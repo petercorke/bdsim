@@ -18,6 +18,7 @@ class Block:
         self.id = None
         self.out = {}
         self.inputs = None
+        self.updated = False
         
         # self.passthru
         
@@ -44,9 +45,10 @@ class Block:
     def reset(self):
         if self.nin > 0:
             self.inputs = [None] * self.nin
-        self.done = False
+        self.updated = False
     
     def input(self, port, val, i):
+        #print('input', self, port, val, i, self.inputs)
         # TODO why is this, val to a port could be an array
         if isinstance(val, np.ndarray):
             self.inputs[port] = val[i]
@@ -57,20 +59,29 @@ class Block:
 
         # check if all inputs have been assigned
         if all([x is not None for x in self.inputs]):
-            self.done = True
+            self.updated = True
             self.update()
         return self.done
     
-    def deriv(self):
+    def start(self):  # begin of a simulation
         pass
     
-    def output(self):
+    def deriv(self):  # return derivative during integration
+        pass
+    
+    def output(self):  # return block output
         pass
 
-    def check(self):
+    def check(self):  # check validity of block parameters at start
         pass
     
-    def update(self):
+    def update(self):  # inputs are valid
+        pass
+    
+    def done(self):  # end of simulation
+        pass
+    
+    def step(self):  # valid
         pass
         
 class Sink(Block):
