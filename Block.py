@@ -11,12 +11,12 @@ import numpy as np
 class Block:
     
     def __init__(self, type=None, name=None, pos=None, **kwargs):
-        print('Block constructor')
+        #print('Block constructor'
         self.type = type
         self.name = name
         self.pos = pos
         self.id = None
-        self.out = {}
+        self.out = []
         self.inputs = None
         self.updated = False
         
@@ -46,22 +46,31 @@ class Block:
         if self.nin > 0:
             self.inputs = [None] * self.nin
         self.updated = False
+        
+    def add_out(self, w):
+        self.out.append(w)
     
-    def input(self, port, val, i):
-        #print('input', self, port, val, i, self.inputs)
-        # TODO why is this, val to a port could be an array
-        if isinstance(val, np.ndarray):
-            self.inputs[port] = val[i]
-        elif i == 0:
-            self.inputs[port] = val
-        else:
-            raise ValueError('bad val to input')
+    def input(self, wire, val):
+        """
+        Receive input from a wire
+        
+        :param wire: Incoming wire
+        :type wire: Wire
+        :param val: Incoming value
+        :type val: any
+        :return: If all inputs have been received
+        :rtype: bool
+
+        """
+
+        # stash it away
+        self.inputs[wire.end.port] = val
 
         # check if all inputs have been assigned
         if all([x is not None for x in self.inputs]):
             self.updated = True
             self.update()
-        return self.done
+        return self.updated
     
     def start(self):  # begin of a simulation
         pass
@@ -87,7 +96,7 @@ class Block:
 class Sink(Block):
     
     def __init__(self, **kwargs):
-        print('Sink constructor')
+        #print('Sink constructor')
         super().__init__(type='sink', **kwargs)
         self.nin = 1
         self.nout = 0
@@ -96,7 +105,7 @@ class Sink(Block):
 class Source(Block):
     
     def __init__(self, **kwargs):
-        print('Source constructor')
+        #print('Source constructor')
         super().__init__(type='source', **kwargs)
         self.nin = 0
         self.nout = 1
@@ -105,7 +114,7 @@ class Source(Block):
 class Transfer(Block):
     
     def __init__(self, **kwargs):
-        print('Transfer constructor')
+        #print('Transfer constructor')
         super().__init__(type='transfer', **kwargs)
         
     def reset(self):

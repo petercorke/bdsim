@@ -225,19 +225,24 @@ class Simulation:
             if np.sum(a) > 1:    
                 print("tied outputs: " + ",".join([str(self.blocklist[i]) for i in np.where(a>0)[0]]))
                 
-        # find the inputs connected to each output
+        # for each wire, connect the source block to the wire
+        # TODO do this when the wire is created
         for w in self.wirelist:
             b = w.start.block
-            b.out[w.start.port] = (w.end.block, w.end.port)
+            b.add_out(w)
         
                 
     def run(self, T=10.0, dt=0.1, solver='RK45', 
             graphics=True,
             **kwargs):
+        
+        self.graphics = graphics
+        self.T = T
+                
         for b in s.blocklist:
             b.start()
         
-        self.T = T
+
         # get the state from each stateful block
         x0 = np.array([])
         for b in s.blocklist:
@@ -251,8 +256,6 @@ class Simulation:
         
         integrator = integrate.__dict__[solver](lambda t, y: Simulation._deriv(t, y, self), t0=0.0, y0=x0, t_bound=T, max_step=dt)
         
-        # we keep results from each step in a list
-        #  apparantly fastest https://stackoverflow.com/questions/7133885/fastest-way-to-grow-a-numpy-numeric-array
         t = []
         x = []
         while integrator.status == 'running':
@@ -274,17 +277,28 @@ class Simulation:
             
     def _propagate(self, b, t):
         #print('propagating:', b)
+        
+        # get output of block at time t
         out = b.output(t)
-        for srcp, dest in b.out.items():
-            destb = dest[0]
-            destp = dest[1]
+        
+        # check for validity
+        assert isinstance(out, list) and len(out) == b.nout, 'block output is wrong type/length'
+        # TODO check output validity once at the start
+        
+        # iterate over all outgoing wires
+        for w in b.out:
             #print(' --> ', destb, '[', destp, ']')
             
-            if destb.input(destp, out, srcp) and destb.nout > 0:
-                self._propagate(destb, t)
+            val = out[w.start.port]
+            dest = w.end.block
+            
+            if dest.input(w, val) and dest.nout > 0:
+                self._propagate(dest, t)
             
     @staticmethod
     def _deriv(t, y, s):
+        
+        s.t = t
         
         # reset all the blocks
         for b in s.blocklist:
@@ -352,9 +366,11 @@ if __name__ == "__main__":
     speed = s.CONSTANT(value=0.5)
     bike = s.BICYCLE(x0=[0, 0, 0])
     scope = s.SCOPEXY()
+    #cro = s.SCOPE()
     
     s.connect(speed, bike[0])
     s.connect(steer, bike[1])
+    #s.connect(steer, cro)
 
     s.connect(bike[0:2], scope[0:2])
     
@@ -362,6 +378,6 @@ if __name__ == "__main__":
     
     print(s)
     
-    out = s.run()
+    out = s.run(graphics=True)
     
     s.done()

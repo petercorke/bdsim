@@ -72,10 +72,10 @@ class _Constant(Source):
     
     def __init__(self, value=None, **kwargs):
         super().__init__(**kwargs)
-        self.value = value
+        self.value = [value]
 
     def output(self, t):
-        return self.value                
+        return self.value               
 
 
 class _WaveForm(Source):
@@ -124,9 +124,8 @@ class _WaveForm(Source):
         else:
             raise ValueError('bad option for signal')
 
-        out = out * amplitude + self.min
-        print(out)
-        return out
+        #print(out)
+        return [out]
 
 
 class _Pulse(Source):
@@ -156,6 +155,8 @@ class _ScopeXY(Sink):
         self.nin = 2
         self.xdata = []
         self.ydata = []
+        
+        #TODO, fixed vs autoscale, color
         
     def start(self):
         # create the plot
@@ -192,21 +193,51 @@ class _ScopeXY(Sink):
 
 
 class _Scope(Sink):
-    def __init__(self, T=None, yrange=None, **kwargs):
+    def __init__(self, nin=1, **kwargs):
         super().__init__(**kwargs)
         self.nin = 1
-        self.data = []
-        self.yrange = yrange
-        if T is None:
-            T = self.T
+        self.tdata = []
+        self.ydata = [[]]*nin
+        self.line = [None]*nin
         
-    def reset(self):
+        # TODO, fixed vs autoscale, color, wire width
+        
+    def start(self):
         # create the plot
-        pass
+        super().reset()
+        if self.sim.graphics:
+            self.fig = plt.figure()
+            self.ax = self.fig.gca()
+            for i in range(0, self.nin):
+                self.line[i], = self.ax.plot(self.tdata, self.ydata[i])
+            self.ax.set_xlim(0, self.sim.T)
+            # self.ax.set_ylim(-2, 2)
+            self.ax.grid(True)
+            self.ax.set_xlabel('X')
+            self.ax.set_ylabel('Y')
+            self.ax.set_title(self.name)
         
-    def update(self):
+    #TODO need t
+    def step(self):
         # inputs are set
-        self.data.append(self.inputs)
+        self.tdata.append(self.sim.t)
+        for i in range(0, self.nin):
+            self.ydata[i].append(self.inputs[i])
+        if self.sim.graphics:
+            for i in range(0, self.nin):
+                self.line[i].set_data(self.tdata, self.ydata[i])
+        
+            plt.draw()
+            plt.show(block=False)
+            self.fig.canvas.start_event_loop(0.001)
+        
+            self.ax.relim()
+            self.ax.autoscale_view(scalex=False, scaley=True)
+        
+    def done(self):
+        print('ScopeXY done')
+        if self.sim.graphics:
+            plt.show(block=True)
 
 class _Integrator(Transfer):
     def __init__(self, N=1, order=1, limit=None, **kwargs):
@@ -256,7 +287,7 @@ class _Bicycle(Transfer):
             self.x0 = x0
         
     def output(self, t):
-        return self.x
+        return list(self.x)
     
     def deriv(self):
         theta = self.x[2]
