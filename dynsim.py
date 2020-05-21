@@ -7,9 +7,7 @@ Created on Mon May 18 21:43:18 2020
 """
 
 import numpy as np
-import scipy.integrate
-import sys
-import math
+import scipy.integrate as integrate
 
 from Block import Block
 
@@ -65,6 +63,7 @@ class Simulation:
         self.blocklist = []
         self.srcwirelist = []
         self.x = None
+        self.graphics = True
         
         
         # bind blocks to this object
@@ -92,6 +91,7 @@ class Simulation:
         
     
     def add_block(self, block):
+        block.sim = self
         self.blocklist.append(block)
         
     def add_wire(self, wire):
@@ -231,8 +231,13 @@ class Simulation:
             b.out[w.start.port] = (w.end.block, w.end.port)
         
                 
-    def run(self, T=10.0, dt=0.1, solver='RK45', **kwargs):
+    def run(self, T=10.0, dt=0.1, solver='RK45', 
+            graphics=True,
+            **kwargs):
+        for b in s.blocklist:
+            b.start()
         
+        self.T = T
         # get the state from each stateful block
         x0 = np.array([])
         for b in s.blocklist:
@@ -241,30 +246,32 @@ class Simulation:
         print('x0', x0)
 
 
-        out = scipy.integrate.solve_ivp(Simulation._deriv, args=(self,), t_span=(0,T), y0=x0, 
-                    method=solver, t_eval=None, events=None, **kwargs)
-
-        return out
-        # try:
-        #     integrator = integrate.__dict__[solver](lambda t, y: Simulation._deriv(self, t, y), t0=0.0, y0=x0, t_bound=T, max_step=dt, **kwargs)
-        # except KeyError:
-        #     print('unknown integrator selected:', solver)
-        #     raise
+        # out = scipy.integrate.solve_ivp(Simulation._deriv, args=(self,), t_span=(0,T), y0=x0, 
+        #             method=solver, t_eval=np.linspace(0, T, 100), events=None, **kwargs)
         
-        # # we keep results from each step in a list
-        # #  apparantly fastest https://stackoverflow.com/questions/7133885/fastest-way-to-grow-a-numpy-numeric-array
-        # t = []
-        # x = []
-        # while integrator.status == 'running':
-        #     # step the integrator, calls _deriv multiple times
-        #     integrator.step()
+        integrator = integrate.__dict__[solver](lambda t, y: Simulation._deriv(t, y, self), t0=0.0, y0=x0, t_bound=T, max_step=dt)
+        
+        # we keep results from each step in a list
+        #  apparantly fastest https://stackoverflow.com/questions/7133885/fastest-way-to-grow-a-numpy-numeric-array
+        t = []
+        x = []
+        while integrator.status == 'running':
+            # step the integrator, calls _deriv multiple times
+            integrator.step()
             
-        #     # stash the results
-        #     t.append(integrator.t)
-        #     x.append(integrator.y)
-
-        # return np.c_[t,x]
+            # stash the results
+            t.append(integrator.t)
+            x.append(integrator.y)
+            
+            for b in self.blocklist:
+                b.step()
+            
+        return np.c_[t,x]
     
+    def done(self):
+        for b in s.blocklist:
+            b.done()
+            
     def _propagate(self, b, t):
         #print('propagating:', b)
         out = b.output(t)
@@ -341,13 +348,14 @@ class Simulation:
 if __name__ == "__main__":
     s = Simulation()
     
-    steer = s.WAVEFORM(name='siggen', min=-1)
-    speed = s.CONSTANT(value=2)
-    bike = s.BICYCLE(x0=[1,2,0])
-    scope = s.SCOPE()
+    steer = s.WAVEFORM(name='siggen', freq=0.5, min=-0.5, max=0.5)
+    speed = s.CONSTANT(value=0.5)
+    bike = s.BICYCLE(x0=[0, 0, 0])
+    scope = s.SCOPEXY()
     
-    s.connect(steer, bike[0])
-    s.connect(speed, bike[1])
+    s.connect(speed, bike[0])
+    s.connect(steer, bike[1])
+
     s.connect(bike[0:2], scope[0:2])
     
     s.compile()
@@ -355,3 +363,5 @@ if __name__ == "__main__":
     print(s)
     
     out = s.run()
+    
+    s.done()
