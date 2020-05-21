@@ -33,6 +33,10 @@ Created on Thu May 21 06:39:29 2020
 """
 import numpy as np
 import math
+
+import matplotlib.pyplot as plt
+import time
+
 from Block import *
     
 
@@ -75,7 +79,7 @@ class _Constant(Source):
 
 
 class _WaveForm(Source):
-    def __init__(self, freq=1, phase0=0, signal='square',
+    def __init__(self, freq=1, unit='Hz', phase0=0, signal='square',
                  min=0, max=1, duty=0.5, # for square
                  amplitude=1, offset=0,  # for sine, triangle
                  **kwargs):
@@ -84,8 +88,11 @@ class _WaveForm(Source):
         assert 0<duty<1, 'duty must be in range [0,1]'
         assert max > min, 'maximum value must be greater than minimum'
         
-        self.freq = freq
         self.signal = signal
+        if unit == 'Hz':
+            self.freq = freq
+        elif unit == 'rad/s':
+            self.freq = freq / (2 * math.pi)
         self.phase0 = phase0
         self.min = min
         self.max = max
@@ -95,16 +102,16 @@ class _WaveForm(Source):
 
     def output(self, t):
         T = 1.0 / self.freq
-        phase = ((t % T) * self.freq - self.phase0 ) % 1.0
+        phase = (t * self.freq - self.phase0 ) % 1.0
         
         amplitude = self.max - self.min
         
         # define all signals in the range -1 to 1
         if self.signal == 'square':
             if phase < self.duty:
-                out = -1
+                out = self.min
             else:
-                out = 1
+                out = self.max
         elif self.signal == 'triangle':
             if phase < 0.25:
                 out = phase * 4
@@ -118,7 +125,7 @@ class _WaveForm(Source):
             raise ValueError('bad option for signal')
 
         out = out * amplitude + self.min
-        #print(out)
+        print(out)
         return out
 
 
@@ -144,24 +151,95 @@ class _Pulse(Source):
 
     
 class _ScopeXY(Sink):
-    def __init__(self, dims=[-1,1], **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.nin = 2
+        self.xdata = []
+        self.ydata = []
+        
+    def start(self):
+        # create the plot
+        super().reset()
+        if self.sim.graphics:
+            self.fig = plt.figure()
+            self.ax = self.fig.gca()
+            self.line, = self.ax.plot(self.xdata, self.ydata)
+            # self.ax.set_xlim(-2, 2)
+            # self.ax.set_ylim(-2, 2)
+            self.ax.grid(True)
+            self.ax.set_xlabel('X')
+            self.ax.set_ylabel('Y')
+            self.ax.set_title(self.name)
+        
+    def step(self):
+        # inputs are set
+        self.xdata.append(self.inputs[0])
+        self.ydata.append(self.inputs[1])
+        if self.sim.graphics:
+            self.line.set_data(self.xdata, self.ydata)
+        
+            plt.draw()
+            plt.show(block=False)
+            self.fig.canvas.start_event_loop(0.001)
+        
+            self.ax.relim()
+            self.ax.autoscale_view()
+        
+    def done(self):
+        print('ScopeXY done')
+        if self.sim.graphics:
+            plt.show(block=True)
+
+
+class _Scope(Sink):
+    def __init__(self, T=None, yrange=None, **kwargs):
+        super().__init__(**kwargs)
+        self.nin = 1
         self.data = []
+        self.yrange = yrange
+        if T is None:
+            T = self.T
+        
+    def reset(self):
+        # create the plot
+        pass
         
     def update(self):
         # inputs are set
         self.data.append(self.inputs)
 
-class _Scope(Sink):
-    def __init__(self, dims=[-1,1], **kwargs):
-        super().__init__(**kwargs)
-        self.nin = 2
-        self.data = []
+class _Integrator(Transfer):
+    def __init__(self, N=1, order=1, limit=None, **kwargs):
+        self.N = N
+        self.order = order
+        self.limit = limit
         
-    def update(self):
-        # inputs are set
-        self.data.append(self.inputs)
+        self.nin = N
+        self.nout = N
+        self.nstates = N*order
+
+class _SISO_LTI(Transfer):
+    def __init__(self, N=1, D=[1, 1], order=1, limit=None, **kwargs):
+        self.N = N
+        self.D = N
+        n = len(D) - 1
+        nn = len(N)
+        assert nn <= n, 'direct pass through is not supported'
+        
+        self.nin = 1
+        self.nout = 1
+        self.nstates = n
+        
+        self.A = sp.eye(len(D)-1, k=1)
+        D /= D[0]
+        self.A[-1,:] = -D[::-1]
+        self.B = np.zeros((n,))
+        self.B[-1] = 1
+        nn = len(N)
+        self.C = np.r_[N[::-1], np.zeros((n-nn,))]
+        print('A=', A)
+        print('B=', B)
+        print('C=', C)
 
 
 class _Bicycle(Transfer):
@@ -182,6 +260,6 @@ class _Bicycle(Transfer):
     
     def deriv(self):
         theta = self.x[2]
-        v = self.inputs[0]; gamma = self.inputs[1
-                                                ]
-        return np.r_[v*math.cos(theta), v*math.sin(theta), v*math.tan(gamma)/self.L ]
+        v = self.inputs[0]; gamma = self.inputs[1]
+        xd = np.r_[v*math.cos(theta), v*math.sin(theta), v*math.tan(gamma)/self.L ]
+        return xd
