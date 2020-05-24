@@ -37,8 +37,8 @@ import math
 import matplotlib.pyplot as plt
 import time
 
-from Block import *
-    
+from bdsim.Block import *
+
 
 
 # ---------------------------------- simulation elements ---------------- #
@@ -204,7 +204,7 @@ class _Scope(Sink):
         
     def start(self):
         # create the plot
-        super().reset()
+        super().reset()   # TODO should this be here?
         if self.sim.graphics:
             self.fig = plt.figure()
             self.ax = self.fig.gca()

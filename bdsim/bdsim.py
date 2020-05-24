@@ -9,7 +9,7 @@ Created on Mon May 18 21:43:18 2020
 import numpy as np
 import scipy.integrate as integrate
 
-from Block import Block
+from bdsim.Block import Block
 
 # ------------------------------------------------------------------------- # 
                 
@@ -67,7 +67,7 @@ class Simulation:
         
         
         # bind blocks to this object
-        import blocks
+        import bdsim.blocks
         
        
         def new_method(cls):
@@ -357,27 +357,3 @@ class Simulation:
                 f.write('\t"{:s}" -> "{:s}" [label="{:s}"]\n'.format(w.start.block.name, w.end.block.name, w.name))
 
             f.write('}\n')
-
-
-if __name__ == "__main__":
-    s = Simulation()
-    
-    steer = s.WAVEFORM(name='siggen', freq=0.5, min=-0.5, max=0.5)
-    speed = s.CONSTANT(value=0.5)
-    bike = s.BICYCLE(x0=[0, 0, 0])
-    scope = s.SCOPEXY()
-    #cro = s.SCOPE()
-    
-    s.connect(speed, bike[0])
-    s.connect(steer, bike[1])
-    #s.connect(steer, cro)
-
-    s.connect(bike[0:2], scope[0:2])
-    
-    s.compile()
-    
-    print(s)
-    
-    out = s.run(graphics=True)
-    
-    s.done()
