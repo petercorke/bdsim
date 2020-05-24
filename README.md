@@ -9,17 +9,17 @@ Consider the canonic block diagram
 which we can express concisely with `bdsim` as
 
 ```python
-demand = s.WAVEFORM(wave='square', freq=2, pos=(0,0))
+demand = s.STEP(T=1, pos=(0,0))
 sum = s.SUM('+-', pos=(1,0))
 gain = s.GAIN(2, pos=(1.5,0))
 plant = s.LTI_SISO(0.5, [1, 2], name='plant', pos=(3,0))
-scope = s.SCOPE(pos=(4,0))
+scope = s.SCOPE(style=['k', 'r--'], pos=(4,0))
     
-s.connect(demand, sum[0])
+s.connect(demand, sum[0], scope[1])
 s.connect(plant, sum[1])
 s.connect(sum, gain)
 s.connect(gain, plant)
-s.connect(plant, scope)
+s.connect(plant, scope[0])
 ```
 where the red block annotations in the diagram have become names of instances of object that represent the blocks.  
 
@@ -44,13 +44,19 @@ We can also turn into something like a real block diagram using GraphViz to prod
 s.dotfile('demo.dot')
 ```
 
-which we can turn into a graphic using `neato`
+which we can turn into a graphic using `dot` 
 
+```shell
+% dot -Tpng demo.dot demo.png
+```
+or `neato`
 ```shell
 % neato -Tpng demo.dot demo.png
 ```
 
 ![output of neato](figs/bd1.png)
+
+While this is correct, it's not quite the way we would expect the diagram to be drawn.  `dot` ignores the `pos` options on the blocks while `neato` respects them, but is prone to drawing all the lines on top of each other.
 
 Sources are shown as 3D boxes, sinks as folders, functions as boxes (apart from gains which are triangles and summing junctions which are points), and transfer functions as connectors (look's like a gate).  To create a decent looking plot you need to manually place the blocks using the `pos` argument to place them. Unit spacing in the x- and y-directions is generally sufficient. 
 
