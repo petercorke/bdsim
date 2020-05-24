@@ -283,11 +283,13 @@ class Simulation:
             
             for b in self.blocklist:
                 b.step()
-            
+        
+        self.done()
+        
         return np.c_[t,x]
     
     def done(self):
-        for b in s.blocklist:
+        for b in self.blocklist:
             b.done()
             
     def _propagate(self, b, t):
@@ -302,45 +304,47 @@ class Simulation:
         
         # iterate over all outgoing wires
         for w in b.out:
-            #print(' --> ', destb, '[', destp, ']')
+            #print(' --> ', w.end.block.name, '[', w.end.port, ']')
             
             val = out[w.start.port]
             dest = w.end.block
             
-            if dest.input(w, val) and dest.nout > 0:
+            if dest.input(w, val) and dest.blockclass == 'function':
                 self._propagate(dest, t)
-            
-    @staticmethod
-    def _deriv(t, y, s):
-        
-        s.t = t
+    
+    def evaluate(self, x, t):
+        self.t = t
         
         # reset all the blocks
-        for b in s.blocklist:
+        for b in self.blocklist:
             b.reset()
             
         # split the state vector to stateful blocks
-        for b in s.blocklist:
+        for b in self.blocklist:
             if b.blockclass == 'transfer':
-                y = b.setstate(y)
+                x = b.setstate(x)
         
         # process blocks with initial outputs
-        for b in s.blocklist:
-            if b.nout > 0:
-                s._propagate(b, t)
+        for b in self.blocklist:
+            if b.blockclass in ('source', 'transfer'):
+                self._propagate(b, t)
                 
         # now iterate, running blocks, until we have values for all
-        for b in s.blocklist:
+        for b in self.blocklist:
             if b.blockclass in ('sink', 'function', 'transfer') and not b.done:
                 print('block not set')
             
         # gather the derivative
         YD = np.array([])
-        for b in s.blocklist:
+        for b in self.blocklist:
             if b.blockclass == 'transfer':
-                yd = b.deriv()
+                yd = b.deriv().flatten()
                 YD = np.r_[YD, yd]
         return YD
+        
+    @staticmethod
+    def _deriv(t, y, s):
+        return s.evaluate(y, t)
     
     def reset(self):
         X0 = np.array([])
@@ -399,7 +403,7 @@ if __name__ == "__main__":
     s = Simulation()
     
     
-    demand = s.WAVEFORM(wave='square', freq='2', pos=(0,0))
+    demand = s.WAVEFORM(wave='square', freq=2, pos=(0,0))
     sum = s.SUM('+-', pos=(1,0))
     gain = s.GAIN(2, pos=(1.5,0))
     plant = s.LTI_SISO(0.5, [1, 2], name='plant', pos=(3,0))
@@ -413,4 +417,6 @@ if __name__ == "__main__":
     
     s.compile()
     
-    s.dotfile('bd1.dot')
+    #s.dotfile('bd1.dot')
+    
+    s.run(10)
