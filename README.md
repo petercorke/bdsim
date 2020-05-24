@@ -9,7 +9,7 @@ Consider the canonic block diagram
 which we can express concisely with `bdsim` as
 
 ```python
-demand = s.WAVEFORM(wave='square', freq='2', pos=(0,0))
+demand = s.WAVEFORM(wave='square', freq=2, pos=(0,0))
 sum = s.SUM('+-', pos=(1,0))
 gain = s.GAIN(2, pos=(1.5,0))
 plant = s.LTI_SISO(0.5, [1, 2], name='plant', pos=(3,0))
@@ -31,32 +31,6 @@ A bundle of wires can be denoted using slice notation, for example `block[2:4]` 
 
 Remember that wires can hold scalar or vector values.  The first index refers to the port. A second index, if present is used to index into a vector value on the port, eg. `block1[2,:2]` refers to the first two elements of a vector on port 2 of block1.  This notation reduces the need for multiplexer and demultiplexer blocks.
 
-We could also write the above more compactly using implicit connections described by the assignement operator
-
-```python
-s = Simulation()
-plant = s.LTI_SISO(1, [1 2], name='plant')
-demand = s.WAVEFORM(type='square', freq='2')
-scope = s.SCOPE()
-gain = s.GAIN(value=2)
-
-gain[0] = s.SUM('+-', demand, plant)
-plant[0] = gain
-scope[0] = plant
-```
-but note that we need to explicitly include the ports on the left-hand side of the expressions (since we cannot overload the assignment operator in Python).
-
-Even more concisely
-
-```python
-s = Simulation()
-plant = s.LTI_SISO(0.5, [1, 2], name='plant')
-demand = s.WAVEFORM(type='square', freq='2')
-scope = s.SCOPE()
-
-plant[0] = s.SUM('+-', demand, plant) * s.GAIN(value=2)
-scope[0] = plant
-```
 
 Whatever way we choose to express our model, and a mixture of ways is perfectly OK, the model is expressed in terms of Block and Wire objects.  The output port of a block is a set of wires connecting to input ports, and each Wire has reference to the start and end blocks. We can see this representation by
 
@@ -78,13 +52,22 @@ which we can turn into a graphic using `neato`
 
 ![output of neato](figs/bd1.png)
 
-To run the simulation and save the results 
+Sources are shown as 3D boxes, sinks as folders, functions as boxes (apart from gains which are triangles and summing junctions which are points), and transfer functions as connectors (look's like a gate).  To create a decent looking plot you need to manually place the blocks using the `pos` argument to place them. Unit spacing in the x- and y-directions is generally sufficient. 
+
+To run the simulation for 5 seconds and visualize the results
 
 ```python
-s.record(demand, plant)
+s.run(5)
+```
+simulate for 5s (using the default variable step RK45 solver) and output values at least every 0.1s.  The scope block pops up a graph
+
+![bdsim output](figs/Figure_1.png)
+
+To save the results is achieved by
+
+```python
 out = s.run(5, dt=0.1)
 ```
-which requests to record the outputs of the `demand` and `plant` blocks, simulate for 5s (using the default variable step RK45 solver) and output values at least every 0.1s.
 
 The result `out` is effectively a structure with elements
 
@@ -92,15 +75,9 @@ The result `out` is effectively a structure with elements
 - `x` is the state vector: ndarray, shape=(M,N)
 - `xnames` is a list of the names of the states corresponding to columns of `x`, eg. "plant.x0"
 
-In this case there are also elements due to the `record` method:
-
-- `block0` is the output of the waveform generator: ndarray, shape=(M,)
-- `plant` is the output of the plant: ndarray, shape=(M,)
 
 Note that the names comes from the names of the blocks, because we didn't assign a name to the WAVEFORM block it gets a default name from the unique block id. 
 
-
-wires can be any valid python type, scalars, lists, objects, even functions!
 
 # Writing your own block
 
@@ -253,6 +230,48 @@ class _MyBlock(Transfer):
 		# inputs is list representing the input ports to the block
 ```
 
+
+## Future
+
+We could write the connections part of the above example more compactly using implicit connections described by the assignement operator
+
+```python
+gain[0] = s.SUM('+-', demand, plant)
+plant[0] = gain
+scope[0] = plant
+```
+but note that we need to explicitly include the ports on the left-hand side of the expressions (since we cannot overload the assignment operator in Python).
+
+Even more concisely
+
+```python
+s = Simulation()
+plant = s.LTI_SISO(0.5, [1, 2], name='plant')
+demand = s.WAVEFORM(type='square', freq='2')
+scope = s.SCOPE()
+
+plant[0] = s.SUM('+-', demand, plant) * s.GAIN(value=2)
+scope[0] = plant
+```
+
+
+s.record(demand, plant)
+out = s.run(5, dt=0.1)
+```
+which requests to record the outputs of the `demand` and `plant` blocks, simulate for 5s (using the default variable step RK45 solver) and output values at least every 0.1s.
+
+The result `out` is effectively a structure with elements
+
+- `t` the time vector: ndarray, shape=(M,)
+- `x` is the state vector: ndarray, shape=(M,N)
+- `xnames` is a list of the names of the states corresponding to columns of `x`, eg. "plant.x0"
+
+In this case there are also elements due to the `record` method:
+
+- `block0` is the output of the waveform generator: ndarray, shape=(M,)
+- `plant` is the output of the plant: ndarray, shape=(M,)
+
+Note that the names comes from the names of the blocks, because we didn't assign a name to the WAVEFORM block it gets a default name from the unique block id. 
 
 
 
