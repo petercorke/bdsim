@@ -1,2 +1,2 @@
-from bdsim.bdsim import *
-from bdsim.Block import *
+from bdsim.simulation import *
+from bdsim.components import *

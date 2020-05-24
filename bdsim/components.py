@@ -8,6 +8,51 @@ Created on Thu May 21 08:48:47 2020
 
 import numpy as np
 
+
+                
+class Wire:
+    
+    class Port:
+        def __init__(self, bp):
+            self.block = bp[0]
+            self.port = bp[1]
+            self.dir = ''
+            
+        def __repr(self):
+            return self.block + "[" + self.port + "]"
+                
+                
+    def __init__(self, start=None, end=None, name=None):
+        self.name = name
+        self.id = None
+        self.start = Wire.Port(start)
+        self.end = Wire.Port(end)
+        self.value = None
+        self.type = None
+
+    @property
+    def info(self):
+        print("block:")
+        for k,v in self.__dict__.items():
+            print("  {:8s}{:s}".format(k+":", str(v)))
+            
+    def __repr__(self):
+        
+        def range(x):
+            if isinstance(x,slice):
+                return "{:d}:{:d}".format(x.start, x.stop)
+            else:
+                return "{:d}".format(x)
+        if self.id is None:
+            sid = ""
+        else:
+            sid = "-{:d}".format(self.id)            
+        s = "wire{:s}: {:s}[{:s}] --> {:s}[{:s}]".format(sid, type(self.start.block).__name__, range(self.start.port), type(self.end.block).__name__, range(self.end.port))
+
+        return s
+
+# ------------------------------------------------------------------------- # 
+
 class Block:
     
     def __init__(self, blockclass=None, name=None, pos=None, **kwargs):

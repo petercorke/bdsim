@@ -37,7 +37,7 @@ import math
 import matplotlib.pyplot as plt
 import time
 
-from bdsim.Block import *
+from bdsim.components import Sink, Source, Transfer, Function
 
 
 
@@ -46,6 +46,8 @@ from bdsim.Block import *
 # could create a decorator for each of these
 """
 maybe ??
+
+perhaps add decorator adds the class to a global list _block_classes
 
 @block
 class _Constant(Source):

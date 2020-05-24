@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-import bdsim.bdsim as bd
+import bdsim.simulation as sim
 
-s = bd.Simulation()
+s = sim.Simulation()
 
 demand = s.STEP(T=1, pos=(0,0))
 sum = s.SUM('+-', pos=(1,0))
