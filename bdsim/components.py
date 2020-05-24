@@ -115,22 +115,14 @@ class Block:
         # check if all inputs have been assigned
         if all([x is not None for x in self.inputs]):
             self.updated = True
-            self.update()
+            #self.update()
         return self.updated
     
     def start(self):  # begin of a simulation
         pass
     
-    def deriv(self):  # return derivative during integration
-        pass
-    
-    def output(self):  # return block output
-        pass
 
     def check(self):  # check validity of block parameters at start
-        pass
-    
-    def update(self):  # inputs are valid
         pass
     
     def done(self):  # end of simulation
@@ -140,6 +132,7 @@ class Block:
         pass
         
 class Sink(Block):
+    blockclass = "sink"
     
     def __init__(self, **kwargs):
         #print('Sink constructor')
@@ -147,9 +140,10 @@ class Sink(Block):
         self.nin = 1
         self.nout = 0
         self.nstates = 0
-        self.blockclass = "sink"
+
 
 class Source(Block):
+    blockclass = "source"
     
     def __init__(self, **kwargs):
         #print('Source constructor')
@@ -157,14 +151,13 @@ class Source(Block):
         self.nin = 0
         self.nout = 1
         self.nstates = 0
-        self.blockclass = "source"
         
 class Transfer(Block):
+    blockclass = "transfer"
     
     def __init__(self, **kwargs):
         #print('Transfer constructor')
         super().__init__(blockclass='transfer', **kwargs)
-        self.blockclass = "transfer"
         
     def reset(self):
         super().reset()
@@ -184,8 +177,8 @@ class Transfer(Block):
     
 
 class Function(Block):
+    blockclass = "function"
     
     def __init__(self, **kwargs):
         super().__init__(blockclass='function', **kwargs)
         self.nstates = 0
-        self.blockclass = "function"

@@ -199,26 +199,26 @@ class _WaveForm(Source):
 
 # ------------------------------------------------------------------------ #
 
-class _Pulse(Source):
-    def __init__(self, T=1, width=1,
-                 off=0, on=1,
-                 **kwargs):
-        super().__init__(**kwargs)
+# class _Pulse(Source):
+#     def __init__(self, T=1, width=1,
+#                  off=0, on=1,
+#                  **kwargs):
+#         super().__init__(**kwargs)
         
-        self.t_on = T
-        self.t_off =T + width
-        self.off = off
-        self.on = on
-        self.type = "pulsegen"
+#         self.t_on = T
+#         self.t_off =T + width
+#         self.off = off
+#         self.on = on
+#         self.type = "pulsegen"
 
-    def output(self, t):
-        if self.t_on <= t <= self.t_off:
-            out = self.on
-        else:
-            out = self.off
+#     def output(self, t):
+#         if self.t_on <= t <= self.t_off:
+#             out = self.on
+#         else:
+#             out = self.off
 
-        #print(out)
-        return [out]
+#         #print(out)
+#         return [out]
     
 # ------------------------------------------------------------------------ #
 
@@ -467,16 +467,16 @@ class _Scope(Sink):
 
 # ------------------------------------------------------------------------ #
 
-class _Integrator(Transfer):
-    def __init__(self, N=1, order=1, limit=None, **kwargs):
-        super().__init__(**kwargs)
-        self.N = N
-        self.order = order
-        self.limit = limit
+# class _Integrator(Transfer):
+#     def __init__(self, N=1, order=1, limit=None, **kwargs):
+#         super().__init__(**kwargs)
+#         self.N = N
+#         self.order = order
+#         self.limit = limit
         
-        self.nin = N
-        self.nout = N
-        self.nstates = N*order
+#         self.nin = N
+#         self.nout = N
+#         self.nstates = N*order
 
 # ------------------------------------------------------------------------ #
 
@@ -670,6 +670,7 @@ if __name__ == "__main__":
     a = _LTI_SISO(N=1, D=[1,2])
     
     s = _Scope(nin=2)
+    s.reset()
     s.inputs[0] = 3
     s.inputs = np.r_[4]
     s.step()

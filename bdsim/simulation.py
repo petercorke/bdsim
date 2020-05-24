@@ -8,6 +8,7 @@ Created on Mon May 18 21:43:18 2020
 import os
 import os.path
 import importlib
+import inspect
 
 import numpy as np
 import scipy.integrate as integrate
@@ -39,7 +40,11 @@ class Simulation:
                 self.add_block(block)
                 return block
             
-            return block_method_wrapper
+            # return a function that invokes the class constructor
+            f = block_method_wrapper
+            # move the __init__ docstring to the class to allow BLOCK.__doc__
+            cls.__doc__ = cls.__init__.__doc__  
+            return f
     
         # scan every file for classes and make their constructors methods of this class
         for file in os.listdir(os.path.join(os.path.dirname(__file__), 'blocks')):
@@ -55,7 +60,24 @@ class Simulation:
                         # valid class name within module
                         cls = blocks.__dict__[item]
                         
-                        # create a function to invoke its constructor
+                        # test the class is a valid block
+                        if cls.blockclass in ('source', 'transfer', 'function'):
+                            # must have an output function
+                            valid = hasattr(cls, 'output') and \
+                                    callable(cls.output) and \
+                                    len(inspect.signature(cls.output).parameters) == 2
+                            if not valid:
+                                raise ImportError('class {:s} has missing/improper output method'.format(str(cls)))
+                            
+                        if cls.blockclass == 'sink':
+                            # must have a step function
+                            valid = hasattr(cls, 'step') and \
+                                    callable(cls.step) and \
+                                    len(inspect.signature(cls.step).parameters) == 1
+                            if not valid:
+                                raise ImportError('class {:s} has missing/improper step method'.format(str(cls)))
+
+                        # create a function to invoke the block's constructor
                         f = new_method(cls)
                         
                         # create the new method name
@@ -64,17 +86,15 @@ class Simulation:
                         
                         # set an attribute of the class
                         #  it becomes a bound method of the instance.
-                        
                         setattr(Simulation, bindname, f)
 
                 if len(blocknames) > 0:
-                    print('Loading blocks from {:s}: {:s}'.format(file, ', '.join(blocknames))
-)
-        
+                    print('Loading blocks from {:s}: {:s}'.format(file, ', '.join(blocknames)))
+
     
     def add_block(self, block):
-        block.sim = self
-        self.blocklist.append(block)
+        block.sim = self   # block back pointer to the simulator
+        self.blocklist.append(block)  # add to the list of available blocks
         
     def add_wire(self, wire):
         return self.wirelist.append(wire)
@@ -480,6 +500,8 @@ class Simulation:
                 file.write('\t"{:s}" -> "{:s}" [{:s}]\n'.format(w.start.block.name, w.end.block.name, ', '.join(options)))
 
             file.write('}\n')
+            
+
 
 if __name__ == "__main__":
     
