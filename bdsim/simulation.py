@@ -9,6 +9,7 @@ import os
 import os.path
 import importlib
 import inspect
+import re
 
 import numpy as np
 import scipy.integrate as integrate
@@ -193,7 +194,73 @@ class Simulation:
             
         self.compiled = True
         
+    def report(self):
+        
+        def format(table, colsep = 2):
+            """
+            Tabular printing
+            
+            :param table: format string
+            :type table: str
+            :param extrasep: extra separation between columns, default 2
+            :type extrasep: int
+            :return: a format string
+            :rtype: str
+            
+            Given an input string like::
+            
+                "col1[s] col2[d] col3[10s] col4[3d]"
                 
+            where the square brackets denote type  (as per `format`) and the
+            number if given is a minumum column width.  The actual column width
+            is the maximum of the given value and the width of the heading text
+            plus `extrasep`.
+            
+            col1  col2  col3        col4
+            ----  ----  ----------  ----
+
+            """
+            re_fmt = re.compile(r"([a-zA-Z]+)\[([0-9]*)([a-z])\]")
+            hfmt = ""
+            cfmt = ""
+            sep = ""
+            
+            colheads = []
+            for col in table.split(' '):
+                m = re_fmt.search(col)
+                colhead = m.group(1)
+                colwidth = m.group(2)
+                if colwidth == '':
+                    colwidth = len(colhead) + colsep
+                else:
+                    colwidth = max(int(colwidth), len(colhead) + colsep)
+                colfmt = m.group(3)
+                colheads.append(colhead)
+                if colfmt == 'd':
+                    hfmt += "{:>%ds}" % (colwidth,)
+                else:
+                    hfmt += "{:%ds}" % (colwidth,)
+                cfmt += "{:%d%s}" % (colwidth, colfmt)
+                hfmt += ' ' * colsep
+                cfmt += ' ' * colsep
+                sep += '-' * colwidth + '  '
+            
+            print(hfmt.format(*colheads))
+            print(sep)
+            return cfmt
+        
+        print('\nBlocks::\n')
+        cfmt = format("id[3d] class[10s] type[10s] name[10s] nin[2d] nout[2d] nstate[2d]")
+        for b in self.blocklist:
+            print( cfmt.format(b.id, b.blockclass, b.type, b.name, b.nin, b.nout, b.nstates))
+        
+        print('\nWires::\n')
+        cfmt = format("id[3d] name[10s] from[6s] to[6s]")
+        for w in self.wirelist:
+            start = "{:d}[{:d}]".format(w.start.block.id, w.start.port)
+            end = "{:d}[{:d}]".format(w.end.block.id, w.end.port)
+            print( cfmt.format(w.id, w.name, start, end))
+            
     def run(self, T=10.0, dt=0.1, solver='RK45', 
             graphics=True,
             **kwargs):
@@ -524,4 +591,5 @@ if __name__ == "__main__":
     
     #s.dotfile('bd1.dot')
     
-    s.run(10)
+    s.report()
+    #s.run(10)
