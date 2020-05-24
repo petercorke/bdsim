@@ -4,18 +4,17 @@ This Python package simulates a dynamic system conceptualized in block diagram f
 
 Consider the canonic block diagram
 
-![block diagram](figs/bd1.png)
+![block diagram](figs/bd1-sketch.png)
 
 which we can express concisely with `bdsim` as
 
 ```python
-s = Simulation()
-plant = s.LTI_SISO(1, [1 2], name='plant')
-demand = s.WAVEFORM(type='square', freq='2')
-sum = s.SUM('+-')
-scope = s.SCOPE()
-gain = s.GAIN(value=2)
-
+demand = s.WAVEFORM(wave='square', freq='2', pos=(0,0))
+sum = s.SUM('+-', pos=(1,0))
+gain = s.GAIN(2, pos=(1.5,0))
+plant = s.LTI_SISO(0.5, [1, 2], name='plant', pos=(3,0))
+scope = s.SCOPE(pos=(4,0))
+    
 s.connect(demand, sum[0])
 s.connect(plant, sum[1])
 s.connect(sum, gain)
@@ -48,9 +47,10 @@ scope[0] = plant
 but note that we need to explicitly include the ports on the left-hand side of the expressions (since we cannot overload the assignment operator in Python).
 
 Even more concisely
+
 ```python
 s = Simulation()
-plant = s.LTI_SISO(1, [1 2], name='plant')
+plant = s.LTI_SISO(0.5, [1, 2], name='plant')
 demand = s.WAVEFORM(type='square', freq='2')
 scope = s.SCOPE()
 
@@ -70,13 +70,13 @@ We can also turn into something like a real block diagram using GraphViz to prod
 s.dotfile('demo.dot')
 ```
 
-which we can turn into a graphic
+which we can turn into a graphic using `neato`
 
 ```shell
-% dot -Tpng demo.dot demo.png
+% neato -Tpng demo.dot demo.png
 ```
 
-INCLUDE IMAGE HERE
+![output of neato](figs/bd1.png)
 
 To run the simulation and save the results 
 
@@ -98,14 +98,6 @@ In this case there are also elements due to the `record` method:
 - `plant` is the output of the plant: ndarray, shape=(M,)
 
 Note that the names comes from the names of the blocks, because we didn't assign a name to the WAVEFORM block it gets a default name from the unique block id. 
-
-
-BLOCKS TO ADD
-
-interpolate a variable
-saturate
-sum, +, - , ~ for angdiff
-gain
 
 
 wires can be any valid python type, scalars, lists, objects, even functions!
