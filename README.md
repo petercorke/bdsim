@@ -12,7 +12,7 @@ which we can express concisely with `bdsim` as
 demand = s.STEP(T=1, pos=(0,0))
 sum = s.SUM('+-', pos=(1,0))
 gain = s.GAIN(2, pos=(1.5,0))
-plant = s.LTI_SISO(0.5, [1, 2], name='plant', pos=(3,0))
+plant = s.LTI_SISO(0.5, [2, 1], name='plant', pos=(3,0))
 scope = s.SCOPE(style=['k', 'r--'], pos=(4,0))
     
 s.connect(demand, sum[0], scope[1])
