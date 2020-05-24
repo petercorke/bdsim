@@ -134,13 +134,13 @@ class _WaveForm(Source):
 # ------------------------------------------------------------------------ #
 
 class _Pulse(Source):
-    def __init__(self, time=1, width=1,
+    def __init__(self, T=1, width=1,
                  off=0, on=1,
                  **kwargs):
         super().__init__(**kwargs)
         
-        self.t_on = time
-        self.t_off =time + width
+        self.t_on = T
+        self.t_off =T + width
         self.off = off
         self.on = on
         self.type = "pulsegen"
@@ -152,7 +152,30 @@ class _Pulse(Source):
             out = self.off
 
         #print(out)
-        return out
+        return [out]
+    
+# ------------------------------------------------------------------------ #
+
+class _Step(Source):
+    def __init__(self, T=1,
+                 off=0, on=1,
+                 **kwargs):
+        super().__init__(**kwargs)
+        
+        self.T = T
+        self.off = off
+        self.on = on
+        self.type = "step"
+        self.nout = 1
+
+    def output(self, t):
+        if t >= self.T:
+            out = self.on
+        else:
+            out = self.off
+
+        #print(out)
+        return [out]
 
 # ------------------------------------------------------------------------ #
 
@@ -162,7 +185,7 @@ class _ScopeXY(Sink):
         self.nin = 2
         self.xdata = []
         self.ydata = []
-        self.type = 'xyscope'
+        self.type = 'scopexy'
         
         #TODO, fixed vs autoscale, color
         
@@ -179,7 +202,6 @@ class _ScopeXY(Sink):
             self.ax.set_xlabel('X')
             self.ax.set_ylabel('Y')
             self.ax.set_title(self.name)
-        self.type = "scopeXY"
         
     def step(self):
         # inputs are set
@@ -194,7 +216,6 @@ class _ScopeXY(Sink):
         
             self.ax.relim()
             self.ax.autoscale_view()
-        self.type = "step"
         
     def done(self):
         print('ScopeXY done')
@@ -247,7 +268,7 @@ class _Scope(Sink):
             self.ax.autoscale_view(scalex=False, scaley=True)
         
     def done(self):
-        print('ScopeXY done')
+        print('Scope done')
         if self.sim.graphics:
             plt.show(block=True)
 
@@ -278,7 +299,7 @@ class _LTI_SISO(Transfer):
         n = len(D) - 1
         nn = len(N)
         if x0 is None:
-            self.x0 = np.zeros((n,1))
+            self.x0 = np.zeros((n,))
         else:
             self.x0 = x0
         assert nn <= n, 'direct pass through is not supported'
@@ -298,10 +319,18 @@ class _LTI_SISO(Transfer):
             self.A[-1,:] = D[::-1]
             self.B[-1] = 1
         nn = len(N)
-        self.C = np.r_[N[::-1], np.zeros((n-nn,))]
+        self.B = np.array([[0.5]])
+        self.C = np.array([[1]])
+        #self.C = np.r_[N[::-1], np.zeros((n-nn,))]
         print('A=', self.A)
         print('B=', self.B)
         print('C=', self.C)
+        
+    def output(self, t):
+        return list(self.C*self.x)
+    
+    def deriv(self):
+        return self.A@self.x + self.B@np.array(self.inputs)
 
 # ------------------------------------------------------------------------ #
 
