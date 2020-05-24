@@ -38,7 +38,7 @@ class Wire:
         self.type = None
 
     @property
-    def about(self):
+    def info(self):
         print("block:")
         for k,v in self.__dict__.items():
             print("  {:8s}{:s}".format(k+":", str(v)))
@@ -63,17 +63,17 @@ class Simulation:
     
     def __init__(self):
         
-        self.wirelist = []
-        self.blocklist = []
-        self.srcwirelist = []
-        self.x = None
-        self.graphics = True
+        self.wirelist = []      # list of all wires
+        self.blocklist = []     # list of all blocks
+        self.x = None           # state vector numpy.ndarray
+        self.graphics = True    # graphics enabled
+        self.compiled = False   # network has been compiled
+        self.T = None           # maximum simulation time
+        self.t = None           # current time
         
         
-        # bind blocks to this object
-        import bdsim.blocks
+        # load modules from the blocks folder
         
-       
         def new_method(cls):
             def block_method_wrapper(self, *args, **kwargs):
                 block = cls(*args, **kwargs)
@@ -82,24 +82,35 @@ class Simulation:
             
             return block_method_wrapper
     
-        # load modules from the blocks folder
+        # scan every file for classes and make their constructors methods of this class
         for file in os.listdir(os.path.join(os.path.dirname(__file__), 'blocks')):
             if file.endswith('.py'):
-                print('Load blocks from', file, ': ', end='')
+                
+                # valid python module, import it
                 blocks = importlib.import_module('.' + os.path.splitext(file)[0], package='bdsim.blocks')
                 
+                blocknames = []
                 for item in dir(blocks):
                     if item.startswith('_') and not item.endswith('_'):
         
+                        # valid class name within module
                         cls = blocks.__dict__[item]
                         
+                        # create a function to invoke its constructor
                         f = new_method(cls)
                         
+                        # create the new method name
                         bindname = item[1:].upper()
-                        #print(item, cls, bindname, f)
-                        print(bindname, end='')
+                        blocknames.append(bindname)
+                        
+                        # set an attribute of the class
+                        #  it becomes a bound method of the instance.
+                        
                         setattr(Simulation, bindname, f)
-                print()
+
+                if len(blocknames) > 0:
+                    print('Loading blocks from {:s}: {:s}'.format(file, ', '.join(blocknames))
+)
         
     
     def add_block(self, block):
@@ -193,6 +204,225 @@ class Simulation:
         print('{:d} states'.format(nstates))
         self.nstates = nstates
          
+        self.check_connectivity()
+                
+        # for each wire, connect the source block to the wire
+        # TODO do this when the wire is created
+        for w in self.wirelist:
+            b = w.start.block
+            b.add_out(w)
+            
+        self.compiled = True
+        
+                
+    def run(self, T=10.0, dt=0.1, solver='RK45', 
+            graphics=True,
+            **kwargs):
+        """
+        
+        :param T: maximum integration time, defaults to 10.0
+        :type T: float, optional
+        :param dt: maximum time step, defaults to 0.1
+        :type dt: float, optional
+        :param solver: integration method, defaults to 'RK45'
+        :type solver: str, optional
+        :param graphics: enable graphic display by blocks, defaults to True
+        :type graphics: bool, optional
+        :param **kwargs: passed to `scipy.integrate`
+        :return: time history of signals and states
+        :rtype: Sim class
+        
+        Assumes tgat the network has been compiled.
+        
+        Graphics display in all blocks can be disabled using the `graphics`
+        option.
+        
+        Results are returned in a class with attributes:
+            
+        - `t` the time vector: ndarray, shape=(M,)
+        - `x` is the state vector: ndarray, shape=(M,N)
+        - `xnames` is a list of the names of the states corresponding to columns of `x`, eg. "plant.x0"
+
+        """
+        
+        assert self.compiled, 'Network has not been compiled'
+        self.graphics = graphics
+        self.T = T
+        
+        # tell all blocks we're doing a simulation
+        self.start()
+
+        # get the state from each stateful block
+        x0 = np.array([])
+        for b in self.blocklist:
+            if b.blockclass == 'transfer':
+                x0 = np.r_[x0, b.getstate()]
+        #print('x0', x0)
+        
+
+        # integratnd function, wrapper for network evaluation method
+        def _deriv(t, y, s):
+            return s.evaluate(y, t)
+    
+        # out = scipy.integrate.solve_ivp(Simulation._deriv, args=(self,), t_span=(0,T), y0=x0, 
+        #             method=solver, t_eval=np.linspace(0, T, 100), events=None, **kwargs)
+        
+        integrator = integrate.__dict__[solver](lambda t, y: _deriv(t, y, self), t0=0.0, y0=x0, t_bound=T, max_step=dt)
+        
+        t = []
+        x = []
+        while integrator.status == 'running':
+            # step the integrator, calls _deriv multiple times
+            integrator.step()
+            
+            # stash the results
+            t.append(integrator.t)
+            x.append(integrator.y)
+            
+            for b in self.blocklist:
+                b.step()
+        
+        self.done()
+        
+        return np.c_[t,x]
+    
+    def evaluate(self, x, t):
+        """
+        Evaluate all blocks in the network
+        
+        :param x: state
+        :type x: numpy.ndarray
+        :param t: current time
+        :type t: float
+        :return: state derivative
+        :rtype: numpy.ndarray
+        
+        Performs the following steps:
+            
+        1. Partition the state vector to all stateful blocks
+        2. Propogate known block output ports to connected input ports
+
+
+        """
+        self.t = t
+        
+        # reset all the blocks ready for the evalation
+        self.reset()
+        
+        # split the state vector to stateful blocks
+        for b in self.blocklist:
+            if b.blockclass == 'transfer':
+                x = b.setstate(x)
+        
+        # process blocks with initial outputs
+        for b in self.blocklist:
+            if b.blockclass in ('source', 'transfer'):
+                self._propagate(b, t)
+                
+        # now iterate, running blocks, until we have values for all
+        for b in self.blocklist:
+            if b.blockclass in ('sink', 'function', 'transfer') and not b.done:
+                print('block not set')
+            
+        # gather the derivative
+        YD = np.array([])
+        for b in self.blocklist:
+            if b.blockclass == 'transfer':
+                yd = b.deriv().flatten()
+                YD = np.r_[YD, yd]
+        return YD
+
+    def _propagate(self, b, t):
+        """
+        Propogate values of a block to all connected inputs.
+        
+        :param b: Block with valid output
+        :type b: Block
+        :param t: current time
+        :type t: float
+
+        When all inputs to a block are available, its output can be computed
+        using its `output` method (which may also be a function of time).
+        
+        This value is presented to each connected input port via its
+        `setinput` method.  That method returns True if the block now has
+        all its inputs defined, in which case we recurse.
+
+        """
+        #print('propagating:', b)
+        
+        # get output of block at time t
+        out = b.output(t)
+        
+        # check for validity
+        assert isinstance(out, list) and len(out) == b.nout, 'block output is wrong type/length'
+        # TODO check output validity once at the start
+        
+        # iterate over all outgoing wires
+        for w in b.out:
+            #print(' --> ', w.end.block.name, '[', w.end.port, ']')
+            
+            val = out[w.start.port]
+            dest = w.end.block
+            
+            if dest.setinput(w, val) and dest.blockclass == 'function':
+                self._propagate(dest, t)
+                
+    def reset(self):
+        """
+        Reset conditions within every active block.  Most importantly, all
+        inputs are marked as unknown.
+        
+        Invokes the `reset` method on all blocks.
+
+        """
+        for b in self.blocklist:
+            b.reset()     
+            
+    def start(self):
+        """
+        Inform all active blocks that simulation is about to start.  Opem files,
+        initialize graphics, etc.
+        
+        Invokes the `start` method on all blocks.
+        
+        """            
+        for b in self.blocklist:
+            b.start()
+            
+    def done(self):
+        """
+        Inform all active blocks that simulation is complete.  Close files,
+        graphics, etc.
+        
+        Invokes the `done` method on all blocks.
+        
+        """
+        for b in self.blocklist:
+            b.done()
+            
+
+
+    
+    def reset(self):
+        X0 = np.array([])
+        for b in self.blocklist:
+            x0 = b.reset()
+            if x0 is not None:
+                X0 = np.r_[X0, x0]
+    
+        #print(X0)
+        self.x = X0
+
+    def check_connectivity(self):
+        """
+        
+        Perform a number of connectivity checks on the network:
+            
+            - cycles
+            - multiple outputs driving one input port
+    
+        """
         # build an adjacency matrix to represent the graph
         A = np.zeros((self.nblocks, self.nblocks))
         for w in self.wirelist:
@@ -240,124 +470,18 @@ class Simulation:
             if np.sum(a) > 1:    
                 print("tied outputs: " + ",".join([str(self.blocklist[i]) for i in np.where(a>0)[0]]))
                 
-        # for each wire, connect the source block to the wire
-        # TODO do this when the wire is created
-        for w in self.wirelist:
-            b = w.start.block
-            b.add_out(w)
-        
-                
-    def run(self, T=10.0, dt=0.1, solver='RK45', 
-            graphics=True,
-            **kwargs):
-        
-        self.graphics = graphics
-        self.T = T
-                
-        for b in self.blocklist:
-            b.start()
-        
-
-        # get the state from each stateful block
-        x0 = np.array([])
-        for b in self.blocklist:
-            if b.blockclass == 'transfer':
-                x0 = np.r_[x0, b.getstate()]
-        print('x0', x0)
-
-
-        # out = scipy.integrate.solve_ivp(Simulation._deriv, args=(self,), t_span=(0,T), y0=x0, 
-        #             method=solver, t_eval=np.linspace(0, T, 100), events=None, **kwargs)
-        
-        integrator = integrate.__dict__[solver](lambda t, y: Simulation._deriv(t, y, self), t0=0.0, y0=x0, t_bound=T, max_step=dt)
-        
-        t = []
-        x = []
-        while integrator.status == 'running':
-            # step the integrator, calls _deriv multiple times
-            integrator.step()
-            
-            # stash the results
-            t.append(integrator.t)
-            x.append(integrator.y)
-            
-            for b in self.blocklist:
-                b.step()
-        
-        self.done()
-        
-        return np.c_[t,x]
-    
-    def done(self):
-        for b in self.blocklist:
-            b.done()
-            
-    def _propagate(self, b, t):
-        #print('propagating:', b)
-        
-        # get output of block at time t
-        out = b.output(t)
-        
-        # check for validity
-        assert isinstance(out, list) and len(out) == b.nout, 'block output is wrong type/length'
-        # TODO check output validity once at the start
-        
-        # iterate over all outgoing wires
-        for w in b.out:
-            #print(' --> ', w.end.block.name, '[', w.end.port, ']')
-            
-            val = out[w.start.port]
-            dest = w.end.block
-            
-            if dest.input(w, val) and dest.blockclass == 'function':
-                self._propagate(dest, t)
-    
-    def evaluate(self, x, t):
-        self.t = t
-        
-        # reset all the blocks
-        for b in self.blocklist:
-            b.reset()
-            
-        # split the state vector to stateful blocks
-        for b in self.blocklist:
-            if b.blockclass == 'transfer':
-                x = b.setstate(x)
-        
-        # process blocks with initial outputs
-        for b in self.blocklist:
-            if b.blockclass in ('source', 'transfer'):
-                self._propagate(b, t)
-                
-        # now iterate, running blocks, until we have values for all
-        for b in self.blocklist:
-            if b.blockclass in ('sink', 'function', 'transfer') and not b.done:
-                print('block not set')
-            
-        # gather the derivative
-        YD = np.array([])
-        for b in self.blocklist:
-            if b.blockclass == 'transfer':
-                yd = b.deriv().flatten()
-                YD = np.r_[YD, yd]
-        return YD
-        
-    @staticmethod
-    def _deriv(t, y, s):
-        return s.evaluate(y, t)
-    
-    def reset(self):
-        X0 = np.array([])
-        for b in self.blocklist:
-            x0 = b.reset()
-            if x0 is not None:
-                X0 = np.r_[X0, x0]
-    
-        print(X0)
-        self.x = X0
-    
-
     def dotfile(self, file):
+        """
+        Write a GraphViz dot file representing the network.
+        
+        :param file: Name of file to write to
+        :type file: str
+
+        The file can be processed using neato or dot::
+            
+            % dot -Tpng -o out.png dotfile.dot
+
+        """
         with open(file, 'w') as file:
             
             header = r"""digraph G {

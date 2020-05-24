@@ -25,7 +25,7 @@ class Block:
         
 
     @property
-    def about(self):
+    def info(self):
         print("block: " + type(self).__name__)
         for k,v in self.__dict__.items():
             print("  {:8s}{:s}".format(k+":", str(v)))
@@ -51,7 +51,7 @@ class Block:
     def add_out(self, w):
         self.out.append(w)
     
-    def input(self, wire, val):
+    def setinput(self, wire, val):
         """
         Receive input from a wire
         
