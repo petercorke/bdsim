@@ -5,9 +5,13 @@ Created on Mon May 18 21:43:18 2020
 
 @author: corkep
 """
+import os
+import os.path
+import importlib
 
 import numpy as np
 import scipy.integrate as integrate
+
 
 from bdsim.Block import Block
 
@@ -71,23 +75,31 @@ class Simulation:
         
        
         def new_method(cls):
-            def wrapper_method(self, **kwargs):
-                block = cls(**kwargs)
+            def block_method_wrapper(self, *args, **kwargs):
+                block = cls(*args, **kwargs)
                 self.add_block(block)
                 return block
             
-            return wrapper_method
+            return block_method_wrapper
     
-        for item in dir(blocks):
-            if item.startswith('_') and not item.endswith('_'):
-
-                cls = blocks.__dict__[item]
+        # load modules from the blocks folder
+        for file in os.listdir(os.path.join(os.path.dirname(__file__), 'blocks')):
+            if file.endswith('.py'):
+                print('Load blocks from', file, ': ', end='')
+                blocks = importlib.import_module('.' + os.path.splitext(file)[0], package='bdsim.blocks')
                 
-                f = new_method(cls)
-                
-                bindname = item[1:].upper()
-                print(item, cls, bindname, f)
-                setattr(Simulation, bindname, f)
+                for item in dir(blocks):
+                    if item.startswith('_') and not item.endswith('_'):
+        
+                        cls = blocks.__dict__[item]
+                        
+                        f = new_method(cls)
+                        
+                        bindname = item[1:].upper()
+                        #print(item, cls, bindname, f)
+                        print(bindname, end='')
+                        setattr(Simulation, bindname, f)
+                print()
         
     
     def add_block(self, block):
@@ -106,7 +118,7 @@ class Simulation:
             s += str(wire) + "\n"
         return s.lstrip("\n")
     
-    def connect(self, start=None, end=None, name=None):
+    def connect(self, *args, name=None):
         
         """
         TODO:
@@ -117,40 +129,43 @@ class Simulation:
         
         slices = False
         
+        start = args[0]
+        
         if isinstance(start, Block):
             start = (start, 0)
         elif isinstance(start, tuple):
             if isinstance(start[1], slice):
                 slices = True
 
-        if isinstance(end, Block):
-            end = (end, 0)
-        elif isinstance(end, tuple):
-            if isinstance(end[1], slice):
-                slices = True
+        for end in args[1:]:
+            if isinstance(end, Block):
+                end = (end, 0)
+            elif isinstance(end, tuple):
+                if isinstance(end[1], slice):
+                    slices = True
+                    
+            if slices:
+                # we have a bundle of signals
                 
-        if slices:
-            # we have a bundle of signals
-            
-            # TODO: allow destination to have no slice
-            
-            def slice2list(s):
-                if s.step is None:
-                    return list(range(s.start, s.stop))
-                else:
-                    return list(range(s.start, s.stop, s.step))
-                        
-                        
-            slist = slice2list(start[1])
-            elist = slice2list(end[1])
-            assert len(slist) == len(elist), 'slice wires must have same width'
-            
-            for (s,e) in zip(slist, elist):
-                wire = Wire( (start[0], s), (end[0], e), name)
+                # TODO: allow destination to have no slice
+                
+                def slice2list(s):
+                    if s.step is None:
+                        return list(range(s.start, s.stop))
+                    else:
+                        return list(range(s.start, s.stop, s.step))
+                            
+                            
+                slist = slice2list(start[1])
+                elist = slice2list(end[1])
+                assert len(slist) == len(elist), 'slice wires must have same width'
+                
+                for (s,e) in zip(slist, elist):
+                    wire = Wire( (start[0], s), (end[0], e), name)
+                    self.wirelist.append(wire)
+            else:
+                wire = Wire(start, end, name)
                 self.wirelist.append(wire)
-        else:
-            wire = Wire(start, end, name)
-            self.wirelist.append(wire)
         
     def compile(self):
         
@@ -165,8 +180,8 @@ class Simulation:
             w.id = i 
             if w.name is None:
                 w.name = "wire {:d}".format(i)
-            if w.start.block.type == 'source':
-                w.type = 'source'
+            if w.start.block.blockclass == 'source':
+                w.blockclass = 'source'
         
         # run block specific checks
         for b in self.blocklist:
@@ -194,13 +209,13 @@ class Simulation:
         for n in range(2, self.nwires+1):
             An = An @ A   # compute A**n
             if np.trace(An) > 0:
-                for i in np.find(An.diagonal()):
+                for i in np.argwhere(An.diagonal()):
                     cycles.append((i, n))
                     
         if len(cycles) > 0:
             print("cycles found")
             for cycle in cycles:
-                print(" len=" + cycle[1] + " block " + self.blocklist(cycle[0]))
+                print(" - length of {:d} involving block id={:d} ({:s})".format(cycle[1], cycle[0][0], self.blocklist[cycle[0][0]].name))
         
  
         # check for sources and sinks
@@ -208,13 +223,13 @@ class Simulation:
         for (i,a) in enumerate(A):  # check the rows
             if np.sum(a) == 0:
                 print('block {:d} is a source'.format(i))
-                assert self.blocklist[i].type == 'source'
+                assert self.blocklist[i].blockclass == 'source'
             else:
                 dependson[i] = tuple(np.where(a > 0))
         for (i,a) in enumerate(A.T): # check the columns
             if np.sum(a) == 0:
                 print('block {:d} is a sink'.format(i))
-                assert self.blocklist[i].type == 'sink'
+                assert self.blocklist[i].blockclass == 'sink'
 
         # build an adjacency matrix to check for connected outputs
         A = np.zeros((self.nwires, self.nblocks))
@@ -239,14 +254,14 @@ class Simulation:
         self.graphics = graphics
         self.T = T
                 
-        for b in s.blocklist:
+        for b in self.blocklist:
             b.start()
         
 
         # get the state from each stateful block
         x0 = np.array([])
-        for b in s.blocklist:
-            if b.type == 'transfer':
+        for b in self.blocklist:
+            if b.blockclass == 'transfer':
                 x0 = np.r_[x0, b.getstate()]
         print('x0', x0)
 
@@ -306,7 +321,7 @@ class Simulation:
             
         # split the state vector to stateful blocks
         for b in s.blocklist:
-            if b.type == 'transfer':
+            if b.blockclass == 'transfer':
                 y = b.setstate(y)
         
         # process blocks with initial outputs
@@ -316,13 +331,13 @@ class Simulation:
                 
         # now iterate, running blocks, until we have values for all
         for b in s.blocklist:
-            if b.type in ('sink', 'function', 'transfer') and not b.done:
+            if b.blockclass in ('sink', 'function', 'transfer') and not b.done:
                 print('block not set')
             
         # gather the derivative
         YD = np.array([])
         for b in s.blocklist:
-            if b.type == 'transfer':
+            if b.blockclass == 'transfer':
                 yd = b.deriv()
                 YD = np.r_[YD, yd]
         return YD
@@ -339,21 +354,63 @@ class Simulation:
     
 
     def dotfile(self, file):
-        with open(file, 'w') as f:
+        with open(file, 'w') as file:
             
             header = r"""digraph G {
 
     graph [splines=ortho, rankdir=LR]
-    node [shape=box, style=filled, color=gray90]
+    node [shape=box]
     
     """
-            f.write(header)
+            file.write(header)
             # add the blocks
             for b in self.blocklist:
-                f.write('\t"{:s}"\n'.format(b.name))
+                options = []
+                if b.blockclass == "source":
+                    options.append("shape=box3d")
+                elif b.blockclass == "sink":
+                    options.append("shape=folder")
+                elif b.blockclass == "function":
+                    if b.type == 'gain':
+                        options.append("shape=triangle")
+                        options.append("orientation=-90")
+                        options.append('label="{:g}"'.format(b.gain))
+                    elif b.type == 'sum':
+                        options.append("shape=point")
+                elif b.blockclass == 'transfer':
+                    options.append("shape=component")
+                if b.pos is not None:
+                    options.append('pos="{:g},{:g}!"'.format(b.pos[0], b.pos[1]))
+                options.append('xlabel=<<BR/><FONT POINT-SIZE="8" COLOR="blue">{:s}</FONT>>'.format(b.type))
+                file.write('\t"{:s}" [{:s}]\n'.format(b.name, ', '.join(options)))
             
             # add the wires
             for w in self.wirelist:
-                f.write('\t"{:s}" -> "{:s}" [label="{:s}"]\n'.format(w.start.block.name, w.end.block.name, w.name))
+                options = []
+                #options.append('xlabel="{:s}"'.format(w.name))
+                if w.end.block.type == 'sum':
+                    options.append('headlabel="{:s} "'.format(w.end.block.signs[w.end.port]))
+                file.write('\t"{:s}" -> "{:s}" [{:s}]\n'.format(w.start.block.name, w.end.block.name, ', '.join(options)))
 
-            f.write('}\n')
+            file.write('}\n')
+
+if __name__ == "__main__":
+    
+    s = Simulation()
+    
+    
+    demand = s.WAVEFORM(wave='square', freq='2', pos=(0,0))
+    sum = s.SUM('+-', pos=(1,0))
+    gain = s.GAIN(2, pos=(1.5,0))
+    plant = s.LTI_SISO(0.5, [1, 2], name='plant', pos=(3,0))
+    scope = s.SCOPE(pos=(4,0))
+    
+    s.connect(demand, sum[0])
+    s.connect(plant, sum[1])
+    s.connect(sum, gain)
+    s.connect(gain, plant)
+    s.connect(plant, scope)
+    
+    s.compile()
+    
+    s.dotfile('bd1.dot')

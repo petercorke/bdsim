@@ -68,18 +68,21 @@ def block(cls):
             
 """
 
+# ------------------------------------------------------------------------ #
 class _Constant(Source):
     
     def __init__(self, value=None, **kwargs):
         super().__init__(**kwargs)
         self.value = [value]
+        self.type = 'constant'
 
     def output(self, t):
         return self.value               
 
+# ------------------------------------------------------------------------ #
 
 class _WaveForm(Source):
-    def __init__(self, freq=1, unit='Hz', phase0=0, signal='square',
+    def __init__(self, freq=1, unit='Hz', phase0=0, wave='square',
                  min=0, max=1, duty=0.5, # for square
                  amplitude=1, offset=0,  # for sine, triangle
                  **kwargs):
@@ -88,7 +91,7 @@ class _WaveForm(Source):
         assert 0<duty<1, 'duty must be in range [0,1]'
         assert max > min, 'maximum value must be greater than minimum'
         
-        self.signal = signal
+        self.wave = wave
         if unit == 'Hz':
             self.freq = freq
         elif unit == 'rad/s':
@@ -99,6 +102,7 @@ class _WaveForm(Source):
         self.duty = duty
         self.amplitude = amplitude
         self.offset = offset
+        self.type = 'waveform'
 
     def output(self, t):
         T = 1.0 / self.freq
@@ -107,19 +111,19 @@ class _WaveForm(Source):
         amplitude = self.max - self.min
         
         # define all signals in the range -1 to 1
-        if self.signal == 'square':
+        if self.wave == 'square':
             if phase < self.duty:
                 out = self.min
             else:
                 out = self.max
-        elif self.signal == 'triangle':
+        elif self.wave == 'triangle':
             if phase < 0.25:
                 out = phase * 4
             elif phase < 0.75:
                 out = 1 - 4 * (phase - 0.25)
             else:
                 out = -1 + 4 * (phase - 0.75)
-        elif self.signal == 'sine':
+        elif self.wave == 'sine':
             out = math.sin(phase*2*math.pi)
         else:
             raise ValueError('bad option for signal')
@@ -127,6 +131,7 @@ class _WaveForm(Source):
         #print(out)
         return [out]
 
+# ------------------------------------------------------------------------ #
 
 class _Pulse(Source):
     def __init__(self, time=1, width=1,
@@ -138,6 +143,7 @@ class _Pulse(Source):
         self.t_off =time + width
         self.off = off
         self.on = on
+        self.type = "pulsegen"
 
     def output(self, t):
         if self.t_on <= t <= self.t_off:
@@ -148,13 +154,15 @@ class _Pulse(Source):
         #print(out)
         return out
 
-    
+# ------------------------------------------------------------------------ #
+
 class _ScopeXY(Sink):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.nin = 2
         self.xdata = []
         self.ydata = []
+        self.type = 'xyscope'
         
         #TODO, fixed vs autoscale, color
         
@@ -171,6 +179,7 @@ class _ScopeXY(Sink):
             self.ax.set_xlabel('X')
             self.ax.set_ylabel('Y')
             self.ax.set_title(self.name)
+        self.type = "scopeXY"
         
     def step(self):
         # inputs are set
@@ -185,12 +194,14 @@ class _ScopeXY(Sink):
         
             self.ax.relim()
             self.ax.autoscale_view()
+        self.type = "step"
         
     def done(self):
         print('ScopeXY done')
         if self.sim.graphics:
             plt.show(block=True)
 
+# ------------------------------------------------------------------------ #
 
 class _Scope(Sink):
     def __init__(self, nin=1, **kwargs):
@@ -199,6 +210,7 @@ class _Scope(Sink):
         self.tdata = []
         self.ydata = [[]]*nin
         self.line = [None]*nin
+        self.type = 'scope'
         
         # TODO, fixed vs autoscale, color, wire width
         
@@ -239,8 +251,11 @@ class _Scope(Sink):
         if self.sim.graphics:
             plt.show(block=True)
 
+# ------------------------------------------------------------------------ #
+
 class _Integrator(Transfer):
     def __init__(self, N=1, order=1, limit=None, **kwargs):
+        super().__init__(**kwargs)
         self.N = N
         self.order = order
         self.limit = limit
@@ -249,48 +264,88 @@ class _Integrator(Transfer):
         self.nout = N
         self.nstates = N*order
 
-class _SISO_LTI(Transfer):
-    def __init__(self, N=1, D=[1, 1], order=1, limit=None, **kwargs):
+# ------------------------------------------------------------------------ #
+
+class _LTI_SISO(Transfer):
+    def __init__(self, N=1, D=[1, 1], order=1, x0=None, limit=None, **kwargs):
+        super().__init__(**kwargs)
+        if not isinstance(N, list):
+            N = [N]
+        if not isinstance(D, list):
+            D = [D]
         self.N = N
         self.D = N
         n = len(D) - 1
         nn = len(N)
+        if x0 is None:
+            self.x0 = np.zeros((n,1))
+        else:
+            self.x0 = x0
         assert nn <= n, 'direct pass through is not supported'
+        self.type = 'LTI'
         
         self.nin = 1
         self.nout = 1
         self.nstates = n
         
-        self.A = sp.eye(len(D)-1, k=1)
-        D /= D[0]
-        self.A[-1,:] = -D[::-1]
+        self.A = np.eye(len(D)-1, k=1)
+        D = [-d/D[0] for d in D]
         self.B = np.zeros((n,))
-        self.B[-1] = 1
+        if n == 1:
+            self.A[0,0] = D[-1]
+            self.B[0] = 1
+        else:
+            self.A[-1,:] = D[::-1]
+            self.B[-1] = 1
         nn = len(N)
         self.C = np.r_[N[::-1], np.zeros((n-nn,))]
-        print('A=', A)
-        print('B=', B)
-        print('C=', C)
+        print('A=', self.A)
+        print('B=', self.B)
+        print('C=', self.C)
 
+# ------------------------------------------------------------------------ #
 
-class _Bicycle(Transfer):
-    def __init__(self, x0=None, L=1, **kwargs):
+class _Sum(Function):
+    def __init__(self, signs, **kwargs):
         super().__init__(**kwargs)
-        self.nin = 2
-        self.nout = 3
-        self.nstates = 3
-        self.L = L
-        if x0 is None:
-            self.x0 = np.zeros((slef.nstates,))
-        else:
-            assert len(x0) == self.nstates, "x0 is {:d} long, should be {:d}".format(len(x0), self.nstates)
-            self.x0 = x0
+        assert isinstance(signs, str), 'first argument must be signs string'
+        self.nin = len(signs)
+        self.nout = 1
+        self.type = 'sum'
+        self.signs = signs
+        
+        signdict = {'+': 1, '-': -1, '~': -1}
+        self.gain = [signdict[s] for s in signs]
         
     def output(self, t):
-        return list(self.x)
-    
-    def deriv(self):
-        theta = self.x[2]
-        v = self.inputs[0]; gamma = self.inputs[1]
-        xd = np.r_[v*math.cos(theta), v*math.sin(theta), v*math.tan(gamma)/self.L ]
-        return xd
+        sum = 0
+        for i,input in enumerate(self.inputs):
+            sum += self.gain[i] * input
+        return [sum]
+
+# ------------------------------------------------------------------------ #
+
+class _Gain(Function):
+    def __init__(self, gain, **kwargs):
+        super().__init__(**kwargs)
+        self.nin = 1
+        self.nout = 1
+        self.gain  = gain
+        self.type = 'gain'
+        
+    def output(self, t):
+        return [self.inputs[0] * self.gain]
+        
+# pulse + pulse train (on, len, ampl) list, min=0
+# interpolate
+# gain
+# code, function or lambda, len(inspect.signature(f).parameters
+# sum
+# PID
+# product
+# matrix inv
+# saturation
+
+# subsystem
+
+# transform 3D points

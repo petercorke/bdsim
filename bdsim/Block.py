@@ -10,15 +10,16 @@ import numpy as np
 
 class Block:
     
-    def __init__(self, type=None, name=None, pos=None, **kwargs):
+    def __init__(self, blockclass=None, name=None, pos=None, **kwargs):
         #print('Block constructor'
-        self.type = type
         self.name = name
         self.pos = pos
         self.id = None
         self.out = []
         self.inputs = None
         self.updated = False
+        self.shape = 'block' # for box
+        self.blockclass = blockclass
         
         # self.passthru
         
@@ -97,25 +98,28 @@ class Sink(Block):
     
     def __init__(self, **kwargs):
         #print('Sink constructor')
-        super().__init__(type='sink', **kwargs)
+        super().__init__(blockclass='sink', **kwargs)
         self.nin = 1
         self.nout = 0
         self.nstates = 0
+        self.blockclass = "sink"
 
 class Source(Block):
     
     def __init__(self, **kwargs):
         #print('Source constructor')
-        super().__init__(type='source', **kwargs)
+        super().__init__(blockclass='source', **kwargs)
         self.nin = 0
         self.nout = 1
         self.nstates = 0
+        self.blockclass = "source"
         
 class Transfer(Block):
     
     def __init__(self, **kwargs):
         #print('Transfer constructor')
-        super().__init__(type='transfer', **kwargs)
+        super().__init__(blockclass='transfer', **kwargs)
+        self.blockclass = "transfer"
         
     def reset(self):
         super().reset()
@@ -137,5 +141,6 @@ class Transfer(Block):
 class Function(Block):
     
     def __init__(self, **kwargs):
-        super().__init__(type='function', **kwargs)
+        super().__init__(blockclass='function', **kwargs)
         self.nstates = 0
+        self.blockclass = "function"
