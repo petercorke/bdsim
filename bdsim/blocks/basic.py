@@ -194,7 +194,7 @@ class _WaveForm(Source):
 
         out = out * self.amplitude + self.offset
 
-        #print(out)
+        #print('waveform = ', out)
         return [out]
 
 # ------------------------------------------------------------------------ #
@@ -449,6 +449,7 @@ class _Scope(Sink):
         for i,input in enumerate(self.inputs):
             self.ydata[i] = np.append(self.ydata[i], input)
         if self.sim.graphics:
+            plt.figure(self.fig.number)
             for i in range(0, self.nin):
                 self.line[i].set_data(self.tdata, self.ydata[i])
         

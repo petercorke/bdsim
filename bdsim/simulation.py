@@ -216,16 +216,22 @@ class Simulation:
             is the maximum of the given value and the width of the heading text
             plus `extrasep`.
             
+            Then print the header and a separator line::
+            
             col1  col2  col3        col4
             ----  ----  ----------  ----
 
+            and return a format string that can be used with `format` to format
+            the arguments for subsequent data rows.
             """
+            # parse the format line
             re_fmt = re.compile(r"([a-zA-Z]+)\[([0-9]*)([a-z])\]")
+            
             hfmt = ""
             cfmt = ""
             sep = ""
-            
             colheads = []
+            
             for col in table.split(' '):
                 m = re_fmt.search(col)
                 colhead = m.group(1)
@@ -249,11 +255,13 @@ class Simulation:
             print(sep)
             return cfmt
         
+        # print all the blocks
         print('\nBlocks::\n')
         cfmt = format("id[3d] class[10s] type[10s] name[10s] nin[2d] nout[2d] nstate[2d]")
         for b in self.blocklist:
             print( cfmt.format(b.id, b.blockclass, b.type, b.name, b.nin, b.nout, b.nstates))
         
+        # print all the wires
         print('\nWires::\n')
         cfmt = format("id[3d] name[10s] from[6s] to[6s]")
         for w in self.wirelist:
@@ -313,24 +321,30 @@ class Simulation:
         # out = scipy.integrate.solve_ivp(Simulation._deriv, args=(self,), t_span=(0,T), y0=x0, 
         #             method=solver, t_eval=np.linspace(0, T, 100), events=None, **kwargs)
         
-        integrator = integrate.__dict__[solver](lambda t, y: _deriv(t, y, self), t0=0.0, y0=x0, t_bound=T, max_step=dt)
+        if len(x0) > 0:
+            integrator = integrate.__dict__[solver](lambda t, y: _deriv(t, y, self), t0=0.0, y0=x0, t_bound=T, max_step=dt)
         
-        t = []
-        x = []
-        while integrator.status == 'running':
-            # step the integrator, calls _deriv multiple times
-            integrator.step()
-            
-            # stash the results
-            t.append(integrator.t)
-            x.append(integrator.y)
-            
-            for b in self.blocklist:
-                b.step()
+            t = []
+            x = []
+            while integrator.status == 'running':
+                # step the integrator, calls _deriv multiple times
+                integrator.step()
+                
+                # stash the results
+                t.append(integrator.t)
+                x.append(integrator.y)
+                
+                self.step()
+                
+                return np.c_[t,x]
+        else:
+            for t in np.arange(0, T, dt):
+                _deriv(t, [], self)
+                self.step()
         
         self.done()
         
-        return np.c_[t,x]
+
     
     def evaluate(self, x, t):
         """
@@ -350,6 +364,7 @@ class Simulation:
 
 
         """
+        #print('in evaluate at t=', t)
         self.t = t
         
         # reset all the blocks ready for the evalation
@@ -424,7 +439,17 @@ class Simulation:
         """
         for b in self.blocklist:
             b.reset()     
-            
+    
+    def step(self):
+        """
+        Tell all blocks to take action on new inputs.  Relevant to Sink
+        blocks only since they have no output function to be called.
+        """
+        # TODO could be done by output method, even if no outputs
+        
+        for b in self.blocklist:
+            b.step()
+                    
     def start(self):
         """
         Inform all active blocks that simulation is about to start.  Opem files,
@@ -447,18 +472,6 @@ class Simulation:
         for b in self.blocklist:
             b.done()
             
-
-
-    
-    def reset(self):
-        X0 = np.array([])
-        for b in self.blocklist:
-            x0 = b.reset()
-            if x0 is not None:
-                X0 = np.r_[X0, x0]
-    
-        #print(X0)
-        self.x = X0
 
     def check_connectivity(self):
         """
@@ -575,21 +588,31 @@ if __name__ == "__main__":
     s = Simulation()
     
     
-    demand = s.WAVEFORM(wave='square', freq=2, pos=(0,0))
-    sum = s.SUM('+-', pos=(1,0))
-    gain = s.GAIN(2, pos=(1.5,0))
-    plant = s.LTI_SISO(0.5, [1, 2], name='plant', pos=(3,0))
-    scope = s.SCOPE(pos=(4,0))
+    # demand = s.WAVEFORM(wave='square', freq=2, pos=(0,0))
+    # sum = s.SUM('+-', pos=(1,0))
+    # gain = s.GAIN(2, pos=(1.5,0))
+    # plant = s.LTI_SISO(0.5, [1, 2], name='plant', pos=(3,0))
+    # scope = s.SCOPE(pos=(4,0))
     
-    s.connect(demand, sum[0])
-    s.connect(plant, sum[1])
-    s.connect(sum, gain)
-    s.connect(gain, plant)
-    s.connect(plant, scope)
+    # s.connect(demand, sum[0])
+    # s.connect(plant, sum[1])
+    # s.connect(sum, gain)
+    # s.connect(gain, plant)
+    # s.connect(plant, scope)
+    
+    # s.compile()
+    
+    # #s.dotfile('bd1.dot')
+    
+    # s.report()
+    # #s.run(10)
+    
+    s = Simulation()
+
+    wave = s.WAVEFORM(freq=2)
+    scope = s.SCOPE(nin=1)
+    
+    s.connect(wave, scope)
     
     s.compile()
-    
-    #s.dotfile('bd1.dot')
-    
-    s.report()
-    #s.run(10)
+    s.run(5)
