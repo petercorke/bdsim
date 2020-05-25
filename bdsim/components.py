@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Components of the simulation system, namely blocks and wires.
+Components of the simulation system, namely blocks, wires and plugs.
 """
 
 import numpy as np
@@ -13,22 +13,13 @@ class Wire:
     A Wire object connects two block ports.  A Wire has a reference to the
     start and end ports.
     """
-    
-    class Port:
-        def __init__(self, bp):
-            self.block = bp[0]
-            self.port = bp[1]
-            self.dir = ''
-            
-        def __repr(self):
-            return self.block + "[" + self.port + "]"
                 
                 
     def __init__(self, start=None, end=None, name=None):
         self.name = name
         self.id = None
-        self.start = Wire.Port(start)
-        self.end = Wire.Port(end)
+        self.start = Plug(start)
+        self.end = Plug(end)
         self.value = None
         self.type = None
 
@@ -40,19 +31,55 @@ class Wire:
             
     def __repr__(self):
         
-        def range(x):
-            if isinstance(x,slice):
-                return "{:d}:{:d}".format(x.start, x.stop)
-            else:
-                return "{:d}".format(x)
-        if self.id is None:
-            sid = ""
-        else:
-            sid = "-{:d}".format(self.id)            
-        s = "wire{:s}: {:s}[{:s}] --> {:s}[{:s}]".format(sid, type(self.start.block).__name__, range(self.start.port), type(self.end.block).__name__, range(self.end.port))
+        # def range(x):
+        #     if isinstance(x,slice):
+        #         return "{:d}:{:d}".format(x.start, x.stop)
+        #     else:
+        #         return "{:d}".format(x)
+        # if self.id is None:
+        #     sid = ""
+        # else:
+        #     sid = "-{:d}".format(self.id)            
+        # s = "wire{:s}: {:s}[{:s}] --> {:s}[{:s}]".format(sid, type(self.start.block).__name__, range(self.start.port), type(self.end.block).__name__, range(self.end.port))
+        
 
+        return str(self) + ": " + self.str2
+    
+    @property
+    def str2(self):
+        return "{:s}[{:d}] --> {:s}[{:d}]".format(str(self.start.block), self.start.port, str(self.end.block), self.end.port)
+    
+    def __str__(self):
+        s = "wire."
+        if self.name is not None:
+            s += self.name
+        elif self.id is not None:
+            s += str(self.id)
+        else:
+            s += '??'
         return s
 
+# ------------------------------------------------------------------------- # 
+
+class Plug:
+    """
+    Plugs are on the end of each wire, and connect a Wire to a specific port on
+    a Block.
+    """
+    def __init__(self, bp):
+        self.block = bp[0]
+        self.port = bp[1]
+        self.dir = ''
+        
+    def __mul__(left, right):
+        pass
+        # plug * plug
+        # plug * block
+        # make connection, return a plug
+        
+    def __repr(self):
+        return self.block + "[" + self.port + "]"
+    
 # ------------------------------------------------------------------------- # 
 
 class Block:
@@ -81,17 +108,34 @@ class Block:
             print("  {:8s}{:s}".format(k+":", str(v)))
 
         
-    def __getitem__(self, i):
-        return (self, i)
+    def __getitem__(self, port):
+        return (self, port)
+    
+    def __setitem__(self, i, port):
+        pass
+    
+    def __mul__(left, right):
+        pass
+        # block * block
+        # block * plug
+        # make connection, return a plug
         
-    def __repr__(self):
-        if self.id is None:
-            sid = ""
+    def __str__(self):
+        s = self.type + '.'
+        if self.name is not None:
+            s += self.name
+        elif self.id is not None:
+            s += 'block' + str(self.id)
         else:
-            sid = "-{:d}".format(self.id)
-
-        s = "block{:s}: {:8s} {:10s}".format(sid, self.type, type(self).__name__)
+            s += '??'
         return s
+    
+    def __repr__(self):
+        return self.fullname
+    
+    @property
+    def fullname(self):
+        return self.blockclass + "." + str(self)
     
     def reset(self):
         if self.nin > 0:

@@ -95,9 +95,15 @@ class Simulation:
     
     def add_block(self, block):
         block.sim = self   # block back pointer to the simulator
+        block.id = len(self.blocklist)
+        if block.name is None:
+            block.name = 'b' + str(block.id)
         self.blocklist.append(block)  # add to the list of available blocks
         
     def add_wire(self, wire):
+        wire.id = len(self.wirelist)
+        if wire.name is None:
+            wire.name = 'w' + str(wire.id)
         return self.wirelist.append(wire)
     
     def __repr__(self):
@@ -153,26 +159,26 @@ class Simulation:
                 
                 for (s,e) in zip(slist, elist):
                     wire = Wire( (start[0], s), (end[0], e), name)
-                    self.wirelist.append(wire)
+                    self.add_wire(wire)
             else:
                 wire = Wire(start, end, name)
-                self.wirelist.append(wire)
+                self.add_wire(wire)
         
     def compile(self):
         
         # enumrate the elements
         self.nblocks = len(self.blocklist)
-        for (i,b) in enumerate(self.blocklist):
-            b.id = i
-            if b.name is None:
-                b.name = "block {:d}".format(i)
+        # for (i,b) in enumerate(self.blocklist):
+        #     b.id = i
+        #     if b.name is None:
+        #         b.name = "block {:d}".format(i)
         self.nwires = len(self.wirelist)
-        for (i,w) in enumerate(self.wirelist):
-            w.id = i 
-            if w.name is None:
-                w.name = "wire {:d}".format(i)
-            if w.start.block.blockclass == 'source':
-                w.blockclass = 'source'
+        # for (i,w) in enumerate(self.wirelist):
+        #     # w.id = i 
+        #     # if w.name is None:
+        #     #     w.name = "wire {:d}".format(i)
+        #     if w.start.block.blockclass == 'source':
+        #         w.blockclass = 'source'
         
         # run block specific checks
         for b in self.blocklist:
@@ -257,17 +263,17 @@ class Simulation:
         
         # print all the blocks
         print('\nBlocks::\n')
-        cfmt = format("id[3d] class[10s] type[10s] name[10s] nin[2d] nout[2d] nstate[2d]")
+        cfmt = format("id[3d] name[30s] nin[2d] nout[2d] nstate[2d]")
         for b in self.blocklist:
-            print( cfmt.format(b.id, b.blockclass, b.type, b.name, b.nin, b.nout, b.nstates))
+            print( cfmt.format(b.id, b.fullname, b.nin, b.nout, b.nstates))
         
         # print all the wires
         print('\nWires::\n')
-        cfmt = format("id[3d] name[10s] from[6s] to[6s]")
+        cfmt = format("id[3d] from[6s] to[6s] description[40s]")
         for w in self.wirelist:
             start = "{:d}[{:d}]".format(w.start.block.id, w.start.port)
             end = "{:d}[{:d}]".format(w.end.block.id, w.end.port)
-            print( cfmt.format(w.id, w.name, start, end))
+            print( cfmt.format(w.id, start, end, w.str2))
             
     def run(self, T=10.0, dt=0.1, solver='RK45', 
             graphics=True,
@@ -588,31 +594,32 @@ if __name__ == "__main__":
     s = Simulation()
     
     
-    # demand = s.WAVEFORM(wave='square', freq=2, pos=(0,0))
-    # sum = s.SUM('+-', pos=(1,0))
-    # gain = s.GAIN(2, pos=(1.5,0))
-    # plant = s.LTI_SISO(0.5, [1, 2], name='plant', pos=(3,0))
-    # scope = s.SCOPE(pos=(4,0))
+    demand = s.WAVEFORM(wave='square', freq=2, pos=(0,0))
+    sum = s.SUM('+-', pos=(1,0))
+    gain = s.GAIN(2, pos=(1.5,0))
+    plant = s.LTI_SISO(0.5, [1, 2], name='plant', pos=(3,0))
+    scope = s.SCOPE(pos=(4,0))
     
-    # s.connect(demand, sum[0])
-    # s.connect(plant, sum[1])
-    # s.connect(sum, gain)
-    # s.connect(gain, plant)
-    # s.connect(plant, scope)
-    
-    # s.compile()
-    
-    # #s.dotfile('bd1.dot')
-    
-    # s.report()
-    # #s.run(10)
-    
-    s = Simulation()
-
-    wave = s.WAVEFORM(freq=2)
-    scope = s.SCOPE(nin=1)
-    
-    s.connect(wave, scope)
+    s.connect(demand, sum[0])
+    s.connect(plant, sum[1])
+    s.connect(sum, gain)
+    s.connect(gain, plant)
+    s.connect(plant, scope)
     
     s.compile()
-    s.run(5)
+    
+    #s.dotfile('bd1.dot')
+    
+    s.report()
+    #s.run(10)
+    
+    # s = Simulation()
+
+    # wave = s.WAVEFORM(freq=2)
+    # scope = s.SCOPE(nin=1)
+    
+    # s.connect(wave, scope)
+    
+    # s.compile()
+    # s.report()
+    # s.run(5)
