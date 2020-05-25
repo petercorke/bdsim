@@ -22,7 +22,8 @@ bdsim.blocks.robot module
    :undoc-members:
    :show-inheritance:
    :private-members:
-
+   :special-members:
+   
 Module contents
 ---------------
 
@@ -31,3 +32,4 @@ Module contents
    :undoc-members:
    :show-inheritance:
    :private-members:
+   :special-members:

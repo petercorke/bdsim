@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Blocks available for use in block diagrams.
+Define fundamental blocks available for use in block diagrams.
 
 Each class _MyClass in this module becomes a method MYCLASS() of the Simulation object.
 This is done in Simulation.__init__()
@@ -501,12 +501,12 @@ class _LTI_SISO(Transfer):
         polynomial coefficients.
 
         Coefficients are given in the order from highest order to zeroth 
-        order, ie. :math:`2s^2 - 4s +3` is `[2 -4 3].
+        order, ie. :math:`2s^2 - 4s +3` is ``[2, -4, 3]``.
         
         Only proper transfer functions, where order of numerator is less
         than denominator are allowed.
         
-        The order of the states in `x0` is consistent with controller canonical
+        The order of the states in ``x0`` is consistent with controller canonical
         form.
         
         Examples::
