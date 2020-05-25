@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu May 21 08:48:47 2020
-
-@author: corkep
+Components of the simulation system, namely blocks and wires.
 """
 
 import numpy as np
@@ -11,6 +9,10 @@ import numpy as np
 
                 
 class Wire:
+    """
+    A Wire object connects two block ports.  A Wire has a reference to the
+    start and end ports.
+    """
     
     class Port:
         def __init__(self, bp):
@@ -54,6 +56,9 @@ class Wire:
 # ------------------------------------------------------------------------- # 
 
 class Block:
+    """
+    A block object is the superclass of all blocks in the simulation environment.
+    """
     
     def __init__(self, blockclass=None, name=None, pos=None, **kwargs):
         #print('Block constructor'
@@ -132,6 +137,12 @@ class Block:
         pass
         
 class Sink(Block):
+    """
+    A Sink is a subclass of Block that represents a block that has inputs
+    but no outputs. Typically used to save data to a variable, file or 
+    graphics.
+    """
+    
     blockclass = "sink"
     
     def __init__(self, **kwargs):
@@ -143,6 +154,10 @@ class Sink(Block):
 
 
 class Source(Block):
+    """
+    A Source is a subclass of Block that represents a block that has outputs
+    but no inputs.  Its output is a function of parameters and time.
+    """
     blockclass = "source"
     
     def __init__(self, **kwargs):
@@ -153,6 +168,11 @@ class Source(Block):
         self.nstates = 0
         
 class Transfer(Block):
+    """
+    A Transfer is a subclass of Block that represents a block with inputs
+    outputs and states. Typically used to describe a continuous time dynamic
+    system, either linear or nonlinear.
+    """
     blockclass = "transfer"
     
     def __init__(self, **kwargs):
@@ -177,6 +197,11 @@ class Transfer(Block):
     
 
 class Function(Block):
+    """
+    A Function is a subclass of Block that represents a block that has inputs
+    and outputs but no state variables.  Typically used to describe operations
+    such as gain, summation or various mappings.
+    """
     blockclass = "function"
     
     def __init__(self, **kwargs):
