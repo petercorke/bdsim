@@ -21,4 +21,5 @@ s.compile()
 
 s.dotfile('bd1.dot')
 
+s.report()
 s.run(5)
