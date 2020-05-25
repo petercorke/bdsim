@@ -1,10 +1,17 @@
+[![PyPI pyversions](https://img.shields.io/pypi/pyversions/bdsim)](https://pypi.python.org/pypi/bdsim/)
+[![PyPI version fury.io](https://badge.fury.io/py/bdsim.svg)](https://pypi.python.org/pypi/bdsim/)
+[![PyPI status](https://img.shields.io/pypi/status/ansicolortags.svg)](https://pypi.python.org/pypi/bdsim/)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/petercorke/bdsim/graphs/commit-activity)
+[![GitHub license](https://img.shields.io/github/license/Naereen/StrapDown.js.svg)](https://github.com/petercorke/bdsim/blob/master/LICENSE)
+
+
 # Block diagram simulation
 
 This Python package simulates a dynamic system conceptualized in block diagram form, but represented in terms of Python class and method calls.  Unlike Simulink or LabView we write Python code rather than drawing boxes and wires.  Wires can communicate any Python type such as scalars, lists, numpy arrays, other objects, and even functions.
 
-Consider the canonic block diagram
+Consider this simple block diagram
 
-![block diagram](figs/bd1-sketch.png)
+![block diagram](https://github.com/petercorke/bdsim/raw/master/figs/bd1-sketch.png)
 
 which we can express concisely with `bdsim` as
 
@@ -32,10 +39,31 @@ A bundle of wires can be denoted using slice notation, for example `block[2:4]` 
 Remember that wires can hold scalar or vector values.  The first index refers to the port. A second index, if present is used to index into a vector value on the port, eg. `block1[2,:2]` refers to the first two elements of a vector on port 2 of block1.  This notation reduces the need for multiplexer and demultiplexer blocks.
 
 
-Whatever way we choose to express our model, and a mixture of ways is perfectly OK, the model is expressed in terms of Block and Wire objects.  The output port of a block is a set of wires connecting to input ports, and each Wire has reference to the start and end blocks. We can see this representation by
+Whatever way we choose to express our model, and a mixture of ways is perfectly OK, the model is expressed in terms of Block and Wire objects.  The output port of a block is a set of wires connecting to input ports, and each Wire has reference to the start and end blocks. We can see this representation, in tabular form, as
 
-```
+```python
 s.report()
+
+Blocks::
+
+  id  class       type        name          nin    nout    nstate  
+----  ----------  ----------  ----------  -----  ------  --------  
+   0  source      step        block 0         0       1         0  
+   1  function    sum         block 1         2       1         0  
+   2  function    gain        block 2         1       1         0  
+   3  transfer    LTI         plant           1       1         1  
+   4  sink        scope       block 4         2       0         0  
+
+Wires::
+
+  id  name        from    to      
+----  ----------  ------  ------  
+   0  wire 0      0[0]    1[0]    
+   1  wire 1      0[0]    4[1]    
+   2  wire 2      3[0]    1[1]    
+   3  wire 3      1[0]    2[0]    
+   4  wire 4      2[0]    3[0]    
+   5  wire 5      3[0]    4[0] 
 ```
 
 We can also turn into something like a real block diagram using GraphViz to produce a .dot file
@@ -54,11 +82,12 @@ or `neato`
 % neato -Tpng demo.dot demo.png
 ```
 
-![output of neato](figs/bd1.png)
+![output of neato](https://github.com/petercorke/bdsim/raw/master/figs/bd1.png)
 
 While this is correct, it's not quite the way we would expect the diagram to be drawn.  `dot` ignores the `pos` options on the blocks while `neato` respects them, but is prone to drawing all the lines on top of each other.
 
 Sources are shown as 3D boxes, sinks as folders, functions as boxes (apart from gains which are triangles and summing junctions which are points), and transfer functions as connectors (look's like a gate).  To create a decent looking plot you need to manually place the blocks using the `pos` argument to place them. Unit spacing in the x- and y-directions is generally sufficient. 
+
 
 To run the simulation for 5 seconds and visualize the results
 
@@ -67,7 +96,7 @@ s.run(5)
 ```
 simulate for 5s (using the default variable step RK45 solver) and output values at least every 0.1s.  The scope block pops up a graph
 
-![bdsim output](figs/Figure_1.png)
+![bdsim output](https://github.com/petercorke/bdsim/raw/master/figs/Figure_1.png)
 
 To save the results is achieved by
 
