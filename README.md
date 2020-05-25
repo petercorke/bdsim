@@ -7,7 +7,7 @@
 
 # Block diagram simulation
 
-This Python package simulates a dynamic system conceptualized in block diagram form, but represented in terms of Python class and method calls.  Unlike Simulink or LabView we write Python code rather than drawing boxes and wires.  Wires can communicate any Python type such as scalars, lists, numpy arrays, other objects, and even functions.
+This Python package enables modelling and simulation of dynamic systems conceptualized in block diagram form, but represented in terms of Python class and method calls.  Unlike Simulink or LabView we write Python code rather than drawing boxes and wires.  Wires can communicate any Python type such as scalars, lists, numpy arrays, other objects, and even functions.
 
 Consider this simple block diagram
 
@@ -50,24 +50,24 @@ s.report()
 
 Blocks::
 
-  id  class       type        name          nin    nout    nstate  
-----  ----------  ----------  ----------  -----  ------  --------  
-   0  source      step        block 0         0       1         0  
-   1  function    sum         block 1         2       1         0  
-   2  function    gain        block 2         1       1         0  
-   3  transfer    LTI         plant           1       1         1  
-   4  sink        scope       block 4         2       0         0  
+  id  name                              nin    nout    nstate  
+----  ------------------------------  -----  ------  --------  
+   0  source.step.b0                      0       1         0  
+   1  function.sum.b1                     2       1         0  
+   2  function.gain.b2                    1       1         0  
+   3  transfer.LTI.plant                  1       1         1  
+   4  sink.scope.b4                       2       0         0  
 
 Wires::
 
-  id  name        from    to      
-----  ----------  ------  ------  
-   0  wire 0      0[0]    1[0]    
-   1  wire 1      0[0]    4[1]    
-   2  wire 2      3[0]    1[1]    
-   3  wire 3      1[0]    2[0]    
-   4  wire 4      2[0]    3[0]    
-   5  wire 5      3[0]    4[0] 
+  id  from    to      description                               
+----  ------  ------  ----------------------------------------  
+   0  0[0]    1[0]    step.b0[0] --> sum.b1[0]                  
+   1  0[0]    4[1]    step.b0[0] --> scope.b4[1]                
+   2  3[0]    1[1]    LTI.plant[0] --> sum.b1[1]                
+   3  1[0]    2[0]    sum.b1[0] --> gain.b2[0]                  
+   4  2[0]    3[0]    gain.b2[0] --> LTI.plant[0]               
+   5  3[0]    4[0]    LTI.plant[0] --> scope.b4[0]
 ```
 
 We can also turn into something like a real block diagram using GraphViz to produce a .dot file
@@ -82,6 +82,7 @@ which we can turn into a graphic using `dot`
 % dot -Tpng -o demo.png demo.dot 
 ```
 or `neato`
+
 ```shell
 % neato -Tpng -o demo.png demo.dot
 ```
@@ -114,8 +115,6 @@ The result `out` is effectively a structure with elements
 - `x` is the state vector: ndarray, shape=(M,N)
 - `xnames` is a list of the names of the states corresponding to columns of `x`, eg. "plant.x0"
 
-
-Note that the names comes from the names of the blocks, because we didn't assign a name to the WAVEFORM block it gets a default name from the unique block id. 
 
 # Other examples
 
@@ -300,7 +299,9 @@ plant[0] = s.SUM('+-', demand, plant) * s.GAIN(value=2)
 scope[0] = plant
 ```
 
+If we wish to record some particular block output ports there is no need to wire them to recording blocks.  Simply
 
+```
 s.record(demand, plant)
 out = s.run(5, dt=0.1)
 ```
@@ -312,6 +313,7 @@ The result `out` is effectively a structure with elements
 - `x` is the state vector: ndarray, shape=(M,N)
 - `xnames` is a list of the names of the states corresponding to columns of `x`, eg. "plant.x0"
 
+
 In this case there are also elements due to the `record` method:
 
 - `block0` is the output of the waveform generator: ndarray, shape=(M,)
@@ -319,5 +321,59 @@ In this case there are also elements due to the `record` method:
 
 Note that the names comes from the names of the blocks, because we didn't assign a name to the WAVEFORM block it gets a default name from the unique block id. 
 
+We can create a subsystem by a file `subsys1.py`
 
+```python
+import bdsim.simulation as sim
+
+s = sim.Simulation()
+
+demand = s.STEP(T=1, pos=(0,0))
+sum = s.SUM('+-', pos=(1,0))
+gain = s.GAIN(2, pos=(1.5,0))
+plant = s.LTI_SISO(0.5, [2, 1], name='plant', pos=(3,0))
+scope = s.SCOPE(style=['k', 'r--'], pos=(4,0))
+outport = s.OUTPORT(0)
+inport = s.INPORT(0)
+    
+s.connect(demand, sum[0], scope[1])
+s.connect(plant, sum[1])
+s.connect(sum, gain)
+s.connect(gain, plant)
+s.connect(plant, scope[0])
+```
+
+In a top-level model
+
+```python
+
+import bdsim.simulation as sim
+
+s = sim.Simulation()
+
+sub1 = s.SUBSYSTEM('subsys1.py')
+scope = s.SCOPE()
+
+s.connect(sub1[0], scope)
+```
+
+The port labels are dictionary keys so can be ints or strings, they don't have to be consecutive ints.
+
+The subsystem can be runnable in its own right for testing using 
+
+```
+if __name__ == "__main__":
+```
+logic.  Any OUTPORTS will be ignored.  INPORTS can be wired to the output of a source.  When executed standalone the INPORTS are automatically disconnected.  When executed as a subsystem, the sources they are connected to are automatically disconnected.
+
+We can consider each block as having a set of ports, some are inputs, some are outputs, it depends on the purpose of the block.  It's a bit like working with physical hardware
+
+![block](figs/ports2.jpg) ![wire](figs/wires.jpg)
+
+We connect the ports of various blocks together with wires to make a system.
+`bdsim` will ensure that you don't connect two outputs together, and warn you if you have left inputs dangling.
+
+It's all a bit reminsicent of 1940s computing, like ENIAC's plugboard
+
+![wire](figs/ENIAC.jpg)
 
