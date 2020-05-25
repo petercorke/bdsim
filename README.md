@@ -16,6 +16,10 @@ Consider this simple block diagram
 which we can express concisely with `bdsim` as
 
 ```python
+import bdsim.simulation as sim
+
+s = sim.Simulation()
+
 demand = s.STEP(T=1, pos=(0,0))
 sum = s.SUM('+-', pos=(1,0))
 gain = s.GAIN(2, pos=(1.5,0))
@@ -75,11 +79,11 @@ s.dotfile('demo.dot')
 which we can turn into a graphic using `dot` 
 
 ```shell
-% dot -Tpng demo.dot demo.png
+% dot -Tpng -o demo.png demo.dot 
 ```
 or `neato`
 ```shell
-% neato -Tpng demo.dot demo.png
+% neato -Tpng -o demo.png demo.dot
 ```
 
 ![output of neato](https://github.com/petercorke/bdsim/raw/master/figs/bd1.png)
@@ -113,6 +117,13 @@ The result `out` is effectively a structure with elements
 
 Note that the names comes from the names of the blocks, because we didn't assign a name to the WAVEFORM block it gets a default name from the unique block id. 
 
+# Other examples
+
+In the folder `bdsim/examples` you can find a couple of runnable examples:
+
+- `eg1.py` the example given above
+- `waveform.py` two signal generators connected to two scopes
+- `rvc4_2.py` something like Fig 4.2 in _Robotics, Vision & Control (2017)_ - a vehicle with bicycle kinematics driven by a square wave steering signal.
 
 # Writing your own block
 
