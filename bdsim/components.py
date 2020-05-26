@@ -167,14 +167,14 @@ class Block:
             #self.update()
         return self.updated
     
-    def start(self):  # begin of a simulation
+    def start(self, **kwargs):  # begin of a simulation
         pass
     
 
     def check(self):  # check validity of block parameters at start
         pass
     
-    def done(self):  # end of simulation
+    def done(self, **kwargs):  # end of simulation
         pass
     
     def step(self):  # valid

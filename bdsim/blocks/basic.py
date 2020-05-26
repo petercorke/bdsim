@@ -305,7 +305,7 @@ class _ScopeXY(Sink):
         self.scale = scale
         self.labels = labels
         
-    def start(self):
+    def start(self, **kwargs):
         # create the plot
         super().reset()
         if self.sim.graphics:
@@ -346,7 +346,7 @@ class _ScopeXY(Sink):
                 self.ax.relim()
                 self.ax.autoscale_view()
         
-    def done(self):
+    def done(self, **kwargs):
         print('ScopeXY done')
         if self.sim.graphics:
             plt.show(block=True)
@@ -418,7 +418,7 @@ class _Scope(Sink):
         # TODO, wire width
         # inherit names from wires, block needs to be able to introspect
         
-    def start(self):
+    def start(self, **kwargs):
         # create the plot
         super().reset()   # TODO should this be here?
         if self.sim.graphics:
@@ -461,10 +461,10 @@ class _Scope(Sink):
                 self.ax.relim()
                 self.ax.autoscale_view(scalex=False, scaley=True)
         
-    def done(self):
+    def done(self, block=False, **kwargs):
         print('Scope done')
         if self.sim.graphics:
-            plt.show(block=True)
+            plt.show(block=block)
 
 # ------------------------------------------------------------------------ #
 
