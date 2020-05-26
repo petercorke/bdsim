@@ -18,6 +18,12 @@ import scipy.integrate as integrate
 from bdsim.components import Block, Wire
 
 
+debuglist = ()  # ('propagate', 'state', 'deriv')
+
+def DEBUG(debug, *args):
+    if debug in debuglist:
+        print('DEBUG.{:s}: '.format(debug), *args)
+
 # ------------------------------------------------------------------------- #    
     
 class Simulation:
@@ -187,6 +193,8 @@ class Simulation:
         nstates = 0
         for b in self.blocklist:
             nstates += b.nstates
+            b.outports = [[]] * b.nout
+            
         print('{:d} states'.format(nstates))
         self.nstates = nstates
          
@@ -196,8 +204,13 @@ class Simulation:
         # TODO do this when the wire is created
         for w in self.wirelist:
             b = w.start.block
-            b.add_out(w)
+            b.add_outport(w)
             
+        # check for unconnected outputs
+        for b in self.blocklist:
+            if any(map(lambda x: x == [], b.outports)):
+                print('block', b, 'has unconnected output ports')
+                
         self.compiled = True
         
     def report(self):
@@ -276,7 +289,7 @@ class Simulation:
             print( cfmt.format(w.id, start, end, w.str2))
             
     def run(self, T=10.0, dt=0.1, solver='RK45', 
-            graphics=True,
+            graphics=True, block=False,
             **kwargs):
         """
         
@@ -342,16 +355,18 @@ class Simulation:
                 
                 self.step()
                 
-                return np.c_[t,x]
+            out = np.c_[t,x]
         else:
             for t in np.arange(0, T, dt):
                 _deriv(t, [], self)
                 self.step()
+            out = None
         
-        self.done()
+        self.done(block=block)
+        
+        return out
         
 
-    
     def evaluate(self, x, t):
         """
         Evaluate all blocks in the network
@@ -372,6 +387,7 @@ class Simulation:
         """
         #print('in evaluate at t=', t)
         self.t = t
+        DEBUG('state', 't=', t, ', x=', x)
         
         # reset all the blocks ready for the evalation
         self.reset()
@@ -397,11 +413,12 @@ class Simulation:
             if b.blockclass == 'transfer':
                 yd = b.deriv().flatten()
                 YD = np.r_[YD, yd]
+        DEBUG('deriv', YD)
         return YD
 
-    def _propagate(self, b, t):
+    def _propagate(self, b, t, depth=0):
         """
-        Propogate values of a block to all connected inputs.
+        Propagate values of a block to all connected inputs.
         
         :param b: Block with valid output
         :type b: Block
@@ -416,7 +433,7 @@ class Simulation:
         all its inputs defined, in which case we recurse.
 
         """
-        #print('propagating:', b)
+        DEBUG('propagate', '  '*depth, 'propagating: {:s} @ t={:.3f}'.format(str(b),t))
         
         # get output of block at time t
         out = b.output(t)
@@ -425,15 +442,16 @@ class Simulation:
         assert isinstance(out, list) and len(out) == b.nout, 'block output is wrong type/length'
         # TODO check output validity once at the start
         
-        # iterate over all outgoing wires
-        for w in b.out:
-            #print(' --> ', w.end.block.name, '[', w.end.port, ']')
-            
-            val = out[w.start.port]
-            dest = w.end.block
-            
-            if dest.setinput(w, val) and dest.blockclass == 'function':
-                self._propagate(dest, t)
+        for (port, outwires) in enumerate(b.outports):
+            val = out[port]
+            # iterate over all outgoing wires
+            for w in outwires:
+                
+                dest = w.end.block
+                DEBUG('propagate', '  '*depth, '[', port, '] = ', val, ' --> ', w.end.block.name, '[', w.end.port, ']')
+                
+                if dest.setinput(w, val) and dest.blockclass == 'function':
+                    self._propagate(dest, t, depth+1)
                 
     def reset(self):
         """
@@ -456,7 +474,7 @@ class Simulation:
         for b in self.blocklist:
             b.step()
                     
-    def start(self):
+    def start(self, **kwargs):
         """
         Inform all active blocks that simulation is about to start.  Opem files,
         initialize graphics, etc.
@@ -465,9 +483,9 @@ class Simulation:
         
         """            
         for b in self.blocklist:
-            b.start()
+            b.start(**kwargs)
             
-    def done(self):
+    def done(self, **kwargs):
         """
         Inform all active blocks that simulation is complete.  Close files,
         graphics, etc.
@@ -476,7 +494,7 @@ class Simulation:
         
         """
         for b in self.blocklist:
-            b.done()
+            b.done(**kwargs)
             
 
     def check_connectivity(self):
@@ -496,7 +514,7 @@ class Simulation:
             A[end,start] = 1
             
         self.A = A
-        print(A)
+        #print(A)
         
         # check for cycles
         cycles = []
@@ -587,8 +605,6 @@ class Simulation:
 
             file.write('}\n')
             
-
-
 if __name__ == "__main__":
     
     s = Simulation()
@@ -598,20 +614,22 @@ if __name__ == "__main__":
     sum = s.SUM('+-', pos=(1,0))
     gain = s.GAIN(2, pos=(1.5,0))
     plant = s.LTI_SISO(0.5, [1, 2], name='plant', pos=(3,0))
-    scope = s.SCOPE(pos=(4,0))
+    scope = s.SCOPE(nin=2, pos=(4,0))
     
     s.connect(demand, sum[0])
     s.connect(plant, sum[1])
     s.connect(sum, gain)
     s.connect(gain, plant)
-    s.connect(plant, scope)
+    s.connect(plant, scope[0])
+    s.connect(demand, scope[1])
     
     s.compile()
     
     #s.dotfile('bd1.dot')
     
     s.report()
-    #s.run(10)
+    print()
+    out = s.run(0.2)
     
     # s = Simulation()
 

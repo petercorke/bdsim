@@ -142,8 +142,9 @@ class Block:
             self.inputs = [None] * self.nin
         self.updated = False
         
-    def add_out(self, w):
-        self.out.append(w)
+    def add_outport(self, w):
+        port = w.start.port
+        self.outports[port].append(w)
     
     def setinput(self, wire, val):
         """
