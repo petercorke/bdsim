@@ -447,11 +447,10 @@ class Simulation:
             # iterate over all outgoing wires
             for w in outwires:
                 
-                dest = w.end.block
                 DEBUG('propagate', '  '*depth, '[', port, '] = ', val, ' --> ', w.end.block.name, '[', w.end.port, ']')
                 
-                if dest.setinput(w, val) and dest.blockclass == 'function':
-                    self._propagate(dest, t, depth+1)
+                if w.send(val) and w.end.block.blockclass == 'function':
+                    self._propagate(w.end.block, t, depth+1)
                 
     def reset(self):
         """

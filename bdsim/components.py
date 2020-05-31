@@ -29,6 +29,10 @@ class Wire:
         for k,v in self.__dict__.items():
             print("  {:8s}{:s}".format(k+":", str(v)))
             
+    def send(self, value):
+        # dest is a Wire
+        return self.end.block.setinput(self.end.port, value)
+        
     def __repr__(self):
         
         # def range(x):
@@ -146,27 +150,35 @@ class Block:
         port = w.start.port
         self.outports[port].append(w)
     
-    def setinput(self, wire, val):
+    def setinput(self, port, value):
         """
         Receive input from a wire
         
-        :param wire: Incoming wire
-        :type wire: Wire
-        :param val: Incoming value
+        :param self: Block to be updated
+        :type wire: Block
+        :param port: Inut port to be updated
+        :type port: int
+        :param value: Input value
         :type val: any
         :return: If all inputs have been received
         :rtype: bool
 
         """
-
+        
         # stash it away
-        self.inputs[wire.end.port] = val
+        self.inputs[port] = value
 
         # check if all inputs have been assigned
         if all([x is not None for x in self.inputs]):
             self.updated = True
             #self.update()
         return self.updated
+    
+    def setinputs(self, *pos):
+        assert len(pos) == self.nin, 'mismatch in number of inputs'
+        self.reset()
+        for i,val in enumerate(pos):
+            self.inputs[i] = val
     
     def start(self, **kwargs):  # begin of a simulation
         pass
