@@ -56,18 +56,14 @@ class Simulation:
         # scan every file for classes and make their constructors methods of this class
         for file in os.listdir(os.path.join(os.path.dirname(__file__), 'blocks')):
             if file.endswith('.py'):
-                
+                print(file)
                 # valid python module, import it
-                blocks = importlib.import_module('.' + os.path.splitext(file)[0], package='bdsim.blocks')
-                
+                module = importlib.import_module('.' + os.path.splitext(file)[0], package='bdsim.blocks')
                 blocknames = []
-                for item in dir(blocks):
-                    if item.startswith('_') and not item.endswith('_'):
-        
-                        # valid class name within module
-                        cls = blocks.__dict__[item]
-                        
-                        # test the class is a valid block
+                if 'module_blocklist' in module.__dict__:
+                    print(module.module_blocklist)
+                    for cls in module.__dict__['module_blocklist']:
+    
                         if cls.blockclass in ('source', 'transfer', 'function'):
                             # must have an output function
                             valid = hasattr(cls, 'output') and \
@@ -88,15 +84,16 @@ class Simulation:
                         f = new_method(cls)
                         
                         # create the new method name
-                        bindname = item[1:].upper()
+                        bindname = cls.__name__[1:].upper()
                         blocknames.append(bindname)
                         
                         # set an attribute of the class
                         #  it becomes a bound method of the instance.
                         setattr(Simulation, bindname, f)
-
-                if len(blocknames) > 0:
-                    print('Loading blocks from {:s}: {:s}'.format(file, ', '.join(blocknames)))
+    
+                    if len(blocknames) > 0:
+                        print('Loading blocks from {:s}: {:s}'.format(file, ', '.join(blocknames)))
+                    module.__dict__['module_blocklist'] = []
 
     
     def add_block(self, block):

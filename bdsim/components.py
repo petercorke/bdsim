@@ -86,6 +86,14 @@ class Plug:
     
 # ------------------------------------------------------------------------- # 
 
+print('clear module blocklist')
+module_blocklist = []
+
+def block(cls):
+    print('@block', cls)
+    module_blocklist.append(cls)
+    return cls
+
 class Block:
     """
     A block object is the superclass of all blocks in the simulation environment.
