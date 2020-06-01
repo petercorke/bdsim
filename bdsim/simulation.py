@@ -132,42 +132,32 @@ class Simulation:
             block[1] = SigGen()  # use setitem
             block[1] = SumJunction(block2[3], block3[4]) * Gain(value=2)
         """
-        
-        slices = False
-        
+                
         start = args[0]
         
+        # convert to default plug on port 0 if need be
         if isinstance(start, Block):
-            start = (start, 0)
-        elif isinstance(start, tuple):
-            if isinstance(start[1], slice):
-                slices = True
+            start = Plug(start, 0)
+        start.type = 'start'
 
         for end in args[1:]:
             if isinstance(end, Block):
-                end = (end, 0)
-            elif isinstance(end, tuple):
-                if isinstance(end[1], slice):
-                    slices = True
+                end = Plug(end, 0)
+            end.type = 'end'
                     
-            if slices:
+            if start.isslice and end.isslice:
                 # we have a bundle of signals
+                                
+                assert start.width == end.width, 'slice wires must have same width'
                 
-                # TODO: allow destination to have no slice
-                
-                def slice2list(s):
-                    if s.step is None:
-                        return list(range(s.start, s.stop))
-                    else:
-                        return list(range(s.start, s.stop, s.step))
-                            
-                            
-                slist = slice2list(start[1])
-                elist = slice2list(end[1])
-                assert len(slist) == len(elist), 'slice wires must have same width'
-                
-                for (s,e) in zip(slist, elist):
-                    wire = Wire( (start[0], s), (end[0], e), name)
+                for (s,e) in zip(start.portlist, end.portlist):
+                    wire = Wire( Plug(start.block, s, 'start'), Plug(end.block, e, 'end'), name)
+                    self.add_wire(wire)
+            elif start.isslice and not end.isslice:
+                # bundle goint to a block
+                assert start.width == start.block.nin, "bundle width doesn't match number of input ports"
+                for inport,outport in enumerate(start.portlist):
+                    wire = Wire( Plug(start.block, outport, 'start'), Plug(end.block, inport, 'end'), name)
                     self.add_wire(wire)
             else:
                 wire = Wire(start, end, name)

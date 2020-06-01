@@ -18,8 +18,8 @@ class Wire:
     def __init__(self, start=None, end=None, name=None):
         self.name = name
         self.id = None
-        self.start = Plug(start)
-        self.end = Plug(end)
+        self.start = start
+        self.end = end
         self.value = None
         self.type = None
 
@@ -70,10 +70,35 @@ class Plug:
     Plugs are on the end of each wire, and connect a Wire to a specific port on
     a Block.
     """
-    def __init__(self, bp):
-        self.block = bp[0]
-        self.port = bp[1]
-        self.dir = ''
+    def __init__(self, block, port=0, type=None):
+        self.block = block
+        self.port = port
+        self.type = type  # start
+        
+    
+    @property
+    def isslice(self):
+        return isinstance(self.port, slice)
+    
+    @property
+    def portlist(self):
+        if self.isslice:
+            if self.type == 'start':
+                seq = range(0, self.block.nout)
+                return seq[self.port]
+            elif self.type == 'end':
+                seq = range(0, self.block.nin)
+                return seq[self.port]
+            else:
+                return None
+        else:
+            return [0]
+        
+    
+    @property
+    def width(self):
+        return len(self.portlist)
+            
         
     def __mul__(left, right):
         pass
@@ -81,8 +106,8 @@ class Plug:
         # plug * block
         # make connection, return a plug
         
-    def __repr(self):
-        return self.block + "[" + self.port + "]"
+    def __repr__(self):
+        return str(self.block) + "[" + str(self.port) + "]"
     
 # ------------------------------------------------------------------------- # 
 
@@ -114,7 +139,7 @@ class Block:
     A block object is the superclass of all blocks in the simulation environment.
     """
     
-    _fix_table = str.maketrans({'$':'', '\\':'', '{':'', '}':'', '^':'', '_':''})
+    _latex_remove = str.maketrans({'$':'', '\\':'', '{':'', '}':'', '^':'', '_':''})
     
     def __init__(self, blockclass=None, name=None, pos=None, **kwargs):
         #print('Block constructor'
@@ -134,19 +159,26 @@ class Block:
     def info(self):
         print("block: " + type(self).__name__)
         for k,v in self.__dict__.items():
-            print("  {:8s}{:s}".format(k+":", str(v)))
+            if k != 'sim':
+                print("  {:11s}{:s}".format(k+":", str(v)))
 
         
     def __getitem__(self, port):
-        return (self, port)
+        # block[i] is a plug object
+        return Plug(self, port)
     
     def __setitem__(self, i, port):
         pass
     
     def __mul__(left, right):
-        pass
+        # called for the cases:
         # block * block
         # block * plug
+        s = left.sim
+        assert isinstance(right, Block), 'arguments to * must be blocks not ports (for now)'
+        s.connect(left, right)  # add a wire
+        return right
+        
         # make connection, return a plug
         
     def __str__(self):
