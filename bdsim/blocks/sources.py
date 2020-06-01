@@ -57,11 +57,14 @@ class _Constant(Source):
 
         """
         super().__init__(**kwargs)
-        self.value = [value]
+        
+        if isinstance(value, (tuple, list)):
+            value = np.array(value)
+        self.value = value
         self.type = 'constant'
 
     def output(self, t=None):
-        return self.value               
+        return [self.value]               
 
 # ------------------------------------------------------------------------ #
 
@@ -169,26 +172,21 @@ class _WaveForm(Source):
 
 # ------------------------------------------------------------------------ #
 
-# class _Pulse(Source):
-#     def __init__(self, T=1, width=1,
-#                  off=0, on=1,
-#                  **kwargs):
-#         super().__init__(**kwargs)
+@block
+class _Piecewise(Source):
+    def __init__(self, *seq,
+                  **kwargs):
+        super().__init__(**kwargs)
         
-#         self.t_on = T
-#         self.t_off =T + width
-#         self.off = off
-#         self.on = on
-#         self.type = "pulsegen"
+        self.t = [ x[0] for x in seq]
+        self.y = [ x[1] for x in seq]
+        self.type = "piecewise"
 
-#     def output(self, t):
-#         if self.t_on <= t <= self.t_off:
-#             out = self.on
-#         else:
-#             out = self.off
-
-#         #print(out)
-#         return [out]
+    def output(self, t):
+        i = sum([ 1 if t >= _t else 0  for _t in self.t]) - 1
+        out = self.y[i]
+        #print(out)
+        return [out]
     
 # ------------------------------------------------------------------------ #
 
@@ -234,6 +232,14 @@ if __name__ == "__main__":
 
     import unittest
     import numpy.testing as nt
+    
+    a = _Piecewise( (0,0), (1, 1), (2,0) )
+    print(a.output(0))
+    print(a.output(0.9))
+    print(a.output(1.1))
+    print(a.output(1.9))
+    print(a.output(2.1))
+    print(a.output(10))
 
     class SourceBlockTest(unittest.TestCase):
 
