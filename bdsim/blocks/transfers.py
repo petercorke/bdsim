@@ -56,7 +56,7 @@ from bdsim.components import *
 
 @block
 class _LTI_SISO(Transfer):
-    def __init__(self, N=1, D=[1, 1], x0=None, **kwargs):
+    def __init__(self, N=1, D=[1, 1], x0=None, verbose=False, **kwargs):
         """
         Create a SISO LTI block.
         
@@ -100,9 +100,9 @@ class _LTI_SISO(Transfer):
         n = len(D) - 1
         nn = len(N)
         if x0 is None:
-            self.x0 = np.zeros((n,))
+            self._x0 = np.zeros((n,))
         else:
-            self.x0 = x0
+            self._x0 = x0
         assert nn <= n, 'direct pass through is not supported'
         self.type = 'LTI'
         
@@ -134,15 +134,16 @@ class _LTI_SISO(Transfer):
         
         self.C = (N[1:] - N[0] * D[1:]).reshape((1,n))
         
-        print('A=', self.A)
-        print('B=', self.B)
-        print('C=', self.C)
+        if verbose:
+            print('A=', self.A)
+            print('B=', self.B)
+            print('C=', self.C)
         
     def output(self, t=None):
-        return list(self.C*self.x)
+        return list(self.C*self._x)
     
     def deriv(self):
-        return self.A@self.x + self.B@np.array(self.inputs)
+        return self.A@self._x + self.B@np.array(self.inputs)
 
 
 
