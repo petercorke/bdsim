@@ -37,7 +37,6 @@ import math
 
 from bdsim.components import *
 
-print('in functions')
 
 @block
 class _Sum(Function):

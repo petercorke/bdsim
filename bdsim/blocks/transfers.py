@@ -39,7 +39,6 @@ import inspect
 
 from bdsim.components import *
 
-print('in transfers')
 # ------------------------------------------------------------------------ #
 #@block
 # class _Integrator(Transfer):

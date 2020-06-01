@@ -4,10 +4,10 @@ import math
 import matplotlib.pyplot as plt
 import time
 
-from bdsim.components import Sink, Source, Transfer, Function
+from bdsim.components import *
 
 
-
+@block
 class _Bicycle(Transfer):
     def __init__(self, x0=None, L=1, **kwargs):
         """

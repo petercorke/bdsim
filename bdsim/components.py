@@ -86,18 +86,35 @@ class Plug:
     
 # ------------------------------------------------------------------------- # 
 
-print('clear module blocklist')
 module_blocklist = []
 
 def block(cls):
-    print('@block', cls)
-    module_blocklist.append(cls)
+    """
+    Decorator for blocks
+    
+    :param cls: A block to be registered for the simulator
+    :type cls: subclass of Block
+    :return: the class
+    :rtype: subclass of Block
+    
+    @block
+    class MyBlock
+
+    """
+    if issubclass(cls, Block):
+        module_blocklist.append(cls)  # append class to a global list
+    else:
+        raise ValueError('@block used on non Block subclass')
     return cls
+
+# ------------------------------------------------------------------------- #
 
 class Block:
     """
     A block object is the superclass of all blocks in the simulation environment.
     """
+    
+    _fix_table = str.maketrans({'$':'', '\\':'', '{':'', '}':'', '^':'', '_':''})
     
     def __init__(self, blockclass=None, name=None, pos=None, **kwargs):
         #print('Block constructor'

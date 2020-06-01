@@ -36,7 +36,6 @@ import math
 
 from bdsim.components import *
 
-print('in sources')
 
 # ------------------------------------------------------------------------ #
 @block

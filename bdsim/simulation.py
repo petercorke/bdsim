@@ -15,10 +15,11 @@ import numpy as np
 import scipy.integrate as integrate
 
 
-from bdsim.components import Block, Wire
+from bdsim.components import Block, Wire, Plug
 
 
-debuglist = ()  # ('propagate', 'state', 'deriv')
+
+debuglist = () # ('propagate', 'state', 'deriv')
 
 def DEBUG(debug, *args):
     if debug in debuglist:
@@ -53,15 +54,20 @@ class Simulation:
             cls.__doc__ = cls.__init__.__doc__  
             return f
     
-        # scan every file for classes and make their constructors methods of this class
+        # scan every file ./blocks/*.py to find block definitions
+        # a block is a class that subclasses Source, Sink, Function, Transfer and
+        # has an @block decorator.
+        #
+        # The decorator adds the classes to a global variable module_blocklist in the
+        # module's namespace.
         for file in os.listdir(os.path.join(os.path.dirname(__file__), 'blocks')):
             if file.endswith('.py'):
-                print(file)
                 # valid python module, import it
                 module = importlib.import_module('.' + os.path.splitext(file)[0], package='bdsim.blocks')
-                blocknames = []
-                if 'module_blocklist' in module.__dict__:
-                    print(module.module_blocklist)
+
+                if hasattr(module, 'module_blocklist'):
+                    # it has @blocks defined
+                    blocknames = []
                     for cls in module.__dict__['module_blocklist']:
     
                         if cls.blockclass in ('source', 'transfer', 'function'):
@@ -83,8 +89,8 @@ class Simulation:
                         # create a function to invoke the block's constructor
                         f = new_method(cls)
                         
-                        # create the new method name
-                        bindname = cls.__name__[1:].upper()
+                        # create the new method name, strip underscores and capitalize
+                        bindname = cls.__name__.strip('_').upper()
                         blocknames.append(bindname)
                         
                         # set an attribute of the class
@@ -93,7 +99,7 @@ class Simulation:
     
                     if len(blocknames) > 0:
                         print('Loading blocks from {:s}: {:s}'.format(file, ', '.join(blocknames)))
-                    module.__dict__['module_blocklist'] = []
+                    del module.module_blocklist[:]  # clear the list
 
     
     def add_block(self, block):

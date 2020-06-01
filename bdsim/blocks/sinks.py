@@ -39,7 +39,6 @@ import matplotlib.pyplot as plt
 from bdsim.components import *
 
 
-
 # ------------------------------------------------------------------------ #
 
 @block
