@@ -38,6 +38,12 @@ import math
 from bdsim.components import *
 
 
+# PID
+# product
+# saturation
+# transform 3D points
+
+
 @block
 class _Sum(Function):
     def __init__(self, signs, angles=False, **kwargs):
@@ -68,14 +74,16 @@ class _Sum(Function):
         self.type = 'sum'
         self.signs = signs
         self.angles = angles
-        
-        signdict = {'+': 1, '-': -1}
-        self.gain = [signdict[s] for s in signs]
+
         
     def output(self, t=None):
-        sum = 0
         for i,input in enumerate(self.inputs):
-            sum += self.gain[i] * input
+            if self.signs[i] == '-':
+                input = -input
+            if i == 0:
+                sum = input
+            else:
+                sum = sum + input
         
         if self.angles:
             sum = np.mod(sum + math.pi, 2 * math.pi) - math.pi
@@ -127,7 +135,28 @@ class _Gain(Function):
                 raise ValueError('bad value of order')
         else:
             return [self.inputs[0] * self.gain]
+        
+# ------------------------------------------------------------------------ #
 
+@block
+class _Clip(Function):
+    def __init__(self, min=-math.inf, max=math.inf, **kwargs):
+
+        super().__init__(**kwargs)
+        self.nin = 1
+        self.nout = 1
+        self.min = min
+        self.max = max
+        self.type = 'clip'
+        
+    def output(self, t=None):
+        input = self.inputs[0]
+        
+        if isinstance(input, np.ndarray):
+            out = np.clip(input, self.min, self.max)
+        else:
+            out = min(self.max, max(input, -self.min))
+        return [ out ]
 # ------------------------------------------------------------------------ #
 
 @block
@@ -272,10 +301,6 @@ class _Interpolate(Function):
 
 
 
-# PID
-# product
-# saturation
-# transform 3D points
 
 if __name__ == "__main__":
 
