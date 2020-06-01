@@ -1,25 +1,24 @@
 #!/usr/bin/env python3
 
-import bdsim.bdsim as bd
+import bdsim.simulation as sim
 
-s = bd.Simulation()
+s = sim.Simulation()
     
-steer = s.WAVEFORM(name='siggen', freq=0.5, min=-0.5, max=0.5)
-speed = s.CONSTANT(value=0.5)
-bike = s.BICYCLE(x0=[0, 0, 0])
-scope = s.SCOPEXY()
-#cro = s.SCOPE()
+steer = s.PIECEWISE( (0,0), (3,0.5), (4,0), (5,-0.5), (6,0), name='steering')
+speed = s.CONSTANT(1, name='speed')
+bike = s.BICYCLE(x0=[0, 0, 0], name='bicycle')
+
+tscope= s.SCOPE(name='theta')
+scope = s.SCOPEXY(scale=[0, 10, 0, 1.2])
 
 s.connect(speed, bike[0])
 s.connect(steer, bike[1])
-#s.connect(steer, cro)
 
-s.connect(bike[0:2], scope[0:2])
+s.connect(bike[0:2], scope)
+s.connect(bike[2], tscope)
 
 s.compile()
 
-print(s)
-
-out = s.run(graphics=True)
+out = s.run(dt=0.05, block=False)
 
 s.done()
