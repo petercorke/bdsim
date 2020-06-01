@@ -60,6 +60,7 @@ class Simulation:
         #
         # The decorator adds the classes to a global variable module_blocklist in the
         # module's namespace.
+        print('Initializing:')
         for file in os.listdir(os.path.join(os.path.dirname(__file__), 'blocks')):
             if file.endswith('.py'):
                 # valid python module, import it
@@ -98,7 +99,7 @@ class Simulation:
                         setattr(Simulation, bindname, f)
     
                     if len(blocknames) > 0:
-                        print('Loading blocks from {:s}: {:s}'.format(file, ', '.join(blocknames)))
+                        print('  loading blocks from {:s}: {:s}'.format(file, ', '.join(blocknames)))
                     del module.module_blocklist[:]  # clear the list
 
     
@@ -184,27 +185,66 @@ class Simulation:
             b.check()
             
         nstates = 0
+        
+        error = False
+        
+        print('\nCompiling:')
         for b in self.blocklist:
             nstates += b.nstates
-            b.outports = [[]] * b.nout
+            b.outports = [[] for i in range(0, b.nout)]
+            b.inports = [[] for i in range(0, b.nin)]
             
-        print('{:d} states'.format(nstates))
+        print('  {:d} states'.format(nstates))
         self.nstates = nstates
          
-        self.check_connectivity()
-                
+
         # for each wire, connect the source block to the wire
-        # TODO do this when the wire is created
         for w in self.wirelist:
-            b = w.start.block
-            b.add_outport(w)
+            w.start.block.add_outport(w)
+            w.end.block.add_inport(w)
             
-        # check for unconnected outputs
+        # check every block 
         for b in self.blocklist:
-            if any(map(lambda x: x == [], b.outports)):
-                print('block', b, 'has unconnected output ports')
-                
-        self.compiled = True
+            # check all inputs are connected
+            for port,connections in enumerate(b.inports):
+                if len(connections) == 0:
+                    print('  ERROR: block {:s} input {:d} is not connected'.format(str(b), port))
+                    error = True
+                    
+                    # check multiple outputs are not driving same input
+                if len(connections) > 1:
+                    print('  ERROR: block {:s} input {:d} is driven by more than one source'.format(str(b), port))
+                    error = True
+            # check all outputs are connected
+            for port,connections in enumerate(b.outports):
+                if len(connections) == 0:
+                    print('  WARNING: block {:s} output {:d} is not connected'.format(str(b), port))
+                    
+        # check for cycles of function blocks
+        def _DFS(path):
+            start = path[0]
+            tail = path[-1]
+            for outgoing in tail.outports:
+                # for every port on this block
+                for w in outgoing:
+                    dest = w.end.block
+                    if dest == start:
+                        print('  ERROR: cycle found: ', ' - '.join([str(x) for x in path + [dest]]))
+                        return True
+                    if dest.blockclass == 'function':
+                        return _DFS(path + [dest]) # recurse
+            return False
+
+        for b in self.blocklist:
+            if b.blockclass == 'function':
+                # do depth first search looking for a cycle
+                if _DFS([b]):
+                    error = True
+        
+        if error:
+            raise RuntimeError('System has fatal errors and cannot be simulated')
+        else:
+            self.compiled = True
         
     def report(self):
         
@@ -314,6 +354,7 @@ class Simulation:
         assert self.compiled, 'Network has not been compiled'
         self.graphics = graphics
         self.T = T
+        self.count = 0
         
         # tell all blocks we're doing a simulation
         self.start()
@@ -323,7 +364,7 @@ class Simulation:
         for b in self.blocklist:
             if b.blockclass == 'transfer':
                 x0 = np.r_[x0, b.getstate()]
-        #print('x0', x0)
+        print('x0', x0)
         
 
         # integratnd function, wrapper for network evaluation method
@@ -332,7 +373,6 @@ class Simulation:
     
         # out = scipy.integrate.solve_ivp(Simulation._deriv, args=(self,), t_span=(0,T), y0=x0, 
         #             method=solver, t_eval=np.linspace(0, T, 100), events=None, **kwargs)
-        
         if len(x0) > 0:
             integrator = integrate.__dict__[solver](lambda t, y: _deriv(t, y, self), t0=0.0, y0=x0, t_bound=T, max_step=dt)
         
@@ -354,8 +394,10 @@ class Simulation:
                 _deriv(t, [], self)
                 self.step()
             out = None
+
         
         self.done(block=block)
+        print(self.count, ' integrator steps')
         
         return out
         
@@ -397,13 +439,14 @@ class Simulation:
                 
         # now iterate, running blocks, until we have values for all
         for b in self.blocklist:
-            if b.blockclass in ('sink', 'function', 'transfer') and not b.done:
-                print('block not set')
+            if b.nin > 0 and not b.done:
+                raise RuntimeError(str(b) + ' has incomplete inputs')
             
         # gather the derivative
         YD = np.array([])
         for b in self.blocklist:
             if b.blockclass == 'transfer':
+                assert b.updated, str(b) + ' has incomplete inputs'
                 yd = b.deriv().flatten()
                 YD = np.r_[YD, yd]
         DEBUG('deriv', YD)
@@ -429,7 +472,11 @@ class Simulation:
         DEBUG('propagate', '  '*depth, 'propagating: {:s} @ t={:.3f}'.format(str(b),t))
         
         # get output of block at time t
-        out = b.output(t)
+        try:
+            out = b.output(t)
+        except:
+            print('Error in output() method of ' + str(b))
+            raise
         
         # check for validity
         assert isinstance(out, list) and len(out) == b.nout, 'block output is wrong type/length'
@@ -465,6 +512,7 @@ class Simulation:
         
         for b in self.blocklist:
             b.step()
+            self.count += 1
                     
     def start(self, **kwargs):
         """
@@ -488,62 +536,6 @@ class Simulation:
         for b in self.blocklist:
             b.done(**kwargs)
             
-
-    def check_connectivity(self):
-        """
-        
-        Perform a number of connectivity checks on the network:
-            
-            - cycles
-            - multiple outputs driving one input port
-    
-        """
-        # build an adjacency matrix to represent the graph
-        A = np.zeros((self.nblocks, self.nblocks))
-        for w in self.wirelist:
-            start = w.start.block.id
-            end = w.end.block.id
-            A[end,start] = 1
-            
-        self.A = A
-        #print(A)
-        
-        # check for cycles
-        cycles = []
-        An = A
-        for n in range(2, self.nwires+1):
-            An = An @ A   # compute A**n
-            if np.trace(An) > 0:
-                for i in np.argwhere(An.diagonal()):
-                    cycles.append((i, n))
-                    
-        if len(cycles) > 0:
-            print("cycles found")
-            for cycle in cycles:
-                print(" - length of {:d} involving block id={:d} ({:s})".format(cycle[1], cycle[0][0], self.blocklist[cycle[0][0]].name))
-        
- 
-        # check for sources and sinks
-        dependson = {}   
-        for (i,a) in enumerate(A):  # check the rows
-            if np.sum(a) == 0:
-                print('block {:d} is a source'.format(i))
-                assert self.blocklist[i].blockclass == 'source'
-            else:
-                dependson[i] = tuple(np.where(a > 0))
-        for (i,a) in enumerate(A.T): # check the columns
-            if np.sum(a) == 0:
-                print('block {:d} is a sink'.format(i))
-                assert self.blocklist[i].blockclass == 'sink'
-
-        # build an adjacency matrix to check for connected outputs
-        A = np.zeros((self.nwires, self.nblocks))
-        for w in self.wirelist:
-            b = w.start.block
-            A[w.id,b.id] = 1
-        for (i,a) in enumerate(A):  # check the rows
-            if np.sum(a) > 1:    
-                print("tied outputs: " + ",".join([str(self.blocklist[i]) for i in np.where(a>0)[0]]))
                 
     def dotfile(self, file):
         """
@@ -601,20 +593,34 @@ if __name__ == "__main__":
     
     s = Simulation()
     
+    steer = s.PIECEWISE( (0,0), (3,0.5), (4,0), (5,-0.5), (6,0), name='steering')
+    speed = s.CONSTANT(1, name='speed')
+    bike = s.BICYCLE(x0=[0, 0, 0], name='bicycle')
     
-    demand = s.WAVEFORM(wave='square', freq=2, pos=(0,0))
-    sum = s.SUM('+-', pos=(1,0))
-    gain = s.GAIN(2, pos=(1.5,0))
-    plant = s.LTI_SISO(0.5, [1, 2], name='plant', pos=(3,0))
-    scope = s.SCOPE(nin=2, pos=(4,0))
+    # tscope= s.SCOPE(name='theta')
+    scope = s.SCOPEXY(scale=[0, 10, 0, 1.2])
     
-    s.connect(demand, sum[0])
-    s.connect(plant, sum[1])
-    s.connect(sum, gain)
-    s.connect(gain, plant)
-    s.connect(plant, scope[0])
-    s.connect(demand, scope[1])
+
     
+    s.connect(bike[0:2], scope)
+    s.connect(speed, bike.v)
+    s.connect(steer, bike.gamma)
+    
+    # demand = s.WAVEFORM(wave='square', freq=2, pos=(0,0))
+    # sum = s.SUM('+-', pos=(1,0))
+    # gain = s.GAIN(2, pos=(1.5,0))
+    
+    # #plant = s.GAIN(2, pos=(1.5,0)) * s.LTI_SISO(0.5, [1, 2], name='plant', pos=(3,0), verbose=True)
+    # plant = s.LTI_SISO(0.5, [1, 2], name='plant', pos=(3,0), verbose=True)
+    # scope = s.SCOPE(nin=2, pos=(4,0))
+    
+    # s.connect(demand, sum[0])
+    # s.connect(plant, sum[1])
+    # s.connect(sum, gain)
+    # s.connect(gain, plant)
+    # s.connect(plant, scope[0])
+    # s.connect(demand, scope[1])
+    # #s.connect(gain, sum[0])  # cycle
     s.compile()
     
     #s.dotfile('bd1.dot')

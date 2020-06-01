@@ -151,6 +151,17 @@ class Block:
         self.updated = False
         self.shape = 'block' # for box
         self.blockclass = blockclass
+
+
+        if hasattr(self, '_names_in'):
+            for port,name in enumerate(self._names_in):
+                setattr(self, self._fixname(name), self[port])
+        if hasattr(self, '_names_out'):
+            for port,name in enumerate(self._names_out):
+                setattr(self, self._fixname(name), self[port])
+        
+        if len(kwargs) > 0:
+            print('WARNING: unused arguments', kwargs.keys())
         
         # self.passthru
         
@@ -194,6 +205,11 @@ class Block:
     def __repr__(self):
         return self.fullname
     
+
+    def _fixname(self, s):
+        return s.translate(self._latex_remove)
+        
+    
     @property
     def fullname(self):
         return self.blockclass + "." + str(self)
@@ -206,7 +222,11 @@ class Block:
     def add_outport(self, w):
         port = w.start.port
         self.outports[port].append(w)
-    
+        
+    def add_inport(self, w):
+        port = w.end.port
+        self.inports[port].append(1)
+        
     def setinput(self, port, value):
         """
         Receive input from a wire
@@ -295,18 +315,18 @@ class Transfer(Block):
         
     def reset(self):
         super().reset()
-        self.x = self.x0
-        return self.x
+        self._x = self._x0
+        return self._x
     
     def setstate(self, x):
-        self.x = x[:self.nstates] # take as much state vector as we need
+        self._x = x[:self.nstates] # take as much state vector as we need
         return x[self.nstates:]   # return the rest
     
     def getstate(self):
-        return self.x0
+        return self._x0
     
     def check(self):
-        assert len(self.x0) == self.nstates, 'incorrect length for initial state'
+        assert len(self._x0) == self.nstates, 'incorrect length for initial state'
                 
     
 
