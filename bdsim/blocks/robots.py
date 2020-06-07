@@ -22,10 +22,8 @@ class _Bicycle(Transfer):
         :rtype: TYPE
 
         """
-        self._names_in=['v', '$\gamma$']
-        self._names_out=['x', 'y', '$\theta$']
-        self._names_state = ['x', 'y', '$\theta$']
         super().__init__(**kwargs)
+
         self.nin = 2
         self.nout = 3
         self.nstates = 3
@@ -33,13 +31,16 @@ class _Bicycle(Transfer):
         self.slim = slim
         self.type = 'bicycle'
 
-        
         self.L = L
         if x0 is None:
             self._x0 = np.zeros((self.nstates,))
         else:
             assert len(x0) == self.nstates, "x0 is {:d} long, should be {:d}".format(len(x0), self.nstates)
             self._x0 = x0
+            
+        self.inport_names('v', '$\gamma$')
+        self.outport_names('x', 'y', '$\theta$')
+        self.state_names('x', 'y', '$\theta$')
         
     def output(self, t):
         return list(self._x)

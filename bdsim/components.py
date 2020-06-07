@@ -151,15 +151,10 @@ class Block:
         self.updated = False
         self.shape = 'block' # for box
         self.blockclass = blockclass
+        self._inport_names = None
+        self._outport_names = None
+        self._state_names = None
 
-
-        if hasattr(self, '_names_in'):
-            for port,name in enumerate(self._names_in):
-                setattr(self, self._fixname(name), self[port])
-        if hasattr(self, '_names_out'):
-            for port,name in enumerate(self._names_out):
-                setattr(self, self._fixname(name), self[port])
-        
         if len(kwargs) > 0:
             print('WARNING: unused arguments', kwargs.keys())
         
@@ -208,7 +203,35 @@ class Block:
 
     def _fixname(self, s):
         return s.translate(self._latex_remove)
+
+    def inport_names(self, *names):
+        assert len(names) == self.nin, 'incorrect number of inport names given'
+        self._inport_names = names
         
+        for port,name in enumerate(names):
+            setattr(self, self._fixname(name), self[port])
+        
+                
+        
+    def outport_names(self, *names):
+        assert len(names) == self.nout, 'incorrect number of outport names given'
+        self._outport_names = names
+        for port,name in enumerate(names):
+            setattr(self, self._fixname(name), self[port])
+
+    def state_names(self, *names):
+        assert len(names) == self.nstates, 'incorrect number of state names given'
+        self._state_names = names
+        
+    def sourcename(self, port):
+        w = self.inports[port]
+        if w.name is not None:
+            return w.name
+        src = w.start.block
+        srcp = w.start.port
+        if src._outport_names is not None:
+            return src._outport_names[srcp]
+        return str(w.start)
     
     @property
     def fullname(self):
