@@ -22,6 +22,7 @@ class Wire:
         self.end = end
         self.value = None
         self.type = None
+        self.name = None
 
     @property
     def info(self):
@@ -34,19 +35,6 @@ class Wire:
         return self.end.block.setinput(self.end.port, value)
         
     def __repr__(self):
-        
-        # def range(x):
-        #     if isinstance(x,slice):
-        #         return "{:d}:{:d}".format(x.start, x.stop)
-        #     else:
-        #         return "{:d}".format(x)
-        # if self.id is None:
-        #     sid = ""
-        # else:
-        #     sid = "-{:d}".format(self.id)            
-        # s = "wire{:s}: {:s}[{:s}] --> {:s}[{:s}]".format(sid, type(self.start.block).__name__, range(self.start.port), type(self.end.block).__name__, range(self.end.port))
-        
-
         return str(self) + ": " + self.str2
     
     @property
@@ -224,7 +212,9 @@ class Block:
         self._state_names = names
         
     def sourcename(self, port):
+
         w = self.inports[port]
+        print(self, port, w)
         if w.name is not None:
             return w.name
         src = w.start.block
@@ -248,7 +238,8 @@ class Block:
         
     def add_inport(self, w):
         port = w.end.port
-        self.inports[port].append(1)
+        assert self.inports[port] is None, 'attempting to connect second wire to an input'
+        self.inports[port] = w
         
     def setinput(self, port, value):
         """

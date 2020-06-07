@@ -196,10 +196,9 @@ class Simulation:
             block.name = 'b' + str(block.id)
         self.blocklist.append(block)  # add to the list of available blocks
         
-    def add_wire(self, wire):
+    def add_wire(self, wire, name=None):
         wire.id = len(self.wirelist)
-        if wire.name is None:
-            wire.name = 'w' + str(wire.id)
+        wire.name = name
         return self.wirelist.append(wire)
     
     def __repr__(self):
@@ -278,7 +277,7 @@ class Simulation:
         for b in self.blocklist:
             nstates += b.nstates
             b.outports = [[] for i in range(0, b.nout)]
-            b.inports = [[] for i in range(0, b.nin)]
+            b.inports = [None for i in range(0, b.nin)]
             
         print('  {:d} states'.format(nstates))
         self.nstates = nstates
@@ -292,15 +291,11 @@ class Simulation:
         # check every block 
         for b in self.blocklist:
             # check all inputs are connected
-            for port,connections in enumerate(b.inports):
-                if len(connections) == 0:
+            for port,connection in enumerate(b.inports):
+                if connection is None:
                     print('  ERROR: block {:s} input {:d} is not connected'.format(str(b), port))
                     error = True
                     
-                    # check multiple outputs are not driving same input
-                if len(connections) > 1:
-                    print('  ERROR: block {:s} input {:d} is driven by more than one source'.format(str(b), port))
-                    error = True
             # check all outputs are connected
             for port,connections in enumerate(b.outports):
                 if len(connections) == 0:

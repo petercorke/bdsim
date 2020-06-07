@@ -342,8 +342,7 @@ class _Scope(Sink):
             if nin is not None:
                 assert nin == len(labels), 'need one label per input'
             nin = len(labels)
-        else:
-            self.labels = ['input%d'%(i,) for i in range(0, nin)]
+
             
         self.nin = nin
         
@@ -356,9 +355,6 @@ class _Scope(Sink):
         self.line = [None]*nin
         self.scale = scale
         
-        if labels is None:
-            labels = ['Y'+str(i) for i in range(0, nin)]
-            labels.insert(0, 'Time')
         self.labels = labels
         # TODO, wire width
         # inherit names from wires, block needs to be able to introspect
@@ -367,32 +363,42 @@ class _Scope(Sink):
         # create the plot
         if self.sim.graphics:
             super().reset()   # TODO should this be here?
-            if self.sim.graphics:
-                self.fig = self.sim.create_figure()
-                self.ax = self.fig.gca()
-                for i in range(0, self.nin):
-                    args = []
-                    kwargs = {}
-                    style = self.styles[i]
-                    if isinstance(style, dict):
-                        kwargs = style
-                    elif isinstance(style, str):
-                        args = [style]
-                    self.line[i], = self.ax.plot(self.tdata, self.ydata[i], *args, label=self.styles[i], **kwargs)
-                    self.ax.set_ylabel(self.labels[i+1])
-                    
-                if self.grid is True:
-                    self.ax.grid(self.grid)
-                elif isinstance(self.grid, (list, tuple)):
-                    self.ax.grid(True, *self.grid)
-                    
-                self.ax.set_xlim(0, self.sim.T)
-                # self.ax.set_ylim(-2, 2)
-                self.ax.set_xlabel(self.labels[0])
-    
-                self.ax.set_title(self.name)
-                if self.scale != 'auto':
-                    self.ax.set_ylim(*self.scale)
+            self.fig = self.sim.create_figure()
+            self.ax = self.fig.gca()
+            
+            # figure out the labels
+            if self.labels is None:
+                self.labels = [self.sourcename(i) for i in range(0, self.nin)]
+                self.labels.insert(0, 'Time')
+            elif len(self.labels) == 1:
+                self.labels += [self.sourcename(i) for i in range(0, self.nin)]
+            else:
+                raise ValueError('incorrect number of labels specified for Scope')
+                
+            print(self.labels)
+            for i in range(0, self.nin):
+                args = []
+                kwargs = {}
+                style = self.styles[i]
+                if isinstance(style, dict):
+                    kwargs = style
+                elif isinstance(style, str):
+                    args = [style]
+                self.line[i], = self.ax.plot(self.tdata, self.ydata[i], *args, label=self.styles[i], **kwargs)
+                self.ax.set_ylabel(self.labels[i+1])
+                
+            if self.grid is True:
+                self.ax.grid(self.grid)
+            elif isinstance(self.grid, (list, tuple)):
+                self.ax.grid(True, *self.grid)
+                
+            self.ax.set_xlim(0, self.sim.T)
+            # self.ax.set_ylim(-2, 2)
+            self.ax.set_xlabel(self.labels[0])
+
+            self.ax.set_title(self.name)
+            if self.scale != 'auto':
+                self.ax.set_ylim(*self.scale)
         
     def step(self):
         # inputs are set
