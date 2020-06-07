@@ -50,12 +50,12 @@ class _Sum(Function):
         """
         Create a summing junction.
         
-        :param signs: signs associated with input ports
+        :param signs: signs associated with input ports, + or -
         :type signs: str
         :param angles: the signals are angles, wrap to [-pi,pi)
         :type angles: bool
         :param **kwargs: common Block options
-        :return: A SCOPE block
+        :return: A SUM block
         :rtype: _Sum
         
         The number of input ports is determined by the length of the `signs`
@@ -72,9 +72,9 @@ class _Sum(Function):
         self.nin = len(signs)
         self.nout = 1
         self.type = 'sum'
+        assert all([x in '+-' for x in signs]), 'invalid sign'
         self.signs = signs
         self.angles = angles
-
         
     def output(self, t=None):
         for i,input in enumerate(self.inputs):
@@ -89,6 +89,51 @@ class _Sum(Function):
             sum = np.mod(sum + math.pi, 2 * math.pi) - math.pi
 
         return [sum]
+
+# ------------------------------------------------------------------------ #
+@block
+class _Prod(Function):
+    def __init__(self, ops, **kwargs):
+        """
+        Create a product junction.
+        
+        :param signs: ops associated with input ports * or /
+        :type signs: str
+        :param **kwargs: common Block options
+        :return: A PROD block
+        :rtype: _Prod
+        
+        The number of input ports is determined by the length of the `ops`
+        string.  For example::
+            
+            PROD('*/*')
+            
+        is a 3-input product junction where ports 0 and 2 are multiplied and
+        port 1 is divided.
+
+        """
+        super().__init__(**kwargs)
+        assert isinstance(signs, str), 'first argument must be signs string'
+        self.nin = len(signs)
+        self.nout = 1
+        self.type = 'prod'
+        assert all([x in '*/' for x in ops]), 'invalid op'
+        self.ops = ops
+        
+    def output(self, t=None):
+        for i,input in enumerate(self.inputs):
+            if i == 0:
+                if self.ops[i] == '*':
+                    prod = input
+                else:
+                    prod = 1.0 / input
+            else:
+                if self.ops[i] == '*':
+                    prod *= input
+                else:
+                    prod /= input
+
+        return [prod]
 
 # ------------------------------------------------------------------------ #
 
@@ -159,14 +204,15 @@ class _Clip(Function):
         return [ out ]
 # ------------------------------------------------------------------------ #
 
+# TODO can have multiple outputs: pass in a tuple of functions, return a tuple
 @block
 class _Function(Function):
     def __init__(self, func, nin=1, args=(), kwargs={}, **kwargs_):
         """
         Create a Python function block.
         
-        :param func: A function or lambda
-        :type func: callable
+        :param func: A function or lambda, or list thereof
+        :type func: callable or sequence of callables
         :param nin: number of inputs, defaults to 1
         :type nin: int, optional
         :param args: extra positional arguments passed to the function, defaults to ()
@@ -197,19 +243,32 @@ class _Function(Function):
                 pass
             
             FUNCTION(myfun, nin=2, kwargs={'param2':7, 'param3':8}}
+                     
+        A block with two inputs and two outputs, the outputs are the two functions::
+            
+            FUNCTION( [ lambda x, y: x_t, lanbda x, y: x* y])
 
         """
         super().__init__(**kwargs_)
         self.nin = nin
-        self.nout = 1
         self.type = 'function'
         
-        
-        if kwargs is None:
-            # we can check the number of arguments
-            n = len(inspect.signature(func).parameters)
-            assert nin + len(args) == n, 'argument count mismatch'
-        assert callable(func), 'Function must be a callable'
+
+        if isinstance(func, (list, tuple)):
+            for f in func:
+                assert callable(f), 'Function must be a callable'
+                if kwargs is None:
+                    # we can check the number of arguments
+                    n = len(inspect.signature(func).parameters)
+                    assert nin + len(args) == n, 'argument count mismatch'
+            self.nout = len(func)
+        elif callable(func):
+            if kwargs is None:
+                # we can check the number of arguments
+                n = len(inspect.signature(func).parameters)
+                assert nin + len(args) == n, 'argument count mismatch'
+            self.nout = 1
+            
         self.func  = func
         self.args = args
         self.kwargs = kwargs
