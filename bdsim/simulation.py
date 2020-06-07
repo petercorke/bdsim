@@ -338,74 +338,112 @@ class Simulation:
         
     def report(self):
         
-        def format(table, colsep = 2):
-            """
-            Tabular printing
+        class TableFormat:
             
-            :param table: format string
-            :type table: str
-            :param extrasep: extra separation between columns, default 2
-            :type extrasep: int
-            :return: a format string
-            :rtype: str
-            
-            Given an input string like::
-            
-                "col1[s] col2[d] col3[10s] col4[3d]"
+            def __init__(self, table, colsep = 2):
+                """
+                Tabular printing
                 
-            where the square brackets denote type  (as per `format`) and the
-            number if given is a minumum column width.  The actual column width
-            is the maximum of the given value and the width of the heading text
-            plus `extrasep`.
-            
-            Then print the header and a separator line::
-            
-            col1  col2  col3        col4
-            ----  ----  ----------  ----
+                :param table: format string
+                :type table: str
+                :param extrasep: extra separation between columns, default 2
+                :type extrasep: int
+                :return: a format string
+                :rtype: str
+                
+                Given an input string like::
+                
+                    "col1[s] col2[d] col3[10s] col4[3d]"
+                    
+                where the square brackets denote type  (as per `format`) and the
+                number if given is a minumum column width.  The actual column width
+                is the maximum of the given value and the width of the heading text
+                plus `extrasep`.
+                
+                Then print the header and a separator line::
+                
+                col1  col2  col3        col4
+                ----  ----  ----------  ----
+    
+                and return a format string that can be used with `format` to format
+                the arguments for subsequent data rows.
+                """
+                # parse the format line
+                re_fmt = re.compile(r"([a-zA-Z]+)\[([0-9]*|\*)([a-z])\]")
+                
 
-            and return a format string that can be used with `format` to format
-            the arguments for subsequent data rows.
-            """
-            # parse the format line
-            re_fmt = re.compile(r"([a-zA-Z]+)\[([0-9]*)([a-z])\]")
-            
-            hfmt = ""
-            cfmt = ""
-            sep = ""
-            colheads = []
-            
-            for col in table.split(' '):
-                m = re_fmt.search(col)
-                colhead = m.group(1)
-                colwidth = m.group(2)
-                if colwidth == '':
-                    colwidth = len(colhead) + colsep
+                colheads = []
+                varwidth = {}
+                columns = []
+                
+                for i, col in enumerate(table.split(' ')):
+                    m = re_fmt.search(col)
+                    colhead = m.group(1)
+                    colwidth = m.group(2)
+                    if colwidth == '':
+                        colwidth = len(colhead) + colsep
+                    elif colwidth == '*':
+                        varwidth[i] = 0
+                        colwidth = None
+                    else:
+                        colwidth = max(int(colwidth), len(colhead) + colsep)
+                    colfmt = m.group(3)
+                    columns.append( (colhead, colfmt, colwidth) )
                 else:
-                    colwidth = max(int(colwidth), len(colhead) + colsep)
-                colfmt = m.group(3)
-                colheads.append(colhead)
-                if colfmt == 'd':
-                    hfmt += "{:>%ds}" % (colwidth,)
-                else:
-                    hfmt += "{:%ds}" % (colwidth,)
-                cfmt += "{:%d%s}" % (colwidth, colfmt)
-                hfmt += ' ' * colsep
-                cfmt += ' ' * colsep
-                sep += '-' * colwidth + '  '
+                    self.ncols = i + 1
+                    
+                self.data = []
+                self.colsep = colsep
+                self.columns = columns
+                self.varwidth = varwidth
+
             
-            print(hfmt.format(*colheads))
-            print(sep)
-            return cfmt
+            def add(self, *data):
+                assert len(data) == self.ncols, 'wrong number of data items added'
+                self.data.append(data)
+                for k,v in self.varwidth.items():
+                    self.varwidth[k] = max(v, len(data[k]))
+            
+            def print(self):
+                hfmt = ""
+                cfmt = ""
+                sep = ""
+                
+                colheads = []
+                for i, col in enumerate(self.columns):
+                    colhead, colfmt, colwidth = col
+                    
+                    colheads.append(colhead)
+                    
+                    if colwidth is None:
+                        colwidth = self.varwidth[i]
+                        
+                    if colfmt == 'd':
+                        hfmt += "{:>%ds}" % (colwidth,)
+                    else:
+                        hfmt += "{:%ds}" % (colwidth,)
+                        
+                    cfmt += "{:%d%s}" % (colwidth, colfmt)
+                    hfmt += ' ' * self.colsep
+                    cfmt += ' ' * self.colsep
+                    sep += '-' * colwidth + '  '
+                    
+                print(hfmt.format(*colheads))
+                print(sep)
+                
+                for d in self.data:
+                    print( cfmt.format(*d))
         
         # print all the blocks
         print('\nBlocks::\n')
-        cfmt = format("id[3d] name[30s] nin[2d] nout[2d] nstate[2d]")
+        cfmt = TableFormat("id[3d] name[*s] nin[2d] nout[2d] nstate[2d]")
         for b in self.blocklist:
-            print( cfmt.format(b.id, b.fullname, b.nin, b.nout, b.nstates))
+            cfmt.add( b.id, b.fullname, b.nin, b.nout, b.nstates)
+        cfmt.print()
         
         # print all the wires
         print('\nWires::\n')
-        cfmt = format("id[3d] from[6s] to[6s] description[50s] type[12s]")
+        cfmt = TableFormat("id[3d] from[6s] to[6s] description[*s] type[*s]")
         for w in self.wirelist:
             start = "{:d}[{:d}]".format(w.start.block.id, w.start.port)
             end = "{:d}[{:d}]".format(w.end.block.id, w.end.port)
@@ -414,7 +452,8 @@ class Simulation:
             typ = type(value).__name__
             if isinstance(value, np.ndarray):
                 typ += ' {:s}'.format(str(value.shape))
-            print( cfmt.format(w.id, start, end, w.str2, typ))
+            cfmt.add( w.id, start, end, w.str2, typ)
+        cfmt.print()
             
 
                 
