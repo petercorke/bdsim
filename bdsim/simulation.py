@@ -112,12 +112,17 @@ class Simulation:
                             help='matplotlib backend to choose')
         parser.add_argument('--tiles', '-t', type=str, default='3x4', metavar='ROWSxCOLS',
                             help='window tiling as NxM')
-        parser.add_argument('--nographics', '-g', default=False, action='store_const', const=True,
+        parser.add_argument('--nographics', '-g', default=True, action='store_const', const=False, dest='graphics',
                             help='disable graphic display')
+        parser.add_argument('--animation', '-a', default=False, action='store_const', const=True,
+                            help='animate graphics')
         args = parser.parse_args()
 
         # graphics initialization
-        self.graphics = not args.nographics
+        if args.animation:
+            args.graphics = True
+        self.graphics = args.graphics
+        self.animation = args.animation
         self.args = args
             
     def create_figure(self):
@@ -160,19 +165,27 @@ class Simulation:
             self.screensize_pix = (sw, sh)
             self.tiles = [int(x) for x in self.args.tiles.split('x')]
             
+            # create a figure at default size to get dpi (TODO better way?)
             f = plt.figure(figsize=(1,1))
             self.dpi = f.dpi
             
             # compute fig size in inches (width, height)
             self.figsize = [ self.screensize_pix[0] / self.tiles[1] / self.dpi , self.screensize_pix[1] / self.tiles[0] / self.dpi ]
-            plt.close(f)
-        f = plt.figure(figsize=self.figsize)
+            
+            # resize the figure
+            #plt.figure(num=f.number, figsize=self.figsize)
+            f.set_size_inches(self.figsize, forward=True)
+            plt.ion()
+        else:
+            f = plt.figure(figsize=self.figsize)
+            
+        # move the figure to right place on screen
         row = self.fignum // self.tiles[0]
         col = self.fignum % self.tiles[0]
         move_figure(f, col * self.figsize[0] * self.dpi, row * self.figsize[1] * self.dpi)
-        self.fignum += 1
-        print('create figure', self.fignum, row, col)
         
+        self.fignum += 1
+        #print('create figure', self.fignum, row, col)
         return f
         
     
@@ -319,6 +332,10 @@ class Simulation:
         else:
             self.compiled = True
         
+        # evaluate the network once to check out wire types
+        x = self.getstate()
+        self.evaluate(x, 0.0)
+        
     def report(self):
         
         def format(table, colsep = 2):
@@ -388,12 +405,29 @@ class Simulation:
         
         # print all the wires
         print('\nWires::\n')
-        cfmt = format("id[3d] from[6s] to[6s] description[40s]")
+        cfmt = format("id[3d] from[6s] to[6s] description[50s] type[12s]")
         for w in self.wirelist:
             start = "{:d}[{:d}]".format(w.start.block.id, w.start.port)
             end = "{:d}[{:d}]".format(w.end.block.id, w.end.port)
-            print( cfmt.format(w.id, start, end, w.str2))
             
+            value = w.end.block.inputs[w.end.port]
+            typ = type(value).__name__
+            if isinstance(value, np.ndarray):
+                typ += ' {:s}'.format(str(value.shape))
+            print( cfmt.format(w.id, start, end, w.str2, typ))
+            
+
+                
+    
+    def getstate(self):
+        # get the state from each stateful block
+        x0 = np.array([])
+        for b in self.blocklist:
+            if b.blockclass == 'transfer':
+                x0 = np.r_[x0, b.getstate()]
+        print('x0', x0)
+        return x0
+        
     def run(self, T=10.0, dt=0.1, solver='RK45', 
             block=False,
             **kwargs):
@@ -429,12 +463,7 @@ class Simulation:
         # tell all blocks we're doing a simulation
         self.start()
 
-        # get the state from each stateful block
-        x0 = np.array([])
-        for b in self.blocklist:
-            if b.blockclass == 'transfer':
-                x0 = np.r_[x0, b.getstate()]
-        print('x0', x0)
+        x0 = self.getstate()
         
 
         # integratnd function, wrapper for network evaluation method
@@ -583,6 +612,7 @@ class Simulation:
         for b in self.blocklist:
             b.step()
             self.count += 1
+
                     
     def start(self, **kwargs):
         """
@@ -669,12 +699,13 @@ if __name__ == "__main__":
     steer = s.PIECEWISE( (0,0), (3,0.5), (4,0), (5,-0.5), (6,0), name='steering')
     speed = s.CONSTANT(1, name='speed')
     bike = s.BICYCLE(x0=[0, 0, 0], name='bicycle')
+    disp = s.VEHICLE(shape='triangle', scale=[0,10])
     
     # tscope= s.SCOPE(name='theta')
     scope = s.SCOPEXY(scale=[0, 10, 0, 1.2])
     
 
-    
+    s.connect(bike[0:3], disp[0:3])
     s.connect(bike[0:2], scope)
     s.connect(speed, bike.v)
     s.connect(steer, bike.gamma)
