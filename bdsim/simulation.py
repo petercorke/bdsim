@@ -10,10 +10,12 @@ import os.path
 import importlib
 import inspect
 import re
+import argparse
 
 import numpy as np
 import scipy.integrate as integrate
-
+import matplotlib
+import matplotlib.pyplot as plt
 
 from bdsim.components import Block, Wire, Plug
 
@@ -38,6 +40,7 @@ class Simulation:
         self.compiled = False   # network has been compiled
         self.T = None           # maximum simulation time
         self.t = None           # current time
+        self.fignum = 0
         
         
         # load modules from the blocks folder
@@ -101,7 +104,77 @@ class Simulation:
                     if len(blocknames) > 0:
                         print('  loading blocks from {:s}: {:s}'.format(file, ', '.join(blocknames)))
                     del module.module_blocklist[:]  # clear the list
+                    
 
+        # command line arguments and graphics
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--backend', '-b', type=str, metavar='BACKEND', default='Qt5Agg',
+                            help='matplotlib backend to choose')
+        parser.add_argument('--tiles', '-t', type=str, default='3x4', metavar='ROWSxCOLS',
+                            help='window tiling as NxM')
+        parser.add_argument('--nographics', '-g', default=False, action='store_const', const=True,
+                            help='disable graphic display')
+        args = parser.parse_args()
+
+        # graphics initialization
+        self.graphics = not args.nographics
+        self.args = args
+            
+    def create_figure(self):
+
+        def move_figure(f, x, y):
+            """Move figure's upper left corner to pixel (x, y)"""
+            backend = matplotlib.get_backend()
+            if backend == 'TkAgg':
+                f.canvas.manager.window.wm_geometry("+%d+%d" % (x, y))
+            elif backend == 'WXAgg':
+                f.canvas.manager.window.SetPosition((x, y))
+            else:
+                # This works for QT and GTK
+                # You can also use window.setGeometry
+                f.canvas.manager.window.move(x, y)
+                
+        if self.fignum == 0:
+            # no figures yet created, lazy initialization
+            
+            matplotlib.use(self.args.backend)            
+            mpl_backend = matplotlib.get_backend()
+            print('matplotlib backend is', mpl_backend)
+            
+            if mpl_backend == 'Qt5Agg':
+                from PyQt5 import QtWidgets
+                app = QtWidgets.QApplication([])
+                screen = app.primaryScreen()
+                print('Screen: %s' % screen.name())
+                size = screen.size()
+                print('Size: %d x %d' % (size.width(), size.height()))
+                rect = screen.availableGeometry()
+                print('Available: %d x %d' % (rect.width(), rect.height()))
+                sw = rect.width()
+                sh = rect.height()
+            elif mpl_backend == 'TkAgg':
+                window = plt.get_current_fig_manager().window
+                sw =  window.winfo_screenwidth()
+                sh =  window.winfo_screenheight()
+                print('Size: %d x %d' % (sw, sh))
+            self.screensize_pix = (sw, sh)
+            self.tiles = [int(x) for x in self.args.tiles.split('x')]
+            
+            f = plt.figure(figsize=(1,1))
+            self.dpi = f.dpi
+            
+            # compute fig size in inches (width, height)
+            self.figsize = [ self.screensize_pix[0] / self.tiles[1] / self.dpi , self.screensize_pix[1] / self.tiles[0] / self.dpi ]
+            plt.close(f)
+        f = plt.figure(figsize=self.figsize)
+        row = self.fignum // self.tiles[0]
+        col = self.fignum % self.tiles[0]
+        move_figure(f, col * self.figsize[0] * self.dpi, row * self.figsize[1] * self.dpi)
+        self.fignum += 1
+        print('create figure', self.fignum, row, col)
+        
+        return f
+        
     
     def add_block(self, block):
         block.sim = self   # block back pointer to the simulator
@@ -322,7 +395,7 @@ class Simulation:
             print( cfmt.format(w.id, start, end, w.str2))
             
     def run(self, T=10.0, dt=0.1, solver='RK45', 
-            graphics=True, block=False,
+            block=False,
             **kwargs):
         """
         
@@ -332,8 +405,6 @@ class Simulation:
         :type dt: float, optional
         :param solver: integration method, defaults to 'RK45'
         :type solver: str, optional
-        :param graphics: enable graphic display by blocks, defaults to True
-        :type graphics: bool, optional
         :param **kwargs: passed to `scipy.integrate`
         :return: time history of signals and states
         :rtype: Sim class
@@ -352,7 +423,6 @@ class Simulation:
         """
         
         assert self.compiled, 'Network has not been compiled'
-        self.graphics = graphics
         self.T = T
         self.count = 0
         
@@ -475,7 +545,7 @@ class Simulation:
         try:
             out = b.output(t)
         except:
-            print('Error in output() method of ' + str(b))
+            print('Error at t={:f} in computing output of block {:s}'.format(t, str(b)))
             raise
         
         # check for validity
@@ -591,6 +661,9 @@ class Simulation:
             
 if __name__ == "__main__":
     
+
+        
+    
     s = Simulation()
     
     steer = s.PIECEWISE( (0,0), (3,0.5), (4,0), (5,-0.5), (6,0), name='steering')
@@ -627,7 +700,7 @@ if __name__ == "__main__":
     
     s.report()
     print()
-    out = s.run(0.2)
+    #out = s.run(0.2)
     
     # s = Simulation()
 

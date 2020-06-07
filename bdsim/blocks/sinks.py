@@ -35,42 +35,15 @@ import numpy as np
 import math
 
 import matplotlib.pyplot as plt
-import matplotlib
+
 
 from bdsim.components import *
 
-matplotlib.use("Qt5Agg")
 
 
-mpl_backend = matplotlib.get_backend()
-print('matplotlib backend', mpl_backend)
+# TODO stop sim, pass in a lambda
 
-if mpl_backend == 'Qt5Agg':
-    from PyQt5 import QtWidgets
-    app = QtWidgets.QApplication([])
-    screen = app.primaryScreen()
-    print('Screen: %s' % screen.name())
-    size = screen.size()
-    print('Size: %d x %d' % (size.width(), size.height()))
-    rect = screen.availableGeometry()
-    print('Available: %d x %d' % (rect.width(), rect.height()))
-elif mpl_backend == 'TkAgg'
-    window = plt.get_current_fig_manager().window
-    sw =  window.winfo_screenwidth()
-    sh =  window.winfo_screenheight()
-    print('Size: %d x %d' % (size.width(), size.height()))
 
-def move_figure(f, x, y):
-    """Move figure's upper left corner to pixel (x, y)"""
-    backend = matplotlib.get_backend()
-    if backend == 'TkAgg':
-        f.canvas.manager.window.wm_geometry("+%d+%d" % (x, y))
-    elif backend == 'WXAgg':
-        f.canvas.manager.window.SetPosition((x, y))
-    else:
-        # This works for QT and GTK
-        # You can also use window.setGeometry
-        f.canvas.manager.window.move(x, y)
 
 # ------------------------------------------------------------------------ #
 
@@ -126,49 +99,50 @@ class _ScopeXY(Sink):
         
     def start(self, **kwargs):
         # create the plot
-        super().reset()
         if self.sim.graphics:
-            self.fig = plt.figure()
-            self.ax = self.fig.gca()
-            
-            args = []
-            kwargs = {}
-            style = self.styles
-            if isinstance(style, dict):
-                kwargs = style
-            elif isinstance(style, str):
-                args = [style]
-            self.line, = self.ax.plot(self.xdata, self.ydata, *args, **kwargs)
+            super().reset()
+            if self.sim.graphics:
+                self.fig = self.sim.create_figure()
+                self.ax = self.fig.gca()
                 
-            # self.ax.set_xlim(-2, 2)
-            # self.ax.set_ylim(-2, 2)
-            self.ax.grid(True)
-            self.ax.set_xlabel(self.labels[0])
-            self.ax.set_ylabel(self.labels[1])
-            self.ax.set_title(self.name)
-            if self.scale != 'auto':
-                self.ax.set_xlim(*self.scale[0:2])
-                self.ax.set_ylim(*self.scale[2:4])
-            if self.init is not None:
-                self.init(self.ax)
-            move_figure(self.fig, 500, 500)
+                args = []
+                kwargs = {}
+                style = self.styles
+                if isinstance(style, dict):
+                    kwargs = style
+                elif isinstance(style, str):
+                    args = [style]
+                self.line, = self.ax.plot(self.xdata, self.ydata, *args, **kwargs)
+                    
+                # self.ax.set_xlim(-2, 2)
+                # self.ax.set_ylim(-2, 2)
+                self.ax.grid(True)
+                self.ax.set_xlabel(self.labels[0])
+                self.ax.set_ylabel(self.labels[1])
+                self.ax.set_title(self.name)
+                if self.scale != 'auto':
+                    self.ax.set_xlim(*self.scale[0:2])
+                    self.ax.set_ylim(*self.scale[2:4])
+                if self.init is not None:
+                    self.init(self.ax)
 
         
     def step(self):
         # inputs are set
-        self.xdata.append(self.inputs[0])
-        self.ydata.append(self.inputs[1])
         if self.sim.graphics:
-            plt.figure(self.fig.number)
-            self.line.set_data(self.xdata, self.ydata)
-        
-            plt.draw()
-            plt.show(block=False)
-            self.fig.canvas.start_event_loop(0.001)
-        
-            if self.scale == 'auto':
-                self.ax.relim()
-                self.ax.autoscale_view()
+            self.xdata.append(self.inputs[0])
+            self.ydata.append(self.inputs[1])
+            if self.sim.graphics:
+                plt.figure(self.fig.number)
+                self.line.set_data(self.xdata, self.ydata)
+            
+                plt.draw()
+                plt.show(block=False)
+                self.fig.canvas.start_event_loop(0.001)
+            
+                if self.scale == 'auto':
+                    self.ax.relim()
+                    self.ax.autoscale_view()
         
     def done(self, block=False, **kwargs):
         if self.sim.graphics:
@@ -182,17 +156,22 @@ class _Scope(Sink):
     Plot input ports against time.  Each line can have its own color or style.
     """
     
-    def __init__(self, nin=None, style=None, scale='auto', labels=None, **kwargs):
+    def __init__(self, nin=1, styles=None, scale='auto', labels=None, grid=True, **kwargs):
         """
         Create a block that plots input ports against time.
         
         :param nin: number of inputs, defaults to length of style vector if given,
                     otherwise 1
         :type nin: int, optional
-        :param style: styles for each line to be plotted
-        :type style: optional str or dict, list of strings or dicts; one per line
+        :param styles: styles for each line to be plotted
+        :type styles: optional str or dict, list of strings or dicts; one per line
         :param scale: y-axis scale, defaults to 'auto'
         :type scale: 2-element sequence
+        :param labels: vertical axis labels
+        :type labels: sequence of strings
+        :param grid: draw a grid, default is on. Can be boolean or a tuple of 
+        options for grid()
+        :type grid: bool or sequence
         :param **kwargs: common Block options
         :return: A SCOPE block
         :rtype: _Scope
@@ -219,14 +198,25 @@ class _Scope(Sink):
         super().__init__(**kwargs)
 
         self.type = 'scope'
-        if style is not None:
-            self.styles = list(style)
-            nin = len(style)
+        if styles is not None:
+            self.styles = list(styles)
+            if nin is not None:
+                assert nin == len(styles), 'need one style per input'
+            nin = len(styles)
         else:
-            if nin is None:
-                nin = 1     # default number of inputs
             self.styles = [None,] * nin
+            
+        if labels is not None:
+            self.labels = list(labels)
+            if nin is not None:
+                assert nin == len(labels), 'need one label per input'
+            nin = len(labels)
+        else:
+            self.labels = ['input%d'%(i,) for i in range(0, nin)]
+            
         self.nin = nin
+        
+        self.grid = grid
                  
         # init the arrays that hold the data
         self.tdata = np.array([])
@@ -244,46 +234,53 @@ class _Scope(Sink):
         
     def start(self, **kwargs):
         # create the plot
-        super().reset()   # TODO should this be here?
         if self.sim.graphics:
-            self.fig = plt.figure()
-            self.ax = self.fig.gca()
-            for i in range(0, self.nin):
-                args = []
-                kwargs = {}
-                style = self.styles[i]
-                if isinstance(style, dict):
-                    kwargs = style
-                elif isinstance(style, str):
-                    args = [style]
-                self.line[i], = self.ax.plot(self.tdata, self.ydata[i], *args, **kwargs)
-                self.ax.set_ylabel(self.labels[i+1])
-            self.ax.set_xlim(0, self.sim.T)
-            # self.ax.set_ylim(-2, 2)
-            self.ax.grid(True)
-            self.ax.set_xlabel(self.labels[0])
-
-            self.ax.set_title(self.name)
-            if self.scale != 'auto':
-                self.ax.set_ylim(*self.scale)
+            super().reset()   # TODO should this be here?
+            if self.sim.graphics:
+                self.fig = self.sim.create_figure()
+                self.ax = self.fig.gca()
+                for i in range(0, self.nin):
+                    args = []
+                    kwargs = {}
+                    style = self.styles[i]
+                    if isinstance(style, dict):
+                        kwargs = style
+                    elif isinstance(style, str):
+                        args = [style]
+                    self.line[i], = self.ax.plot(self.tdata, self.ydata[i], *args, label=self.styles[i], **kwargs)
+                    self.ax.set_ylabel(self.labels[i+1])
+                    
+                if self.grid is True:
+                    self.ax.grid(self.grid)
+                elif isinstance(self.grid, (list, tuple)):
+                    self.ax.grid(True, *self.grid)
+                    
+                self.ax.set_xlim(0, self.sim.T)
+                # self.ax.set_ylim(-2, 2)
+                self.ax.set_xlabel(self.labels[0])
+    
+                self.ax.set_title(self.name)
+                if self.scale != 'auto':
+                    self.ax.set_ylim(*self.scale)
         
     def step(self):
         # inputs are set
-        self.tdata = np.append(self.tdata, self.sim.t)
-        for i,input in enumerate(self.inputs):
-            self.ydata[i] = np.append(self.ydata[i], input)
         if self.sim.graphics:
-            plt.figure(self.fig.number)
-            for i in range(0, self.nin):
-                self.line[i].set_data(self.tdata, self.ydata[i])
-        
-            plt.draw()
-            plt.show(block=False)
-            self.fig.canvas.start_event_loop(0.001)
-        
-            if self.scale == 'auto':
-                self.ax.relim()
-                self.ax.autoscale_view(scalex=False, scaley=True)
+            self.tdata = np.append(self.tdata, self.sim.t)
+            for i,input in enumerate(self.inputs):
+                self.ydata[i] = np.append(self.ydata[i], input)
+            if self.sim.graphics:
+                plt.figure(self.fig.number)
+                for i in range(0, self.nin):
+                    self.line[i].set_data(self.tdata, self.ydata[i])
+            
+                plt.draw()
+                plt.show(block=False)
+                self.fig.canvas.start_event_loop(0.001)
+            
+                if self.scale == 'auto':
+                    self.ax.relim()
+                    self.ax.autoscale_view(scalex=False, scaley=True)
         
     def done(self, block=False, **kwargs):
         if self.sim.graphics:
