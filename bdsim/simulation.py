@@ -89,7 +89,10 @@ class Simulation:
         for file in os.listdir(os.path.join(os.path.dirname(__file__), 'blocks')):
             if file.endswith('.py'):
                 # valid python module, import it
-                module = importlib.import_module('.' + os.path.splitext(file)[0], package='bdsim.blocks')
+                try:
+                    module = importlib.import_module('.' + os.path.splitext(file)[0], package='bdsim.blocks')
+                except:
+                    print('-- syntax error in block definiton: ' + file)
 
                 if hasattr(module, 'module_blocklist'):
                     # it has @blocks defined
@@ -295,8 +298,12 @@ class Simulation:
 
         # for each wire, connect the source block to the wire
         for w in self.wirelist:
-            w.start.block.add_outport(w)
-            w.end.block.add_inport(w)
+            try:
+                w.start.block.add_outport(w)
+                w.end.block.add_inport(w)
+            except:
+                print('error connecting wire: ', w.fullname)
+                raise
             
         # check every block 
         for b in self.blocklist:

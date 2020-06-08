@@ -245,6 +245,7 @@ class Block:
         
     def add_outport(self, w):
         port = w.start.port
+        assert port < len(self.outports), 'port number too big'
         self.outports[port].append(w)
         
     def add_inport(self, w):
