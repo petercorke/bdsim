@@ -38,9 +38,9 @@ class _Bicycle(Transfer):
             assert len(x0) == self.nstates, "x0 is {:d} long, should be {:d}".format(len(x0), self.nstates)
             self._x0 = x0
             
-        self.inport_names('v', '$\gamma$')
-        self.outport_names('x', 'y', '$\theta$')
-        self.state_names('x', 'y', '$\theta$')
+        self.inport_names(('v', '$\gamma$'))
+        self.outport_names(('x', 'y', r'$\theta$'))
+        self.state_names(('x', 'y', r'$\theta$'))
         
     def output(self, t):
         return list(self._x)

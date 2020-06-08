@@ -35,10 +35,10 @@ class Wire:
         return self.end.block.setinput(self.end.port, value)
         
     def __repr__(self):
-        return str(self) + ": " + self.str2
+        return str(self) + ": " + self.fullname
     
     @property
-    def str2(self):
+    def fullname(self):
         return "{:s}[{:d}] --> {:s}[{:d}]".format(str(self.start.block), self.start.port, str(self.end.block), self.end.port)
     
     def __str__(self):
@@ -129,9 +129,13 @@ class Block:
     
     _latex_remove = str.maketrans({'$':'', '\\':'', '{':'', '}':'', '^':'', '_':''})
     
-    def __init__(self, blockclass=None, name=None, pos=None, **kwargs):
+    def __init__(self, blockclass=None, name=None, inp_names=None, outp_names=None, state_names=None, pos=None, **kwargs):
         #print('Block constructor'
-        self.name = name
+        if name is not None:
+            self.name_tex = name
+            self.name = self._fixname(name)
+        else:
+            self.name = None
         self.pos = pos
         self.id = None
         self.out = []
@@ -142,6 +146,17 @@ class Block:
         self._inport_names = None
         self._outport_names = None
         self._state_names = None
+        
+        self._inport_names = None
+        self._outport_names = None
+        self._state_names = None
+        
+        if inp_names is not None:
+            self.inport_names(inp_names)
+        if outp_names is not None:
+            self.outport_names(outp_names)
+        if state_names is not None:
+            self.state_names(state_names)
 
         if len(kwargs) > 0:
             print('WARNING: unused arguments', kwargs.keys())
@@ -192,23 +207,19 @@ class Block:
     def _fixname(self, s):
         return s.translate(self._latex_remove)
 
-    def inport_names(self, *names):
-        assert len(names) == self.nin, 'incorrect number of inport names given'
+    def inport_names(self, names):
         self._inport_names = names
         
         for port,name in enumerate(names):
             setattr(self, self._fixname(name), self[port])
         
-                
         
-    def outport_names(self, *names):
-        assert len(names) == self.nout, 'incorrect number of outport names given'
+    def outport_names(self, names):
         self._outport_names = names
         for port,name in enumerate(names):
             setattr(self, self._fixname(name), self[port])
 
-    def state_names(self, *names):
-        assert len(names) == self.nstates, 'incorrect number of state names given'
+    def state_names(self, names):
         self._state_names = names
         
     def sourcename(self, port):
