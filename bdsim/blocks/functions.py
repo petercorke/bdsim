@@ -113,8 +113,8 @@ class _Prod(Function):
 
         """
         super().__init__(**kwargs)
-        assert isinstance(signs, str), 'first argument must be signs string'
-        self.nin = len(signs)
+        assert isinstance(ops, str), 'first argument must be signs string'
+        self.nin = len(ops)
         self.nout = 1
         self.type = 'prod'
         assert all([x in '*/' for x in ops]), 'invalid op'
@@ -207,7 +207,7 @@ class _Clip(Function):
 # TODO can have multiple outputs: pass in a tuple of functions, return a tuple
 @block
 class _Function(Function):
-    def __init__(self, func, nin=1, args=(), kwargs={}, **kwargs_):
+    def __init__(self, func, nin=1, nout=1, dict=False, args=(), kwargs={}, **kwargs_):
         """
         Create a Python function block.
         
@@ -215,6 +215,10 @@ class _Function(Function):
         :type func: callable or sequence of callables
         :param nin: number of inputs, defaults to 1
         :type nin: int, optional
+        :param nout: number of outputs, defaults to 1
+        :type nout: int, optional
+        :param dict: pass in a reference to a dictionary instance
+        :type dict: bool
         :param args: extra positional arguments passed to the function, defaults to ()
         :type args: tuple, optional
         :param kwargs: extra keyword arguments passed to the function, defaults to {}
@@ -222,37 +226,51 @@ class _Function(Function):
         :param **kwargs: common Block options
         :return: A FUNCTION block
         :rtype: _Function
-        
-        A function block always has one output.
-        
-        A block that sums its two inputs is::
+
+        A block with one output that sums its two inputs is::
             
             FUNCTION(lambda u1, u2: u1+u2, nin=2)
             
-        A block with a function that takes additional arguments::
+        A block with a function that takes two inputs and has two additional arguments::
         
             def myfun(u1, u2, param1, param2):
                 pass
             
             FUNCTION(myfun, nin=2, args=(p1,p2))
             
+        If we need access to persistent (static) data, to keep some state
+        
+            def myfun(u1, u2, param1, param2, dict):
+                pass
             
-        A block with a function that takes additional keyword arguments::
+            FUNCTION(myfun, nin=2, args=(p1,p2), dict=True)
+            
+        a dictionary is passed in as the last argument.
+            
+        A block with a function that takes two inputs and additional keyword arguments::
         
             def myfun(u1, u2, param1=1, param2=2, param3=3, param4=4):
                 pass
             
             FUNCTION(myfun, nin=2, kwargs={'param2':7, 'param3':8}}
                      
-        A block with two inputs and two outputs, the outputs are the two functions::
+        A block with two inputs and two outputs, the outputs are defined by two lambda
+        functions with the same inputs::
             
             FUNCTION( [ lambda x, y: x_t, lanbda x, y: x* y])
+        
+        A block with two inputs and two outputs, the outputs are defined by a 
+        single function::
+            
+            def myfun(u1, u2):
+                return [ u1+u2, u1*u2 ]
+            
+            FUNCTION( myfun, nin=2, nout=2)
 
         """
         super().__init__(**kwargs_)
         self.nin = nin
         self.type = 'function'
-        
 
         if isinstance(func, (list, tuple)):
             for f in func:
@@ -267,14 +285,34 @@ class _Function(Function):
                 # we can check the number of arguments
                 n = len(inspect.signature(func).parameters)
                 assert nin + len(args) == n, 'argument count mismatch'
-            self.nout = 1
+            self.nout = nout
             
         self.func  = func
+        if dict:
+            self.userdata = {}
+            args += (self.userdata,)
         self.args = args
         self.kwargs = kwargs
 
     def output(self, t=None):
-        return [self.func(*self.inputs, *self.args, **self.kwargs)]
+        if callable(self.func):
+            # single function
+            val = self.func(*self.inputs, *self.args, **self.kwargs)
+            if isinstance(val, (list, tuple)):
+                if len(val) != self.nout:
+                    raise RuntimeError('Function returns wrong number of arguments: ' + str(self))
+                return val
+            else:
+                if self.nout != 1:
+                    raise RuntimeError('Function returns wrong number of arguments: ' + str(self))
+                return [val]
+        else:
+            # list of functions
+            out = []
+            for f in self.func:
+                val = f(*self.inputs, *self.args, **self.kwargs)
+                out.append(val)
+            return out
         
 @block
 class _Interpolate(Function):
