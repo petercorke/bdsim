@@ -21,7 +21,7 @@ from bdsim.components import Block, Wire, Plug
 
 
 
-debuglist = () # ('propagate', 'state', 'deriv')
+debuglist = [] # ('propagate', 'state', 'deriv')
 
 def DEBUG(debug, *args):
     if debug in debuglist:
@@ -41,10 +41,32 @@ class Simulation:
         self.T = None           # maximum simulation time
         self.t = None           # current time
         self.fignum = 0
+        self.stop = None
+
+
+        # command line arguments and graphics
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--backend', '-b', type=str, metavar='BACKEND', default='Qt5Agg',
+                            help='matplotlib backend to choose')
+        parser.add_argument('--tiles', '-t', type=str, default='3x4', metavar='ROWSxCOLS',
+                            help='window tiling as NxM')
+        parser.add_argument('--nographics', '-g', default=True, action='store_const', const=False, dest='graphics',
+                            help='disable graphic display')
+        parser.add_argument('--animation', '-a', default=False, action='store_const', const=True,
+                            help='animate graphics')
+        parser.add_argument('--debug', '-d', type=str, metavar='[psd]', default='', 
+                            help='debug flags')
+        args = parser.parse_args()      
         
+        global debuglist
+        if 'p' in args.debug:
+            debuglist.append('propagate')
+        if 's' in args.debug:
+            debuglist.append('state')
+        if 'd' in args.debug:
+            debuglist.append('deriv')
         
         # load modules from the blocks folder
-        
         def new_method(cls):
             def block_method_wrapper(self, *args, **kwargs):
                 block = cls(*args, **kwargs)
@@ -105,18 +127,6 @@ class Simulation:
                         print('  loading blocks from {:s}: {:s}'.format(file, ', '.join(blocknames)))
                     del module.module_blocklist[:]  # clear the list
                     
-
-        # command line arguments and graphics
-        parser = argparse.ArgumentParser()
-        parser.add_argument('--backend', '-b', type=str, metavar='BACKEND', default='Qt5Agg',
-                            help='matplotlib backend to choose')
-        parser.add_argument('--tiles', '-t', type=str, default='3x4', metavar='ROWSxCOLS',
-                            help='window tiling as NxM')
-        parser.add_argument('--nographics', '-g', default=True, action='store_const', const=False, dest='graphics',
-                            help='disable graphic display')
-        parser.add_argument('--animation', '-a', default=False, action='store_const', const=True,
-                            help='animate graphics')
-        args = parser.parse_args()
 
         # graphics initialization
         if args.animation:
@@ -301,6 +311,13 @@ class Simulation:
                 if len(connections) == 0:
                     print('  WARNING: block {:s} output {:d} is not connected'.format(str(b), port))
                     
+            if b._inport_names is not None:
+                assert len(b._inport_names) == b.nin, 'incorrect number of input names given: ' + str(b)
+            if b._outport_names is not None:
+                assert len(b._outport_names) == b.nout, 'incorrect number of output names given: ' + str(b)
+            if b._state_names is not None:
+                assert len(b._state_names) == b.nstates, 'incorrect number of state names given: ' + str(b)
+                    
         # check for cycles of function blocks
         def _DFS(path):
             start = path[0]
@@ -447,7 +464,7 @@ class Simulation:
             typ = type(value).__name__
             if isinstance(value, np.ndarray):
                 typ += ' {:s}'.format(str(value.shape))
-            cfmt.add( w.id, start, end, w.str2, typ)
+            cfmt.add( w.id, start, end, w.fullname, typ)
         cfmt.print()
             
 
@@ -555,7 +572,7 @@ class Simulation:
         """
         #print('in evaluate at t=', t)
         self.t = t
-        DEBUG('state', 't=', t, ', x=', x)
+        DEBUG('state', '>>>>>>>>> t=', t, ', x=', x, '>>>>>>>>>>>>>>>>')
         
         # reset all the blocks ready for the evalation
         self.reset()
@@ -602,7 +619,6 @@ class Simulation:
         all its inputs defined, in which case we recurse.
 
         """
-        DEBUG('propagate', '  '*depth, 'propagating: {:s} @ t={:.3f}'.format(str(b),t))
         
         # get output of block at time t
         try:
@@ -610,10 +626,17 @@ class Simulation:
         except:
             print('Error at t={:f} in computing output of block {:s}'.format(t, str(b)))
             raise
-        
+            
+        DEBUG('propagate', '  '*depth, 'propagating: {:s} @ t={:.3f}: output = '.format(str(b),t) + str(out))
+
         # check for validity
         assert isinstance(out, list) and len(out) == b.nout, 'block output is wrong type/length'
         # TODO check output validity once at the start
+        
+
+        # check it has no nan or inf values
+        if not np.isfinite(out).any():
+            raise RuntimeError('block outputs nan')
         
         for (port, outwires) in enumerate(b.outports):
             val = out[port]
@@ -738,7 +761,15 @@ if __name__ == "__main__":
     # tscope= s.SCOPE(name='theta')
     scope = s.SCOPEXY(scale=[0, 10, 0, 1.2])
     
-
+    # convert x,y,theta state to polar form
+    def polar(x, block):
+        rho = math.sqrt(x[0]**2 + x[1]**2)
+        beta = -math.atan2(-x[1], -x[0])
+        alpha = -x[2] - beta
+        
+    polar = s.FUNCTION(polar, nout=4, block=True, name='polar', inp_names=('x',),
+        outp_names=(r'$\rho$', r'$\alpha$', r'$\beta', 'direction'))
+    
     s.connect(bike[0:3], disp[0:3])
     s.connect(bike[0:2], scope)
     s.connect(speed, bike.v)
