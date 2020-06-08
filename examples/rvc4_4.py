@@ -17,7 +17,7 @@ heading_error = s.SUM('+-', angles=True)
 Kv = s.GAIN(0.5)
 Kh = s.GAIN(4)
 bike = s.BICYCLE(x0=[5, 2, 0])
-xyscope = s.SCOPEXY(scale=[0, 10], init=graphics)
+xyscope = s.VEHICLE(scale=[0, 10], size=0.7, shape='box', init=graphics)
 vscope = s.SCOPE(name='velocity')
 hscope = s.SCOPE(name='heading')
 mux = s.MUX(2)
@@ -31,11 +31,14 @@ s.connect(bike[2], heading_error[1])
 s.connect(heading_error, hscope)
 s.connect(heading_error, Kh)
 s.connect(Kh, bike[1])
-s.connect(bike[0:2], mux, xyscope)
+s.connect(bike[0:2], mux)
+s.connect(bike[0:3], xyscope[0:3])
 s.connect(mux, error[1])
 
 s.compile()
 s.report()
+
+vscope.info
 
 out = s.run(block=True)
 

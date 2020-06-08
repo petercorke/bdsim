@@ -18,6 +18,7 @@ s.connect(bike[0:2], scope)
 s.connect(bike[2], tscope)
 
 s.compile()
+s.report()
 
 out = s.run(dt=0.05, block=False)
 
