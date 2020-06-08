@@ -510,6 +510,7 @@ class Simulation:
         assert self.compiled, 'Network has not been compiled'
         self.T = T
         self.count = 0
+        self.stop = None
         
         # tell all blocks we're doing a simulation
         self.start()
@@ -529,6 +530,10 @@ class Simulation:
             t = []
             x = []
             while integrator.status == 'running':
+                
+                if self.stop is not None:
+                     print('--- stop requested at t={:f} by {:s}'.format(self.t, str(self.stop)))
+                     break
                 # step the integrator, calls _deriv multiple times
                 integrator.step()
                 

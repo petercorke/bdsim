@@ -375,7 +375,6 @@ class _Scope(Sink):
             else:
                 raise ValueError('incorrect number of labels specified for Scope')
                 
-            print(self.labels)
             for i in range(0, self.nin):
                 args = []
                 kwargs = {}
@@ -424,6 +423,28 @@ class _Scope(Sink):
         if self.sim.graphics:
             plt.show(block=block)
 
+# ------------------------------------------------------------------------ #
+            
+
+@block
+class _Stop(Sink):
+    def __init__(self, stop, **kwargs):
+
+        super().__init__(**kwargs)
+        self.nin = 1
+        self.type = 'stop'
+                    
+        self.stop  = stop
+
+    def step(self):
+        if isinstance(self.stop, bool):
+            stop = self.inputs[0]
+        elif callable(self.stop):
+            stop = self.stop(self.inputs[0])
+        else:
+            raise RuntimeError('input to stop must be boolean or callable')
+        if stop:
+            self.sim.stop = self
 
 
 if __name__ == "__main__":
