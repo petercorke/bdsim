@@ -200,7 +200,7 @@ class _Clip(Function):
         if isinstance(input, np.ndarray):
             out = np.clip(input, self.min, self.max)
         else:
-            out = min(self.max, max(input, -self.min))
+            out = min(self.max, max(input, self.min))
         return [ out ]
 # ------------------------------------------------------------------------ #
 
@@ -297,7 +297,10 @@ class _Function(Function):
     def output(self, t=None):
         if callable(self.func):
             # single function
-            val = self.func(*self.inputs, *self.args, **self.kwargs)
+            try:
+                val = self.func(*self.inputs, *self.args, **self.kwargs)
+            except TypeError:
+                raise RuntimeError('Function invocation failed, check number of arguments') from None
             if isinstance(val, (list, tuple)):
                 if len(val) != self.nout:
                     raise RuntimeError('Function returns wrong number of arguments: ' + str(self))
@@ -310,7 +313,10 @@ class _Function(Function):
             # list of functions
             out = []
             for f in self.func:
-                val = f(*self.inputs, *self.args, **self.kwargs)
+                try:
+                    val = f(*self.inputs, *self.args, **self.kwargs)
+                except TypeError:
+                    raise RuntimeError('Function invocation failed, check number of arguments') from None
                 out.append(val)
             return out
         
