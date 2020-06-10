@@ -40,17 +40,46 @@ import inspect
 from bdsim.components import *
 
 # ------------------------------------------------------------------------ #
-#@block
-# class _Integrator(Transfer):
-#     def __init__(self, N=1, order=1, limit=None, **kwargs):
-#         super().__init__(**kwargs)
-#         self.N = N
-#         self.order = order
-#         self.limit = limit
+@block
+class _Integrator(Transfer):
+    def __init__(self, x0=0, min=None, max=None, **kwargs):
+        super().__init__(**kwargs)
+
+        self.limit = limit
         
-#         self.nin = N
-#         self.nout = N
-#         self.nstates = N*order
+        self.nin = 1
+        self.nout = 1
+        if isinstance(x0, np.ndarray):
+            assert len(x0.shape) == 1, 'state must be a vector'
+            self.nstates = x0.shape[0]
+            if min is None:
+                min = [-math.inf] * self.nstates
+            else:
+                assert len(min) == self.nstates, 'minimum bound length must match x0'
+                
+            if max is None:
+                max = [math.inf] * self.nstates
+            else:
+                assert len(max) == self.nstates, 'mmaximum bound length must match x0'
+        elif isinstance(x0, (int, float)):
+            self.nstates = 1
+            if min is None:
+                min = -math.inf
+            if max is None:
+                max = math.inf
+        self.x0 = x0
+        self.min = min
+        self.max = max
+        
+    def output(self, t=None):
+        return list(self._x)
+    
+    def deriv(self):
+        xd = np.array(self.inputs)
+        for i in range(0, self.nstates):
+            if x[i] < self.min[i] or x[i] > self.max[i]:
+                xd[i] = 0
+        return xd
 
 # ------------------------------------------------------------------------ #
 
@@ -140,7 +169,7 @@ class _LTI_SISO(Transfer):
             print('C=', self.C)
         
     def output(self, t=None):
-        return list(self.C*self._x)
+        return list(self.C@self._x)
     
     def deriv(self):
         return self.A@self._x + self.B@np.array(self.inputs)

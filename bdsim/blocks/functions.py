@@ -477,6 +477,75 @@ if __name__ == "__main__":
             block.setinputs(math.pi, -math.pi)
             out = block.output()
             self.assertEqual(out[0], 0)
+            
+        def test_prod(self):
+
+            block = _Prod('**')
+            block.setinputs(10, 5)
+            out = block.output()
+            self.assertIsInstance(out, list)
+            self.assertEqual(len(out), 1)
+            self.assertEqual(out[0], 50)
+
+            block = _Prod('*/')
+            block.setinputs(10, 5)
+            out = block.output()
+            self.assertEqual(out[0], 2)
+
+            block = _Prod('/*')
+            block.setinputs(10, 5)
+            out = block.output()
+            self.assertEqual(out[0], 0.5)
+            
+        def test_clip(self):
+            
+            block = _Clip(min=-1, max=1)
+            block.setinputs(0)
+            out = block.output()
+            self.assertIsInstance(out, list)
+            self.assertEqual(len(out), 1)
+            self.assertEqual(out[0], 0)
+            
+            block.setinputs(1)
+            out = block.output()
+            self.assertEqual(out[0], 1)
+            
+            block.setinputs(10)
+            out = block.output()
+            self.assertEqual(out[0], 1)
+            
+            block.setinputs(-1)
+            out = block.output()
+            self.assertEqual(out[0], -1)
+            
+            block.setinputs(-10)
+            out = block.output()
+            self.assertEqual(out[0], -1)
+            
+            block = _Clip(min=-2, max=3)
+            block.setinputs(1)
+            out = block.output()
+            self.assertEqual(out[0], 1)
+            
+            block.setinputs(10)
+            out = block.output()
+            self.assertEqual(out[0], 3)
+            
+            block.setinputs(-1)
+            out = block.output()
+            self.assertEqual(out[0], -1)
+            
+            block.setinputs(-10)
+            out = block.output()
+            self.assertEqual(out[0], -2)
+            
+            block.setinputs(np.r_[-10, -2, -1, 0, 1, 3, 10])
+            out = block.output()
+            self.assertIsInstance(out, list)
+            self.assertEqual(len(out), 1)
+            nt.assert_equal(out[0], np.r_[-2, -2, -1, 0, 1, 3, 3])
+            
+
 
         def test_function(self):
 

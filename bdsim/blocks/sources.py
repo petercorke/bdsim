@@ -470,4 +470,24 @@ if __name__ == "__main__":
             out = block.output(2.1)
             self.assertEqual(out[0], 1)
             
+
+        def test_piecewise(self):
+            
+            block = _Piecewise( (0,0), (1,1), (2,1), (2,0), (10,0))
+            out = block.output(0)
+            self.assertIsInstance(out, list)
+            self.assertEqual(len(out), 1)
+            self.assertEqual(out[0], 0)
+            
+            self.assertEqual(block.output(0.5)[0], 0)
+            self.assertEqual(block.output(1)[0], 1)
+            self.assertEqual(block.output(1.1)[0], 1)
+            self.assertEqual(block.output(1.9)[0], 1)
+            self.assertEqual(block.output(2)[0], 0)
+            self.assertEqual(block.output(2.1)[0], 0)
+            self.assertEqual(block.output(9)[0], 0)
+
+            
+        
+            
     unittest.main()
