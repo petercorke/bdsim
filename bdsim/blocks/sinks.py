@@ -125,6 +125,7 @@ class _ScopeXY(Sink):
                 self.ax.set_ylim(*self.scale[2:4])
             if self.init is not None:
                 self.init(self.ax)
+            super().start()
 
         
     def step(self):
@@ -143,10 +144,12 @@ class _ScopeXY(Sink):
             if self.scale == 'auto':
                 self.ax.relim()
                 self.ax.autoscale_view()
+            super.step()
         
     def done(self, block=False, **kwargs):
         if self.sim.graphics:
             plt.show(block=block)
+            super.done()
             
 # ------------------------------------------------------------------------ #
 
@@ -252,7 +255,7 @@ class _Vehicle(Sink):
                 self.ax.set_ylim(*self.scale[2:4])
             if self.init is not None:
                 self.init(self.ax)
-
+            super().start()
         
     def step(self):
         # inputs are set
@@ -274,10 +277,13 @@ class _Vehicle(Sink):
             if self.scale == 'auto':
                 self.ax.relim()
                 self.ax.autoscale_view()
+            super().step()
         
     def done(self, block=False, **kwargs):
         if self.sim.graphics:
             plt.show(block=block)
+            
+            super.done()
 
 # ------------------------------------------------------------------------ #
 
@@ -342,7 +348,6 @@ class _Scope(Sink):
             if nin is not None:
                 assert nin == len(labels), 'need one label per input'
             nin = len(labels)
-
             
         self.nin = nin
         
@@ -398,6 +403,7 @@ class _Scope(Sink):
             self.ax.set_title(self.name)
             if self.scale != 'auto':
                 self.ax.set_ylim(*self.scale)
+            super().start()
         
     def step(self):
         # inputs are set
@@ -418,10 +424,12 @@ class _Scope(Sink):
                 if self.scale == 'auto':
                     self.ax.relim()
                     self.ax.autoscale_view(scalex=False, scaley=True)
+                super.step()
         
     def done(self, block=False, **kwargs):
         if self.sim.graphics:
             plt.show(block=block)
+            super.done()
 
 # ------------------------------------------------------------------------ #
             

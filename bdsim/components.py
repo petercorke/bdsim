@@ -305,13 +305,29 @@ class Sink(Block):
     
     blockclass = "sink"
     
-    def __init__(self, **kwargs):
+    def __init__(self, movie=None, **kwargs):
         #print('Sink constructor')
         super().__init__(blockclass='sink', **kwargs)
         self.nin = 1
         self.nout = 0
         self.nstates = 0
+        self.movie = movie
 
+    def start(self):
+        if self.movie is not None:
+            self.writer = animation.FFMpegWriter(fps=10, extra_args=['-vcodec', 'libx264'])
+            self.writer.setup(fig=self.fig, outfile=self.movie)
+                
+    def step(self):
+        if self.movie is not None:
+            self.writer.grab_frame()
+                
+                
+    def done(self):
+        if self.movie is not None:
+            self.writer.finish()
+            self.cleanup()
+            
 
 class Source(Block):
     """
