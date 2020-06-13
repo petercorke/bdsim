@@ -301,18 +301,16 @@ class Block:
     def step(self):  # valid
         pass
         
-class Sink(Block):
+class SinkBlock(Block):
     """
     A Sink is a subclass of Block that represents a block that has inputs
     but no outputs. Typically used to save data to a variable, file or 
     graphics.
     """
-    
-    blockclass = "sink"
-    
+    blockclass='sink'
     def __init__(self, movie=None, **kwargs):
         #print('Sink constructor')
-        super().__init__(blockclass='sink', **kwargs)
+        super().__init__(**kwargs)
         self.nin = 1
         self.nout = 0
         self.nstates = 0
@@ -334,31 +332,30 @@ class Sink(Block):
             self.cleanup()
             
 
-class Source(Block):
+class SourceBlock(Block):
     """
     A Source is a subclass of Block that represents a block that has outputs
     but no inputs.  Its output is a function of parameters and time.
     """
-    blockclass = "source"
-    
+    blockclass = 'source'
     def __init__(self, **kwargs):
         #print('Source constructor')
-        super().__init__(blockclass='source', **kwargs)
+        super().__init__(**kwargs)
         self.nin = 0
         self.nout = 1
         self.nstates = 0
         
-class Transfer(Block):
+class TransferBlock(Block):
     """
     A Transfer is a subclass of Block that represents a block with inputs
     outputs and states. Typically used to describe a continuous time dynamic
     system, either linear or nonlinear.
     """
-    blockclass = "transfer"
+    blockclass = 'transfer'
     
     def __init__(self, **kwargs):
         #print('Transfer constructor')
-        super().__init__(blockclass='transfer', **kwargs)
+        super().__init__(**kwargs)
         
     def reset(self):
         super().reset()
@@ -377,14 +374,26 @@ class Transfer(Block):
                 
     
 
-class Function(Block):
+class FunctionBlock(Block):
     """
     A Function is a subclass of Block that represents a block that has inputs
     and outputs but no state variables.  Typically used to describe operations
     such as gain, summation or various mappings.
     """
-    blockclass = "function"
+    blockclass = 'function'
     
     def __init__(self, **kwargs):
-        super().__init__(blockclass='function', **kwargs)
+        super().__init__(**kwargs)
+        self.nstates = 0
+        
+
+class SubsystemBlock(Block):
+    """
+    A Function is a subclass of Block that represents a block that has inputs
+    and outputs but no state variables.  Typically used to describe operations
+    such as gain, summation or various mappings.
+    """
+    blockclass = 'subsystem'
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.nstates = 0
