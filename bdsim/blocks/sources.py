@@ -34,12 +34,12 @@ Created on Thu May 21 06:39:29 2020
 import numpy as np
 import math
 
-from bdsim.components import *
+from bdsim.components import SourceBlock, block
 
 
 # ------------------------------------------------------------------------ #
 @block
-class _Constant(Source):
+class Constant(SourceBlock):
     
     def __init__(self, value=None, **kwargs):
         """
@@ -69,7 +69,7 @@ class _Constant(Source):
 # ------------------------------------------------------------------------ #
 
 @block
-class _WaveForm(Source):
+class WaveForm(SourceBlock):
     def __init__(self, wave='square',
                  freq=1, unit='Hz', phase=0, amplitude=1, offset=0,
                  min=None, max=None, duty=0.5,
@@ -173,7 +173,7 @@ class _WaveForm(Source):
 # ------------------------------------------------------------------------ #
 
 @block
-class _Piecewise(Source):
+class Piecewise(SourceBlock):
     def __init__(self, *seq,
                   **kwargs):
         super().__init__(**kwargs)
@@ -191,7 +191,7 @@ class _Piecewise(Source):
 # ------------------------------------------------------------------------ #
 
 @block
-class _Step(Source):
+class Step(SourceBlock):
     def __init__(self, T=1,
                  off=0, on=1,
                  **kwargs):
@@ -229,265 +229,7 @@ class _Step(Source):
 
 if __name__ == "__main__":
 
+    import pathlib
+    import os.path
 
-    import unittest
-    import numpy.testing as nt
-    
-    a = _Piecewise( (0,0), (1, 1), (2,0) )
-    print(a.output(0))
-    print(a.output(0.9))
-    print(a.output(1.1))
-    print(a.output(1.9))
-    print(a.output(2.1))
-    print(a.output(10))
-
-    class SourceBlockTest(unittest.TestCase):
-
-        def test_constant(self):
-
-            block = _Constant(value=7)
-            out = block.output()
-            self.assertIsInstance(out, list)
-            self.assertEqual(len(out), 1)
-            self.assertEqual(out[0], 7)
-
-            block = _Constant(value=np.r_[1,2,3])
-            out = block.output()
-            self.assertIsInstance(out, list)
-            self.assertEqual(len(out), 1)
-            nt.assert_array_almost_equal(out[0], np.r_[1,2,3])
-
-        def test_waveform_sine(self):
-
-            block = _WaveForm(wave='sine')
-            out = block.output(0)
-            self.assertIsInstance(out, list)
-            self.assertEqual(len(out), 1)
-            self.assertAlmostEqual(out[0], 0)
-            out = block.output(0.25)
-            self.assertAlmostEqual(out[0], 1)
-            out = block.output(0.75)
-            self.assertAlmostEqual(out[0], -1)
-
-            block = _WaveForm(wave='sine', amplitude=2)
-            out = block.output(0)
-            self.assertAlmostEqual(out[0], 0)
-            out = block.output(0.25)
-            self.assertAlmostEqual(out[0], 2)
-            out = block.output(0.75)
-            self.assertAlmostEqual(out[0], -2)
-
-            block = _WaveForm(wave='sine', offset=1)
-            out = block.output(0)
-            self.assertAlmostEqual(out[0], 1)
-            out = block.output(0.25)
-            self.assertAlmostEqual(out[0], 2)
-            out = block.output(0.75)
-            self.assertAlmostEqual(out[0], 0)
-
-            block = _WaveForm(wave='sine', amplitude=2, offset=1)
-            out = block.output(0)
-            self.assertAlmostEqual(out[0], 1)
-            out = block.output(0.25)
-            self.assertAlmostEqual(out[0], 3)
-            out = block.output(0.75)
-            self.assertAlmostEqual(out[0], -1)
-
-            block = _WaveForm(wave='sine', min=10, max=12)
-            out = block.output(0)
-            self.assertAlmostEqual(out[0], 11)
-            out = block.output(0.25)
-            self.assertAlmostEqual(out[0], 12)
-            out = block.output(0.75)
-            self.assertAlmostEqual(out[0], 10)
-
-            block = _WaveForm(wave='sine', phase=0.25)
-            out = block.output(0)
-            self.assertAlmostEqual(out[0], -1)
-            out = block.output(0.25)
-            self.assertAlmostEqual(out[0], 0)
-            out = block.output(0.75)
-            self.assertAlmostEqual(out[0], 0)
-
-            block = _WaveForm(wave='sine', unit='rad/s')
-            out = block.output(0)
-            self.assertIsInstance(out, list)
-            self.assertAlmostEqual(len(out), 1)
-            self.assertAlmostEqual(out[0], 0)
-            out = block.output(math.pi/2)
-            self.assertAlmostEqual(out[0], 1)
-            out = block.output(3/2*math.pi)
-            self.assertAlmostEqual(out[0], -1)
-            
-        def test_waveform_triangle(self):
-
-            block = _WaveForm(wave='triangle')
-            out = block.output(0)
-            self.assertIsInstance(out, list)
-            self.assertEqual(len(out), 1)
-            self.assertAlmostEqual(out[0], 0)
-            out = block.output(0.25)
-            self.assertAlmostEqual(out[0], 1)
-            out = block.output(0.75)
-            self.assertAlmostEqual(out[0], -1)
-
-            block = _WaveForm(wave='triangle', amplitude=2)
-            out = block.output(0)
-            self.assertAlmostEqual(out[0], 0)
-            out = block.output(0.25)
-            self.assertAlmostEqual(out[0], 2)
-            out = block.output(0.75)
-            self.assertAlmostEqual(out[0], -2)
-
-            block = _WaveForm(wave='triangle', offset=1)
-            out = block.output(0)
-            self.assertAlmostEqual(out[0], 1)
-            out = block.output(0.25)
-            self.assertAlmostEqual(out[0], 2)
-            out = block.output(0.75)
-            self.assertAlmostEqual(out[0], 0)
-
-            block = _WaveForm(wave='triangle', amplitude=2, offset=1)
-            out = block.output(0)
-            self.assertAlmostEqual(out[0], 1)
-            out = block.output(0.25)
-            self.assertAlmostEqual(out[0], 3)
-            out = block.output(0.75)
-            self.assertAlmostEqual(out[0], -1)
-
-            block = _WaveForm(wave='triangle', min=10, max=12)
-            out = block.output(0)
-            self.assertAlmostEqual(out[0], 11)
-            out = block.output(0.25)
-            self.assertAlmostEqual(out[0], 12)
-            out = block.output(0.75)
-            self.assertAlmostEqual(out[0], 10)
-
-            block = _WaveForm(wave='triangle', phase=0.25)
-            out = block.output(0)
-            self.assertAlmostEqual(out[0], -1)
-            out = block.output(0.25)
-            self.assertAlmostEqual(out[0], 0)
-            out = block.output(0.75)
-            self.assertAlmostEqual(out[0], 0)
-
-            block = _WaveForm(wave='triangle', unit='rad/s')
-            out = block.output(0)
-            self.assertIsInstance(out, list)
-            self.assertAlmostEqual(len(out), 1)
-            self.assertAlmostEqual(out[0], 0)
-            out = block.output(math.pi/2)
-            self.assertAlmostEqual(out[0], 1)
-            out = block.output(3/2*math.pi)
-            self.assertAlmostEqual(out[0], -1)
-            
-        def test_waveform_square(self):
-
-            block = _WaveForm(wave='square')
-            out = block.output(0)
-            self.assertIsInstance(out, list)
-            self.assertEqual(len(out), 1)
-            self.assertAlmostEqual(out[0], 1)
-            out = block.output(0.25)
-            self.assertAlmostEqual(out[0], 1)
-            out = block.output(0.75)
-            self.assertAlmostEqual(out[0], -1)
-
-            block = _WaveForm(wave='square', amplitude=2)
-            out = block.output(0)
-            self.assertAlmostEqual(out[0], 2)
-            out = block.output(0.25)
-            self.assertAlmostEqual(out[0], 2)
-            out = block.output(0.75)
-            self.assertAlmostEqual(out[0], -2)
-
-            block = _WaveForm(wave='square', offset=1)
-            out = block.output(0)
-            self.assertAlmostEqual(out[0], 2)
-            out = block.output(0.25)
-            self.assertAlmostEqual(out[0], 2)
-            out = block.output(0.75)
-            self.assertAlmostEqual(out[0], 0)
-
-            block = _WaveForm(wave='square', amplitude=2, offset=1)
-            out = block.output(0)
-            self.assertAlmostEqual(out[0], 3)
-            out = block.output(0.25)
-            self.assertAlmostEqual(out[0], 3)
-            out = block.output(0.75)
-            self.assertAlmostEqual(out[0], -1)
-
-            block = _WaveForm(wave='square', min=10, max=12)
-            out = block.output(0)
-            self.assertAlmostEqual(out[0], 12)
-            out = block.output(0.25)
-            self.assertAlmostEqual(out[0], 12)
-            out = block.output(0.75)
-            self.assertAlmostEqual(out[0], 10)
-
-            block = _WaveForm(wave='square', phase=0.25)
-            out = block.output(0)
-            self.assertAlmostEqual(out[0], -1)
-            out = block.output(0.25)
-            self.assertAlmostEqual(out[0], 1)
-            out = block.output(0.75)
-            self.assertAlmostEqual(out[0], -1)
-
-            block = _WaveForm(wave='square', unit='rad/s')
-            out = block.output(0)
-            self.assertIsInstance(out, list)
-            self.assertAlmostEqual(len(out), 1)
-            self.assertAlmostEqual(out[0], 1)
-            out = block.output(math.pi/2)
-            self.assertAlmostEqual(out[0], 1)
-            out = block.output(3/2*math.pi)
-            self.assertAlmostEqual(out[0], -1)
-            
-
-        def test_step(self):
-
-            block = _Step()
-            out = block.output(0)
-            self.assertIsInstance(out, list)
-            self.assertEqual(len(out), 1)
-            self.assertEqual(out[0], 0)
-
-            out = block.output(0.9)
-            self.assertEqual(out[0], 0)
-            out = block.output(1)
-            self.assertEqual(out[0], 1)
-
-            block = _Step(off=1, on=2)
-            out = block.output(1)
-            out = block.output(0.9)
-            self.assertEqual(out[0], 1)
-            out = block.output(1)
-            self.assertEqual(out[0], 2)
-            
-            block = _Step(T=2)
-            out = block.output(1.9)
-            self.assertEqual(out[0], 0)
-            out = block.output(2.1)
-            self.assertEqual(out[0], 1)
-            
-
-        def test_piecewise(self):
-            
-            block = _Piecewise( (0,0), (1,1), (2,1), (2,0), (10,0))
-            out = block.output(0)
-            self.assertIsInstance(out, list)
-            self.assertEqual(len(out), 1)
-            self.assertEqual(out[0], 0)
-            
-            self.assertEqual(block.output(0.5)[0], 0)
-            self.assertEqual(block.output(1)[0], 1)
-            self.assertEqual(block.output(1.1)[0], 1)
-            self.assertEqual(block.output(1.9)[0], 1)
-            self.assertEqual(block.output(2)[0], 0)
-            self.assertEqual(block.output(2.1)[0], 0)
-            self.assertEqual(block.output(9)[0], 0)
-
-            
-        
-            
-    unittest.main()
+    exec(open(os.path.join(pathlib.Path(__file__).parent.absolute(), "test_sources.py")).read())

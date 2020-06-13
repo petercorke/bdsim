@@ -17,9 +17,7 @@ import scipy.integrate as integrate
 import matplotlib
 import matplotlib.pyplot as plt
 
-from bdsim.components import Block, Wire, Plug
-
-
+from bdsim.components import *
 
 debuglist = [] # ('propagate', 'state', 'deriv')
 
@@ -87,48 +85,46 @@ class Simulation:
         # module's namespace.
         print('Initializing:')
         for file in os.listdir(os.path.join(os.path.dirname(__file__), 'blocks')):
-            if file.endswith('.py'):
+            if not file.startswith('test_') and file.endswith('.py'):
                 # valid python module, import it
                 try:
                     module = importlib.import_module('.' + os.path.splitext(file)[0], package='bdsim.blocks')
-                except:
+                except SyntaxError:
                     print('-- syntax error in block definiton: ' + file)
 
-                if hasattr(module, 'module_blocklist'):
-                    # it has @blocks defined
-                    blocknames = []
-                    for cls in module.__dict__['module_blocklist']:
-    
-                        if cls.blockclass in ('source', 'transfer', 'function'):
-                            # must have an output function
-                            valid = hasattr(cls, 'output') and \
-                                    callable(cls.output) and \
-                                    len(inspect.signature(cls.output).parameters) == 2
-                            if not valid:
-                                raise ImportError('class {:s} has missing/improper output method'.format(str(cls)))
-                            
-                        if cls.blockclass == 'sink':
-                            # must have a step function
-                            valid = hasattr(cls, 'step') and \
-                                    callable(cls.step) and \
-                                    len(inspect.signature(cls.step).parameters) == 1
-                            if not valid:
-                                raise ImportError('class {:s} has missing/improper step method'.format(str(cls)))
+                blocknames = []
+                for cls in blocklist:
 
-                        # create a function to invoke the block's constructor
-                        f = new_method(cls)
+                    if cls.blockclass in ('source', 'transfer', 'function'):
+                        # must have an output function
+                        valid = hasattr(cls, 'output') and \
+                                callable(cls.output) and \
+                                len(inspect.signature(cls.output).parameters) == 2
+                        if not valid:
+                            raise ImportError('class {:s} has missing/improper output method'.format(str(cls)))
                         
-                        # create the new method name, strip underscores and capitalize
-                        bindname = cls.__name__.strip('_').upper()
-                        blocknames.append(bindname)
-                        
-                        # set an attribute of the class
-                        #  it becomes a bound method of the instance.
-                        setattr(Simulation, bindname, f)
-    
-                    if len(blocknames) > 0:
-                        print('  loading blocks from {:s}: {:s}'.format(file, ', '.join(blocknames)))
-                    del module.module_blocklist[:]  # clear the list
+                    if cls.blockclass == 'sink':
+                        # must have a step function
+                        valid = hasattr(cls, 'step') and \
+                                callable(cls.step) and \
+                                len(inspect.signature(cls.step).parameters) == 1
+                        if not valid:
+                            raise ImportError('class {:s} has missing/improper step method'.format(str(cls)))
+
+                    # create a function to invoke the block's constructor
+                    f = new_method(cls)
+                    
+                    # create the new method name, strip underscores and capitalize
+                    bindname = cls.__name__.strip('_').upper()
+                    blocknames.append(bindname)
+                    
+                    # set an attribute of the class
+                    #  it becomes a bound method of the instance.
+                    setattr(Simulation, bindname, f)
+
+                if len(blocknames) > 0:
+                    print('  loading blocks from {:s}: {:s}'.format(file, ', '.join(blocknames)))
+                del blocklist[:]  # clear the list
                     
 
         # graphics initialization

@@ -35,7 +35,7 @@ import numpy as np
 import scipy.interpolate
 import math
 
-from bdsim.components import *
+from bdsim.components import FunctionBlock, block
 
 
 # PID
@@ -45,7 +45,7 @@ from bdsim.components import *
 
 
 @block
-class _Sum(Function):
+class Sum(FunctionBlock):
     def __init__(self, signs, angles=False, **kwargs):
         """
         Create a summing junction.
@@ -92,13 +92,15 @@ class _Sum(Function):
 
 # ------------------------------------------------------------------------ #
 @block
-class _Prod(Function):
-    def __init__(self, ops, **kwargs):
+class Prod(FunctionBlock):
+    def __init__(self, ops, *pos, matrix=False, **kwargs):
         """
         Create a product junction.
         
         :param signs: ops associated with input ports * or /
         :type signs: str
+        :param matrix: Arguments are matrices, use @ and np.linalg.inv, default False
+        :type matrix: bool
         :param **kwargs: common Block options
         :return: A PROD block
         :rtype: _Prod
@@ -112,13 +114,14 @@ class _Prod(Function):
         port 1 is divided.
 
         """
-        super().__init__(**kwargs)
+        super().__init__(*pos, **kwargs)
         assert isinstance(ops, str), 'first argument must be signs string'
         self.nin = len(ops)
         self.nout = 1
         self.type = 'prod'
         assert all([x in '*/' for x in ops]), 'invalid op'
         self.ops = ops
+        self.matrix = matrix
         
     def output(self, t=None):
         for i,input in enumerate(self.inputs):
@@ -126,19 +129,27 @@ class _Prod(Function):
                 if self.ops[i] == '*':
                     prod = input
                 else:
+                    if self.matrix:
+                        prod = numpy.linalg.inv(input)
                     prod = 1.0 / input
             else:
                 if self.ops[i] == '*':
-                    prod *= input
+                    if self.matrix:
+                        prod = prod @ input
+                    else:
+                        prod *= input
                 else:
-                    prod /= input
+                    if self.matrix:
+                        prod = prod @ numpy.linalg.inv(input)
+                    else:
+                        prod /= input
 
         return [prod]
 
 # ------------------------------------------------------------------------ #
 
 @block
-class _Gain(Function):
+class Gain(FunctionBlock):
     def __init__(self, gain, order='premul', **kwargs):
         """
         Create a gain block.
@@ -184,7 +195,7 @@ class _Gain(Function):
 # ------------------------------------------------------------------------ #
 
 @block
-class _Clip(Function):
+class Clip(FunctionBlock):
     def __init__(self, min=-math.inf, max=math.inf, **kwargs):
 
         super().__init__(**kwargs)
@@ -206,7 +217,7 @@ class _Clip(Function):
 
 # TODO can have multiple outputs: pass in a tuple of functions, return a tuple
 @block
-class _Function(Function):
+class Function(FunctionBlock):
     def __init__(self, func, nin=1, nout=1, dict=False, args=(), kwargs={}, **kwargs_):
         """
         Create a Python function block.
@@ -321,7 +332,7 @@ class _Function(Function):
             return out
         
 @block
-class _Interpolate(Function):
+class Interpolate(FunctionBlock):
     def __init__(self, x=None, y=None, xy=None, time=False, kind='linear', **kwargs):
         """
         
@@ -407,263 +418,7 @@ class _Interpolate(Function):
 
 if __name__ == "__main__":
 
-    import unittest
-    import numpy.testing as nt
+    import pathlib
+    import os.path
 
-    class FunctionBlockTest(unittest.TestCase):
-
-
-        def test_gain(self):
-
-            block = _Gain(2)
-            block.setinputs(1)
-            out = block.output()
-            self.assertIsInstance(out, list)
-            self.assertEqual(len(out), 1)
-            self.assertEqual(out[0], 2)
-
-            block = _Gain(2)
-            block.setinputs(np.r_[1,2,3])
-            out = block.output()
-            nt.assert_array_almost_equal(out[0], np.r_[2,4,6])
-
-            block = _Gain(np.r_[1,2,3])
-            block.setinputs(2)
-            out = block.output()
-            nt.assert_array_almost_equal(out[0], np.r_[2,4,6])
-
-            block = _Gain(np.array([[1,2],[3,4]]))
-            block.setinputs(2)
-            out = block.output()
-            nt.assert_array_almost_equal(out[0], np.array([[2,4],[6,8]]))
-
-            block = _Gain(np.array([[1,2],[3,4]]))
-            block.setinputs(np.r_[1,2])
-            out = block.output()
-            nt.assert_array_almost_equal(out[0], np.r_[5,11])
-
-            block = _Gain(np.array([[1,2],[3,4]]))
-            block.setinputs(np.array([[5,6],[7,8]]))
-            out = block.output()
-            nt.assert_array_almost_equal(out[0], np.array([[19,22],[43,50]]))
-
-            block = _Gain(np.array([[1,2],[3,4]]), order='postmul')
-            block.setinputs(np.array([[5,6],[7,8]]))
-            out = block.output()
-            nt.assert_array_almost_equal(out[0], np.array([[23,34],[31,46]]))
-
-        def test_sum(self):
-
-            block = _Sum('++')
-            block.setinputs(10, 5)
-            out = block.output()
-            self.assertIsInstance(out, list)
-            self.assertEqual(len(out), 1)
-            self.assertEqual(out[0], 15)
-
-            block = _Sum('+-')
-            block.setinputs(10, 5)
-            out = block.output()
-            self.assertEqual(out[0], 5)
-
-            block = _Sum('-+')
-            block.setinputs(10, 5)
-            out = block.output()
-            self.assertEqual(out[0], -5)
-
-            block = _Sum('+-', angles=True)
-            block.setinputs(math.pi, -6*math.pi)
-            out = block.output()
-            self.assertEqual(out[0], -math.pi)
-
-            block.setinputs(0, -5*math.pi)
-            out = block.output()
-            self.assertEqual(out[0], -math.pi)
-            
-            block.setinputs(math.pi, -math.pi)
-            out = block.output()
-            self.assertEqual(out[0], 0)
-            
-        def test_prod(self):
-
-            block = _Prod('**')
-            block.setinputs(10, 5)
-            out = block.output()
-            self.assertIsInstance(out, list)
-            self.assertEqual(len(out), 1)
-            self.assertEqual(out[0], 50)
-
-            block = _Prod('*/')
-            block.setinputs(10, 5)
-            out = block.output()
-            self.assertEqual(out[0], 2)
-
-            block = _Prod('/*')
-            block.setinputs(10, 5)
-            out = block.output()
-            self.assertEqual(out[0], 0.5)
-            
-        def test_clip(self):
-            
-            block = _Clip(min=-1, max=1)
-            block.setinputs(0)
-            out = block.output()
-            self.assertIsInstance(out, list)
-            self.assertEqual(len(out), 1)
-            self.assertEqual(out[0], 0)
-            
-            block.setinputs(1)
-            out = block.output()
-            self.assertEqual(out[0], 1)
-            
-            block.setinputs(10)
-            out = block.output()
-            self.assertEqual(out[0], 1)
-            
-            block.setinputs(-1)
-            out = block.output()
-            self.assertEqual(out[0], -1)
-            
-            block.setinputs(-10)
-            out = block.output()
-            self.assertEqual(out[0], -1)
-            
-            block = _Clip(min=-2, max=3)
-            block.setinputs(1)
-            out = block.output()
-            self.assertEqual(out[0], 1)
-            
-            block.setinputs(10)
-            out = block.output()
-            self.assertEqual(out[0], 3)
-            
-            block.setinputs(-1)
-            out = block.output()
-            self.assertEqual(out[0], -1)
-            
-            block.setinputs(-10)
-            out = block.output()
-            self.assertEqual(out[0], -2)
-            
-            block.setinputs(np.r_[-10, -2, -1, 0, 1, 3, 10])
-            out = block.output()
-            self.assertIsInstance(out, list)
-            self.assertEqual(len(out), 1)
-            nt.assert_equal(out[0], np.r_[-2, -2, -1, 0, 1, 3, 3])
-            
-
-
-        def test_function(self):
-
-            def test(x, y):
-                return x+y
-            
-            block = _Function(test, nin=2)
-            block.setinputs(1, 2)
-            out = block.output()
-            self.assertIsInstance(out, list)
-            self.assertAlmostEqual(len(out), 1)
-            self.assertEqual(out[0], 3)
-
-            
-            block = _Function(lambda x, y: x+y, nin=2)
-            block.setinputs(1, 2)
-            out = block.output()
-            self.assertEqual(out[0], 3)
-            
-            block = _Function(lambda x, y, a, b: x+y+a+b, nin=2, args=(3,4))
-            block.setinputs(1, 2)
-            out = block.output()
-            self.assertEqual(out[0], 10)
-
-            block = _Function(lambda x, y, a=0, b=0: x+y+a+b, nin=2, kwargs={'a':3, 'b':4})
-            block.setinputs(1, 2)
-            out = block.output()
-            self.assertEqual(out[0], 10)
-            
-        def test_interpolate(self):
-            block = _Interpolate(x=(0,5,10), y=(0,1,0))
-            block.setinputs(0)
-            out = block.output()
-            self.assertIsInstance(out, list)
-            self.assertAlmostEqual(len(out), 1)
-            block.setinputs(0); self.assertEqual(block.output()[0], 0)
-            block.setinputs(2.5); self.assertEqual(block.output()[0], 0.5)
-            block.setinputs(5); self.assertEqual(block.output()[0], 1)
-            block.setinputs(7.5); self.assertEqual(block.output()[0], 0.5)
-            block.setinputs(10); self.assertEqual(block.output()[0], 0)
-            
-            block = _Interpolate(x=np.r_[0,5,10], y=np.r_[0,1,0])
-            block.setinputs(0); self.assertEqual(block.output()[0], 0)
-            block.setinputs(2.5); self.assertEqual(block.output()[0], 0.5)
-            block.setinputs(5); self.assertEqual(block.output()[0], 1)
-            block.setinputs(7.5); self.assertEqual(block.output()[0], 0.5)
-            block.setinputs(10); self.assertEqual(block.output()[0], 0)
-            
-            block = _Interpolate(x=np.r_[0,5,10], y=np.r_[0,1,0].reshape((3,1)))
-            block.setinputs(0); self.assertEqual(block.output()[0], 0)
-            block.setinputs(2.5); self.assertEqual(block.output()[0], 0.5)
-            block.setinputs(5); self.assertEqual(block.output()[0], 1)
-            block.setinputs(7.5); self.assertEqual(block.output()[0], 0.5)
-            block.setinputs(10); self.assertEqual(block.output()[0], 0)
-            
-            block = _Interpolate(xy=[(0,0), (5,1), (10,0)])
-            block.setinputs(0); self.assertEqual(block.output()[0], 0)
-            block.setinputs(2.5); self.assertEqual(block.output()[0], 0.5)
-            block.setinputs(5); self.assertEqual(block.output()[0], 1)
-            block.setinputs(7.5); self.assertEqual(block.output()[0], 0.5)
-            block.setinputs(10); self.assertEqual(block.output()[0], 0)
-            
-            # block = _Interpolate(xy=np.array([(0,0), (5,1), (10,0)]).T)
-            # block.setinputs(0); self.assertEqual(block.output()[0], 0)
-            # block.setinputs(2.5); self.assertEqual(block.output()[0], 0.5)
-            # block.setinputs(5); self.assertEqual(block.output()[0], 1)
-            # block.setinputs(7.5); self.assertEqual(block.output()[0], 0.5)
-            # block.setinputs(10); self.assertEqual(block.output()[0], 0)
-            
-            
-            block = _Interpolate(x=(0,5,10), y=(0,1,0), time=True)
-            out = block.output(0)
-            self.assertIsInstance(out, list)
-            self.assertAlmostEqual(len(out), 1)
-            self.assertEqual(block.output(0)[0], 0)
-            self.assertEqual(block.output(2.5)[0], 0.5)
-            self.assertEqual(block.output(5)[0], 1)
-            self.assertEqual(block.output(7.5)[0], 0.5)
-            self.assertEqual(block.output(10)[0], 0)
-            
-            block = _Interpolate(x=np.r_[0,5,10], y=np.r_[0,1,0], time=True)
-            out = block.output(0)
-            self.assertIsInstance(out, list)
-            self.assertAlmostEqual(len(out), 1)
-            out = block.output(0)
-            self.assertIsInstance(out, list)
-            self.assertAlmostEqual(len(out), 1)
-            self.assertEqual(block.output(0)[0], 0)
-            self.assertEqual(block.output(2.5)[0], 0.5)
-            self.assertEqual(block.output(5)[0], 1)
-            self.assertEqual(block.output(7.5)[0], 0.5)
-            self.assertEqual(block.output(10)[0], 0)
-            
-            block = _Interpolate(xy=[(0,0), (5,1), (10,0)], time=True)
-            out = block.output(0)
-            self.assertIsInstance(out, list)
-            self.assertAlmostEqual(len(out), 1)
-            self.assertEqual(block.output(0)[0], 0)
-            self.assertEqual(block.output(2.5)[0], 0.5)
-            self.assertEqual(block.output(5)[0], 1)
-            self.assertEqual(block.output(7.5)[0], 0.5)
-            self.assertEqual(block.output(10)[0], 0)
-            
-            # block = _Interpolate(xy=np.array([(0,0), (5,1), (10,0)]), time=True)
-            # out = block.output(0)
-            # self.assertIsInstance(out, list)
-            # self.assertAlmostEqual(len(out), 1)
-            # self.assertEqual(block.output(0)[0], 0)
-            # self.assertEqual(block.output(2.5)[0], 0.5)
-            # self.assertEqual(block.output(5)[0], 1)
-            # self.assertEqual(block.output(7.5)[0], 0.)
-            # self.assertEqual(block.output(10)[0], 0)
-
-
-    unittest.main()
+    exec(open(os.path.join(pathlib.Path(__file__).parent.absolute(), "test_functions.py")).read())

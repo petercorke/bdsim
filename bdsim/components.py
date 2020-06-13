@@ -89,17 +89,21 @@ class Plug:
             
         
     def __mul__(left, right):
-        pass
-        # plug * plug
-        # plug * block
-        # make connection, return a plug
+        # called for the cases:
+        # block * block
+        # block * plug
+        s = left.block.sim
+        #assert isinstance(right, Block), 'arguments to * must be blocks not ports (for now)'
+        w = s.connect(left, right)  # add a wire
+        print('plug * ' + str(w))
+        return right
         
     def __repr__(self):
         return str(self.block) + "[" + str(self.port) + "]"
     
 # ------------------------------------------------------------------------- # 
 
-module_blocklist = []
+blocklist = []
 
 def block(cls):
     """
@@ -114,8 +118,9 @@ def block(cls):
     class MyBlock
 
     """
+    
     if issubclass(cls, Block):
-        module_blocklist.append(cls)  # append class to a global list
+        blocklist.append(cls)  # append class to a global list
     else:
         raise ValueError('@block used on non Block subclass')
     return cls

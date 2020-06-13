@@ -1,4 +1,4 @@
-from bdsim.components import Sink, Source
+from bdsim.components import SinkBlock, SourceBlock, block
 
 """
 could have if/else chain here to define these classes according to the platform

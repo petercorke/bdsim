@@ -37,11 +37,11 @@ import math
 import matplotlib.pyplot as plt
 import inspect
 
-from bdsim.components import *
+from bdsim.components import TransferBlock, block
 
 # ------------------------------------------------------------------------ #
 @block
-class _Integrator(Transfer):
+class Integrator(TransferBlock):
     def __init__(self, x0=0, min=None, max=None, **kwargs):
         super().__init__(**kwargs)
 
@@ -84,7 +84,7 @@ class _Integrator(Transfer):
 # ------------------------------------------------------------------------ #
 
 @block
-class _LTI_SISO(Transfer):
+class LTI_SISO(TransferBlock):
     def __init__(self, N=1, D=[1, 1], x0=None, verbose=False, **kwargs):
         """
         Create a SISO LTI block.
@@ -175,15 +175,9 @@ class _LTI_SISO(Transfer):
         return self.A@self._x + self.B@np.array(self.inputs)
 
 
-
 if __name__ == "__main__":
 
+    import pathlib
+    import os.path
 
-    import unittest
-
-    class BlockTest(unittest.TestCase):
-
-
-
-        def test_LTI_SISO(self):
-            pass
+    exec(open(os.path.join(pathlib.Path(__file__).parent.absolute(), "test_transfers.py")).read())

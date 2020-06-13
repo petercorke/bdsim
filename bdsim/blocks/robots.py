@@ -4,11 +4,11 @@ import math
 import matplotlib.pyplot as plt
 import time
 
-from bdsim.components import *
+from bdsim.components import TransferBlock, block
 
 
 @block
-class _Bicycle(Transfer):
+class Bicycle(TransferBlock):
     def __init__(self, x0=None, L=1, vlim=1, slim=1, **kwargs):
         """
         
@@ -58,7 +58,7 @@ class _Bicycle(Transfer):
         return xd
     
 @block
-class _Unicycle(Transfer):
+class Unicycle(TransferBlock):
     def __init__(self, x0=None, **kwargs):
         super().__init__(**kwargs)
         self.nin = 2
@@ -88,3 +88,11 @@ class _Unicycle(Transfer):
     # RNE
     # fkine
     # robot plot
+
+
+if __name__ == "__main__":
+
+    import pathlib
+    import os.path
+
+    exec(open(os.path.join(pathlib.Path(__file__).parent.absolute(), "test_robots.py")).read())

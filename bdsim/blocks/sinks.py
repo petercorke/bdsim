@@ -39,18 +39,13 @@ from matplotlib.pyplot import Polygon
 
 import spatialmath.base as sm
 
-from bdsim.components import *
-
-
-
-# TODO stop sim, pass in a lambda
-
+from bdsim.components import SinkBlock, block
 
 
 # ------------------------------------------------------------------------ #
 
 @block
-class _ScopeXY(Sink):
+class ScopeXY(SinkBlock):
     """
     Plot one input against the other.
     """
@@ -154,7 +149,7 @@ class _ScopeXY(Sink):
 # ------------------------------------------------------------------------ #
 
 @block
-class _Vehicle(Sink):
+class Vehicle(SinkBlock):
     """
     Animate a vehicle
     """
@@ -288,7 +283,7 @@ class _Vehicle(Sink):
 # ------------------------------------------------------------------------ #
 
 @block
-class _Scope(Sink):
+class Scope(SinkBlock):
     """
     Plot input ports against time.  Each line can have its own color or style.
     """
@@ -424,7 +419,7 @@ class _Scope(Sink):
                 if self.scale == 'auto':
                     self.ax.relim()
                     self.ax.autoscale_view(scalex=False, scaley=True)
-                super.step()
+                super().step()
         
     def done(self, block=False, **kwargs):
         if self.sim.graphics:
@@ -435,7 +430,7 @@ class _Scope(Sink):
             
 
 @block
-class _Stop(Sink):
+class Stop(SinkBlock):
     def __init__(self, stop, **kwargs):
 
         super().__init__(**kwargs)
@@ -455,15 +450,10 @@ class _Stop(Sink):
             self.sim.stop = self
 
 
+
 if __name__ == "__main__":
 
+    import pathlib
+    import os.path
 
-    import unittest
-
-    class BlockTest(unittest.TestCase):
-
-        def test_scope(self):
-            pass
-        
-        def test_scopexy(self):
-            pass
+    exec(open(os.path.join(pathlib.Path(__file__).parent.absolute(), "test_sinks.py")).read())

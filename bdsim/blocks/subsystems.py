@@ -1,4 +1,3 @@
-from bdsim.components import Sink, Source, Function
 
 
 # class _SubSystem(Function):
@@ -15,18 +14,25 @@ At compile time we remove/disable certain wires.
 Block should have the subsystem enable status
 """
 
-from bdsim.components import *
+from bdsim.components import SubsystemBlock, block
 
 
 @block
-class _Mux(Function):
-    def __init__(self, nin=1, **kwargs):
+class Subsystem(SubsystemBlock):
+    pass
 
-        super().__init__(**kwargs)
-        self.nin = nin
-        self.nout = 1
-        self.type = 'mux'
-    
-    def output(self, t=None):
-        # TODO, handle inputs that are vectors themselves
-        return [ np.r_[self.inputs] ]
+class InputPort(SubsystemBlock):
+    pass
+
+
+class OutputPort(SubsystemBlock):
+    pass
+
+
+
+if __name__ == "__main__":
+
+    import pathlib
+    import os.path
+
+    exec(open(os.path.join(pathlib.Path(__file__).parent.absolute(), "test_subsystems.py")).read())
