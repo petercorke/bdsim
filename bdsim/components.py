@@ -5,7 +5,7 @@ Components of the simulation system, namely blocks, wires and plugs.
 """
 
 import numpy as np
-
+from matplotlib import animation
 
                 
 class Wire:
@@ -50,6 +50,8 @@ class Wire:
         else:
             s += '??'
         return s
+
+        
 
 # ------------------------------------------------------------------------- # 
 
@@ -134,7 +136,7 @@ class Block:
     
     _latex_remove = str.maketrans({'$':'', '\\':'', '{':'', '}':'', '^':'', '_':''})
     
-    def __init__(self, blockclass=None, name=None, inp_names=None, outp_names=None, state_names=None, pos=None, **kwargs):
+    def __init__(self, name=None, inames=None, onames=None, snames=None, pos=None, **kwargs):
         #print('Block constructor'
         if name is not None:
             self.name_tex = name
@@ -147,21 +149,16 @@ class Block:
         self.inputs = None
         self.updated = False
         self.shape = 'block' # for box
-        self.blockclass = blockclass
         self._inport_names = None
         self._outport_names = None
         self._state_names = None
         
-        self._inport_names = None
-        self._outport_names = None
-        self._state_names = None
-        
-        if inp_names is not None:
-            self.inport_names(inp_names)
-        if outp_names is not None:
-            self.outport_names(outp_names)
-        if state_names is not None:
-            self.state_names(state_names)
+        if inames is not None:
+            self.inport_names(inames)
+        if onames is not None:
+            self.outport_names(onames)
+        if snames is not None:
+            self.state_names(snames)
 
         if len(kwargs) > 0:
             print('WARNING: unused arguments', kwargs.keys())
@@ -176,21 +173,33 @@ class Block:
             if k != 'sim':
                 print("  {:11s}{:s}".format(k+":", str(v)))
 
+    
+    # for use in unit testing
+    def _eval(self, *pos, t=None):
+        assert len(pos) == self.nin, 'wrong number of inputs provided'
+        self.inputs = pos
+        out = self.output(t=t)
+        assert isinstance(out, list), 'result must be a list'
+        assert len(out) == self.nout, 'result list is wrong length'
+        return out
         
     def __getitem__(self, port):
         # block[i] is a plug object
         return Plug(self, port)
     
-    def __setitem__(self, i, port):
-        pass
+    def __setitem__(self, port, src):
+        # b[port] = src
+        # src --> b[port]
+        self.sim.connect(src, self[port])
     
     def __mul__(left, right):
         # called for the cases:
         # block * block
         # block * plug
         s = left.sim
-        assert isinstance(right, Block), 'arguments to * must be blocks not ports (for now)'
-        s.connect(left, right)  # add a wire
+        #assert isinstance(right, Block), 'arguments to * must be blocks not ports (for now)'
+        w = s.connect(left, right)  # add a wire
+        print('block * ' + str(w))
         return right
         
         # make connection, return a plug

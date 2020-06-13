@@ -26,7 +26,8 @@ def DEBUG(debug, *args):
         print('DEBUG.{:s}: '.format(debug), *args)
 
 # ------------------------------------------------------------------------- #    
-    
+
+
 class Simulation:
     
     def __init__(self):
@@ -40,7 +41,8 @@ class Simulation:
         self.t = None           # current time
         self.fignum = 0
         self.stop = None
-
+        self.connnecterror = False
+        self.checkfinite = True
 
         # command line arguments and graphics
         parser = argparse.ArgumentParser()
@@ -292,14 +294,14 @@ class Simulation:
         self.nstates = nstates
          
 
-        # for each wire, connect the source block to the wire
+        # for each wire, connect the source and destination blocks to the wire
         for w in self.wirelist:
             try:
                 w.start.block.add_outport(w)
                 w.end.block.add_inport(w)
             except:
                 print('error connecting wire: ', w.fullname)
-                raise
+                error = True
             
         # check every block 
         for b in self.blocklist:
@@ -347,9 +349,16 @@ class Simulation:
         else:
             self.compiled = True
         
+        
         # evaluate the network once to check out wire types
         x = self.getstate()
-        self.evaluate(x, 0.0)
+        
+        try:
+            self.evaluate(x, 0.0)
+        except RuntimeError as err:
+            print('unrecoverable error in value propagation')
+            return False
+        return True
         
     def report(self):
         
@@ -384,7 +393,7 @@ class Simulation:
                 the arguments for subsequent data rows.
                 """
                 # parse the format line
-                re_fmt = re.compile(r"([a-zA-Z]+)\[([0-9]*|\*)([a-z])\]")
+                re_fmt = re.compile(r"([a-zA-Z]+)\[(\-?[0-9]*|\*)([a-z])\]")
                 
 
                 colheads = []
@@ -397,13 +406,21 @@ class Simulation:
                     colwidth = m.group(2)
                     if colwidth == '':
                         colwidth = len(colhead) + colsep
+                        coljust = '<'
                     elif colwidth == '*':
                         varwidth[i] = 0
                         colwidth = None
+                        coljust = '<'
                     else:
-                        colwidth = max(int(colwidth), len(colhead) + colsep)
+                        w = int(colwidth)
+                        if w < 0:
+                            coljust = '>'
+                            w = -w
+                        else:
+                            coljust = '<'
+                        colwidth = max(w, len(colhead) + colsep)
                     colfmt = m.group(3)
-                    columns.append( (colhead, colfmt, colwidth) )
+                    columns.append( (colhead, colfmt, coljust, colwidth) )
                 else:
                     self.ncols = i + 1
                     
@@ -426,7 +443,7 @@ class Simulation:
                 
                 colheads = []
                 for i, col in enumerate(self.columns):
-                    colhead, colfmt, colwidth = col
+                    colhead, colfmt, coljust, colwidth = col
                     
                     colheads.append(colhead)
                     
@@ -438,7 +455,7 @@ class Simulation:
                     else:
                         hfmt += "{:%ds}" % (colwidth,)
                         
-                    cfmt += "{:%d%s}" % (colwidth, colfmt)
+                    cfmt += "{:%s%d%s}" % (coljust, colwidth, colfmt)
                     hfmt += ' ' * self.colsep
                     cfmt += ' ' * self.colsep
                     sep += '-' * colwidth + '  '
@@ -458,7 +475,7 @@ class Simulation:
         
         # print all the wires
         print('\nWires::\n')
-        cfmt = TableFormat("id[3d] from[6s] to[6s] description[*s] type[*s]")
+        cfmt = TableFormat("id[3d] from[-6s] to[-6s] description[*s] type[*s]")
         for w in self.wirelist:
             start = "{:d}[{:d}]".format(w.start.block.id, w.start.port)
             end = "{:d}[{:d}]".format(w.end.block.id, w.end.port)
@@ -483,7 +500,7 @@ class Simulation:
         return x0
         
     def run(self, T=10.0, dt=0.1, solver='RK45', 
-            block=False,
+            block=False, checkfinite=True,
             **kwargs):
         """
         
@@ -493,6 +510,10 @@ class Simulation:
         :type dt: float, optional
         :param solver: integration method, defaults to 'RK45'
         :type solver: str, optional
+        :param block: matplotlib block at end of run, default False
+        :type block: bool
+        :param checkfinite: error if inf or nan on any wire, default True
+        :type checkfinite: bool
         :param **kwargs: passed to `scipy.integrate`
         :return: time history of signals and states
         :rtype: Sim class
@@ -513,7 +534,8 @@ class Simulation:
         assert self.compiled, 'Network has not been compiled'
         self.T = T
         self.count = 0
-        self.stop = None
+        self.stop = None # allow any block to stop simulation by setting this to the block's name
+        self.checkfinite = checkfinite
         
         # tell all blocks we're doing a simulation
         self.start()
@@ -525,35 +547,40 @@ class Simulation:
         def _deriv(t, y, s):
             return s.evaluate(y, t)
     
-        # out = scipy.integrate.solve_ivp(Simulation._deriv, args=(self,), t_span=(0,T), y0=x0, 
-        #             method=solver, t_eval=np.linspace(0, T, 100), events=None, **kwargs)
-        if len(x0) > 0:
-            integrator = integrate.__dict__[solver](lambda t, y: _deriv(t, y, self), t0=0.0, y0=x0, t_bound=T, max_step=dt)
-        
-            t = []
-            x = []
-            while integrator.status == 'running':
+        try:
+            # out = scipy.integrate.solve_ivp(Simulation._deriv, args=(self,), t_span=(0,T), y0=x0, 
+            #             method=solver, t_eval=np.linspace(0, T, 100), events=None, **kwargs)
+            if len(x0) > 0:
+                integrator = integrate.__dict__[solver](lambda t, y: _deriv(t, y, self), t0=0.0, y0=x0, t_bound=T, max_step=dt)
+            
+                t = []
+                x = []
+                while integrator.status == 'running':
+                    
+                    if self.stop is not None:
+                         print('--- stop requested at t={:f} by {:s}'.format(self.t, str(self.stop)))
+                         break
+                    # step the integrator, calls _deriv multiple times
+                    integrator.step()
+                    
+                    # stash the results
+                    t.append(integrator.t)
+                    x.append(integrator.y)
+                    
+                    self.step()
+                if integrator.status == 'failed':
+                    print('integration completed with failed status ')
+                out = np.c_[t,x]
+            else:
+                for t in np.arange(0, T, dt):
+                    _deriv(t, [], self)
+                    self.step()
+                out = None
                 
-                if self.stop is not None:
-                     print('--- stop requested at t={:f} by {:s}'.format(self.t, str(self.stop)))
-                     break
-                # step the integrator, calls _deriv multiple times
-                integrator.step()
-                
-                # stash the results
-                t.append(integrator.t)
-                x.append(integrator.y)
-                
-                self.step()
-                
-            out = np.c_[t,x]
-        else:
-            for t in np.arange(0, T, dt):
-                _deriv(t, [], self)
-                self.step()
-            out = None
+        except RuntimeError as err:
+            print('unrecoverable error in value propagation')
+            return None
 
-        
         self.done(block=block)
         print(self.count, ' integrator steps')
         
@@ -590,12 +617,12 @@ class Simulation:
             if b.blockclass == 'transfer':
                 x = b.setstate(x)
         
-        # process blocks with initial outputs
+        # process blocks with initial outputs and propagate
         for b in self.blocklist:
             if b.blockclass in ('source', 'transfer'):
                 self._propagate(b, t)
                 
-        # now iterate, running blocks, until we have values for all
+        # check we have values for all
         for b in self.blocklist:
             if b.nin > 0 and not b.done:
                 raise RuntimeError(str(b) + ' has incomplete inputs')
@@ -628,12 +655,20 @@ class Simulation:
 
         """
         
+        # check for a subsystem block here, recurse to evalute it
+        # execute the subsystem to obtain its outputs
+
         # get output of block at time t
         try:
             out = b.output(t)
-        except:
-            print('Error at t={:f} in computing output of block {:s}'.format(t, str(b)))
-            raise
+        except Exception as err:
+            print('--Error at t={:f} when computing output of block {:s}'.format(t, str(b)))
+            print('  {}'.format(err))
+            print('  inputs were: ', b.inputs)
+            if b.nstates > 0:
+                print('  state was: ', b.x)
+            raise RuntimeError from None
+
             
         DEBUG('propagate', '  '*depth, 'propagating: {:s} @ t={:.3f}: output = '.format(str(b),t) + str(out))
 
@@ -641,15 +676,14 @@ class Simulation:
         assert isinstance(out, list) and len(out) == b.nout, 'block output is wrong type/length'
         # TODO check output validity once at the start
         
-
         # check it has no nan or inf values
-        if not np.isfinite(out).any():
+        if self.checkfinite and not np.isfinite(out).any():
             raise RuntimeError('block outputs nan')
         
-        for (port, outwires) in enumerate(b.outports):
+        # propagate block outputs to all downstream connected blocks
+        for (port, outwires) in enumerate(b.outports): # every port
             val = out[port]
-            # iterate over all outgoing wires
-            for w in outwires:
+            for w in outwires:     # every wire
                 
                 DEBUG('propagate', '  '*depth, '[', port, '] = ', val, ' --> ', w.end.block.name, '[', w.end.port, ']')
                 
@@ -757,62 +791,19 @@ class Simulation:
 if __name__ == "__main__":
     
 
-        
-    
     s = Simulation()
     
-    steer = s.PIECEWISE( (0,0), (3,0.5), (4,0), (5,-0.5), (6,0), name='steering')
-    speed = s.CONSTANT(1, name='speed')
-    bike = s.BICYCLE(x0=[0, 0, 0], name='bicycle')
-    disp = s.VEHICLE(shape='triangle', scale=[0,10])
+    const = s.CONSTANT(1, name='const')
+    sink = s.STOP(lambda x: False)
+    #gain = s.GAIN(2, 'K1')
+    # s.connect(const, gain)
+    # s.connect(gain, sink)
     
-    # tscope= s.SCOPE(name='theta')
-    scope = s.SCOPEXY(scale=[0, 10, 0, 1.2])
+    sink[0] = const[0] * s.GAIN(2, 'K1')[0]
     
-    # convert x,y,theta state to polar form
-    def polar(x, block):
-        rho = math.sqrt(x[0]**2 + x[1]**2)
-        beta = -math.atan2(-x[1], -x[0])
-        alpha = -x[2] - beta
-        
-    polar = s.FUNCTION(polar, nout=4, block=True, name='polar', inp_names=('x',),
-        outp_names=(r'$\rho$', r'$\alpha$', r'$\beta', 'direction'))
-    
-    s.connect(bike[0:3], disp[0:3])
-    s.connect(bike[0:2], scope)
-    s.connect(speed, bike.v)
-    s.connect(steer, bike.gamma)
-    
-    # demand = s.WAVEFORM(wave='square', freq=2, pos=(0,0))
-    # sum = s.SUM('+-', pos=(1,0))
-    # gain = s.GAIN(2, pos=(1.5,0))
-    
-    # #plant = s.GAIN(2, pos=(1.5,0)) * s.LTI_SISO(0.5, [1, 2], name='plant', pos=(3,0), verbose=True)
-    # plant = s.LTI_SISO(0.5, [1, 2], name='plant', pos=(3,0), verbose=True)
-    # scope = s.SCOPE(nin=2, pos=(4,0))
-    
-    # s.connect(demand, sum[0])
-    # s.connect(plant, sum[1])
-    # s.connect(sum, gain)
-    # s.connect(gain, plant)
-    # s.connect(plant, scope[0])
-    # s.connect(demand, scope[1])
-    # #s.connect(gain, sum[0])  # cycle
+
     s.compile()
-    
-    #s.dotfile('bd1.dot')
+
     
     s.report()
-    print()
-    #out = s.run(0.2)
-    
-    # s = Simulation()
 
-    # wave = s.WAVEFORM(freq=2)
-    # scope = s.SCOPE(nin=1)
-    
-    # s.connect(wave, scope)
-    
-    # s.compile()
-    # s.report()
-    # s.run(5)
