@@ -4,104 +4,99 @@
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/petercorke/bdsim/graphs/commit-activity)
 [![GitHub license](https://img.shields.io/github/license/Naereen/StrapDown.js.svg)](https://github.com/petercorke/bdsim/blob/master/LICENSE)
 
+- GitHub repository: [https://github.com/petercorke/bdsim](https://github.com/petercorke/bdsim)
+- Examples and details: [https://github.com/petercorke/bdsim/wiki](https://github.com/petercorke/bdsim/wiki)
+- Documentation: [https://petercorke.github.io/bdsim](https://petercorke.github.io/bdsim)
+- Dependencies: `numpy`, `scipy`, `matplotlib`, `spatialmath`, `ffmpeg` (if rendering animations as a movie)
 
 # Block diagram simulation
 
 This Python package enables modelling and simulation of dynamic systems conceptualized in block diagram form, but represented in terms of Python class and method calls.  Unlike Simulink or LabView we write Python code rather than drawing boxes and wires.  Wires can communicate any Python type such as scalars, lists, numpy arrays, other objects, and even functions.
 
-Consider this simple block diagram
+We first sketch the dynamic system we want to simulate as a block diagram, for example this simple first-order system
 
 ![block diagram](https://github.com/petercorke/bdsim/raw/master/figs/bd1-sketch.png)
 
-which we can express concisely with `bdsim` as
+which we can express concisely with `bdsim` as (see [`bdsim/examples/eg1.py`](https://github.com/petercorke/bdsim/blob/master/examples/eg1.py)
 
 ```python
-import bdsim.simulation as sim
-
-s = sim.Simulation()
-
-demand = s.STEP(T=1, pos=(0,0))
-sum = s.SUM('+-', pos=(1,0))
-gain = s.GAIN(2, pos=(1.5,0))
-plant = s.LTI_SISO(0.5, [2, 1], name='plant', pos=(3,0))
-scope = s.SCOPE(style=['k', 'r--'], pos=(4,0))
-    
-s.connect(demand, sum[0], scope[1])
-s.connect(plant, sum[1])
-s.connect(sum, gain)
-s.connect(gain, plant)
-s.connect(plant, scope[0])
+     1	#!/usr/bin/env python3
+     2	
+     3	import bdsim.simulation as sim
+     4	
+     5	bd = sim.Simulation()
+     6	
+     7	# define the blocks
+     8	demand = bd.STEP(T=1, pos=(0,0), name='demand')
+     9	sum = bd.SUM('+-', pos=(1,0))
+    10	gain = bd.GAIN(10, pos=(1.5,0))
+    11	plant = bd.LTI_SISO(0.5, [2, 1], name='plant', pos=(3,0))
+    12	scope = bd.SCOPE(styles=['k', 'r--'], pos=(4,0))
+    13	
+    14	# connect the blocks
+    15	bd.connect(demand, sum[0], scope[1])
+    16	bd.connect(plant, sum[1])
+    17	bd.connect(sum, gain)
+    18	bd.connect(gain, plant)
+    19	bd.connect(plant, scope[0])
+    20	
+    21	bd.compile()   # check the diagram
+    22	bd.report()    # list all blocks and wires
+    23	
+    24	bd.run(5)  # simulate for 5s
+    25	
+    26	bd.dotfile('bd1.dot')  # output a graphviz dot file
+    27	bd.savefig('pdf')      # save all figures as pdf
+    28	
+    29	bd.done()
 ```
-where the red block annotations in the diagram have become names of instances of object that represent the blocks.  
+which is just 18 lines of code.
 
-Wires can also be named, though that is less useful, since the value of a wire in uniquely determined by the output port that drives it.  In `bdsim` all wires are point to point, a *one-to-many* connection is implemented by *many* wires.
+The red block annotations in the diagram are the names of blocks, and have become names of instances of object that represent those blocks.  The blocks can also have names which are used in diagnostics and as labels in plots.
 
-Ports are designated using Python indexing and slicing notation, for example `sum[0]`.  Whether it is an input or output port depends on context.  Blocks are connected by `connect(from, to)` so an index on the first argument refers to an output port, while on the second (or subsequent) arguments refers to an input port.  If a port has only a single port then no index is required.
+In `bdsim` all wires are point to point, a *one-to-many* connection is implemented by *many* wires.
+
+Ports are designated using Python indexing and slicing notation, for example `sum[0]`.  Whether it is an input or output port depends on context.  Blocks are connected by `connect(from, to_1, to_2, ...)` so an index on the first argument refers to an output port, while on the second (or subsequent) arguments refers to an input port.  If a port has only a single port then no index is required.
 
 A bundle of wires can be denoted using slice notation, for example `block[2:4]` refers to ports 2 and 3.  When connecting slices of ports the number of wires in each slice must be consistent.  You could even do a cross over by connecting `block1[2:4]` to `block2[5:2:-1]`.
 
-Remember that wires can hold scalar or vector values.  The first index refers to the port. A second index, if present is used to index into a vector value on the port, eg. `block1[2,:2]` refers to the first two elements of a vector on port 2 of block1.  This notation reduces the need for multiplexer and demultiplexer blocks.
-
-
-Whatever way we choose to express our model, and a mixture of ways is perfectly OK, the model is expressed in terms of Block and Wire objects.  The output port of a block is a set of wires connecting to input ports, and each Wire has reference to the start and end blocks. We can see this representation, in tabular form, as
+Line 22 shows a report, in tabular form, showing all the blocks and wires in the diagram.
 
 ```python
-s.report()
-
 Blocks::
 
-  id  name                              nin    nout    nstate  
-----  ------------------------------  -----  ------  --------  
-   0  source.step.b0                      0       1         0  
-   1  function.sum.b1                     2       1         0  
-   2  function.gain.b2                    1       1         0  
-   3  transfer.LTI.plant                  1       1         1  
-   4  sink.scope.b4                       2       0         0  
+  id  name                  nin    nout    nstate  
+----  ------------------  -----  ------  --------  
+0     source.step.demand  0      1       0         
+1     function.sum.b1     2      1       0         
+2     function.gain.b2    1      1       0         
+3     transfer.LTI.plant  1      1       1         
+4     sink.scope.b4       2      0       0         
 
 Wires::
 
-  id  from    to      description                               
-----  ------  ------  ----------------------------------------  
-   0  0[0]    1[0]    step.b0[0] --> sum.b1[0]                  
-   1  0[0]    4[1]    step.b0[0] --> scope.b4[1]                
-   2  3[0]    1[1]    LTI.plant[0] --> sum.b1[1]                
-   3  1[0]    2[0]    sum.b1[0] --> gain.b2[0]                  
-   4  2[0]    3[0]    gain.b2[0] --> LTI.plant[0]               
-   5  3[0]    4[0]    LTI.plant[0] --> scope.b4[0]
+  id  from    to      description                     type     
+----  ------  ------  ------------------------------  -------  
+0       0[0]    1[0]  step.demand[0] --> sum.b1[0]    int      
+1       0[0]    4[1]  step.demand[0] --> scope.b4[1]  int      
+2       3[0]    1[1]  LTI.plant[0] --> sum.b1[1]      float64  
+3       1[0]    2[0]  sum.b1[0] --> gain.b2[0]        float64  
+4       2[0]    3[0]  gain.b2[0] --> LTI.plant[0]     float64  
+5       3[0]    4[0]  LTI.plant[0] --> scope.b4[0]    float64  
 ```
 
-We can also turn into something like a real block diagram using GraphViz to produce a .dot file
-
-```python
-s.dotfile('demo.dot')
-```
-
-which we can turn into a graphic using `dot` 
-
-```shell
-% dot -Tpng -o demo.png demo.dot 
-```
-or `neato`
-
-```shell
-% neato -Tpng -o demo.png demo.dot
-```
-
-![output of neato](https://github.com/petercorke/bdsim/raw/master/figs/bd1.png)
-
-While this is correct, it's not quite the way we would expect the diagram to be drawn.  `dot` ignores the `pos` options on the blocks while `neato` respects them, but is prone to drawing all the lines on top of each other.
-
-Sources are shown as 3D boxes, sinks as folders, functions as boxes (apart from gains which are triangles and summing junctions which are points), and transfer functions as connectors (look's like a gate).  To create a decent looking plot you need to manually place the blocks using the `pos` argument to place them. Unit spacing in the x- and y-directions is generally sufficient. 
-
-
-To run the simulation for 5 seconds and visualize the results
+Line 24 runs the simulation for 5 seconds 
 
 ```python
 s.run(5)
 ```
-simulate for 5s (using the default variable step RK45 solver) and output values at least every 0.1s.  The scope block pops up a graph
+using the default variable-step RK45 solver and saves output values at least every 0.1s.  The scope block pops up a graph
 
 ![bdsim output](https://github.com/petercorke/bdsim/raw/master/figs/Figure_1.png)
+
+Line 27 causes the graphs in all displayed figures to be saved in the specified format, in this case the file would be called `scope.b4.pdf`.
+
+Line 28 blocks the script until all figure windows are closed, or the script is killed with SIGINT.
 
 To save the results is achieved by
 
@@ -115,265 +110,51 @@ The result `out` is effectively a structure with elements
 - `x` is the state vector: ndarray, shape=(M,N)
 - `xnames` is a list of the names of the states corresponding to columns of `x`, eg. "plant.x0"
 
+Line 26 attempts to produce something like a real block diagram by generating produce a [Graphviz](https://www.graphviz.org) .dot file.  Using `dot`
+we can generate a graphic
+
+```shell
+% dot -Tpng -o demo.png demo.dot 
+```
+or `neato`
+
+```shell
+% neato -Tpng -o demo.png demo.dot
+```
+
+![output of neato](https://github.com/petercorke/bdsim/raw/master/figs/bd1.png)
+
+While this is topologically correct, it's not quite the way we would expect the diagram to be drawn.  `dot` ignores the `pos` options on the blocks while `neato` respects them, but is prone to drawing all the lines on top of each other.
+
+Sources are shown as 3D boxes, sinks as folders, functions as boxes (apart from gains which are triangles and summing junctions which are points), and transfer functions as connectors (look's like a gate).  To create a decent looking plot you need to manually place the blocks using the `pos` argument to place them. Unit spacing in the x- and y-directions is generally sufficient. 
+
 
 # Other examples
 
 In the folder `bdsim/examples` you can find a couple of runnable examples:
 
-- `eg1.py` the example given above
-- `waveform.py` two signal generators connected to two scopes
-- `rvc4_2.py` something like Fig 4.2 in _Robotics, Vision & Control (2017)_ - a vehicle with bicycle kinematics driven by a square wave steering signal.
+- [`eg1.py`](https://github.com/petercorke/bdsim/blob/master/examples/eg1.py) the example given above
+- [`waveform.py`](https://github.com/petercorke/bdsim/blob/master/examples/waveform.py) two signal generators connected to two scopes
 
-# Writing your own block
+Examples from Chapter four of _Robotics, Vision & Control (2017)_:
 
-Your block must belong to one of these categories which are subclasses of the `Block` superclass.
+- [`rvc4_2.py`](https://github.com/petercorke/bdsim/blob/master/examples/rvc4_2.py) Fig 4.2 - a car-like vehicle with bicycle kinematics driven by a rectangular pulse steering signal
+- [`rvc4_4.py`](https://github.com/petercorke/bdsim/blob/master/examples/rvc4_4.py) Fig 4.4 - a car-like vehicle driving to a point
 
-- a **Source** which has no inputs, and creates a signal as a function of simulation time
-- a **Sink** which has no outputs, and performs some display or recording function
-- a **Function** which has inputs *and* outputs but has no internal state variables.  The output is a direct function of the input.
-- a **Transfer** which has inputs and outputs and some internal state variables.  The output is not a direct function of the input, that is, it is a *proper* transfer function or a statespace system where D=0.
+![RVC Figure 4.4](https://github.com/petercorke/bdsim/raw/master/figs/rvc4_4.gif)
 
-All blocks are described by classes defined in Python modules residing in the `blocks` folder. Suitably named classes defined in any module are dynamically added as methods of the `Simulation` class. For example a 
-class called `_MyBlock` will be available as a method called `MYBLOCK` which invokes the object constructor.
+- [`rvc4_6.py`](https://github.com/petercorke/bdsim/blob/master/examples/rvc4_6.py) Fig 4.6 - a car-like vehicle driving to/along a line
 
-Each class:
+![RVC Figure 4.6](https://github.com/petercorke/bdsim/raw/master/figs/rvc4_6.gif)
 
-- has a name that begins with an underscore.  The corresponding method is capitalized and without the underscore.
-- must subclass one of `Source`, `Sink`, `Function` or `Transfer`.
-- must provide a constructor that handles keyword arguments passed from the call to `s.MYBLOCK()` where `s` is an instance of the `Simulation` class.  You need to ensure that argument names don't clash with those already in use by the superclasses.
-- constructor must call the superclass constructor with keyword arguments
-- constructor must implement certain other methods depending on which category it belongs to.
-- can add attributes to the instance to enable the operation of your block.  You need to ensure that attribute names don't clash with those already in use by the superclasses.
+- [`rvc4_11.py`](https://github.com/petercorke/bdsim/blob/master/examples/rvc4_11.py) Fig 4.11 a car-like vehicle driving to a pose
 
-To create your own block create a file `blocks/myblock.py` and adapt one of the templates below.  Methods in your class have access to useful attributes including:
+![RVC Figure 4.11](https://github.com/petercorke/bdsim/raw/master/figs/rvc4_11.gif)
 
+Figs 4.8 (pure pursuit) and Fig 4.21 (quadrotor control) are yet to be done.
 
-|  attribute  |  purpose  |
-|-------------|-----------|
-|nin          | number of input ports to the block  |
-|nout         | number of output ports from the block  |
-|nstates      | number of state variables in the block  |
-|sim          | reference to Simulation instance  |
-|sim.T        | maximum simulation time  |
-|sim.t        | current simulation time  |
-|sim.graphics | graphics enabled (bool)  |
+# Limitations
 
-## Source
+There are lots!  The biggest is that `bdsim` is based on a very standard variable-step integrator from the scipy library.  For discontinuous inputs (step, square wave, triangle wave, piecewise constant) the transitions get missed.  This also makes it inaccurate to simulate hybrid discrete-continuous time systems.  We really need a better integrator.
 
-
-```
-from bdsim.blocks import *
-
-class _MyBlock(Source):
-	
-	def __init__(self, param1=defautl1, param2=default2, **kwargs):
-		super().__init__(**kwargs)
-		
-		self.param1 = param1
-		self.param2 = param2
-
-	def output(self, t):
-		# return a list with self.nout elements representing the output ports 
-		# of the block. This is a function of the passed time `t` and 
-		# the parameters passed to the constructor.	
-		
-	def start(self):
-		# simulation is beginning, open files etc.
-		
-	def done(self):
-		# simulation is complete, close files etc.
-```
-
-
-## Sink
-
-
-```
-from bdsim.blocks import *
-
-class _MyBlock(Sink):
-	
-	def __init__(self, param1=defautl1, param2=default2, **kwargs):
-		super().__init__(**kwargs)
-		
-		self.param1 = param1
-		self.param2 = param2
-
-	def step(self):
-		# the values of the inputs to the block are available in the list
-		# self.inputs which has self.nin elements.
-		
-	def start(self):
-		# simulation is beginning, open files etc.
-		
-	def done(self):
-		# simulation is complete, close files etc.
-		
-```
-If a sink performs graphics it should respect the boolean `self.sim.graphics`.
-
-
-## Function
-
-
-```
-from bdsim.blocks import *
-
-class _MyBlock(Function):
-	
-	def __init__(self, param1=defautl1, param2=default2, **kwargs):
-		super().__init__(**kwargs)
-		
-		self.param1 = param1
-		self.param2 = param2
-		
-	def output(self, t):
-		# return a list with self.nout elements representing the output ports 
-		# of the block. This is a function of the passed time `t`, the 
-		# parameters passed to the constructor, and the inputs to the block 
-		# which are available in the list self.inputs which has self.nin elements.
-	
-	def start(self):
-		# simulation is beginning
-			
-	def done(self):
-		# simulation is complete
-		
-```
-
-## Transfer
-
-
-```
-from bdsim.blocks import *
-
-class _MyBlock(Transfer):
-	
-	def __init__(self, param1=defautl1, param2=default2, **kwargs):
-		super().__init__(**kwargs)
-		
-		self.param1 = param1
-		self.param2 = param2
-		
-	def output(self, t):
-		# return a list with self.nout elements representing the output ports 
-		# of the block. This is a function of the state self.x
-	
-	def deriv(self):
-		# return an ndarray with self.nstate elements containing the derivative,
-		# computed as a function of the current state self.x and current inputs
-		# in self.inputs
-	
-	def start(self):
-		# simulation is beginning
-			
-	def done(self):
-		# simulation is complete
-		
-	def update(self):
-		# the values of the inputs attribute are valid
-		# inputs is list representing the input ports to the block
-```
-
-
-## Future
-
-We could write the connections part of the above example more compactly using implicit connections described by the assignement operator
-
-```python
-gain[0] = s.SUM('+-', demand, plant)
-plant[0] = gain
-scope[0] = plant
-```
-but note that we need to explicitly include the ports on the left-hand side of the expressions (since we cannot overload the assignment operator in Python).
-
-Even more concisely
-
-```python
-s = Simulation()
-plant = s.LTI_SISO(0.5, [1, 2], name='plant')
-demand = s.WAVEFORM(type='square', freq='2')
-scope = s.SCOPE()
-
-plant[0] = s.SUM('+-', demand, plant) * s.GAIN(value=2)
-scope[0] = plant
-```
-
-If we wish to record some particular block output ports there is no need to wire them to recording blocks.  Simply
-
-```
-s.record(demand, plant)
-out = s.run(5, dt=0.1)
-```
-which requests to record the outputs of the `demand` and `plant` blocks, simulate for 5s (using the default variable step RK45 solver) and output values at least every 0.1s.
-
-The result `out` is effectively a structure with elements
-
-- `t` the time vector: ndarray, shape=(M,)
-- `x` is the state vector: ndarray, shape=(M,N)
-- `xnames` is a list of the names of the states corresponding to columns of `x`, eg. "plant.x0"
-
-
-In this case there are also elements due to the `record` method:
-
-- `block0` is the output of the waveform generator: ndarray, shape=(M,)
-- `plant` is the output of the plant: ndarray, shape=(M,)
-
-Note that the names comes from the names of the blocks, because we didn't assign a name to the WAVEFORM block it gets a default name from the unique block id. 
-
-We can create a subsystem by a file `subsys1.py`
-
-```python
-import bdsim.simulation as sim
-
-s = sim.Simulation()
-
-demand = s.STEP(T=1, pos=(0,0))
-sum = s.SUM('+-', pos=(1,0))
-gain = s.GAIN(2, pos=(1.5,0))
-plant = s.LTI_SISO(0.5, [2, 1], name='plant', pos=(3,0))
-scope = s.SCOPE(style=['k', 'r--'], pos=(4,0))
-outport = s.OUTPORT(0)
-inport = s.INPORT(0)
-    
-s.connect(demand, sum[0], scope[1])
-s.connect(plant, sum[1])
-s.connect(sum, gain)
-s.connect(gain, plant)
-s.connect(plant, scope[0])
-```
-
-In a top-level model
-
-```python
-
-import bdsim.simulation as sim
-
-s = sim.Simulation()
-
-sub1 = s.SUBSYSTEM('subsys1.py')
-scope = s.SCOPE()
-
-s.connect(sub1[0], scope)
-```
-
-The port labels are dictionary keys so can be ints or strings, they don't have to be consecutive ints.
-
-The subsystem can be runnable in its own right for testing using 
-
-```
-if __name__ == "__main__":
-```
-logic.  Any OUTPORTS will be ignored.  INPORTS can be wired to the output of a source.  When executed standalone the INPORTS are automatically disconnected.  When executed as a subsystem, the sources they are connected to are automatically disconnected.
-
-We can consider each block as having a set of ports, some are inputs, some are outputs, it depends on the purpose of the block.  It's a bit like working with physical hardware
-
-![block](figs/ports2.jpg) ![wire](figs/wires.jpg)
-
-We connect the ports of various blocks together with wires to make a system.
-`bdsim` will ensure that you don't connect two outputs together, and warn you if you have left inputs dangling.
-
-It's all a bit reminsicent of 1940s computing, like ENIAC's plugboard
-
-![wire](figs/ENIAC.jpg)
 
