@@ -299,8 +299,8 @@ class Simulation:
             try:
                 w.start.block.add_outport(w)
                 w.end.block.add_inport(w)
-            except:
-                print('error connecting wire: ', w.fullname)
+            except AssertionError as err:
+                print('error connecting wire: ', w.fullname, err)
                 error = True
             
         # check every block 
@@ -735,7 +735,13 @@ class Simulation:
         for b in self.blocklist:
             b.done(**kwargs)
             
-                
+    def savefig(self, format='pdf', **kwargs):
+        for b in self.blocklist:
+            if isinstance(b, SinkBlockGraphics):
+                fname = str(b) + '.' + format
+                print('saving {} -> {}'.format(str(b), fname))
+                b.savefig(fname, **kwargs)
+        
     def dotfile(self, file):
         """
         Write a GraphViz dot file representing the network.
