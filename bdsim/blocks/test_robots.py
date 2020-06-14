@@ -4,7 +4,7 @@ import math
 import matplotlib.pyplot as plt
 import time
 
-import robots
+from bdsim.blocks.robots import *
 
 import unittest
 import numpy.testing as nt

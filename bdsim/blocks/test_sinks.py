@@ -39,7 +39,7 @@ from matplotlib.pyplot import Polygon
 import unittest
 import numpy.testing as nt
 
-import sinks
+from bdsim.blocks.sinks import *
 
 class SinkBlockTest(unittest.TestCase):
     pass

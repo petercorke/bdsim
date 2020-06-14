@@ -36,7 +36,7 @@ import math
 
 import matplotlib.pyplot as plt
 
-from transfers import *
+from bdsim.blocks.sources import *
 
 import unittest
 import numpy.testing as nt

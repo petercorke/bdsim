@@ -4,7 +4,7 @@ import numpy as np
 import scipy.interpolate
 import math
 
-from functions import *
+from bdsim.blocks.functions import *
 
 import unittest
 import numpy.testing as nt
