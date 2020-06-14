@@ -1,36 +1,13 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-Define fundamental blocks available for use in block diagrams.
+Define transfer blocks for use in block diagrams.  These are blocks that:
 
-Each class _MyClass in this module becomes a method MYCLASS() of the Simulation object.
-This is done in Simulation.__init__()
+- have inputs and outputs
+- have state variables
+- are a subclass of ``TransferBlock``
 
-All arguments to MYCLASS() must be named arguments and passed through to the constructor
-_MyClass.__init__().
-
-These classses must subclass one of
-
-- Source, output is a constant or function of time
-- Sink, input only
-- Transfer, output is a function of state self.x (no pass through)
-- Function, output is a direct function of input
-
-These classes all subclass Block.
-
-Every class defined here provides several methods:
-    
-- __init__, mandatory to handle block specific parameter arguments
-- reset, 
-- output, to compute the output value as a function of self.inputs which is 
-  a dict indexed by input number
-- deriv, for Transfer subclass only, return the state derivative vector
-- check, to validate parameter settings
-
-Created on Thu May 21 06:39:29 2020
-
-@author: Peter Corke
+Each class MyClass in this module becomes a method MYCLASS() of the Simulation object.
 """
+
 import numpy as np
 import math
 
@@ -86,7 +63,7 @@ class Integrator(TransferBlock):
 @block
 class LTI_SS(TransferBlock):
     def __init__(self, A=None, B=None, C=None, x0=None, verbose=False, **kwargs):
-        """
+        r"""
         Create a state-space LTI block.
         
         :param N: numerator coefficients, defaults to 1
@@ -95,7 +72,7 @@ class LTI_SS(TransferBlock):
         :type D: array_like, optional
         :param x0: initial states, defaults to zero
         :type x0: array_like, optional
-        :param **kwargs: common Block options
+        :param ``**kwargs``: common Block options
         :return: A SCOPE block
         :rtype: _LTI_SISO
         
@@ -116,8 +93,7 @@ class LTI_SS(TransferBlock):
             
             LTI_SISO(N=[1,2], D=[2, 3, -4])
             
-        is the transfer function :math:`\frac{s+2}{2s^2+3s-4}`
-
+        is the transfer function :math:`\frac{s+2}{2s^2+3s-4}`.
         """
         print('in SS constructor')
 
@@ -160,7 +136,7 @@ class LTI_SS(TransferBlock):
 @block
 class LTI_SISO(LTI_SS):
     def __init__(self, N=1, D=[1, 1], x0=None, verbose=False, **kwargs):
-        """
+        r"""
         Create a SISO LTI block.
         
         :param N: numerator coefficients, defaults to 1
@@ -169,7 +145,7 @@ class LTI_SISO(LTI_SS):
         :type D: array_like, optional
         :param x0: initial states, defaults to zero
         :type x0: array_like, optional
-        :param **kwargs: common Block options
+        :param ``**kwargs``: common Block options
         :return: A SCOPE block
         :rtype: _LTI_SISO
         
@@ -188,10 +164,9 @@ class LTI_SISO(LTI_SS):
         
         Examples::
             
-            LTI_SISO(N=[1,2], D=[2, 3, -4])
+            LTI_SISO(N=[1, 2], D=[2, 3, -4])
             
-        is the transfer function :math:`\frac{s+2}{2s^2+3s-4}`
-
+        is the transfer function :math:`\frac{s+2}{2s^2+3s-4}`.
         """
         super(LTI_SS, self).__init__(**kwargs)
         if not isinstance(N, list):

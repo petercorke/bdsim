@@ -1,35 +1,11 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-Define fundamental blocks available for use in block diagrams.
+Define function blocks for use in block diagrams.  These are blocks that:
 
-Each class _MyClass in this module becomes a method MYCLASS() of the Simulation object.
-This is done in Simulation.__init__()
+- have inputs and outputs
+- have no state variables
+- are a subclass of ``FunctionBlock``
 
-All arguments to MYCLASS() must be named arguments and passed through to the constructor
-_MyClass.__init__().
-
-These classses must subclass one of
-
-- Source, output is a constant or function of time
-- Sink, input only
-- Transfer, output is a function of state self.x (no pass through)
-- Function, output is a direct function of input
-
-These classes all subclass Block.
-
-Every class defined here provides several methods:
-    
-- __init__, mandatory to handle block specific parameter arguments
-- reset, 
-- output, to compute the output value as a function of self.inputs which is 
-  a dict indexed by input number
-- deriv, for Transfer subclass only, return the state derivative vector
-- check, to validate parameter settings
-
-Created on Thu May 21 06:39:29 2020
-
-@author: Peter Corke
+Each class MyClass in this module becomes a method MYCLASS() of the Simulation object.
 """
 import numpy as np
 import scipy.interpolate
@@ -68,7 +44,7 @@ class Sum(FunctionBlock):
         :type signs: str
         :param angles: the signals are angles, wrap to [-pi,pi)
         :type angles: bool
-        :param **kwargs: common Block options
+        :param ``**kwargs``: common Block options
         :return: A SUM block
         :rtype: _Sum
         
@@ -115,7 +91,7 @@ class Prod(FunctionBlock):
         :type signs: str
         :param matrix: Arguments are matrices, use @ and np.linalg.inv, default False
         :type matrix: bool
-        :param **kwargs: common Block options
+        :param ``**kwargs``: common Block options
         :return: A PROD block
         :rtype: _Prod
         
@@ -172,7 +148,7 @@ class Gain(FunctionBlock):
         :type gain: float
         :param order: the order of multiplication: 'postmul' [default], 'premul'
         :type order: str, optional
-        :param **kwargs: common Block options
+        :param ``**kwargs``: common Block options
         :return: A SCOPE block
         :rtype: _Gain
         
@@ -248,7 +224,7 @@ class Function(FunctionBlock):
         :type args: tuple, optional
         :param kwargs: extra keyword arguments passed to the function, defaults to {}
         :type kwargs: dict, optional
-        :param **kwargs: common Block options
+        :param ``**kwargs``: common Block options
         :return: A FUNCTION block
         :rtype: _Function
 
@@ -263,14 +239,14 @@ class Function(FunctionBlock):
             
             FUNCTION(myfun, nin=2, args=(p1,p2))
             
-        If we need access to persistent (static) data, to keep some state
+        If we need access to persistent (static) data, to keep some state::
         
             def myfun(u1, u2, param1, param2, dict):
                 pass
             
             FUNCTION(myfun, nin=2, args=(p1,p2), dict=True)
             
-        a dictionary is passed in as the last argument.
+        where a dictionary is passed in as the last argument which is kept from call to call.
             
         A block with a function that takes two inputs and additional keyword arguments::
         
@@ -360,7 +336,7 @@ class Interpolate(FunctionBlock):
         :type time: bool
         :param kind: interpolation method, defaults to 'linear'
         :type kind: str
-        :param **kwargs: common Block options
+        :param ``**kwargs``: common Block options
         :return: INTERPOLATE block
         :rtype: _Function
         
@@ -369,11 +345,11 @@ class Interpolate(FunctionBlock):
         A simple triangle function with domain [0,10] and range [0,1] can be
         defined by::
             
-        INTERPOLATE(x=(0,5,10), y=(0,1,0))
+            INTERPOLATE(x=(0,5,10), y=(0,1,0))
         
         We might also express this as::
             
-        INTERPOLATE(xy=[(0,0), (5,1), (10,0)])
+            INTERPOLATE(xy=[(0,0), (5,1), (10,0)])
         
         The data can also be expressed as numpy arrays.  If that is the case,
         the interpolation function can be vector valued. ``x`` has a shape of

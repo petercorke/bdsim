@@ -1,23 +1,6 @@
 bdsim package
 =============
 
-Subpackages
------------
-
-.. toctree::
-
-   bdsim.blocks
-
-Submodules
-----------
-
-bdsim.components module
------------------------
-
-.. automodule:: bdsim.components
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 bdsim.simulation module
 -----------------------
@@ -27,11 +10,10 @@ bdsim.simulation module
    :undoc-members:
    :show-inheritance:
 
+bdsim.components module
+-----------------------
 
-Module contents
----------------
-
-.. automodule:: bdsim
+.. automodule:: bdsim.components
    :members:
    :undoc-members:
    :show-inheritance:

@@ -1,3 +1,16 @@
+"""
+Define robotic blocks for use in block diagrams, such as kinematic, dynamic and graphical display.
+These are blocks that may be:
+
+- subclass of ``FunctionBlock`` for kinematics
+- subclass of ``TransferBlock`` for dynamics
+- subclass of``SinkBlockGraphics`` for graphical display
+
+Each class MyClass in this module becomes a method MYCLASS() of the Simulation object.
+"""
+
+# TODO: quadrotor dyanmics and display
+
 import numpy as np
 import math
 
@@ -16,8 +29,7 @@ class Bicycle(TransferBlock):
         :type x0: TYPE, optional
         :param L: DESCRIPTION, defaults to 1
         :type L: TYPE, optional
-        :param **kwargs: DESCRIPTION
-        :type **kwargs: TYPE
+        :param ``**kwargs``: DESCRIPTION
         :return: DESCRIPTION
         :rtype: TYPE
 

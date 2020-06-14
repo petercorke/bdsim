@@ -1,35 +1,85 @@
 bdsim.blocks package
 ====================
 
-Submodules
-----------
+The block diagrams comprise blocks which belong to one of a number of different categories
 
-bdsim.blocks.basic module
--------------------------
+Source blocks
+-------------
 
-.. automodule:: bdsim.blocks.basic
+.. automodule:: bdsim.blocks.sources
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
-   :special-members:
+   :special-members: __init__
+   :exclude-members: output reset step start done
 
-bdsim.blocks.robot module
--------------------------
+Sink blocks
+-----------
 
-.. automodule:: bdsim.blocks.robot
+.. automodule:: bdsim.blocks.sinks
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
-   :special-members:
-   
-Module contents
+   :special-members: __init__
+   :exclude-members: output reset step start done
+
+
+Function blocks
 ---------------
 
-.. automodule:: bdsim.blocks
+.. automodule:: bdsim.blocks.functions
+   :members:
+   :undoc-members:
+   :special-members: __init__
+   :exclude-members: output, reset, step, start, done
+
+Transfer blocks
+---------------
+
+.. automodule:: bdsim.blocks.transfers
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
-   :special-members:
+   :special-members: __init__
+   :exclude-members: output reset step start done
+
+Robot blocks
+------------
+
+.. automodule:: bdsim.blocks.robots
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :special-members: __init__
+   :exclude-members: output reset step start done
+
+Subsystem blocks
+----------------
+
+.. automodule:: bdsim.blocks.subsystems
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :special-members: __init__
+   :exclude-members: output reset step start done
+
+io blocks
+---------
+
+.. automodule:: bdsim.blocks.io
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :special-members: __init__
+   :exclude-members: output reset step start done
+
+Vision blocks
+-------------
+
+.. automodule:: bdsim.blocks.vision
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :special-members: __init__
+   :exclude-members: output reset step start done
+

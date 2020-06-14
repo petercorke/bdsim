@@ -1,20 +1,18 @@
-.. bdsim documentation master file, created by
-   sphinx-quickstart on Mon May 25 10:39:26 2020.
+.. Spatial Maths package documentation master file, created by
+   sphinx-quickstart on Sun Apr 12 15:50:23 2020.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to bdsim's documentation!
-=================================
+Block diagram simulator
+=======================
 
+This Python package enables modelling and simulation of dynamic systems conceptualized in block diagram form, but represented in terms of Python class and method calls.  Unlike Simulink or LabView we write Python code rather than drawing boxes and wires.  Wires can communicate any Python type such as scalars, lists, numpy arrays, other objects, and even functions.
+
+    
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Code documentation:
 
+   bdsim
+   bdsim.blocks
 
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

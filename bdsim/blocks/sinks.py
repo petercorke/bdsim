@@ -1,36 +1,13 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-Define fundamental blocks available for use in block diagrams.
+Define sink blocks for use in block diagrams.  These are blocks that:
 
-Each class _MyClass in this module becomes a method MYCLASS() of the Simulation object.
-This is done in Simulation.__init__()
+- have inputs but no outputs
+- have no state variables
+- are a subclass of ``SinkBlock``
 
-All arguments to MYCLASS() must be named arguments and passed through to the constructor
-_MyClass.__init__().
-
-These classses must subclass one of
-
-- Source, output is a constant or function of time
-- Sink, input only
-- Transfer, output is a function of state self.x (no pass through)
-- Function, output is a direct function of input
-
-These classes all subclass Block.
-
-Every class defined here provides several methods:
-    
-- __init__, mandatory to handle block specific parameter arguments
-- reset, 
-- output, to compute the output value as a function of self.inputs which is 
-  a dict indexed by input number
-- deriv, for Transfer subclass only, return the state derivative vector
-- check, to validate parameter settings
-
-Created on Thu May 21 06:39:29 2020
-
-@author: Peter Corke
+Each class MyClass in this module becomes a method MYCLASS() of the Simulation object.
 """
+
 import numpy as np
 import math
 
@@ -62,7 +39,7 @@ class ScopeXY(SinkBlockGraphics):
         :type scale: 2- or 4-element sequence
         :param labels: axis labels (xlabel, ylabel)
         :type labels: 2-element tuple or list
-        :param **kwargs: common Block options
+        :param ``**kwargs``: common Block options
         :return: A SCOPEXY block
         :rtype: _Scope
 
@@ -71,14 +48,13 @@ class ScopeXY(SinkBlockGraphics):
         
         The line style is given by either:
             
-            - a dict of options for `plot` ,or
-            - as a simple MATLAB-style linestyle like 'k--'.
+            - a dict of options for ``plot``, or
+            - as a simple MATLAB-style linestyle like ``'k--'``.
         
         The scale factor defaults to auto-scaling but can be fixed by
         providing either:
             - a 2-tuple [min, max] which is used for the x- and y-axes
             - a 4-tuple [xmin, xmax, ymin, ymax]
-            
         """
         super().__init__(**kwargs)
         self.nin = 2
@@ -166,7 +142,7 @@ class Vehicle(SinkBlockGraphics):
         :type scale: 2- or 4-element sequence
         :param labels: axis labels (xlabel, ylabel)
         :type labels: 2-element tuple or list
-        :param **kwargs: common Block options
+        :param ``**kwargs``: common Block options
         :return: A SCOPEXY block
         :rtype: _Scope
 
@@ -175,14 +151,13 @@ class Vehicle(SinkBlockGraphics):
         
         The line style is given by either:
             
-            - a dict of options for `plot` ,or
-            - as a simple MATLAB-style linestyle like 'k--'.
+            - a dict of options for ``plot`` ,or
+            - as a simple MATLAB-style linestyle like ``'k--'``.
         
         The scale factor defaults to auto-scaling but can be fixed by
         providing either:
             - a 2-tuple [min, max] which is used for the x- and y-axes
             - a 4-tuple [xmin, xmax, ymin, ymax]
-            
         """
         super().__init__(**kwargs)
         self.nin = 3
@@ -280,7 +255,7 @@ class Vehicle(SinkBlockGraphics):
         if self.sim.graphics:
             plt.show(block=block)
             
-            super.done()
+            super().done()
 
 # ------------------------------------------------------------------------ #
 
@@ -304,9 +279,9 @@ class Scope(SinkBlockGraphics):
         :param labels: vertical axis labels
         :type labels: sequence of strings
         :param grid: draw a grid, default is on. Can be boolean or a tuple of 
-        options for grid()
+                     options for grid()
         :type grid: bool or sequence
-        :param **kwargs: common Block options
+        :param ``**kwargs``: common Block options
         :return: A SCOPE block
         :rtype: _Scope
         
