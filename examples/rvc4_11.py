@@ -1,21 +1,22 @@
 #!/usr/bin/env python3
 
+# run with command line -a switch to show animation
+
 import bdsim.simulation as sim
 import math
 
-s = sim.Simulation()
-
+bd = sim.Simulation()
 
 # parameters
 xg = [5, 5, math.pi/2]
-Krho = s.GAIN(1)
-Kalpha = s.GAIN(5)
-Kbeta = s.GAIN(-2)
+Krho = bd.GAIN(1)
+Kalpha = bd.GAIN(5)
+Kbeta = bd.GAIN(-2)
 xg = [5, 5, math.pi/2]
 x0 = [5, 2, 0]
 
 # annotate the graphics
-def graphics(ax):
+def background_graphics(ax):
     ax.plot(*xg[0:2], '*')
     ax.plot(*x0[0:2], 'o')
 
@@ -46,61 +47,61 @@ def polar(x, dict):
     return [rho, alpha, beta, dict['direction']]
 
 # constants
-goal0 = s.CONSTANT([xg[0], xg[1], 0])
-goalh = s.CONSTANT(xg[2])
+goal0 = bd.CONSTANT([xg[0], xg[1], 0])
+goalh = bd.CONSTANT(xg[2])
 
 # stateful blocks
-bike = s.BICYCLE(x0=x0, name='bike')
+bike = bd.BICYCLE(x0=x0, name='bike')
 
 # functions
-fabs = s.FUNCTION(lambda x: abs(x), name='abs')
-polar = s.FUNCTION(polar, nout=4, dict=True, name='polar', inp_names=('x',),
-    outp_names=(r'$\rho$', r'$\alpha$', r'$\beta', 'direction'))
-stop = s.STOP(lambda x: x < 0.01, name='close enough')
-steer_rate = s.FUNCTION(lambda u: math.atan(u), name='atan')
+fabs = bd.FUNCTION(lambda x: abs(x), name='abs')
+polar = bd.FUNCTION(polar, nout=4, dict=True, name='polar', inames=('x',),
+    onames=(r'$\rho$', r'$\alpha$', r'$\beta', 'direction'))
+stop = bd.STOP(lambda x: x < 0.01, name='close enough')
+steer_rate = bd.FUNCTION(lambda u: math.atan(u), name='atan')
 
 # arithmetic
-vprod = s.PROD('**', name='vprod')
-aprod = s.PROD('**/', name='aprod')
-xerror = s.SUM('+-')
-heading_sum = s.SUM('++', angles=True)
-gsum = s.SUM('++')
+vprod = bd.PROD('**', name='vprod')
+aprod = bd.PROD('**/', name='aprod')
+xerror = bd.SUM('+-')
+heading_sum = bd.SUM('++', angles=True)
+gsum = bd.SUM('++')
 
 # displays
-xyscope = s.VEHICLE(scale=[0, 10], size=0.7, shape='box', init=graphics)
-ascope = s.SCOPE(name=r'$\alpha$')
-bscope = s.SCOPE(name=r'$\beta$')
+vplot = bd.VEHICLE(scale=[0, 10], size=0.7, shape='box', init=background_graphics, movie='rvc4_11.mp4')
+ascope = bd.SCOPE(name=r'$\alpha$')
+bscope = bd.SCOPE(name=r'$\beta$')
 
 # connections
 
-mux = s.MUX(3)
+mux = bd.MUX(3)
 
-s.connect(bike[0:3], mux[0:3], xyscope[0:3])
-s.connect(mux, xerror[0])
-s.connect(goal0, xerror[1])
+bd.connect(bike[0:3], mux[0:3], vplot[0:3])
+bd.connect(mux, xerror[0])
+bd.connect(goal0, xerror[1])
 
-s.connect(xerror, polar)
-s.connect(polar[0], Krho, stop) # rho
-s.connect(Krho, vprod[1])
-s.connect(polar[1], Kalpha, ascope) # alpha
-s.connect(Kalpha, gsum[0])
-s.connect(polar[2], heading_sum[0]) # beta
-s.connect(goalh, heading_sum[1])
-s.connect(heading_sum, Kbeta, bscope)
+bd.connect(xerror, polar)
+bd.connect(polar[0], Krho, stop) # rho
+bd.connect(Krho, vprod[1])
+bd.connect(polar[1], Kalpha, ascope) # alpha
+bd.connect(Kalpha, gsum[0])
+bd.connect(polar[2], heading_sum[0]) # beta
+bd.connect(goalh, heading_sum[1])
+bd.connect(heading_sum, Kbeta, bscope)
 
-s.connect(polar[3], vprod[0], aprod[1])
-s.connect(vprod, fabs, bike.v)
-s.connect(fabs, aprod[2])
-s.connect(aprod, steer_rate)
-s.connect(steer_rate, bike.gamma)
+bd.connect(polar[3], vprod[0], aprod[1])
+bd.connect(vprod, fabs, bike.v)
+bd.connect(fabs, aprod[2])
+bd.connect(aprod, steer_rate)
+bd.connect(steer_rate, bike.gamma)
 
-s.connect(Kbeta, gsum[1])
-s.connect(gsum, aprod[0])
+bd.connect(Kbeta, gsum[1])
+bd.connect(gsum, aprod[0])
 
-s.compile()
-s.report()
-s.dotfile('rvc4_11.dot')
+bd.compile()
+bd.report()
+bd.dotfile('rvc4_11.dot')
 
-out = s.run(block=True)
+out = bd.run(block=True)
 
-s.done()
+bd.done()

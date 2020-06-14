@@ -2,17 +2,19 @@
 
 import bdsim.simulation as sim
 
-s = sim.Simulation()
+bd = sim.Simulation()
 
-wave1 = s.WAVEFORM(wave='triangle', freq=1, phase0=0.25)
-wave2 = s.WAVEFORM(wave='square', freq=1, min=0, max=1)
-scope1 = s.SCOPE()
-scope2 = s.SCOPE()
+wave1 = bd.WAVEFORM(wave='triangle', freq=1, phase=0.25)
+wave2 = bd.WAVEFORM(wave='square', freq=1, min=0, max=1)
+scope1 = bd.SCOPE()
+scope2 = bd.SCOPE()
 
 
-s.connect(wave1, scope1)
-s.connect(wave2, scope2)
+bd.connect(wave1, scope1)
+bd.connect(wave2, scope2)
 
-s.compile()
-s.report()
-s.run(4, dt=0.02)
+bd.compile()
+bd.report()
+bd.run(4, dt=0.02, block=True)
+
+bd.done()

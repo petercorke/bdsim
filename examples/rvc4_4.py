@@ -1,45 +1,47 @@
 #!/usr/bin/env python3
 
+# run with command line -a switch to show animation
+
 import bdsim.simulation as sim
 import math
 
-s = sim.Simulation()
+bd = sim.Simulation()
 
-def graphics(ax):
+def background_graphics(ax):
     ax.plot(5, 5, '*')
     ax.plot(5, 2, 'o')
     
-goal = s.CONSTANT([5, 5])
-error = s.SUM('+-')
-d2goal = s.FUNCTION(lambda d: math.sqrt(d[0]**2 + d[1]**2))
-h2goal = s.FUNCTION(lambda d: math.atan2(d[1], d[0]))
-heading_error = s.SUM('+-', angles=True)
-Kv = s.GAIN(0.5)
-Kh = s.GAIN(4)
-bike = s.BICYCLE(x0=[5, 2, 0])
-xyscope = s.VEHICLE(scale=[0, 10], size=0.7, shape='box', init=graphics)
-vscope = s.SCOPE(name='velocity')
-hscope = s.SCOPE(name='heading')
-mux = s.MUX(2)
+goal = bd.CONSTANT([5, 5])
+error = bd.SUM('+-')
+d2goal = bd.FUNCTION(lambda d: math.sqrt(d[0]**2 + d[1]**2))
+h2goal = bd.FUNCTION(lambda d: math.atan2(d[1], d[0]))
+heading_error = bd.SUM('+-', angles=True)
+Kv = bd.GAIN(0.5)
+Kh = bd.GAIN(4)
+bike = bd.BICYCLE(x0=[5, 2, 0])
+vplot = bd.VEHICLE(scale=[0, 10], size=0.7, shape='box', init=background_graphics, movie='rvc4_4.mp4')
+vscope = bd.SCOPE(name='velocity')
+hscope = bd.SCOPE(name='heading')
+mux = bd.MUX(2)
 
-s.connect(goal, error[0])
-s.connect(error, d2goal, h2goal)
-s.connect(d2goal, Kv)
-s.connect(Kv, bike[0], vscope)
-s.connect(h2goal, heading_error[0])
-s.connect(bike[2], heading_error[1])
-s.connect(heading_error, hscope)
-s.connect(heading_error, Kh)
-s.connect(Kh, bike[1])
-s.connect(bike[0:2], mux)
-s.connect(bike[0:3], xyscope[0:3])
-s.connect(mux, error[1])
+bd.connect(goal, error[0])
+bd.connect(error, d2goal, h2goal)
+bd.connect(d2goal, Kv)
+bd.connect(Kv, bike[0], vscope)
+bd.connect(h2goal, heading_error[0])
+bd.connect(bike[2], heading_error[1])
+bd.connect(heading_error, hscope)
+bd.connect(heading_error, Kh)
+bd.connect(Kh, bike[1])
+bd.connect(bike[0:2], mux)
+bd.connect(bike[0:3], vplot[0:3])
+bd.connect(mux, error[1])
 
-s.compile()
-s.report()
+bd.compile()
+bd.report()
 
 vscope.info
 
-out = s.run(block=True)
+out = bd.run(block=True)
 
-s.done()
+bd.done()
