@@ -136,8 +136,8 @@ class Block:
     
     _latex_remove = str.maketrans({'$':'', '\\':'', '{':'', '}':'', '^':'', '_':''})
     
-    def __init__(self, name=None, inames=None, onames=None, snames=None, pos=None, **kwargs):
-        #print('Block constructor'
+    def __init__(self, name=None, inames=None, onames=None, snames=None, pos=None, sim=None, **kwargs):
+        #print('Block constructor, sim = ', sim)
         if name is not None:
             self.name_tex = name
             self.name = self._fixname(name)
@@ -152,6 +152,7 @@ class Block:
         self._inport_names = None
         self._outport_names = None
         self._state_names = None
+        self.sim = sim
         
         if inames is not None:
             self.inport_names(inames)
@@ -239,7 +240,6 @@ class Block:
     def sourcename(self, port):
 
         w = self.inports[port]
-        print(self, port, w)
         if w.name is not None:
             return w.name
         src = w.start.block

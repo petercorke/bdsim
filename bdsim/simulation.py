@@ -67,9 +67,9 @@ class Simulation:
             debuglist.append('deriv')
         
         # load modules from the blocks folder
-        def new_method(cls):
+        def new_method(cls, sim):
             def block_method_wrapper(self, *args, **kwargs):
-                block = cls(*args, **kwargs)
+                block = cls(*args, sim=sim, **kwargs)
                 self.add_block(block)
                 return block
             
@@ -114,7 +114,7 @@ class Simulation:
                             raise ImportError('class {:s} has missing/improper step method'.format(str(cls)))
 
                     # create a function to invoke the block's constructor
-                    f = new_method(cls)
+                    f = new_method(cls, self)
                     
                     # create the new method name, strip underscores and capitalize
                     bindname = cls.__name__.strip('_').upper()
@@ -201,7 +201,6 @@ class Simulation:
         
     
     def add_block(self, block):
-        block.sim = self   # block back pointer to the simulator
         block.id = len(self.blocklist)
         if block.name is None:
             block.name = 'b' + str(block.id)
@@ -260,7 +259,7 @@ class Simulation:
                 wire = Wire(start, end, name)
                 self.add_wire(wire)
         
-    def compile(self):
+    def compile(self, subsystem=False):
         
         # enumrate the elements
         self.nblocks = len(self.blocklist)
@@ -284,16 +283,91 @@ class Simulation:
         
         error = False
         
-        print('\nCompiling:')
+        # TODO blockdiagrams have a name, default is "main"
+        if not subsystem:
+            print('\nCompiling:')
+        
+        #flatten the hierarchy
+        
+        def flatten(top, subsys, path):
+            subsystems = [b for b in subsys.subsystem.blocklist if b.type == 'subsystem']
+            # recursively flatten all subsystems
+            for ss in subsystems:
+                flatten(top, ss, path + [ss.name] )
+            
+            # compile this subsystem TODO
+            if subsys.subsystem.compiled is False:
+                subsys.subsystem.compile(subsystem=True)
+            
+            # sort the subsystem blocks into categories
+            inports = []
+            outports = []
+            others = []
+            for b in subsys.subsystem.blocklist:
+                if b.type == 'inport':
+                    inports.append(b)
+                elif b.type == 'outport':
+                    outports.append(b)
+                else:
+                    others.append(b)
+            if len(inports) >1:
+                raise ImportError('subsystem has more than one input port element')
+            if len(outports) > 1:
+                raise ImportError('subsystem has more than one output port element')
+            if len(inports) == 0 and len(outports) == 0:
+                raise ImportError('subsystem has no input or output port elements')
+                
+            # connect the input port
+            inport = inports[0]
+            for w in top.wirelist:
+                if w.end.block == subsys:
+                    # this top-level wire is input to subsystem
+                    # reroute it
+                    port = w.end.port
+                    for w2 in inport.outports[port]:
+                        # w2 is the wire from INPORT to others within subsystem
+                        
+                        # make w2 start at the source driving INPORT
+                        w2.start.block = w.start.block
+                        w2.start.port = w.start.port
+            # remove all wires connected to the inport
+            top.wirelist = [w for w in top.wirelist if w.end.block != subsys]
+                    
+            # connect the output port
+            outport = outports[0]
+            for w in top.wirelist:
+                if w.start.block == subsys:
+                    # this top-level wire is output from subsystem
+                    # reroute it
+                    port = w.start.port
+                    w2 = outport.inports[port]
+                    # w2 is the wire to OUTPORT from others within subsystem
+                    
+                    # make w2 end at the destination from OUTPORT
+                    w2.end.block = w.end.block
+                    w2.end.port = w.end.port
+            # remove all wires connected to the outport
+            top.wirelist = [w for w in top.wirelist if w.start.block != subsys]
+            top.blocklist.remove(subsys)
+            for b in others:
+                top.add_block(b)   # add remaining blocks from subsystem
+                b.name = '/'.join(path + [b.name])
+            top.wirelist.extend(subsys.subsystem.wirelist)  # add remaining wires from subsystem
+        
+        for b in self.blocklist:
+            if b.type == 'subsystem':
+                print('-- Wiring in subsystem', b, 'from module local variable ', b.ssvar)
+                flatten(self, b, [b.name])
+        
+        # initialize lists of input and output ports
         for b in self.blocklist:
             nstates += b.nstates
             b.outports = [[] for i in range(0, b.nout)]
             b.inports = [None for i in range(0, b.nin)]
             
-        print('  {:d} states'.format(nstates))
+        #print('  {:d} states'.format(nstates))
         self.nstates = nstates
          
-
         # for each wire, connect the source and destination blocks to the wire
         for w in self.wirelist:
             try:
@@ -486,9 +560,8 @@ class Simulation:
                 typ += ' {:s}'.format(str(value.shape))
             cfmt.add( w.id, start, end, w.fullname, typ)
         cfmt.print()
+        print('\nState variables: {:d}'.format(self.nstates))
             
-
-                
     
     def getstate(self):
         # get the state from each stateful block
@@ -496,25 +569,24 @@ class Simulation:
         for b in self.blocklist:
             if b.blockclass == 'transfer':
                 x0 = np.r_[x0, b.getstate()]
-        print('x0', x0)
+        #print('x0', x0)
         return x0
         
     def run(self, T=10.0, dt=0.1, solver='RK45', 
             block=False, checkfinite=True,
             **kwargs):
         """
-        
         :param T: maximum integration time, defaults to 10.0
         :type T: float, optional
         :param dt: maximum time step, defaults to 0.1
         :type dt: float, optional
-        :param solver: integration method, defaults to 'RK45'
+        :param solver: integration method, defaults to ``RK45``
         :type solver: str, optional
         :param block: matplotlib block at end of run, default False
         :type block: bool
         :param checkfinite: error if inf or nan on any wire, default True
         :type checkfinite: bool
-        :param **kwargs: passed to `scipy.integrate`
+        :param ``**kwargs``: passed to ``scipy.integrate``
         :return: time history of signals and states
         :rtype: Sim class
         
@@ -541,6 +613,8 @@ class Simulation:
         self.start()
 
         x0 = self.getstate()
+        if len(x0) > 0:
+            print('initial state x0 = ', x0)
         
 
         # integratnd function, wrapper for network evaluation method
@@ -715,7 +789,7 @@ class Simulation:
                     
     def start(self, **kwargs):
         """
-        Inform all active blocks that simulation is about to start.  Opem files,
+        Inform all active blocks that simulation is about to start.  Open files,
         initialize graphics, etc.
         
         Invokes the `start` method on all blocks.

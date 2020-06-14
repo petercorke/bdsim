@@ -1,33 +1,66 @@
 
+"""
+Define subsystem connection blocks for use in block diagrams.  These are blocks that:
 
-# class _SubSystem(Function):
-#     pass
+- have inputs or outputs
+- have no state variables
+- are a subclass of ``SubsysttemBlock``
 
-# class _InPort(Source):
-#     pass
 
-# class _OutPort(Sink):
-#     pass
+Each class MyClass in this module becomes a method MYCLASS() of the Simulation object.
+"""
+
+import importlib.util
+
 
 """
 At compile time we remove/disable certain wires.
 Block should have the subsystem enable status
 """
-
-from bdsim.components import SubsystemBlock, block
+import bdsim
+from bdsim.components import SubsystemBlock, SourceBlock, SinkBlock, block
 
 
 @block
-class Subsystem(SubsystemBlock):
-    pass
+class SubSystem(SubsystemBlock):
+    
+    def __init__(self, fname, **kwargs):
+        super().__init__(**kwargs)
+        self.type = 'subsystem'
+        
+        # attempt to import the file
+        try:
+            module = importlib.import_module(fname, package='.')
+        except SyntaxError:
+            print('-- syntax error in block definiton: ' + file)
+        except ModuleNotFoundError:
+            print('-- module not found ', fname)
 
-class InputPort(SubsystemBlock):
-    pass
+        # get all the bdsim.Simulation instances
+        simvars = [name for name, ref in module.__dict__.items() if isinstance(ref, bdsim.Simulation)]
+        if len(simvars) == 0:
+            raise ImportError('no bdsim.Simulation instances in imported module')
+        elif len(simvars) > 1:
+            raise ImportError('multiple bdsim.Simulation instances in imported module' + str(simvars))
+            
+        self.subsystem = module.__dict__[simvars[0]]
+        self.ssvar = simvars[0]
 
+@block
+class InPort(SubsystemBlock):
+    
+    def __init__(self, nout=1, **kwargs):
+        super().__init__(**kwargs)
+        self.nout= nout
+        self.type = 'inport'
 
-class OutputPort(SubsystemBlock):
-    pass
-
+@block
+class OutPort(SubsystemBlock):
+    
+    def __init__(self, nin=1, **kwargs):
+        super().__init__(**kwargs)
+        self.nin = nin
+        self.type = 'outport'
 
 
 if __name__ == "__main__":
