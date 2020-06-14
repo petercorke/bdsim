@@ -84,7 +84,81 @@ class Integrator(TransferBlock):
 # ------------------------------------------------------------------------ #
 
 @block
-class LTI_SISO(TransferBlock):
+class LTI_SS(TransferBlock):
+    def __init__(self, A=None, B=None, C=None, x0=None, verbose=False, **kwargs):
+        """
+        Create a state-space LTI block.
+        
+        :param N: numerator coefficients, defaults to 1
+        :type N: array_like, optional
+        :param D: denominator coefficients, defaults to [1, 1]
+        :type D: array_like, optional
+        :param x0: initial states, defaults to zero
+        :type x0: array_like, optional
+        :param **kwargs: common Block options
+        :return: A SCOPE block
+        :rtype: _LTI_SISO
+        
+        Describes the dynamics of a single-input single-output (SISO) linear
+        time invariant (LTI) system described by numerator and denominator
+        polynomial coefficients.
+
+        Coefficients are given in the order from highest order to zeroth 
+        order, ie. :math:`2s^2 - 4s +3` is ``[2, -4, 3]``.
+        
+        Only proper transfer functions, where order of numerator is less
+        than denominator are allowed.
+        
+        The order of the states in ``x0`` is consistent with controller canonical
+        form.
+        
+        Examples::
+            
+            LTI_SISO(N=[1,2], D=[2, 3, -4])
+            
+        is the transfer function :math:`\frac{s+2}{2s^2+3s-4}`
+
+        """
+        print('in SS constructor')
+
+        super().__init__(**kwargs)
+
+        self.type = 'LTI SS'
+
+        assert A.shape[0] == A.shape[1], 'A must be square'
+        if len(B.shape) == 1:
+            self.nin = 1
+        else:
+            self.nin = B.shape[1]
+        assert A.shape[0] == B.shape[0], 'B must have same number of rows as A'
+        
+        if len(C.shape) == 1:
+            self.nout = 1
+            assert A.shape[1] == C.shape[0], 'C must have same number of columns as A'
+        else:
+            self.nout = C.shape[0]
+            assert A.shape[1] == C.shape[1], 'C must have same number of columns as A'
+        
+        self.A = A
+        self.B = B
+        self.C = C
+        
+        self.nstates = A.shape[0]
+        
+        if x0 is None:
+            self._x0 = np.zeros((self.nstates,))
+        else:
+            self._x0 = x0
+        
+    def output(self, t=None):
+        return list(self.C@self._x)
+    
+    def deriv(self):
+        return self.A@self._x + self.B@np.array(self.inputs)
+# ------------------------------------------------------------------------ #
+
+@block
+class LTI_SISO(LTI_SS):
     def __init__(self, N=1, D=[1, 1], x0=None, verbose=False, **kwargs):
         """
         Create a SISO LTI block.
@@ -119,7 +193,7 @@ class LTI_SISO(TransferBlock):
         is the transfer function :math:`\frac{s+2}{2s^2+3s-4}`
 
         """
-        super().__init__(**kwargs)
+        super(LTI_SS, self).__init__(**kwargs)
         if not isinstance(N, list):
             N = [N]
         if not isinstance(D, list):
@@ -167,12 +241,6 @@ class LTI_SISO(TransferBlock):
             print('A=', self.A)
             print('B=', self.B)
             print('C=', self.C)
-        
-    def output(self, t=None):
-        return list(self.C@self._x)
-    
-    def deriv(self):
-        return self.A@self._x + self.B@np.array(self.inputs)
 
 
 if __name__ == "__main__":
