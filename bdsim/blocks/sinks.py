@@ -37,15 +37,17 @@ import math
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import Polygon
 
+
 import spatialmath.base as sm
 
-from bdsim.components import SinkBlock, block
+from bdsim.components import SinkBlock, SinkBlockGraphics, block
+
 
 
 # ------------------------------------------------------------------------ #
 
 @block
-class ScopeXY(SinkBlock):
+class ScopeXY(SinkBlockGraphics):
     """
     Plot one input against the other.
     """
@@ -139,17 +141,17 @@ class ScopeXY(SinkBlock):
             if self.scale == 'auto':
                 self.ax.relim()
                 self.ax.autoscale_view()
-            super.step()
+            super().step()
         
     def done(self, block=False, **kwargs):
         if self.sim.graphics:
             plt.show(block=block)
-            super.done()
+            super().done()
             
 # ------------------------------------------------------------------------ #
 
 @block
-class Vehicle(SinkBlock):
+class Vehicle(SinkBlockGraphics):
     """
     Animate a vehicle
     """
@@ -283,12 +285,12 @@ class Vehicle(SinkBlock):
 # ------------------------------------------------------------------------ #
 
 @block
-class Scope(SinkBlock):
+class Scope(SinkBlockGraphics):
     """
     Plot input ports against time.  Each line can have its own color or style.
     """
     
-    def __init__(self, nin=1, styles=None, scale='auto', labels=None, grid=True, **kwargs):
+    def __init__(self, nin=None, styles=None, scale='auto', labels=None, grid=True, **kwargs):
         """
         Create a block that plots input ports against time.
         
@@ -334,17 +336,24 @@ class Scope(SinkBlock):
             self.styles = list(styles)
             if nin is not None:
                 assert nin == len(styles), 'need one style per input'
-            nin = len(styles)
-        else:
-            self.styles = [None,] * nin
-            
+            else:
+                nin = len(styles)
+
         if labels is not None:
             self.labels = list(labels)
             if nin is not None:
                 assert nin == len(labels), 'need one label per input'
-            nin = len(labels)
-            
+            else:
+                nin = len(labels)
+        else:
+            self.labels = labels
+
+        if nin is None:
+            nin = 1
         self.nin = nin
+        
+        if styles is None:
+            self.styles = [ None ] * nin
         
         self.grid = grid
                  
@@ -365,7 +374,6 @@ class Scope(SinkBlock):
             super().reset()   # TODO should this be here?
             self.fig = self.sim.create_figure()
             self.ax = self.fig.gca()
-            
             # figure out the labels
             if self.labels is None:
                 self.labels = [self.sourcename(i) for i in range(0, self.nin)]
@@ -374,7 +382,6 @@ class Scope(SinkBlock):
                 self.labels += [self.sourcename(i) for i in range(0, self.nin)]
             else:
                 raise ValueError('incorrect number of labels specified for Scope')
-                
             for i in range(0, self.nin):
                 args = []
                 kwargs = {}
@@ -384,8 +391,7 @@ class Scope(SinkBlock):
                 elif isinstance(style, str):
                     args = [style]
                 self.line[i], = self.ax.plot(self.tdata, self.ydata[i], *args, label=self.styles[i], **kwargs)
-                self.ax.set_ylabel(self.labels[i+1])
-                
+            self.ax.set_ylabel(','.join(self.labels[1:]))
             if self.grid is True:
                 self.ax.grid(self.grid)
             elif isinstance(self.grid, (list, tuple)):
@@ -398,6 +404,8 @@ class Scope(SinkBlock):
             self.ax.set_title(self.name)
             if self.scale != 'auto':
                 self.ax.set_ylim(*self.scale)
+            if self.labels is not None:
+                self.ax.legend(self.labels[1:])
             super().start()
         
     def step(self):
@@ -424,7 +432,7 @@ class Scope(SinkBlock):
     def done(self, block=False, **kwargs):
         if self.sim.graphics:
             plt.show(block=block)
-            super.done()
+            super().done()
 
 # ------------------------------------------------------------------------ #
             
