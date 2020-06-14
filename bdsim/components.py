@@ -5,7 +5,9 @@ Components of the simulation system, namely blocks, wires and plugs.
 """
 
 import numpy as np
+import matplotlib.pyplot as plt
 from matplotlib import animation
+
 
                 
 class Wire:
@@ -317,12 +319,16 @@ class SinkBlock(Block):
     graphics.
     """
     blockclass='sink'
-    def __init__(self, movie=None, **kwargs):
+    def __init__(self, **kwargs):
         #print('Sink constructor')
         super().__init__(**kwargs)
         self.nin = 1
         self.nout = 0
         self.nstates = 0
+
+class SinkBlockGraphics(SinkBlock):
+    def __init__(self, movie=None, **kwargs):
+        super().__init__(**kwargs)
         self.movie = movie
 
     def start(self):
@@ -340,6 +346,9 @@ class SinkBlock(Block):
             self.writer.finish()
             self.cleanup()
             
+    def savefig(self, fname, **kwargs):
+        plt.figure(self.fig.number)
+        plt.savefig(fname, **kwargs)
 
 class SourceBlock(Block):
     """
