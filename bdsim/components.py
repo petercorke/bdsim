@@ -337,6 +337,7 @@ class SinkBlockGraphics(SinkBlock):
             self.writer.setup(fig=self.fig, outfile=self.movie)
                 
     def step(self):
+        super().step()
         if self.movie is not None:
             self.writer.grab_frame()
                 
@@ -415,3 +416,5 @@ class SubsystemBlock(Block):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.nstates = 0
+        self.nin = 0
+        self.nout = 0
