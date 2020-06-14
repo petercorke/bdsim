@@ -45,6 +45,20 @@ from bdsim.components import FunctionBlock, block
 
 
 @block
+class Mux(FunctionBlock):
+    def __init__(self, nin=1, **kwargs):
+
+        super().__init__(**kwargs)
+        self.nin = nin
+        self.nout = 1
+        self.type = 'mux'
+    
+    def output(self, t=None):
+        # TODO, handle inputs that are vectors themselves
+        return [ np.r_[self.inputs] ]
+    
+
+@block
 class Sum(FunctionBlock):
     def __init__(self, signs, angles=False, **kwargs):
         """
