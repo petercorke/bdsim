@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import sys
 import os
 import string
@@ -23,10 +24,10 @@ def pairwise(iterable):
 def ortho_line(start, end, width=2, **kwargs):
   if start[0] < end[0]:
     if start[1] == end[1]:
-      canvas.create_line( start, end, tag="wire", **kwargs)
+      canvas.create_line( start, end, arrow=tk.LAST, tag="wire", **kwargs)
     else:
       xmid = (start[0] + end[0]) / 2.0
-      canvas.create_line( start, (xmid, start[1]), (xmid, end[1]), end, tag="wire", width=width, **kwargs)
+      canvas.create_line( start, (xmid, start[1]), (xmid, end[1]), end, arrow=tk.LAST, tag="wire", width=width, **kwargs)
   else:
     # line has to go backwards
     L = 20
@@ -36,13 +37,14 @@ def ortho_line(start, end, width=2, **kwargs):
       y = end[1] - H
     else:
       y = end[1] + H
-    canvas.create_line( start, (start[0]+L, start[1]), (start[0]+L, y), (end[0]-L, y), (end[0]-L, end[1]), end, tag="wire", **kwargs)
+    canvas.create_line( start, (start[0]+L, start[1]), (start[0]+L, y), (end[0]-L, y), (end[0]-L, end[1]), end, arrow=tk.LAST, tag="wire", **kwargs)
 
 def redraw_wires():
   canvas.delete("wire")
   ortho_line( b3.outpos(0), b4.inpos(0))
 
 class CanvasDnD (tk.Frame):
+# see http://www.bitflipper.ca/Documentation/dnd_barebones.txt
   def __init__(self, master, canvas):
     self.master = master
     self.loc = self.dragged = 0
@@ -197,8 +199,8 @@ class GBlock:
     print(outline)
     A = 2 * (outline[0] + 25)
     flipped = []
-    for x,y in pairwise(outline):
-      flipped.extend([A-x, y])
+    for i in range(0, len(outline), 2):
+      flipped.extend([A-outline[i], outline[i+1]])
     print(flipped)
     canvas.coords(self.id, flipped)
 
