@@ -155,6 +155,6 @@ Figs 4.8 (pure pursuit) and Fig 4.21 (quadrotor control) are yet to be done.
 
 # Limitations
 
-There are lots!  The biggest is that `bdsim` is based on a very standard variable-step integrator from the scipy library.  For discontinuous inputs (step, square wave, triangle wave, piecewise constant) the transitions get missed.  This also makes it inaccurate to simulate hybrid discrete-continuous time systems.  We really need a better integrator.
+There are lots!  The biggest is that `bdsim` is based on a very standard variable-step integrator from the scipy library.  For discontinuous inputs (step, square wave, triangle wave, piecewise constant) the transitions get missed.  This also makes it inaccurate to simulate hybrid discrete-continuous time systems.  We really need a better integrator, perhaps [`odedc` from SciLab](https://help.scilab.org/docs/6.1.0/en_US/odedc.html) could be integrated.
 
 
