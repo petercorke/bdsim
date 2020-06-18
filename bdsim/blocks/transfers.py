@@ -21,8 +21,6 @@ from bdsim.components import TransferBlock, block
 class Integrator(TransferBlock):
     def __init__(self, x0=0, min=None, max=None, **kwargs):
         super().__init__(**kwargs)
-
-        self.limit = limit
         
         self.nin = 1
         self.nout = 1
@@ -44,9 +42,9 @@ class Integrator(TransferBlock):
                 min = -math.inf
             if max is None:
                 max = math.inf
-        self.x0 = x0
-        self.min = min
-        self.max = max
+        self._x0 = np.r_[x0]
+        self.min = np.r_[min]
+        self.max = np.r_[max]
         
     def output(self, t=None):
         return list(self._x)
@@ -54,7 +52,7 @@ class Integrator(TransferBlock):
     def deriv(self):
         xd = np.array(self.inputs)
         for i in range(0, self.nstates):
-            if x[i] < self.min[i] or x[i] > self.max[i]:
+            if self._x[i] < self.min[i] or self._x[i] > self.max[i]:
                 xd[i] = 0
         return xd
 
@@ -102,18 +100,21 @@ class LTI_SS(TransferBlock):
         self.type = 'LTI SS'
 
         assert A.shape[0] == A.shape[1], 'A must be square'
+        n = A.shape[0]
         if len(B.shape) == 1:
             self.nin = 1
+            B = B.reshape((n, 1))
         else:
             self.nin = B.shape[1]
-        assert A.shape[0] == B.shape[0], 'B must have same number of rows as A'
+        assert B.shape[0] == n, 'B must have same number of rows as A'
         
         if len(C.shape) == 1:
             self.nout = 1
-            assert A.shape[1] == C.shape[0], 'C must have same number of columns as A'
+            assert C.shape[0] == n, 'C must have same number of columns as A'
+            C = C.reshape((1,n))
         else:
             self.nout = C.shape[0]
-            assert A.shape[1] == C.shape[1], 'C must have same number of columns as A'
+            assert C.shape[1] == n, 'C must have same number of columns as A'
         
         self.A = A
         self.B = B

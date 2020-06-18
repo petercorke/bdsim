@@ -36,14 +36,55 @@ import math
 
 import matplotlib.pyplot as plt
 
-from bdsim.blocks.sources import *
+from bdsim.blocks.transfers import *
 
 import unittest
 import numpy.testing as nt
 
 
-def test_LTI_SISO(self):
-    pass
+class TransferTest(unittest.TestCase):
+
+    def test_LTI_SS(self):
+        
+        A=np.array([[1, 2], [3, 4]])
+        B=np.array([5, 6])
+        C=np.array([7, 8])
+        block = LTI_SS(A=A, B=B, C=C, x0=[30,40])
+        x = np.r_[10, 11]
+        block._x = np.r_[x]
+        u = -2
+        block.inputs = [u]
+        nt.assert_equal(block.deriv(), A@x  + B*u)
+        nt.assert_equal(block.output()[0], C@x)
+        nt.assert_equal(block.getstate(), np.r_[30, 40])
+        
+        A=np.array([[1, 2], [3, 4]])
+        B=np.array([[5], [6]])
+        C=np.array([[7, 8]])
+        block = LTI_SS(A=A, B=B, C=C, x0=[30,40])
+        x = np.r_[10, 11]
+        block._x = np.r_[x]
+        u = -2
+        block.inputs = [u]
+        nt.assert_equal(block.deriv(), A@x  + B@np.r_[u])
+        nt.assert_equal(block.output()[0], C@x)
+        nt.assert_equal(block.getstate(), np.r_[30, 40])
+        
+    def test_LTI_SISO(self):
+        
+        block = LTI_SISO( [2, 1], [2, 4, 6])
+        nt.assert_equal(block.A, np.array([[0, 1], [-2, -3]]))
+        nt.assert_equal(block.B, np.array([[0], [1]]))
+        nt.assert_equal(block.C, np.array([[1, 0.5]]))
+    
+    def test_integrator(self):
+        block = Integrator(x0=30)
+        x = np.r_[10]
+        block._x = x
+        u = -2
+        block.inputs = [u]
+        nt.assert_equal(block.deriv(), u)
+        nt.assert_equal(block.getstate(), np.r_[30])
 
 # ---------------------------------------------------------------------------------------#
 if __name__ == '__main__':
