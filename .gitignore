@@ -3,6 +3,17 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+untitled*.py
+
+# docs
+*.mp4
+*.pdf
+*.dot
+
+
+# MATLAB
+*.m
+
 # C extensions
 *.so
 
