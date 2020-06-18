@@ -11,7 +11,7 @@ import importlib
 import inspect
 import re
 import argparse
-
+from collections import Counter
 import numpy as np
 import scipy.integrate as integrate
 import matplotlib
@@ -43,6 +43,7 @@ class Simulation:
         self.stop = None
         self.connnecterror = False
         self.checkfinite = True
+        self.blockcounter = Counter()
 
         # command line arguments and graphics
         parser = argparse.ArgumentParser()
@@ -67,9 +68,9 @@ class Simulation:
             debuglist.append('deriv')
         
         # load modules from the blocks folder
-        def new_method(cls, sim):
+        def new_method(cls):
             def block_method_wrapper(self, *args, **kwargs):
-                block = cls(*args, sim=sim, **kwargs)
+                block = cls(*args, **kwargs)
                 self.add_block(block)
                 return block
             
@@ -114,7 +115,7 @@ class Simulation:
                             raise ImportError('class {:s} has missing/improper step method'.format(str(cls)))
 
                     # create a function to invoke the block's constructor
-                    f = new_method(cls, self)
+                    f = new_method(cls)
                     
                     # create the new method name, strip underscores and capitalize
                     bindname = cls.__name__.strip('_').upper()
@@ -204,6 +205,7 @@ class Simulation:
         block.id = len(self.blocklist)
         if block.name is None:
             block.name = 'b' + str(block.id)
+        block.sim = self
         self.blocklist.append(block)  # add to the list of available blocks
         
     def add_wire(self, wire, name=None):
@@ -870,20 +872,33 @@ class Simulation:
             
 if __name__ == "__main__":
     
+    bd = Simulation()
+    
+    const1 = bd.CONSTANT(2)
+    print(const1)
+    const2 = bd.CONSTANT(3)
 
-    s = Simulation()
-    
-    const = s.CONSTANT(1, name='const')
-    sink = s.STOP(lambda x: False)
-    #gain = s.GAIN(2, 'K1')
-    # s.connect(const, gain)
-    # s.connect(gain, sink)
-    
-    sink[0] = const[0] * s.GAIN(2, 'K1')[0]
-    
+    dst = bd.OUTPORT(2)  # 2 ports
+    print(dst)
 
-    s.compile()
-
+    dst[0] = const1
+    dst[1] = const2
     
-    s.report()
+    bd.compile()
+    
+    
+    bd = Simulation()
+    
+    const1 = bd.CONSTANT(2)
+    print(const1)
+    const2 = bd.CONSTANT(3)
+
+    dst = bd.OUTPORT(2)  # 2 ports
+    print(dst)
+
+    dst[0] = const1
+    dst[1] = const2
+    
+    bd.compile()
+
 

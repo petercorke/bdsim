@@ -74,17 +74,21 @@ class Plug:
     
     @property
     def portlist(self):
-        if self.isslice:
-            if self.type == 'start':
-                seq = range(0, self.block.nout)
-                return seq[self.port]
-            elif self.type == 'end':
-                seq = range(0, self.block.nin)
-                return seq[self.port]
+        if isinstance(self.port, slice):
+            if self.port.step is None:
+                return range(self.port.start, self.port.stop)
             else:
-                return None
+                return range(self.port.start, self.port.stop, self.port.step)
+            # if self.type == 'start':
+            #     seq = range(0, self.block.nout)
+            #     return seq[self.port]
+            # elif self.type == 'end':
+            #     seq = range(0, self.block.nin)
+            #     return seq[self.port]
+            # else:
+            #     return None
         else:
-            return [0]
+            return self.port
         
     
     @property
@@ -193,6 +197,7 @@ class Block:
     def __setitem__(self, port, src):
         # b[port] = src
         # src --> b[port]
+        print('connecting', src, self, port)
         self.sim.connect(src, self[port])
     
     def __mul__(left, right):
@@ -275,7 +280,7 @@ class Block:
         
         :param self: Block to be updated
         :type wire: Block
-        :param port: Inut port to be updated
+        :param port: Input port to be updated
         :type port: int
         :param value: Input value
         :type val: any
