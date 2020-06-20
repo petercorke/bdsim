@@ -5,7 +5,7 @@
 import bdsim.simulation as sim
 import math
 
-bd = sim.Simulation()
+bd = bdsim.BlockDiagram()
 
 # parameters
 xg = [5, 5, math.pi/2]

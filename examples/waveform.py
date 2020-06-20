@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-import bdsim.simulation as sim
+import bdsim
 
-bd = sim.Simulation()
+bd = bdsim.BlockDiagram()
 
 wave1 = bd.WAVEFORM(wave='triangle', freq=1, phase=0.25)
 wave2 = bd.WAVEFORM(wave='square', freq=1, min=0, max=1)

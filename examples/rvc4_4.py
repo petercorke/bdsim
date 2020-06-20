@@ -2,10 +2,10 @@
 
 # run with command line -a switch to show animation
 
-import bdsim.simulation as sim
+import bdsim
 import math
 
-bd = sim.Simulation()
+bd = bdsim.BlockDiagram()
 
 def background_graphics(ax):
     ax.plot(5, 5, '*')

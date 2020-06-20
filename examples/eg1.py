@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-import bdsim.simulation as sim
+import bdsim
 
-bd = sim.Simulation()
+bd = bdsim.BlockDiagram()
 
 # define the blocks
 demand = bd.STEP(T=1, pos=(0,0), name='demand')

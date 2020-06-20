@@ -2,11 +2,11 @@
 
 # run with command line -a switch to show animation
 
-import bdsim.simulation as sim
+import bdsim
 import math
 import numpy as np
 
-bd = sim.Simulation()
+bd = bdsim.BlockDiagram()
 
 #x0 = [8, 5, math.pi/2]
 x0 = [5, 2, 0]

@@ -12,14 +12,14 @@ import numpy.testing as nt
 class BlockTest(unittest.TestCase):
     pass
 
-class SimulationTest(unittest.TestCase):
+class BlockDiagramTest(unittest.TestCase):
     pass
 
 class WiringTest(unittest.TestCase):
 
     def test_wiring1(self):
 
-        bd = bdsim.Simulation()
+        bd = bdsim.BlockDiagram()
 
         src = bd.CONSTANT(2)
         dst = bd.OUTPORT(1)  # 1 port
@@ -30,7 +30,7 @@ class WiringTest(unittest.TestCase):
 
     def test_wiring2(self):
 
-        bd = bdsim.Simulation()
+        bd = bdsim.BlockDiagram()
 
         src = bd.CONSTANT(2)
         dst1 = bd.OUTPORT(1)  # 1 port
@@ -44,7 +44,7 @@ class WiringTest(unittest.TestCase):
 
     def test_wiring_multipoint(self):
 
-        bd = bdsim.Simulation()
+        bd = bdsim.BlockDiagram()
 
         src = bd.CONSTANT(2)
         dst1 = bd.OUTPORT(1)  # 1 port
@@ -57,7 +57,7 @@ class WiringTest(unittest.TestCase):
 
     def test_ports1(self):
 
-        bd = bdsim.Simulation()
+        bd = bdsim.BlockDiagram()
 
         const1 = bd.CONSTANT(2)
         const2 = bd.CONSTANT(3)
@@ -71,7 +71,7 @@ class WiringTest(unittest.TestCase):
 
     def test_ports2(self):
 
-        bd = bdsim.Simulation()
+        bd = bdsim.BlockDiagram()
 
         const = bd.CONSTANT([2, 3])
         src = bd.DEMUX(2)
@@ -88,7 +88,7 @@ class WiringTest(unittest.TestCase):
 
     def test_ports2(self):
 
-        bd = bdsim.Simulation()
+        bd = bdsim.BlockDiagram()
 
         const = bd.CONSTANT([2, 3, 4, 5])
         src = bd.DEMUX(4)
@@ -105,7 +105,7 @@ class WiringTest(unittest.TestCase):
 
     def test_slice1(self):
 
-        bd = bdsim.Simulation()
+        bd = bdsim.BlockDiagram()
 
         src = bd.CONSTANT(2)
         dst = bd.OUTPORT(2)  # 1 port
@@ -117,7 +117,7 @@ class WiringTest(unittest.TestCase):
 
     def test_slice2(self):
 
-        bd = bdsim.Simulation()
+        bd = bdsim.BlockDiagram()
 
         const = bd.CONSTANT([2, 3, 4, 5])
         src = bd.DEMUX(4)
@@ -131,7 +131,7 @@ class WiringTest(unittest.TestCase):
 
     def test_slice3(self):
 
-        bd = bdsim.Simulation()
+        bd = bdsim.BlockDiagram()
 
         const = bd.CONSTANT([2, 3, 4, 5])
         src = bd.DEMUX(4)
@@ -145,7 +145,7 @@ class WiringTest(unittest.TestCase):
 
     def test_slice4(self):
 
-        bd = bdsim.Simulation()
+        bd = bdsim.BlockDiagram()
 
         const = bd.CONSTANT([2, 3, 4, 5])
         src = bd.DEMUX(4)
@@ -159,7 +159,7 @@ class WiringTest(unittest.TestCase):
 
     def test_slice5(self):
 
-        bd = bdsim.Simulation()
+        bd = bdsim.BlockDiagram()
 
         const = bd.CONSTANT([2, 3, 4, 5])
         src = bd.DEMUX(4)
@@ -174,7 +174,7 @@ class WiringTest(unittest.TestCase):
 
     def test_slice5(self):
 
-        bd = bdsim.Simulation()
+        bd = bdsim.BlockDiagram()
 
         const = bd.CONSTANT([2, 3, 4, 5])
         src = bd.DEMUX(4)
@@ -189,7 +189,7 @@ class WiringTest(unittest.TestCase):
         
     def test_assignment11(self):
 
-        bd = bdsim.Simulation()
+        bd = bdsim.BlockDiagram()
 
         src = bd.CONSTANT(2)
         dst = bd.OUTPORT(1)  # 1 port
@@ -202,7 +202,7 @@ class WiringTest(unittest.TestCase):
 
     def test_assignment2(self):
         
-        bd = bdsim.Simulation()
+        bd = bdsim.BlockDiagram()
 
         const1 = bd.CONSTANT(2)
         const2 = bd.CONSTANT(3)
@@ -218,7 +218,7 @@ class WiringTest(unittest.TestCase):
 
 
     def test_assignment3(self):
-        bd = bdsim.Simulation()
+        bd = bdsim.BlockDiagram()
 
         const = bd.CONSTANT([2, 3, 4, 5])
         src = bd.DEMUX(4)
@@ -233,7 +233,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(dst.inputs, [5, 4, 3, 2])
 
     def test_multiply1(self):
-        bd = bdsim.Simulation()
+        bd = bdsim.BlockDiagram()
 
         dst = bd.OUTPORT(1)  # 1 ports
 
@@ -244,7 +244,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(dst.inputs, [6])
 
     def test_multiply2(self):
-        bd = bdsim.Simulation()
+        bd = bdsim.BlockDiagram()
 
         dst = bd.OUTPORT(1)  # 1 ports
 
@@ -255,7 +255,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(dst.inputs, [24])
 
     def test_multiply3(self):
-        bd = bdsim.Simulation()
+        bd = bdsim.BlockDiagram()
 
         const = bd.CONSTANT([2, 3])
         src = bd.DEMUX(2)
@@ -271,7 +271,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(dst.inputs, [4, 9])
 
     def test_inline1(self):
-        bd = bdsim.Simulation()
+        bd = bdsim.BlockDiagram()
 
         dst = bd.OUTPORT(1)  # 1 ports
         const1 = bd.CONSTANT(2)
@@ -284,7 +284,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(dst.inputs, [5])
 
     def test_inline2(self):
-        bd = bdsim.Simulation()
+        bd = bdsim.BlockDiagram()
 
         dst = bd.OUTPORT(1)  # 1 ports
         const1 = bd.CONSTANT(2)

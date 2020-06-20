@@ -2,9 +2,9 @@
 
 # run with command line -a switch to show animation
 
-import bdsim.simulation as sim
+import bdsim
 
-bd = sim.Simulation()
+bd = bdsim.BlockDiagram()
     
 steer = bd.PIECEWISE( (0,0), (3,0.5), (4,0), (5,-0.5), (6,0), name='steering')
 speed = bd.CONSTANT(1, name='speed')

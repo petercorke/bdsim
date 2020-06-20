@@ -28,7 +28,7 @@ def DEBUG(debug, *args):
 # ------------------------------------------------------------------------- #    
 
 
-class Simulation:
+class BlockDiagram:
     
     def __init__(self):
         
@@ -37,7 +37,7 @@ class Simulation:
         self.x = None           # state vector numpy.ndarray
         self.graphics = True    # graphics enabled
         self.compiled = False   # network has been compiled
-        self.T = None           # maximum simulation time
+        self.T = None           # maximum.BlockDiagram time
         self.t = None           # current time
         self.fignum = 0
         self.stop = None
@@ -123,7 +123,7 @@ class Simulation:
                     
                     # set an attribute of the class
                     #  it becomes a bound method of the instance.
-                    setattr(Simulation, bindname, f)
+                    setattr(BlockDiagram, bindname, f)
 
                 if len(blocknames) > 0:
                     print('  loading blocks from {:s}: {:s}'.format(file, ', '.join(blocknames)))
@@ -608,10 +608,10 @@ class Simulation:
         assert self.compiled, 'Network has not been compiled'
         self.T = T
         self.count = 0
-        self.stop = None # allow any block to stop simulation by setting this to the block's name
+        self.stop = None # allow any block to stop.BlockDiagram by setting this to the block's name
         self.checkfinite = checkfinite
         
-        # tell all blocks we're doing a simulation
+        # tell all blocks we're doing a.BlockDiagram
         self.start()
 
         x0 = self.getstate()
@@ -624,7 +624,7 @@ class Simulation:
             return s.evaluate(y, t)
     
         try:
-            # out = scipy.integrate.solve_ivp(Simulation._deriv, args=(self,), t_span=(0,T), y0=x0, 
+            # out = scipy.integrate.solve_ivp.BlockDiagram._deriv, args=(self,), t_span=(0,T), y0=x0, 
             #             method=solver, t_eval=np.linspace(0, T, 100), events=None, **kwargs)
             if len(x0) > 0:
                 integrator = integrate.__dict__[solver](lambda t, y: _deriv(t, y, self), t0=0.0, y0=x0, t_bound=T, max_step=dt)
@@ -791,7 +791,7 @@ class Simulation:
                     
     def start(self, **kwargs):
         """
-        Inform all active blocks that simulation is about to start.  Open files,
+        Inform all active blocks that.BlockDiagram is about to start.  Open files,
         initialize graphics, etc.
         
         Invokes the `start` method on all blocks.
@@ -802,7 +802,7 @@ class Simulation:
             
     def done(self, **kwargs):
         """
-        Inform all active blocks that simulation is complete.  Close files,
+        Inform all active blocks that.BlockDiagram is complete.  Close files,
         graphics, etc.
         
         Invokes the `done` method on all blocks.
@@ -872,7 +872,7 @@ class Simulation:
             
 if __name__ == "__main__":
     
-    bd = Simulation()
+    bd = BlockDiagram()
     
     const1 = bd.CONSTANT(2)
     print(const1)
@@ -887,7 +887,7 @@ if __name__ == "__main__":
     bd.compile()
     
     
-    bd = Simulation()
+    bd = BlockDiagram()
     
     const1 = bd.CONSTANT(2)
     print(const1)
