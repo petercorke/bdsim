@@ -19,34 +19,6 @@ from bdsim.components import FunctionBlock, block
 # saturation
 # transform 3D points
 
-
-@block
-class Mux(FunctionBlock):
-    def __init__(self, nin=1, **kwargs):
-
-        super().__init__(**kwargs)
-        self.nin = nin
-        self.nout = 1
-        self.type = 'mux'
-    
-    def output(self, t=None):
-        # TODO, handle inputs that are vectors themselves
-        return [ np.r_[self.inputs] ]
-
-
-@block
-class DeMux(FunctionBlock):
-    def __init__(self, nout=1, **kwargs):
-
-        super().__init__(**kwargs)
-        self.nin = 1
-        self.nout = nout
-        self.type = 'demux'
-    
-    def output(self, t=None):
-        # TODO, handle inputs that are vectors themselves
-        assert len(self.inputs[0]) == self.nout, 'Input width not equal to number of output ports'
-        return list(self.inputs[0])
         
 @block
 class Sum(FunctionBlock):

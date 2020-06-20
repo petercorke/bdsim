@@ -11,6 +11,7 @@ Each class MyClass in this module becomes a method MYCLASS() of the Simulation o
 """
 
 import importlib.util
+import numpy as np
 
 
 """
@@ -18,8 +19,35 @@ At compile time we remove/disable certain wires.
 Block should have the subsystem enable status
 """
 import bdsim
-from bdsim.components import SubsystemBlock, SourceBlock, SinkBlock, block
+from bdsim.components import SubsystemBlock, SourceBlock, SinkBlock, FunctionBlock, block
 
+@block
+class Mux(FunctionBlock):
+    def __init__(self, nin=1, **kwargs):
+
+        super().__init__(**kwargs)
+        self.nin = nin
+        self.nout = 1
+        self.type = 'mux'
+    
+    def output(self, t=None):
+        # TODO, handle inputs that are vectors themselves
+        return [ np.r_[self.inputs] ]
+
+
+@block
+class DeMux(FunctionBlock):
+    def __init__(self, nout=1, **kwargs):
+
+        super().__init__(**kwargs)
+        self.nin = 1
+        self.nout = nout
+        self.type = 'demux'
+    
+    def output(self, t=None):
+        # TODO, handle inputs that are vectors themselves
+        assert len(self.inputs[0]) == self.nout, 'Input width not equal to number of output ports'
+        return list(self.inputs[0])
 
 @block
 class SubSystem(SubsystemBlock):
