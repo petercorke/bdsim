@@ -12,7 +12,7 @@ Each class MyClass in this module becomes a method MYCLASS() of the Simulation o
 
 import importlib.util
 import numpy as np
-
+import copy
 
 """
 At compile time we remove/disable certain wires.
@@ -52,27 +52,34 @@ class DeMux(FunctionBlock):
 @block
 class SubSystem(SubsystemBlock):
     
-    def __init__(self, fname, **kwargs):
+    def __init__(self, subsys, **kwargs):
         super().__init__(**kwargs)
         self.type = 'subsystem'
         
-        # attempt to import the file
-        try:
-            module = importlib.import_module(fname, package='.')
-        except SyntaxError:
-            print('-- syntax error in block definiton: ' + file)
-        except ModuleNotFoundError:
-            print('-- module not found ', fname)
+        if isinstance(subsys, str):
+            # attempt to import the file
+            try:
+                module = importlib.import_module(subsys, package='.')
+            except SyntaxError:
+                print('-- syntax error in block definiton: ' + subsys)
+            except ModuleNotFoundError:
+                print('-- module not found ', subsys)
+            # get all the bdsim.BlockDiagram instances
+            simvars = [name for name, ref in module.__dict__.items() if isinstance(ref, bdsim.BlockDiagram)]
+            if len(simvars) == 0:
+                raise ImportError('no bdsim.Simulation instances in imported module')
+            elif len(simvars) > 1:
+                raise ImportError('multiple bdsim.Simulation instances in imported module' + str(simvars))
+            subsys = module.__dict__[simvars[0]]
+            self.ssvar = simvars[0]
+        elif isinstance(subsys, bdsim.BlockDiagram):
+            # use an in-memory digram
+            self.ssvar = None
+        else:
+            raise ValueError('argument must be filename or BlockDiagram instance')
 
-        # get all the bdsim.Simulation instances
-        simvars = [name for name, ref in module.__dict__.items() if isinstance(ref, bdsim.Simulation)]
-        if len(simvars) == 0:
-            raise ImportError('no bdsim.Simulation instances in imported module')
-        elif len(simvars) > 1:
-            raise ImportError('multiple bdsim.Simulation instances in imported module' + str(simvars))
-            
-        self.subsystem = module.__dict__[simvars[0]]
-        self.ssvar = simvars[0]
+        self.subsystem = copy.deepcopy(subsys)
+        self.ssname = subsys.name
 
 @block
 class InPort(SubsystemBlock):
