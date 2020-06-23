@@ -296,11 +296,62 @@ class WiringTest(unittest.TestCase):
         bd.evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [10])
 
-# create DEMUX block
-# do doco & unit tests for blocks
-
-
+class ImportTest(unittest.TestCase):
     
+    def test_import1(self):
+        # create a subsystem
+        ss = bdsim.BlockDiagram(name='subsystem1')
+    
+        f = ss.FUNCTION(lambda x: x)
+        inp = ss.INPORT(1)
+        outp = ss.OUTPORT(1)
+        
+        ss.connect(inp, f)
+        ss.connect(f, outp)
+    
+        # create main system
+        bd = bdsim.BlockDiagram()
+    
+        const = bd.CONSTANT(1)
+        scope = bd.SCOPE()
+        
+        f = bd.SUBSYSTEM(ss, name='subsys')
+        
+        bd.connect(const, f)
+        bd.connect(f, scope)
+        
+        bd.compile()
+        
+        self.assertEqual(len(bd.blocklist), 3)
+        self.assertEqual(len(bd.wirelist), 2)
+
+    def test_import2(self):
+        # create a subsystem
+        ss = bdsim.BlockDiagram(name='subsystem1')
+    
+        f = ss.FUNCTION(lambda x: x)
+        inp = ss.INPORT(1)
+        outp = ss.OUTPORT(1)
+        
+        ss.connect(inp, f)
+        ss.connect(f, outp)
+    
+        # create main system
+        bd = bdsim.BlockDiagram()
+    
+        const = bd.CONSTANT(1)
+        scope1 = bd.SCOPE()
+        scope2 = bd.SCOPE()
+        
+        f1 = bd.SUBSYSTEM(ss, name='subsys1')
+        f2 = bd.SUBSYSTEM(ss, name='subsys2')
+        
+        bd.connect(const, f1, f2)
+        bd.connect(f1, scope1)
+        bd.connect(f2, scope2)
+        
+        bd.compile()
+        
 
 # ---------------------------------------------------------------------------------------#
 if __name__ == '__main__':
