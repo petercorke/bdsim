@@ -22,7 +22,7 @@ from bdsim.components import FunctionBlock, block
         
 @block
 class Sum(FunctionBlock):
-    def __init__(self, signs, angles=False, **kwargs):
+    def __init__(self, signs, *inputs, angles=False, **kwargs):
         """
         Create a summing junction.
         
@@ -51,6 +51,9 @@ class Sum(FunctionBlock):
         assert all([x in '+-' for x in signs]), 'invalid sign'
         self.signs = signs
         self.angles = angles
+        
+        for input in inputs:
+            self.sim.connect(input, self)
         
     def output(self, t=None):
         for i,input in enumerate(self.inputs):
