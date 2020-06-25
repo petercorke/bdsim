@@ -213,7 +213,9 @@ class BlockDiagram:
     def add_block(self, block):
         block.id = len(self.blocklist)
         if block.name is None:
-            block.name = 'b' + str(block.id)
+            i = self.blockcounter[block.type]
+            self.blockcounter[block.type] += 1
+            block.name = "{:s}.{:d}".format(block.type, i)
         block.sim = self
         self.blocklist.append(block)  # add to the list of available blocks
         
@@ -272,12 +274,13 @@ class BlockDiagram:
         
     def compile(self, subsystem=False):
         
-        # enumrate the elements
+        # namethe elements
         self.nblocks = len(self.blocklist)
-        # for (i,b) in enumerate(self.blocklist):
-        #     b.id = i
+        # for b in self.blocklist:
         #     if b.name is None:
-        #         b.name = "block {:d}".format(i)
+        #         i = self.blockcounter[b.type]
+        #         self.blockcounter[b.type] += 1
+        #         b.name = "{:s}.{:d}".format(b.type, i)
         self.nwires = len(self.wirelist)
         # for (i,w) in enumerate(self.wirelist):
         #     # w.id = i 
@@ -298,85 +301,19 @@ class BlockDiagram:
         if not subsystem:
             print('\nCompiling:')
         
-        #flatten the hierarchy
-        
-        def flatten(top, subsys, path):
-            subsystems = [b for b in subsys.subsystem.blocklist if b.type == 'subsystem']
-            # recursively flatten all subsystems
-            for ss in subsystems:
-                flatten(top, ss, path + [ss.name] )
-            
-            # compile this subsystem TODO
-            if subsys.subsystem.compiled is False:
-                subsys.subsystem.compile(subsystem=True)
-            
-            # sort the subsystem blocks into categories
-            inports = []
-            outports = []
-            others = []
-            for b in subsys.subsystem.blocklist:
-                if b.type == 'inport':
-                    inports.append(b)
-                elif b.type == 'outport':
-                    outports.append(b)
-                else:
-                    others.append(b)
-            if len(inports) >1:
-                raise ImportError('subsystem has more than one input port element')
-            if len(outports) > 1:
-                raise ImportError('subsystem has more than one output port element')
-            if len(inports) == 0 and len(outports) == 0:
-                raise ImportError('subsystem has no input or output port elements')
-                
-            # connect the input port
-            inport = inports[0]
-            for w in top.wirelist:
-                if w.end.block == subsys:
-                    # this top-level wire is input to subsystem
-                    # reroute it
-                    port = w.end.port
-                    for w2 in inport.outports[port]:
-                        # w2 is the wire from INPORT to others within subsystem
-                        
-                        # make w2 start at the source driving INPORT
-                        w2.start.block = w.start.block
-                        w2.start.port = w.start.port
-            # remove all wires connected to the inport
-            top.wirelist = [w for w in top.wirelist if w.end.block != subsys]
-                    
-            # connect the output port
-            outport = outports[0]
-            for w in top.wirelist:
-                if w.start.block == subsys:
-                    # this top-level wire is output from subsystem
-                    # reroute it
-                    port = w.start.port
-                    w2 = outport.inports[port]
-                    # w2 is the wire to OUTPORT from others within subsystem
-                    
-                    # make w2 end at the destination from OUTPORT
-                    w2.end.block = w.end.block
-                    w2.end.port = w.end.port
-            # remove all wires connected to the outport
-            top.wirelist = [w for w in top.wirelist if w.start.block != subsys]
-            top.blocklist.remove(subsys)
-            for b in others:
-                top.add_block(b)   # add remaining blocks from subsystem
-                b.name = '/'.join(path + [b.name])
-            top.wirelist.extend(subsys.subsystem.wirelist)  # add remaining wires from subsystem
-        
-        for b in self.blocklist:
-            if b.type == 'subsystem':
-                if b.ssvar is not None:
-                    print('-- Wiring in subsystem', b, 'from module local variable ', b.ssvar)
-                flatten(self, b, [b.name])
+        ssblocks = [b for b in self.blocklist if b.type == 'subsystem']
+        for b in ssblocks:
+            print('  importing subsystem', b.name)
+            if b.ssvar is not None:
+                print('-- Wiring in subsystem', b, 'from module local variable ', b.ssvar)
+            self.flatten(b, [b.name])
         
         # initialize lists of input and output ports
         for b in self.blocklist:
             nstates += b.nstates
             b.outports = [[] for i in range(0, b.nout)]
             b.inports = [None for i in range(0, b.nin)]
-            
+        
         #print('  {:d} states'.format(nstates))
         self.nstates = nstates
          
@@ -445,6 +382,74 @@ class BlockDiagram:
             print('unrecoverable error in value propagation')
             return False
         return True
+    
+    #flatten the hierarchy
+    
+    def flatten(top, subsys, path):
+        subsystems = [b for b in subsys.subsystem.blocklist if b.type == 'subsystem']
+        # recursively flatten all subsystems
+        for ss in subsystems:
+            flatten(top, ss, path + [ss.name] )
+        
+        # compile this subsystem TODO
+        if subsys.subsystem.compiled is False:
+            ok = subsys.subsystem.compile(subsystem=True)
+            if not ok:
+                raise ImportError('cant compile subsystem')
+        # sort the subsystem blocks into categories
+        inports = []
+        outports = []
+        others = []
+        for b in subsys.subsystem.blocklist:
+            if b.type == 'inport':
+                inports.append(b)
+            elif b.type == 'outport':
+                outports.append(b)
+            else:
+                others.append(b)
+        if len(inports) >1:
+            raise ImportError('subsystem has more than one input port element')
+        if len(outports) > 1:
+            raise ImportError('subsystem has more than one output port element')
+        if len(inports) == 0 and len(outports) == 0:
+            raise ImportError('subsystem has no input or output port elements')
+            
+        # connect the input port
+        inport = inports[0]
+        for w in top.wirelist:
+            if w.end.block == subsys:
+                # this top-level wire is input to subsystem
+                # reroute it
+                port = w.end.port
+                for w2 in inport.outports[port]:
+                    # w2 is the wire from INPORT to others within subsystem
+                    
+                    # make w2 start at the source driving INPORT
+                    w2.start.block = w.start.block
+                    w2.start.port = w.start.port
+        # remove all wires connected to the inport
+        top.wirelist = [w for w in top.wirelist if w.end.block != subsys]
+                
+        # connect the output port
+        outport = outports[0]
+        for w in top.wirelist:
+            if w.start.block == subsys:
+                # this top-level wire is output from subsystem
+                # reroute it
+                port = w.start.port
+                w2 = outport.inports[port]
+                # w2 is the wire to OUTPORT from others within subsystem
+                
+                # make w2 end at the destination from OUTPORT
+                w2.end.block = w.end.block
+                w2.end.port = w.end.port
+        # remove all wires connected to the outport
+        top.wirelist = [w for w in top.wirelist if w.start.block != subsys]
+        top.blocklist.remove(subsys)
+        for b in others:
+            top.add_block(b)   # add remaining blocks from subsystem
+            b.name = '/'.join(path + [b.name])
+        top.wirelist.extend(subsys.subsystem.wirelist)  # add remaining wires from subsystem
         
     def report(self):
         
@@ -556,7 +561,7 @@ class BlockDiagram:
         print('\nBlocks::\n')
         cfmt = TableFormat("id[3d] name[*s] nin[2d] nout[2d] nstate[2d]")
         for b in self.blocklist:
-            cfmt.add( b.id, b.fullname, b.nin, b.nout, b.nstates)
+            cfmt.add( b.id, str(b), b.nin, b.nout, b.nstates)
         cfmt.print()
         
         # print all the wires
@@ -882,33 +887,8 @@ class BlockDiagram:
             
 if __name__ == "__main__":
     
-    bd = BlockDiagram()
-    
-    const1 = bd.CONSTANT(2)
-    print(const1)
-    const2 = bd.CONSTANT(3)
+    import pathlib
+    import os.path
 
-    dst = bd.OUTPORT(2)  # 2 ports
-    print(dst)
-
-    dst[0] = const1
-    dst[1] = const2
-    
-    bd.compile()
-    
-    
-    bd = BlockDiagram()
-    
-    const1 = bd.CONSTANT(2)
-    print(const1)
-    const2 = bd.CONSTANT(3)
-
-    dst = bd.OUTPORT(2)  # 2 ports
-    print(dst)
-
-    dst[0] = const1
-    dst[1] = const2
-    
-    bd.compile()
-
+    exec(open(os.path.join(pathlib.Path(__file__).parent.absolute(), "test_blockdiagram.py")).read())
 

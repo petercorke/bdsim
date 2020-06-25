@@ -142,7 +142,7 @@ class Block:
     
     _latex_remove = str.maketrans({'$':'', '\\':'', '{':'', '}':'', '^':'', '_':''})
     
-    def __init__(self, name=None, inames=None, onames=None, snames=None, pos=None, sim=None, **kwargs):
+    def __init__(self, name=None, inames=None, onames=None, snames=None, pos=None, bd=None, **kwargs):
         #print('Block constructor, sim = ', sim)
         if name is not None:
             self.name_tex = name
@@ -158,7 +158,7 @@ class Block:
         self._inport_names = None
         self._outport_names = None
         self._state_names = None
-        self.sim = sim
+        self.sim = bd
         
         if inames is not None:
             self.inport_names(inames)
@@ -213,14 +213,10 @@ class Block:
         # make connection, return a plug
         
     def __str__(self):
-        s = self.type + '.'
         if self.name is not None:
-            s += self.name
-        elif self.id is not None:
-            s += 'block' + str(self.id)
+            return self.name
         else:
-            s += '??'
-        return s
+            return self.type + '.??'
     
     def __repr__(self):
         return self.fullname
@@ -255,9 +251,9 @@ class Block:
             return src._outport_names[srcp]
         return str(w.start)
     
-    @property
-    def fullname(self):
-        return self.blockclass + "." + str(self)
+    # @property
+    # def fullname(self):
+    #     return self.blockclass + "." + str(self)
     
     def reset(self):
         if self.nin > 0:
