@@ -53,34 +53,22 @@
 <span class="c1"># saturation</span>
 <span class="c1"># transform 3D points</span>
 
-
-<div class="viewcode-block" id="Mux"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Mux">[docs]</a><span class="nd">@block</span>
-<span class="k">class</span> <span class="nc">Mux</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
-<div class="viewcode-block" id="Mux.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Mux.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">nin</span> <span class="o">=</span> <span class="n">nin</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;mux&#39;</span></div>
-    
-    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="c1"># TODO, handle inputs that are vectors themselves</span>
-        <span class="k">return</span> <span class="p">[</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">]</span> <span class="p">]</span></div>
-    
-
+        
 <div class="viewcode-block" id="Sum"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Sum">[docs]</a><span class="nd">@block</span>
 <span class="k">class</span> <span class="nc">Sum</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
-<div class="viewcode-block" id="Sum.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Sum.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signs</span><span class="p">,</span> <span class="n">angles</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Sum.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Sum.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signs</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">angles</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create a summing junction.</span>
 <span class="sd">        </span>
 <span class="sd">        :param signs: signs associated with input ports, + or -</span>
 <span class="sd">        :type signs: str</span>
+<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
+<span class="sd">        :type ``*inputs``: Block or Plug</span>
 <span class="sd">        :param angles: the signals are angles, wrap to [-pi,pi)</span>
 <span class="sd">        :type angles: bool</span>
 <span class="sd">        :param ``**kwargs``: common Block options</span>
 <span class="sd">        :return: A SUM block</span>
-<span class="sd">        :rtype: _Sum</span>
+<span class="sd">        :rtype: Sum instance</span>
 <span class="sd">        </span>
 <span class="sd">        The number of input ports is determined by the length of the `signs`</span>
 <span class="sd">        string.  For example::</span>
@@ -91,14 +79,13 @@
 <span class="sd">        port 1 is subtracted.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">signs</span><span class="p">),</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">signs</span><span class="p">,</span> <span class="nb">str</span><span class="p">),</span> <span class="s1">&#39;first argument must be signs string&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">nin</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">signs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;sum&#39;</span>
         <span class="k">assert</span> <span class="nb">all</span><span class="p">([</span><span class="n">x</span> <span class="ow">in</span> <span class="s1">&#39;+-&#39;</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">signs</span><span class="p">]),</span> <span class="s1">&#39;invalid sign&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">signs</span> <span class="o">=</span> <span class="n">signs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">angles</span> <span class="o">=</span> <span class="n">angles</span></div>
+        
         
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="nb">input</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">):</span>
@@ -117,17 +104,19 @@
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 <div class="viewcode-block" id="Prod"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Prod">[docs]</a><span class="nd">@block</span>
 <span class="k">class</span> <span class="nc">Prod</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
-<div class="viewcode-block" id="Prod.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Prod.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ops</span><span class="p">,</span> <span class="o">*</span><span class="n">pos</span><span class="p">,</span> <span class="n">matrix</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Prod.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Prod.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ops</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">matrix</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create a product junction.</span>
 <span class="sd">        </span>
-<span class="sd">        :param signs: ops associated with input ports * or /</span>
-<span class="sd">        :type signs: str</span>
+<span class="sd">        :param ops: operations associated with input ports * or /</span>
+<span class="sd">        :type ops: str</span>
+<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
+<span class="sd">        :type ``*inputs``: Block or Plug</span>
 <span class="sd">        :param matrix: Arguments are matrices, use @ and np.linalg.inv, default False</span>
 <span class="sd">        :type matrix: bool</span>
 <span class="sd">        :param ``**kwargs``: common Block options</span>
 <span class="sd">        :return: A PROD block</span>
-<span class="sd">        :rtype: _Prod</span>
+<span class="sd">        :rtype: Prod instance</span>
 <span class="sd">        </span>
 <span class="sd">        The number of input ports is determined by the length of the `ops`</span>
 <span class="sd">        string.  For example::</span>
@@ -138,10 +127,8 @@
 <span class="sd">        port 1 is divided.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">pos</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">ops</span><span class="p">),</span><span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ops</span><span class="p">,</span> <span class="nb">str</span><span class="p">),</span> <span class="s1">&#39;first argument must be signs string&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">nin</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ops</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;prod&#39;</span>
         <span class="k">assert</span> <span class="nb">all</span><span class="p">([</span><span class="n">x</span> <span class="ow">in</span> <span class="s1">&#39;*/&#39;</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">ops</span><span class="p">]),</span> <span class="s1">&#39;invalid op&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ops</span> <span class="o">=</span> <span class="n">ops</span>
@@ -174,17 +161,19 @@
 
 <div class="viewcode-block" id="Gain"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Gain">[docs]</a><span class="nd">@block</span>
 <span class="k">class</span> <span class="nc">Gain</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
-<div class="viewcode-block" id="Gain.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Gain.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gain</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s1">&#39;premul&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Gain.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Gain.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gain</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">premul</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create a gain block.</span>
 <span class="sd">        </span>
 <span class="sd">        :param gain: The gain value</span>
 <span class="sd">        :type gain: float</span>
-<span class="sd">        :param order: the order of multiplication: &#39;postmul&#39; [default], &#39;premul&#39;</span>
-<span class="sd">        :type order: str, optional</span>
+<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
+<span class="sd">        :type ``*inputs``: Block or Plug</span>
+<span class="sd">        :param premul: premultiply by constant, default is postmultiply</span>
+<span class="sd">        :type premul: bool, optional</span>
 <span class="sd">        :param ``**kwargs``: common Block options</span>
-<span class="sd">        :return: A SCOPE block</span>
-<span class="sd">        :rtype: _Gain</span>
+<span class="sd">        :return: A GAIN block</span>
+<span class="sd">        :rtype: Gain instance</span>
 <span class="sd">        </span>
 <span class="sd">        This block has only one input and one output port. The output is the</span>
 <span class="sd">        product of the input by the gain.</span>
@@ -192,27 +181,25 @@
 <span class="sd">        Either or both the input and gain can be numpy arrays and numpy will</span>
 <span class="sd">        compute the appropriate product.  If both are numpy arrays then the</span>
 <span class="sd">        matmult operator `@` is used and by default the input is postmultiplied</span>
-<span class="sd">        by the gain, but this can be changed using the `order` option.</span>
+<span class="sd">        by the gain, but this can be changed using the ``premul`` option.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gain</span>  <span class="o">=</span> <span class="n">gain</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;gain&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">order</span> <span class="o">=</span> <span class="n">order</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">premul</span> <span class="o">=</span> <span class="n">premul</span></div>
         
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="nb">input</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gain</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
             <span class="c1"># array x array case</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">order</span> <span class="o">==</span> <span class="s1">&#39;postmul&#39;</span><span class="p">:</span>
-                <span class="k">return</span> <span class="p">[</span><span class="nb">input</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span><span class="p">]</span>
-            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">order</span> <span class="o">==</span> <span class="s1">&#39;premul&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">premul</span><span class="p">:</span>
+                <span class="c1"># premultiply by gain</span>
                 <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">@</span> <span class="nb">input</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;bad value of order&#39;</span><span class="p">)</span>
+                <span class="c1"># postmultiply by gain</span>
+                <span class="k">return</span> <span class="p">[</span><span class="nb">input</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span><span class="p">]</span></div>
         
@@ -220,11 +207,33 @@
 
 <div class="viewcode-block" id="Clip"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Clip">[docs]</a><span class="nd">@block</span>
 <span class="k">class</span> <span class="nc">Clip</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
-<div class="viewcode-block" id="Clip.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Clip.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">min</span><span class="o">=-</span><span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Clip.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Clip.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="nb">min</span><span class="o">=-</span><span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a value clipping block.</span>
+<span class="sd">        </span>
+<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
+<span class="sd">        :type ``*inputs``: Block or Plug</span>
+<span class="sd">        :param min: Minimum value, defaults to -math.inf</span>
+<span class="sd">        :type min: float or array_like, optional</span>
+<span class="sd">        :param max: Maximum value, defaults to math.inf</span>
+<span class="sd">        :type max: float or array_like, optional</span>
+<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        :return: A CLIP block</span>
+<span class="sd">        :rtype: Clip instance</span>
+<span class="sd">        </span>
+<span class="sd">        Input signals are clipped to the range from ``minimum`` to ``maximum`` inclusive.</span>
+<span class="sd">        </span>
+<span class="sd">        The signal can be a vector in which case each element is clipped.  The</span>
+<span class="sd">        minimum and maximum values can be:</span>
+<span class="sd">            </span>
+<span class="sd">            - a scalar, in which case the same value applies to every element of </span>
+<span class="sd">              the input vector , or</span>
+<span class="sd">            - a vector, of the same shape as the input vector that applies elementwise to</span>
+<span class="sd">              the input vector.</span>
+<span class="sd">        </span>
 
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">min</span> <span class="o">=</span> <span class="nb">min</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max</span> <span class="o">=</span> <span class="nb">max</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;clip&#39;</span></div>
@@ -242,12 +251,14 @@
 <span class="c1"># TODO can have multiple outputs: pass in a tuple of functions, return a tuple</span>
 <div class="viewcode-block" id="Function"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Function">[docs]</a><span class="nd">@block</span>
 <span class="k">class</span> <span class="nc">Function</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
-<div class="viewcode-block" id="Function.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Function.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="nb">dict</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(),</span> <span class="n">kwargs</span><span class="o">=</span><span class="p">{},</span> <span class="o">**</span><span class="n">kwargs_</span><span class="p">):</span>
+<div class="viewcode-block" id="Function.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Function.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="nb">dict</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(),</span> <span class="n">kwargs</span><span class="o">=</span><span class="p">{},</span> <span class="o">**</span><span class="n">kwargs_</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create a Python function block.</span>
 <span class="sd">        </span>
 <span class="sd">        :param func: A function or lambda, or list thereof</span>
 <span class="sd">        :type func: callable or sequence of callables</span>
+<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
+<span class="sd">        :type ``*inputs``: Block or Plug</span>
 <span class="sd">        :param nin: number of inputs, defaults to 1</span>
 <span class="sd">        :type nin: int, optional</span>
 <span class="sd">        :param nout: number of outputs, defaults to 1</span>
@@ -303,7 +314,7 @@
 <span class="sd">            FUNCTION( myfun, nin=2, nout=2)</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs_</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="n">nin</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="n">nout</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs_</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nin</span> <span class="o">=</span> <span class="n">nin</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;function&#39;</span>
 
@@ -357,9 +368,11 @@
         
 <div class="viewcode-block" id="Interpolate"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Interpolate">[docs]</a><span class="nd">@block</span>
 <span class="k">class</span> <span class="nc">Interpolate</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
-<div class="viewcode-block" id="Interpolate.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Interpolate.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">xy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">time</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Interpolate.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Interpolate.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">xy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">time</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        </span>
+<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
+<span class="sd">        :type ``*inputs``: Block or Plug</span>
 <span class="sd">        :param x: x-values of function</span>
 <span class="sd">        :type x: array_like, shape (N,) optional</span>
 <span class="sd">        :param y: y-values of function</span>
@@ -397,14 +410,14 @@
 <span class="sd">          input ports and is a ``Source`` not a ``Function``.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
+        
         <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">=</span> <span class="n">time</span>
         <span class="k">if</span> <span class="n">time</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">nin</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">nin</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">blockclass</span> <span class="o">=</span> <span class="s1">&#39;source&#39;</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="n">nin</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
             
         <span class="k">if</span> <span class="n">xy</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># process separate x and y vectors</span>
@@ -436,8 +449,6 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">xnew</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="p">(</span><span class="n">xnew</span><span class="p">)]</span></div>
-
-
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>

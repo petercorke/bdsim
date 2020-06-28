@@ -60,10 +60,10 @@
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>a STEP block</p>
+<dd class="field-even"><p>a CONSTANT block</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>_Constant</p>
+<dd class="field-odd"><p>Constant instance</p>
 </dd>
 </dl>
 <p>This block has only one output port, but the value can be any 
@@ -85,7 +85,27 @@ For example float, list or numpy ndarray.</p>
 <dl class="method">
 <dt id="bdsim.blocks.sources.Piecewise.__init__">
 <code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">*seq</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sources.html#Piecewise.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sources.Piecewise.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+<dd><p>Create a piecewise constant signal block.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*seq</strong> (<em>list of 2-tuples</em>) – Sequence of time, value pairs</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a PIECEWISE block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Piecewise instance</p>
+</dd>
+</dl>
+<p>Outputs a piecewise constant function of time.  This is described as
+a series of 2-tupes (time, value).  The output value is taken from the
+active tuple, that is, the latest one in the list whose time is no greater
+than simulation time.</p>
+<p>Note that there is no default initial value, the list should contain
+a tuple with time zero otherwise the output will be undefined.</p>
 </dd></dl>
 
 <dl class="method">
@@ -116,9 +136,11 @@ For example float, list or numpy ndarray.</p>
 <dd class="field-even"><p>a STEP block</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>_Step</p>
+<dd class="field-odd"><p><a class="reference internal" href="#bdsim.blocks.sources.Step" title="bdsim.blocks.sources.Step">Step</a></p>
 </dd>
 </dl>
+<p>Output a step signal that transitions from the value <code class="docutils literal notranslate"><span class="pre">off</span></code> to <code class="docutils literal notranslate"><span class="pre">on</span></code>
+when time equals <code class="docutils literal notranslate"><span class="pre">T</span></code>.</p>
 </dd></dl>
 
 <dl class="method">
@@ -152,10 +174,10 @@ For example float, list or numpy ndarray.</p>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>a STEP block</p>
+<dd class="field-even"><p>a WAVEFORM block</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>_Step</p>
+<dd class="field-odd"><p>WaveForm instance</p>
 </dd>
 </dl>
 <p>Examples:</p>
@@ -200,13 +222,102 @@ a number in the range [0,1] where 1 corresponds to one cycle.</p>
 </ul>
 <p>Each class MyClass in this module becomes a method MYCLASS() of the Simulation object.</p>
 <dl class="class">
+<dt id="bdsim.blocks.sinks.MultiRotorPlot">
+<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.sinks.</code><code class="sig-name descname">MultiRotorPlot</code><span class="sig-paren">(</span><em class="sig-param">model, *inputs, scale=[-2, 2, -2, 2, 10], flapscale=1, projection='ortho', **kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#MultiRotorPlot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.MultiRotorPlot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.SinkBlockGraphics" title="bdsim.components.SinkBlockGraphics"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SinkBlockGraphics</span></code></a></p>
+<p>Animate a multi-rotor flyer.</p>
+<p>Based on code lovingly coded by Paul Pounds, first coded 17/4/02
+version 2 2004 added scaling and ground display
+version 3 2010 improved rotor rendering and fixed mirroring bug</p>
+<p>Displays X-4 flyer position and attitude in a 3D plot.
+GREEN ROTOR POINTS NORTH
+BLUE ROTOR POINTS EAST</p>
+<p>PARAMETERS
+s defines the plot size in meters
+swi controls flyer attitude plot; 1 = on, otherwise off.</p>
+<p>INPUTS
+1 Center X position
+2 Center Y position
+3 Center Z position
+4 Yaw angle in rad
+5 Pitch angle in rad
+6 Roll angle in rad</p>
+<dl class="method">
+<dt id="bdsim.blocks.sinks.MultiRotorPlot.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">model, *inputs, scale=[-2, 2, -2, 2, 10], flapscale=1, projection='ortho', **kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#MultiRotorPlot.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.MultiRotorPlot.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a block that displays a multi-rotor flying vehicle.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>dict</em>) – A dictionary of vehicle geometric and inertial properties</p></li>
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>scale</strong> (<em>array_like</em>) – dimensions of workspace: xmin, xmax, ymin, ymax, zmin, zmax</p></li>
+<li><p><strong>flapscale</strong> (<em>float</em>) – exagerate flapping angle by this factor, default is 1</p></li>
+<li><p><strong>projection</strong> (<em>str</em>) – 3D projection: ortho or perspective, defaults to ‘ortho’</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a MULTIROTOPLOT block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>MultiRobotPlot instance</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="bdsim.blocks.sinks.MultiRotorPlot.start">
+<code class="sig-name descname">start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#MultiRotorPlot.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.MultiRotorPlot.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="bdsim.blocks.sinks.MultiRotorPlot.step">
+<code class="sig-name descname">step</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#MultiRotorPlot.step"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.MultiRotorPlot.step" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="bdsim.blocks.sinks.Print">
+<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.sinks.</code><code class="sig-name descname">Print</code><span class="sig-paren">(</span><em class="sig-param">fmt=None</em>, <em class="sig-param">*inputs</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#Print"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.Print" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.SinkBlock" title="bdsim.components.SinkBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SinkBlock</span></code></a></p>
+<dl class="method">
+<dt id="bdsim.blocks.sinks.Print.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">fmt=None</em>, <em class="sig-param">*inputs</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#Print.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.Print.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a console print block.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fmt</strong> (<em>str</em><em>, </em><em>optional</em>) – Format string, defaults to None</p></li>
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A PRINT block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Print instance</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="bdsim.blocks.sinks.Print.step">
+<code class="sig-name descname">step</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#Print.step"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.Print.step" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
 <dt id="bdsim.blocks.sinks.Scope">
-<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.sinks.</code><code class="sig-name descname">Scope</code><span class="sig-paren">(</span><em class="sig-param">nin=None</em>, <em class="sig-param">styles=None</em>, <em class="sig-param">scale='auto'</em>, <em class="sig-param">labels=None</em>, <em class="sig-param">grid=True</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#Scope"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.Scope" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.sinks.</code><code class="sig-name descname">Scope</code><span class="sig-paren">(</span><em class="sig-param">nin=None</em>, <em class="sig-param">styles=None</em>, <em class="sig-param">scale='auto'</em>, <em class="sig-param">labels=None</em>, <em class="sig-param">grid=True</em>, <em class="sig-param">*inputs</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#Scope"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.Scope" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.SinkBlockGraphics" title="bdsim.components.SinkBlockGraphics"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SinkBlockGraphics</span></code></a></p>
 <p>Plot input ports against time.  Each line can have its own color or style.</p>
 <dl class="method">
 <dt id="bdsim.blocks.sinks.Scope.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">nin=None</em>, <em class="sig-param">styles=None</em>, <em class="sig-param">scale='auto'</em>, <em class="sig-param">labels=None</em>, <em class="sig-param">grid=True</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#Scope.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.Scope.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">nin=None</em>, <em class="sig-param">styles=None</em>, <em class="sig-param">scale='auto'</em>, <em class="sig-param">labels=None</em>, <em class="sig-param">grid=True</em>, <em class="sig-param">*inputs</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#Scope.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.Scope.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a block that plots input ports against time.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -218,6 +329,7 @@ otherwise 1</p></li>
 <li><p><strong>labels</strong> (<em>sequence of strings</em>) – vertical axis labels</p></li>
 <li><p><strong>grid</strong> (<em>bool</em><em> or </em><em>sequence</em>) – draw a grid, default is on. Can be boolean or a tuple of 
 options for grid()</p></li>
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
 <li><p><strong>**kwargs</strong> – common Block options</p></li>
 </ul>
 </dd>
@@ -225,7 +337,7 @@ options for grid()</p></li>
 <dd class="field-even"><p>A SCOPE block</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>_Scope</p>
+<dd class="field-odd"><p>Scope instance</p>
 </dd>
 </dl>
 <p>Line styles are given by either a dict of options for <cite>plot</cite> or as
@@ -265,17 +377,18 @@ same vertical scale.</p>
 
 <dl class="class">
 <dt id="bdsim.blocks.sinks.ScopeXY">
-<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.sinks.</code><code class="sig-name descname">ScopeXY</code><span class="sig-paren">(</span><em class="sig-param">style=None, scale='auto', labels=['X', 'Y'], init=None, **kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#ScopeXY"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.ScopeXY" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.sinks.</code><code class="sig-name descname">ScopeXY</code><span class="sig-paren">(</span><em class="sig-param">style=None, *inputs, scale='auto', labels=['X', 'Y'], init=None, **kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#ScopeXY"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.ScopeXY" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.SinkBlockGraphics" title="bdsim.components.SinkBlockGraphics"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SinkBlockGraphics</span></code></a></p>
 <p>Plot one input against the other.</p>
 <dl class="method">
 <dt id="bdsim.blocks.sinks.ScopeXY.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">style=None, scale='auto', labels=['X', 'Y'], init=None, **kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#ScopeXY.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.ScopeXY.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">style=None, *inputs, scale='auto', labels=['X', 'Y'], init=None, **kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#ScopeXY.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.ScopeXY.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create an XY scope.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>style</strong> (<em>optional str</em><em> or </em><em>dict</em>) – line style</p></li>
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
 <li><p><strong>scale</strong> (<em>2-</em><em> or </em><em>4-element sequence</em>) – y-axis scale, defaults to ‘auto’</p></li>
 <li><p><strong>labels</strong> (<em>2-element tuple</em><em> or </em><em>list</em>) – axis labels (xlabel, ylabel)</p></li>
 <li><p><strong>**kwargs</strong> – common Block options</p></li>
@@ -285,7 +398,7 @@ same vertical scale.</p>
 <dd class="field-even"><p>A SCOPEXY block</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>_Scope</p>
+<dd class="field-odd"><p>ScopeXY instance</p>
 </dd>
 </dl>
 <p>This block has two inputs which are plotted against each other. Port 0
@@ -326,12 +439,27 @@ providing either:</p>
 
 <dl class="class">
 <dt id="bdsim.blocks.sinks.Stop">
-<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.sinks.</code><code class="sig-name descname">Stop</code><span class="sig-paren">(</span><em class="sig-param">stop</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#Stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.Stop" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.sinks.</code><code class="sig-name descname">Stop</code><span class="sig-paren">(</span><em class="sig-param">stop</em>, <em class="sig-param">*inputs</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#Stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.Stop" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.SinkBlock" title="bdsim.components.SinkBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SinkBlock</span></code></a></p>
 <dl class="method">
 <dt id="bdsim.blocks.sinks.Stop.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">stop</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#Stop.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.Stop.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">stop</em>, <em class="sig-param">*inputs</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#Stop.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.Stop.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Conditionally stop the simulation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>stop</strong> (<em>TYPE</em>) – Function</p></li>
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A STOP block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Stop instance</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -343,16 +471,17 @@ providing either:</p>
 
 <dl class="class">
 <dt id="bdsim.blocks.sinks.Vehicle">
-<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.sinks.</code><code class="sig-name descname">Vehicle</code><span class="sig-paren">(</span><em class="sig-param">path=True, pathstyle=None, shape='triangle', color='blue', fill='white', size=1, scale='auto', labels=['X', 'Y'], square=True, init=None, **kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#Vehicle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.Vehicle" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.sinks.</code><code class="sig-name descname">Vehicle</code><span class="sig-paren">(</span><em class="sig-param">*inputs, path=True, pathstyle=None, shape='triangle', color='blue', fill='white', size=1, scale='auto', labels=['X', 'Y'], square=True, init=None, **kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#Vehicle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.Vehicle" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.SinkBlockGraphics" title="bdsim.components.SinkBlockGraphics"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SinkBlockGraphics</span></code></a></p>
 <p>Animate a vehicle</p>
 <dl class="method">
 <dt id="bdsim.blocks.sinks.Vehicle.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">path=True, pathstyle=None, shape='triangle', color='blue', fill='white', size=1, scale='auto', labels=['X', 'Y'], square=True, init=None, **kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#Vehicle.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.Vehicle.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">*inputs, path=True, pathstyle=None, shape='triangle', color='blue', fill='white', size=1, scale='auto', labels=['X', 'Y'], square=True, init=None, **kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#Vehicle.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.Vehicle.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a vehile animation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
 <li><p><strong>style</strong> (<em>optional str</em><em> or </em><em>dict</em>) – line style</p></li>
 <li><p><strong>scale</strong> (<em>2-</em><em> or </em><em>4-element sequence</em>) – y-axis scale, defaults to ‘auto’</p></li>
 <li><p><strong>labels</strong> (<em>2-element tuple</em><em> or </em><em>list</em>) – axis labels (xlabel, ylabel)</p></li>
@@ -363,7 +492,7 @@ providing either:</p>
 <dd class="field-even"><p>A SCOPEXY block</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>_Scope</p>
+<dd class="field-odd"><p>Scope instance</p>
 </dd>
 </dl>
 <p>This block has two inputs which are plotted against each other. Port 0
@@ -414,26 +543,54 @@ providing either:</p>
 <p>Each class MyClass in this module becomes a method MYCLASS() of the Simulation object.</p>
 <dl class="class">
 <dt id="bdsim.blocks.functions.Clip">
-<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.functions.</code><code class="sig-name descname">Clip</code><span class="sig-paren">(</span><em class="sig-param">min=-inf</em>, <em class="sig-param">max=inf</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Clip"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.functions.Clip" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.functions.</code><code class="sig-name descname">Clip</code><span class="sig-paren">(</span><em class="sig-param">*inputs</em>, <em class="sig-param">min=-inf</em>, <em class="sig-param">max=inf</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Clip"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.functions.Clip" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="method">
 <dt id="bdsim.blocks.functions.Clip.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">min=-inf</em>, <em class="sig-param">max=inf</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Clip.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.functions.Clip.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">*inputs</em>, <em class="sig-param">min=-inf</em>, <em class="sig-param">max=inf</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Clip.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.functions.Clip.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a value clipping block.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>min</strong> (<em>float</em><em> or </em><em>array_like</em><em>, </em><em>optional</em>) – Minimum value, defaults to -math.inf</p></li>
+<li><p><strong>max</strong> (<em>float</em><em> or </em><em>array_like</em><em>, </em><em>optional</em>) – Maximum value, defaults to math.inf</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A CLIP block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Clip instance</p>
+</dd>
+</dl>
+<p>Input signals are clipped to the range from <code class="docutils literal notranslate"><span class="pre">minimum</span></code> to <code class="docutils literal notranslate"><span class="pre">maximum</span></code> inclusive.</p>
+<p>The signal can be a vector in which case each element is clipped.  The
+minimum and maximum values can be:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>a scalar, in which case the same value applies to every element of 
+the input vector , or</p></li>
+<li><p>a vector, of the same shape as the input vector that applies elementwise to
+the input vector.</p></li>
+</ul>
+</div></blockquote>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="class">
 <dt id="bdsim.blocks.functions.Function">
-<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.functions.</code><code class="sig-name descname">Function</code><span class="sig-paren">(</span><em class="sig-param">func</em>, <em class="sig-param">nin=1</em>, <em class="sig-param">nout=1</em>, <em class="sig-param">dict=False</em>, <em class="sig-param">args=()</em>, <em class="sig-param">kwargs={}</em>, <em class="sig-param">**kwargs_</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Function"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.functions.Function" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.functions.</code><code class="sig-name descname">Function</code><span class="sig-paren">(</span><em class="sig-param">func</em>, <em class="sig-param">*inputs</em>, <em class="sig-param">nin=1</em>, <em class="sig-param">nout=1</em>, <em class="sig-param">dict=False</em>, <em class="sig-param">args=()</em>, <em class="sig-param">kwargs={}</em>, <em class="sig-param">**kwargs_</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Function"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.functions.Function" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="method">
 <dt id="bdsim.blocks.functions.Function.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">func</em>, <em class="sig-param">nin=1</em>, <em class="sig-param">nout=1</em>, <em class="sig-param">dict=False</em>, <em class="sig-param">args=()</em>, <em class="sig-param">kwargs={}</em>, <em class="sig-param">**kwargs_</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Function.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.functions.Function.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">func</em>, <em class="sig-param">*inputs</em>, <em class="sig-param">nin=1</em>, <em class="sig-param">nout=1</em>, <em class="sig-param">dict=False</em>, <em class="sig-param">args=()</em>, <em class="sig-param">kwargs={}</em>, <em class="sig-param">**kwargs_</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Function.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.functions.Function.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a Python function block.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>func</strong> (<em>callable</em><em> or </em><em>sequence of callables</em>) – A function or lambda, or list thereof</p></li>
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
 <li><p><strong>nin</strong> (<em>int</em><em>, </em><em>optional</em>) – number of inputs, defaults to 1</p></li>
 <li><p><strong>nout</strong> (<em>int</em><em>, </em><em>optional</em>) – number of outputs, defaults to 1</p></li>
 <li><p><strong>dict</strong> (<em>bool</em>) – pass in a reference to a dictionary instance</p></li>
@@ -494,24 +651,25 @@ single function:</p>
 
 <dl class="class">
 <dt id="bdsim.blocks.functions.Gain">
-<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.functions.</code><code class="sig-name descname">Gain</code><span class="sig-paren">(</span><em class="sig-param">gain</em>, <em class="sig-param">order='premul'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Gain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.functions.Gain" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.functions.</code><code class="sig-name descname">Gain</code><span class="sig-paren">(</span><em class="sig-param">gain</em>, <em class="sig-param">*inputs</em>, <em class="sig-param">premul=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Gain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.functions.Gain" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="method">
 <dt id="bdsim.blocks.functions.Gain.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">gain</em>, <em class="sig-param">order='premul'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Gain.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.functions.Gain.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">gain</em>, <em class="sig-param">*inputs</em>, <em class="sig-param">premul=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Gain.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.functions.Gain.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a gain block.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>gain</strong> (<em>float</em>) – The gain value</p></li>
-<li><p><strong>order</strong> (<em>str</em><em>, </em><em>optional</em>) – the order of multiplication: ‘postmul’ [default], ‘premul’</p></li>
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>premul</strong> (<em>bool</em><em>, </em><em>optional</em>) – premultiply by constant, default is postmultiply</p></li>
 <li><p><strong>**kwargs</strong> – common Block options</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A SCOPE block</p>
+<dd class="field-even"><p>A GAIN block</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>_Gain</p>
+<dd class="field-odd"><p>Gain instance</p>
 </dd>
 </dl>
 <p>This block has only one input and one output port. The output is the
@@ -519,20 +677,21 @@ product of the input by the gain.</p>
 <p>Either or both the input and gain can be numpy arrays and numpy will
 compute the appropriate product.  If both are numpy arrays then the
 matmult operator <cite>&#64;</cite> is used and by default the input is postmultiplied
-by the gain, but this can be changed using the <cite>order</cite> option.</p>
+by the gain, but this can be changed using the <code class="docutils literal notranslate"><span class="pre">premul</span></code> option.</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="class">
 <dt id="bdsim.blocks.functions.Interpolate">
-<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.functions.</code><code class="sig-name descname">Interpolate</code><span class="sig-paren">(</span><em class="sig-param">x=None</em>, <em class="sig-param">y=None</em>, <em class="sig-param">xy=None</em>, <em class="sig-param">time=False</em>, <em class="sig-param">kind='linear'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Interpolate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.functions.Interpolate" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.functions.</code><code class="sig-name descname">Interpolate</code><span class="sig-paren">(</span><em class="sig-param">*inputs</em>, <em class="sig-param">x=None</em>, <em class="sig-param">y=None</em>, <em class="sig-param">xy=None</em>, <em class="sig-param">time=False</em>, <em class="sig-param">kind='linear'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Interpolate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.functions.Interpolate" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="method">
 <dt id="bdsim.blocks.functions.Interpolate.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">x=None</em>, <em class="sig-param">y=None</em>, <em class="sig-param">xy=None</em>, <em class="sig-param">time=False</em>, <em class="sig-param">kind='linear'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Interpolate.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.functions.Interpolate.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">*inputs</em>, <em class="sig-param">x=None</em>, <em class="sig-param">y=None</em>, <em class="sig-param">xy=None</em>, <em class="sig-param">time=False</em>, <em class="sig-param">kind='linear'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Interpolate.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.functions.Interpolate.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
 <li><p><strong>x</strong> (<em>array_like</em><em>, </em><em>shape</em><em> (</em><em>N</em><em>,</em><em>) </em><em>optional</em>) – x-values of function</p></li>
 <li><p><strong>y</strong> (<em>array_like</em><em>, </em><em>optional</em>) – y-values of function</p></li>
 <li><p><strong>xy</strong> (<em>array_like</em><em>, </em><em>optional</em>) – combined x- and y-values of function</p></li>
@@ -573,27 +732,17 @@ input ports and is a <code class="docutils literal notranslate"><span class="pre
 </dd></dl>
 
 <dl class="class">
-<dt id="bdsim.blocks.functions.Mux">
-<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.functions.</code><code class="sig-name descname">Mux</code><span class="sig-paren">(</span><em class="sig-param">nin=1</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Mux"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.functions.Mux" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="method">
-<dt id="bdsim.blocks.functions.Mux.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">nin=1</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Mux.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.functions.Mux.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
 <dt id="bdsim.blocks.functions.Prod">
-<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.functions.</code><code class="sig-name descname">Prod</code><span class="sig-paren">(</span><em class="sig-param">ops</em>, <em class="sig-param">*pos</em>, <em class="sig-param">matrix=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Prod"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.functions.Prod" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.functions.</code><code class="sig-name descname">Prod</code><span class="sig-paren">(</span><em class="sig-param">ops</em>, <em class="sig-param">*inputs</em>, <em class="sig-param">matrix=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Prod"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.functions.Prod" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="method">
 <dt id="bdsim.blocks.functions.Prod.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">ops</em>, <em class="sig-param">*pos</em>, <em class="sig-param">matrix=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Prod.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.functions.Prod.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">ops</em>, <em class="sig-param">*inputs</em>, <em class="sig-param">matrix=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Prod.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.functions.Prod.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a product junction.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>signs</strong> (<em>str</em>) – ops associated with input ports * or /</p></li>
+<li><p><strong>ops</strong> (<em>str</em>) – operations associated with input ports * or /</p></li>
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
 <li><p><strong>matrix</strong> (<em>bool</em>) – Arguments are matrices, use &#64; and np.linalg.inv, default False</p></li>
 <li><p><strong>**kwargs</strong> – common Block options</p></li>
 </ul>
@@ -602,7 +751,7 @@ input ports and is a <code class="docutils literal notranslate"><span class="pre
 <dd class="field-even"><p>A PROD block</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>_Prod</p>
+<dd class="field-odd"><p>Prod instance</p>
 </dd>
 </dl>
 <p>The number of input ports is determined by the length of the <cite>ops</cite>
@@ -618,15 +767,16 @@ port 1 is divided.</p>
 
 <dl class="class">
 <dt id="bdsim.blocks.functions.Sum">
-<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.functions.</code><code class="sig-name descname">Sum</code><span class="sig-paren">(</span><em class="sig-param">signs</em>, <em class="sig-param">angles=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Sum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.functions.Sum" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.functions.</code><code class="sig-name descname">Sum</code><span class="sig-paren">(</span><em class="sig-param">signs</em>, <em class="sig-param">*inputs</em>, <em class="sig-param">angles=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Sum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.functions.Sum" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="method">
 <dt id="bdsim.blocks.functions.Sum.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">signs</em>, <em class="sig-param">angles=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Sum.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.functions.Sum.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">signs</em>, <em class="sig-param">*inputs</em>, <em class="sig-param">angles=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Sum.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.functions.Sum.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a summing junction.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>signs</strong> (<em>str</em>) – signs associated with input ports, + or -</p></li>
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
 <li><p><strong>angles</strong> (<em>bool</em>) – the signals are angles, wrap to [-pi,pi)</p></li>
 <li><p><strong>**kwargs</strong> – common Block options</p></li>
 </ul>
@@ -635,7 +785,7 @@ port 1 is divided.</p>
 <dd class="field-even"><p>A SUM block</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>_Sum</p>
+<dd class="field-odd"><p>Sum instance</p>
 </dd>
 </dl>
 <p>The number of input ports is determined by the length of the <cite>signs</cite>
@@ -661,12 +811,40 @@ port 1 is subtracted.</p>
 <p>Each class MyClass in this module becomes a method MYCLASS() of the Simulation object.</p>
 <dl class="class">
 <dt id="bdsim.blocks.transfers.Integrator">
-<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.transfers.</code><code class="sig-name descname">Integrator</code><span class="sig-paren">(</span><em class="sig-param">x0=0</em>, <em class="sig-param">min=None</em>, <em class="sig-param">max=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/transfers.html#Integrator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.transfers.Integrator" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.transfers.</code><code class="sig-name descname">Integrator</code><span class="sig-paren">(</span><em class="sig-param">*inputs</em>, <em class="sig-param">x0=0</em>, <em class="sig-param">min=None</em>, <em class="sig-param">max=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/transfers.html#Integrator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.transfers.Integrator" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.TransferBlock" title="bdsim.components.TransferBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></a></p>
 <dl class="method">
 <dt id="bdsim.blocks.transfers.Integrator.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">x0=0</em>, <em class="sig-param">min=None</em>, <em class="sig-param">max=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/transfers.html#Integrator.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.transfers.Integrator.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">*inputs</em>, <em class="sig-param">x0=0</em>, <em class="sig-param">min=None</em>, <em class="sig-param">max=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/transfers.html#Integrator.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.transfers.Integrator.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an integrator block.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – Initial state, defaults to 0</p></li>
+<li><p><strong>min</strong> (<em>float</em><em> or </em><em>array_like</em><em>, </em><em>optional</em>) – Minimum value of state, defaults to None</p></li>
+<li><p><strong>max</strong> (<em>float</em><em> or </em><em>array_like</em><em>, </em><em>optional</em>) – Maximum value of state, defaults to None</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>an INTEGRATOR block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Integrator instance</p>
+</dd>
+</dl>
+<p>Output is the time integral of the input.  The state can be a scalar or a
+vector, this is given by the type of <code class="docutils literal notranslate"><span class="pre">x0</span></code>.</p>
+<p>The minimum and maximum values can be:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>a scalar, in which case the same value applies to every element of 
+the state vector, or</p></li>
+<li><p>a vector, of the same shape as <code class="docutils literal notranslate"><span class="pre">x0</span></code> that applies elementwise to
+the state.</p></li>
+</ul>
+</div></blockquote>
 </dd></dl>
 
 <dl class="method">
@@ -683,17 +861,18 @@ port 1 is subtracted.</p>
 
 <dl class="class">
 <dt id="bdsim.blocks.transfers.LTI_SISO">
-<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.transfers.</code><code class="sig-name descname">LTI_SISO</code><span class="sig-paren">(</span><em class="sig-param">N=1, D=[1, 1], x0=None, verbose=False, **kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/transfers.html#LTI_SISO"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.transfers.LTI_SISO" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.transfers.</code><code class="sig-name descname">LTI_SISO</code><span class="sig-paren">(</span><em class="sig-param">N=1, D=[1, 1], *inputs, x0=None, verbose=False, **kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/transfers.html#LTI_SISO"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.transfers.LTI_SISO" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#bdsim.blocks.transfers.LTI_SS" title="bdsim.blocks.transfers.LTI_SS"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.blocks.transfers.LTI_SS</span></code></a></p>
 <dl class="method">
 <dt id="bdsim.blocks.transfers.LTI_SISO.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">N=1, D=[1, 1], x0=None, verbose=False, **kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/transfers.html#LTI_SISO.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.transfers.LTI_SISO.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">N=1, D=[1, 1], *inputs, x0=None, verbose=False, **kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/transfers.html#LTI_SISO.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.transfers.LTI_SISO.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a SISO LTI block.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>N</strong> (<em>array_like</em><em>, </em><em>optional</em>) – numerator coefficients, defaults to 1</p></li>
 <li><p><strong>D</strong> (<em>array_like</em><em>, </em><em>optional</em>) – denominator coefficients, defaults to [1, 1]</p></li>
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
 <li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – initial states, defaults to zero</p></li>
 <li><p><strong>**kwargs</strong> – common Block options</p></li>
 </ul>
@@ -702,7 +881,7 @@ port 1 is subtracted.</p>
 <dd class="field-even"><p>A SCOPE block</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>_LTI_SISO</p>
+<dd class="field-odd"><p>LTI_SISO instance</p>
 </dd>
 </dl>
 <p>Describes the dynamics of a single-input single-output (SISO) linear
@@ -725,15 +904,16 @@ form.</p>
 
 <dl class="class">
 <dt id="bdsim.blocks.transfers.LTI_SS">
-<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.transfers.</code><code class="sig-name descname">LTI_SS</code><span class="sig-paren">(</span><em class="sig-param">A=None</em>, <em class="sig-param">B=None</em>, <em class="sig-param">C=None</em>, <em class="sig-param">x0=None</em>, <em class="sig-param">verbose=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/transfers.html#LTI_SS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.transfers.LTI_SS" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.transfers.</code><code class="sig-name descname">LTI_SS</code><span class="sig-paren">(</span><em class="sig-param">*inputs</em>, <em class="sig-param">A=None</em>, <em class="sig-param">B=None</em>, <em class="sig-param">C=None</em>, <em class="sig-param">x0=None</em>, <em class="sig-param">verbose=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/transfers.html#LTI_SS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.transfers.LTI_SS" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.TransferBlock" title="bdsim.components.TransferBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></a></p>
 <dl class="method">
 <dt id="bdsim.blocks.transfers.LTI_SS.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">A=None</em>, <em class="sig-param">B=None</em>, <em class="sig-param">C=None</em>, <em class="sig-param">x0=None</em>, <em class="sig-param">verbose=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/transfers.html#LTI_SS.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.transfers.LTI_SS.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">*inputs</em>, <em class="sig-param">A=None</em>, <em class="sig-param">B=None</em>, <em class="sig-param">C=None</em>, <em class="sig-param">x0=None</em>, <em class="sig-param">verbose=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/transfers.html#LTI_SS.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.transfers.LTI_SS.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a state-space LTI block.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
 <li><p><strong>N</strong> (<em>array_like</em><em>, </em><em>optional</em>) – numerator coefficients, defaults to 1</p></li>
 <li><p><strong>D</strong> (<em>array_like</em><em>, </em><em>optional</em>) – denominator coefficients, defaults to [1, 1]</p></li>
 <li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – initial states, defaults to zero</p></li>
@@ -744,7 +924,7 @@ form.</p>
 <dd class="field-even"><p>A SCOPE block</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>_LTI_SISO</p>
+<dd class="field-odd"><p>LTI_SISO instance</p>
 </dd>
 </dl>
 <p>Describes the dynamics of a single-input single-output (SISO) linear
@@ -788,26 +968,48 @@ These are blocks that may be:</p>
 <p>Each class MyClass in this module becomes a method MYCLASS() of the Simulation object.</p>
 <dl class="class">
 <dt id="bdsim.blocks.robots.Bicycle">
-<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.robots.</code><code class="sig-name descname">Bicycle</code><span class="sig-paren">(</span><em class="sig-param">x0=None</em>, <em class="sig-param">L=1</em>, <em class="sig-param">vlim=1</em>, <em class="sig-param">slim=1</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/robots.html#Bicycle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.robots.Bicycle" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.robots.</code><code class="sig-name descname">Bicycle</code><span class="sig-paren">(</span><em class="sig-param">*inputs</em>, <em class="sig-param">x0=None</em>, <em class="sig-param">L=1</em>, <em class="sig-param">vlim=1</em>, <em class="sig-param">slim=1</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/robots.html#Bicycle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.robots.Bicycle" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.TransferBlock" title="bdsim.components.TransferBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></a></p>
 <dl class="method">
 <dt id="bdsim.blocks.robots.Bicycle.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">x0=None</em>, <em class="sig-param">L=1</em>, <em class="sig-param">vlim=1</em>, <em class="sig-param">slim=1</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/robots.html#Bicycle.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.robots.Bicycle.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">*inputs</em>, <em class="sig-param">x0=None</em>, <em class="sig-param">L=1</em>, <em class="sig-param">vlim=1</em>, <em class="sig-param">slim=1</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/robots.html#Bicycle.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.robots.Bicycle.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a vehicle model with Bicycle kinematics.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>x0</strong> (<em>TYPE</em><em>, </em><em>optional</em>) – DESCRIPTION, defaults to None</p></li>
-<li><p><strong>L</strong> (<em>TYPE</em><em>, </em><em>optional</em>) – DESCRIPTION, defaults to 1</p></li>
-<li><p><strong>**kwargs</strong> – DESCRIPTION</p></li>
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – Inital state, defaults to 0</p></li>
+<li><p><strong>L</strong> (<em>float</em><em>, </em><em>optional</em>) – Wheelbase, defaults to 1</p></li>
+<li><p><strong>vlim</strong> (<em>float</em><em>, </em><em>optional</em>) – Velocity limit, defaults to 1</p></li>
+<li><p><strong>slim</strong> (<em>float</em><em>, </em><em>optional</em>) – Steering limit, defaults to 1</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>DESCRIPTION</p>
+<dd class="field-even"><p>a BICYCLE block</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>TYPE</p>
+<dd class="field-odd"><p>Bicycle instance</p>
 </dd>
 </dl>
+<p>Bicycle kinematic model with state :math:<code class="docutils literal notranslate"><span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">\theta]</span></code>.</p>
+<p>The block has two input ports:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Vehicle speed (meters/sec).  The velocity limit <code class="docutils literal notranslate"><span class="pre">vlim</span></code> is
+applied to the magnitude of this input.</p></li>
+<li><p>Steering wheel angle (radians).  The steering limit <code class="docutils literal notranslate"><span class="pre">slime</span></code>
+is applied to the magnitude of this input.</p></li>
+</ol>
+</div></blockquote>
+<p>and three output ports:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>x position in the world frame (metres)</p></li>
+<li><p>y positon in the world frame (meters)</p></li>
+<li><p>heading angle with respect to the world frame (radians)</p></li>
+</ol>
+</div></blockquote>
 </dd></dl>
 
 <dl class="method">
@@ -823,13 +1025,204 @@ These are blocks that may be:</p>
 </dd></dl>
 
 <dl class="class">
+<dt id="bdsim.blocks.robots.DiffSteer">
+<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.robots.</code><code class="sig-name descname">DiffSteer</code><span class="sig-paren">(</span><em class="sig-param">*inputs</em>, <em class="sig-param">R=1</em>, <em class="sig-param">W=1</em>, <em class="sig-param">x0=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/robots.html#DiffSteer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.robots.DiffSteer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.TransferBlock" title="bdsim.components.TransferBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></a></p>
+<dl class="method">
+<dt id="bdsim.blocks.robots.DiffSteer.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">*inputs</em>, <em class="sig-param">R=1</em>, <em class="sig-param">W=1</em>, <em class="sig-param">x0=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/robots.html#DiffSteer.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.robots.DiffSteer.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a differential steer vehicle model with Unicycle kinematics.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – Inital state, defaults to 0</p></li>
+<li><p><strong>R</strong> (<em>float</em><em>, </em><em>optional</em>) – Wheel radius, defaults to 1</p></li>
+<li><p><strong>W</strong> – Wheel separation in lateral direction, defaults to 1</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a DIFFSTEER block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>DifSteer instance</p>
+</dd>
+</dl>
+<p>Bicycle kinematic model with state :math:<code class="docutils literal notranslate"><span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">\theta]</span></code>.</p>
+<p>The block has two input ports:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Left-wheel angular velocity (radians/sec).</p></li>
+<li><p>Right-wheel angular velocity (radians/sec).</p></li>
+</ol>
+</div></blockquote>
+<p>and three output ports:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>x position in the world frame (metres)</p></li>
+<li><p>y positon in the world frame (meters)</p></li>
+<li><p>heading angle with respect to the world frame (radians)</p></li>
+</ol>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="bdsim.blocks.robots.DiffSteer.deriv">
+<code class="sig-name descname">deriv</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/robots.html#DiffSteer.deriv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.robots.DiffSteer.deriv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="bdsim.blocks.robots.DiffSteer.output">
+<code class="sig-name descname">output</code><span class="sig-paren">(</span><em class="sig-param">t</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/robots.html#DiffSteer.output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.robots.DiffSteer.output" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="bdsim.blocks.robots.MultiRotor">
+<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.robots.</code><code class="sig-name descname">MultiRotor</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">*inputs</em>, <em class="sig-param">groundcheck=True</em>, <em class="sig-param">speedcheck=True</em>, <em class="sig-param">x0=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/robots.html#MultiRotor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.robots.MultiRotor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.TransferBlock" title="bdsim.components.TransferBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></a></p>
+<p>Flyer2dynamics lovingly coded by Paul Pounds, first coded 12/4/04
+A simulation of idealised X-4 Flyer II flight dynamics.
+version 2.0 2005 modified to be compatible with latest version of Matlab
+version 3.0 2006 fixed rotation matrix problem
+version 4.0 4/2/10, fixed rotor flapping rotation matrix bug, mirroring
+version 5.0 8/8/11, simplified and restructured
+version 6.0 25/10/13, fixed rotation matrix/inverse wronskian definitions, flapping cross-product bug</p>
+<dl class="simple">
+<dt>New in version 2:</dt><dd><ul class="simple">
+<li><p>Generalised rotor thrust model</p></li>
+<li><p>Rotor flapping model</p></li>
+<li><p>Frame aerodynamic drag model</p></li>
+<li><p>Frame aerodynamic surfaces model</p></li>
+<li><p>Internal motor model</p></li>
+<li><p>Much coolage</p></li>
+</ul>
+</dd>
+<dt>Version 1.3</dt><dd><ul class="simple">
+<li><p>Rigid body dynamic model</p></li>
+<li><p>Rotor gyroscopic model</p></li>
+<li><p>External motor model</p></li>
+</ul>
+</dd>
+<dt>ARGUMENTS</dt><dd><p>u       Reference inputs                1x4
+tele    Enable telemetry (1 or 0)       1x1
+crash   Enable crash detection (1 or 0) 1x1
+init    Initial conditions              1x12</p>
+</dd>
+<dt>INPUTS</dt><dd><p>u = [N S E W]
+NSEW motor commands                     1x4</p>
+</dd>
+<dt>CONTINUOUS STATES</dt><dd><p>z      Position                         3x1   (x,y,z)
+v      Velocity                         3x1   (xd,yd,zd)
+n      Attitude                         3x1   (Y,P,R)
+o      Angular velocity                 3x1   (wx,wy,wz)
+w      Rotor angular velocity           4x1</p>
+</dd>
+</dl>
+<p>Notes: z-axis downward so altitude is -z(3)</p>
+<dl class="simple">
+<dt>CONTINUOUS STATE MATRIX MAPPING</dt><dd><p>x = [z1 z2 z3 n1 n2 n3 z1 z2 z3 o1 o2 o3 w1 w2 w3 w4]</p>
+</dd>
+<dt>CONTINUOUS STATE EQUATIONS</dt><dd><p>z` = v
+v` = g*e3 - (1/m)*T*R*e3
+I*o` = -o X I*o + G + torq
+R = f(n)
+n` = inv(W)*o</p>
+</dd>
+</dl>
+<dl class="method">
+<dt id="bdsim.blocks.robots.MultiRotor.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">*inputs</em>, <em class="sig-param">groundcheck=True</em>, <em class="sig-param">speedcheck=True</em>, <em class="sig-param">x0=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/robots.html#MultiRotor.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.robots.MultiRotor.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Createa a multi-rotor dynamic model block.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>model</strong> – A dictionary of vehicle geometric and inertial parameters</p></li>
+<li><p><strong>groundcheck</strong> (<em>bool</em>) – Prevent vehicle moving below ground , defaults to True</p></li>
+<li><p><strong>speedcheck</strong> (<em>bool</em>) – Check for zero rotor speed, defaults to True</p></li>
+<li><p><strong>x0</strong> (<em>TYPE</em><em>, </em><em>optional</em>) – Initial state, defaults to all zeros</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a DIFFSTEER block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>MultiRotor instance</p>
+</dd>
+</dl>
+<p>The block has one input port which is a vector of input rotor speeds
+in (radians/sec).  These are, looking down, clockwise from the front rotor
+which lies on the x-axis.</p>
+<p>The block has one output port which is a dictionary signal with the
+following items:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">x</span></code> pose in the world frame as :math:<code class="docutils literal notranslate"><span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">z,</span> <span class="pre">\theta_Y,</span> <span class="pre">\theta_P,</span> <span class="pre">\theta_R]</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">vb</span></code> translational velocity in the world frame (metres/sec)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">w</span></code> angular rates in the world frame as yaw-pitch-roll rates (radians/second)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">a1s</span></code> longitudinal flapping angles (radians)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">b1s</span></code> lateral flapping angles (radians)</p></li>
+</ul>
+</div></blockquote>
+<p>Based on MATLAB code developed by Pauline Pounds 2004.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bdsim.blocks.robots.MultiRotor.deriv">
+<code class="sig-name descname">deriv</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/robots.html#MultiRotor.deriv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.robots.MultiRotor.deriv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="bdsim.blocks.robots.MultiRotor.output">
+<code class="sig-name descname">output</code><span class="sig-paren">(</span><em class="sig-param">t=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/robots.html#MultiRotor.output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.robots.MultiRotor.output" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
 <dt id="bdsim.blocks.robots.Unicycle">
-<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.robots.</code><code class="sig-name descname">Unicycle</code><span class="sig-paren">(</span><em class="sig-param">x0=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/robots.html#Unicycle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.robots.Unicycle" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.robots.</code><code class="sig-name descname">Unicycle</code><span class="sig-paren">(</span><em class="sig-param">*inputs</em>, <em class="sig-param">x0=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/robots.html#Unicycle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.robots.Unicycle" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.TransferBlock" title="bdsim.components.TransferBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></a></p>
 <dl class="method">
 <dt id="bdsim.blocks.robots.Unicycle.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">x0=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/robots.html#Unicycle.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.robots.Unicycle.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">*inputs</em>, <em class="sig-param">x0=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/robots.html#Unicycle.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.robots.Unicycle.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a vehicle model with Unicycle kinematics.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – Inital state, defaults to 0</p></li>
+<li><p><strong>*inputs</strong> – Optional incoming connections</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a UNICYCLE block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Unicycle instance</p>
+</dd>
+</dl>
+<p>Unicycle kinematic model with state :math:<code class="docutils literal notranslate"><span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">\theta]</span></code>.</p>
+<p>The block has two input ports:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Vehicle speed (meters/sec).</p></li>
+<li><p>Angular velocity (radians/sec).</p></li>
+</ol>
+</div></blockquote>
+<p>and three output ports:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>x position in the world frame (metres)</p></li>
+<li><p>y positon in the world frame (meters)</p></li>
+<li><p>heading angle with respect to the world frame (radians)</p></li>
+</ol>
+</div></blockquote>
 </dd></dl>
 
 <dl class="method">
@@ -845,8 +1238,8 @@ These are blocks that may be:</p>
 </dd></dl>
 
 </div>
-<div class="section" id="module-bdsim.blocks.subsystems">
-<span id="subsystem-blocks"></span><h2>Subsystem blocks<a class="headerlink" href="#module-bdsim.blocks.subsystems" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-bdsim.blocks.connections">
+<span id="subsystem-blocks"></span><h2>Subsystem blocks<a class="headerlink" href="#module-bdsim.blocks.connections" title="Permalink to this headline">¶</a></h2>
 <p>Define subsystem connection blocks for use in block diagrams.  These are blocks that:</p>
 <ul class="simple">
 <li><p>have inputs or outputs</p></li>
@@ -855,37 +1248,238 @@ These are blocks that may be:</p>
 </ul>
 <p>Each class MyClass in this module becomes a method MYCLASS() of the Simulation object.</p>
 <dl class="class">
-<dt id="bdsim.blocks.subsystems.InPort">
-<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.subsystems.</code><code class="sig-name descname">InPort</code><span class="sig-paren">(</span><em class="sig-param">nout=1</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/subsystems.html#InPort"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.subsystems.InPort" title="Permalink to this definition">¶</a></dt>
+<dt id="bdsim.blocks.connections.DeMux">
+<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.connections.</code><code class="sig-name descname">DeMux</code><span class="sig-paren">(</span><em class="sig-param">nout=1</em>, <em class="sig-param">*inputs</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#DeMux"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.connections.DeMux" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dl class="method">
+<dt id="bdsim.blocks.connections.DeMux.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">nout=1</em>, <em class="sig-param">*inputs</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#DeMux.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.connections.DeMux.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a demultiplexer block.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nout</strong> (<em>TYPE</em><em>, </em><em>optional</em>) – DESCRIPTION, defaults to 1</p></li>
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A DEMUX block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>DeMux instance</p>
+</dd>
+</dl>
+<p>This block has a single input port and <code class="docutils literal notranslate"><span class="pre">nout</span></code> output ports.  A vector
+input signal (with <code class="docutils literal notranslate"><span class="pre">nout</span></code> elements) is routed element-wise to individual
+scalar output port.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bdsim.blocks.connections.DeMux.output">
+<code class="sig-name descname">output</code><span class="sig-paren">(</span><em class="sig-param">t=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#DeMux.output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.connections.DeMux.output" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="bdsim.blocks.connections.InPort">
+<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.connections.</code><code class="sig-name descname">InPort</code><span class="sig-paren">(</span><em class="sig-param">nout=1</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#InPort"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.connections.InPort" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.SubsystemBlock" title="bdsim.components.SubsystemBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SubsystemBlock</span></code></a></p>
 <dl class="method">
-<dt id="bdsim.blocks.subsystems.InPort.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">nout=1</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/subsystems.html#InPort.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.subsystems.InPort.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+<dt id="bdsim.blocks.connections.InPort.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">nout=1</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#InPort.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.connections.InPort.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an input port block for a subsystem.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nout</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of output ports, defaults to 1</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>An INPORT block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>InPort instance</p>
+</dd>
+</dl>
+<p>This block connects a subsystem to a parent block diagram.  Inputs to the
+parent-level <code class="docutils literal notranslate"><span class="pre">SubSystem</span></code> block appear as outputs of this block.</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="class">
-<dt id="bdsim.blocks.subsystems.OutPort">
-<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.subsystems.</code><code class="sig-name descname">OutPort</code><span class="sig-paren">(</span><em class="sig-param">nin=1</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/subsystems.html#OutPort"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.subsystems.OutPort" title="Permalink to this definition">¶</a></dt>
+<dt id="bdsim.blocks.connections.Item">
+<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.connections.</code><code class="sig-name descname">Item</code><span class="sig-paren">(</span><em class="sig-param">item</em>, <em class="sig-param">*inputs</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#Item"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.connections.Item" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dl class="method">
+<dt id="bdsim.blocks.connections.Item.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">item</em>, <em class="sig-param">*inputs</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#Item.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.connections.Item.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a signal selector block.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>item</strong> (<em>str</em>) – name of dictionary item</p></li>
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>An ITEM block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Item instance</p>
+</dd>
+</dl>
+<p>For a dictionary type inut signal select one item as the output signal.
+For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ITEM</span><span class="p">(</span><span class="s1">&#39;xd&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>selects the <code class="docutils literal notranslate"><span class="pre">xd</span></code> item from the dictionary output signal of the MULTIROTOR
+block.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bdsim.blocks.connections.Item.output">
+<code class="sig-name descname">output</code><span class="sig-paren">(</span><em class="sig-param">t=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#Item.output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.connections.Item.output" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="bdsim.blocks.connections.Mux">
+<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.connections.</code><code class="sig-name descname">Mux</code><span class="sig-paren">(</span><em class="sig-param">nin=1</em>, <em class="sig-param">*inputs</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#Mux"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.connections.Mux" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dl class="method">
+<dt id="bdsim.blocks.connections.Mux.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">nin=1</em>, <em class="sig-param">*inputs</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#Mux.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.connections.Mux.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a multiplexer block.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nin</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of input ports, defaults to 1</p></li>
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A MUX block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Mux instance</p>
+</dd>
+</dl>
+<p>This block takes a number of scalar or vector signals and concatenates
+them into a single vector signal.  For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">MUX</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">func1</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">sum3</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>multiplexes the outputs of blocks <code class="docutils literal notranslate"><span class="pre">func1</span></code> (port 2) and <code class="docutils literal notranslate"><span class="pre">sum3</span></code> into
+a single output vector.  If the explicit inputs are omitted they can be wired
+using the <code class="docutils literal notranslate"><span class="pre">connect</span></code> function.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bdsim.blocks.connections.Mux.output">
+<code class="sig-name descname">output</code><span class="sig-paren">(</span><em class="sig-param">t=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#Mux.output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.connections.Mux.output" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="bdsim.blocks.connections.OutPort">
+<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.connections.</code><code class="sig-name descname">OutPort</code><span class="sig-paren">(</span><em class="sig-param">nin=1</em>, <em class="sig-param">*inputs</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#OutPort"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.connections.OutPort" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.SubsystemBlock" title="bdsim.components.SubsystemBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SubsystemBlock</span></code></a></p>
 <dl class="method">
-<dt id="bdsim.blocks.subsystems.OutPort.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">nin=1</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/subsystems.html#OutPort.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.subsystems.OutPort.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+<dt id="bdsim.blocks.connections.OutPort.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">nin=1</em>, <em class="sig-param">*inputs</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#OutPort.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.connections.OutPort.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an output port block for a subsystem.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nin</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of input ports, defaults to 1</p></li>
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A OUTPORT block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>OutPort instance</p>
+</dd>
+</dl>
+<p>This block connects a subsystem to a parent block diagram.  Outputs of the
+parent-level <code class="docutils literal notranslate"><span class="pre">SubSystem</span></code> block are the inputs of this block.</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="class">
-<dt id="bdsim.blocks.subsystems.SubSystem">
-<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.subsystems.</code><code class="sig-name descname">SubSystem</code><span class="sig-paren">(</span><em class="sig-param">fname</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/subsystems.html#SubSystem"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.subsystems.SubSystem" title="Permalink to this definition">¶</a></dt>
+<dt id="bdsim.blocks.connections.SubSystem">
+<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.connections.</code><code class="sig-name descname">SubSystem</code><span class="sig-paren">(</span><em class="sig-param">subsys</em>, <em class="sig-param">*inputs</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#SubSystem"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.connections.SubSystem" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.SubsystemBlock" title="bdsim.components.SubsystemBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SubsystemBlock</span></code></a></p>
 <dl class="method">
-<dt id="bdsim.blocks.subsystems.SubSystem.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">fname</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/subsystems.html#SubSystem.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.subsystems.SubSystem.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+<dt id="bdsim.blocks.connections.SubSystem.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">subsys</em>, <em class="sig-param">*inputs</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#SubSystem.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.connections.SubSystem.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a subsystem block.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>subsys</strong> (<em>str</em><em> or </em><em>BlockDiagram</em>) – Subsystem as either a filename or a <code class="docutils literal notranslate"><span class="pre">BlockDiagram</span></code> instance</p></li>
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ImportError</strong> – DESCRIPTION</p></li>
+<li><p><strong>ValueError</strong> – DESCRIPTION</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A SUBSYSTEM block</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>SubSystem instance</p>
+</dd>
+</dl>
+<p>This block represents a subsystem in a parent block diagram.  It can be
+specified as either:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>the name of a module which is imported and must contain only
+only <code class="docutils literal notranslate"><span class="pre">BlockDiagram</span></code> instance, or</p></li>
+<li><p>a <code class="docutils literal notranslate"><span class="pre">BlockDiagram</span></code> instance</p></li>
+</ul>
+</div></blockquote>
+<p>The referenced block diagram must contain one or both of:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>one <code class="docutils literal notranslate"><span class="pre">InPort</span></code> block, which has outputs but no inputs. These
+outputs are connected to the inputs to the enclosing <code class="docutils literal notranslate"><span class="pre">SubSystem</span></code> block.</p></li>
+<li><p>one <code class="docutils literal notranslate"><span class="pre">OutPort</span></code> block, which has inputs but no outputs. These
+inputs are connected to the outputs to the enclosing <code class="docutils literal notranslate"><span class="pre">SubSystem</span></code> block.</p></li>
+</ul>
+</div></blockquote>
+<p>Notes:</p>
+<ul class="simple">
+<li><p>The referenced block diagram is treated like a macro and copied into 
+the parent block diagram at compile time. The <code class="docutils literal notranslate"><span class="pre">SubSystem</span></code>, <code class="docutils literal notranslate"><span class="pre">InPort</span></code> and
+<code class="docutils literal notranslate"><span class="pre">OutPort</span></code> blocks are eliminated, that is, all hierarchical structure is 
+lost.</p></li>
+<li><dl class="simple">
+<dt>The same subsystem can be used multiple times, its blocks and wires</dt><dd><p>will be cloned.  Subsystems can also include subsystems.</p>
+</dd>
+</dl>
+</li>
+<li><p>The number of input and output ports is not specified, they are computed
+from the number of ports on the <code class="docutils literal notranslate"><span class="pre">InPort</span></code> and <code class="docutils literal notranslate"><span class="pre">OutPort</span></code> blocks within the
+subsystem.</p></li>
+</ul>
 </dd></dl>
 
 </dd></dl>
@@ -930,7 +1524,7 @@ These are blocks that may be:</p>
 
 
 <h3>Navigation</h3>
-<p class="caption"><span class="caption-text">Contents:</span></p>
+<p class="caption"><span class="caption-text">Code documentation:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="bdsim.html">bdsim package</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">bdsim.blocks package</a><ul>
@@ -939,7 +1533,7 @@ These are blocks that may be:</p>
 <li class="toctree-l2"><a class="reference internal" href="#module-bdsim.blocks.functions">Function blocks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-bdsim.blocks.transfers">Transfer blocks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-bdsim.blocks.robots">Robot blocks</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-bdsim.blocks.subsystems">Subsystem blocks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-bdsim.blocks.connections">Subsystem blocks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-bdsim.blocks.io">io blocks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-bdsim.blocks.vision">Vision blocks</a></li>
 </ul>

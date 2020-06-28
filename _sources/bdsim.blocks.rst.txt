@@ -56,7 +56,7 @@ Robot blocks
 Subsystem blocks
 ----------------
 
-.. automodule:: bdsim.blocks.subsystems
+.. automodule:: bdsim.blocks.connections
    :members:
    :undoc-members:
    :show-inheritance:

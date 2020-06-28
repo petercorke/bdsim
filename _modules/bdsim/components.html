@@ -52,6 +52,25 @@
                 
                 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a wire.</span>
+<span class="sd">        </span>
+<span class="sd">        :param start: Plug at the start of a wire, defaults to None</span>
+<span class="sd">        :type start: Plug, optional</span>
+<span class="sd">        :param end: Plug at the end of a wire, defaults to None</span>
+<span class="sd">        :type end: Plug, optional</span>
+<span class="sd">        :param name: Name of wire, defaults to None</span>
+<span class="sd">        :type name: str, optional</span>
+<span class="sd">        :return: A wire object</span>
+<span class="sd">        :rtype: Wire</span>
+
+<span class="sd">        A wire records all the connections defined by the user.  At compile time</span>
+<span class="sd">        wires are used to build inter-block references.</span>
+<span class="sd">        </span>
+<span class="sd">        Between two blocks, a wire can connect one or more ports, ie. it can connect</span>
+<span class="sd">        a set of output ports on one block to a same sized set of input ports on </span>
+<span class="sd">        another block.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">start</span> <span class="o">=</span> <span class="n">start</span>
@@ -62,22 +81,69 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;block:&quot;</span><span class="p">)</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Interactive display of wire properties.</span>
+<span class="sd">        </span>
+<span class="sd">        Displays all attributes of the wire for debugging purposes.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;wire:&quot;</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  </span><span class="si">{:8s}{:s}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="o">+</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)))</span>
             
 <div class="viewcode-block" id="Wire.send"><a class="viewcode-back" href="../../bdsim.html#bdsim.components.Wire.send">[docs]</a>    <span class="k">def</span> <span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Send a value to the port at end of this wire.</span>
+<span class="sd">        </span>
+<span class="sd">        :param value: A port value</span>
+<span class="sd">        :type value: float, numpy.ndarray, etc.</span>
+
+<span class="sd">        The value is sent to the input port connected to the end of this wire.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># dest is a Wire</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">setinput</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">port</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></div>
         
     <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Display wire with name and connection details.</span>
+<span class="sd">        </span>
+<span class="sd">        :return: Long-form wire description</span>
+<span class="sd">        :rtype: str</span>
+<span class="sd">        </span>
+<span class="sd">        String format::</span>
+<span class="sd">            </span>
+<span class="sd">            wire.5: d2goal[0] --&gt; Kv[0]</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;: &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">fullname</span>
     
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">fullname</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Display wire connection details.</span>
+<span class="sd">        </span>
+<span class="sd">        :return: Wire name</span>
+<span class="sd">        :rtype: str</span>
+
+<span class="sd">        String format::</span>
+<span class="sd">            </span>
+<span class="sd">            d2goal[0] --&gt; Kv[0]</span>
+<span class="sd">            </span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{:s}</span><span class="s2">[</span><span class="si">{:d}</span><span class="s2">] --&gt; </span><span class="si">{:s}</span><span class="s2">[</span><span class="si">{:d}</span><span class="s2">]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">block</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">port</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">block</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">port</span><span class="p">)</span>
     
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Display wire name.</span>
+<span class="sd">        </span>
+<span class="sd">        :return: Wire name</span>
+<span class="sd">        :rtype: str</span>
+
+<span class="sd">        String format::</span>
+<span class="sd">            </span>
+<span class="sd">            wire.5</span>
+<span class="sd">            </span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;wire.&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">s</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
@@ -97,6 +163,27 @@
 <span class="sd">    a Block.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a plug.</span>
+<span class="sd">        </span>
+<span class="sd">        :param block: The block being plugged into</span>
+<span class="sd">        :type block: Block</span>
+<span class="sd">        :param port: The port on the block, defaults to 0</span>
+<span class="sd">        :type port: int, optional</span>
+<span class="sd">        :param type: &#39;start&#39; or &#39;end&#39;, defaults to None</span>
+<span class="sd">        :type type: str, optional</span>
+<span class="sd">        :return: Plug object</span>
+<span class="sd">        :rtype: Plug</span>
+<span class="sd">        </span>
+<span class="sd">        Plugs are the interface between a wire and block and have information</span>
+<span class="sd">        about port number and wire end.</span>
+<span class="sd">        </span>
+<span class="sd">        The ``type`` argument indicates if the ``Plug`` is at:</span>
+<span class="sd">            - the start of a wire, ie. the port is an output port</span>
+<span class="sd">            - the end of a wire, ie. the port is an input port</span>
+<span class="sd">            </span>
+<span class="sd">        A plug can specify a set of ports on a block.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">block</span> <span class="o">=</span> <span class="n">block</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">port</span> <span class="o">=</span> <span class="n">port</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="nb">type</span>  <span class="c1"># start</span>
@@ -104,39 +191,131 @@
     
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">isslice</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Test if port number is a slice.</span>
+<span class="sd">        </span>
+<span class="sd">        :return: Whether the port is a slice</span>
+<span class="sd">        :rtype: bool</span>
+
+<span class="sd">        Returns ``True`` if the port is a slice, eg. ``[0:3]``, and ``False``</span>
+<span class="sd">        for a simple index, eg. ``[2]``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">,</span> <span class="nb">slice</span><span class="p">)</span>
     
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">portlist</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">isslice</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;start&#39;</span><span class="p">:</span>
-                <span class="n">seq</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">nout</span><span class="p">)</span>
-                <span class="k">return</span> <span class="n">seq</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">]</span>
-            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;end&#39;</span><span class="p">:</span>
-                <span class="n">seq</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">nin</span><span class="p">)</span>
-                <span class="k">return</span> <span class="n">seq</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">]</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return port numbers.</span>
+<span class="sd">        </span>
+<span class="sd">        :return: Port numbers</span>
+<span class="sd">        :rtype: int or list of int</span>
+<span class="sd">        </span>
+<span class="sd">        If the port is a simple index, eg. ``[2]`` returns 2.</span>
+<span class="sd">        </span>
+<span class="sd">        If the port is a slice, eg. ``[0:3]``, returns [0, 1, 2].</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="o">.</span><span class="n">step</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="o">.</span><span class="n">stop</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="kc">None</span>
+                <span class="k">return</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="o">.</span><span class="n">stop</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span>
         
     
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">width</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return number of ports connected.</span>
+<span class="sd">        </span>
+<span class="sd">        :return: Number of ports</span>
+<span class="sd">        :rtype: int</span>
+
+<span class="sd">        If the port is a simple index, eg. ``[2]`` returns 1.</span>
+<span class="sd">        </span>
+<span class="sd">        If the port is a slice, eg. ``[0:3]``, returns 3.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">portlist</span><span class="p">)</span>
             
         
     <span class="k">def</span> <span class="fm">__mul__</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Operator for implicit wiring.</span>
+<span class="sd">        </span>
+<span class="sd">        :param left: A plug to be wired from</span>
+<span class="sd">        :type left: Plug</span>
+<span class="sd">        :param right: A block or plug to be wired to</span>
+<span class="sd">        :type right: Block or Plug</span>
+<span class="sd">        :return: ``right``</span>
+<span class="sd">        :rtype: Block or Plug</span>
+<span class="sd">        </span>
+<span class="sd">        Implements implicit wiring, where the left-hand operator is a Plug, for example::</span>
+<span class="sd">            </span>
+<span class="sd">            a = bike[2] * bd.GAIN(3)</span>
+<span class="sd">            </span>
+<span class="sd">        will connect port 2 of ``bike`` to the input of the GAIN block.</span>
+<span class="sd">        </span>
+<span class="sd">        Note that::</span>
+<span class="sd">            </span>
+<span class="sd">           a = bike[2] * func[1]</span>
+<span class="sd">           </span>
+<span class="sd">        will connect port 2 of ``bike`` to port 1 of ``func``, and port 1 of ``func``</span>
+<span class="sd">        will be assigned to ``a``.  To specify a different outport port on ``func``</span>
+<span class="sd">        we need to use parentheses::</span>
+<span class="sd">            </span>
+<span class="sd">            a = (bike[2] * func[1])[0]</span>
+<span class="sd">            </span>
+<span class="sd">        which will connect port 2 of ``bike`` to port 1 of ``func``, and port 0 of ``func``</span>
+<span class="sd">        will be assigned to ``a``.</span>
+<span class="sd">        </span>
+<span class="sd">        :seealso: Block.__mul__</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
         <span class="c1"># called for the cases:</span>
         <span class="c1"># block * block</span>
         <span class="c1"># block * plug</span>
-        <span class="n">s</span> <span class="o">=</span> <span class="n">left</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">sim</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">left</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span>
         <span class="c1">#assert isinstance(right, Block), &#39;arguments to * must be blocks not ports (for now)&#39;</span>
         <span class="n">w</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">)</span>  <span class="c1"># add a wire</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;plug * &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">w</span><span class="p">))</span>
+        <span class="c1">#print(&#39;plug * &#39; + str(w))</span>
         <span class="k">return</span> <span class="n">right</span>
+
+    <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">src</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert a LHS block slice reference to a wire.</span>
+
+<span class="sd">        :param port: Port number</span>
+<span class="sd">        :type port: int</span>
+<span class="sd">        :param src: the RHS</span>
+<span class="sd">        :type src: Block or Plug</span>
+
+<span class="sd">        Used to create a wired connection by assignment, for example::</span>
+
+<span class="sd">            c = bd.CONSTANT(1)</span>
+<span class="sd">            </span>
+<span class="sd">            c[0] = x</span>
+
+<span class="sd">        Ths method is invoked to create a wire from ``x`` to input port 0 of</span>
+<span class="sd">        the constant block ``c``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># b[port] = src</span>
+        <span class="c1"># src --&gt; b[port]</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Plug connecting&#39;</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">port</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="bp">self</span><span class="p">[</span><span class="n">port</span><span class="p">])</span>
         
     <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Display plug details.</span>
+<span class="sd">        </span>
+<span class="sd">        :return: Plug description</span>
+<span class="sd">        :rtype: str</span>
+<span class="sd">        </span>
+<span class="sd">        String format::</span>
+<span class="sd">            </span>
+<span class="sd">            bicycle.0[1]</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;[&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;]&quot;</span></div>
     
 <span class="c1"># ------------------------------------------------------------------------- # </span>
@@ -145,7 +324,7 @@
 
 <div class="viewcode-block" id="block"><a class="viewcode-back" href="../../bdsim.html#bdsim.components.block">[docs]</a><span class="k">def</span> <span class="nf">block</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Decorator for blocks</span>
+<span class="sd">    Decorator for block classes</span>
 <span class="sd">    </span>
 <span class="sd">    :param cls: A block to be registered for the simulator</span>
 <span class="sd">    :type cls: subclass of Block</span>
@@ -153,7 +332,12 @@
 <span class="sd">    :rtype: subclass of Block</span>
 <span class="sd">    </span>
 <span class="sd">    @block</span>
-<span class="sd">    class MyBlock</span>
+<span class="sd">    class MyBlock:</span>
+<span class="sd">        </span>
+<span class="sd">    The modules in ``./blocks`` uses the ``block`` decorator to declare</span>
+<span class="sd">    that they are a block which will be made available as a method of the</span>
+<span class="sd">    ``BlockDiagram`` instance.  The method name is a capitalized version of</span>
+<span class="sd">    the class name.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     
@@ -169,11 +353,65 @@
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A block object is the superclass of all blocks in the simulation environment.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Construct a new Block object.</span>
+<span class="sd">        </span>
+<span class="sd">        :param cls: The class to construct</span>
+<span class="sd">        :type cls: class type</span>
+<span class="sd">        :param *args: positional args passed to constructor</span>
+<span class="sd">        :type *args: list</span>
+<span class="sd">        :param **kwargs: keyword args passed to constructor</span>
+<span class="sd">        :type **kwargs: dict</span>
+<span class="sd">        :return: new Block instance</span>
+<span class="sd">        :rtype: Block instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1">#print(&#39;Block __new__&#39;)</span>
+        <span class="n">block</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">Block</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>  <span class="c1"># create a new instance</span>
+        
+        <span class="c1"># we overload setattr, so need to know whether it is being passed a port</span>
+        <span class="c1"># name.  Add this attribute now to allow proper operation.</span>
+        <span class="n">block</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="s1">&#39;portnames&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># must be first, see __setattr__</span>
+
+        <span class="n">block</span><span class="o">.</span><span class="n">nin</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">block</span><span class="o">.</span><span class="n">nout</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">block</span><span class="o">.</span><span class="n">nstates</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="n">block</span>
     
     <span class="n">_latex_remove</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">maketrans</span><span class="p">({</span><span class="s1">&#39;$&#39;</span><span class="p">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span><span class="p">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;{&#39;</span><span class="p">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;}&#39;</span><span class="p">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;^&#39;</span><span class="p">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">:</span><span class="s1">&#39;&#39;</span><span class="p">})</span>
     
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">inames</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">onames</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">snames</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sim</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="c1">#print(&#39;Block constructor, sim = &#39;, sim)</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">inames</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">onames</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">snames</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bd</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Construct a new block object.</span>
+<span class="sd">        </span>
+<span class="sd">        :param name: Name of the block, defaults to None</span>
+<span class="sd">        :type name: str, optional</span>
+<span class="sd">        :param inames: Names of input ports, defaults to None</span>
+<span class="sd">        :type inames: list of str, optional</span>
+<span class="sd">        :param onames: Names of output ports, defaults to None</span>
+<span class="sd">        :type onames: list of str, optional</span>
+<span class="sd">        :param snames: Names of states, defaults to None</span>
+<span class="sd">        :type snames: list of str, optional</span>
+<span class="sd">        :param pos: Position of block on the canvas, defaults to None</span>
+<span class="sd">        :type pos: 2-element tuple or list, optional</span>
+<span class="sd">        :param bd: Parent block diagram, defaults to None</span>
+<span class="sd">        :type bd: BlockDiagram, optional</span>
+<span class="sd">        :param nin: Number of inputs, defaults to None</span>
+<span class="sd">        :type nin: int, optional</span>
+<span class="sd">        :param nout: Number of outputs, defaults to None</span>
+<span class="sd">        :type nout: int, optional</span>
+<span class="sd">        :param *inputs: Optional incoming connections</span>
+<span class="sd">        :type *inputs: Block or Plug</span>
+<span class="sd">        :param **kwargs: Unknow arguments</span>
+<span class="sd">        :return: A Block superclass</span>
+<span class="sd">        :rtype: Block</span>
+<span class="sd">        </span>
+<span class="sd">        This is the top-level initializer, and handles most options passed to</span>
+<span class="sd">        the superclass initializer for each block in the library.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1">#print(&#39;Block constructor, bd = &#39;, bd)</span>
         <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">name_tex</span> <span class="o">=</span> <span class="n">name</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fixname</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
@@ -188,8 +426,13 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_inport_names</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_outport_names</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_state_names</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sim</span> <span class="o">=</span> <span class="n">sim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bd</span> <span class="o">=</span> <span class="n">bd</span>
         
+        <span class="k">if</span> <span class="n">nin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">nin</span> <span class="o">=</span> <span class="n">nin</span>
+        <span class="k">if</span> <span class="n">nout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">nout</span> <span class="o">=</span> <span class="n">nout</span>
+            
         <span class="k">if</span> <span class="n">inames</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">inport_names</span><span class="p">(</span><span class="n">inames</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">onames</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -197,83 +440,266 @@
         <span class="k">if</span> <span class="n">snames</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">state_names</span><span class="p">(</span><span class="n">snames</span><span class="p">)</span>
 
+        <span class="k">if</span> <span class="n">inputs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1">#assert len(inputs) == self.nin, &#39;Number of input connections must match number of inputs&#39;</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="nb">input</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">inputs</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">Plug</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="n">i</span><span class="p">))</span>
+            
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;WARNING: unused arguments&#39;</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-        
-        <span class="c1"># self.passthru</span>
         
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Interactive display of block properties.</span>
+<span class="sd">        </span>
+<span class="sd">        Displays all attributes of the block for debugging purposes.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;block: &quot;</span> <span class="o">+</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s1">&#39;sim&#39;</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  </span><span class="si">{:11s}{:s}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="o">+</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)))</span>
 
-    
     <span class="c1"># for use in unit testing</span>
-    <span class="k">def</span> <span class="nf">_eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">pos</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">nin</span><span class="p">,</span> <span class="s1">&#39;wrong number of inputs provided&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span> <span class="o">=</span> <span class="n">pos</span>
+    <span class="k">def</span> <span class="nf">_eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Evaluate a block for unit testing.</span>
+<span class="sd">        </span>
+<span class="sd">        :param *inputs: List of input port values</span>
+<span class="sd">        :type *inputs: list</span>
+<span class="sd">        :param t: Simulation time, defaults to None</span>
+<span class="sd">        :type t: float, optional</span>
+<span class="sd">        :return: Block output port values</span>
+<span class="sd">        :rtype: list</span>
+<span class="sd">        </span>
+<span class="sd">        The output ports of the block are evaluated for a given set of input</span>
+<span class="sd">        port values and simulation time. Input and output port values are treated</span>
+<span class="sd">        as lists.</span>
+<span class="sd">        </span>
+<span class="sd">        Mostly used for making concise unit tests.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">nin</span><span class="p">,</span> <span class="s1">&#39;wrong number of inputs provided&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span> <span class="o">=</span> <span class="n">inputs</span>
         <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">t</span><span class="p">)</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="nb">list</span><span class="p">),</span> <span class="s1">&#39;result must be a list&#39;</span>
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">out</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">nout</span><span class="p">,</span> <span class="s1">&#39;result list is wrong length&#39;</span>
         <span class="k">return</span> <span class="n">out</span>
         
     <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">port</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert a block slice reference to a plug.</span>
+<span class="sd">        </span>
+<span class="sd">        :param port: Port number</span>
+<span class="sd">        :type port: int</span>
+<span class="sd">        :return: A port plug</span>
+<span class="sd">        :rtype: Plug</span>
+<span class="sd">        </span>
+<span class="sd">        Invoked whenever a block is referenced as a slice, for example::</span>
+<span class="sd">            </span>
+<span class="sd">            c = bd.CONSTANT(1)</span>
+<span class="sd">            </span>
+<span class="sd">            bd.connect(x, c[0])</span>
+<span class="sd">            bd.connect(c[0], x)</span>
+<span class="sd">            </span>
+<span class="sd">        In both cases ``c[0]`` is converted to a ``Plug`` by this method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># block[i] is a plug object</span>
+        <span class="c1">#print(&#39;getitem called&#39;, self, port)</span>
         <span class="k">return</span> <span class="n">Plug</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">port</span><span class="p">)</span>
     
     <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">src</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert a LHS block slice reference to a wire.</span>
+
+<span class="sd">        :param port: Port number</span>
+<span class="sd">        :type port: int</span>
+<span class="sd">        :param src: the RHS</span>
+<span class="sd">        :type src: Block or Plug</span>
+
+<span class="sd">        Used to create a wired connection by assignment, for example::</span>
+
+<span class="sd">            c = bd.CONSTANT(1)</span>
+<span class="sd">            </span>
+<span class="sd">            c[0] = x</span>
+
+<span class="sd">        Ths method is invoked to create a wire from ``x`` to port 0 of</span>
+<span class="sd">        the constant block ``c``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># b[port] = src</span>
         <span class="c1"># src --&gt; b[port]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="bp">self</span><span class="p">[</span><span class="n">port</span><span class="p">])</span>
+        <span class="c1">#print(&#39;connecting&#39;, src, self, port)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="bp">self</span><span class="p">[</span><span class="n">port</span><span class="p">])</span>
+        
+        
+    <span class="k">def</span> <span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert a LHS block name reference to a wire.</span>
+
+<span class="sd">        :param name: Port name</span>
+<span class="sd">        :type port: str</span>
+<span class="sd">        :param value: the RHS</span>
+<span class="sd">        :type value: Block or Plug</span>
+
+<span class="sd">        Used to create a wired connection by assignment, for example::</span>
+
+<span class="sd">            c = bd.CONSTANT(1, inames=[&#39;u&#39;])</span>
+<span class="sd">            </span>
+<span class="sd">            c.u = x</span>
+
+<span class="sd">        Ths method is invoked to create a wire from ``x`` to port &#39;u&#39; of</span>
+<span class="sd">        the constant block ``c``.</span>
+<span class="sd">        </span>
+<span class="sd">        Notes:</span>
+<span class="sd">            </span>
+<span class="sd">            - this overloaded method handles all instances of ``setattr`` and</span>
+<span class="sd">              implements normal functionality as well, only creating a wire</span>
+<span class="sd">              if ``name`` is a known port name.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="c1"># b[port] = src</span>
+        <span class="c1"># src --&gt; b[port]</span>
+        <span class="c1"># gets called for regular attribute settings, as well as for wiring</span>
+        
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">portnames</span><span class="p">:</span>
+            <span class="c1"># we&#39;re doing wiring</span>
+            <span class="c1">#print(&#39;in __setattr___&#39;, self, name, value)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1">#print(&#39;in __setattr___&#39;, self, name, value)</span>
+            <span class="c1"># regular case, add attribute to the instance&#39;s dictionary</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        
+        
     
     <span class="k">def</span> <span class="fm">__mul__</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Operator for implicit wiring.</span>
+<span class="sd">        </span>
+<span class="sd">        :param left: A block to be wired from</span>
+<span class="sd">        :type left: Block</span>
+<span class="sd">        :param right: A block or plugto be wired to</span>
+<span class="sd">        :type right: Block or Plug</span>
+<span class="sd">        :return: ``right``</span>
+<span class="sd">        :rtype: Block or Plug</span>
+<span class="sd">        </span>
+<span class="sd">        Implements implicit wiring, for example::</span>
+<span class="sd">            </span>
+<span class="sd">            a = bd.CONSTANT(1) * bd.GAIN(2)</span>
+<span class="sd">            </span>
+<span class="sd">        will connect the output of the CONSTANT block to the input of the </span>
+<span class="sd">        GAIN block.  The result will be GAIN block, whose output in this case</span>
+<span class="sd">        will be assigned to ``a``.</span>
+<span class="sd">        </span>
+<span class="sd">        Note that::</span>
+<span class="sd">            </span>
+<span class="sd">           a = bd.CONSTANT(1) * func[1]</span>
+<span class="sd">           </span>
+<span class="sd">        will connect port 0 of CONSTANT to port 1 of ``func``, and port 1 of ``func``</span>
+<span class="sd">        will be assigned to ``a``.  To specify a different outport port on ``func``</span>
+<span class="sd">        we need to use parentheses::</span>
+<span class="sd">            </span>
+<span class="sd">            a = (bd.CONSTANT(1) * func[1])[0]</span>
+<span class="sd">            </span>
+<span class="sd">        which will connect port 0 of CONSTANT ` to port 1 of ``func``, and port 0 of ``func``</span>
+<span class="sd">        will be assigned to ``a``.</span>
+<span class="sd">        </span>
+<span class="sd">        :seealso: Plug.__mul__</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># called for the cases:</span>
         <span class="c1"># block * block</span>
         <span class="c1"># block * plug</span>
-        <span class="n">s</span> <span class="o">=</span> <span class="n">left</span><span class="o">.</span><span class="n">sim</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">left</span><span class="o">.</span><span class="n">bd</span>
         <span class="c1">#assert isinstance(right, Block), &#39;arguments to * must be blocks not ports (for now)&#39;</span>
         <span class="n">w</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">)</span>  <span class="c1"># add a wire</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;block * &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">w</span><span class="p">))</span>
+        <span class="c1">#print(&#39;block * &#39; + str(w))</span>
         <span class="k">return</span> <span class="n">right</span>
         
         <span class="c1"># make connection, return a plug</span>
         
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">s</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">s</span> <span class="o">+=</span> <span class="s1">&#39;block&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">s</span> <span class="o">+=</span> <span class="s1">&#39;??&#39;</span>
-        <span class="k">return</span> <span class="n">s</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">blockclass</span> <span class="o">+</span> <span class="s1">&#39;.??&#39;</span>
     
     <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fullname</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span>
     
 
     <span class="k">def</span> <span class="nf">_fixname</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_latex_remove</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Block.inport_names"><a class="viewcode-back" href="../../bdsim.html#bdsim.components.Block.inport_names">[docs]</a>    <span class="k">def</span> <span class="nf">inport_names</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">names</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the names of block input ports.</span>
+<span class="sd">        </span>
+<span class="sd">        :param names: List of port names</span>
+<span class="sd">        :type names: list of str</span>
+<span class="sd">        </span>
+<span class="sd">        Invoked by the ``inames`` argument to the Block constructor.</span>
+<span class="sd">        </span>
+<span class="sd">        The names can include LaTeX math markup.  The LaTeX version is used</span>
+<span class="sd">        where appropriate, but the port names are a de-LaTeXd version of the</span>
+<span class="sd">        given string with backslash, underscore, caret, braces and dollar signs</span>
+<span class="sd">        removed.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_inport_names</span> <span class="o">=</span> <span class="n">names</span>
         
         <span class="k">for</span> <span class="n">port</span><span class="p">,</span><span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">names</span><span class="p">):</span>
-            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fixname</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="bp">self</span><span class="p">[</span><span class="n">port</span><span class="p">])</span></div>
+            <span class="n">fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fixname</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">,</span> <span class="bp">self</span><span class="p">[</span><span class="n">port</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">portnames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
         
         
 <div class="viewcode-block" id="Block.outport_names"><a class="viewcode-back" href="../../bdsim.html#bdsim.components.Block.outport_names">[docs]</a>    <span class="k">def</span> <span class="nf">outport_names</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">names</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the names of block output ports.</span>
+<span class="sd">        </span>
+<span class="sd">        :param names: List of port names</span>
+<span class="sd">        :type names: list of str</span>
+<span class="sd">        </span>
+<span class="sd">        Invoked by the ``onames`` argument to the Block constructor.</span>
+<span class="sd">        </span>
+<span class="sd">        The names can include LaTeX math markup.  The LaTeX version is used</span>
+<span class="sd">        where appropriate, but the port names are a de-LaTeXd version of the</span>
+<span class="sd">        given string with backslash, underscore, caret, braces and dollar signs</span>
+<span class="sd">        removed.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_outport_names</span> <span class="o">=</span> <span class="n">names</span>
         <span class="k">for</span> <span class="n">port</span><span class="p">,</span><span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">names</span><span class="p">):</span>
-            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fixname</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="bp">self</span><span class="p">[</span><span class="n">port</span><span class="p">])</span></div>
+            <span class="n">fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fixname</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">,</span> <span class="bp">self</span><span class="p">[</span><span class="n">port</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">portnames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Block.state_names"><a class="viewcode-back" href="../../bdsim.html#bdsim.components.Block.state_names">[docs]</a>    <span class="k">def</span> <span class="nf">state_names</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">names</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_state_names</span> <span class="o">=</span> <span class="n">names</span></div>
         
 <div class="viewcode-block" id="Block.sourcename"><a class="viewcode-back" href="../../bdsim.html#bdsim.components.Block.sourcename">[docs]</a>    <span class="k">def</span> <span class="nf">sourcename</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">port</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the name of output port driving this input port.</span>
+<span class="sd">        </span>
+<span class="sd">        :param port: Input port</span>
+<span class="sd">        :type port: int</span>
+<span class="sd">        :return: Port name</span>
+<span class="sd">        :rtype: str</span>
+<span class="sd">        </span>
+<span class="sd">        Return the name of the output port that drives the specified input</span>
+<span class="sd">        port. The name can be:</span>
+<span class="sd">            </span>
+<span class="sd">            - a LaTeX string if provided</span>
+<span class="sd">            - block name with port number given in square brackets.  The block</span>
+<span class="sd">              name will the one optionally assigned by the user using the ``name``</span>
+<span class="sd">              keyword, otherwise a systematic default name.</span>
+<span class="sd">            </span>
+<span class="sd">        :seealso: outport_names</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="n">w</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inports</span><span class="p">[</span><span class="n">port</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">w</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -284,9 +710,9 @@
             <span class="k">return</span> <span class="n">src</span><span class="o">.</span><span class="n">_outport_names</span><span class="p">[</span><span class="n">srcp</span><span class="p">]</span>
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">start</span><span class="p">)</span></div>
     
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">fullname</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">blockclass</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+    <span class="c1"># @property</span>
+    <span class="c1"># def fullname(self):</span>
+    <span class="c1">#     return self.blockclass + &quot;.&quot; + str(self)</span>
     
 <div class="viewcode-block" id="Block.reset"><a class="viewcode-back" href="../../bdsim.html#bdsim.components.Block.reset">[docs]</a>    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nin</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -309,7 +735,7 @@
 <span class="sd">        </span>
 <span class="sd">        :param self: Block to be updated</span>
 <span class="sd">        :type wire: Block</span>
-<span class="sd">        :param port: Inut port to be updated</span>
+<span class="sd">        :param port: Input port to be updated</span>
 <span class="sd">        :type port: int</span>
 <span class="sd">        :param value: Input value</span>
 <span class="sd">        :type val: any</span>
@@ -356,7 +782,6 @@
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="c1">#print(&#39;Sink constructor&#39;)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nout</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span> <span class="o">=</span> <span class="mi">0</span></div>
 
@@ -395,7 +820,6 @@
         <span class="c1">#print(&#39;Source constructor&#39;)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nin</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span> <span class="o">=</span> <span class="mi">0</span></div>
         
 <div class="viewcode-block" id="TransferBlock"><a class="viewcode-back" href="../../bdsim.html#bdsim.components.TransferBlock">[docs]</a><span class="k">class</span> <span class="nc">TransferBlock</span><span class="p">(</span><span class="n">Block</span><span class="p">):</span>
@@ -423,7 +847,8 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x0</span></div>
     
 <div class="viewcode-block" id="TransferBlock.check"><a class="viewcode-back" href="../../bdsim.html#bdsim.components.TransferBlock.check">[docs]</a>    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_x0</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span><span class="p">,</span> <span class="s1">&#39;incorrect length for initial state&#39;</span></div></div>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_x0</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span><span class="p">,</span> <span class="s1">&#39;incorrect length for initial state&#39;</span>
+        <span class="k">assert</span> <span class="n">nin</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">nout</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;no inputs or outputs specified&#39;</span></div></div>
                 
     
 
@@ -436,6 +861,7 @@
     <span class="n">blockclass</span> <span class="o">=</span> <span class="s1">&#39;function&#39;</span>
     
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1">#print(&#39;Function constructor&#39;)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span> <span class="o">=</span> <span class="mi">0</span></div>
         
@@ -448,10 +874,10 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">blockclass</span> <span class="o">=</span> <span class="s1">&#39;subsystem&#39;</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1">#print(&#39;Subsystem constructor&#39;)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">nin</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">nout</span> <span class="o">=</span> <span class="mi">0</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span> <span class="o">=</span> <span class="mi">0</span></div>
+        
 </pre></div>
 
           </div>
