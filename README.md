@@ -1,3 +1,4 @@
+![PyPI - Downloads](https://img.shields.io/pypi/dm/bdsim)
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/bdsim)](https://pypi.python.org/pypi/bdsim/)
 [![PyPI version fury.io](https://badge.fury.io/py/bdsim.svg)](https://pypi.python.org/pypi/bdsim/)
 [![PyPI status](https://img.shields.io/pypi/status/ansicolortags.svg)](https://pypi.python.org/pypi/bdsim/)
@@ -155,6 +156,6 @@ Figs 4.8 (pure pursuit) and Fig 4.21 (quadrotor control) are yet to be done.
 
 # Limitations
 
-There are lots!  The biggest is that `bdsim` is based on a very standard variable-step integrator from the scipy library.  For discontinuous inputs (step, square wave, triangle wave, piecewise constant) the transitions get missed.  This also makes it inaccurate to simulate hybrid discrete-continuous time systems.  We really need a better integrator, perhaps [`odedc` from SciLab](https://help.scilab.org/docs/6.1.0/en_US/odedc.html) could be integrated.
+There are lots!  The biggest is that `bdsim` is based on a very standard variable-step integrator from the scipy library.  For discontinuous inputs (step, square wave, triangle wave, piecewise constant) the transitions get missed.  This also makes it inaccurate to simulate hybrid discrete-continuous time systems.  We really need a better integrator, perhaps [`odedc`](https://help.scilab.org/docs/6.1.0/en_US/odedc.html) from SciLab could be integrated.
 
 
