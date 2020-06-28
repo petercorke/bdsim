@@ -23,7 +23,7 @@ docs: .FORCE
 	(cd docs; make html)
 
 dist: .FORCE
-	$(MAKE) test
+	#$(MAKE) test
 	python setup.py sdist
 
 upload: .FORCE
