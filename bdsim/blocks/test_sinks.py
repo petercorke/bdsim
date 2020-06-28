@@ -45,7 +45,10 @@ class SinkBlockTest(unittest.TestCase):
     
     
     def test_quadrotor(self):
-        b = QuadRotorPlot(qm)
+        
+        from quad_model import quadrotor as qm
+        
+        b = MultiRotorPlot(qm)
         
         b.start()
         

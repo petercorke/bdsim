@@ -9,7 +9,7 @@ Each class MyClass in this module becomes a method MYCLASS() of the Simulation o
 """
 
 import numpy as np
-import math
+from math import pi, sqrt, sin, cos, atan2
 
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import Polygon
@@ -25,8 +25,20 @@ from bdsim.components import SinkBlock, SinkBlockGraphics, block
 
 @block
 class Print(SinkBlock):
-    def __init__(self, fmt=None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, fmt=None, *inputs, **kwargs):
+        """
+        Create a console print block.
+        
+        :param fmt: Format string, defaults to None
+        :type fmt: str, optional
+        :param ``*inputs``: Optional incoming connections
+        :type ``*inputs``: Block or Plug
+        :param ``**kwargs``: common Block options
+        :return: A PRINT block
+        :rtype: Print instance
+
+        """
+        super().__init__(nin=1, inputs=inputs, **kwargs)
         self.format = fmt
         self.type = 'print'
         
@@ -42,19 +54,21 @@ class ScopeXY(SinkBlockGraphics):
     Plot one input against the other.
     """
     
-    def __init__(self, style=None, scale='auto', labels=['X', 'Y'], init=None, **kwargs):
+    def __init__(self, style=None, *inputs, scale='auto', labels=['X', 'Y'], init=None, **kwargs):
         """
         Create an XY scope.
         
         :param style: line style
         :type style: optional str or dict
+        :param ``*inputs``: Optional incoming connections
+        :type ``*inputs``: Block or Plug
         :param scale: y-axis scale, defaults to 'auto'
         :type scale: 2- or 4-element sequence
         :param labels: axis labels (xlabel, ylabel)
         :type labels: 2-element tuple or list
         :param ``**kwargs``: common Block options
         :return: A SCOPEXY block
-        :rtype: ScopeXY
+        :rtype: ScopeXY instance
 
         This block has two inputs which are plotted against each other. Port 0
         is the horizontal axis, and port 1 is the vertical axis.
@@ -66,10 +80,11 @@ class ScopeXY(SinkBlockGraphics):
         
         The scale factor defaults to auto-scaling but can be fixed by
         providing either:
+            
             - a 2-tuple [min, max] which is used for the x- and y-axes
             - a 4-tuple [xmin, xmax, ymin, ymax]
         """
-        super().__init__(**kwargs)
+        super().__init__(nin=2, inputs=inputs, **kwargs)
         self.nin = 2
         self.xdata = []
         self.ydata = []
@@ -87,10 +102,10 @@ class ScopeXY(SinkBlockGraphics):
         
     def start(self, **kwargs):
         # create the plot
-        if self.sim.graphics:
+        if self.bd.graphics:
             super().reset()
 
-            self.fig = self.sim.create_figure()
+            self.fig = self.bd.create_figure()
             self.ax = self.fig.gca()
             
             args = []
@@ -118,13 +133,13 @@ class ScopeXY(SinkBlockGraphics):
         # inputs are set
         self.xdata.append(self.inputs[0])
         self.ydata.append(self.inputs[1])
-        if self.sim.graphics:
+        if self.bd.graphics:
             plt.figure(self.fig.number)
             self.line.set_data(self.xdata, self.ydata)
         
             plt.draw()
             plt.show(block=False)
-            if self.sim.animation:
+            if self.bd.animation:
                 self.fig.canvas.start_event_loop(0.001)
         
             if self.scale == 'auto':
@@ -133,7 +148,7 @@ class ScopeXY(SinkBlockGraphics):
             super().step()
         
     def done(self, block=False, **kwargs):
-        if self.sim.graphics:
+        if self.bd.graphics:
             plt.show(block=block)
             super().done()
             
@@ -145,10 +160,12 @@ class Vehicle(SinkBlockGraphics):
     Animate a vehicle
     """
     
-    def __init__(self, path=True, pathstyle=None, shape='triangle', color="blue", fill="white", size=1, scale='auto', labels=['X', 'Y'], square=True, init=None, **kwargs):
+    def __init__(self, *inputs, path=True, pathstyle=None, shape='triangle', color="blue", fill="white", size=1, scale='auto', labels=['X', 'Y'], square=True, init=None, **kwargs):
         """
         Create a vehile animation.
         
+        :param ``*inputs``: Optional incoming connections
+        :type ``*inputs``: Block or Plug
         :param style: line style
         :type style: optional str or dict
         :param scale: y-axis scale, defaults to 'auto'
@@ -157,7 +174,7 @@ class Vehicle(SinkBlockGraphics):
         :type labels: 2-element tuple or list
         :param ``**kwargs``: common Block options
         :return: A SCOPEXY block
-        :rtype: Scope
+        :rtype: Scope instance
 
         This block has two inputs which are plotted against each other. Port 0
         is the horizontal axis, and port 1 is the vertical axis.
@@ -169,11 +186,11 @@ class Vehicle(SinkBlockGraphics):
         
         The scale factor defaults to auto-scaling but can be fixed by
         providing either:
+            
             - a 2-tuple [min, max] which is used for the x- and y-axes
             - a 4-tuple [xmin, xmax, ymin, ymax]
         """
-        super().__init__(**kwargs)
-        self.nin = 3
+        super().__init__(nin=3, inputs=inputs, **kwargs)
         self.xdata = []
         self.ydata = []
         self.type = 'vehicle'
@@ -213,8 +230,8 @@ class Vehicle(SinkBlockGraphics):
     def start(self, **kwargs):
         # create the plot
         super().reset()
-        if self.sim.graphics:
-            self.fig = self.sim.create_figure()
+        if self.bd.graphics:
+            self.fig = self.bd.create_figure()
             self.ax = self.fig.gca()
             if self.square:
                 self.ax.set_aspect('equal')
@@ -244,7 +261,7 @@ class Vehicle(SinkBlockGraphics):
         
     def step(self):
         # inputs are set
-        if self.sim.graphics:
+        if self.bd.graphics:
             self.xdata.append(self.inputs[0])
             self.ydata.append(self.inputs[1])
             plt.figure(self.fig.number)
@@ -256,7 +273,7 @@ class Vehicle(SinkBlockGraphics):
         
             plt.draw()
             plt.show(block=False)
-            if self.sim.animation:
+            if self.bd.animation:
                 self.fig.canvas.start_event_loop(0.001)
         
             if self.scale == 'auto':
@@ -265,13 +282,14 @@ class Vehicle(SinkBlockGraphics):
             super().step()
         
     def done(self, block=False, **kwargs):
-        if self.sim.graphics:
+        if self.bd.graphics:
             plt.show(block=block)
             
             super().done()
 
 # ------------------------------------------------------------------------ #
 
+@block
 class MultiRotorPlot(SinkBlockGraphics):
     """
     Animate a multi-rotor flyer.
@@ -297,25 +315,26 @@ class MultiRotorPlot(SinkBlockGraphics):
     6 Roll angle in rad
     """
      
-    def __init__(self, model, scale=[-2, 2, -2, 2, 10], flapscale=1, projection='ortho', **kwargs):
+    def __init__(self, model, *inputs, scale=[-2, 2, -2, 2, 10], flapscale=1, projection='ortho', **kwargs):
         """
         Create a block that displays a multi-rotor flying vehicle.
         
         :param model: A dictionary of vehicle geometric and inertial properties
         :type model: dict
+        :param ``*inputs``: Optional incoming connections
+        :type ``*inputs``: Block or Plug
         :param scale: dimensions of workspace: xmin, xmax, ymin, ymax, zmin, zmax
         :type scale: array_like
         :param flapscale: exagerate flapping angle by this factor, default is 1
         :type flapscale: float
         :param projection: 3D projection: ortho or perspective, defaults to 'ortho'
         :type projection: str
-        :param **kwargs: DESCRIPTION
         :param ``**kwargs``: common Block options
         :return: a MULTIROTOPLOT block
-        :rtype: MultiRobotPlot
+        :rtype: MultiRobotPlot instance
 
         """
-        super().__init__(**kwargs)
+        super().__init__(nin=1, inputs=inputs, **kwargs)
         self.type = 'quadrotorplot'
         self.model = model
         self.scale = scale
@@ -350,14 +369,13 @@ class MultiRotorPlot(SinkBlockGraphics):
         self.ax.set_zlabel('-Z (height above ground)')
         
         # TODO allow user to set maximum height of plot volume
-        self.ax.set_xlim(-self.scale, self.scale)
-        self.ax.set_ylim(-self.scale, self.scale)
-        self.ax.set_zlim(0, self.scale)
+        self.ax.set_xlim(self.scale[0], self.scale[1])
+        self.ax.set_ylim(self.scale[2], self.scale[3])
+        self.ax.set_zlim(0, self.scale[4])
 
         # plot the ground boundaries and the big cross
-        s = self.scale
-        self.ax.plot([-s, s], [-s, s], [0, 0], 'b-')
-        self.ax.plot([-s, s], [s, -s], [0, 0], 'b-')
+        self.ax.plot([self.scale[0], self.scale[2]], [self.scale[1], self.scale[3]], [0, 0], 'b-')
+        self.ax.plot([self.scale[0], self.scale[3]], [self.scale[1], self.scale[2]], [0, 0], 'b-')
         self.ax.grid(True)
         
         self.shadow, = self.ax.plot([0, 0], [0, 0], 'k--')
@@ -469,7 +487,7 @@ class Scope(SinkBlockGraphics):
     Plot input ports against time.  Each line can have its own color or style.
     """
     
-    def __init__(self, nin=None, styles=None, scale='auto', labels=None, grid=True, **kwargs):
+    def __init__(self, nin=None, styles=None, scale='auto', labels=None, grid=True, *inputs, **kwargs):
         """
         Create a block that plots input ports against time.
         
@@ -485,9 +503,11 @@ class Scope(SinkBlockGraphics):
         :param grid: draw a grid, default is on. Can be boolean or a tuple of 
                      options for grid()
         :type grid: bool or sequence
+        :param ``*inputs``: Optional incoming connections
+        :type ``*inputs``: Block or Plug
         :param ``**kwargs``: common Block options
         :return: A SCOPE block
-        :rtype: Scope
+        :rtype: Scope instance
         
         Line styles are given by either a dict of options for `plot` or as
         a simple MATLAB-style linestyle like 'k--'.
@@ -508,7 +528,6 @@ class Scope(SinkBlockGraphics):
             SCOPE(style='k--')
             SCOPE(style={'color:', 'red, 'linestyle': '--''})
         """
-        super().__init__(**kwargs)
 
         self.type = 'scope'
         if styles is not None:
@@ -529,7 +548,9 @@ class Scope(SinkBlockGraphics):
 
         if nin is None:
             nin = 1
-        self.nin = nin
+        
+        super().__init__(nin=nin, inputs=inputs, **kwargs)
+
         
         if styles is None:
             self.styles = [ None ] * nin
@@ -549,9 +570,9 @@ class Scope(SinkBlockGraphics):
         
     def start(self, **kwargs):
         # create the plot
-        if self.sim.graphics:
+        if self.bd.graphics:
             super().reset()   # TODO should this be here?
-            self.fig = self.sim.create_figure()
+            self.fig = self.bd.create_figure()
             self.ax = self.fig.gca()
             # figure out the labels
             if self.labels is None:
@@ -576,7 +597,7 @@ class Scope(SinkBlockGraphics):
             elif isinstance(self.grid, (list, tuple)):
                 self.ax.grid(True, *self.grid)
                 
-            self.ax.set_xlim(0, self.sim.T)
+            self.ax.set_xlim(0, self.bd.T)
             # self.ax.set_ylim(-2, 2)
             self.ax.set_xlabel(self.labels[0])
 
@@ -589,18 +610,18 @@ class Scope(SinkBlockGraphics):
         
     def step(self):
         # inputs are set
-        if self.sim.graphics:
-            self.tdata = np.append(self.tdata, self.sim.t)
+        if self.bd.graphics:
+            self.tdata = np.append(self.tdata, self.bd.t)
             for i,input in enumerate(self.inputs):
                 self.ydata[i] = np.append(self.ydata[i], input)
-            if self.sim.graphics:
+            if self.bd.graphics:
                 plt.figure(self.fig.number)
                 for i in range(0, self.nin):
                     self.line[i].set_data(self.tdata, self.ydata[i])
             
                 plt.draw()
                 plt.show(block=False)
-                if self.sim.animation:
+                if self.bd.animation:
                     self.fig.canvas.start_event_loop(0.001)
             
                 if self.scale == 'auto':
@@ -609,7 +630,7 @@ class Scope(SinkBlockGraphics):
                 super().step()
         
     def done(self, block=False, **kwargs):
-        if self.sim.graphics:
+        if self.bd.graphics:
             plt.show(block=block)
             super().done()
 
@@ -618,21 +639,21 @@ class Scope(SinkBlockGraphics):
 
 @block
 class Stop(SinkBlock):
-    def __init__(self, stop, **kwargs):
+    def __init__(self, stop, *inputs, **kwargs):
         """
         Conditionally stop the simulation.
         
         :param stop: Function 
         :type stop: TYPE
-        :param **kwargs: DESCRIPTION
-        :type **kwargs: TYPE
+        :param ``*inputs``: Optional incoming connections
+        :type ``*inputs``: Block or Plug
+        :param ``**kwargs``: common Block options
         :return: A STOP block
-        :rtype: Stop
+        :rtype: Stop instance
 
         """
 
-        super().__init__(**kwargs)
-        self.nin = 1
+        super().__init__(nin=1, inputs=inputs, **kwargs)
         self.type = 'stop'
                     
         self.stop  = stop
@@ -645,7 +666,7 @@ class Stop(SinkBlock):
         else:
             raise RuntimeError('input to stop must be boolean or callable')
         if stop:
-            self.sim.stop = self
+            self.bd.stop = self
 
 
 

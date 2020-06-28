@@ -28,11 +28,13 @@ class Sum(FunctionBlock):
         
         :param signs: signs associated with input ports, + or -
         :type signs: str
+        :param ``*inputs``: Optional incoming connections
+        :type ``*inputs``: Block or Plug
         :param angles: the signals are angles, wrap to [-pi,pi)
         :type angles: bool
         :param ``**kwargs``: common Block options
         :return: A SUM block
-        :rtype: _Sum
+        :rtype: Sum instance
         
         The number of input ports is determined by the length of the `signs`
         string.  For example::
@@ -43,17 +45,13 @@ class Sum(FunctionBlock):
         port 1 is subtracted.
 
         """
-        super().__init__(**kwargs)
+        super().__init__(nin=len(signs), nout=1, inputs=inputs, **kwargs)
         assert isinstance(signs, str), 'first argument must be signs string'
-        self.nin = len(signs)
-        self.nout = 1
         self.type = 'sum'
         assert all([x in '+-' for x in signs]), 'invalid sign'
         self.signs = signs
         self.angles = angles
         
-        for input in inputs:
-            self.sim.connect(input, self)
         
     def output(self, t=None):
         for i,input in enumerate(self.inputs):
@@ -72,17 +70,19 @@ class Sum(FunctionBlock):
 # ------------------------------------------------------------------------ #
 @block
 class Prod(FunctionBlock):
-    def __init__(self, ops, *pos, matrix=False, **kwargs):
+    def __init__(self, ops, *inputs, matrix=False, **kwargs):
         """
         Create a product junction.
         
-        :param signs: ops associated with input ports * or /
-        :type signs: str
+        :param ops: operations associated with input ports * or /
+        :type ops: str
+        :param ``*inputs``: Optional incoming connections
+        :type ``*inputs``: Block or Plug
         :param matrix: Arguments are matrices, use @ and np.linalg.inv, default False
         :type matrix: bool
         :param ``**kwargs``: common Block options
         :return: A PROD block
-        :rtype: _Prod
+        :rtype: Prod instance
         
         The number of input ports is determined by the length of the `ops`
         string.  For example::
@@ -93,10 +93,8 @@ class Prod(FunctionBlock):
         port 1 is divided.
 
         """
-        super().__init__(*pos, **kwargs)
+        super().__init__(nin=len(ops),nout=1, inputs=inputs, **kwargs)
         assert isinstance(ops, str), 'first argument must be signs string'
-        self.nin = len(ops)
-        self.nout = 1
         self.type = 'prod'
         assert all([x in '*/' for x in ops]), 'invalid op'
         self.ops = ops
@@ -129,17 +127,19 @@ class Prod(FunctionBlock):
 
 @block
 class Gain(FunctionBlock):
-    def __init__(self, gain, order='premul', **kwargs):
+    def __init__(self, gain, *inputs, premul=False, **kwargs):
         """
         Create a gain block.
         
         :param gain: The gain value
         :type gain: float
-        :param order: the order of multiplication: 'postmul' [default], 'premul'
-        :type order: str, optional
+        :param ``*inputs``: Optional incoming connections
+        :type ``*inputs``: Block or Plug
+        :param premul: premultiply by constant, default is postmultiply
+        :type premul: bool, optional
         :param ``**kwargs``: common Block options
-        :return: A SCOPE block
-        :rtype: _Gain
+        :return: A GAIN block
+        :rtype: Gain instance
         
         This block has only one input and one output port. The output is the
         product of the input by the gain.
@@ -147,27 +147,25 @@ class Gain(FunctionBlock):
         Either or both the input and gain can be numpy arrays and numpy will
         compute the appropriate product.  If both are numpy arrays then the
         matmult operator `@` is used and by default the input is postmultiplied
-        by the gain, but this can be changed using the `order` option.
+        by the gain, but this can be changed using the ``premul`` option.
 
         """
-        super().__init__(**kwargs)
-        self.nin = 1
-        self.nout = 1
+        super().__init__(nin=1, nout=1, inputs=inputs, **kwargs)
         self.gain  = gain
         self.type = 'gain'
-        self.order = order
+        self.premul = premul
         
     def output(self, t=None):
         input = self.inputs[0]
         
         if isinstance(input, np.ndarray) and isinstance(self.gain, np.ndarray):
             # array x array case
-            if self.order == 'postmul':
-                return [input @ self.gain]
-            elif self.order == 'premul':
+            if self.premul:
+                # premultiply by gain
                 return [self.gain @ input]
             else:
-                raise ValueError('bad value of order')
+                # postmultiply by gain
+                return [input @ self.gain]
         else:
             return [self.inputs[0] * self.gain]
         
@@ -175,11 +173,33 @@ class Gain(FunctionBlock):
 
 @block
 class Clip(FunctionBlock):
-    def __init__(self, min=-math.inf, max=math.inf, **kwargs):
+    def __init__(self, *inputs, min=-math.inf, max=math.inf, **kwargs):
+        """
+        Create a value clipping block.
+        
+        :param ``*inputs``: Optional incoming connections
+        :type ``*inputs``: Block or Plug
+        :param min: Minimum value, defaults to -math.inf
+        :type min: float or array_like, optional
+        :param max: Maximum value, defaults to math.inf
+        :type max: float or array_like, optional
+        :param ``**kwargs``: common Block options
+        :return: A CLIP block
+        :rtype: Clip instance
+        
+        Input signals are clipped to the range from ``minimum`` to ``maximum`` inclusive.
+        
+        The signal can be a vector in which case each element is clipped.  The
+        minimum and maximum values can be:
+            
+            - a scalar, in which case the same value applies to every element of 
+              the input vector , or
+            - a vector, of the same shape as the input vector that applies elementwise to
+              the input vector.
+        
 
-        super().__init__(**kwargs)
-        self.nin = 1
-        self.nout = 1
+        """
+        super().__init__(nin=1, nout=1, inputs=inputs, **kwargs)
         self.min = min
         self.max = max
         self.type = 'clip'
@@ -197,12 +217,14 @@ class Clip(FunctionBlock):
 # TODO can have multiple outputs: pass in a tuple of functions, return a tuple
 @block
 class Function(FunctionBlock):
-    def __init__(self, func, nin=1, nout=1, dict=False, args=(), kwargs={}, **kwargs_):
+    def __init__(self, func, *inputs, nin=1, nout=1, dict=False, args=(), kwargs={}, **kwargs_):
         """
         Create a Python function block.
         
         :param func: A function or lambda, or list thereof
         :type func: callable or sequence of callables
+        :param ``*inputs``: Optional incoming connections
+        :type ``*inputs``: Block or Plug
         :param nin: number of inputs, defaults to 1
         :type nin: int, optional
         :param nout: number of outputs, defaults to 1
@@ -258,7 +280,7 @@ class Function(FunctionBlock):
             FUNCTION( myfun, nin=2, nout=2)
 
         """
-        super().__init__(**kwargs_)
+        super().__init__(nin=nin, nout=nout, inputs=inputs, **kwargs_)
         self.nin = nin
         self.type = 'function'
 
@@ -312,9 +334,11 @@ class Function(FunctionBlock):
         
 @block
 class Interpolate(FunctionBlock):
-    def __init__(self, x=None, y=None, xy=None, time=False, kind='linear', **kwargs):
+    def __init__(self, *inputs, x=None, y=None, xy=None, time=False, kind='linear', **kwargs):
         """
         
+        :param ``*inputs``: Optional incoming connections
+        :type ``*inputs``: Block or Plug
         :param x: x-values of function
         :type x: array_like, shape (N,) optional
         :param y: y-values of function
@@ -352,14 +376,14 @@ class Interpolate(FunctionBlock):
           input ports and is a ``Source`` not a ``Function``.
 
         """
-        super().__init__(**kwargs)
-        self.nout = 1
+        
         self.time = time
         if time:
-            self.nin = 0
+            nin = 0
             self.blockclass = 'source'
         else:
-            self.nin = 1
+            nin = 1
+        super().__init__(nin=nin, nout=1, inputs=inputs, **kwargs)
             
         if xy is None:
             # process separate x and y vectors
@@ -391,8 +415,6 @@ class Interpolate(FunctionBlock):
         else:
             xnew = self.inputs[0]
         return [self.f(xnew)]
-
-
 
 
 if __name__ == "__main__":

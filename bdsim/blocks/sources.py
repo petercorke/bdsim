@@ -25,15 +25,15 @@ class Constant(SourceBlock):
         :param value: the constant, defaults to None
         :type value: any
         :param ``**kwargs``: common Block options
-        :return: a STEP block
-        :rtype: _Constant
+        :return: a CONSTANT block
+        :rtype: Constant instance
         
         This block has only one output port, but the value can be any 
         Python type, so long as the connected input port can handle it.
         For example float, list or numpy ndarray.
 
         """
-        super().__init__(**kwargs)
+        super().__init__(nout=1, **kwargs)
         
         if isinstance(value, (tuple, list)):
             value = np.array(value)
@@ -73,8 +73,8 @@ class WaveForm(SourceBlock):
         :param duty: duty cycle for square wave in range [0,1], defaults to 0.5
         :type duty: float, optional
         :param ``**kwargs``: common Block options
-        :return: a STEP block
-        :rtype: _Step
+        :return: a WAVEFORM block
+        :rtype: WaveForm instance
         
         Examples::
             
@@ -100,7 +100,7 @@ class WaveForm(SourceBlock):
         a number in the range [0,1] where 1 corresponds to one cycle.
         
         """
-        super().__init__(**kwargs)
+        super().__init__(nout=1, **kwargs)
 
         assert 0<duty<1, 'duty must be in range [0,1]'
         
@@ -151,9 +151,26 @@ class WaveForm(SourceBlock):
 
 @block
 class Piecewise(SourceBlock):
-    def __init__(self, *seq,
-                  **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, *seq, **kwargs):
+        """
+        Create a piecewise constant signal block.
+        
+        :param ``*seq``: Sequence of time, value pairs
+        :type ``*seq``: list of 2-tuples
+        :param ``**kwargs``: common Block options
+        :return: a PIECEWISE block
+        :rtype: Piecewise instance
+        
+        Outputs a piecewise constant function of time.  This is described as
+        a series of 2-tupes (time, value).  The output value is taken from the
+        active tuple, that is, the latest one in the list whose time is no greater
+        than simulation time.
+        
+        Note that there is no default initial value, the list should contain
+        a tuple with time zero otherwise the output will be undefined.
+
+        """
+        super().__init__(nout=1, **kwargs)
         
         self.t = [ x[0] for x in seq]
         self.y = [ x[1] for x in seq]
@@ -183,16 +200,18 @@ class Step(SourceBlock):
         :type on: float, optional
         :param ``**kwargs``: common Block options
         :return: a STEP block
-        :rtype: _Step
+        :rtype: Step
+        
+        Output a step signal that transitions from the value ``off`` to ``on``
+        when time equals ``T``.
 
         """
-        super().__init__(**kwargs)
+        super().__init__(nout=1, **kwargs)
         
         self.T = T
         self.off = off
         self.on = on
         self.type = "step"
-        self.nout = 1
 
     def output(self, t=None):
         if t >= self.T:

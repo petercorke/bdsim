@@ -27,6 +27,13 @@ class ConnectionsTest(unittest.TestCase):
         block = DeMux(2)
         self.assertEqual(block._eval(np.r_[1,2])[0], 1)
         self.assertEqual(block._eval(np.r_[1,2])[1], 2)
+        
+    def test_item(self):
+        block = Item('sig2')
+        sig = {'sig1':1, 'sig2':2, 'sig3':3}
+        self.assertEqual(block._eval(sig)[0], 2)
+    
+    # subsystems are tested by test_blockdiagram
 
 
 # ---------------------------------------------------------------------------------------#

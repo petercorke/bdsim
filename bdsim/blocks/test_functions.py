@@ -26,9 +26,15 @@ class FunctionBlockTest(unittest.TestCase):
         nt.assert_array_almost_equal(block._eval(2)[0], np.array([[2,4],[6,8]]))
 
         block = Gain(np.array([[1,2],[3,4]]))
-        nt.assert_array_almost_equal(block._eval(np.r_[1,2])[0], np.r_[5,11])
+        nt.assert_array_almost_equal(block._eval(np.r_[1,2])[0], np.r_[7, 10])
+        
+        block = Gain(np.array([[1,2],[3,4]]), premul=True)
+        nt.assert_array_almost_equal(block._eval(np.r_[1,2])[0], np.r_[5, 11])
 
         block = Gain(np.array([[1,2],[3,4]]))
+        nt.assert_array_almost_equal(block._eval(np.array([[5,6],[7,8]]))[0], np.array([[23,34],[31,46]]))
+        
+        block = Gain(np.array([[1,2],[3,4]]), premul=True)
         nt.assert_array_almost_equal(block._eval(np.array([[5,6],[7,8]]))[0], np.array([[19,22],[43,50]]))
 
         block = Gain(np.array([[1,2],[3,4]]), order='postmul')
