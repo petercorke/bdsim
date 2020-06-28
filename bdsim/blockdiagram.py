@@ -216,7 +216,7 @@ class BlockDiagram:
             i = self.blockcounter[block.type]
             self.blockcounter[block.type] += 1
             block.name = "{:s}.{:d}".format(block.type, i)
-        block.sim = self
+        block.bd = self
         self.blocklist.append(block)  # add to the list of available blocks
         
     def add_wire(self, wire, name=None):
@@ -224,14 +224,17 @@ class BlockDiagram:
         wire.name = name
         return self.wirelist.append(wire)
     
+    def __str__(self):
+        return 'BlockDiagram: {:s}'.format(self.name)
+    
     def __repr__(self):
-        s = ""
-        for block in self.blocklist:
-            s += str(block) + "\n"
-        s += "\n"
-        for wire in self.wirelist:
-            s += str(wire) + "\n"
-        return s.lstrip("\n")
+        return str(self) + " with {:d} blocks and {:d} wires".format(len(self.blocklist), len(self.wirelist))
+        # for block in self.blocklist:
+        #     s += str(block) + "\n"
+        # s += "\n"
+        # for wire in self.wirelist:
+        #     s += str(wire) + "\n"
+        # return s.lstrip("\n")
     
     def connect(self, *args, name=None):
         
@@ -272,7 +275,7 @@ class BlockDiagram:
                 wire = Wire(start, end, name)
                 self.add_wire(wire)
         
-    def compile(self, subsystem=False):
+    def compile(self, subsystem=False, doimport=True):
         
         # namethe elements
         self.nblocks = len(self.blocklist)
@@ -311,8 +314,11 @@ class BlockDiagram:
         # initialize lists of input and output ports
         for b in self.blocklist:
             nstates += b.nstates
-            b.outports = [[] for i in range(0, b.nout)]
-            b.inports = [None for i in range(0, b.nin)]
+            try:
+                b.outports = [[] for i in range(0, b.nout)]
+                b.inports = [None for i in range(0, b.nin)]
+            except:
+                raise RuntimeError('cannot initialize ports for block ' + str(b))
         
         #print('  {:d} states'.format(nstates))
         self.nstates = nstates
@@ -367,12 +373,7 @@ class BlockDiagram:
                 if _DFS([b]):
                     error = True
         
-        if error:
-            raise RuntimeError('System has fatal errors and cannot be simulated')
-        else:
-            self.compiled = True
-        
-        
+
         # evaluate the network once to check out wire types
         x = self.getstate()
         
@@ -380,8 +381,12 @@ class BlockDiagram:
             self.evaluate(x, 0.0)
         except RuntimeError as err:
             print('unrecoverable error in value propagation')
-            return False
-        return True
+            error = True
+            
+        if not error:
+            self.compiled = True
+            
+        return self.compiled
     
     #flatten the hierarchy
     
@@ -578,8 +583,10 @@ class BlockDiagram:
             cfmt.add( w.id, start, end, w.fullname, typ)
         cfmt.print()
         print('\nState variables: {:d}'.format(self.nstates))
+        
+        if not self.compiled:
+            print('** System has not been compiled, or had a compile time error')
             
-    
     def getstate(self):
         # get the state from each stateful block
         x0 = np.array([])
@@ -884,6 +891,12 @@ class BlockDiagram:
                 file.write('\t"{:s}" -> "{:s}" [{:s}]\n'.format(w.start.block.name, w.end.block.name, ', '.join(options)))
 
             file.write('}\n')
+            
+    def blockvalues(self):
+        for b in self.blocklist:
+            print('Block {:s}:'.format(b.name))
+            print('  inputs:  ', b.inputs)
+            print('  outputs: ', b.output(t=0))  
             
 if __name__ == "__main__":
     

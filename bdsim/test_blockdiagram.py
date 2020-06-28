@@ -17,7 +17,7 @@ class BlockDiagramTest(unittest.TestCase):
 
 class WiringTest(unittest.TestCase):
 
-    def test_wiring1(self):
+    def test_connect_1(self):
 
         bd = bdsim.BlockDiagram()
 
@@ -28,7 +28,7 @@ class WiringTest(unittest.TestCase):
         bd.evaluate(x=[], t=0)
         self.assertEqual(dst.inputs[0], 2)
 
-    def test_wiring2(self):
+    def test_connect_2(self):
 
         bd = bdsim.BlockDiagram()
 
@@ -42,7 +42,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(dst1.inputs[0], 2)
         self.assertEqual(dst2.inputs[0], 2)
 
-    def test_wiring_multipoint(self):
+    def test_multi_connect(self):
 
         bd = bdsim.BlockDiagram()
 
@@ -357,3 +357,4 @@ class ImportTest(unittest.TestCase):
 if __name__ == '__main__':
 
     unittest.main()
+    
