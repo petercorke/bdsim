@@ -1,12 +1,12 @@
 """
-Define robotic blocks for use in block diagrams, such as kinematic, dynamic and graphical display.
+Define robotic blocks for use in block diagrams, such as kinematics, and dynamics.
+Graphical display of robots are in ``sinks.py``.
 These are blocks that may be:
 
 - subclass of ``FunctionBlock`` for kinematics
 - subclass of ``TransferBlock`` for dynamics
-- subclass of``SinkBlockGraphics`` for graphical display
 
-Each class MyClass in this module becomes a method MYCLASS() of the Simulation object.
+Each class MyClass in this module becomes a method MYCLASS() of the BlockDiagram instance.
 """
 
 # TODO: quadrotor dyanmics and display
@@ -40,7 +40,7 @@ class Bicycle(TransferBlock):
         :return: a BICYCLE block
         :rtype: Bicycle instance
         
-        Bicycle kinematic model with state :math:``[x, y, \theta]``.  
+        Bicycle kinematic model with state :math:`[x, y, \theta]`.  
         
         The block has two input ports:
             
@@ -107,7 +107,7 @@ class Unicycle(TransferBlock):
         :return: a UNICYCLE block
         :rtype: Unicycle instance
         
-        Unicycle kinematic model with state :math:``[x, y, \theta]``.
+        Unicycle kinematic model with state :math:`[x, y, \theta]`.
         
         The block has two input ports:
             
@@ -160,7 +160,7 @@ class DiffSteer(TransferBlock):
         :return: a DIFFSTEER block
         :rtype: DifSteer instance
         
-        Bicycle kinematic model with state :math:``[x, y, \theta]``.
+        Bicycle kinematic model with state :math:`[x, y, \theta]`.
 
         The block has two input ports:
             
@@ -262,9 +262,10 @@ class MultiRotor(TransferBlock):
         r"""
         Createa a multi-rotor dynamic model block.
         
+        :param model: Vehicle geometric and inertial parameters
+        :type model: dict
         :param ``*inputs``: Optional incoming connections
         :type ``*inputs``: Block or Plug
-        :param model: A dictionary of vehicle geometric and inertial parameters
         :param groundcheck: Prevent vehicle moving below ground , defaults to True
         :type groundcheck: bool
         :param speedcheck: Check for zero rotor speed, defaults to True
@@ -272,7 +273,7 @@ class MultiRotor(TransferBlock):
         :param x0: Initial state, defaults to all zeros
         :type x0: TYPE, optional
         :param ``**kwargs``: common Block options
-        :return: a DIFFSTEER block
+        :return: a MULTIROTOR block
         :rtype: MultiRotor instance
         
         The block has one input port which is a vector of input rotor speeds
@@ -282,7 +283,7 @@ class MultiRotor(TransferBlock):
         The block has one output port which is a dictionary signal with the
         following items:
             
-            - ``x`` pose in the world frame as :math:``[x, y, z, \theta_Y, \theta_P, \theta_R]``
+            - ``x`` pose in the world frame as :math:`[x, y, z, \theta_Y, \theta_P, \theta_R]`
             - ``vb`` translational velocity in the world frame (metres/sec)
             - ``w`` angular rates in the world frame as yaw-pitch-roll rates (radians/second)
             - ``a1s`` longitudinal flapping angles (radians)

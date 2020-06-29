@@ -5,7 +5,7 @@ Define source blocks for use in block diagrams.  These are blocks that:
 - have no state variables
 - are a subclass of ``SourceBlock``
 
-Each class MyClass in this module becomes a method MYCLASS() of the Simulation object.
+Each class MyClass in this module becomes a method MYCLASS() of the BlockDiagram instance.
 """
 
 import numpy as np

@@ -41,7 +41,7 @@ Transfer blocks
    :undoc-members:
    :show-inheritance:
    :special-members: __init__
-   :exclude-members: output reset step start done
+   :exclude-members: output, reset, step, start, done
 
 Robot blocks
 ------------
@@ -51,17 +51,17 @@ Robot blocks
    :undoc-members:
    :show-inheritance:
    :special-members: __init__
-   :exclude-members: output reset step start done
+   :exclude-members: output, reset, step, start, done
 
-Subsystem blocks
-----------------
+Connection blocks
+-----------------
 
 .. automodule:: bdsim.blocks.connections
    :members:
    :undoc-members:
    :show-inheritance:
    :special-members: __init__
-   :exclude-members: output reset step start done
+   :exclude-members: output, reset, step, start, done
 
 io blocks
 ---------
@@ -71,7 +71,7 @@ io blocks
    :undoc-members:
    :show-inheritance:
    :special-members: __init__
-   :exclude-members: output reset step start done
+   :exclude-members: output, reset, step, start, done
 
 Vision blocks
 -------------
@@ -81,5 +81,5 @@ Vision blocks
    :undoc-members:
    :show-inheritance:
    :special-members: __init__
-   :exclude-members: output reset step start done
+   :exclude-members: output, reset, step, start, done
 

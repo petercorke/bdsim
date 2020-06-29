@@ -4,10 +4,10 @@ Define subsystem connection blocks for use in block diagrams.  These are blocks 
 
 - have inputs or outputs
 - have no state variables
-- are a subclass of ``SubsysttemBlock``
+- are a subclass of ``SubsysytemBlock``
 
 
-Each class MyClass in this module becomes a method MYCLASS() of the Simulation object.
+Each class MyClass in this module becomes a method MYCLASS() of the BlockDiagram instance.
 """
 
 import importlib.util
