@@ -7,6 +7,7 @@ Created on Mon May 18 21:43:18 2020
 """
 import os
 import os.path
+import sys
 import importlib
 import inspect
 import re
@@ -294,7 +295,10 @@ class BlockDiagram:
         
         # run block specific checks
         for b in self.blocklist:
-            b.check()
+            try:
+                b.check()
+            except:
+                raise RuntimeError('block failed check ' + str(b))
             
         nstates = 0
         
@@ -318,7 +322,7 @@ class BlockDiagram:
                 b.outports = [[] for i in range(0, b.nout)]
                 b.inports = [None for i in range(0, b.nin)]
             except:
-                raise RuntimeError('cannot initialize ports for block ' + str(b))
+                raise RuntimeError('cannot initialize ports for block ' + str(b) + ': ', sys.exc_info()[1])
         
         #print('  {:d} states'.format(nstates))
         self.nstates = nstates
@@ -380,7 +384,7 @@ class BlockDiagram:
         try:
             self.evaluate(x, 0.0)
         except RuntimeError as err:
-            print('unrecoverable error in value propagation')
+            print('unrecoverable error in value propagation:', err)
             error = True
             
         if not error:
@@ -676,7 +680,7 @@ class BlockDiagram:
                 out = None
                 
         except RuntimeError as err:
-            print('unrecoverable error in value propagation')
+            print('unrecoverable error in value propagation: ', err)
             return None
 
         self.done(block=block)
@@ -775,7 +779,7 @@ class BlockDiagram:
         # TODO check output validity once at the start
         
         # check it has no nan or inf values
-        if self.checkfinite and not np.isfinite(out).any():
+        if self.checkfinite and isinstance(out, (int, float, np.ndarray)) and not np.isfinite(out).any():
             raise RuntimeError('block outputs nan')
         
         # propagate block outputs to all downstream connected blocks

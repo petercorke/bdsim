@@ -814,7 +814,7 @@ class TransferBlock(Block):
     
     def check(self):
         assert len(self._x0) == self.nstates, 'incorrect length for initial state'
-        assert nin > 0 or nout > 0, 'no inputs or outputs specified'
+        assert self.nin > 0 or self.nout > 0, 'no inputs or outputs specified'
                 
     
 
