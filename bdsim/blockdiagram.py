@@ -31,12 +31,11 @@ def DEBUG(debug, *args):
 
 class BlockDiagram:
     
-    def __init__(self, name='main'):
+    def __init__(self, name='main', graphics=True):
         
         self.wirelist = []      # list of all wires
         self.blocklist = []     # list of all blocks
         self.x = None           # state vector numpy.ndarray
-        self.graphics = True    # graphics enabled
         self.compiled = False   # network has been compiled
         self.T = None           # maximum.BlockDiagram time
         self.t = None           # current time
@@ -53,7 +52,7 @@ class BlockDiagram:
                             help='matplotlib backend to choose')
         parser.add_argument('--tiles', '-t', type=str, default='3x4', metavar='ROWSxCOLS',
                             help='window tiling as NxM')
-        parser.add_argument('--nographics', '-g', default=True, action='store_const', const=False, dest='graphics',
+        parser.add_argument('--nographics', '-g', default=graphics, action='store_const', const=False, dest='graphics',
                             help='disable graphic display')
         parser.add_argument('--animation', '-a', default=False, action='store_const', const=True,
                             help='animate graphics')
@@ -322,7 +321,7 @@ class BlockDiagram:
                 b.outports = [[] for i in range(0, b.nout)]
                 b.inports = [None for i in range(0, b.nin)]
             except:
-                raise RuntimeError('cannot initialize ports for block ' + str(b) + ': ', sys.exc_info()[1])
+                print('cannot initialize ports for block ' + str(b) + ': ', sys.exc_info()[1])
         
         #print('  {:d} states'.format(nstates))
         self.nstates = nstates
@@ -332,8 +331,8 @@ class BlockDiagram:
             try:
                 w.start.block.add_outport(w)
                 w.end.block.add_inport(w)
-            except AssertionError as err:
-                print('error connecting wire: ', w.fullname, err)
+            except:
+                print('error connecting wire ', w.fullname + ': ', sys.exc_info()[1])
                 error = True
             
         # check every block 
@@ -636,20 +635,21 @@ class BlockDiagram:
         self.count = 0
         self.stop = None # allow any block to stop.BlockDiagram by setting this to the block's name
         self.checkfinite = checkfinite
-        
-        # tell all blocks we're doing a.BlockDiagram
-        self.start()
 
-        x0 = self.getstate()
-        if len(x0) > 0:
-            print('initial state x0 = ', x0)
-        
-
-        # integratnd function, wrapper for network evaluation method
-        def _deriv(t, y, s):
-            return s.evaluate(y, t)
+        try:        
+            # tell all blocks we're doing a.BlockDiagram
+            self.start()
     
-        try:
+            x0 = self.getstate()
+            if len(x0) > 0:
+                print('initial state x0 = ', x0)
+            
+    
+            # integratnd function, wrapper for network evaluation method
+            def _deriv(t, y, s):
+                return s.evaluate(y, t)
+    
+
             # out = scipy.integrate.solve_ivp.BlockDiagram._deriv, args=(self,), t_span=(0,T), y0=x0, 
             #             method=solver, t_eval=np.linspace(0, T, 100), events=None, **kwargs)
             if len(x0) > 0:
@@ -670,6 +670,9 @@ class BlockDiagram:
                     x.append(integrator.y)
                     
                     self.step()
+                    
+                    print('\rt = {:.3f}      '.format(integrator.t), end='')
+                    
                 if integrator.status == 'failed':
                     print('integration completed with failed status ')
                 out = np.c_[t,x]
@@ -680,7 +683,7 @@ class BlockDiagram:
                 out = None
                 
         except RuntimeError as err:
-            print('unrecoverable error in value propagation: ', err)
+            print('unrecoverable error in evaluation: ', err)
             return None
 
         self.done(block=block)
@@ -824,7 +827,11 @@ class BlockDiagram:
         
         """            
         for b in self.blocklist:
-            b.start(**kwargs)
+            try:
+                b.start(**kwargs)
+            except:
+                raise RuntimeError('error in start method of block: ' + str(b) + ' - ' + str(sys.exc_info()[1])) from None
+                
             
     def done(self, **kwargs):
         """
