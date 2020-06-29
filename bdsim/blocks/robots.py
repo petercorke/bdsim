@@ -12,7 +12,7 @@ Each class MyClass in this module becomes a method MYCLASS() of the Simulation o
 # TODO: quadrotor dyanmics and display
 
 import numpy as np
-from math import sin, cos, atan2, sqrt, pi
+from math import sin, cos, atan2, tan, sqrt, pi
 
 import matplotlib.pyplot as plt
 import time
@@ -87,7 +87,7 @@ class Bicycle(TransferBlock):
         gamma = self.inputs[1]
         gamma = min(self.slim, max(gamma, -self.slim))
         
-        xd = np.r_[v*math.cos(theta), v*math.sin(theta), v*math.tan(gamma)/self.L ]
+        xd = np.r_[v * cos(theta), v * sin(theta), v * tan(gamma)/self.L ]
         return xd
     
 # ------------------------------------------------------------------------ #
@@ -138,7 +138,7 @@ class Unicycle(TransferBlock):
         theta = self._x[2]
         v = self.inputs[0]
         omega = self.inputs[1]
-        xd = np.r_[v * math.cos(theta), v * math.sin(theta), omega]
+        xd = np.r_[v * cos(theta), v * sin(theta), omega]
         return xd
     
 # ------------------------------------------------------------------------ #
@@ -194,7 +194,7 @@ class DiffSteer(TransferBlock):
         v = self.R * (self.inputs[0] + self.inputs[1]) / 2
         omega = (self.inputs[1] + self.inputs[0]) / self.W
     
-        xd = np.r_[v * math.cos(theta), v * math.sin(theta), omega]
+        xd = np.r_[v * cos(theta), v * sin(theta), omega]
         return xd
     
     # seriallink
