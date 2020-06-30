@@ -33,15 +33,14 @@
             
   <h1>Source code for bdsim.blocks.robots</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Define robotic blocks for use in block diagrams, such as kinematics, and dynamics.</span>
-<span class="sd">Graphical display of robots are in ``sinks.py``.</span>
-<span class="sd">These are blocks that may be:</span>
+<span class="sd">Robot blocks:</span>
+<span class="sd">- have inputs and outputs</span>
+<span class="sd">- are a subclass of ``FunctionBlock`` |rarr| ``Block`` for kinematics and have no states</span>
+<span class="sd">- are a subclass of ``TransferBlock`` |rarr| ``Block`` for dynamics and have states</span>
 
-<span class="sd">- subclass of ``FunctionBlock`` for kinematics</span>
-<span class="sd">- subclass of ``TransferBlock`` for dynamics</span>
-
-<span class="sd">The constructor each class ``MyClass`` with a ``@block`` decorator becomes a method ``MYCLASS()`` of the BlockDiagram instance.</span>
 <span class="sd">&quot;&quot;&quot;</span>
+<span class="c1"># The constructor of each class ``MyClass`` with a ``@block`` decorator becomes a method ``MYCLASS()`` of the BlockDiagram instance.</span>
+
 
 <span class="c1"># TODO: quadrotor dyanmics and display</span>
 

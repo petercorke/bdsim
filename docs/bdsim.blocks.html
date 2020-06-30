@@ -38,13 +38,12 @@
 the package <code class="docutils literal notranslate"><span class="pre">bdsim.blocks</span></code>.</p>
 <div class="section" id="module-bdsim.blocks.sources">
 <span id="source-blocks"></span><h2>Source blocks<a class="headerlink" href="#module-bdsim.blocks.sources" title="Permalink to this headline">¶</a></h2>
-<p>Define source blocks for use in block diagrams.  These are blocks that:</p>
+<p>Source blocks:</p>
 <ul class="simple">
 <li><p>have outputs but no inputs</p></li>
 <li><p>have no state variables</p></li>
-<li><p>are a subclass of <code class="docutils literal notranslate"><span class="pre">SourceBlock</span></code></p></li>
+<li><p>are a subclass of <code class="docutils literal notranslate"><span class="pre">SourceBlock</span></code> → <code class="docutils literal notranslate"><span class="pre">Block</span></code></p></li>
 </ul>
-<p>The constructor each class <code class="docutils literal notranslate"><span class="pre">MyClass</span></code> with a <code class="docutils literal notranslate"><span class="pre">&#64;block</span></code> decorator becomes a method <code class="docutils literal notranslate"><span class="pre">MYCLASS()</span></code> of the BlockDiagram instance.</p>
 <dl class="class">
 <dt id="bdsim.blocks.sources.Constant">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.sources.</code><code class="sig-name descname">Constant</code><span class="sig-paren">(</span><em class="sig-param">value=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sources.html#Constant"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sources.Constant" title="Permalink to this definition">¶</a></dt>
@@ -179,13 +178,13 @@ a number in the range [0,1] where 1 corresponds to one cycle.</p>
 </div>
 <div class="section" id="module-bdsim.blocks.sinks">
 <span id="sink-blocks"></span><h2>Sink blocks<a class="headerlink" href="#module-bdsim.blocks.sinks" title="Permalink to this headline">¶</a></h2>
-<p>Define sink blocks for use in block diagrams.  These are blocks that:</p>
+<p>Sink blocks:</p>
 <ul class="simple">
 <li><p>have inputs but no outputs</p></li>
 <li><p>have no state variables</p></li>
-<li><p>are a subclass of <code class="docutils literal notranslate"><span class="pre">SinkBlock</span></code></p></li>
+<li><p>are a subclass of <code class="docutils literal notranslate"><span class="pre">SinkBlock</span></code> → <code class="docutils literal notranslate"><span class="pre">Block</span></code></p></li>
+<li><p>that perform graphics are a subclass of  <code class="docutils literal notranslate"><span class="pre">SinkBlockGraphics</span></code> → <code class="docutils literal notranslate"><span class="pre">SinkBlock</span></code> → <code class="docutils literal notranslate"><span class="pre">Block</span></code></p></li>
 </ul>
-<p>The constructor each class <code class="docutils literal notranslate"><span class="pre">MyClass</span></code> with a <code class="docutils literal notranslate"><span class="pre">&#64;block</span></code> decorator becomes a method <code class="docutils literal notranslate"><span class="pre">MYCLASS()</span></code> of the BlockDiagram instance.</p>
 <dl class="class">
 <dt id="bdsim.blocks.sinks.MultiRotorPlot">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.sinks.</code><code class="sig-name descname">MultiRotorPlot</code><span class="sig-paren">(</span><em class="sig-param">model, *inputs, scale=[-2, 2, -2, 2, 10], flapscale=1, projection='ortho', **kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#MultiRotorPlot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.MultiRotorPlot" title="Permalink to this definition">¶</a></dt>
@@ -210,6 +209,13 @@ a number in the range [0,1] where 1 corresponds to one cycle.</p>
 </dd>
 </dl>
 <p>Create a block that displays/animates a multi-rotor flying vehicle.</p>
+<div class="figure align-default" id="id1">
+<a class="reference internal image-reference" href="_images/multirotorplot.png"><img alt="example of generated graphic" src="_images/multirotorplot.png" style="width: 500px;" /></a>
+<p class="caption"><span class="caption-text">Example of quad-rotor display.</span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
 <p>Written by Pauline Pounds 2004</p>
 </dd></dl>
 
@@ -376,13 +382,12 @@ providing either:</p>
 </div>
 <div class="section" id="module-bdsim.blocks.functions">
 <span id="function-blocks"></span><h2>Function blocks<a class="headerlink" href="#module-bdsim.blocks.functions" title="Permalink to this headline">¶</a></h2>
-<p>Define function blocks for use in block diagrams.  These are blocks that:</p>
+<p>Function blocks:</p>
 <ul class="simple">
 <li><p>have inputs and outputs</p></li>
 <li><p>have no state variables</p></li>
-<li><p>are a subclass of <code class="docutils literal notranslate"><span class="pre">FunctionBlock</span></code></p></li>
+<li><p>are a subclass of <code class="docutils literal notranslate"><span class="pre">FunctionBlock</span></code> → <code class="docutils literal notranslate"><span class="pre">Block</span></code></p></li>
 </ul>
-<p>The constructor each class <code class="docutils literal notranslate"><span class="pre">MyClass</span></code> with a <code class="docutils literal notranslate"><span class="pre">&#64;block</span></code> decorator becomes a method <code class="docutils literal notranslate"><span class="pre">MYCLASS()</span></code> of the BlockDiagram instance.</p>
 <dl class="class">
 <dt id="bdsim.blocks.functions.Clip">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.functions.</code><code class="sig-name descname">Clip</code><span class="sig-paren">(</span><em class="sig-param">*inputs</em>, <em class="sig-param">min=-inf</em>, <em class="sig-param">max=inf</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Clip"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.functions.Clip" title="Permalink to this definition">¶</a></dt>
@@ -592,13 +597,12 @@ port 1 is subtracted.</p>
 </div>
 <div class="section" id="module-bdsim.blocks.transfers">
 <span id="transfer-blocks"></span><h2>Transfer blocks<a class="headerlink" href="#module-bdsim.blocks.transfers" title="Permalink to this headline">¶</a></h2>
-<p>Define transfer blocks for use in block diagrams.  These are blocks that:</p>
+<p>Transfer blocks:</p>
 <ul class="simple">
 <li><p>have inputs and outputs</p></li>
 <li><p>have state variables</p></li>
-<li><p>are a subclass of <code class="docutils literal notranslate"><span class="pre">TransferBlock</span></code></p></li>
+<li><p>are a subclass of <code class="docutils literal notranslate"><span class="pre">TransferBlock</span></code> → <code class="docutils literal notranslate"><span class="pre">Block</span></code></p></li>
 </ul>
-<p>The constructor each class <code class="docutils literal notranslate"><span class="pre">MyClass</span></code> with a <code class="docutils literal notranslate"><span class="pre">&#64;block</span></code> decorator becomes a method <code class="docutils literal notranslate"><span class="pre">MYCLASS()</span></code> of the BlockDiagram instance.</p>
 <dl class="class">
 <dt id="bdsim.blocks.transfers.Integrator">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.transfers.</code><code class="sig-name descname">Integrator</code><span class="sig-paren">(</span><em class="sig-param">*inputs</em>, <em class="sig-param">x0=0</em>, <em class="sig-param">min=None</em>, <em class="sig-param">max=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/transfers.html#Integrator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.transfers.Integrator" title="Permalink to this definition">¶</a></dt>
@@ -716,14 +720,10 @@ form.</p>
 </div>
 <div class="section" id="module-bdsim.blocks.robots">
 <span id="robot-blocks"></span><h2>Robot blocks<a class="headerlink" href="#module-bdsim.blocks.robots" title="Permalink to this headline">¶</a></h2>
-<p>Define robotic blocks for use in block diagrams, such as kinematics, and dynamics.
-Graphical display of robots are in <code class="docutils literal notranslate"><span class="pre">sinks.py</span></code>.
-These are blocks that may be:</p>
-<ul class="simple">
-<li><p>subclass of <code class="docutils literal notranslate"><span class="pre">FunctionBlock</span></code> for kinematics</p></li>
-<li><p>subclass of <code class="docutils literal notranslate"><span class="pre">TransferBlock</span></code> for dynamics</p></li>
-</ul>
-<p>The constructor each class <code class="docutils literal notranslate"><span class="pre">MyClass</span></code> with a <code class="docutils literal notranslate"><span class="pre">&#64;block</span></code> decorator becomes a method <code class="docutils literal notranslate"><span class="pre">MYCLASS()</span></code> of the BlockDiagram instance.</p>
+<p>Robot blocks:
+- have inputs and outputs
+- are a subclass of <code class="docutils literal notranslate"><span class="pre">FunctionBlock</span></code> → <code class="docutils literal notranslate"><span class="pre">Block</span></code> for kinematics and have no states
+- are a subclass of <code class="docutils literal notranslate"><span class="pre">TransferBlock</span></code> → <code class="docutils literal notranslate"><span class="pre">Block</span></code> for dynamics and have states</p>
 <dl class="class">
 <dt id="bdsim.blocks.robots.Bicycle">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.robots.</code><code class="sig-name descname">Bicycle</code><span class="sig-paren">(</span><em class="sig-param">*inputs</em>, <em class="sig-param">x0=None</em>, <em class="sig-param">L=1</em>, <em class="sig-param">vlim=1</em>, <em class="sig-param">slim=1</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/robots.html#Bicycle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.robots.Bicycle" title="Permalink to this definition">¶</a></dt>
@@ -901,13 +901,27 @@ following items:</p>
 </div>
 <div class="section" id="module-bdsim.blocks.connections">
 <span id="connection-blocks"></span><h2>Connection blocks<a class="headerlink" href="#module-bdsim.blocks.connections" title="Permalink to this headline">¶</a></h2>
-<p>Define subsystem connection blocks for use in block diagrams.  These are blocks that:</p>
-<ul class="simple">
+<p>Connection blocks are in two categories:</p>
+<ol class="arabic simple">
+<li><dl class="simple">
+<dt>Signal manipulation:</dt><dd><ul class="simple">
+<li><p>have inputs and outputs</p></li>
+<li><p>have no state variables</p></li>
+<li><p>are a subclass of <code class="docutils literal notranslate"><span class="pre">FunctionBlock</span></code> → <code class="docutils literal notranslate"><span class="pre">Block</span></code></p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Subsystem support</dt><dd><ul class="simple">
 <li><p>have inputs or outputs</p></li>
 <li><p>have no state variables</p></li>
-<li><p>are a subclass of <code class="docutils literal notranslate"><span class="pre">SubsysytemBlock</span></code></p></li>
+<li><p>are a subclass of <code class="docutils literal notranslate"><span class="pre">SubsysytemBlock</span></code> → <code class="docutils literal notranslate"><span class="pre">Block</span></code></p></li>
 </ul>
-<p>The constructor each class <code class="docutils literal notranslate"><span class="pre">MyClass</span></code> with a <code class="docutils literal notranslate"><span class="pre">&#64;block</span></code> decorator becomes a method <code class="docutils literal notranslate"><span class="pre">MYCLASS()</span></code> of the BlockDiagram instance.</p>
+</dd>
+</dl>
+</li>
+</ol>
 <dl class="class">
 <dt id="bdsim.blocks.connections.DeMux">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.connections.</code><code class="sig-name descname">DeMux</code><span class="sig-paren">(</span><em class="sig-param">nout=1</em>, <em class="sig-param">*inputs</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#DeMux"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.connections.DeMux" title="Permalink to this definition">¶</a></dt>
@@ -1115,7 +1129,6 @@ subsystem.</p></li>
 <li><p>have no state variables</p></li>
 <li><p>are a subclass of <code class="docutils literal notranslate"><span class="pre">SourceBlock</span></code> or <code class="docutils literal notranslate"><span class="pre">SinkBlock</span></code></p></li>
 </ul>
-<p>The constructor each class <code class="docutils literal notranslate"><span class="pre">MyClass</span></code> with a <code class="docutils literal notranslate"><span class="pre">&#64;block</span></code> decorator becomes a method <code class="docutils literal notranslate"><span class="pre">MYCLASS()</span></code> of the BlockDiagram instance.</p>
 </div>
 <div class="section" id="module-bdsim.blocks.vision">
 <span id="vision-blocks"></span><h2>Vision blocks<a class="headerlink" href="#module-bdsim.blocks.vision" title="Permalink to this headline">¶</a></h2>
@@ -1125,7 +1138,6 @@ subsystem.</p></li>
 <li><p>have no state variables</p></li>
 <li><p>are a subclass of <code class="docutils literal notranslate"><span class="pre">SourceBlock</span></code>, <code class="docutils literal notranslate"><span class="pre">SinkBlock</span></code> or <code class="docutils literal notranslate"><span class="pre">FunctionBlock</span></code></p></li>
 </ul>
-<p>The constructor each class <code class="docutils literal notranslate"><span class="pre">MyClass</span></code> with a <code class="docutils literal notranslate"><span class="pre">&#64;block</span></code> decorator becomes a method <code class="docutils literal notranslate"><span class="pre">MYCLASS()</span></code> of the BlockDiagram instance.</p>
 </div>
 </div>
 

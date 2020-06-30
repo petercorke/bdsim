@@ -33,14 +33,16 @@
             
   <h1>Source code for bdsim.blocks.sinks</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Define sink blocks for use in block diagrams.  These are blocks that:</span>
+<span class="sd">Sink blocks:</span>
 
 <span class="sd">- have inputs but no outputs</span>
 <span class="sd">- have no state variables</span>
-<span class="sd">- are a subclass of ``SinkBlock``</span>
+<span class="sd">- are a subclass of ``SinkBlock`` |rarr| ``Block``</span>
+<span class="sd">- that perform graphics are a subclass of  ``SinkBlockGraphics`` |rarr| ``SinkBlock`` |rarr| ``Block``</span>
 
-<span class="sd">The constructor each class ``MyClass`` with a ``@block`` decorator becomes a method ``MYCLASS()`` of the BlockDiagram instance.</span>
 <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1"># The constructor of each class ``MyClass`` with a ``@block`` decorator becomes a method ``MYCLASS()`` of the BlockDiagram instance.</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">pi</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">sin</span><span class="p">,</span> <span class="n">cos</span><span class="p">,</span> <span class="n">atan2</span>
@@ -332,6 +334,13 @@
 <span class="sd">    :rtype: MultiRobotPlot instance</span>
 
 <span class="sd">    Create a block that displays/animates a multi-rotor flying vehicle.</span>
+
+<span class="sd">    .. figure:: ../../figs/multirotorplot.png</span>
+<span class="sd">       :width: 500px</span>
+<span class="sd">       :alt: example of generated graphic</span>
+
+<span class="sd">       Example of quad-rotor display.</span>
+<span class="sd">    |</span>
 
 <span class="sd">    Written by Pauline Pounds 2004</span>
 <span class="sd">    &quot;&quot;&quot;</span>
