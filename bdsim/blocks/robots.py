@@ -1,13 +1,12 @@
 """
-Define robotic blocks for use in block diagrams, such as kinematics, and dynamics.
-Graphical display of robots are in ``sinks.py``.
-These are blocks that may be:
+Robot blocks:
+- have inputs and outputs
+- are a subclass of ``FunctionBlock`` |rarr| ``Block`` for kinematics and have no states
+- are a subclass of ``TransferBlock`` |rarr| ``Block`` for dynamics and have states
 
-- subclass of ``FunctionBlock`` for kinematics
-- subclass of ``TransferBlock`` for dynamics
-
-Each class MyClass in this module becomes a method MYCLASS() of the BlockDiagram instance.
 """
+# The constructor of each class ``MyClass`` with a ``@block`` decorator becomes a method ``MYCLASS()`` of the BlockDiagram instance.
+
 
 # TODO: quadrotor dyanmics and display
 
@@ -22,41 +21,44 @@ from bdsim.components import TransferBlock, block
 # ------------------------------------------------------------------------ #
 @block
 class Bicycle(TransferBlock):
-    def __init__(self, *inputs, x0=None, L=1, vlim=1, slim=1, **kwargs):
-        r"""
-        Create a vehicle model with Bicycle kinematics.
-        
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
-        :param x0: Inital state, defaults to 0
-        :type x0: array_like, optional
-        :param L: Wheelbase, defaults to 1
-        :type L: float, optional
-        :param vlim: Velocity limit, defaults to 1
-        :type vlim: float, optional
-        :param slim: Steering limit, defaults to 1
-        :type slim: float, optional
-        :param ``**kwargs``: common Block options
-        :return: a BICYCLE block
-        :rtype: Bicycle instance
-        
-        Bicycle kinematic model with state :math:`[x, y, \theta]`.  
-        
-        The block has two input ports:
-            
-            1. Vehicle speed (meters/sec).  The velocity limit ``vlim`` is
-               applied to the magnitude of this input.
-            2. Steering wheel angle (radians).  The steering limit ``slime``
-               is applied to the magnitude of this input.
-            
-        and three output ports:
-            
-            1. x position in the world frame (metres)
-            2. y positon in the world frame (meters)
-            3. heading angle with respect to the world frame (radians)
-            
+    """
+    **BICYCLE** block
 
-        """
+    :param ``*inputs``: Optional incoming connections
+    :type ``*inputs``: Block or Plug
+    :param x0: Inital state, defaults to 0
+    :type x0: array_like, optional
+    :param L: Wheelbase, defaults to 1
+    :type L: float, optional
+    :param vlim: Velocity limit, defaults to 1
+    :type vlim: float, optional
+    :param slim: Steering limit, defaults to 1
+    :type slim: float, optional
+    :param ``**kwargs``: common Block options
+    :return: a BICYCLE block
+    :rtype: Bicycle instance
+    
+    Create a vehicle model with Bicycle kinematics.
+    
+    Bicycle kinematic model with state :math:`[x, y, \theta]`.  
+    
+    The block has two input ports:
+        
+        1. Vehicle speed (metres/sec).  The velocity limit ``vlim`` is
+           applied to the magnitude of this input.
+        2. Steering wheel angle (radians).  The steering limit ``slim``
+           is applied to the magnitude of this input.
+        
+    and three output ports:
+        
+        1. x position in the world frame (metres)
+        2. y positon in the world frame (metres)
+        3. heading angle with respect to the world frame (radians)
+
+    """
+
+    def __init__(self, *inputs, x0=None, L=1, vlim=1, slim=1, **kwargs):
+
         super().__init__(nin=2, nout=3, inputs=inputs, **kwargs)
 
         self.nstates = 3
@@ -93,34 +95,37 @@ class Bicycle(TransferBlock):
 # ------------------------------------------------------------------------ #
 @block
 class Unicycle(TransferBlock):
-    def __init__(self, *inputs, x0=None, **kwargs):
-        r"""
-        Create a vehicle model with Unicycle kinematics.
-        
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
-        :param x0: Inital state, defaults to 0
-        :type x0: array_like, optional
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
-        :param ``**kwargs``: common Block options
-        :return: a UNICYCLE block
-        :rtype: Unicycle instance
-        
-        Unicycle kinematic model with state :math:`[x, y, \theta]`.
-        
-        The block has two input ports:
-            
-            1. Vehicle speed (meters/sec).
-            2. Angular velocity (radians/sec).
-            
-        and three output ports:
-            
-            1. x position in the world frame (metres)
-            2. y positon in the world frame (meters)
-            3. heading angle with respect to the world frame (radians)
+    r"""
+    **UNICYCLE** block
+    
+    :param ``*inputs``: Optional incoming connections
+    :type ``*inputs``: Block or Plug
+    :param x0: Inital state, defaults to 0
+    :type x0: array_like, optional
+    :param ``*inputs``: Optional incoming connections
+    :type ``*inputs``: Block or Plug
+    :param ``**kwargs``: common Block options
+    :return: a UNICYCLE block
+    :rtype: Unicycle instance
+    
+    Create a vehicle model with Unicycle kinematics.
 
-        """
+    Unicycle kinematic model with state :math:`[x, y, \theta]`.
+    
+    The block has two input ports:
+        
+        1. Vehicle speed (metres/sec).
+        2. Angular velocity (radians/sec).
+        
+    and three output ports:
+        
+        1. x position in the world frame (metres)
+        2. y positon in the world frame (metres)
+        3. heading angle with respect to the world frame (radians)
+
+    """
+    def __init__(self, *inputs, x0=None, **kwargs):
+        
         super().__init__(nin=2, nout=3, inputs=inputs, **kwargs)
         self.nstates = 3
         self.type = 'unicycle'
@@ -144,36 +149,45 @@ class Unicycle(TransferBlock):
 # ------------------------------------------------------------------------ #
 @block
 class DiffSteer(TransferBlock):
+    r"""
+    **DIFFSTEER** block
+
+    :param ``*inputs``: Optional incoming connections
+    :type ``*inputs``: Block or Plug
+    :param x0: Inital state, defaults to 0
+    :type x0: array_like, optional
+    :param R: Wheel radius, defaults to 1
+    :type R: float, optional
+    :param W: Wheel separation in lateral direction, defaults to 1
+    :type R: float, optional
+    :param ``**kwargs``: common Block options
+    :return: a DIFFSTEER block
+    :rtype: DifSteer instance
+    
+    Create a differential steer vehicle model with Unicycle kinematics, with inputs
+    given as wheel angular velocity.
+    
+    Unicycle kinematic model with state :math:`[x, y, \theta]`.
+
+    The block has two input ports:
+        
+        1. Left-wheel angular velocity (radians/sec).
+        2. Right-wheel angular velocity (radians/sec).
+        
+    and three output ports:
+        
+        1. x position in the world frame (metres)
+        2. y positon in the world frame (metres)
+        3. heading angle with respect to the world frame (radians)
+
+    Note:
+
+        - wheel velocity is defined such that if both are positive the vehicle
+          moves forward.
+    """
+
     def __init__(self, *inputs, R=1, W=1, x0=None, **kwargs):
-        r"""
-        Create a differential steer vehicle model with Unicycle kinematics.
-        
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
-        :param x0: Inital state, defaults to 0
-        :type x0: array_like, optional
-        :param R: Wheel radius, defaults to 1
-        :type R: float, optional
-        :param W: Wheel separation in lateral direction, defaults to 1
-        :type R: float, optional
-        :param ``**kwargs``: common Block options
-        :return: a DIFFSTEER block
-        :rtype: DifSteer instance
-        
-        Bicycle kinematic model with state :math:`[x, y, \theta]`.
 
-        The block has two input ports:
-            
-            1. Left-wheel angular velocity (radians/sec).
-            2. Right-wheel angular velocity (radians/sec).
-            
-        and three output ports:
-            
-            1. x position in the world frame (metres)
-            2. y positon in the world frame (meters)
-            3. heading angle with respect to the world frame (radians)
-
-        """
         super().__init__(nin=2, nout=3, inputs=inputs, **kwargs)
         self.nstates = 3
         self.type = 'diffsteer'
@@ -205,98 +219,97 @@ class DiffSteer(TransferBlock):
 
 @block
 class MultiRotor(TransferBlock):
-    """
-    Flyer2dynamics lovingly coded by Paul Pounds, first coded 12/4/04
-    A simulation of idealised X-4 Flyer II flight dynamics.
-    version 2.0 2005 modified to be compatible with latest version of Matlab
-    version 3.0 2006 fixed rotation matrix problem
-    version 4.0 4/2/10, fixed rotor flapping rotation matrix bug, mirroring
-    version 5.0 8/8/11, simplified and restructured
-    version 6.0 25/10/13, fixed rotation matrix/inverse wronskian definitions, flapping cross-product bug
+    r"""
+    **MULTIROTOR** block
 
-    New in version 2:
-      - Generalised rotor thrust model
-      - Rotor flapping model
-      - Frame aerodynamic drag model
-      - Frame aerodynamic surfaces model
-      - Internal motor model
-      - Much coolage
+    :param model: Vehicle geometric and inertial parameters
+    :type model: dict
+    :param ``*inputs``: Optional incoming connections
+    :type ``*inputs``: Block or Plug
+    :param groundcheck: Prevent vehicle moving below ground , defaults to True
+    :type groundcheck: bool
+    :param speedcheck: Check for zero rotor speed, defaults to True
+    :type speedcheck: bool
+    :param x0: Initial state, defaults to all zeros
+    :type x0: TYPE, optional
+    :param ``**kwargs``: common Block options
+    :return: a MULTIROTOR block
+    :rtype: MultiRotor instance
     
-    Version 1.3
-      - Rigid body dynamic model
-      - Rotor gyroscopic model
-      - External motor model
+    Create a a multi-rotor dynamic model block.
     
-    ARGUMENTS
-      u       Reference inputs                1x4
-      tele    Enable telemetry (1 or 0)       1x1
-      crash   Enable crash detection (1 or 0) 1x1
-      init    Initial conditions              1x12
+    The block has one input port which is a vector of input rotor speeds
+    in (radians/sec).  These are, looking down, clockwise from the front rotor
+    which lies on the x-axis.
     
-    INPUTS
-      u = [N S E W]
-      NSEW motor commands                     1x4
-    
-    CONTINUOUS STATES
-      z      Position                         3x1   (x,y,z)
-      v      Velocity                         3x1   (xd,yd,zd)
-      n      Attitude                         3x1   (Y,P,R)
-      o      Angular velocity                 3x1   (wx,wy,wz)
-      w      Rotor angular velocity           4x1
-    
-    Notes: z-axis downward so altitude is -z(3)
-    
-    CONTINUOUS STATE MATRIX MAPPING
-      x = [z1 z2 z3 n1 n2 n3 z1 z2 z3 o1 o2 o3 w1 w2 w3 w4]
-    
-
-    CONTINUOUS STATE EQUATIONS
-      z` = v
-      v` = g*e3 - (1/m)*T*R*e3
-      I*o` = -o X I*o + G + torq
-      R = f(n)
-      n` = inv(W)*o
+    The block has one output port which is a dictionary signal with the
+    following items:
+        
+        - ``x`` pose in the world frame as :math:`[x, y, z, \theta_Y, \theta_P, \theta_R]`
+        - ``vb`` translational velocity in the world frame (metres/sec)
+        - ``w`` angular rates in the world frame as yaw-pitch-roll rates (radians/second)
+        - ``a1s`` longitudinal flapping angles (radians)
+        - ``b1s`` lateral flapping angles (radians)
+        
+    Based on MATLAB code developed by Pauline Pounds 2004.
     """
-    
+
+	# Flyer2dynamics lovingly coded by Paul Pounds, first coded 12/4/04
+	# A simulation of idealised X-4 Flyer II flight dynamics.
+	# version 2.0 2005 modified to be compatible with latest version of Matlab
+	# version 3.0 2006 fixed rotation matrix problem
+	# version 4.0 4/2/10, fixed rotor flapping rotation matrix bug, mirroring
+	# version 5.0 8/8/11, simplified and restructured
+	# version 6.0 25/10/13, fixed rotation matrix/inverse wronskian definitions, flapping cross-product bug
+	# 
+	# New in version 2:
+	#   - Generalised rotor thrust model
+	#   - Rotor flapping model
+	#   - Frame aerodynamic drag model
+	#   - Frame aerodynamic surfaces model
+	#   - Internal motor model
+	#   - Much coolage
+	# 
+	# Version 1.3
+	#   - Rigid body dynamic model
+	#   - Rotor gyroscopic model
+	#   - External motor model
+	# 
+	# ARGUMENTS
+	#   u       Reference inputs                1x4
+	#   tele    Enable telemetry (1 or 0)       1x1
+	#   crash   Enable crash detection (1 or 0) 1x1
+	#   init    Initial conditions              1x12
+	# 
+	# INPUTS
+	#   u = [N S E W]
+	#   NSEW motor commands                     1x4
+	# 
+	# CONTINUOUS STATES
+	#   z      Position                         3x1   (x,y,z)
+	#   v      Velocity                         3x1   (xd,yd,zd)
+	#   n      Attitude                         3x1   (Y,P,R)
+	#   o      Angular velocity                 3x1   (wx,wy,wz)
+	#   w      Rotor angular velocity           4x1
+	# 
+	# Notes: z-axis downward so altitude is -z(3)
+	# 
+	# CONTINUOUS STATE MATRIX MAPPING
+	#   x = [z1 z2 z3 n1 n2 n3 z1 z2 z3 o1 o2 o3 w1 w2 w3 w4]
+	# 
+	# 
+	# CONTINUOUS STATE EQUATIONS
+	#   z` = v
+	#   v` = g*e3 - (1/m)*T*R*e3
+	#   I*o` = -o X I*o + G + torq
+	#   R = f(n)
+	#   n` = inv(W)*o
+	# 
     def __init__(self, model, *inputs, groundcheck=True, speedcheck=True, x0=None, **kwargs):
-        r"""
-        Createa a multi-rotor dynamic model block.
-        
-        :param model: Vehicle geometric and inertial parameters
-        :type model: dict
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
-        :param groundcheck: Prevent vehicle moving below ground , defaults to True
-        :type groundcheck: bool
-        :param speedcheck: Check for zero rotor speed, defaults to True
-        :type speedcheck: bool
-        :param x0: Initial state, defaults to all zeros
-        :type x0: TYPE, optional
-        :param ``**kwargs``: common Block options
-        :return: a MULTIROTOR block
-        :rtype: MultiRotor instance
-        
-        The block has one input port which is a vector of input rotor speeds
-        in (radians/sec).  These are, looking down, clockwise from the front rotor
-        which lies on the x-axis.
-        
-        The block has one output port which is a dictionary signal with the
-        following items:
-            
-            - ``x`` pose in the world frame as :math:`[x, y, z, \theta_Y, \theta_P, \theta_R]`
-            - ``vb`` translational velocity in the world frame (metres/sec)
-            - ``w`` angular rates in the world frame as yaw-pitch-roll rates (radians/second)
-            - ``a1s`` longitudinal flapping angles (radians)
-            - ``b1s`` lateral flapping angles (radians)
-            
-        Based on MATLAB code developed by Pauline Pounds 2004.
 
-        """
         super().__init__(nin=1, nout=1, inputs=inputs, **kwargs)
         self.type = 'quadrotor'
     
-
-        
         try:
             nrotors = model['nrotors']
         except KeyError:
@@ -482,8 +495,6 @@ class MultiRotor(TransferBlock):
         self.b1s = b1s
         
         return np.r_[dz, dn, dv, do]  # This is the state derivative vector
-
-
 
 if __name__ == "__main__":
 

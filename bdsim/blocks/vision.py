@@ -5,8 +5,9 @@ Define vision processing blocks for use in block diagrams.  These are blocks tha
 - have no state variables
 - are a subclass of ``SourceBlock``, ``SinkBlock`` or ``FunctionBlock``
 
-Each class MyClass in this module becomes a method MYCLASS() of the Simulation object.
 """
+# The constructor of each class ``MyClass`` with a ``@block`` decorator becomes a method ``MYCLASS()`` of the BlockDiagram instance.
+
 
 # camera
 # display

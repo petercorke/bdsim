@@ -12,31 +12,30 @@ from matplotlib import animation
                 
 class Wire:
     """
+    Create a wire.
+    
+    :param start: Plug at the start of a wire, defaults to None
+    :type start: Plug, optional
+    :param end: Plug at the end of a wire, defaults to None
+    :type end: Plug, optional
+    :param name: Name of wire, defaults to None
+    :type name: str, optional
+    :return: A wire object
+    :rtype: Wire
+
     A Wire object connects two block ports.  A Wire has a reference to the
     start and end ports.
-    """
-                
+
+    A wire records all the connections defined by the user.  At compile time
+    wires are used to build inter-block references.
+    
+    Between two blocks, a wire can connect one or more ports, ie. it can connect
+    a set of output ports on one block to a same sized set of input ports on 
+    another block.
+    """      
                 
     def __init__(self, start=None, end=None, name=None):
-        """
-        Create a wire.
-        
-        :param start: Plug at the start of a wire, defaults to None
-        :type start: Plug, optional
-        :param end: Plug at the end of a wire, defaults to None
-        :type end: Plug, optional
-        :param name: Name of wire, defaults to None
-        :type name: str, optional
-        :return: A wire object
-        :rtype: Wire
 
-        A wire records all the connections defined by the user.  At compile time
-        wires are used to build inter-block references.
-        
-        Between two blocks, a wire can connect one or more ports, ie. it can connect
-        a set of output ports on one block to a same sized set of input ports on 
-        another block.
-        """
         self.name = name
         self.id = None
         self.start = start
@@ -125,31 +124,31 @@ class Wire:
 
 class Plug:
     """
-    Plugs are on the end of each wire, and connect a Wire to a specific port on
-    a Block.
+    Create a plug.
+    
+    :param block: The block being plugged into
+    :type block: Block
+    :param port: The port on the block, defaults to 0
+    :type port: int, optional
+    :param type: 'start' or 'end', defaults to None
+    :type type: str, optional
+    :return: Plug object
+    :rtype: Plug
+    
+    Plugs are the interface between a wire and block and have information
+    about port number and wire end. Plugs are on the end of each wire, and connect a 
+    Wire to a specific port on a Block.
+    
+    The ``type`` argument indicates if the ``Plug`` is at:
+        - the start of a wire, ie. the port is an output port
+        - the end of a wire, ie. the port is an input port
+        
+    A plug can specify a set of ports on a block.
+
     """
+
     def __init__(self, block, port=0, type=None):
-        """
-        Create a plug.
-        
-        :param block: The block being plugged into
-        :type block: Block
-        :param port: The port on the block, defaults to 0
-        :type port: int, optional
-        :param type: 'start' or 'end', defaults to None
-        :type type: str, optional
-        :return: Plug object
-        :rtype: Plug
-        
-        Plugs are the interface between a wire and block and have information
-        about port number and wire end.
-        
-        The ``type`` argument indicates if the ``Plug`` is at:
-            - the start of a wire, ie. the port is an output port
-            - the end of a wire, ie. the port is an input port
-            
-        A plug can specify a set of ports on a block.
-        """
+
         self.block = block
         self.port = port
         self.type = type  # start
@@ -316,8 +315,37 @@ def block(cls):
 # ------------------------------------------------------------------------- #
 
 class Block:
+
     """
+    Construct a new block object.
+    
+    :param name: Name of the block, defaults to None
+    :type name: str, optional
+    :param inames: Names of input ports, defaults to None
+    :type inames: list of str, optional
+    :param onames: Names of output ports, defaults to None
+    :type onames: list of str, optional
+    :param snames: Names of states, defaults to None
+    :type snames: list of str, optional
+    :param pos: Position of block on the canvas, defaults to None
+    :type pos: 2-element tuple or list, optional
+    :param bd: Parent block diagram, defaults to None
+    :type bd: BlockDiagram, optional
+    :param nin: Number of inputs, defaults to None
+    :type nin: int, optional
+    :param nout: Number of outputs, defaults to None
+    :type nout: int, optional
+    :param *inputs: Optional incoming connections
+    :type *inputs: Block or Plug
+    :param **kwargs: Unknow arguments
+    :return: A Block superclass
+    :rtype: Block
+    
     A block object is the superclass of all blocks in the simulation environment.
+
+    This is the top-level initializer, and handles most options passed to
+    the superclass initializer for each block in the library.
+
     """
 
     def __new__(cls, *args, **kwargs):
@@ -348,35 +376,7 @@ class Block:
     _latex_remove = str.maketrans({'$':'', '\\':'', '{':'', '}':'', '^':'', '_':''})
     
     def __init__(self, name=None, inames=None, onames=None, snames=None, pos=None, bd=None, nin=None, nout=None, inputs=None, **kwargs):
-        """
-        Construct a new block object.
-        
-        :param name: Name of the block, defaults to None
-        :type name: str, optional
-        :param inames: Names of input ports, defaults to None
-        :type inames: list of str, optional
-        :param onames: Names of output ports, defaults to None
-        :type onames: list of str, optional
-        :param snames: Names of states, defaults to None
-        :type snames: list of str, optional
-        :param pos: Position of block on the canvas, defaults to None
-        :type pos: 2-element tuple or list, optional
-        :param bd: Parent block diagram, defaults to None
-        :type bd: BlockDiagram, optional
-        :param nin: Number of inputs, defaults to None
-        :type nin: int, optional
-        :param nout: Number of outputs, defaults to None
-        :type nout: int, optional
-        :param *inputs: Optional incoming connections
-        :type *inputs: Block or Plug
-        :param **kwargs: Unknow arguments
-        :return: A Block superclass
-        :rtype: Block
-        
-        This is the top-level initializer, and handles most options passed to
-        the superclass initializer for each block in the library.
 
-        """
         #print('Block constructor, bd = ', bd)
         if name is not None:
             self.name_tex = name
@@ -740,7 +740,7 @@ class Block:
         
 class SinkBlock(Block):
     """
-    A Sink is a subclass of Block that represents a block that has inputs
+    A SinkBlock is a subclass of Block that represents a block that has inputs
     but no outputs. Typically used to save data to a variable, file or 
     graphics.
     """
@@ -752,6 +752,11 @@ class SinkBlock(Block):
         self.nstates = 0
 
 class SinkBlockGraphics(SinkBlock):
+    """
+    A SinkBlockGraphics is a subclass of SinkBlock that represents a block that has inputs
+    but no outputs. Typically used to save data to a variable, file or 
+    graphics.
+    """
     def __init__(self, movie=None, **kwargs):
         super().__init__(**kwargs)
         self.movie = movie
@@ -778,7 +783,7 @@ class SinkBlockGraphics(SinkBlock):
 
 class SourceBlock(Block):
     """
-    A Source is a subclass of Block that represents a block that has outputs
+    A SourceBlock is a subclass of Block that represents a block that has outputs
     but no inputs.  Its output is a function of parameters and time.
     """
     blockclass = 'source'
@@ -790,7 +795,7 @@ class SourceBlock(Block):
         
 class TransferBlock(Block):
     """
-    A Transfer is a subclass of Block that represents a block with inputs
+    A TransferBlock is a subclass of Block that represents a block with inputs
     outputs and states. Typically used to describe a continuous time dynamic
     system, either linear or nonlinear.
     """
@@ -820,7 +825,7 @@ class TransferBlock(Block):
 
 class FunctionBlock(Block):
     """
-    A Function is a subclass of Block that represents a block that has inputs
+    A FunctionBlock is a subclass of Block that represents a block that has inputs
     and outputs but no state variables.  Typically used to describe operations
     such as gain, summation or various mappings.
     """

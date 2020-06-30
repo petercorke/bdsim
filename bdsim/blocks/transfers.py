@@ -1,12 +1,13 @@
 """
-Define transfer blocks for use in block diagrams.  These are blocks that:
+Transfer blocks:
 
 - have inputs and outputs
 - have state variables
-- are a subclass of ``TransferBlock``
+- are a subclass of ``TransferBlock`` |rarr| ``Block``
 
-Each class MyClass in this module becomes a method MYCLASS() of the Simulation object.
 """
+# The constructor of each class ``MyClass`` with a ``@block`` decorator becomes a method ``MYCLASS()`` of the BlockDiagram instance.
+
 
 import numpy as np
 import math
@@ -35,33 +36,36 @@ from bdsim.components import TransferBlock, block
 
 @block
 class Integrator(TransferBlock):
-    def __init__(self, *inputs, x0=0, min=None, max=None, **kwargs):
-        """
-        Create an integrator block.
-        
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
-        :param x0: Initial state, defaults to 0
-        :type x0: array_like, optional
-        :param min: Minimum value of state, defaults to None
-        :type min: float or array_like, optional
-        :param max: Maximum value of state, defaults to None
-        :type max: float or array_like, optional
-        :param ``**kwargs``: common Block options
-        :return: an INTEGRATOR block
-        :rtype: Integrator instance
-        
-        Output is the time integral of the input.  The state can be a scalar or a
-        vector, this is given by the type of ``x0``.
-        
-        The minimum and maximum values can be:
-            
-            - a scalar, in which case the same value applies to every element of 
-              the state vector, or
-            - a vector, of the same shape as ``x0`` that applies elementwise to
-              the state.
+    """
+    **INTEGRATOR** block
 
-        """
+    :param ``*inputs``: Optional incoming connections
+    :type ``*inputs``: Block or Plug
+    :param x0: Initial state, defaults to 0
+    :type x0: array_like, optional
+    :param min: Minimum value of state, defaults to None
+    :type min: float or array_like, optional
+    :param max: Maximum value of state, defaults to None
+    :type max: float or array_like, optional
+    :param ``**kwargs``: common Block options
+    :return: an INTEGRATOR block
+    :rtype: Integrator instance
+    
+    Create an integrator block.
+
+    Output is the time integral of the input.  The state can be a scalar or a
+    vector, this is given by the type of ``x0``.
+    
+    The minimum and maximum values can be:
+        
+        - a scalar, in which case the same value applies to every element of 
+          the state vector, or
+        - a vector, of the same shape as ``x0`` that applies elementwise to
+          the state.
+    """
+
+    def __init__(self, *inputs, x0=0, min=None, max=None, **kwargs):
+
         super().__init__(nin=1, nout=1, inputs=inputs, **kwargs)
         
         if isinstance(x0, np.ndarray):
@@ -100,41 +104,44 @@ class Integrator(TransferBlock):
 
 @block
 class LTI_SS(TransferBlock):
-    def __init__(self, *inputs, A=None, B=None, C=None, x0=None, verbose=False, **kwargs):
-        r"""
-        Create a state-space LTI block.
-        
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
-        :param N: numerator coefficients, defaults to 1
-        :type N: array_like, optional
-        :param D: denominator coefficients, defaults to [1, 1]
-        :type D: array_like, optional
-        :param x0: initial states, defaults to zero
-        :type x0: array_like, optional
-        :param ``**kwargs``: common Block options
-        :return: A SCOPE block
-        :rtype: LTI_SISO instance
-        
-        Describes the dynamics of a single-input single-output (SISO) linear
-        time invariant (LTI) system described by numerator and denominator
-        polynomial coefficients.
+    r"""
+    **LTI_SS** block
+    
+    :param ``*inputs``: Optional incoming connections
+    :type ``*inputs``: Block or Plug
+    :param N: numerator coefficients, defaults to 1
+    :type N: array_like, optional
+    :param D: denominator coefficients, defaults to [1, 1]
+    :type D: array_like, optional
+    :param x0: initial states, defaults to zero
+    :type x0: array_like, optional
+    :param ``**kwargs``: common Block options
+    :return: A SCOPE block
+    :rtype: LTI_SISO instance
 
-        Coefficients are given in the order from highest order to zeroth 
-        order, ie. :math:`2s^2 - 4s +3` is ``[2, -4, 3]``.
+    Create a state-space LTI block.
+
+    Describes the dynamics of a single-input single-output (SISO) linear
+    time invariant (LTI) system described by numerator and denominator
+    polynomial coefficients.
+
+    Coefficients are given in the order from highest order to zeroth 
+    order, ie. :math:`2s^2 - 4s +3` is ``[2, -4, 3]``.
+    
+    Only proper transfer functions, where order of numerator is less
+    than denominator are allowed.
+    
+    The order of the states in ``x0`` is consistent with controller canonical
+    form.
+    
+    Examples::
         
-        Only proper transfer functions, where order of numerator is less
-        than denominator are allowed.
+        LTI_SISO(N=[1,2], D=[2, 3, -4])
         
-        The order of the states in ``x0`` is consistent with controller canonical
-        form.
-        
-        Examples::
-            
-            LTI_SISO(N=[1,2], D=[2, 3, -4])
-            
-        is the transfer function :math:`\frac{s+2}{2s^2+3s-4}`.
-        """
+    is the transfer function :math:`\frac{s+2}{2s^2+3s-4}`.
+    """
+    def __init__(self, *inputs, A=None, B=None, C=None, x0=None, verbose=False, **kwargs):
+
         #print('in SS constructor')
         self.type = 'LTI SS'
 
@@ -177,41 +184,45 @@ class LTI_SS(TransferBlock):
 
 @block
 class LTI_SISO(LTI_SS):
-    def __init__(self, N=1, D=[1, 1], *inputs, x0=None, verbose=False, **kwargs):
-        r"""
-        Create a SISO LTI block.
-        
-        :param N: numerator coefficients, defaults to 1
-        :type N: array_like, optional
-        :param D: denominator coefficients, defaults to [1, 1]
-        :type D: array_like, optional
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
-        :param x0: initial states, defaults to zero
-        :type x0: array_like, optional
-        :param ``**kwargs``: common Block options
-        :return: A SCOPE block
-        :rtype: LTI_SISO instance
-        
-        Describes the dynamics of a single-input single-output (SISO) linear
-        time invariant (LTI) system described by numerator and denominator
-        polynomial coefficients.
+    r"""
+    **LTI_SISO** block
+    
+    :param N: numerator coefficients, defaults to 1
+    :type N: array_like, optional
+    :param D: denominator coefficients, defaults to [1, 1]
+    :type D: array_like, optional
+    :param ``*inputs``: Optional incoming connections
+    :type ``*inputs``: Block or Plug
+    :param x0: initial states, defaults to zero
+    :type x0: array_like, optional
+    :param ``**kwargs``: common Block options
+    :return: A SCOPE block
+    :rtype: LTI_SISO instance
+    
+    Create a SISO LTI block.
 
-        Coefficients are given in the order from highest order to zeroth 
-        order, ie. :math:`2s^2 - 4s +3` is ``[2, -4, 3]``.
+    Describes the dynamics of a single-input single-output (SISO) linear
+    time invariant (LTI) system described by numerator and denominator
+    polynomial coefficients.
+
+    Coefficients are given in the order from highest order to zeroth 
+    order, ie. :math:`2s^2 - 4s +3` is ``[2, -4, 3]``.
+    
+    Only proper transfer functions, where order of numerator is less
+    than denominator are allowed.
+    
+    The order of the states in ``x0`` is consistent with controller canonical
+    form.
+    
+    Examples::
         
-        Only proper transfer functions, where order of numerator is less
-        than denominator are allowed.
+        LTI_SISO(N=[1, 2], D=[2, 3, -4])
         
-        The order of the states in ``x0`` is consistent with controller canonical
-        form.
-        
-        Examples::
-            
-            LTI_SISO(N=[1, 2], D=[2, 3, -4])
-            
-        is the transfer function :math:`\frac{s+2}{2s^2+3s-4}`.
-        """
+    is the transfer function :math:`\frac{s+2}{2s^2+3s-4}`.
+    """
+
+    def __init__(self, N=1, D=[1, 1], *inputs, x0=None, verbose=False, **kwargs):
+
         #print('in SISO constscutor')
 
         if not isinstance(N, list):

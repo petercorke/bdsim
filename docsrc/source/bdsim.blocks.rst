@@ -1,6 +1,8 @@
 Blocks
 ======
 
+.. include:: <isonum.txt>
+
 The block diagrams comprise blocks which belong to one of a number of different categories. These come from
 the package ``bdsim.blocks``.
 

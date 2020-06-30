@@ -20,7 +20,14 @@ coverage:
 	coverage report
 
 docs: .FORCE
-	(cd docs; make html)
+	(cd docsrc; make html)
+	open docsrc/build/html/index.html
+
+docupdate: docs
+	cp -r docsrc/build/html/. docs
+	git add docs
+	git commit -m "rebuilt docs"
+	git push origin master
 
 dist: .FORCE
 	#$(MAKE) test

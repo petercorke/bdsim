@@ -5,8 +5,8 @@ Define real-time i/o blocks for use in block diagrams.  These are blocks that:
 - have no state variables
 - are a subclass of ``SourceBlock`` or ``SinkBlock``
 
-Each class MyClass in this module becomes a method MYCLASS() of the BlockDiagram instance.
 """
+# The constructor of each class ``MyClass`` with a ``@block`` decorator becomes a method ``MYCLASS()`` of the BlockDiagram instance.
 
 from bdsim.components import SinkBlock, SourceBlock, block
 

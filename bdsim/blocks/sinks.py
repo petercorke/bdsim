@@ -1,12 +1,14 @@
 """
-Define sink blocks for use in block diagrams.  These are blocks that:
+Sink blocks:
 
 - have inputs but no outputs
 - have no state variables
-- are a subclass of ``SinkBlock``
+- are a subclass of ``SinkBlock`` |rarr| ``Block``
+- that perform graphics are a subclass of  ``SinkBlockGraphics`` |rarr| ``SinkBlock`` |rarr| ``Block``
 
-Each class MyClass in this module becomes a method MYCLASS() of the BlockDiagram instance.
 """
+
+# The constructor of each class ``MyClass`` with a ``@block`` decorator becomes a method ``MYCLASS()`` of the BlockDiagram instance.
 
 import numpy as np
 from math import pi, sqrt, sin, cos, atan2
@@ -25,19 +27,22 @@ from bdsim.components import SinkBlock, SinkBlockGraphics, block
 
 @block
 class Print(SinkBlock):
-    def __init__(self, fmt=None, *inputs, **kwargs):
-        """
-        Create a console print block.
-        
-        :param fmt: Format string, defaults to None
-        :type fmt: str, optional
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
-        :param ``**kwargs``: common Block options
-        :return: A PRINT block
-        :rtype: Print instance
+    """
+    **PRINT** block
 
-        """
+    :param fmt: Format string, defaults to None
+    :type fmt: str, optional
+    :param ``*inputs``: Optional incoming connections
+    :type ``*inputs``: Block or Plug
+    :param ``**kwargs``: common Block options
+    :return: A PRINT block
+    :rtype: Print instance
+
+    Create a console print block.
+
+    """
+    def __init__(self, fmt=None, *inputs, **kwargs):
+
         super().__init__(nin=1, inputs=inputs, **kwargs)
         self.format = fmt
         self.type = 'print'
@@ -47,43 +52,42 @@ class Print(SinkBlock):
     def step(self):
         print('PRINT {:s} = '.format(self.name), self.inputs)
 
-
 @block
 class ScopeXY(SinkBlockGraphics):
     """
-    Plot one input against the other.
-    """
+    **SCOPEXY** block
     
-    def __init__(self, style=None, *inputs, scale='auto', labels=['X', 'Y'], init=None, **kwargs):
-        """
-        Create an XY scope.
-        
-        :param style: line style
-        :type style: optional str or dict
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
-        :param scale: y-axis scale, defaults to 'auto'
-        :type scale: 2- or 4-element sequence
-        :param labels: axis labels (xlabel, ylabel)
-        :type labels: 2-element tuple or list
-        :param ``**kwargs``: common Block options
-        :return: A SCOPEXY block
-        :rtype: ScopeXY instance
+    :param style: line style
+    :type style: optional str or dict
+    :param ``*inputs``: Optional incoming connections
+    :type ``*inputs``: Block or Plug
+    :param scale: y-axis scale, defaults to 'auto'
+    :type scale: 2- or 4-element sequence
+    :param labels: axis labels (xlabel, ylabel)
+    :type labels: 2-element tuple or list
+    :param ``**kwargs``: common Block options
+    :return: A SCOPEXY block
+    :rtype: ScopeXY instance
 
-        This block has two inputs which are plotted against each other. Port 0
-        is the horizontal axis, and port 1 is the vertical axis.
+    Create an XY scope.
+
+    This block has two inputs which are plotted against each other. Port 0
+    is the horizontal axis, and port 1 is the vertical axis.
+    
+    The line style is given by either:
         
-        The line style is given by either:
-            
-            - a dict of options for ``plot``, or
-            - as a simple MATLAB-style linestyle like ``'k--'``.
+        - a dict of options for ``plot``, or
+        - as a simple MATLAB-style linestyle like ``'k--'``.
+    
+    The scale factor defaults to auto-scaling but can be fixed by
+    providing either:
         
-        The scale factor defaults to auto-scaling but can be fixed by
-        providing either:
-            
-            - a 2-tuple [min, max] which is used for the x- and y-axes
-            - a 4-tuple [xmin, xmax, ymin, ymax]
-        """
+        - a 2-tuple [min, max] which is used for the x- and y-axes
+        - a 4-tuple [xmin, xmax, ymin, ymax]
+    """
+
+    def __init__(self, style=None, *inputs, scale='auto', labels=['X', 'Y'], init=None, **kwargs):
+
         super().__init__(nin=2, inputs=inputs, **kwargs)
         self.nin = 2
         self.xdata = []
@@ -157,39 +161,26 @@ class ScopeXY(SinkBlockGraphics):
 @block
 class Vehicle(SinkBlockGraphics):
     """
-    Animate a vehicle
+    **VEHICLE** block
+    
+    :param ``*inputs``: Optional incoming connections
+    :type ``*inputs``: Block or Plug
+    :param style: line style
+    :type style: optional str or dict
+    :param scale: y-axis scale, defaults to 'auto'
+    :type scale: 2- or 4-element sequence
+    :param labels: axis labels (xlabel, ylabel)
+    :type labels: 2-element tuple or list
+    :param ``**kwargs``: common Block options
+    :return: A SCOPEXY block
+    :rtype: Scope instance
+
+    Create a vehicle animation.
+
     """
     
     def __init__(self, *inputs, path=True, pathstyle=None, shape='triangle', color="blue", fill="white", size=1, scale='auto', labels=['X', 'Y'], square=True, init=None, **kwargs):
-        """
-        Create a vehile animation.
-        
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
-        :param style: line style
-        :type style: optional str or dict
-        :param scale: y-axis scale, defaults to 'auto'
-        :type scale: 2- or 4-element sequence
-        :param labels: axis labels (xlabel, ylabel)
-        :type labels: 2-element tuple or list
-        :param ``**kwargs``: common Block options
-        :return: A SCOPEXY block
-        :rtype: Scope instance
 
-        This block has two inputs which are plotted against each other. Port 0
-        is the horizontal axis, and port 1 is the vertical axis.
-        
-        The line style is given by either:
-            
-            - a dict of options for ``plot`` ,or
-            - as a simple MATLAB-style linestyle like ``'k--'``.
-        
-        The scale factor defaults to auto-scaling but can be fixed by
-        providing either:
-            
-            - a 2-tuple [min, max] which is used for the x- and y-axes
-            - a 4-tuple [xmin, xmax, ymin, ymax]
-        """
         super().__init__(nin=3, inputs=inputs, **kwargs)
         self.xdata = []
         self.ydata = []
@@ -292,48 +283,57 @@ class Vehicle(SinkBlockGraphics):
 @block
 class MultiRotorPlot(SinkBlockGraphics):
     """
-    Animate a multi-rotor flyer.
+    **MULTIROTORPLOT** block
     
-    Based on code lovingly coded by Paul Pounds, first coded 17/4/02
-    version 2 2004 added scaling and ground display
-    version 3 2010 improved rotor rendering and fixed mirroring bug
-    
-    Displays X-4 flyer position and attitude in a 3D plot.
-    GREEN ROTOR POINTS NORTH
-    BLUE ROTOR POINTS EAST
-    
-    PARAMETERS
-    s defines the plot size in meters
-    swi controls flyer attitude plot; 1 = on, otherwise off.
-    
-    INPUTS
-    1 Center X position
-    2 Center Y position
-    3 Center Z position
-    4 Yaw angle in rad
-    5 Pitch angle in rad
-    6 Roll angle in rad
+    :param model: A dictionary of vehicle geometric and inertial properties
+    :type model: dict
+    :param ``*inputs``: Optional incoming connections
+    :type ``*inputs``: Block or Plug
+    :param scale: dimensions of workspace: xmin, xmax, ymin, ymax, zmin, zmax
+    :type scale: array_like
+    :param flapscale: exagerate flapping angle by this factor, default is 1
+    :type flapscale: float
+    :param projection: 3D projection: ortho or perspective, defaults to 'ortho'
+    :type projection: str
+    :param ``**kwargs``: common Block options
+    :return: a MULTIROTOPLOT block
+    :rtype: MultiRobotPlot instance
+
+    Create a block that displays/animates a multi-rotor flying vehicle.
+
+    .. figure:: ../../figs/multirotorplot.png
+       :width: 500px
+       :alt: example of generated graphic
+
+       Example of quad-rotor display.
+    |
+
+    Written by Pauline Pounds 2004
     """
+    
+    # Based on code lovingly coded by Paul Pounds, first coded 17/4/02
+    # version 2 2004 added scaling and ground display
+    # version 3 2010 improved rotor rendering and fixed mirroring bug
+
+    # Displays X-4 flyer position and attitude in a 3D plot.
+    # GREEN ROTOR POINTS NORTH
+    # BLUE ROTOR POINTS EAST
+
+    # PARAMETERS
+    # s defines the plot size in meters
+    # swi controls flyer attitude plot; 1 = on, otherwise off.
+
+    # INPUTS
+    # 1 Center X position
+    # 2 Center Y position
+    # 3 Center Z position
+    # 4 Yaw angle in rad
+    # 5 Pitch angle in rad
+    # 6 Roll angle in rad
+
      
     def __init__(self, model, *inputs, scale=[-2, 2, -2, 2, 10], flapscale=1, projection='ortho', **kwargs):
-        """
-        Create a block that displays a multi-rotor flying vehicle.
-        
-        :param model: A dictionary of vehicle geometric and inertial properties
-        :type model: dict
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
-        :param scale: dimensions of workspace: xmin, xmax, ymin, ymax, zmin, zmax
-        :type scale: array_like
-        :param flapscale: exagerate flapping angle by this factor, default is 1
-        :type flapscale: float
-        :param projection: 3D projection: ortho or perspective, defaults to 'ortho'
-        :type projection: str
-        :param ``**kwargs``: common Block options
-        :return: a MULTIROTOPLOT block
-        :rtype: MultiRobotPlot instance
 
-        """
         super().__init__(nin=1, inputs=inputs, **kwargs)
         self.type = 'quadrotorplot'
         self.model = model
@@ -484,50 +484,54 @@ class MultiRotorPlot(SinkBlockGraphics):
 @block
 class Scope(SinkBlockGraphics):
     """
-    Plot input ports against time.  Each line can have its own color or style.
+    **SCOPE** block
+
+    Create a block that plots input ports against time.
+    
+    :param nin: number of inputs, defaults to length of style vector if given,
+                otherwise 1
+    :type nin: int, optional
+    :param styles: styles for each line to be plotted
+    :type styles: optional str or dict, list of strings or dicts; one per line
+    :param scale: y-axis scale, defaults to 'auto'
+    :type scale: 2-element sequence
+    :param labels: vertical axis labels
+    :type labels: sequence of strings
+    :param grid: draw a grid, default is on. Can be boolean or a tuple of 
+                 options for grid()
+    :type grid: bool or sequence
+    :param ``*inputs``: Optional incoming connections
+    :type ``*inputs``: Block or Plug
+    :param ``**kwargs``: common Block options
+    :return: A SCOPE block
+    :rtype: Scope instance
+
+    Create a block that plots input ports against time.  
+
+    Each line can have its own color or style.
+    
+    Line styles are given by either a dict of options for `plot` or as
+    a simple MATLAB-style linestyle like 'k--'.
+    
+    If multiple lines are plotted then a list of styles, dicts or strings,
+    one per line must be given.
+    
+    The vertical scale factor defaults to auto-scaling but can be fixed by
+    providing a 2-tuple [ymin, ymax]. All lines are plotted against the
+    same vertical scale.
+    
+    Examples::
+        
+        SCOPE()
+        SCOPE(nin=2)
+        SCOPE(nin=2, scale=[-1,,2])
+        SCOPE(style=['k', 'r--'])
+        SCOPE(style='k--')
+        SCOPE(style={'color:', 'red, 'linestyle': '--''})
     """
     
     def __init__(self, nin=None, styles=None, scale='auto', labels=None, grid=True, *inputs, **kwargs):
-        """
-        Create a block that plots input ports against time.
-        
-        :param nin: number of inputs, defaults to length of style vector if given,
-                    otherwise 1
-        :type nin: int, optional
-        :param styles: styles for each line to be plotted
-        :type styles: optional str or dict, list of strings or dicts; one per line
-        :param scale: y-axis scale, defaults to 'auto'
-        :type scale: 2-element sequence
-        :param labels: vertical axis labels
-        :type labels: sequence of strings
-        :param grid: draw a grid, default is on. Can be boolean or a tuple of 
-                     options for grid()
-        :type grid: bool or sequence
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
-        :param ``**kwargs``: common Block options
-        :return: A SCOPE block
-        :rtype: Scope instance
-        
-        Line styles are given by either a dict of options for `plot` or as
-        a simple MATLAB-style linestyle like 'k--'.
-        
-        If multiple lines are plotted then a list of styles, dicts or strings,
-        one per line must be given.
-        
-        The vertical scale factor defaults to auto-scaling but can be fixed by
-        providing a 2-tuple [ymin, ymax]. All lines are plotted against the
-        same vertical scale.
-        
-        Examples::
-            
-            SCOPE()
-            SCOPE(nin=2)
-            SCOPE(nin=2, scale=[-1,,2])
-            SCOPE(style=['k', 'r--'])
-            SCOPE(style='k--')
-            SCOPE(style={'color:', 'red, 'linestyle': '--''})
-        """
+
 
         self.type = 'scope'
         if styles is not None:
@@ -639,19 +643,21 @@ class Scope(SinkBlockGraphics):
 
 @block
 class Stop(SinkBlock):
-    def __init__(self, stop, *inputs, **kwargs):
-        """
-        Conditionally stop the simulation.
-        
-        :param stop: Function 
-        :type stop: TYPE
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
-        :param ``**kwargs``: common Block options
-        :return: A STOP block
-        :rtype: Stop instance
+    """
+    **STOP** block
+    
+    :param stop: Function 
+    :type stop: TYPE
+    :param ``*inputs``: Optional incoming connections
+    :type ``*inputs``: Block or Plug
+    :param ``**kwargs``: common Block options
+    :return: A STOP block
+    :rtype: Stop instance
 
-        """
+    Conditionally stop the simulation.
+    """
+    def __init__(self, stop, *inputs, **kwargs):
+
 
         super().__init__(nin=1, inputs=inputs, **kwargs)
         self.type = 'stop'
@@ -667,8 +673,6 @@ class Stop(SinkBlock):
             raise RuntimeError('input to stop must be boolean or callable')
         if stop:
             self.bd.stop = self
-
-
 
 if __name__ == "__main__":
 
