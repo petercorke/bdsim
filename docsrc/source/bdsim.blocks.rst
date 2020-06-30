@@ -1,7 +1,8 @@
-bdsim.blocks package
-====================
+Blocks
+======
 
-The block diagrams comprise blocks which belong to one of a number of different categories
+The block diagrams comprise blocks which belong to one of a number of different categories. These come from
+the package ``bdsim.blocks``.
 
 Source blocks
 -------------
@@ -10,8 +11,7 @@ Source blocks
    :members:
    :undoc-members:
    :show-inheritance:
-   :special-members: __init__
-   :exclude-members: output reset step start done
+   :exclude-members: output, reset, step, start, done
 
 Sink blocks
 -----------
@@ -20,8 +20,7 @@ Sink blocks
    :members:
    :undoc-members:
    :show-inheritance:
-   :special-members: __init__
-   :exclude-members: output reset step start done
+   :exclude-members: output, reset, step, start, done
 
 
 Function blocks
@@ -30,7 +29,6 @@ Function blocks
 .. automodule:: bdsim.blocks.functions
    :members:
    :undoc-members:
-   :special-members: __init__
    :exclude-members: output, reset, step, start, done
 
 Transfer blocks
@@ -40,8 +38,7 @@ Transfer blocks
    :members:
    :undoc-members:
    :show-inheritance:
-   :special-members: __init__
-   :exclude-members: output, reset, step, start, done
+   :exclude-members: output, reset, step, start, done, deriv
 
 Robot blocks
 ------------
@@ -50,8 +47,7 @@ Robot blocks
    :members:
    :undoc-members:
    :show-inheritance:
-   :special-members: __init__
-   :exclude-members: output, reset, step, start, done
+   :exclude-members: output, reset, step, start, done, deriv
 
 Connection blocks
 -----------------
@@ -60,7 +56,6 @@ Connection blocks
    :members:
    :undoc-members:
    :show-inheritance:
-   :special-members: __init__
    :exclude-members: output, reset, step, start, done
 
 io blocks
@@ -70,7 +65,6 @@ io blocks
    :members:
    :undoc-members:
    :show-inheritance:
-   :special-members: __init__
    :exclude-members: output, reset, step, start, done
 
 Vision blocks
@@ -80,6 +74,5 @@ Vision blocks
    :members:
    :undoc-members:
    :show-inheritance:
-   :special-members: __init__
    :exclude-members: output, reset, step, start, done
 
