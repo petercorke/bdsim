@@ -1,0 +1,78 @@
+Blocks
+======
+
+The block diagrams comprise blocks which belong to one of a number of different categories. These come from
+the package ``bdsim.blocks``.
+
+Source blocks
+-------------
+
+.. automodule:: bdsim.blocks.sources
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: output, reset, step, start, done
+
+Sink blocks
+-----------
+
+.. automodule:: bdsim.blocks.sinks
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: output, reset, step, start, done
+
+
+Function blocks
+---------------
+
+.. automodule:: bdsim.blocks.functions
+   :members:
+   :undoc-members:
+   :exclude-members: output, reset, step, start, done
+
+Transfer blocks
+---------------
+
+.. automodule:: bdsim.blocks.transfers
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: output, reset, step, start, done, deriv
+
+Robot blocks
+------------
+
+.. automodule:: bdsim.blocks.robots
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: output, reset, step, start, done, deriv
+
+Connection blocks
+-----------------
+
+.. automodule:: bdsim.blocks.connections
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: output, reset, step, start, done
+
+io blocks
+---------
+
+.. automodule:: bdsim.blocks.io
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: output, reset, step, start, done
+
+Vision blocks
+-------------
+
+.. automodule:: bdsim.blocks.vision
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: output, reset, step, start, done
+
