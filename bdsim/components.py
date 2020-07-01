@@ -348,7 +348,7 @@ class Block:
 
     """
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args, bd=None, **kwargs):
         """
         Construct a new Block object.
         
@@ -361,13 +361,14 @@ class Block:
         :return: new Block instance
         :rtype: Block instance
         """
-        #print('Block __new__')
+        #print('Block __new__', args,bd, kwargs)
         block = super(Block, cls).__new__(cls)  # create a new instance
         
         # we overload setattr, so need to know whether it is being passed a port
         # name.  Add this attribute now to allow proper operation.
         block.__dict__['portnames'] = []  # must be first, see __setattr__
 
+        block.bd = bd
         block.nin = 0
         block.nout = 0
         block.nstates = 0
@@ -375,7 +376,7 @@ class Block:
     
     _latex_remove = str.maketrans({'$':'', '\\':'', '{':'', '}':'', '^':'', '_':''})
     
-    def __init__(self, name=None, inames=None, onames=None, snames=None, pos=None, bd=None, nin=None, nout=None, inputs=None, **kwargs):
+    def __init__(self, name=None, inames=None, onames=None, snames=None, pos=None, nin=None, nout=None, inputs=None, bd=None, **kwargs):
 
         #print('Block constructor, bd = ', bd)
         if name is not None:
@@ -392,7 +393,6 @@ class Block:
         self._inport_names = None
         self._outport_names = None
         self._state_names = None
-        self.bd = bd
         
         if nin is not None:
             self.nin = nin
