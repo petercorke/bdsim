@@ -94,7 +94,7 @@ class BlockDiagram:
                     if len(blocklist) > nblocks:
                         # we just loaded some more blocks
                         print('  loading blocks from {:s}: {:s}'.format(file, ', '.join([blockname(cls) for cls in blocklist[nblocks:]])))
-
+                        
                     # perform basic sanity checks on the blocks just read
                     for cls in blocklist[nblocks:]:
                         
@@ -129,6 +129,7 @@ class BlockDiagram:
             return f
         
         # bind the block constructors as new methods on this instance
+        self.blockdict = {}
         for cls in blocklist:
             # create a function to invoke the block's constructor
             f = new_method(cls, self)
@@ -138,6 +139,12 @@ class BlockDiagram:
             
             # set a bound version of this function as an attribute of the instance
             setattr(self, bindname, f.__get__(self))
+            
+            blocktype = cls.__module__.split('.')[2]
+            if blocktype in self.blockdict:
+                self.blockdict[blocktype].append(bindname)
+            else:
+                self.blockdict[blocktype] = [bindname]
 
         # graphics initialization
         if args.animation:
@@ -235,6 +242,10 @@ class BlockDiagram:
         # for wire in self.wirelist:
         #     s += str(wire) + "\n"
         # return s.lstrip("\n")
+        
+    def ls(self):
+        for k,v in self.blockdict.items():
+            print('{:12s}: '.format(k), ', '.join(v))
     
     def connect(self, *args, name=None):
         
