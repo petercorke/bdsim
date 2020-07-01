@@ -19,7 +19,7 @@ from bdsim.components import SourceBlock, block
 @block
 class Constant(SourceBlock):
     """
-    **CONSTANT** block
+    :blockname:`CONSTANT`
     
     :param value: the constant, defaults to None
     :type value: any
@@ -52,7 +52,7 @@ class Constant(SourceBlock):
 @block
 class WaveForm(SourceBlock):
     """
-    **WAVEFORM** block
+    :blockname:`WAVEFORM`
     
     :param wave: type of waveform to generate: 'sine', 'square' [default], 'triangle'
     :type wave: str, optional
@@ -159,7 +159,7 @@ class WaveForm(SourceBlock):
 @block
 class Piecewise(SourceBlock):
     """
-    **PIECEWISE** block
+    :blockname:`PIECEWISE`
 
     :param ``*seq``: Sequence of time, value pairs
     :type ``*seq``: list of 2-tuples
@@ -198,7 +198,7 @@ class Piecewise(SourceBlock):
 @block
 class Step(SourceBlock):
     """
-    **STEP** block
+    :blockname:`STEP`
 
     :param T: time of step, defaults to 1
     :type T: float, optional

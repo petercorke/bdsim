@@ -28,7 +28,7 @@ from bdsim.components import SubsystemBlock, SourceBlock, SinkBlock, FunctionBlo
 class Item(FunctionBlock):
 
     """
-    **ITEM** block
+    :blockname:`ITEM`
     
     :param item: name of dictionary item
     :type item: str
@@ -65,7 +65,7 @@ class Item(FunctionBlock):
 @block
 class Mux(FunctionBlock):
     """
-    **MUX** block
+    :blockname:`MUX`
 
     :param nin: Number of input ports, defaults to 1
     :type nin: int, optional
@@ -101,7 +101,7 @@ class Mux(FunctionBlock):
 @block
 class DeMux(FunctionBlock):
     """
-    **DEMUX** block
+    :blockname:`DEMUX`
     
     :param nout: DESCRIPTION, defaults to 1
     :type nout: TYPE, optional
@@ -132,7 +132,7 @@ class DeMux(FunctionBlock):
 @block
 class SubSystem(SubsystemBlock):
     """
-    **SUBSYSTEM** block
+    :blockname:`SUBSYSTEM`
     
     :param subsys: Subsystem as either a filename or a ``BlockDiagram`` instance
     :type subsys: str or BlockDiagram
@@ -206,7 +206,7 @@ class SubSystem(SubsystemBlock):
 @block
 class InPort(SubsystemBlock):
     """
-    **INPORT** block
+    :blockname:`INPORT`
 
     :param nout: Number of output ports, defaults to 1
     :type nout: int, optional
@@ -229,7 +229,7 @@ class InPort(SubsystemBlock):
 @block
 class OutPort(SubsystemBlock):
     """
-    **OUTPORT** block
+    :blockname:`OUTPORT`
 
     :param nin: Number of input ports, defaults to 1
     :type nin: int, optional

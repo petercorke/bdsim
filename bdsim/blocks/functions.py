@@ -25,7 +25,7 @@ from bdsim.components import FunctionBlock, block
 @block
 class Sum(FunctionBlock):
     """
-    **SUM** block
+    :blockname:`SUM`
 
     :param signs: signs associated with input ports, + or -
     :type signs: str
@@ -77,7 +77,7 @@ class Sum(FunctionBlock):
 @block
 class Prod(FunctionBlock):
     """
-    **PROD** block
+    :blockname:`PROD`
 
     :param ops: operations associated with input ports * or /
     :type ops: str
@@ -137,7 +137,7 @@ class Prod(FunctionBlock):
 @block
 class Gain(FunctionBlock):
     """
-    **GAIN** block
+    :blockname:`GAIN`
 
     :param gain: The gain value
     :type gain: float
@@ -186,32 +186,35 @@ class Gain(FunctionBlock):
 
 @block
 class Clip(FunctionBlock):
-    def __init__(self, *inputs, min=-math.inf, max=math.inf, **kwargs):
-        """
-        Create a value clipping block.
+    """
+    :blockname:`CLIP`
+    
+    :param ``*inputs``: Optional incoming connections
+    :type ``*inputs``: Block or Plug
+    :param min: Minimum value, defaults to -math.inf
+    :type min: float or array_like, optional
+    :param max: Maximum value, defaults to math.inf
+    :type max: float or array_like, optional
+    :param ``**kwargs``: common Block options
+    :return: A CLIP block
+    :rtype: Clip instance
+    
+    Create a value clipping block.
+    
+    Input signals are clipped to the range from ``minimum`` to ``maximum`` inclusive.
+    
+    The signal can be a vector in which case each element is clipped.  The
+    minimum and maximum values can be:
         
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
-        :param min: Minimum value, defaults to -math.inf
-        :type min: float or array_like, optional
-        :param max: Maximum value, defaults to math.inf
-        :type max: float or array_like, optional
-        :param ``**kwargs``: common Block options
-        :return: A CLIP block
-        :rtype: Clip instance
-        
-        Input signals are clipped to the range from ``minimum`` to ``maximum`` inclusive.
-        
-        The signal can be a vector in which case each element is clipped.  The
-        minimum and maximum values can be:
-            
-            - a scalar, in which case the same value applies to every element of 
-              the input vector , or
-            - a vector, of the same shape as the input vector that applies elementwise to
-              the input vector.
-        
+        - a scalar, in which case the same value applies to every element of 
+          the input vector , or
+        - a vector, of the same shape as the input vector that applies elementwise to
+          the input vector.
+    
 
-        """
+    """
+    def __init__(self, *inputs, min=-math.inf, max=math.inf, **kwargs):
+
         super().__init__(nin=1, nout=1, inputs=inputs, **kwargs)
         self.min = min
         self.max = max
@@ -231,7 +234,7 @@ class Clip(FunctionBlock):
 @block
 class Function(FunctionBlock):
     """
-    **FUNCTION** block
+    :blockname:`FUNCTION`
 
     :param func: A function or lambda, or list thereof
     :type func: callable or sequence of callables
@@ -253,7 +256,7 @@ class Function(FunctionBlock):
 
     Create a Python function block.
 
-    A block with one output that sums its two inputs is::
+    A block with one output port that sums its two input ports is::
         
         FUNCTION(lambda u1, u2: u1+u2, nin=2)
         
@@ -278,7 +281,7 @@ class Function(FunctionBlock):
         def myfun(u1, u2, param1=1, param2=2, param3=3, param4=4):
             pass
         
-        FUNCTION(myfun, nin=2, kwargs={'param2':7, 'param3':8}}
+        FUNCTION(myfun, nin=2, kwargs={'param2':7, 'param3':8})
                  
     A block with two inputs and two outputs, the outputs are defined by two lambda
     functions with the same inputs::
@@ -352,7 +355,7 @@ class Function(FunctionBlock):
 @block
 class Interpolate(FunctionBlock):
     """
-    **INTERPOLATE** block
+    :blockname:`INTERPOLATE`
 
     :param ``*inputs``: Optional incoming connections
     :type ``*inputs``: Block or Plug

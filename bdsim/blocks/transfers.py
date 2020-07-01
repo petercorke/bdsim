@@ -37,7 +37,7 @@ from bdsim.components import TransferBlock, block
 @block
 class Integrator(TransferBlock):
     """
-    **INTEGRATOR** block
+    :blockname:`INTEGRATOR`
 
     :param ``*inputs``: Optional incoming connections
     :type ``*inputs``: Block or Plug
@@ -105,7 +105,7 @@ class Integrator(TransferBlock):
 @block
 class LTI_SS(TransferBlock):
     r"""
-    **LTI_SS** block
+    :blockname:`LTI_SS`
     
     :param ``*inputs``: Optional incoming connections
     :type ``*inputs``: Block or Plug
@@ -185,7 +185,7 @@ class LTI_SS(TransferBlock):
 @block
 class LTI_SISO(LTI_SS):
     r"""
-    **LTI_SISO** block
+    :blockname:`LTI_SISO`
     
     :param N: numerator coefficients, defaults to 1
     :type N: array_like, optional

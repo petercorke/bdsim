@@ -27,8 +27,8 @@ from bdsim.components import SinkBlock, SinkBlockGraphics, block
 
 @block
 class Print(SinkBlock):
-    """
-    **PRINT** block
+    """    
+    :blockname:`PRINT`
 
     :param fmt: Format string, defaults to None
     :type fmt: str, optional
@@ -55,7 +55,7 @@ class Print(SinkBlock):
 @block
 class ScopeXY(SinkBlockGraphics):
     """
-    **SCOPEXY** block
+    :blockname:`SCOPEXY`
     
     :param style: line style
     :type style: optional str or dict
@@ -161,7 +161,7 @@ class ScopeXY(SinkBlockGraphics):
 @block
 class Vehicle(SinkBlockGraphics):
     """
-    **VEHICLE** block
+    :blockname:`VEHICLE`
     
     :param ``*inputs``: Optional incoming connections
     :type ``*inputs``: Block or Plug
@@ -176,7 +176,12 @@ class Vehicle(SinkBlockGraphics):
     :rtype: Scope instance
 
     Create a vehicle animation.
+    
+    .. figure:: ../../figs/rvc4_4.gif
+       :width: 500px
+       :alt: example of generated graphic
 
+       Example of vehicle display (animated).
     """
     
     def __init__(self, *inputs, path=True, pathstyle=None, shape='triangle', color="blue", fill="white", size=1, scale='auto', labels=['X', 'Y'], square=True, init=None, **kwargs):
@@ -283,7 +288,7 @@ class Vehicle(SinkBlockGraphics):
 @block
 class MultiRotorPlot(SinkBlockGraphics):
     """
-    **MULTIROTORPLOT** block
+    :blockname:`MULTIROTORPLOT`
     
     :param model: A dictionary of vehicle geometric and inertial properties
     :type model: dict
@@ -484,7 +489,7 @@ class MultiRotorPlot(SinkBlockGraphics):
 @block
 class Scope(SinkBlockGraphics):
     """
-    **SCOPE** block
+    :blockname:`SCOPE`
 
     Create a block that plots input ports against time.
     
@@ -508,12 +513,12 @@ class Scope(SinkBlockGraphics):
 
     Create a block that plots input ports against time.  
 
-    Each line can have its own color or style.
+    Each line can have its own color or style which is specified by:
     
-    Line styles are given by either a dict of options for `plot` or as
-    a simple MATLAB-style linestyle like 'k--'.
+        - a dict of options for `plot` or 
+        - a  MATLAB-style linestyle like 'k--'
     
-    If multiple lines are plotted then a list of styles, dicts or strings,
+    If multiple lines are plotted then a heterogeneous list of styles, dicts or strings,
     one per line must be given.
     
     The vertical scale factor defaults to auto-scaling but can be fixed by
@@ -524,10 +529,16 @@ class Scope(SinkBlockGraphics):
         
         SCOPE()
         SCOPE(nin=2)
-        SCOPE(nin=2, scale=[-1,,2])
+        SCOPE(nin=2, scale=[-1,2])
         SCOPE(style=['k', 'r--'])
         SCOPE(style='k--')
         SCOPE(style={'color:', 'red, 'linestyle': '--''})
+        
+    .. figure:: ../../figs/Figure_1.png
+       :width: 500px
+       :alt: example of generated graphic
+
+       Example of scope display.
     """
     
     def __init__(self, nin=None, styles=None, scale='auto', labels=None, grid=True, *inputs, **kwargs):
@@ -644,7 +655,7 @@ class Scope(SinkBlockGraphics):
 @block
 class Stop(SinkBlock):
     """
-    **STOP** block
+    :blockname:`STOP`
     
     :param stop: Function 
     :type stop: TYPE

@@ -22,7 +22,7 @@ from bdsim.components import TransferBlock, block
 @block
 class Bicycle(TransferBlock):
     """
-    **BICYCLE** block
+    :blockname:`BICYCLE`
 
     :param ``*inputs``: Optional incoming connections
     :type ``*inputs``: Block or Plug
@@ -96,7 +96,7 @@ class Bicycle(TransferBlock):
 @block
 class Unicycle(TransferBlock):
     r"""
-    **UNICYCLE** block
+    :blockname:`UNICYCLE`
     
     :param ``*inputs``: Optional incoming connections
     :type ``*inputs``: Block or Plug
@@ -150,7 +150,7 @@ class Unicycle(TransferBlock):
 @block
 class DiffSteer(TransferBlock):
     r"""
-    **DIFFSTEER** block
+    :blockname:`DIFFSTEER`
 
     :param ``*inputs``: Optional incoming connections
     :type ``*inputs``: Block or Plug
@@ -220,7 +220,7 @@ class DiffSteer(TransferBlock):
 @block
 class MultiRotor(TransferBlock):
     r"""
-    **MULTIROTOR** block
+    :blockname:`MULTIROTOR`
 
     :param model: Vehicle geometric and inertial parameters
     :type model: dict
