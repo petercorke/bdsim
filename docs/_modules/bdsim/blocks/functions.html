@@ -59,7 +59,7 @@
 <div class="viewcode-block" id="Sum"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Sum">[docs]</a><span class="nd">@block</span>
 <span class="k">class</span> <span class="nc">Sum</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    **SUM** block</span>
+<span class="sd">    :blockname:`SUM`</span>
 
 <span class="sd">    :param signs: signs associated with input ports, + or -</span>
 <span class="sd">    :type signs: str</span>
@@ -111,7 +111,7 @@
 <div class="viewcode-block" id="Prod"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Prod">[docs]</a><span class="nd">@block</span>
 <span class="k">class</span> <span class="nc">Prod</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    **PROD** block</span>
+<span class="sd">    :blockname:`PROD`</span>
 
 <span class="sd">    :param ops: operations associated with input ports * or /</span>
 <span class="sd">    :type ops: str</span>
@@ -171,7 +171,7 @@
 <div class="viewcode-block" id="Gain"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Gain">[docs]</a><span class="nd">@block</span>
 <span class="k">class</span> <span class="nc">Gain</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    **GAIN** block</span>
+<span class="sd">    :blockname:`GAIN`</span>
 
 <span class="sd">    :param gain: The gain value</span>
 <span class="sd">    :type gain: float</span>
@@ -220,32 +220,35 @@
 
 <div class="viewcode-block" id="Clip"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Clip">[docs]</a><span class="nd">@block</span>
 <span class="k">class</span> <span class="nc">Clip</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="nb">min</span><span class="o">=-</span><span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Create a value clipping block.</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :blockname:`CLIP`</span>
+<span class="sd">    </span>
+<span class="sd">    :param ``*inputs``: Optional incoming connections</span>
+<span class="sd">    :type ``*inputs``: Block or Plug</span>
+<span class="sd">    :param min: Minimum value, defaults to -math.inf</span>
+<span class="sd">    :type min: float or array_like, optional</span>
+<span class="sd">    :param max: Maximum value, defaults to math.inf</span>
+<span class="sd">    :type max: float or array_like, optional</span>
+<span class="sd">    :param ``**kwargs``: common Block options</span>
+<span class="sd">    :return: A CLIP block</span>
+<span class="sd">    :rtype: Clip instance</span>
+<span class="sd">    </span>
+<span class="sd">    Create a value clipping block.</span>
+<span class="sd">    </span>
+<span class="sd">    Input signals are clipped to the range from ``minimum`` to ``maximum`` inclusive.</span>
+<span class="sd">    </span>
+<span class="sd">    The signal can be a vector in which case each element is clipped.  The</span>
+<span class="sd">    minimum and maximum values can be:</span>
 <span class="sd">        </span>
-<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
-<span class="sd">        :type ``*inputs``: Block or Plug</span>
-<span class="sd">        :param min: Minimum value, defaults to -math.inf</span>
-<span class="sd">        :type min: float or array_like, optional</span>
-<span class="sd">        :param max: Maximum value, defaults to math.inf</span>
-<span class="sd">        :type max: float or array_like, optional</span>
-<span class="sd">        :param ``**kwargs``: common Block options</span>
-<span class="sd">        :return: A CLIP block</span>
-<span class="sd">        :rtype: Clip instance</span>
-<span class="sd">        </span>
-<span class="sd">        Input signals are clipped to the range from ``minimum`` to ``maximum`` inclusive.</span>
-<span class="sd">        </span>
-<span class="sd">        The signal can be a vector in which case each element is clipped.  The</span>
-<span class="sd">        minimum and maximum values can be:</span>
-<span class="sd">            </span>
-<span class="sd">            - a scalar, in which case the same value applies to every element of </span>
-<span class="sd">              the input vector , or</span>
-<span class="sd">            - a vector, of the same shape as the input vector that applies elementwise to</span>
-<span class="sd">              the input vector.</span>
-<span class="sd">        </span>
+<span class="sd">        - a scalar, in which case the same value applies to every element of </span>
+<span class="sd">          the input vector , or</span>
+<span class="sd">        - a vector, of the same shape as the input vector that applies elementwise to</span>
+<span class="sd">          the input vector.</span>
+<span class="sd">    </span>
 
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="nb">min</span><span class="o">=-</span><span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">min</span> <span class="o">=</span> <span class="nb">min</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max</span> <span class="o">=</span> <span class="nb">max</span>
@@ -265,7 +268,7 @@
 <div class="viewcode-block" id="Function"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Function">[docs]</a><span class="nd">@block</span>
 <span class="k">class</span> <span class="nc">Function</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    **FUNCTION** block</span>
+<span class="sd">    :blockname:`FUNCTION`</span>
 
 <span class="sd">    :param func: A function or lambda, or list thereof</span>
 <span class="sd">    :type func: callable or sequence of callables</span>
@@ -287,7 +290,7 @@
 
 <span class="sd">    Create a Python function block.</span>
 
-<span class="sd">    A block with one output that sums its two inputs is::</span>
+<span class="sd">    A block with one output port that sums its two input ports is::</span>
 <span class="sd">        </span>
 <span class="sd">        FUNCTION(lambda u1, u2: u1+u2, nin=2)</span>
 <span class="sd">        </span>
@@ -312,7 +315,7 @@
 <span class="sd">        def myfun(u1, u2, param1=1, param2=2, param3=3, param4=4):</span>
 <span class="sd">            pass</span>
 <span class="sd">        </span>
-<span class="sd">        FUNCTION(myfun, nin=2, kwargs={&#39;param2&#39;:7, &#39;param3&#39;:8}}</span>
+<span class="sd">        FUNCTION(myfun, nin=2, kwargs={&#39;param2&#39;:7, &#39;param3&#39;:8})</span>
 <span class="sd">                 </span>
 <span class="sd">    A block with two inputs and two outputs, the outputs are defined by two lambda</span>
 <span class="sd">    functions with the same inputs::</span>
@@ -386,7 +389,7 @@
 <div class="viewcode-block" id="Interpolate"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Interpolate">[docs]</a><span class="nd">@block</span>
 <span class="k">class</span> <span class="nc">Interpolate</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    **INTERPOLATE** block</span>
+<span class="sd">    :blockname:`INTERPOLATE`</span>
 
 <span class="sd">    :param ``*inputs``: Optional incoming connections</span>
 <span class="sd">    :type ``*inputs``: Block or Plug</span>

@@ -382,7 +382,7 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">bd</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Construct a new Block object.</span>
 <span class="sd">        </span>
@@ -395,13 +395,14 @@
 <span class="sd">        :return: new Block instance</span>
 <span class="sd">        :rtype: Block instance</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1">#print(&#39;Block __new__&#39;)</span>
+        <span class="c1">#print(&#39;Block __new__&#39;, args,bd, kwargs)</span>
         <span class="n">block</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">Block</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>  <span class="c1"># create a new instance</span>
         
         <span class="c1"># we overload setattr, so need to know whether it is being passed a port</span>
         <span class="c1"># name.  Add this attribute now to allow proper operation.</span>
         <span class="n">block</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="s1">&#39;portnames&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># must be first, see __setattr__</span>
 
+        <span class="n">block</span><span class="o">.</span><span class="n">bd</span> <span class="o">=</span> <span class="n">bd</span>
         <span class="n">block</span><span class="o">.</span><span class="n">nin</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">block</span><span class="o">.</span><span class="n">nout</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">block</span><span class="o">.</span><span class="n">nstates</span> <span class="o">=</span> <span class="mi">0</span>
@@ -409,7 +410,7 @@
     
     <span class="n">_latex_remove</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">maketrans</span><span class="p">({</span><span class="s1">&#39;$&#39;</span><span class="p">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span><span class="p">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;{&#39;</span><span class="p">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;}&#39;</span><span class="p">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;^&#39;</span><span class="p">:</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">:</span><span class="s1">&#39;&#39;</span><span class="p">})</span>
     
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">inames</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">onames</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">snames</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bd</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">inames</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">onames</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">snames</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bd</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 
         <span class="c1">#print(&#39;Block constructor, bd = &#39;, bd)</span>
         <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -426,7 +427,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_inport_names</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_outport_names</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_state_names</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bd</span> <span class="o">=</span> <span class="n">bd</span>
         
         <span class="k">if</span> <span class="n">nin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">nin</span> <span class="o">=</span> <span class="n">nin</span>

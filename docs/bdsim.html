@@ -43,6 +43,40 @@
 <dt id="bdsim.blockdiagram.BlockDiagram">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blockdiagram.</code><code class="sig-name descname">BlockDiagram</code><span class="sig-paren">(</span><em class="sig-param">name='main'</em>, <em class="sig-param">graphics=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blockdiagram.html#BlockDiagram"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blockdiagram.BlockDiagram" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>TYPE</em><em>, </em><em>optional</em>) – DESCRIPTION, defaults to ‘main’</p></li>
+<li><p><strong>graphics</strong> (<em>TYPE</em><em>, </em><em>optional</em>) – DESCRIPTION, defaults to True</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ImportError</strong> – DESCRIPTION</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>DESCRIPTION</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>TYPE</p>
+</dd>
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>wirelist</strong> (<em>list of Wire instances</em>) – all wires in the diagram</p></li>
+<li><p><strong>blocklist</strong> (<em>list of Block subclass instances</em>) – all blocks in the diagram</p></li>
+<li><p><strong>x</strong> (<em>np.ndarray</em>) – state vector</p></li>
+<li><p><strong>compiled</strong> (<em>bool</em>) – diagram has successfully compiled</p></li>
+<li><p><strong>T</strong> (<em>float</em>) – maximum simulation time (seconds)</p></li>
+<li><p><strong>t</strong> (<em>float</em>) – current simulation time (seconds)</p></li>
+<li><p><strong>fignum</strong> (<em>int</em>) – number of next matplotlib figure to create</p></li>
+<li><p><strong>stop</strong> (<em>Block subclass</em>) – reference to block wanting to stop simulation, else None</p></li>
+<li><p><strong>checkfinite</strong> (<em>bool</em>) – halt simulation if any wire has inf or nan</p></li>
+<li><p><strong>blockcounter</strong> (<em>collections.Counter</em>) – unique counter for each block type</p></li>
+<li><p><strong>blockdict</strong> (<em>dict of lists</em>) – index of all blocks by category</p></li>
+<li><p><strong>name</strong> (<em>str</em>) – name of this diagram</p></li>
+<li><p><strong>graphics</strong> (<em>bool</em>) – enable graphics</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="method">
 <dt id="bdsim.blockdiagram.BlockDiagram.add_block">
 <code class="sig-name descname">add_block</code><span class="sig-paren">(</span><em class="sig-param">block</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blockdiagram.html#BlockDiagram.add_block"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blockdiagram.BlockDiagram.add_block" title="Permalink to this definition">¶</a></dt>
@@ -128,13 +162,13 @@ graphics, etc.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="bdsim.blockdiagram.BlockDiagram.flatten">
-<code class="sig-name descname">flatten</code><span class="sig-paren">(</span><em class="sig-param">subsys</em>, <em class="sig-param">path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blockdiagram.html#BlockDiagram.flatten"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blockdiagram.BlockDiagram.flatten" title="Permalink to this definition">¶</a></dt>
+<dt id="bdsim.blockdiagram.BlockDiagram.getstate">
+<code class="sig-name descname">getstate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blockdiagram.html#BlockDiagram.getstate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blockdiagram.BlockDiagram.getstate" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="bdsim.blockdiagram.BlockDiagram.getstate">
-<code class="sig-name descname">getstate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blockdiagram.html#BlockDiagram.getstate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blockdiagram.BlockDiagram.getstate" title="Permalink to this definition">¶</a></dt>
+<dt id="bdsim.blockdiagram.BlockDiagram.ls">
+<code class="sig-name descname">ls</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blockdiagram.html#BlockDiagram.ls"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blockdiagram.BlockDiagram.ls" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -215,7 +249,7 @@ blocks only since they have no output function to be called.</p>
 <p>Components of the simulation system, namely blocks, wires and plugs.</p>
 <dl class="class">
 <dt id="bdsim.components.Block">
-<em class="property">class </em><code class="sig-prename descclassname">bdsim.components.</code><code class="sig-name descname">Block</code><span class="sig-paren">(</span><em class="sig-param">name=None</em>, <em class="sig-param">inames=None</em>, <em class="sig-param">onames=None</em>, <em class="sig-param">snames=None</em>, <em class="sig-param">pos=None</em>, <em class="sig-param">bd=None</em>, <em class="sig-param">nin=None</em>, <em class="sig-param">nout=None</em>, <em class="sig-param">inputs=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#Block"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.components.Block" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">bdsim.components.</code><code class="sig-name descname">Block</code><span class="sig-paren">(</span><em class="sig-param">name=None</em>, <em class="sig-param">inames=None</em>, <em class="sig-param">onames=None</em>, <em class="sig-param">snames=None</em>, <em class="sig-param">pos=None</em>, <em class="sig-param">nin=None</em>, <em class="sig-param">nout=None</em>, <em class="sig-param">inputs=None</em>, <em class="sig-param">bd=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#Block"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.components.Block" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Construct a new block object.</p>
 <dl class="field-list simple">

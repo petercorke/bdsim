@@ -64,8 +64,46 @@
 
 
 <div class="viewcode-block" id="BlockDiagram"><a class="viewcode-back" href="../../bdsim.html#bdsim.blockdiagram.BlockDiagram">[docs]</a><span class="k">class</span> <span class="nc">BlockDiagram</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    </span>
+<span class="sd">    :param name: DESCRIPTION, defaults to &#39;main&#39;</span>
+<span class="sd">    :type name: TYPE, optional</span>
+<span class="sd">    :param graphics: DESCRIPTION, defaults to True</span>
+<span class="sd">    :type graphics: TYPE, optional</span>
+<span class="sd">    :raises ImportError: DESCRIPTION</span>
+<span class="sd">    :return: DESCRIPTION</span>
+<span class="sd">    :rtype: TYPE</span>
+<span class="sd">    </span>
+<span class="sd">    :ivar wirelist: all wires in the diagram</span>
+<span class="sd">    :vartype wirelist: list of Wire instances</span>
+<span class="sd">    :ivar blocklist: all blocks in the diagram</span>
+<span class="sd">    :vartype blocklist: list of Block subclass instances</span>
+<span class="sd">    :ivar x: state vector</span>
+<span class="sd">    :vartype x: np.ndarray</span>
+<span class="sd">    :ivar compiled: diagram has successfully compiled</span>
+<span class="sd">    :vartype compiled: bool</span>
+<span class="sd">    :ivar T: maximum simulation time (seconds)</span>
+<span class="sd">    :vartype T: float</span>
+<span class="sd">    :ivar t: current simulation time (seconds)</span>
+<span class="sd">    :vartype t: float</span>
+<span class="sd">    :ivar fignum: number of next matplotlib figure to create</span>
+<span class="sd">    :vartype fignum: int</span>
+<span class="sd">    :ivar stop: reference to block wanting to stop simulation, else None</span>
+<span class="sd">    :vartype stop: Block subclass</span>
+<span class="sd">    :ivar checkfinite: halt simulation if any wire has inf or nan</span>
+<span class="sd">    :vartype checkfinite: bool</span>
+<span class="sd">    :ivar blockcounter: unique counter for each block type</span>
+<span class="sd">    :vartype blockcounter: collections.Counter</span>
+<span class="sd">    :ivar blockdict: index of all blocks by category</span>
+<span class="sd">    :vartype blockdict: dict of lists</span>
+<span class="sd">    :ivar name: name of this diagram</span>
+<span class="sd">    :vartype name: str</span>
+<span class="sd">    :ivar graphics: enable graphics</span>
+<span class="sd">    :vartype graphics: bool</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;main&#39;</span><span class="p">,</span> <span class="n">graphics</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+
         
         <span class="bp">self</span><span class="o">.</span><span class="n">wirelist</span> <span class="o">=</span> <span class="p">[]</span>      <span class="c1"># list of all wires</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span> <span class="o">=</span> <span class="p">[]</span>     <span class="c1"># list of all blocks</span>
@@ -75,7 +113,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">t</span> <span class="o">=</span> <span class="kc">None</span>           <span class="c1"># current time</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fignum</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">stop</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">connnecterror</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">checkfinite</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">blockcounter</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
@@ -128,7 +165,7 @@
                     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">blocklist</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">nblocks</span><span class="p">:</span>
                         <span class="c1"># we just loaded some more blocks</span>
                         <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;  loading blocks from </span><span class="si">{:s}</span><span class="s1">: </span><span class="si">{:s}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">blockname</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">blocklist</span><span class="p">[</span><span class="n">nblocks</span><span class="p">:]])))</span>
-
+                        
                     <span class="c1"># perform basic sanity checks on the blocks just read</span>
                     <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">blocklist</span><span class="p">[</span><span class="n">nblocks</span><span class="p">:]:</span>
                         
@@ -163,6 +200,7 @@
             <span class="k">return</span> <span class="n">f</span>
         
         <span class="c1"># bind the block constructors as new methods on this instance</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">blockdict</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">blocklist</span><span class="p">:</span>
             <span class="c1"># create a function to invoke the block&#39;s constructor</span>
             <span class="n">f</span> <span class="o">=</span> <span class="n">new_method</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
@@ -172,6 +210,12 @@
             
             <span class="c1"># set a bound version of this function as an attribute of the instance</span>
             <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bindname</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="fm">__get__</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+            
+            <span class="n">blocktype</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__module__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">2</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">blocktype</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blockdict</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">blockdict</span><span class="p">[</span><span class="n">blocktype</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bindname</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">blockdict</span><span class="p">[</span><span class="n">blocktype</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">bindname</span><span class="p">]</span>
 
         <span class="c1"># graphics initialization</span>
         <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">animation</span><span class="p">:</span>
@@ -269,6 +313,10 @@
         <span class="c1"># for wire in self.wirelist:</span>
         <span class="c1">#     s += str(wire) + &quot;\n&quot;</span>
         <span class="c1"># return s.lstrip(&quot;\n&quot;)</span>
+        
+<div class="viewcode-block" id="BlockDiagram.ls"><a class="viewcode-back" href="../../bdsim.html#bdsim.blockdiagram.BlockDiagram.ls">[docs]</a>    <span class="k">def</span> <span class="nf">ls</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blockdict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{:12s}</span><span class="s1">: &#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">v</span><span class="p">))</span></div>
     
 <div class="viewcode-block" id="BlockDiagram.connect"><a class="viewcode-back" href="../../bdsim.html#bdsim.blockdiagram.BlockDiagram.connect">[docs]</a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         
@@ -346,7 +394,7 @@
             <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;  importing subsystem&#39;</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">ssvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;-- Wiring in subsystem&#39;</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="s1">&#39;from module local variable &#39;</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">ssvar</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="p">[</span><span class="n">b</span><span class="o">.</span><span class="n">name</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_flatten</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="p">[</span><span class="n">b</span><span class="o">.</span><span class="n">name</span><span class="p">])</span>
         
         <span class="c1"># initialize lists of input and output ports</span>
         <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
@@ -427,7 +475,7 @@
     
     <span class="c1">#flatten the hierarchy</span>
     
-<div class="viewcode-block" id="BlockDiagram.flatten"><a class="viewcode-back" href="../../bdsim.html#bdsim.blockdiagram.BlockDiagram.flatten">[docs]</a>    <span class="k">def</span> <span class="nf">flatten</span><span class="p">(</span><span class="n">top</span><span class="p">,</span> <span class="n">subsys</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_flatten</span><span class="p">(</span><span class="n">top</span><span class="p">,</span> <span class="n">subsys</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
         <span class="n">subsystems</span> <span class="o">=</span> <span class="p">[</span><span class="n">b</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">subsys</span><span class="o">.</span><span class="n">subsystem</span><span class="o">.</span><span class="n">blocklist</span> <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;subsystem&#39;</span><span class="p">]</span>
         <span class="c1"># recursively flatten all subsystems</span>
         <span class="k">for</span> <span class="n">ss</span> <span class="ow">in</span> <span class="n">subsystems</span><span class="p">:</span>
@@ -491,7 +539,7 @@
         <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">others</span><span class="p">:</span>
             <span class="n">top</span><span class="o">.</span><span class="n">add_block</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>   <span class="c1"># add remaining blocks from subsystem</span>
             <span class="n">b</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;/&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span> <span class="o">+</span> <span class="p">[</span><span class="n">b</span><span class="o">.</span><span class="n">name</span><span class="p">])</span>
-        <span class="n">top</span><span class="o">.</span><span class="n">wirelist</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">subsys</span><span class="o">.</span><span class="n">subsystem</span><span class="o">.</span><span class="n">wirelist</span><span class="p">)</span>  <span class="c1"># add remaining wires from subsystem</span></div>
+        <span class="n">top</span><span class="o">.</span><span class="n">wirelist</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">subsys</span><span class="o">.</span><span class="n">subsystem</span><span class="o">.</span><span class="n">wirelist</span><span class="p">)</span>  <span class="c1"># add remaining wires from subsystem</span>
         
 <div class="viewcode-block" id="BlockDiagram.report"><a class="viewcode-back" href="../../bdsim.html#bdsim.blockdiagram.BlockDiagram.report">[docs]</a>    <span class="k">def</span> <span class="nf">report</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         

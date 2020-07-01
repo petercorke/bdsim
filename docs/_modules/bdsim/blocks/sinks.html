@@ -61,8 +61,8 @@
 
 <div class="viewcode-block" id="Print"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sinks.Print">[docs]</a><span class="nd">@block</span>
 <span class="k">class</span> <span class="nc">Print</span><span class="p">(</span><span class="n">SinkBlock</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    **PRINT** block</span>
+    <span class="sd">&quot;&quot;&quot;    </span>
+<span class="sd">    :blockname:`PRINT`</span>
 
 <span class="sd">    :param fmt: Format string, defaults to None</span>
 <span class="sd">    :type fmt: str, optional</span>
@@ -89,7 +89,7 @@
 <div class="viewcode-block" id="ScopeXY"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sinks.ScopeXY">[docs]</a><span class="nd">@block</span>
 <span class="k">class</span> <span class="nc">ScopeXY</span><span class="p">(</span><span class="n">SinkBlockGraphics</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    **SCOPEXY** block</span>
+<span class="sd">    :blockname:`SCOPEXY`</span>
 <span class="sd">    </span>
 <span class="sd">    :param style: line style</span>
 <span class="sd">    :type style: optional str or dict</span>
@@ -195,7 +195,7 @@
 <div class="viewcode-block" id="Vehicle"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sinks.Vehicle">[docs]</a><span class="nd">@block</span>
 <span class="k">class</span> <span class="nc">Vehicle</span><span class="p">(</span><span class="n">SinkBlockGraphics</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    **VEHICLE** block</span>
+<span class="sd">    :blockname:`VEHICLE`</span>
 <span class="sd">    </span>
 <span class="sd">    :param ``*inputs``: Optional incoming connections</span>
 <span class="sd">    :type ``*inputs``: Block or Plug</span>
@@ -210,7 +210,12 @@
 <span class="sd">    :rtype: Scope instance</span>
 
 <span class="sd">    Create a vehicle animation.</span>
+<span class="sd">    </span>
+<span class="sd">    .. figure:: ../../figs/rvc4_4.gif</span>
+<span class="sd">       :width: 500px</span>
+<span class="sd">       :alt: example of generated graphic</span>
 
+<span class="sd">       Example of vehicle display (animated).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">pathstyle</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="s1">&#39;triangle&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;blue&quot;</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="s2">&quot;white&quot;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="s1">&#39;Y&#39;</span><span class="p">],</span> <span class="n">square</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -317,7 +322,7 @@
 <div class="viewcode-block" id="MultiRotorPlot"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sinks.MultiRotorPlot">[docs]</a><span class="nd">@block</span>
 <span class="k">class</span> <span class="nc">MultiRotorPlot</span><span class="p">(</span><span class="n">SinkBlockGraphics</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    **MULTIROTORPLOT** block</span>
+<span class="sd">    :blockname:`MULTIROTORPLOT`</span>
 <span class="sd">    </span>
 <span class="sd">    :param model: A dictionary of vehicle geometric and inertial properties</span>
 <span class="sd">    :type model: dict</span>
@@ -518,7 +523,7 @@
 <div class="viewcode-block" id="Scope"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sinks.Scope">[docs]</a><span class="nd">@block</span>
 <span class="k">class</span> <span class="nc">Scope</span><span class="p">(</span><span class="n">SinkBlockGraphics</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    **SCOPE** block</span>
+<span class="sd">    :blockname:`SCOPE`</span>
 
 <span class="sd">    Create a block that plots input ports against time.</span>
 <span class="sd">    </span>
@@ -542,12 +547,12 @@
 
 <span class="sd">    Create a block that plots input ports against time.  </span>
 
-<span class="sd">    Each line can have its own color or style.</span>
+<span class="sd">    Each line can have its own color or style which is specified by:</span>
 <span class="sd">    </span>
-<span class="sd">    Line styles are given by either a dict of options for `plot` or as</span>
-<span class="sd">    a simple MATLAB-style linestyle like &#39;k--&#39;.</span>
+<span class="sd">        - a dict of options for `plot` or </span>
+<span class="sd">        - a  MATLAB-style linestyle like &#39;k--&#39;</span>
 <span class="sd">    </span>
-<span class="sd">    If multiple lines are plotted then a list of styles, dicts or strings,</span>
+<span class="sd">    If multiple lines are plotted then a heterogeneous list of styles, dicts or strings,</span>
 <span class="sd">    one per line must be given.</span>
 <span class="sd">    </span>
 <span class="sd">    The vertical scale factor defaults to auto-scaling but can be fixed by</span>
@@ -558,10 +563,16 @@
 <span class="sd">        </span>
 <span class="sd">        SCOPE()</span>
 <span class="sd">        SCOPE(nin=2)</span>
-<span class="sd">        SCOPE(nin=2, scale=[-1,,2])</span>
+<span class="sd">        SCOPE(nin=2, scale=[-1,2])</span>
 <span class="sd">        SCOPE(style=[&#39;k&#39;, &#39;r--&#39;])</span>
 <span class="sd">        SCOPE(style=&#39;k--&#39;)</span>
 <span class="sd">        SCOPE(style={&#39;color:&#39;, &#39;red, &#39;linestyle&#39;: &#39;--&#39;&#39;})</span>
+<span class="sd">        </span>
+<span class="sd">    .. figure:: ../../figs/Figure_1.png</span>
+<span class="sd">       :width: 500px</span>
+<span class="sd">       :alt: example of generated graphic</span>
+
+<span class="sd">       Example of scope display.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">styles</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">grid</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -678,7 +689,7 @@
 <div class="viewcode-block" id="Stop"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sinks.Stop">[docs]</a><span class="nd">@block</span>
 <span class="k">class</span> <span class="nc">Stop</span><span class="p">(</span><span class="n">SinkBlock</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    **STOP** block</span>
+<span class="sd">    :blockname:`STOP`</span>
 <span class="sd">    </span>
 <span class="sd">    :param stop: Function </span>
 <span class="sd">    :type stop: TYPE</span>
