@@ -30,8 +30,46 @@ def DEBUG(debug, *args):
 
 
 class BlockDiagram:
+    """
+    
+    :param name: DESCRIPTION, defaults to 'main'
+    :type name: TYPE, optional
+    :param graphics: DESCRIPTION, defaults to True
+    :type graphics: TYPE, optional
+    :raises ImportError: DESCRIPTION
+    :return: DESCRIPTION
+    :rtype: TYPE
+    
+    :ivar wirelist: all wires in the diagram
+    :vartype wirelist: list of Wire instances
+    :ivar blocklist: all blocks in the diagram
+    :vartype blocklist: list of Block subclass instances
+    :ivar x: state vector
+    :vartype x: np.ndarray
+    :ivar compiled: diagram has successfully compiled
+    :vartype compiled: bool
+    :ivar T: maximum simulation time (seconds)
+    :vartype T: float
+    :ivar t: current simulation time (seconds)
+    :vartype t: float
+    :ivar fignum: number of next matplotlib figure to create
+    :vartype fignum: int
+    :ivar stop: reference to block wanting to stop simulation, else None
+    :vartype stop: Block subclass
+    :ivar checkfinite: halt simulation if any wire has inf or nan
+    :vartype checkfinite: bool
+    :ivar blockcounter: unique counter for each block type
+    :vartype blockcounter: collections.Counter
+    :ivar blockdict: index of all blocks by category
+    :vartype blockdict: dict of lists
+    :ivar name: name of this diagram
+    :vartype name: str
+    :ivar graphics: enable graphics
+    :vartype graphics: bool
+    """
     
     def __init__(self, name='main', graphics=True):
+
         
         self.wirelist = []      # list of all wires
         self.blocklist = []     # list of all blocks
@@ -41,7 +79,6 @@ class BlockDiagram:
         self.t = None           # current time
         self.fignum = 0
         self.stop = None
-        self.connnecterror = False
         self.checkfinite = True
         self.blockcounter = Counter()
         self.name = name
