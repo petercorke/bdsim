@@ -323,7 +323,7 @@ class BlockDiagram:
             print('  importing subsystem', b.name)
             if b.ssvar is not None:
                 print('-- Wiring in subsystem', b, 'from module local variable ', b.ssvar)
-            self.flatten(b, [b.name])
+            self._flatten(b, [b.name])
         
         # initialize lists of input and output ports
         for b in self.blocklist:
@@ -404,7 +404,7 @@ class BlockDiagram:
     
     #flatten the hierarchy
     
-    def flatten(top, subsys, path):
+    def _flatten(top, subsys, path):
         subsystems = [b for b in subsys.subsystem.blocklist if b.type == 'subsystem']
         # recursively flatten all subsystems
         for ss in subsystems:
