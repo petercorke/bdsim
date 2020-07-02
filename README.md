@@ -148,6 +148,10 @@ Examples from Chapter four of _Robotics, Vision & Control (2017)_:
 
 ![RVC Figure 4.6](https://github.com/petercorke/bdsim/raw/master/figs/rvc4_6.gif)
 
+- [`rvc4_8.py`](https://github.com/petercorke/bdsim/blob/master/examples/rvc4_8.py) Fig 4.8 - a car-like vehicle using pure-pursuit trajectory following
+
+![RVC Figure 4.6](https://github.com/petercorke/bdsim/raw/master/figs/rvc4_8.gif)
+
 - [`rvc4_11.py`](https://github.com/petercorke/bdsim/blob/master/examples/rvc4_11.py) Fig 4.11 a car-like vehicle driving to a pose
 
 ![RVC Figure 4.11](https://github.com/petercorke/bdsim/raw/master/figs/rvc4_11.gif)
