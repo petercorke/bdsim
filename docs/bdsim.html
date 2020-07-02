@@ -7,6 +7,7 @@
     <title>bdsim package &#8212; bdsim 0.7 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
     <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
@@ -244,9 +245,20 @@ blocks only since they have no output function to be called.</p>
 <dd></dd></dl>
 
 </div>
-<div class="section" id="module-bdsim.components">
-<span id="components"></span><h2>Components<a class="headerlink" href="#module-bdsim.components" title="Permalink to this headline">¶</a></h2>
-<p>Components of the simulation system, namely blocks, wires and plugs.</p>
+<div class="section" id="components">
+<h2>Components<a class="headerlink" href="#components" title="Permalink to this headline">¶</a></h2>
+<div class="graphviz"><img src="_images/inheritance-60e5f0c9f69b1b5eadcd8886a61f6bab1c8fa5e2.png" alt="Inheritance diagram of bdsim.components" usemap="#inheritancefad3a12bf5" class="inheritance graphviz" /></div>
+<map id="inheritancefad3a12bf5" name="inheritancefad3a12bf5">
+<area shape="rect" id="node1" href="#bdsim.components.Block" target="_top" title="Construct a new block object." alt="" coords="5,104,176,129"/>
+<area shape="rect" id="node2" href="#bdsim.components.FunctionBlock" target="_top" title="A FunctionBlock is a subclass of Block that represents a block that has inputs" alt="" coords="231,5,453,31"/>
+<area shape="rect" id="node4" href="#bdsim.components.SinkBlock" target="_top" title="A SinkBlock is a subclass of Block that represents a block that has inputs" alt="" coords="244,55,440,80"/>
+<area shape="rect" id="node6" href="#bdsim.components.SourceBlock" target="_top" title="A SourceBlock is a subclass of Block that represents a block that has outputs" alt="" coords="236,104,448,129"/>
+<area shape="rect" id="node7" href="#bdsim.components.SubsystemBlock" target="_top" title="A Function is a subclass of Block that represents a block that has inputs" alt="" coords="224,153,460,179"/>
+<area shape="rect" id="node8" href="#bdsim.components.TransferBlock" target="_top" title="A TransferBlock is a subclass of Block that represents a block with inputs" alt="" coords="232,203,452,228"/>
+<area shape="rect" id="node3" href="#bdsim.components.GraphicsBlock" target="_top" title="A GraphicsBlock is a subclass of SinkBlock that represents a block that has inputs" alt="" coords="508,55,732,80"/>
+<area shape="rect" id="node5" href="#bdsim.components.Plug" target="_top" title="Create a plug." alt="" coords="9,55,173,80"/>
+<area shape="rect" id="node9" href="#bdsim.components.Wire" target="_top" title="Create a wire." alt="" coords="8,5,173,31"/>
+</map><span class="target" id="module-bdsim.components"></span><p>Components of the simulation system, namely blocks, wires and plugs.</p>
 <dl class="class">
 <dt id="bdsim.components.Block">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.components.</code><code class="sig-name descname">Block</code><span class="sig-paren">(</span><em class="sig-param">name=None</em>, <em class="sig-param">inames=None</em>, <em class="sig-param">onames=None</em>, <em class="sig-param">snames=None</em>, <em class="sig-param">pos=None</em>, <em class="sig-param">nin=None</em>, <em class="sig-param">nout=None</em>, <em class="sig-param">inputs=None</em>, <em class="sig-param">bd=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#Block"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.components.Block" title="Permalink to this definition">¶</a></dt>
@@ -554,6 +566,35 @@ such as gain, summation or various mappings.</p>
 </dd></dl>
 
 <dl class="class">
+<dt id="bdsim.components.GraphicsBlock">
+<em class="property">class </em><code class="sig-prename descclassname">bdsim.components.</code><code class="sig-name descname">GraphicsBlock</code><span class="sig-paren">(</span><em class="sig-param">movie=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#GraphicsBlock"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.components.GraphicsBlock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bdsim.components.SinkBlock" title="bdsim.components.SinkBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SinkBlock</span></code></a></p>
+<p>A GraphicsBlock is a subclass of SinkBlock that represents a block that has inputs
+but no outputs. Typically used to save data to a variable, file or 
+graphics.</p>
+<dl class="method">
+<dt id="bdsim.components.GraphicsBlock.done">
+<code class="sig-name descname">done</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#GraphicsBlock.done"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.components.GraphicsBlock.done" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="bdsim.components.GraphicsBlock.savefig">
+<code class="sig-name descname">savefig</code><span class="sig-paren">(</span><em class="sig-param">fname</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#GraphicsBlock.savefig"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.components.GraphicsBlock.savefig" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="bdsim.components.GraphicsBlock.start">
+<code class="sig-name descname">start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#GraphicsBlock.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.components.GraphicsBlock.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="bdsim.components.GraphicsBlock.step">
+<code class="sig-name descname">step</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#GraphicsBlock.step"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.components.GraphicsBlock.step" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
 <dt id="bdsim.components.Plug">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.components.</code><code class="sig-name descname">Plug</code><span class="sig-paren">(</span><em class="sig-param">block</em>, <em class="sig-param">port=0</em>, <em class="sig-param">type=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#Plug"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.components.Plug" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
@@ -708,35 +749,6 @@ graphics.</p>
 <dl class="attribute">
 <dt id="bdsim.components.SinkBlock.blockclass">
 <code class="sig-name descname">blockclass</code><em class="property"> = 'sink'</em><a class="headerlink" href="#bdsim.components.SinkBlock.blockclass" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="bdsim.components.SinkBlockGraphics">
-<em class="property">class </em><code class="sig-prename descclassname">bdsim.components.</code><code class="sig-name descname">SinkBlockGraphics</code><span class="sig-paren">(</span><em class="sig-param">movie=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#SinkBlockGraphics"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.components.SinkBlockGraphics" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#bdsim.components.SinkBlock" title="bdsim.components.SinkBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SinkBlock</span></code></a></p>
-<p>A SinkBlockGraphics is a subclass of SinkBlock that represents a block that has inputs
-but no outputs. Typically used to save data to a variable, file or 
-graphics.</p>
-<dl class="method">
-<dt id="bdsim.components.SinkBlockGraphics.done">
-<code class="sig-name descname">done</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#SinkBlockGraphics.done"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.components.SinkBlockGraphics.done" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="bdsim.components.SinkBlockGraphics.savefig">
-<code class="sig-name descname">savefig</code><span class="sig-paren">(</span><em class="sig-param">fname</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#SinkBlockGraphics.savefig"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.components.SinkBlockGraphics.savefig" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="bdsim.components.SinkBlockGraphics.start">
-<code class="sig-name descname">start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#SinkBlockGraphics.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.components.SinkBlockGraphics.start" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="bdsim.components.SinkBlockGraphics.step">
-<code class="sig-name descname">step</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#SinkBlockGraphics.step"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.components.SinkBlockGraphics.step" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -915,7 +927,7 @@ the class name.</p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">bdsim package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#module-bdsim.blockdiagram">BlockDiagram class</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-bdsim.components">Components</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#components">Components</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="bdsim.blocks.html">Blocks</a></li>

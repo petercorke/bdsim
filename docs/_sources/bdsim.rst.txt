@@ -13,6 +13,8 @@ BlockDiagram class
 Components
 ----------
 
+.. inheritance-diagram:: bdsim.components
+
 .. automodule:: bdsim.components
    :members:
    :undoc-members:

@@ -7,6 +7,7 @@
     <title>bdsim.blocks.sinks &#8212; bdsim 0.7 documentation</title>
     <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
     <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
     <script src="../../../_static/jquery.js"></script>
     <script src="../../../_static/underscore.js"></script>
@@ -38,7 +39,7 @@
 <span class="sd">- have inputs but no outputs</span>
 <span class="sd">- have no state variables</span>
 <span class="sd">- are a subclass of ``SinkBlock`` |rarr| ``Block``</span>
-<span class="sd">- that perform graphics are a subclass of  ``SinkBlockGraphics`` |rarr| ``SinkBlock`` |rarr| ``Block``</span>
+<span class="sd">- that perform graphics are a subclass of  ``GraphicsBlock`` |rarr| ``SinkBlock`` |rarr| ``Block``</span>
 
 <span class="sd">&quot;&quot;&quot;</span>
 
@@ -53,7 +54,7 @@
 
 <span class="kn">import</span> <span class="nn">spatialmath.base</span> <span class="k">as</span> <span class="nn">sm</span>
 
-<span class="kn">from</span> <span class="nn">bdsim.components</span> <span class="kn">import</span> <span class="n">SinkBlock</span><span class="p">,</span> <span class="n">SinkBlockGraphics</span><span class="p">,</span> <span class="n">block</span>
+<span class="kn">from</span> <span class="nn">bdsim.components</span> <span class="kn">import</span> <span class="n">SinkBlock</span><span class="p">,</span> <span class="n">GraphicsBlock</span><span class="p">,</span> <span class="n">block</span>
 
 
 
@@ -87,7 +88,7 @@
         <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;PRINT </span><span class="si">{:s}</span><span class="s1"> = &#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ScopeXY"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sinks.ScopeXY">[docs]</a><span class="nd">@block</span>
-<span class="k">class</span> <span class="nc">ScopeXY</span><span class="p">(</span><span class="n">SinkBlockGraphics</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">ScopeXY</span><span class="p">(</span><span class="n">GraphicsBlock</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`SCOPEXY`</span>
 <span class="sd">    </span>
@@ -193,7 +194,7 @@
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 
 <div class="viewcode-block" id="Vehicle"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sinks.Vehicle">[docs]</a><span class="nd">@block</span>
-<span class="k">class</span> <span class="nc">Vehicle</span><span class="p">(</span><span class="n">SinkBlockGraphics</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">Vehicle</span><span class="p">(</span><span class="n">GraphicsBlock</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`VEHICLE`</span>
 <span class="sd">    </span>
@@ -320,7 +321,7 @@
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 
 <div class="viewcode-block" id="MultiRotorPlot"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sinks.MultiRotorPlot">[docs]</a><span class="nd">@block</span>
-<span class="k">class</span> <span class="nc">MultiRotorPlot</span><span class="p">(</span><span class="n">SinkBlockGraphics</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">MultiRotorPlot</span><span class="p">(</span><span class="n">GraphicsBlock</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`MULTIROTORPLOT`</span>
 <span class="sd">    </span>
@@ -521,7 +522,7 @@
 
 
 <div class="viewcode-block" id="Scope"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sinks.Scope">[docs]</a><span class="nd">@block</span>
-<span class="k">class</span> <span class="nc">Scope</span><span class="p">(</span><span class="n">SinkBlockGraphics</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">Scope</span><span class="p">(</span><span class="n">GraphicsBlock</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`SCOPE`</span>
 

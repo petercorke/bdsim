@@ -7,6 +7,7 @@
     <title>bdsim.components &#8212; bdsim 0.7 documentation</title>
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
     <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
     <script src="../../_static/jquery.js"></script>
     <script src="../../_static/underscore.js"></script>
@@ -785,9 +786,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">nout</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span> <span class="o">=</span> <span class="mi">0</span></div>
 
-<div class="viewcode-block" id="SinkBlockGraphics"><a class="viewcode-back" href="../../bdsim.html#bdsim.components.SinkBlockGraphics">[docs]</a><span class="k">class</span> <span class="nc">SinkBlockGraphics</span><span class="p">(</span><span class="n">SinkBlock</span><span class="p">):</span>
+<div class="viewcode-block" id="GraphicsBlock"><a class="viewcode-back" href="../../bdsim.html#bdsim.components.GraphicsBlock">[docs]</a><span class="k">class</span> <span class="nc">GraphicsBlock</span><span class="p">(</span><span class="n">SinkBlock</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A SinkBlockGraphics is a subclass of SinkBlock that represents a block that has inputs</span>
+<span class="sd">    A GraphicsBlock is a subclass of SinkBlock that represents a block that has inputs</span>
 <span class="sd">    but no outputs. Typically used to save data to a variable, file or </span>
 <span class="sd">    graphics.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -795,23 +796,23 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">movie</span> <span class="o">=</span> <span class="n">movie</span>
 
-<div class="viewcode-block" id="SinkBlockGraphics.start"><a class="viewcode-back" href="../../bdsim.html#bdsim.components.SinkBlockGraphics.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="GraphicsBlock.start"><a class="viewcode-back" href="../../bdsim.html#bdsim.components.GraphicsBlock.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">movie</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">writer</span> <span class="o">=</span> <span class="n">animation</span><span class="o">.</span><span class="n">FFMpegWriter</span><span class="p">(</span><span class="n">fps</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">extra_args</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;-vcodec&#39;</span><span class="p">,</span> <span class="s1">&#39;libx264&#39;</span><span class="p">])</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">writer</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">fig</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fig</span><span class="p">,</span> <span class="n">outfile</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">movie</span><span class="p">)</span></div>
                 
-<div class="viewcode-block" id="SinkBlockGraphics.step"><a class="viewcode-back" href="../../bdsim.html#bdsim.components.SinkBlockGraphics.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="GraphicsBlock.step"><a class="viewcode-back" href="../../bdsim.html#bdsim.components.GraphicsBlock.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">movie</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">writer</span><span class="o">.</span><span class="n">grab_frame</span><span class="p">()</span></div>
                 
                 
-<div class="viewcode-block" id="SinkBlockGraphics.done"><a class="viewcode-back" href="../../bdsim.html#bdsim.components.SinkBlockGraphics.done">[docs]</a>    <span class="k">def</span> <span class="nf">done</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="GraphicsBlock.done"><a class="viewcode-back" href="../../bdsim.html#bdsim.components.GraphicsBlock.done">[docs]</a>    <span class="k">def</span> <span class="nf">done</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">movie</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">writer</span><span class="o">.</span><span class="n">finish</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">cleanup</span><span class="p">()</span></div>
             
-<div class="viewcode-block" id="SinkBlockGraphics.savefig"><a class="viewcode-back" href="../../bdsim.html#bdsim.components.SinkBlockGraphics.savefig">[docs]</a>    <span class="k">def</span> <span class="nf">savefig</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fname</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="GraphicsBlock.savefig"><a class="viewcode-back" href="../../bdsim.html#bdsim.components.GraphicsBlock.savefig">[docs]</a>    <span class="k">def</span> <span class="nf">savefig</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fname</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fig</span><span class="o">.</span><span class="n">number</span><span class="p">)</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div></div>
 

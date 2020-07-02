@@ -6,6 +6,9 @@ Blocks
 The block diagrams comprise blocks which belong to one of a number of different categories. These come from
 the package ``bdsim.blocks``.
 
+.. inheritance-diagram:: bdsim.components.SourceBlock bdsim.components.SinkBlock bdsim.components.GraphicsBlock bdsim.components.FunctionBlock bdsim.components.TransferBlock bdsim.components.SubsystemBlock
+
+
 Source blocks
 -------------
 

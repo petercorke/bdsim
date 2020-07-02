@@ -7,6 +7,7 @@
     <title>Blocks &#8212; bdsim 0.7 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
     <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
@@ -36,7 +37,16 @@
 <h1>Blocks<a class="headerlink" href="#blocks" title="Permalink to this headline">¶</a></h1>
 <p>The block diagrams comprise blocks which belong to one of a number of different categories. These come from
 the package <code class="docutils literal notranslate"><span class="pre">bdsim.blocks</span></code>.</p>
-<div class="section" id="module-bdsim.blocks.sources">
+<div class="graphviz"><img src="_images/inheritance-b73e4c5fc66d274cb80ffb7499bb974eef646de5.png" alt="Inheritance diagram of bdsim.components.SourceBlock, bdsim.components.SinkBlock, bdsim.components.GraphicsBlock, bdsim.components.FunctionBlock, bdsim.components.TransferBlock, bdsim.components.SubsystemBlock" usemap="#inheritance2fdfb15a6a" class="inheritance graphviz" /></div>
+<map id="inheritance2fdfb15a6a" name="inheritance2fdfb15a6a">
+<area shape="rect" id="node1" href="bdsim.html#bdsim.components.Block" target="_top" title="Construct a new block object." alt="" coords="5,104,176,129"/>
+<area shape="rect" id="node2" href="bdsim.html#bdsim.components.FunctionBlock" target="_top" title="A FunctionBlock is a subclass of Block that represents a block that has inputs" alt="" coords="231,5,453,31"/>
+<area shape="rect" id="node4" href="bdsim.html#bdsim.components.SinkBlock" target="_top" title="A SinkBlock is a subclass of Block that represents a block that has inputs" alt="" coords="244,55,440,80"/>
+<area shape="rect" id="node5" href="bdsim.html#bdsim.components.SourceBlock" target="_top" title="A SourceBlock is a subclass of Block that represents a block that has outputs" alt="" coords="236,104,448,129"/>
+<area shape="rect" id="node6" href="bdsim.html#bdsim.components.SubsystemBlock" target="_top" title="A Function is a subclass of Block that represents a block that has inputs" alt="" coords="224,153,460,179"/>
+<area shape="rect" id="node7" href="bdsim.html#bdsim.components.TransferBlock" target="_top" title="A TransferBlock is a subclass of Block that represents a block with inputs" alt="" coords="232,203,452,228"/>
+<area shape="rect" id="node3" href="bdsim.html#bdsim.components.GraphicsBlock" target="_top" title="A GraphicsBlock is a subclass of SinkBlock that represents a block that has inputs" alt="" coords="508,55,732,80"/>
+</map><div class="section" id="module-bdsim.blocks.sources">
 <span id="source-blocks"></span><h2>Source blocks<a class="headerlink" href="#module-bdsim.blocks.sources" title="Permalink to this headline">¶</a></h2>
 <p>Source blocks:</p>
 <ul class="simple">
@@ -183,12 +193,12 @@ a number in the range [0,1] where 1 corresponds to one cycle.</p>
 <li><p>have inputs but no outputs</p></li>
 <li><p>have no state variables</p></li>
 <li><p>are a subclass of <code class="docutils literal notranslate"><span class="pre">SinkBlock</span></code> → <code class="docutils literal notranslate"><span class="pre">Block</span></code></p></li>
-<li><p>that perform graphics are a subclass of  <code class="docutils literal notranslate"><span class="pre">SinkBlockGraphics</span></code> → <code class="docutils literal notranslate"><span class="pre">SinkBlock</span></code> → <code class="docutils literal notranslate"><span class="pre">Block</span></code></p></li>
+<li><p>that perform graphics are a subclass of  <code class="docutils literal notranslate"><span class="pre">GraphicsBlock</span></code> → <code class="docutils literal notranslate"><span class="pre">SinkBlock</span></code> → <code class="docutils literal notranslate"><span class="pre">Block</span></code></p></li>
 </ul>
 <dl class="class">
 <dt id="bdsim.blocks.sinks.MultiRotorPlot">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.sinks.</code><code class="sig-name descname">MultiRotorPlot</code><span class="sig-paren">(</span><em class="sig-param">model, *inputs, scale=[-2, 2, -2, 2, 10], flapscale=1, projection='ortho', **kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#MultiRotorPlot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.MultiRotorPlot" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.SinkBlockGraphics" title="bdsim.components.SinkBlockGraphics"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SinkBlockGraphics</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.GraphicsBlock" title="bdsim.components.GraphicsBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.GraphicsBlock</span></code></a></p>
 <p><p style="border:10px; background-color:#000000; padding: 1em; color: white; font-size: 30px; font-weight: bold;">MULTIROTORPLOT</p></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -245,7 +255,7 @@ a number in the range [0,1] where 1 corresponds to one cycle.</p>
 <dl class="class">
 <dt id="bdsim.blocks.sinks.Scope">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.sinks.</code><code class="sig-name descname">Scope</code><span class="sig-paren">(</span><em class="sig-param">nin=None</em>, <em class="sig-param">styles=None</em>, <em class="sig-param">scale='auto'</em>, <em class="sig-param">labels=None</em>, <em class="sig-param">grid=True</em>, <em class="sig-param">*inputs</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#Scope"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.Scope" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.SinkBlockGraphics" title="bdsim.components.SinkBlockGraphics"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SinkBlockGraphics</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.GraphicsBlock" title="bdsim.components.GraphicsBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.GraphicsBlock</span></code></a></p>
 <p><p style="border:10px; background-color:#000000; padding: 1em; color: white; font-size: 30px; font-weight: bold;">SCOPE</p></p>
 <p>Create a block that plots input ports against time.</p>
 <dl class="field-list simple">
@@ -300,7 +310,7 @@ same vertical scale.</p>
 <dl class="class">
 <dt id="bdsim.blocks.sinks.ScopeXY">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.sinks.</code><code class="sig-name descname">ScopeXY</code><span class="sig-paren">(</span><em class="sig-param">style=None, *inputs, scale='auto', labels=['X', 'Y'], init=None, **kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#ScopeXY"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.ScopeXY" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.SinkBlockGraphics" title="bdsim.components.SinkBlockGraphics"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SinkBlockGraphics</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.GraphicsBlock" title="bdsim.components.GraphicsBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.GraphicsBlock</span></code></a></p>
 <p><p style="border:10px; background-color:#000000; padding: 1em; color: white; font-size: 30px; font-weight: bold;">SCOPEXY</p></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -365,7 +375,7 @@ providing either:</p>
 <dl class="class">
 <dt id="bdsim.blocks.sinks.Vehicle">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.sinks.</code><code class="sig-name descname">Vehicle</code><span class="sig-paren">(</span><em class="sig-param">*inputs, path=True, pathstyle=None, shape='triangle', color='blue', fill='white', size=1, scale='auto', labels=['X', 'Y'], square=True, init=None, **kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#Vehicle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.Vehicle" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.SinkBlockGraphics" title="bdsim.components.SinkBlockGraphics"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SinkBlockGraphics</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.GraphicsBlock" title="bdsim.components.GraphicsBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.GraphicsBlock</span></code></a></p>
 <p><p style="border:10px; background-color:#000000; padding: 1em; color: white; font-size: 30px; font-weight: bold;">VEHICLE</p></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
