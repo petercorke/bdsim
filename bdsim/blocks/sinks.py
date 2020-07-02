@@ -4,7 +4,7 @@ Sink blocks:
 - have inputs but no outputs
 - have no state variables
 - are a subclass of ``SinkBlock`` |rarr| ``Block``
-- that perform graphics are a subclass of  ``SinkBlockGraphics`` |rarr| ``SinkBlock`` |rarr| ``Block``
+- that perform graphics are a subclass of  ``GraphicsBlock`` |rarr| ``SinkBlock`` |rarr| ``Block``
 
 """
 
@@ -19,7 +19,7 @@ from matplotlib.pyplot import Polygon
 
 import spatialmath.base as sm
 
-from bdsim.components import SinkBlock, SinkBlockGraphics, block
+from bdsim.components import SinkBlock, GraphicsBlock, block
 
 
 
@@ -53,7 +53,7 @@ class Print(SinkBlock):
         print('PRINT {:s} = '.format(self.name), self.inputs)
 
 @block
-class ScopeXY(SinkBlockGraphics):
+class ScopeXY(GraphicsBlock):
     """
     :blockname:`SCOPEXY`
     
@@ -159,7 +159,7 @@ class ScopeXY(SinkBlockGraphics):
 # ------------------------------------------------------------------------ #
 
 @block
-class Vehicle(SinkBlockGraphics):
+class Vehicle(GraphicsBlock):
     """
     :blockname:`VEHICLE`
     
@@ -286,7 +286,7 @@ class Vehicle(SinkBlockGraphics):
 # ------------------------------------------------------------------------ #
 
 @block
-class MultiRotorPlot(SinkBlockGraphics):
+class MultiRotorPlot(GraphicsBlock):
     """
     :blockname:`MULTIROTORPLOT`
     
@@ -487,7 +487,7 @@ class MultiRotorPlot(SinkBlockGraphics):
 
 
 @block
-class Scope(SinkBlockGraphics):
+class Scope(GraphicsBlock):
     """
     :blockname:`SCOPE`
 

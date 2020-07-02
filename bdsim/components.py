@@ -751,9 +751,9 @@ class SinkBlock(Block):
         self.nout = 0
         self.nstates = 0
 
-class SinkBlockGraphics(SinkBlock):
+class GraphicsBlock(SinkBlock):
     """
-    A SinkBlockGraphics is a subclass of SinkBlock that represents a block that has inputs
+    A GraphicsBlock is a subclass of SinkBlock that represents a block that has inputs
     but no outputs. Typically used to save data to a variable, file or 
     graphics.
     """

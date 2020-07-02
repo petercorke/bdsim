@@ -894,7 +894,7 @@ class BlockDiagram:
             
     def savefig(self, format='pdf', **kwargs):
         for b in self.blocklist:
-            if isinstance(b, SinkBlockGraphics):
+            if isinstance(b, GraphicsBlock):
                 fname = str(b) + '.' + format
                 print('saving {} -> {}'.format(str(b), fname))
                 b.savefig(fname, **kwargs)
