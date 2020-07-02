@@ -26,6 +26,15 @@ def DEBUG(debug, *args):
     if debug in debuglist:
         print('DEBUG.{:s}: '.format(debug), *args)
 
+
+def printProgressBar (fraction, prefix='', suffix='', decimals=1, length=50, fill = '█', printEnd = "\r"):
+    # https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console
+    percent = ("{0:." + str(decimals) + "f}").format(fraction * 100)
+    filledLength = int(length * fraction)
+    bar = fill * filledLength + '-' * (length - filledLength)
+    print(f'\r{prefix} |{bar}| {percent}% {suffix}', end = printEnd)
+
+
 # ------------------------------------------------------------------------- #    
 
 
@@ -697,6 +706,7 @@ class BlockDiagram:
             def _deriv(t, y, s):
                 return s.evaluate(y, t)
     
+            printProgressBar(0, prefix='Progress:', suffix='complete', length=60)
 
             # out = scipy.integrate.solve_ivp.BlockDiagram._deriv, args=(self,), t_span=(0,T), y0=x0, 
             #             method=solver, t_eval=np.linspace(0, T, 100), events=None, **kwargs)
@@ -719,7 +729,8 @@ class BlockDiagram:
                     
                     self.step()
                     
-                    print('\rt = {:.3f}      '.format(integrator.t), end='')
+                    #print('\rt = {:.3f}      '.format(integrator.t), end='')
+                    printProgressBar(integrator.t / T, prefix='Progress:', suffix='complete', length=60)
                     
                 if integrator.status == 'failed':
                     print('integration completed with failed status ')
