@@ -259,7 +259,8 @@ class Scope(GraphicsBlock):
                 # plt.show(block=False)
                 # if self.bd.animation:
                 #     self.fig.canvas.start_event_loop(0.001)
-                self.fig.canvas.flush_events()
+                if self.bd.animation:
+                    self.fig.canvas.flush_events()
             
                 if self.scale == 'auto':
                     self.ax.relim()
@@ -381,7 +382,8 @@ class ScopeXY(GraphicsBlock):
             # plt.show(block=False)
             # if self.bd.animation:
             #     self.fig.canvas.start_event_loop(0.001)
-            self.fig.canvas.flush_events()
+            if self.bd.animation:
+                self.fig.canvas.flush_events()
 
         
             if self.scale == 'auto':
@@ -552,7 +554,8 @@ class VehiclePlot(GraphicsBlock):
             # plt.show(block=False)
             # if self.bd.animation:
             #     self.fig.canvas.start_event_loop(0.001)
-            self.fig.canvas.flush_events()
+            if self.bd.animation:
+                self.fig.canvas.flush_events()
         
             if self.scale == 'auto':
                 self.ax.relim()
