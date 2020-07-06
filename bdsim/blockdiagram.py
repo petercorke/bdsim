@@ -102,6 +102,9 @@ class BlockDiagram:
                             help='disable graphic display')
         parser.add_argument('--animation', '-a', default=False, action='store_const', const=True,
                             help='animate graphics')
+        parser.add_argument('--noprogress', '-p', default=True, action='store_const', const=False, dest='progress',
+                    help='animate graphics')
+
         parser.add_argument('--debug', '-d', type=str, metavar='[psd]', default='', 
                             help='debug flags')
         args = parser.parse_args()      
@@ -697,56 +700,75 @@ class BlockDiagram:
             # tell all blocks we're doing a.BlockDiagram
             self.start()
     
+            # get initial state from the stateful blocks
             x0 = self.getstate()
             if len(x0) > 0:
                 print('initial state x0 = ', x0)
-            
     
-            # integratnd function, wrapper for network evaluation method
-            def _deriv(t, y, s):
-                return s.evaluate(y, t)
-    
-            printProgressBar(0, prefix='Progress:', suffix='complete', length=60)
+            if self.args.progress:
+                printProgressBar(0, prefix='Progress:', suffix='complete', length=60)
 
             # out = scipy.integrate.solve_ivp.BlockDiagram._deriv, args=(self,), t_span=(0,T), y0=x0, 
             #             method=solver, t_eval=np.linspace(0, T, 100), events=None, **kwargs)
             if len(x0) > 0:
-                integrator = integrate.__dict__[solver](lambda t, y: _deriv(t, y, self), t0=0.0, y0=x0, t_bound=T, max_step=dt)
-            
+                # block diagram contains states, solve it using numerical integration
+
+                scipy_integrator = integrate.__dict__[solver]  # get user specified integrator
+
+                integrator = scipy_integrator(lambda t, y: self.evaluate(y, t),
+                                              t0=0.0, y0=x0, t_bound=T, max_step=dt)
+
+                # initialize list of time and states
                 t = []
                 x = []
                 while integrator.status == 'running':
-                    
-                    if self.stop is not None:
-                         print('--- stop requested at t={:f} by {:s}'.format(self.t, str(self.stop)))
-                         break
+
                     # step the integrator, calls _deriv multiple times
                     integrator.step()
-                    
+
+                    if integrator.status == 'failed':
+                        print('integration completed with failed status ')
+
                     # stash the results
                     t.append(integrator.t)
                     x.append(integrator.y)
                     
+                    # update all blocks that need to know
                     self.step()
                     
-                    #print('\rt = {:.3f}      '.format(integrator.t), end='')
-                    printProgressBar(integrator.t / T, prefix='Progress:', suffix='complete', length=60)
-                    
-                if integrator.status == 'failed':
-                    print('integration completed with failed status ')
-                out = np.c_[t,x]
+                    # update the progress bar
+                    if self.args.progress:
+                        printProgressBar(integrator.t / T, prefix='Progress:', suffix='complete', length=60)
+
+                    # has any block called a stop?
+                    if self.stop is not None:
+                        print('\n--- stop requested at t={:f} by {:s}'.format(self.t, str(self.stop)))
+                        break
+
+                out = np.c_[t, x]
             else:
-                for t in np.arange(0, T, dt):
-                    _deriv(t, [], self)
+                # block diagram has no states
+                for t in np.arange(0, T, dt):  # step through the time range
+
+                    # evaluate the block diagram
+                    self.evaluate([], t)
+
+                    # update all blocks that need to know
                     self.step()
+
+                    # update the progress bar
+                    if self.args.progress:
+                        printProgressBar(integrator.t / T, prefix='Progress:', suffix='complete', length=60)
                 out = None
                 
         except RuntimeError as err:
+            # bad things happens, print a message and return no result
             print('unrecoverable error in evaluation: ', err)
             return None
 
+        # pause until all graphics blocks close
         self.done(block=block)
-        print(self.count, ' integrator steps')
+        # print(self.count, ' integrator steps')
         
         return out
         
