@@ -26,31 +26,43 @@ from bdsim.components import FunctionBlock, block
 class Sum(FunctionBlock):
     """
     :blockname:`SUM`
-
-    :param signs: signs associated with input ports, + or -
-    :type signs: str
-    :param ``*inputs``: Optional incoming connections
-    :type ``*inputs``: Block or Plug
-    :param angles: the signals are angles, wrap to [-pi,pi)
-    :type angles: bool
-    :param ``**kwargs``: common Block options
-    :return: A SUM block
-    :rtype: Sum instance
     
-    Create a summing junction.
-
-    The number of input ports is determined by the length of the `signs`
-    string.  For example::
-        
-        SUM('+-+')
-        
-    is a 3-input summing junction where ports 0 and 2 are added and
-    port 1 is subtracted.
-
+    .. table::
+       :align: left
+    
+       +------------+---------+---------+
+       | inputs     | outputs |  states |
+       +------------+---------+---------+
+       | len(signs) | 1       | 0       |
+       +------------+---------+---------+
+       | float,     | float,  |         | 
+       | A(N,),     | A(N,),  |         |
+       | A(N,M)     | A(N,M)  |         | 
+       +------------+---------+---------+
     """
 
     def __init__(self, signs, *inputs, angles=False, **kwargs):
-
+        """
+        :param signs: signs associated with input ports, + or -
+        :type signs: str
+        :param ``*inputs``: Optional incoming connections
+        :type ``*inputs``: Block or Plug
+        :param angles: the signals are angles, wrap to [-pi,pi)
+        :type angles: bool
+        :param ``**kwargs``: common Block options
+        :return: A SUM block
+        :rtype: Sum instance
+        
+        Create a summing junction.
+    
+        The number of input ports is determined by the length of the `signs`
+        string.  For example::
+            
+            SUM('+-+')
+            
+        is a 3-input summing junction where ports 0 and 2 are added and
+        port 1 is subtracted.
+        """
         super().__init__(nin=len(signs), nout=1, inputs=inputs, **kwargs)
         assert isinstance(signs, str), 'first argument must be signs string'
         self.type = 'sum'
@@ -78,30 +90,44 @@ class Sum(FunctionBlock):
 class Prod(FunctionBlock):
     """
     :blockname:`PROD`
-
-    :param ops: operations associated with input ports * or /
-    :type ops: str
-    :param ``*inputs``: Optional incoming connections
-    :type ``*inputs``: Block or Plug
-    :param matrix: Arguments are matrices, use @ and np.linalg.inv, default False
-    :type matrix: bool
-    :param ``**kwargs``: common Block options
-    :return: A PROD block
-    :rtype: Prod instance
     
-    Create a product junction.
-
-    The number of input ports is determined by the length of the `ops`
-    string.  For example::
-        
-        PROD('*/*')
-        
-    is a 3-input product junction where ports 0 and 2 are multiplied and
-    port 1 is divided.
-
+    .. table::
+       :align: left
+    
+       +------------+---------+---------+
+       | inputs     | outputs |  states |
+       +------------+---------+---------+
+       | len(ops)   | 1       | 0       |
+       +------------+---------+---------+
+       | float,     | float,  |         | 
+       | A(N,),     | A(N,),  |         |
+       | A(N,M)     | A(N,M)  |         | 
+       +------------+---------+---------+
     """
-    def __init__(self, ops, *inputs, matrix=False, **kwargs):
 
+    def __init__(self, ops, *inputs, matrix=False, **kwargs):
+        """
+        :param ops: operations associated with input ports * or /
+        :type ops: str
+        :param ``*inputs``: Optional incoming connections
+        :type ``*inputs``: Block or Plug
+        :param matrix: Arguments are matrices, use @ and np.linalg.inv, default False
+        :type matrix: bool
+        :param ``**kwargs``: common Block options
+        :return: A PROD block
+        :rtype: Prod instance
+        
+        Create a product junction.
+    
+        The number of input ports is determined by the length of the `ops`
+        string.  For example::
+            
+            PROD('*/*')
+            
+        is a 3-input product junction where ports 0 and 2 are multiplied and
+        port 1 is divided.
+    
+        """
         super().__init__(nin=len(ops),nout=1, inputs=inputs, **kwargs)
         assert isinstance(ops, str), 'first argument must be signs string'
         self.type = 'prod'
@@ -138,31 +164,43 @@ class Prod(FunctionBlock):
 class Gain(FunctionBlock):
     """
     :blockname:`GAIN`
-
-    :param gain: The gain value
-    :type gain: float
-    :param ``*inputs``: Optional incoming connections
-    :type ``*inputs``: Block or Plug
-    :param premul: premultiply by constant, default is postmultiply
-    :type premul: bool, optional
-    :param ``**kwargs``: common Block options
-    :return: A GAIN block
-    :rtype: Gain instance
     
-    Create a gain block.
-
-    This block has only one input and one output port. The output is the
-    product of the input by the gain.
+    .. table::
+       :align: left
     
-    Either or both the input and gain can be numpy arrays and numpy will
-    compute the appropriate product.  If both are numpy arrays then the
-    matmult operator `@` is used and by default the input is postmultiplied
-    by the gain, but this can be changed using the ``premul`` option.
-
+       +------------+---------+---------+
+       | inputs     | outputs |  states |
+       +------------+---------+---------+
+       | 1          | 1       | 0       |
+       +------------+---------+---------+
+       | float,     | float,  |         | 
+       | A(N,),     | A(N,),  |         |
+       | A(N,M)     | A(N,M)  |         | 
+       +------------+---------+---------+
     """
 
     def __init__(self, gain, *inputs, premul=False, **kwargs):
-
+        """
+        :param gain: The gain value
+        :type gain: float
+        :param ``*inputs``: Optional incoming connections
+        :type ``*inputs``: Block or Plug
+        :param premul: premultiply by constant, default is postmultiply
+        :type premul: bool, optional
+        :param ``**kwargs``: common Block options
+        :return: A GAIN block
+        :rtype: Gain instance
+        
+        Create a gain block.
+    
+        This block has only one input and one output port. The output is the
+        product of the input by the gain.
+        
+        Either or both the input and gain can be numpy arrays and numpy will
+        compute the appropriate product.  If both are numpy arrays then the
+        matmult operator `@` is used and by default the input is postmultiplied
+        by the gain, but this can be changed using the ``premul`` option.
+        """
         super().__init__(nin=1, nout=1, inputs=inputs, **kwargs)
         self.gain  = gain
         self.type = 'gain'
@@ -189,32 +227,44 @@ class Clip(FunctionBlock):
     """
     :blockname:`CLIP`
     
-    :param ``*inputs``: Optional incoming connections
-    :type ``*inputs``: Block or Plug
-    :param min: Minimum value, defaults to -math.inf
-    :type min: float or array_like, optional
-    :param max: Maximum value, defaults to math.inf
-    :type max: float or array_like, optional
-    :param ``**kwargs``: common Block options
-    :return: A CLIP block
-    :rtype: Clip instance
+    .. table::
+       :align: left
     
-    Create a value clipping block.
-    
-    Input signals are clipped to the range from ``minimum`` to ``maximum`` inclusive.
-    
-    The signal can be a vector in which case each element is clipped.  The
-    minimum and maximum values can be:
-        
-        - a scalar, in which case the same value applies to every element of 
-          the input vector , or
-        - a vector, of the same shape as the input vector that applies elementwise to
-          the input vector.
-    
+       +------------+---------+---------+
+       | inputs     | outputs |  states |
+       +------------+---------+---------+
+       | 1          | 1       | 0       |
+       +------------+---------+---------+
+       | float,     | float,  |         | 
+       | A(N,)      | A(N,)   |         |
+       +------------+---------+---------+
 
     """
     def __init__(self, *inputs, min=-math.inf, max=math.inf, **kwargs):
-
+        """
+        :param ``*inputs``: Optional incoming connections
+        :type ``*inputs``: Block or Plug
+        :param min: Minimum value, defaults to -math.inf
+        :type min: float or array_like, optional
+        :param max: Maximum value, defaults to math.inf
+        :type max: float or array_like, optional
+        :param ``**kwargs``: common Block options
+        :return: A CLIP block
+        :rtype: Clip instance
+        
+        Create a value clipping block.
+        
+        Input signals are clipped to the range from ``minimum`` to ``maximum`` inclusive.
+        
+        The signal can be a vector in which case each element is clipped.  The
+        minimum and maximum values can be:
+            
+            - a scalar, in which case the same value applies to every element of 
+              the input vector , or
+            - a vector, of the same shape as the input vector that applies elementwise to
+              the input vector.
+        
+        """
         super().__init__(nin=1, nout=1, inputs=inputs, **kwargs)
         self.min = min
         self.max = max
@@ -235,71 +285,82 @@ class Clip(FunctionBlock):
 class Function(FunctionBlock):
     """
     :blockname:`FUNCTION`
-
-    :param func: A function or lambda, or list thereof
-    :type func: callable or sequence of callables
-    :param ``*inputs``: Optional incoming connections
-    :type ``*inputs``: Block or Plug
-    :param nin: number of inputs, defaults to 1
-    :type nin: int, optional
-    :param nout: number of outputs, defaults to 1
-    :type nout: int, optional
-    :param dict: pass in a reference to a dictionary instance
-    :type dict: bool
-    :param args: extra positional arguments passed to the function, defaults to ()
-    :type args: tuple, optional
-    :param kwargs: extra keyword arguments passed to the function, defaults to {}
-    :type kwargs: dict, optional
-    :param ``**kwargs``: common Block options
-    :return: A FUNCTION block
-    :rtype: _Function
-
-    Create a Python function block.
-
-    A block with one output port that sums its two input ports is::
-        
-        FUNCTION(lambda u1, u2: u1+u2, nin=2)
-        
-    A block with a function that takes two inputs and has two additional arguments::
     
-        def myfun(u1, u2, param1, param2):
-            pass
-        
-        FUNCTION(myfun, nin=2, args=(p1,p2))
-        
-    If we need access to persistent (static) data, to keep some state::
+    .. table::
+       :align: left
     
-        def myfun(u1, u2, param1, param2, dict):
-            pass
-        
-        FUNCTION(myfun, nin=2, args=(p1,p2), dict=True)
-        
-    where a dictionary is passed in as the last argument which is kept from call to call.
-        
-    A block with a function that takes two inputs and additional keyword arguments::
-    
-        def myfun(u1, u2, param1=1, param2=2, param3=3, param4=4):
-            pass
-        
-        FUNCTION(myfun, nin=2, kwargs={'param2':7, 'param3':8})
-                 
-    A block with two inputs and two outputs, the outputs are defined by two lambda
-    functions with the same inputs::
-        
-        FUNCTION( [ lambda x, y: x_t, lanbda x, y: x* y])
-    
-    A block with two inputs and two outputs, the outputs are defined by a 
-    single function::
-        
-        def myfun(u1, u2):
-            return [ u1+u2, u1*u2 ]
-        
-        FUNCTION( myfun, nin=2, nout=2)
-
+       +------------+---------+---------+
+       | inputs     | outputs |  states |
+       +------------+---------+---------+
+       | nin        | nout    | 0       |
+       +------------+---------+---------+
+       | any        | any     |         | 
+       +------------+---------+---------+
+ 
     """
 
     def __init__(self, func, *inputs, nin=1, nout=1, dict=False, args=(), kwargs={}, **kwargs_):
-
+        """
+        :param func: A function or lambda, or list thereof
+        :type func: callable or sequence of callables
+        :param ``*inputs``: Optional incoming connections
+        :type ``*inputs``: Block or Plug
+        :param nin: number of inputs, defaults to 1
+        :type nin: int, optional
+        :param nout: number of outputs, defaults to 1
+        :type nout: int, optional
+        :param dict: pass in a reference to a dictionary instance
+        :type dict: bool
+        :param args: extra positional arguments passed to the function, defaults to ()
+        :type args: tuple, optional
+        :param kwargs: extra keyword arguments passed to the function, defaults to {}
+        :type kwargs: dict, optional
+        :param ``**kwargs``: common Block options
+        :return: A FUNCTION block
+        :rtype: _Function
+    
+        Create a Python function block.
+    
+        A block with one output port that sums its two input ports is::
+            
+            FUNCTION(lambda u1, u2: u1+u2, nin=2)
+            
+        A block with a function that takes two inputs and has two additional arguments::
+        
+            def myfun(u1, u2, param1, param2):
+                pass
+            
+            FUNCTION(myfun, nin=2, args=(p1,p2))
+            
+        If we need access to persistent (static) data, to keep some state::
+        
+            def myfun(u1, u2, param1, param2, dict):
+                pass
+            
+            FUNCTION(myfun, nin=2, args=(p1,p2), dict=True)
+            
+        where a dictionary is passed in as the last argument which is kept from call to call.
+            
+        A block with a function that takes two inputs and additional keyword arguments::
+        
+            def myfun(u1, u2, param1=1, param2=2, param3=3, param4=4):
+                pass
+            
+            FUNCTION(myfun, nin=2, kwargs={'param2':7, 'param3':8})
+                     
+        A block with two inputs and two outputs, the outputs are defined by two lambda
+        functions with the same inputs::
+            
+            FUNCTION( [ lambda x, y: x_t, lanbda x, y: x* y])
+        
+        A block with two inputs and two outputs, the outputs are defined by a 
+        single function::
+            
+            def myfun(u1, u2):
+                return [ u1+u2, u1*u2 ]
+            
+            FUNCTION( myfun, nin=2, nout=2)
+        """
         super().__init__(nin=nin, nout=nout, inputs=inputs, **kwargs_)
         self.nin = nin
         self.type = 'function'
@@ -356,51 +417,61 @@ class Function(FunctionBlock):
 class Interpolate(FunctionBlock):
     """
     :blockname:`INTERPOLATE`
-
-    :param ``*inputs``: Optional incoming connections
-    :type ``*inputs``: Block or Plug
-    :param x: x-values of function
-    :type x: array_like, shape (N,) optional
-    :param y: y-values of function
-    :type y: array_like, optional
-    :param xy: combined x- and y-values of function
-    :type xy: array_like, optional
-    :param time: x new is simulation time, defaults to False
-    :type time: bool
-    :param kind: interpolation method, defaults to 'linear'
-    :type kind: str
-    :param ``**kwargs``: common Block options
-    :return: INTERPOLATE block
-    :rtype: _Function
     
-    Create an interpolation block.
-
-    A block that interpolates its input according to a piecewise function.
+    .. table::
+       :align: left
     
-    A simple triangle function with domain [0,10] and range [0,1] can be
-    defined by::
-        
-        INTERPOLATE(x=(0,5,10), y=(0,1,0))
-    
-    We might also express this as::
-        
-        INTERPOLATE(xy=[(0,0), (5,1), (10,0)])
-    
-    The data can also be expressed as numpy arrays.  If that is the case,
-    the interpolation function can be vector valued. ``x`` has a shape of
-    (N,1) and ``y`` has a shape of (N,M).  Alternatively ``xy`` has a shape
-    of (N,M+1) and the first column is the x-data.
-    
-    The input to the interpolator comes from:
-        
-    - Input port 0
-    - Simulation time, if ``time=True``.  In this case the block has no
-      input ports and is a ``Source`` not a ``Function``.
-
+       +------------+---------+---------+
+       | inputs     | outputs |  states |
+       +------------+---------+---------+
+       | 0 or 1     | 1       | 0       |
+       +------------+---------+---------+
+       | float      | any     |         | 
+       +------------+---------+---------+
     """
 
     def __init__(self, *inputs, x=None, y=None, xy=None, time=False, kind='linear', **kwargs):
-
+        """
+        :param ``*inputs``: Optional incoming connections
+        :type ``*inputs``: Block or Plug
+        :param x: x-values of function
+        :type x: array_like, shape (N,) optional
+        :param y: y-values of function
+        :type y: array_like, optional
+        :param xy: combined x- and y-values of function
+        :type xy: array_like, optional
+        :param time: x new is simulation time, defaults to False
+        :type time: bool
+        :param kind: interpolation method, defaults to 'linear'
+        :type kind: str
+        :param ``**kwargs``: common Block options
+        :return: INTERPOLATE block
+        :rtype: _Function
+        
+        Create an interpolation block.
+    
+        A block that interpolates its input according to a piecewise function.
+        
+        A simple triangle function with domain [0,10] and range [0,1] can be
+        defined by::
+            
+            INTERPOLATE(x=(0,5,10), y=(0,1,0))
+        
+        We might also express this as::
+            
+            INTERPOLATE(xy=[(0,0), (5,1), (10,0)])
+        
+        The data can also be expressed as numpy arrays.  If that is the case,
+        the interpolation function can be vector valued. ``x`` has a shape of
+        (N,1) and ``y`` has a shape of (N,M).  Alternatively ``xy`` has a shape
+        of (N,M+1) and the first column is the x-data.
+        
+        The input to the interpolator comes from:
+            
+        - Input port 0
+        - Simulation time, if ``time=True``.  In this case the block has no
+          input ports and is a ``Source`` not a ``Function``.
+        """
         self.time = time
         if time:
             nin = 0

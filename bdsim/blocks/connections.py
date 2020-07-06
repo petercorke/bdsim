@@ -30,26 +30,38 @@ class Item(FunctionBlock):
     """
     :blockname:`ITEM`
     
-    :param item: name of dictionary item
-    :type item: str
-    :param ``*inputs``: Optional incoming connections
-    :type ``*inputs``: Block or Plug
-    :param ``**kwargs``: common Block options
-    :return: An ITEM block
-    :rtype: Item instance
+    .. table::
+       :align: left
     
-    Create a signal selector block.
-
-    For a dictionary type inut signal select one item as the output signal.
-    For example::
-        
-        ITEM('xd')
-        
-    selects the ``xd`` item from the dictionary output signal of the MULTIROTOR
-    block.
+       +------------+---------+---------+
+       | inputs     | outputs |  states |
+       +------------+---------+---------+
+       | 1          | 1       | 0       |
+       +------------+---------+---------+
+       | dict       | any     |         | 
+       +------------+---------+---------+
     """
-    def __init__(self, item, *inputs, **kwargs):
 
+    def __init__(self, item, *inputs, **kwargs):
+        """
+        :param item: name of dictionary item
+        :type item: str
+        :param ``*inputs``: Optional incoming connections
+        :type ``*inputs``: Block or Plug
+        :param ``**kwargs``: common Block options
+        :return: An ITEM block
+        :rtype: Item instance
+        
+        Create a signal selector block.
+
+        For a dictionary type inut signal select one item as the output signal.
+        For example::
+            
+            ITEM('xd')
+            
+        selects the ``xd`` item from the dictionary output signal of the MULTIROTOR
+        block.
+        """
 
         super().__init__(nin=1, nout=1, **kwargs)
         self.type = 'item'
@@ -67,28 +79,42 @@ class Mux(FunctionBlock):
     """
     :blockname:`MUX`
 
-    :param nin: Number of input ports, defaults to 1
-    :type nin: int, optional
-    :param ``*inputs``: Optional incoming connections
-    :type ``*inputs``: Block or Plug
-    :param ``**kwargs``: common Block options
-    :return: A MUX block
-    :rtype: Mux instance
-
-    Create a multiplexer block.
-
-    This block takes a number of scalar or vector signals and concatenates
-    them into a single vector signal.  For example::
-        
-        MUX(2, func1[2], sum3)
-        
-    multiplexes the outputs of blocks ``func1`` (port 2) and ``sum3`` into
-    a single output vector.  If the explicit inputs are omitted they can be wired
-    using the ``connect`` function.
+    .. table::
+       :align: left
     
-    """
-    def __init__(self, nin=1, *inputs, **kwargs):
 
+       +------------+---------+---------+
+       | inputs     | outputs |  states |
+       +------------+---------+---------+
+       | nin        | 1       | 0       |
+       +------------+---------+---------+
+       | float,     | A(M,)   |         |
+       | A(N,)      | A(M,)   |         | 
+       +------------+---------+---------+
+    """
+
+    def __init__(self, nin=1, *inputs, **kwargs):
+        """
+        :param nin: Number of input ports, defaults to 1
+        :type nin: int, optional
+        :param ``*inputs``: Optional incoming connections
+        :type ``*inputs``: Block or Plug
+        :param ``**kwargs``: common Block options
+        :return: A MUX block
+        :rtype: Mux instance
+
+        Create a multiplexer block.
+
+        This block takes a number of scalar or vector signals and concatenates
+        them into a single vector signal.  For example::
+            
+            MUX(2, func1[2], sum3)
+            
+        multiplexes the outputs of blocks ``func1`` (port 2) and ``sum3`` into
+        a single output vector.  If the explicit inputs are omitted they can be wired
+        using the ``connect`` function.
+        
+        """
         super().__init__(nin=nin, nout=1, inputs=inputs, **kwargs)
         self.type = 'mux'
     
@@ -103,23 +129,36 @@ class DeMux(FunctionBlock):
     """
     :blockname:`DEMUX`
     
-    :param nout: DESCRIPTION, defaults to 1
-    :type nout: TYPE, optional
-    :param ``*inputs``: Optional incoming connections
-    :type ``*inputs``: Block or Plug
-    :param ``**kwargs``: common Block options
-    :return: A DEMUX block
-    :rtype: DeMux instance
+    .. table::
+       :align: left
     
-    Create a demultiplexer block.
+       +------------+---------+---------+
+       | inputs     | outputs |  states |
+       +------------+---------+---------+
+       | 1          | nout    | 0       |
+       +------------+---------+---------+
+       | float,     | float   |         |
+       | A(nout,)   |         |         | 
+       +------------+---------+---------+
+    """
 
-    This block has a single input port and ``nout`` output ports.  A vector
-    input signal (with ``nout`` elements) is routed element-wise to individual
-    scalar output port.
+    def __init__(self, nout=1, *inputs, **kwargs):
+        """
+        :param nout: DESCRIPTION, defaults to 1
+        :type nout: TYPE, optional
+        :param ``*inputs``: Optional incoming connections
+        :type ``*inputs``: Block or Plug
+        :param ``**kwargs``: common Block options
+        :return: A DEMUX block
+        :rtype: DeMux instance
+        
+        Create a demultiplexer block.
+
+        This block has a single input port and ``nout`` output ports.  A vector
+        input signal (with ``nout`` elements) is routed element-wise to individual
+        scalar output port.
 
         """
-    def __init__(self, nout=1, *inputs, **kwargs):
-
         super().__init__(nin=1, nout=nout, inputs=inputs, **kwargs)
         self.type = 'demux'
     
@@ -134,46 +173,65 @@ class SubSystem(SubsystemBlock):
     """
     :blockname:`SUBSYSTEM`
     
-    :param subsys: Subsystem as either a filename or a ``BlockDiagram`` instance
-    :type subsys: str or BlockDiagram
-    :param ``*inputs``: Optional incoming connections
-    :type ``*inputs``: Block or Plug
-    :param ``**kwargs``: common Block options
-    :raises ImportError: DESCRIPTION
-    :raises ValueError: DESCRIPTION
-    :return: A SUBSYSTEM block
-    :rtype: SubSystem instance
+    .. table::
+       :align: left
     
-    Create a subsystem block.
+       ==========  ==========  ======
+       inputs      outputs     states
+       ==========  ==========  ======
+       ss.in.nout  ss.out.nin   0
+       any         any
+       ==========  ==========  ======
+       
+       +------------+------------+---------+
+       | inputs     | outputs    |  states |
+       +------------+------------+---------+
+       | ss.in.nout | ss.out.nin | 0       |
+       +------------+------------+---------+
+       | any        | any        |         |
+       +------------+------------+---------+
+    """
 
-    This block represents a subsystem in a parent block diagram.  It can be
-    specified as either:
-        
-        - the name of a module which is imported and must contain only
-          only ``BlockDiagram`` instance, or
-        - a ``BlockDiagram`` instance
-    
-    The referenced block diagram must contain one or both of:
-    
-        - one ``InPort`` block, which has outputs but no inputs. These
-          outputs are connected to the inputs to the enclosing ``SubSystem`` block.
-        - one ``OutPort`` block, which has inputs but no outputs. These
-          inputs are connected to the outputs to the enclosing ``SubSystem`` block.
-          
-    Notes:
-        
-    - The referenced block diagram is treated like a macro and copied into 
-      the parent block diagram at compile time. The ``SubSystem``, ``InPort`` and
-      ``OutPort`` blocks are eliminated, that is, all hierarchical structure is 
-      lost.
-    - The same subsystem can be used multiple times, its blocks and wires
-       will be cloned.  Subsystems can also include subsystems.
-    - The number of input and output ports is not specified, they are computed
-      from the number of ports on the ``InPort`` and ``OutPort`` blocks within the
-      subsystem.
-    """    
     def __init__(self, subsys, *inputs, **kwargs):
+        """
+        :param subsys: Subsystem as either a filename or a ``BlockDiagram`` instance
+        :type subsys: str or BlockDiagram
+        :param ``*inputs``: Optional incoming connections
+        :type ``*inputs``: Block or Plug
+        :param ``**kwargs``: common Block options
+        :raises ImportError: DESCRIPTION
+        :raises ValueError: DESCRIPTION
+        :return: A SUBSYSTEM block
+        :rtype: SubSystem instance
+        
+        Create a subsystem block.
 
+        This block represents a subsystem in a parent block diagram.  It can be
+        specified as either:
+            
+            - the name of a module which is imported and must contain only
+              only ``BlockDiagram`` instance, or
+            - a ``BlockDiagram`` instance
+        
+        The referenced block diagram must contain one or both of:
+        
+            - one ``InPort`` block, which has outputs but no inputs. These
+              outputs are connected to the inputs to the enclosing ``SubSystem`` block.
+            - one ``OutPort`` block, which has inputs but no outputs. These
+              inputs are connected to the outputs to the enclosing ``SubSystem`` block.
+              
+        Notes:
+            
+        - The referenced block diagram is treated like a macro and copied into 
+          the parent block diagram at compile time. The ``SubSystem``, ``InPort`` and
+          ``OutPort`` blocks are eliminated, that is, all hierarchical structure is 
+          lost.
+        - The same subsystem can be used multiple times, its blocks and wires
+           will be cloned.  Subsystems can also include subsystems.
+        - The number of input and output ports is not specified, they are computed
+          from the number of ports on the ``InPort`` and ``OutPort`` blocks within the
+          subsystem.
+        """
         super().__init__(inputs=inputs, **kwargs)
         self.type = 'subsystem'
         
@@ -207,21 +265,32 @@ class SubSystem(SubsystemBlock):
 class InPort(SubsystemBlock):
     """
     :blockname:`INPORT`
-
-    :param nout: Number of output ports, defaults to 1
-    :type nout: int, optional
-    :param ``**kwargs``: common Block options
-    :return: An INPORT block
-    :rtype: InPort instance
-
-    Create an input port block for a subsystem.
     
-    This block connects a subsystem to a parent block diagram.  Inputs to the
-    parent-level ``SubSystem`` block appear as outputs of this block.
+    .. table::
+       :align: left
+    
+       +------------+---------+---------+
+       | inputs     | outputs |  states |
+       +------------+---------+---------+
+       | 0          | nout    | 0       |
+       +------------+---------+---------+
+       |            | any     |         |
+       +------------+---------+---------+
     """
     
     def __init__(self, nout=1, **kwargs):
+        """
+        :param nout: Number of output ports, defaults to 1
+        :type nout: int, optional
+        :param ``**kwargs``: common Block options
+        :return: An INPORT block
+        :rtype: InPort instance
 
+        Create an input port block for a subsystem.
+        
+        This block connects a subsystem to a parent block diagram.  Inputs to the
+        parent-level ``SubSystem`` block appear as outputs of this block.
+        """
         super().__init__(nout=nout, **kwargs)
         self.type = 'inport'
 
@@ -230,23 +299,34 @@ class InPort(SubsystemBlock):
 class OutPort(SubsystemBlock):
     """
     :blockname:`OUTPORT`
-
-    :param nin: Number of input ports, defaults to 1
-    :type nin: int, optional
-    :param ``*inputs``: Optional incoming connections
-    :type ``*inputs``: Block or Plug
-    :param ``**kwargs``: common Block options
-    :return: A OUTPORT block
-    :rtype: OutPort instance
     
-    Create an output port block for a subsystem.
-
-    This block connects a subsystem to a parent block diagram.  Outputs of the
-    parent-level ``SubSystem`` block are the inputs of this block.
+    .. table::
+       :align: left
+    
+       +------------+---------+---------+
+       | inputs     | outputs |  states |
+       +------------+---------+---------+
+       | nin        | 0       | 0       |
+       +------------+---------+---------+
+       | any        |         |         |
+       +------------+---------+---------+
     """
 
     def __init__(self, nin=1, *inputs, **kwargs):
+        """
+        :param nin: Number of input ports, defaults to 1
+        :type nin: int, optional
+        :param ``*inputs``: Optional incoming connections
+        :type ``*inputs``: Block or Plug
+        :param ``**kwargs``: common Block options
+        :return: A OUTPORT block
+        :rtype: OutPort instance
+        
+        Create an output port block for a subsystem.
 
+        This block connects a subsystem to a parent block diagram.  Outputs of the
+        parent-level ``SubSystem`` block are the inputs of this block.
+        """
         super().__init__(nin=nin, inputs=inputs, **kwargs)
         self.type = 'outport'
 

@@ -23,42 +23,53 @@ from bdsim.components import TransferBlock, block
 class Bicycle(TransferBlock):
     """
     :blockname:`BICYCLE`
-
-    :param ``*inputs``: Optional incoming connections
-    :type ``*inputs``: Block or Plug
-    :param x0: Inital state, defaults to 0
-    :type x0: array_like, optional
-    :param L: Wheelbase, defaults to 1
-    :type L: float, optional
-    :param vlim: Velocity limit, defaults to 1
-    :type vlim: float, optional
-    :param slim: Steering limit, defaults to 1
-    :type slim: float, optional
-    :param ``**kwargs``: common Block options
-    :return: a BICYCLE block
-    :rtype: Bicycle instance
     
-    Create a vehicle model with Bicycle kinematics.
+    .. table::
+       :align: left
     
-    Bicycle kinematic model with state :math:`[x, y, \theta]`.  
-    
-    The block has two input ports:
-        
-        1. Vehicle speed (metres/sec).  The velocity limit ``vlim`` is
-           applied to the magnitude of this input.
-        2. Steering wheel angle (radians).  The steering limit ``slim``
-           is applied to the magnitude of this input.
-        
-    and three output ports:
-        
-        1. x position in the world frame (metres)
-        2. y positon in the world frame (metres)
-        3. heading angle with respect to the world frame (radians)
-
+       +------------+---------+---------+
+       | inputs     | outputs |  states |
+       +------------+---------+---------+
+       | 2          | 3       | 3       |
+       +------------+---------+---------+
+       | float      | float   |         | 
+       +------------+---------+---------+
     """
 
     def __init__(self, *inputs, x0=None, L=1, vlim=1, slim=1, **kwargs):
+        """
+        :param ``*inputs``: Optional incoming connections
+        :type ``*inputs``: Block or Plug
+        :param x0: Inital state, defaults to 0
+        :type x0: array_like, optional
+        :param L: Wheelbase, defaults to 1
+        :type L: float, optional
+        :param vlim: Velocity limit, defaults to 1
+        :type vlim: float, optional
+        :param slim: Steering limit, defaults to 1
+        :type slim: float, optional
+        :param ``**kwargs``: common Block options
+        :return: a BICYCLE block
+        :rtype: Bicycle instance
+        
+        Create a vehicle model with Bicycle kinematics.
+        
+        Bicycle kinematic model with state :math:`[x, y, \theta]`.  
+        
+        The block has two input ports:
+            
+            1. Vehicle speed (metres/sec).  The velocity limit ``vlim`` is
+               applied to the magnitude of this input.
+            2. Steering wheel angle (radians).  The steering limit ``slim``
+               is applied to the magnitude of this input.
+            
+        and three output ports:
+            
+            1. x position in the world frame (metres)
+            2. y positon in the world frame (metres)
+            3. heading angle with respect to the world frame (radians)
 
+        """
         super().__init__(nin=2, nout=3, inputs=inputs, **kwargs)
 
         self.nstates = 3
@@ -95,37 +106,49 @@ class Bicycle(TransferBlock):
 # ------------------------------------------------------------------------ #
 @block
 class Unicycle(TransferBlock):
-    r"""
+    """
     :blockname:`UNICYCLE`
     
-    :param ``*inputs``: Optional incoming connections
-    :type ``*inputs``: Block or Plug
-    :param x0: Inital state, defaults to 0
-    :type x0: array_like, optional
-    :param ``*inputs``: Optional incoming connections
-    :type ``*inputs``: Block or Plug
-    :param ``**kwargs``: common Block options
-    :return: a UNICYCLE block
-    :rtype: Unicycle instance
+    .. table::
+       :align: left
     
-    Create a vehicle model with Unicycle kinematics.
-
-    Unicycle kinematic model with state :math:`[x, y, \theta]`.
-    
-    The block has two input ports:
-        
-        1. Vehicle speed (metres/sec).
-        2. Angular velocity (radians/sec).
-        
-    and three output ports:
-        
-        1. x position in the world frame (metres)
-        2. y positon in the world frame (metres)
-        3. heading angle with respect to the world frame (radians)
-
+       +------------+---------+---------+
+       | inputs     | outputs |  states |
+       +------------+---------+---------+
+       | 2          | 3       | 3       |
+       +------------+---------+---------+
+       | float      | float   |         | 
+       +------------+---------+---------+
     """
+
     def __init__(self, *inputs, x0=None, **kwargs):
+        r"""
+        :param ``*inputs``: Optional incoming connections
+        :type ``*inputs``: Block or Plug
+        :param x0: Inital state, defaults to 0
+        :type x0: array_like, optional
+        :param ``*inputs``: Optional incoming connections
+        :type ``*inputs``: Block or Plug
+        :param ``**kwargs``: common Block options
+        :return: a UNICYCLE block
+        :rtype: Unicycle instance
         
+        Create a vehicle model with Unicycle kinematics.
+
+        Unicycle kinematic model with state :math:`[x, y, \theta]`.
+        
+        The block has two input ports:
+            
+            1. Vehicle speed (metres/sec).
+            2. Angular velocity (radians/sec).
+            
+        and three output ports:
+            
+            1. x position in the world frame (metres)
+            2. y positon in the world frame (metres)
+            3. heading angle with respect to the world frame (radians)
+
+        """        
         super().__init__(nin=2, nout=3, inputs=inputs, **kwargs)
         self.nstates = 3
         self.type = 'unicycle'
@@ -149,45 +172,56 @@ class Unicycle(TransferBlock):
 # ------------------------------------------------------------------------ #
 @block
 class DiffSteer(TransferBlock):
-    r"""
+    """
     :blockname:`DIFFSTEER`
-
-    :param ``*inputs``: Optional incoming connections
-    :type ``*inputs``: Block or Plug
-    :param x0: Inital state, defaults to 0
-    :type x0: array_like, optional
-    :param R: Wheel radius, defaults to 1
-    :type R: float, optional
-    :param W: Wheel separation in lateral direction, defaults to 1
-    :type R: float, optional
-    :param ``**kwargs``: common Block options
-    :return: a DIFFSTEER block
-    :rtype: DifSteer instance
     
-    Create a differential steer vehicle model with Unicycle kinematics, with inputs
-    given as wheel angular velocity.
+    .. table::
+       :align: left
     
-    Unicycle kinematic model with state :math:`[x, y, \theta]`.
-
-    The block has two input ports:
-        
-        1. Left-wheel angular velocity (radians/sec).
-        2. Right-wheel angular velocity (radians/sec).
-        
-    and three output ports:
-        
-        1. x position in the world frame (metres)
-        2. y positon in the world frame (metres)
-        3. heading angle with respect to the world frame (radians)
-
-    Note:
-
-        - wheel velocity is defined such that if both are positive the vehicle
-          moves forward.
+       +------------+---------+---------+
+       | inputs     | outputs |  states |
+       +------------+---------+---------+
+       | 2          | 3       | 3       |
+       +------------+---------+---------+
+       | float      | float   |         | 
+       +------------+---------+---------+
     """
 
     def __init__(self, *inputs, R=1, W=1, x0=None, **kwargs):
+        r"""
+        :param ``*inputs``: Optional incoming connections
+        :type ``*inputs``: Block or Plug
+        :param x0: Inital state, defaults to 0
+        :type x0: array_like, optional
+        :param R: Wheel radius, defaults to 1
+        :type R: float, optional
+        :param W: Wheel separation in lateral direction, defaults to 1
+        :type R: float, optional
+        :param ``**kwargs``: common Block options
+        :return: a DIFFSTEER block
+        :rtype: DifSteer instance
+        
+        Create a differential steer vehicle model with Unicycle kinematics, with inputs
+        given as wheel angular velocity.
+        
+        Unicycle kinematic model with state :math:`[x, y, \theta]`.
 
+        The block has two input ports:
+            
+            1. Left-wheel angular velocity (radians/sec).
+            2. Right-wheel angular velocity (radians/sec).
+            
+        and three output ports:
+            
+            1. x position in the world frame (metres)
+            2. y positon in the world frame (metres)
+            3. heading angle with respect to the world frame (radians)
+
+        Note:
+
+            - wheel velocity is defined such that if both are positive the vehicle
+              moves forward.
+        """
         super().__init__(nin=2, nout=3, inputs=inputs, **kwargs)
         self.nstates = 3
         self.type = 'diffsteer'
@@ -219,40 +253,21 @@ class DiffSteer(TransferBlock):
 
 @block
 class MultiRotor(TransferBlock):
-    r"""
-    :blockname:`MULTIROTOR`
-
-    :param model: Vehicle geometric and inertial parameters
-    :type model: dict
-    :param ``*inputs``: Optional incoming connections
-    :type ``*inputs``: Block or Plug
-    :param groundcheck: Prevent vehicle moving below ground , defaults to True
-    :type groundcheck: bool
-    :param speedcheck: Check for zero rotor speed, defaults to True
-    :type speedcheck: bool
-    :param x0: Initial state, defaults to all zeros
-    :type x0: TYPE, optional
-    :param ``**kwargs``: common Block options
-    :return: a MULTIROTOR block
-    :rtype: MultiRotor instance
-    
-    Create a a multi-rotor dynamic model block.
-    
-    The block has one input port which is a vector of input rotor speeds
-    in (radians/sec).  These are, looking down, clockwise from the front rotor
-    which lies on the x-axis.
-    
-    The block has one output port which is a dictionary signal with the
-    following items:
-        
-        - ``x`` pose in the world frame as :math:`[x, y, z, \theta_Y, \theta_P, \theta_R]`
-        - ``vb`` translational velocity in the world frame (metres/sec)
-        - ``w`` angular rates in the world frame as yaw-pitch-roll rates (radians/second)
-        - ``a1s`` longitudinal flapping angles (radians)
-        - ``b1s`` lateral flapping angles (radians)
-        
-    Based on MATLAB code developed by Pauline Pounds 2004.
     """
+    :blockname:`MULTIROTOR`
+    
+    .. table::
+       :align: left
+    
+       +------------+---------+---------+
+       | inputs     | outputs |  states |
+       +------------+---------+---------+
+       | 1          | 1       | 16      |
+       +------------+---------+---------+
+       | A(4,)      | dict    |         | 
+       +------------+---------+---------+
+    """
+
 
 	# Flyer2dynamics lovingly coded by Paul Pounds, first coded 12/4/04
 	# A simulation of idealised X-4 Flyer II flight dynamics.
@@ -306,7 +321,38 @@ class MultiRotor(TransferBlock):
 	#   n` = inv(W)*o
 	# 
     def __init__(self, model, *inputs, groundcheck=True, speedcheck=True, x0=None, **kwargs):
-
+        r"""
+        :param model: Vehicle geometric and inertial parameters
+        :type model: dict
+        :param ``*inputs``: Optional incoming connections
+        :type ``*inputs``: Block or Plug
+        :param groundcheck: Prevent vehicle moving below ground , defaults to True
+        :type groundcheck: bool
+        :param speedcheck: Check for zero rotor speed, defaults to True
+        :type speedcheck: bool
+        :param x0: Initial state, defaults to all zeros
+        :type x0: TYPE, optional
+        :param ``**kwargs``: common Block options
+        :return: a MULTIROTOR block
+        :rtype: MultiRotor instance
+        
+        Create a a multi-rotor dynamic model block.
+        
+        The block has one input port which is a vector of input rotor speeds
+        in (radians/sec).  These are, looking down, clockwise from the front rotor
+        which lies on the x-axis.
+        
+        The block has one output port which is a dictionary signal with the
+        following items:
+            
+            - ``x`` pose in the world frame as :math:`[x, y, z, \theta_Y, \theta_P, \theta_R]`
+            - ``vb`` translational velocity in the world frame (metres/sec)
+            - ``w`` angular rates in the world frame as yaw-pitch-roll rates (radians/second)
+            - ``a1s`` longitudinal flapping angles (radians)
+            - ``b1s`` lateral flapping angles (radians)
+            
+        Based on MATLAB code developed by Pauline Pounds 2004.
+        """
         super().__init__(nin=1, nout=1, inputs=inputs, **kwargs)
         self.type = 'quadrotor'
     
