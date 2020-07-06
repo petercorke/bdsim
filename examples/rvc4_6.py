@@ -34,7 +34,7 @@ steer_sum = bd.SUM('+-')
 Kd = bd.GAIN(0.5)
 Kh = bd.GAIN(1)
 bike = bd.BICYCLE(x0=x0)
-vplot = bd.VEHICLE(scale=[0, 10], size=0.7, shape='box', init=background_graphics, movie='rvc4_6.mp4')
+vplot = bd.VEHICLEPLOT(scale=[0, 10], size=0.7, shape='box', init=background_graphics, movie='rvc4_6.mp4')
 hscope = bd.SCOPE(name='heading')
 mux = bd.MUX(2)
 

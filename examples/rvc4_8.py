@@ -55,7 +55,7 @@ h2goal = bd.FUNCTION(lambda d: math.atan2(d[1], d[0]), name='h2goal')
 heading_error = bd.SUM('+-', angles=True, name='herr')
 Kh = bd.GAIN(0.5, name='Kh')
 bike = bd.BICYCLE(x0=[2, 2, 0])
-vplot = bd.VEHICLE(scale=[0, 80, 0, 80], size=0.7, shape='box', init=background_graphics, movie='rvc4_4.mp4')
+vplot = bd.VEHICLEPLOT(scale=[0, 80, 0, 80], size=0.7, shape='box', init=background_graphics) #, movie='rvc4_8.mp4')
 sscope = bd.SCOPE(name='steer angle')
 hscope = bd.SCOPE(name='heading angle')
 mux = bd.MUX(2)
@@ -81,6 +81,7 @@ bd.compile()
 bd.report()
 
 print('\nSimulating for ', total_time, ' seconds')
+
 out = bd.run(T=total_time, block=True)
 
 bd.done()

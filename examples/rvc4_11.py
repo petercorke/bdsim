@@ -2,7 +2,7 @@
 
 # run with command line -a switch to show animation
 
-import bdsim.simulation as sim
+import bdsim
 import math
 
 bd = bdsim.BlockDiagram()
@@ -68,7 +68,7 @@ heading_sum = bd.SUM('++', angles=True)
 gsum = bd.SUM('++')
 
 # displays
-vplot = bd.VEHICLE(scale=[0, 10], size=0.7, shape='box', init=background_graphics, movie='rvc4_11.mp4')
+vplot = bd.VEHICLEPLOT(scale=[0, 10], size=0.7, shape='box', init=background_graphics, movie='rvc4_11.mp4')
 ascope = bd.SCOPE(name=r'$\alpha$')
 bscope = bd.SCOPE(name=r'$\beta$')
 
