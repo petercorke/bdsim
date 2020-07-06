@@ -1,3 +1,4 @@
+# bdsim
 # Configuration file for the Sphinx documentation builder.
 #
 # This file only contains a selection of the most common options. For a full
@@ -19,7 +20,7 @@ sys.path.append(os.path.abspath('exts'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'bdsim'
+project = 'Block diagram simulation'
 copyright = '2020, Peter Corke'
 author = 'Peter Corke'
 
@@ -36,6 +37,7 @@ extensions = [
  'sphinx.ext.autodoc',
  'sphinx.ext.todo',
  'sphinx.ext.viewcode',
+ 'sphinx.ext.mathjax',
  'sphinx.ext.coverage',
  'sphinx.ext.inheritance_diagram',
  'blockname'
@@ -58,7 +60,9 @@ exclude_patterns = ['test_*']
 html_theme = 'alabaster'
 html_show_sourcelink = True
 
+autoclass_content = "class"
+
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+# html_static_path = ['_static']
