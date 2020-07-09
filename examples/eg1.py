@@ -22,7 +22,7 @@ bd.connect(plant, scope[0])
 bd.compile()   # check the diagram
 bd.report()    # list all blocks and wires
 
-bd.run(5, block=True)  # simulate for 5s
+out = bd.run(5, block=True, watch=[gain])  # simulate for 5s
 
 bd.dotfile('bd1.dot')  # output a graphviz dot file
 bd.savefig('png')      # save all figures as pdf
