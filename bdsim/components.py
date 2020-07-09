@@ -7,9 +7,53 @@ Components of the simulation system, namely blocks, wires and plugs.
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import animation
+from collections import UserDict
 
+from collections import UserDict
 
-                
+class Struct(UserDict):
+    """
+    A dict like object that allows items to be added by attribute or by key.
+    
+    For example::
+        
+        >>> d = Struct('thing')
+        >>> d.a = 1
+        >>> d['b'] = 2
+        >>> d.a
+        1
+        >>> d['a']
+        1
+        >>> d.b
+        2
+        >>> str(d)
+        "thing {'a': 1, 'b': 2}"
+    """
+    
+    def __init__(self, name='Struct'):
+        super().__init__()
+        self.name = name
+
+    def __setattr__(self, name, value):
+        if name in ['data', 'name']:
+            super().__setattr__(name, value)
+        else:
+            self.data[name] = value
+        
+    def __getattr__(self, name):
+        return self.data[name]
+        
+    def __str__(self):
+        return self.name + ' ' + str({k:v for k, v in self.data.items() if not k.startswith('_')})
+    
+    def __repr__(self):
+        def fmt(k, v):
+            if isinstance(v, np.ndarray):
+                return '{:12s}| {:12s}'.format(k, type(v).__name__ + ' ' + str(v.shape)) 
+            else:
+                return '{:12s}| {:12s}'.format(k, type(v).__name__)
+        return self.name + ':\n' + '\n'.join([fmt(k,v) for k, v in self.data.items() if not k.startswith('_')])
+
 class Wire:
     """
     Create a wire.
@@ -187,56 +231,54 @@ class Plug:
                 return range(self.port.start, self.port.stop, self.port.step)
         else:
             return self.port
-        
-    
+
     @property
     def width(self):
         """
         Return number of ports connected.
-        
+
         :return: Number of ports
         :rtype: int
 
         If the port is a simple index, eg. ``[2]`` returns 1.
-        
+
         If the port is a slice, eg. ``[0:3]``, returns 3.
         """
         return len(self.portlist)
-            
-        
+
     def __mul__(left, right):
         """
         Operator for implicit wiring.
-        
+
         :param left: A plug to be wired from
         :type left: Plug
         :param right: A block or plug to be wired to
         :type right: Block or Plug
         :return: ``right``
         :rtype: Block or Plug
-        
+
         Implements implicit wiring, where the left-hand operator is a Plug, for example::
-            
+
             a = bike[2] * bd.GAIN(3)
-            
+
         will connect port 2 of ``bike`` to the input of the GAIN block.
-        
+
         Note that::
-            
+
            a = bike[2] * func[1]
-           
+
         will connect port 2 of ``bike`` to port 1 of ``func``, and port 1 of ``func``
         will be assigned to ``a``.  To specify a different outport port on ``func``
         we need to use parentheses::
-            
+
             a = (bike[2] * func[1])[0]
-            
+
         which will connect port 2 of ``bike`` to port 1 of ``func``, and port 0 of ``func``
         will be assigned to ``a``.
-        
+
         :seealso: Block.__mul__
         """
-        
+
         # called for the cases:
         # block * block
         # block * plug
@@ -258,7 +300,7 @@ class Plug:
         Used to create a wired connection by assignment, for example::
 
             c = bd.CONSTANT(1)
-            
+
             c[0] = x
 
         Ths method is invoked to create a wire from ``x`` to input port 0 of
@@ -268,44 +310,45 @@ class Plug:
         # src --> b[port]
         print('Plug connecting', src, self, port)
         self.bd.connect(src, self[port])
-        
+
     def __repr__(self):
         """
         Display plug details.
-        
+
         :return: Plug description
         :rtype: str
-        
+
         String format::
-            
+
             bicycle.0[1]
 
         """
         return str(self.block) + "[" + str(self.port) + "]"
-    
-# ------------------------------------------------------------------------- # 
+
+# ------------------------------------------------------------------------- #
+
 
 blocklist = []
+
 
 def block(cls):
     """
     Decorator for block classes
-    
+
     :param cls: A block to be registered for the simulator
     :type cls: subclass of Block
     :return: the class
     :rtype: subclass of Block
-    
+
     @block
     class MyBlock:
-        
+
     The modules in ``./blocks`` uses the ``block`` decorator to declare
     that they are a block which will be made available as a method of the
     ``BlockDiagram`` instance.  The method name is a capitalized version of
     the class name.
-
     """
-    
+
     if issubclass(cls, Block):
         blocklist.append(cls)  # append class to a global list
     else:
@@ -318,7 +361,7 @@ class Block:
 
     """
     Construct a new block object.
-    
+
     :param name: Name of the block, defaults to None
     :type name: str, optional
     :param inames: Names of input ports, defaults to None
@@ -335,12 +378,12 @@ class Block:
     :type nin: int, optional
     :param nout: Number of outputs, defaults to None
     :type nout: int, optional
-    :param *inputs: Optional incoming connections
-    :type *inputs: Block or Plug
-    :param **kwargs: Unknow arguments
+    :param ``*inputs``: Optional incoming connections
+    :type ``*inputs``: Block or Plug
+    :param ``**kwargs``: Unknow arguments
     :return: A Block superclass
     :rtype: Block
-    
+
     A block object is the superclass of all blocks in the simulation environment.
 
     This is the top-level initializer, and handles most options passed to
@@ -351,7 +394,7 @@ class Block:
     def __new__(cls, *args, bd=None, **kwargs):
         """
         Construct a new Block object.
-        
+
         :param cls: The class to construct
         :type cls: class type
         :param *args: positional args passed to constructor
@@ -361,9 +404,9 @@ class Block:
         :return: new Block instance
         :rtype: Block instance
         """
-        #print('Block __new__', args,bd, kwargs)
+        # print('Block __new__', args,bd, kwargs)
         block = super(Block, cls).__new__(cls)  # create a new instance
-        
+
         # we overload setattr, so need to know whether it is being passed a port
         # name.  Add this attribute now to allow proper operation.
         block.__dict__['portnames'] = []  # must be first, see __setattr__
@@ -373,12 +416,12 @@ class Block:
         block.nout = 0
         block.nstates = 0
         return block
-    
+
     _latex_remove = str.maketrans({'$':'', '\\':'', '{':'', '}':'', '^':'', '_':''})
-    
+
     def __init__(self, name=None, inames=None, onames=None, snames=None, pos=None, nin=None, nout=None, inputs=None, bd=None, **kwargs):
 
-        #print('Block constructor, bd = ', bd)
+        # print('Block constructor, bd = ', bd)
         if name is not None:
             self.name_tex = name
             self.name = self._fixname(name)
@@ -389,16 +432,17 @@ class Block:
         self.out = []
         self.inputs = None
         self.updated = False
-        self.shape = 'block' # for box
+        self.shape = 'block'  # for box
         self._inport_names = None
         self._outport_names = None
         self._state_names = None
-        
+        self.initd = True
+
         if nin is not None:
             self.nin = nin
         if nout is not None:
             self.nout = nout
-            
+
         if inames is not None:
             self.inport_names(inames)
         if onames is not None:
@@ -410,16 +454,15 @@ class Block:
             #assert len(inputs) == self.nin, 'Number of input connections must match number of inputs'
             for i, input in enumerate(inputs):
                 self.bd.connect(input, Plug(self, port=i))
-            
+
         if len(kwargs) > 0:
             print('WARNING: unused arguments', kwargs.keys())
-        
 
     @property
     def info(self):
         """
         Interactive display of block properties.
-        
+
         Displays all attributes of the block for debugging purposes.
 
         """
@@ -453,29 +496,29 @@ class Block:
         assert isinstance(out, list), 'result must be a list'
         assert len(out) == self.nout, 'result list is wrong length'
         return out
-        
+
     def __getitem__(self, port):
         """
         Convert a block slice reference to a plug.
-        
+
         :param port: Port number
         :type port: int
         :return: A port plug
         :rtype: Plug
-        
+
         Invoked whenever a block is referenced as a slice, for example::
-            
+
             c = bd.CONSTANT(1)
-            
+
             bd.connect(x, c[0])
             bd.connect(c[0], x)
-            
+
         In both cases ``c[0]`` is converted to a ``Plug`` by this method.
         """
         # block[i] is a plug object
         #print('getitem called', self, port)
         return Plug(self, port)
-    
+
     def __setitem__(self, port, src):
         """
         Convert a LHS block slice reference to a wire.
@@ -488,7 +531,7 @@ class Block:
         Used to create a wired connection by assignment, for example::
 
             c = bd.CONSTANT(1)
-            
+
             c[0] = x
 
         Ths method is invoked to create a wire from ``x`` to port 0 of
@@ -498,8 +541,7 @@ class Block:
         # src --> b[port]
         #print('connecting', src, self, port)
         self.bd.connect(src, self[port])
-        
-        
+
     def __setattr__(self, name, value):
         """
         Convert a LHS block name reference to a wire.
@@ -512,23 +554,23 @@ class Block:
         Used to create a wired connection by assignment, for example::
 
             c = bd.CONSTANT(1, inames=['u'])
-            
+
             c.u = x
 
         Ths method is invoked to create a wire from ``x`` to port 'u' of
         the constant block ``c``.
-        
+
         Notes:
-            
+
             - this overloaded method handles all instances of ``setattr`` and
               implements normal functionality as well, only creating a wire
               if ``name`` is a known port name.
         """
-        
+
         # b[port] = src
         # src --> b[port]
         # gets called for regular attribute settings, as well as for wiring
-        
+
         if name in self.portnames:
             # we're doing wiring
             #print('in __setattr___', self, name, value)
@@ -537,43 +579,41 @@ class Block:
             #print('in __setattr___', self, name, value)
             # regular case, add attribute to the instance's dictionary
             self.__dict__[name] = value
-        
-        
-    
+
     def __mul__(left, right):
         """
         Operator for implicit wiring.
-        
+
         :param left: A block to be wired from
         :type left: Block
         :param right: A block or plugto be wired to
         :type right: Block or Plug
         :return: ``right``
         :rtype: Block or Plug
-        
+
         Implements implicit wiring, for example::
-            
+
             a = bd.CONSTANT(1) * bd.GAIN(2)
-            
-        will connect the output of the CONSTANT block to the input of the 
+
+        will connect the output of the CONSTANT block to the input of the
         GAIN block.  The result will be GAIN block, whose output in this case
         will be assigned to ``a``.
-        
+
         Note that::
-            
+
            a = bd.CONSTANT(1) * func[1]
-           
+
         will connect port 0 of CONSTANT to port 1 of ``func``, and port 1 of ``func``
         will be assigned to ``a``.  To specify a different outport port on ``func``
         we need to use parentheses::
-            
+
             a = (bd.CONSTANT(1) * func[1])[0]
-            
+
         which will connect port 0 of CONSTANT ` to port 1 of ``func``, and port 0 of ``func``
         will be assigned to ``a``.
-        
+
         :seealso: Plug.__mul__
-        
+
         """
         # called for the cases:
         # block * block
@@ -583,18 +623,17 @@ class Block:
         w = s.connect(left, right)  # add a wire
         #print('block * ' + str(w))
         return right
-        
+
         # make connection, return a plug
-        
+
     def __str__(self):
         if hasattr(self, 'name') and self.name is not None:
             return self.name
         else:
             return self.blockclass + '.??'
-    
+
     def __repr__(self):
         return self.__str__()
-    
 
     def _fixname(self, s):
         return s.translate(self._latex_remove)
@@ -602,35 +641,33 @@ class Block:
     def inport_names(self, names):
         """
         Set the names of block input ports.
-        
+
         :param names: List of port names
         :type names: list of str
-        
+
         Invoked by the ``inames`` argument to the Block constructor.
-        
+
         The names can include LaTeX math markup.  The LaTeX version is used
         where appropriate, but the port names are a de-LaTeXd version of the
         given string with backslash, underscore, caret, braces and dollar signs
         removed.
-
         """
         self._inport_names = names
-        
-        for port,name in enumerate(names):
+
+        for port, name in enumerate(names):
             fn = self._fixname(name)
             setattr(self, fn, self[port])
             self.portnames.append(fn)
-        
-        
+
     def outport_names(self, names):
         """
         Set the names of block output ports.
-        
+
         :param names: List of port names
         :type names: list of str
-        
+
         Invoked by the ``onames`` argument to the Block constructor.
-        
+
         The names can include LaTeX math markup.  The LaTeX version is used
         where appropriate, but the port names are a de-LaTeXd version of the
         given string with backslash, underscore, caret, braces and dollar signs
@@ -638,31 +675,31 @@ class Block:
 
         """
         self._outport_names = names
-        for port,name in enumerate(names):
+        for port, name in enumerate(names):
             fn = self._fixname(name)
             setattr(self, fn, self[port])
             self.portnames.append(fn)
 
     def state_names(self, names):
         self._state_names = names
-        
+
     def sourcename(self, port):
         """
         Get the name of output port driving this input port.
-        
+
         :param port: Input port
         :type port: int
         :return: Port name
         :rtype: str
-        
+
         Return the name of the output port that drives the specified input
         port. The name can be:
-            
+
             - a LaTeX string if provided
             - block name with port number given in square brackets.  The block
               name will the one optionally assigned by the user using the ``name``
               keyword, otherwise a systematic default name.
-            
+
         :seealso: outport_names
 
         """
@@ -675,30 +712,30 @@ class Block:
         if src._outport_names is not None:
             return src._outport_names[srcp]
         return str(w.start)
-    
+
     # @property
     # def fullname(self):
     #     return self.blockclass + "." + str(self)
-    
+
     def reset(self):
         if self.nin > 0:
             self.inputs = [None] * self.nin
         self.updated = False
-        
+
     def add_outport(self, w):
         port = w.start.port
         assert port < len(self.outports), 'port number too big'
         self.outports[port].append(w)
-        
+
     def add_inport(self, w):
         port = w.end.port
         assert self.inports[port] is None, 'attempting to connect second wire to an input'
         self.inports[port] = w
-        
+
     def setinput(self, port, value):
         """
         Receive input from a wire
-        
+
         :param self: Block to be updated
         :type wire: Block
         :param port: Input port to be updated
@@ -709,35 +746,34 @@ class Block:
         :rtype: bool
 
         """
-        
         # stash it away
         self.inputs[port] = value
 
         # check if all inputs have been assigned
         if all([x is not None for x in self.inputs]):
             self.updated = True
-            #self.update()
+            # self.update()
         return self.updated
-    
+
     def setinputs(self, *pos):
         assert len(pos) == self.nin, 'mismatch in number of inputs'
         self.reset()
-        for i,val in enumerate(pos):
+        for i, val in enumerate(pos):
             self.inputs[i] = val
-    
+
     def start(self, **kwargs):  # begin of a simulation
         pass
-    
 
     def check(self):  # check validity of block parameters at start
-        pass
-    
+        assert self.nin > 0 or self.nout > 0, 'no inputs or outputs specified'
+        assert hasattr(self, 'initd') and self.initd, 'Block superclass not initalized. was super().__init__ called?'
+
     def done(self, **kwargs):  # end of simulation
         pass
-    
+
     def step(self):  # valid
         pass
-        
+
 class SinkBlock(Block):
     """
     A SinkBlock is a subclass of Block that represents a block that has inputs
@@ -745,41 +781,68 @@ class SinkBlock(Block):
     graphics.
     """
     blockclass='sink'
+
     def __init__(self, **kwargs):
-        #print('Sink constructor')
+        # print('Sink constructor')
         super().__init__(**kwargs)
         self.nout = 0
         self.nstates = 0
 
+
 class GraphicsBlock(SinkBlock):
     """
     A GraphicsBlock is a subclass of SinkBlock that represents a block that has inputs
-    but no outputs. Typically used to save data to a variable, file or 
-    graphics.
+    but no outputs. Typically used to save data to a variable, file or
+    raphics.
+
+    :param movie: Save animation in this file, defaults to None
+    :type movie: str, optional
+    :param ``**kwargs``: common Block options
+    :return: A PRINT block
+    :rtype: Print instance
+
+    The animation is saved as an MP4 video in the specified file.
     """
+
     def __init__(self, movie=None, **kwargs):
+
         super().__init__(**kwargs)
+        if not self.bd.options.animation:
+            movie = None
         self.movie = movie
 
     def start(self):
         if self.movie is not None:
             self.writer = animation.FFMpegWriter(fps=10, extra_args=['-vcodec', 'libx264'])
             self.writer.setup(fig=self.fig, outfile=self.movie)
-                
+
     def step(self):
         super().step()
         if self.movie is not None:
             self.writer.grab_frame()
-                
-                
+
     def done(self):
         if self.movie is not None:
             self.writer.finish()
             self.cleanup()
-            
+
     def savefig(self, fname, **kwargs):
-        plt.figure(self.fig.number)
-        plt.savefig(fname, **kwargs)
+        """
+        Save the figure as an image file
+
+        :param fname: Name of file to save graphics to
+        :type fname: str
+        :param ``**kwargs``: Options passed to `savefig <https://matplotlib.org/3.2.2/api/_as_gen/matplotlib.pyplot.savefig.html>`_
+
+        The file format is taken from the file extension and can be
+        jpeg, png or pdf.
+        """
+        try:
+            plt.figure(self.fig.number)
+            plt.savefig(fname, **kwargs)
+        except:
+            pass
+
 
 class SourceBlock(Block):
     """
@@ -787,12 +850,14 @@ class SourceBlock(Block):
     but no inputs.  Its output is a function of parameters and time.
     """
     blockclass = 'source'
+
     def __init__(self, **kwargs):
-        #print('Source constructor')
+        # print('Source constructor')
         super().__init__(**kwargs)
         self.nin = 0
         self.nstates = 0
-        
+
+
 class TransferBlock(Block):
     """
     A TransferBlock is a subclass of Block that represents a block with inputs
@@ -800,28 +865,27 @@ class TransferBlock(Block):
     system, either linear or nonlinear.
     """
     blockclass = 'transfer'
-    
+
     def __init__(self, **kwargs):
-        #print('Transfer constructor')
+        # print('Transfer constructor')
         super().__init__(**kwargs)
-        
+
     def reset(self):
         super().reset()
         self._x = self._x0
         return self._x
-    
+
     def setstate(self, x):
-        self._x = x[:self.nstates] # take as much state vector as we need
-        return x[self.nstates:]   # return the rest
-    
+        self._x = x[:self.nstates]  # take as much state vector as we need
+        return x[self.nstates:]     # return the rest
+
     def getstate(self):
         return self._x0
-    
+
     def check(self):
         assert len(self._x0) == self.nstates, 'incorrect length for initial state'
         assert self.nin > 0 or self.nout > 0, 'no inputs or outputs specified'
-                
-    
+
 
 class FunctionBlock(Block):
     """
@@ -830,12 +894,12 @@ class FunctionBlock(Block):
     such as gain, summation or various mappings.
     """
     blockclass = 'function'
-    
+
     def __init__(self, **kwargs):
-        #print('Function constructor')
+        # print('Function constructor')
         super().__init__(**kwargs)
         self.nstates = 0
-        
+
 
 class SubsystemBlock(Block):
     """
@@ -844,8 +908,9 @@ class SubsystemBlock(Block):
     such as gain, summation or various mappings.
     """
     blockclass = 'subsystem'
+
     def __init__(self, **kwargs):
-        #print('Subsystem constructor')
+        # print('Subsystem constructor')
         super().__init__(**kwargs)
         self.nstates = 0
-        
+
