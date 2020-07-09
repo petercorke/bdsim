@@ -40,8 +40,6 @@ bd.connect(mux, error[1])
 bd.compile()
 bd.report()
 
-vscope.info
-
 out = bd.run(block=True)
 
 bd.done()
