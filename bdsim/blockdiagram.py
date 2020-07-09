@@ -12,7 +12,7 @@ import importlib
 import inspect
 import re
 import argparse
-from collections import Counter
+from collections import Counter, namedtuple
 import numpy as np
 import scipy.integrate as integrate
 import matplotlib
@@ -26,28 +26,25 @@ def DEBUG(debug, *args):
     if debug in debuglist:
         print('DEBUG.{:s}: '.format(debug), *args)
 
-
+# print a progress bar
+# https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console
 def printProgressBar (fraction, prefix='', suffix='', decimals=1, length=50, fill = '█', printEnd = "\r"):
-    # https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console
+    
     percent = ("{0:." + str(decimals) + "f}").format(fraction * 100)
     filledLength = int(length * fraction)
     bar = fill * filledLength + '-' * (length - filledLength)
     print(f'\r{prefix} |{bar}| {percent}% {suffix}', end = printEnd)
 
-
+# convert class name to BLOCK name
+def blockname(cls):
+    return cls.__name__.strip('_').upper()
 # ------------------------------------------------------------------------- #    
 
 
 class BlockDiagram:
     """
-    
-    :param name: DESCRIPTION, defaults to 'main'
-    :type name: TYPE, optional
-    :param graphics: DESCRIPTION, defaults to True
-    :type graphics: TYPE, optional
-    :raises ImportError: DESCRIPTION
-    :return: DESCRIPTION
-    :rtype: TYPE
+    Block diagram class.  This object is the parent of all blocks and wires in 
+    the system.
     
     :ivar wirelist: all wires in the diagram
     :vartype wirelist: list of Wire instances
@@ -77,9 +74,49 @@ class BlockDiagram:
     :vartype graphics: bool
     """
     
-    def __init__(self, name='main', graphics=True):
-
+    def __init__(self, name='main', **kwargs):
+        """
+        :param name: diagram name, defaults to 'main'
+        :type name: str, optional
+        :param sysargs: process options from sys.argv, defaults to True
+        :type sysargs: bool, optional
+        :param graphics: enable graphics, defaults to True
+        :type graphics: bool, optional
+        :param animation: enable animation, defaults to False
+        :type animation: bool, optional
+        :param progress: enable progress bar, defaults to True
+        :type progress: bool, optional
+        :param debug: debug options, defaults to None
+        :type debug: str, optional
+        :param backend: matplotlib backend, defaults to 'Qt5Agg''
+        :type backend: str, optional
+        :param tiles: figure tile layout on monitor, defaults to '3x4'
+        :type tiles: str, optional
+        :raises ImportError: syntax error in block
+        :return: parent object for blockdiagram
+        :rtype: BlockDiagram
         
+        The instance has a number of factory methods that return instances of blocks.
+        
+        ===================  =========  ========  ===========================================
+        Command line switch  Argument   Default   Behaviour
+        ===================  =========  ========  ===========================================
+        --nographics, -g     graphics   True      enable graphical display
+        --animation, -a      animation  False     update graphics at each time step
+        --noprogress, -p     progress   True      display simulation progress bar
+        --backend BE         backend    'Qt5Agg'  matplotlib backend
+        --tiles RxC, -t RxC  tiles      '3x4'     arrangement of figure tiles on the display
+        --debug F, -d F      debug      ''        debug flag string
+        ===================  =========  ========  ===========================================
+        
+        The debug string comprises single letter flags:
+            
+            - 'p' debug network value propagation
+            - 's' debug state vector
+            - 'd' debug state derivative 
+
+        """
+
         self.wirelist = []      # list of all wires
         self.blocklist = []     # list of all blocks
         self.x = None           # state vector numpy.ndarray
@@ -92,46 +129,86 @@ class BlockDiagram:
         self.blockcounter = Counter()
         self.name = name
 
-        # command line arguments and graphics
-        parser = argparse.ArgumentParser()
-        parser.add_argument('--backend', '-b', type=str, metavar='BACKEND', default='Qt5Agg',
-                            help='matplotlib backend to choose')
-        parser.add_argument('--tiles', '-t', type=str, default='3x4', metavar='ROWSxCOLS',
-                            help='window tiling as NxM')
-        parser.add_argument('--nographics', '-g', default=graphics, action='store_const', const=False, dest='graphics',
-                            help='disable graphic display')
-        parser.add_argument('--animation', '-a', default=False, action='store_const', const=True,
-                            help='animate graphics')
-        parser.add_argument('--noprogress', '-p', default=True, action='store_const', const=False, dest='progress',
-                    help='animate graphics')
+        # process command line and constructor options
+        self._get_options(**kwargs)
 
-        parser.add_argument('--debug', '-d', type=str, metavar='[psd]', default='', 
-                            help='debug flags')
-        args = parser.parse_args()      
+        ##load modules from the blocks folder
+        self._load_modules()
         
+        
+    def _get_options(self, sysargs=True, **kwargs):
+        
+        # all switches and their default values
+        defaults = {
+            'backend': 'Qt5Agg',
+            'tiles': '3x4',
+            'graphics': True,
+            'animation': False,
+            'progress': True,
+            'debug': ''
+            }
+        
+        if sysargs:
+            # command line arguments and graphics
+            parser = argparse.ArgumentParser()
+            parser.add_argument('--backend', '-b', type=str, metavar='BACKEND', default=defaults['backend'],
+                                help='matplotlib backend to choose')
+            parser.add_argument('--tiles', '-t', type=str, default=defaults['tiles'], metavar='ROWSxCOLS',
+                                help='window tiling as NxM')
+            parser.add_argument('--nographics', '-g', default=defaults['graphics'], action='store_const', const=False, dest='graphics',
+                                help='disable graphic display')
+            parser.add_argument('--animation', '-a', default=defaults['animation'], action='store_const', const=True,
+                                help='animate graphics')
+            parser.add_argument('--noprogress', '-p', default=defaults['progress'], action='store_const', const=False, dest='progress',
+                        help='animate graphics')
+            parser.add_argument('--debug', '-d', type=str, metavar='[psd]', default=defaults['debug'], 
+                                help='debug flags')
+            clargs = vars(parser.parse_args())  # get args as a dictionary
+
+            
+        # function arguments override the command line options
+        # provide a list of argument names and default values
+        options = {}
+        for option, default in defaults.items():
+            if option in kwargs:
+                # first priority is to constructor argument
+                assert type(kwargs[option]) is type(default), 'passed argument ' + opt + ' has wrong type'
+                options[option] = kwargs[option]
+            elif sysargs and option in clargs:
+                # if not provided, drop through to command line argument
+                options[option] = clargs[option]
+            else:
+                # drop through to the default value
+                options[option] = default
+            
+        # ensure graphics is enabled if animation is requested
+        if options['animation']:
+            options['graphics'] = True
+        
+        # stash these away as a named tuple
+        self.options = namedtuple('options', options.keys(), defaults=list(defaults.values()))()
+        
+        # setup debug parameters from single character codes
         global debuglist
-        if 'p' in args.debug:
+        if 'p' in self.options.debug:
             debuglist.append('propagate')
-        if 's' in args.debug:
+        if 's' in self.options.debug:
             debuglist.append('state')
-        if 'd' in args.debug:
+        if 'd' in self.options.debug:
             debuglist.append('deriv')
-        
-        def blockname(cls):
-            return cls.__name__.strip('_').upper()
-        
-        # load modules from the blocks folder
-        
-        # scan every file ./blocks/*.py to find block definitions
-        # a block is a class that subclasses Source, Sink, Function, Transfer and
-        # has an @block decorator.
-        #
-        # The decorator adds the classes to a global variable module_blocklist in the
-        # module's namespace.
+            
+    def _load_modules(self):
         nblocks = len(blocklist)
         if nblocks == 0:
             print('Loading blocks:')
+
             for file in os.listdir(os.path.join(os.path.dirname(__file__), 'blocks')):
+                # scan every file ./blocks/*.py to find block definitions
+                # a block is a class that subclasses Source, Sink, Function, Transfer and
+                # has an @block decorator.
+                #
+                # The decorator adds the classes to a global variable blocklist in the
+                # component module's namespace.
                 if not file.startswith('test_') and file.endswith('.py'):
                     # valid python module, import it
                     try:
@@ -194,13 +271,6 @@ class BlockDiagram:
                 self.blockdict[blocktype].append(bindname)
             else:
                 self.blockdict[blocktype] = [bindname]
-
-        # graphics initialization
-        if args.animation:
-            args.graphics = True
-        self.graphics = args.graphics
-        self.animation = args.animation
-        self.args = args
             
     def create_figure(self):
 
@@ -219,10 +289,11 @@ class BlockDiagram:
         if self.fignum == 0:
             # no figures yet created, lazy initialization
             
-            matplotlib.use(self.args.backend)            
+            matplotlib.use(self.options.backend)            
             mpl_backend = matplotlib.get_backend()
             print('matplotlib backend is', mpl_backend)
             
+            dpiscale = 1
             if mpl_backend == 'Qt5Agg':
                 from PyQt5 import QtWidgets
                 app = QtWidgets.QApplication([])
@@ -234,17 +305,20 @@ class BlockDiagram:
                 print('Available: %d x %d' % (rect.width(), rect.height()))
                 sw = rect.width()
                 sh = rect.height()
+                #dpi = screen.physicalDotsPerInch()
+                dpiscale = screen.devicePixelRatio() # is 2.0 for Mac laptop screen
             elif mpl_backend == 'TkAgg':
                 window = plt.get_current_fig_manager().window
                 sw =  window.winfo_screenwidth()
                 sh =  window.winfo_screenheight()
                 print('Size: %d x %d' % (sw, sh))
             self.screensize_pix = (sw, sh)
-            self.tiles = [int(x) for x in self.args.tiles.split('x')]
+            self.tiles = [int(x) for x in self.options.tiles.split('x')]
             
             # create a figure at default size to get dpi (TODO better way?)
             f = plt.figure(figsize=(1,1))
-            self.dpi = f.dpi
+            self.dpi = f.dpi / dpiscale
+            print('dpi', self.dpi)
             
             # compute fig size in inches (width, height)
             self.figsize = [ self.screensize_pix[0] / self.tiles[1] / self.dpi , self.screensize_pix[1] / self.tiles[0] / self.dpi ]
@@ -336,6 +410,29 @@ class BlockDiagram:
                 self.add_wire(wire)
         
     def compile(self, subsystem=False, doimport=True):
+        """
+        Compile the block diagram
+        
+        :param subsystem: importing a subsystems, defaults to False
+        :type subsystem: bool, optional
+        :param doimport: import subsystems, defaults to True
+        :type doimport: bool, optional
+        :raises RuntimeError: various block diagram errors
+        :return: Compile status
+        :rtype: bool
+        
+        Performs a number of operations:
+            
+            - Check sanity of block parameters
+            - Recursively clone and import subsystems
+            - Check for loops without dynamics
+            - Check for inputs driven by more than one wire
+            - Check for unconnected inputs and outputs
+            - Link all output ports to outgoing wires
+            - Link all input ports to incoming wires
+            - Evaluate all blocks in the network
+
+        """
         
         # namethe elements
         self.nblocks = len(self.blocklist)
@@ -352,41 +449,53 @@ class BlockDiagram:
         #     if w.start.block.blockclass == 'source':
         #         w.blockclass = 'source'
         
-        # run block specific checks
-        for b in self.blocklist:
-            try:
-                b.check()
-            except:
-                raise RuntimeError('block failed check ' + str(b))
-            
-        nstates = 0
-        
+
         error = False
         
-        # TODO blockdiagrams have a name, default is "main"
+        self.nstates = 0
+        self.statenames = []
+        self.blocknames = {}
+        
         if not subsystem:
             print('\nCompiling:')
         
+        # process all subsystem imports
         ssblocks = [b for b in self.blocklist if b.type == 'subsystem']
         for b in ssblocks:
             print('  importing subsystem', b.name)
             if b.ssvar is not None:
                 print('-- Wiring in subsystem', b, 'from module local variable ', b.ssvar)
             self._flatten(b, [b.name])
+
+        # run block specific checks
+        for b in self.blocklist:
+            try:
+                b.check()
+            except:
+                raise RuntimeError('block failed check ' + str(b))
+
+        # build a dictionary of all block names
+        for b in self.blocklist:
+            self.blocknames[b.name] = b
         
+        # visit all stateful blocks
+        for b in self.blocklist:
+            if b.blockclass == 'TransferBlock':
+                self.nstates += b.nstates
+                if b._state_names is not None:
+                    assert len(b._state_names) == b.nstates, 'number of state names not consistent with number of states'
+                    self.statenames.extend(b._state_names)
+                else:
+                    # create default state names
+                    self.statenames.extend([b.name + 'x' + str(i) for i in range(0, b.nstates)])
+
         # initialize lists of input and output ports
         for b in self.blocklist:
-            nstates += b.nstates
-            try:
-                b.outports = [[] for i in range(0, b.nout)]
-                b.inports = [None for i in range(0, b.nin)]
-            except:
-                print('cannot initialize ports for block ' + str(b) + ': ', sys.exc_info()[1])
+            b.outports = [[] for i in range(0, b.nout)]
+            b.inports = [None for i in range(0, b.nin)]
         
-        #print('  {:d} states'.format(nstates))
-        self.nstates = nstates
          
-        # for each wire, connect the source and destination blocks to the wire
+        # connect the source and destination blocks to each wire
         for w in self.wirelist:
             try:
                 w.start.block.add_outport(w)
@@ -395,10 +504,10 @@ class BlockDiagram:
                 print('error connecting wire ', w.fullname + ': ', sys.exc_info()[1])
                 error = True
             
-        # check every block 
+        # check connections every block 
         for b in self.blocklist:
             # check all inputs are connected
-            for port,connection in enumerate(b.inports):
+            for port, connection in enumerate(b.inports):
                 if connection is None:
                     print('  ERROR: block {:s} input {:d} is not connected'.format(str(b), port))
                     error = True
@@ -435,7 +544,6 @@ class BlockDiagram:
                 # do depth first search looking for a cycle
                 if _DFS([b]):
                     error = True
-        
 
         # evaluate the network once to check out wire types
         x = self.getstate()
@@ -520,6 +628,10 @@ class BlockDiagram:
         top.wirelist.extend(subsys.subsystem.wirelist)  # add remaining wires from subsystem
         
     def report(self):
+        """
+        Print a tabular report about the block diagram
+
+        """
         
         class TableFormat:
             
@@ -554,7 +666,6 @@ class BlockDiagram:
                 # parse the format line
                 re_fmt = re.compile(r"([a-zA-Z]+)\[(\-?[0-9]*|\*)([a-z])\]")
                 
-
                 colheads = []
                 varwidth = {}
                 columns = []
@@ -660,9 +771,11 @@ class BlockDiagram:
         return x0
         
     def run(self, T=10.0, dt=0.1, solver='RK45', 
-            block=False, checkfinite=True,
+            block=False, checkfinite=True, watch=[],
             **kwargs):
         """
+        Run the block diagram
+        
         :param T: maximum integration time, defaults to 10.0
         :type T: float, optional
         :param dt: maximum time step, defaults to 0.1
@@ -673,20 +786,36 @@ class BlockDiagram:
         :type block: bool
         :param checkfinite: error if inf or nan on any wire, default True
         :type checkfinite: bool
+        :param watch: list of input ports to log
+        :type watch: list
         :param ``**kwargs``: passed to ``scipy.integrate``
         :return: time history of signals and states
         :rtype: Sim class
         
-        Assumes tgat the network has been compiled.
+        Assumes that the network has been compiled.
         
         Graphics display in all blocks can be disabled using the `graphics`
-        option.
+        option to the ``BlockDiagram`` instance.
+        
         
         Results are returned in a class with attributes:
             
-        - `t` the time vector: ndarray, shape=(M,)
-        - `x` is the state vector: ndarray, shape=(M,N)
-        - `xnames` is a list of the names of the states corresponding to columns of `x`, eg. "plant.x0"
+        - ``t`` the time vector: ndarray, shape=(M,)
+        - ``x`` is the state vector: ndarray, shape=(M,N)
+        - ``xnames`` is a list of the names of the states corresponding to columns of `x`, eg. "plant.x0",
+          defined for the block using the ``snames`` argument
+        - ``uN'` for a watched input where N is the index of the port mentioned in the ``watch`` argument
+        - ``unames`` is a list of the names of the input ports being watched, same order as in ``watch`` argument
+        
+        If there are no dynamic elements in the diagram, ie. no states, then ``x`` and ``xnames`` are not
+        present.
+        
+        The ``watch`` argument is a list of one or more input ports whose value during simulation
+        will be recorded.  The elements of the list can be:
+            - a ``Block`` reference, which is interpretted as input port 0
+            - a ``Plug`` reference, ie. a block with an index or attribute
+            - a string of the form "block[i]" which is port i of the block named block.
+        
 
         """
         
@@ -695,6 +824,27 @@ class BlockDiagram:
         self.count = 0
         self.stop = None # allow any block to stop.BlockDiagram by setting this to the block's name
         self.checkfinite = checkfinite
+        
+        # preproces the watchlist
+        pluglist = []
+        plugnamelist = []
+        re_block = re.compile(r'(?P<name>[^[]+)(\[(?P<port>[0-9]+)\])')
+        for n in watch:
+            if isinstance(n, str):
+                # a name was given, with optional port number
+                m = re_block.match(n)
+                name = m.group('name')
+                port = m.group('port')
+                b = self.blocknames[name]
+                plug = b[port]
+            elif isinstance(n, Block):
+                # a block was given, defaults to port 0
+                plug = n[0]
+            elif isinstance(n, Plug):
+                # a plug was given
+                plug = n
+            pluglist.append(plug)
+            plugnamelist.append(str(plug))
 
         try:        
             # tell all blocks we're doing a.BlockDiagram
@@ -705,7 +855,7 @@ class BlockDiagram:
             if len(x0) > 0:
                 print('initial state x0 = ', x0)
     
-            if self.args.progress:
+            if self.options.progress:
                 printProgressBar(0, prefix='Progress:', suffix='complete', length=60)
 
             # out = scipy.integrate.solve_ivp.BlockDiagram._deriv, args=(self,), t_span=(0,T), y0=x0, 
@@ -719,8 +869,10 @@ class BlockDiagram:
                                               t0=0.0, y0=x0, t_bound=T, max_step=dt)
 
                 # initialize list of time and states
-                t = []
-                x = []
+                tlist = []
+                xlist = []
+                plist = [[] for p in pluglist]
+                
                 while integrator.status == 'running':
 
                     # step the integrator, calls _deriv multiple times
@@ -730,14 +882,18 @@ class BlockDiagram:
                         print('integration completed with failed status ')
 
                     # stash the results
-                    t.append(integrator.t)
-                    x.append(integrator.y)
+                    tlist.append(integrator.t)
+                    xlist.append(integrator.y)
+                    
+                    # record the ports on the watchlist
+                    for i, p in enumerate(pluglist):
+                        plist[i].append(p.block.inputs[p.port])
                     
                     # update all blocks that need to know
                     self.step()
                     
                     # update the progress bar
-                    if self.args.progress:
+                    if self.options.progress:
                         printProgressBar(integrator.t / T, prefix='Progress:', suffix='complete', length=60)
 
                     # has any block called a stop?
@@ -745,21 +901,55 @@ class BlockDiagram:
                         print('\n--- stop requested at t={:f} by {:s}'.format(self.t, str(self.stop)))
                         break
 
-                out = np.c_[t, x]
+                # save buffered data in a Struct
+                out = Struct('results')
+                out.t = np.array(tlist)
+                out.x = np.array(xlist)
+                out.xnames = self.statenames
+                for i, p in enumerate(pluglist):
+                    out['u'+str(i)] = np.array(plist[i])
+                out.unames = plugnamelist
             else:
                 # block diagram has no states
+                
+                # initialize list of time and states
+                tlist = []
+                plist = [[] for p in pluglist]
+                
                 for t in np.arange(0, T, dt):  # step through the time range
 
                     # evaluate the block diagram
                     self.evaluate([], t)
 
+                    # stash the results
+                    tlist.append(integrator.t)
+                    xlist.append(integrator.y)
+                    
+                    # record the ports on the watchlist
+                    for i, p in enumerate(pluglist):
+                        plist[i].append(p.block.inputs[p.port])
+
                     # update all blocks that need to know
                     self.step()
 
                     # update the progress bar
-                    if self.args.progress:
+                    if self.options.progress:
                         printProgressBar(integrator.t / T, prefix='Progress:', suffix='complete', length=60)
-                out = None
+                        
+                    # has any block called a stop?
+                    if self.stop is not None:
+                        print('\n--- stop requested at t={:f} by {:s}'.format(self.t, str(self.stop)))
+                        break
+                    
+                # save buffered data in a Struct
+                out = Struct('results')
+                out.t = np.array(tlist)
+                for i, p in enumerate(pluglist):
+                    out['u'+str(i)] = np.array(plist[i])
+                out.unames = plugnamelist
+                
+            if self.options.progress:
+                print('\r' + ' '* 90 + '\r')
                 
         except RuntimeError as err:
             # bad things happens, print a message and return no result

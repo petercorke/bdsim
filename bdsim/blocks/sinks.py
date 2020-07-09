@@ -203,7 +203,7 @@ class Scope(GraphicsBlock):
         
     def start(self, **kwargs):
         # create the plot
-        if self.bd.graphics:
+        if self.bd.options.graphics:
             super().reset()   # TODO should this be here?
             self.fig = self.bd.create_figure()
             self.ax = self.fig.gca()
@@ -246,29 +246,24 @@ class Scope(GraphicsBlock):
         
     def step(self):
         # inputs are set
-        if self.bd.graphics:
+        if self.bd.options.graphics:
             self.tdata = np.append(self.tdata, self.bd.t)
             for i,input in enumerate(self.inputs):
                 self.ydata[i] = np.append(self.ydata[i], input)
-            if self.bd.graphics:
-                plt.figure(self.fig.number)
-                for i in range(0, self.nin):
-                    self.line[i].set_data(self.tdata, self.ydata[i])
-            
-                # plt.draw()
-                # plt.show(block=False)
-                # if self.bd.animation:
-                #     self.fig.canvas.start_event_loop(0.001)
-                if self.bd.animation:
-                    self.fig.canvas.flush_events()
-            
-                if self.scale == 'auto':
-                    self.ax.relim()
-                    self.ax.autoscale_view(scalex=False, scaley=True)
-                super().step()
+            plt.figure(self.fig.number)
+            for i in range(0, self.nin):
+                self.line[i].set_data(self.tdata, self.ydata[i])
+        
+            if self.bd.options.animation:
+                self.fig.canvas.flush_events()
+        
+            if self.scale == 'auto':
+                self.ax.relim()
+                self.ax.autoscale_view(scalex=False, scaley=True)
+            super().step()
         
     def done(self, block=False, **kwargs):
-        if self.bd.graphics:
+        if self.bd.options.graphics:
             plt.show(block=block)
             super().done()
 
@@ -339,7 +334,7 @@ class ScopeXY(GraphicsBlock):
         
     def start(self, **kwargs):
         # create the plot
-        if self.bd.graphics:
+        if self.bd.options.graphics:
             super().reset()
 
             self.fig = self.bd.create_figure()
@@ -374,15 +369,11 @@ class ScopeXY(GraphicsBlock):
         # inputs are set
         self.xdata.append(self.inputs[0])
         self.ydata.append(self.inputs[1])
-        if self.bd.graphics:
+        if self.bd.options.graphics:
             plt.figure(self.fig.number)
             self.line.set_data(self.xdata, self.ydata)
         
-            # plt.draw()
-            # plt.show(block=False)
-            # if self.bd.animation:
-            #     self.fig.canvas.start_event_loop(0.001)
-            if self.bd.animation:
+            if self.bd.options.animation:
                 self.fig.canvas.flush_events()
 
         
@@ -392,7 +383,7 @@ class ScopeXY(GraphicsBlock):
             super().step()
         
     def done(self, block=False, **kwargs):
-        if self.bd.graphics:
+        if self.bd.options.graphics:
             plt.show(block=block)
             super().done()
             
@@ -454,7 +445,7 @@ class VehiclePlot(GraphicsBlock):
               and can be used to draw application specific detail on the
               plot. In the example below, this is the dot and star.
             - A dynamic trail, showing path to date can be animated if
-             the option ``path`` is True.
+              the option ``path`` is True.
             - Two shapes of vehicle can be drawn, a narrow triangle and a box
               (as seen below).
         
@@ -505,7 +496,7 @@ class VehiclePlot(GraphicsBlock):
     def start(self, **kwargs):
         # create the plot
         super().reset()
-        if self.bd.graphics:
+        if self.bd.options.graphics:
             self.fig = self.bd.create_figure()
             self.ax = self.fig.gca()
             if self.square:
@@ -540,7 +531,7 @@ class VehiclePlot(GraphicsBlock):
         
     def step(self):
         # inputs are set
-        if self.bd.graphics:
+        if self.bd.options.graphics:
             self.xdata.append(self.inputs[0])
             self.ydata.append(self.inputs[1])
             #plt.figure(self.fig.number)
@@ -550,11 +541,7 @@ class VehiclePlot(GraphicsBlock):
             new = sm.h2e(T @ self.vertices_hom)
             self.vehicle.set_xy(new.T)
         
-            # plt.draw()
-            # plt.show(block=False)
-            # if self.bd.animation:
-            #     self.fig.canvas.start_event_loop(0.001)
-            if self.bd.animation:
+            if self.bd.options.animation:
                 self.fig.canvas.flush_events()
         
             if self.scale == 'auto':
@@ -563,7 +550,7 @@ class VehiclePlot(GraphicsBlock):
             super().step()
         
     def done(self, block=False, **kwargs):
-        if self.bd.graphics:
+        if self.bd.options.graphics:
             plt.show(block=block)
             
             super().done()
@@ -631,7 +618,6 @@ class MultiRotorPlot(GraphicsBlock):
            :alt: example of generated graphic
 
            Example of quad-rotor display.
-        |
 
         Written by Pauline Pounds 2004
         """
