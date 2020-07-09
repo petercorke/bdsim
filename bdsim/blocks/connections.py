@@ -175,13 +175,6 @@ class SubSystem(SubsystemBlock):
     
     .. table::
        :align: left
-    
-       ==========  ==========  ======
-       inputs      outputs     states
-       ==========  ==========  ======
-       ss.in.nout  ss.out.nin   0
-       any         any
-       ==========  ==========  ======
        
        +------------+------------+---------+
        | inputs     | outputs    |  states |
