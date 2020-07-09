@@ -16,6 +16,7 @@ Source blocks
    :members:
    :undoc-members:
    :show-inheritance:
+   :special-members: __init__
    :exclude-members: output, reset, step, start, done
 
 Sink blocks
@@ -25,6 +26,7 @@ Sink blocks
    :members:
    :undoc-members:
    :show-inheritance:
+   :special-members: __init__
    :exclude-members: output, reset, step, start, done
 
 
@@ -34,6 +36,8 @@ Function blocks
 .. automodule:: bdsim.blocks.functions
    :members:
    :undoc-members:
+   :show-inheritance:
+   :special-members: __init__
    :exclude-members: output, reset, step, start, done
 
 Transfer blocks
@@ -43,6 +47,7 @@ Transfer blocks
    :members:
    :undoc-members:
    :show-inheritance:
+   :special-members: __init__
    :exclude-members: output, reset, step, start, done, deriv
 
 Robot blocks
@@ -52,6 +57,7 @@ Robot blocks
    :members:
    :undoc-members:
    :show-inheritance:
+   :special-members: __init__
    :exclude-members: output, reset, step, start, done, deriv
 
 Connection blocks
@@ -61,6 +67,7 @@ Connection blocks
    :members:
    :undoc-members:
    :show-inheritance:
+   :special-members: __init__
    :exclude-members: output, reset, step, start, done
 
 io blocks

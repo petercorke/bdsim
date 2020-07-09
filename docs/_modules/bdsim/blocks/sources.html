@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>bdsim.blocks.sources &#8212; bdsim 0.7 documentation</title>
+    <title>bdsim.blocks.sources &#8212; Block diagram simulation 0.7 documentation</title>
     <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
@@ -56,28 +56,40 @@
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`CONSTANT`</span>
 <span class="sd">    </span>
-<span class="sd">    :param value: the constant, defaults to None</span>
-<span class="sd">    :type value: any</span>
-<span class="sd">    :param ``**kwargs``: common Block options</span>
-<span class="sd">    :return: a CONSTANT block</span>
-<span class="sd">    :rtype: Constant instance</span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
 <span class="sd">    </span>
-<span class="sd">    Create a constant block.</span>
-
-<span class="sd">    This block has only one output port, but the value can be any </span>
-<span class="sd">    Python type, so long as the connected input port can handle it.</span>
-<span class="sd">    For example float, list or numpy ndarray.</span>
-
+<span class="sd">       +--------+---------+---------+</span>
+<span class="sd">       | inputs | outputs |  states |</span>
+<span class="sd">       +--------+---------+---------+</span>
+<span class="sd">       | 0      | 1       | 0       |</span>
+<span class="sd">       +--------+---------+---------+</span>
+<span class="sd">       |        | float,  |         | </span>
+<span class="sd">       |        | A(N,)   |         |</span>
+<span class="sd">       +--------+---------+---------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 
+<div class="viewcode-block" id="Constant.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sources.Constant.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param value: the constant, defaults to None</span>
+<span class="sd">        :type value: any</span>
+<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        :return: a CONSTANT block</span>
+<span class="sd">        :rtype: Constant instance</span>
+<span class="sd">        </span>
+<span class="sd">        Create a constant block.</span>
+
+<span class="sd">        This block has only one output port, but the value can be any </span>
+<span class="sd">        Python type, so long as the connected input port can handle it.</span>
+<span class="sd">        For example float, list or numpy ndarray.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
             <span class="n">value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;constant&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;constant&#39;</span></div>
 
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">]</span>               </div>
@@ -89,59 +101,70 @@
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`WAVEFORM`</span>
 <span class="sd">    </span>
-<span class="sd">    :param wave: type of waveform to generate: &#39;sine&#39;, &#39;square&#39; [default], &#39;triangle&#39;</span>
-<span class="sd">    :type wave: str, optional</span>
-<span class="sd">    :param freq: frequency, defaults to 1</span>
-<span class="sd">    :type freq: float, optional</span>
-<span class="sd">    :param unit: frequency unit, can be &#39;rad/s&#39;, defaults to &#39;Hz&#39;</span>
-<span class="sd">    :type unit: str, optional</span>
-<span class="sd">    :param amplitude: amplitude, defaults to 1</span>
-<span class="sd">    :type amplitude: float, optional</span>
-<span class="sd">    :param offset: signal offset, defaults to 0</span>
-<span class="sd">    :type offset: float, optional</span>
-<span class="sd">    :param phase: Initial phase of signal in the range [0,1], defaults to 0</span>
-<span class="sd">    :type phase: float, optional</span>
-<span class="sd">    :param min: minimum value, defaults to 0</span>
-<span class="sd">    :type min: float, optional</span>
-<span class="sd">    :param max: maximum value, defaults to 1</span>
-<span class="sd">    :type max: float, optional</span>
-<span class="sd">    :param duty: duty cycle for square wave in range [0,1], defaults to 0.5</span>
-<span class="sd">    :type duty: float, optional</span>
-<span class="sd">    :param ``**kwargs``: common Block options</span>
-<span class="sd">    :return: a WAVEFORM block</span>
-<span class="sd">    :rtype: WaveForm instance</span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
 <span class="sd">    </span>
-<span class="sd">    Create a waveform generator block.</span>
-
-<span class="sd">    Examples::</span>
-<span class="sd">        </span>
-<span class="sd">        WAVEFORM(wave=&#39;sine&#39;, freq=2)   # 2Hz sine wave varying from -1 to 1</span>
-<span class="sd">        WAVEFORM(wave=&#39;square&#39;, freq=2, unit=&#39;rad/s&#39;) # 2rad/s square wave varying from -1 to 1</span>
-<span class="sd">        </span>
-<span class="sd">    The minimum and maximum values of the waveform are given by default in</span>
-<span class="sd">    terms of amplitude and offset. The signals are symmetric about the offset </span>
-<span class="sd">    value. For example::</span>
-<span class="sd">        </span>
-<span class="sd">        WAVEFORM(wave=&#39;sine&#39;) varies between -1 and +1</span>
-<span class="sd">        WAVEFORM(wave=&#39;sine&#39;, amplitude=2) varies between -2 and +2</span>
-<span class="sd">        WAVEFORM(wave=&#39;sine&#39;, offset=1) varies between 0 and +2</span>
-<span class="sd">        WAVEFORM(wave=&#39;sine&#39;, amplitude=2, offset=1) varies between -1 and +3</span>
-<span class="sd">        </span>
-<span class="sd">    Alternatively we can specify the minimum and maximum values which override</span>
-<span class="sd">    amplitude and offset::</span>
-<span class="sd">        </span>
-<span class="sd">        WAVEFORM(wave=&#39;triangle&#39;, min=0, max=5) varies between 0 and +5</span>
-<span class="sd">    </span>
-<span class="sd">    At time 0 the sine and triangle wave are zero and increasing, and the</span>
-<span class="sd">    square wave has its first rise.  We can specify a phase shift with </span>
-<span class="sd">    a number in the range [0,1] where 1 corresponds to one cycle.</span>
+<span class="sd">       +--------+---------+---------+</span>
+<span class="sd">       | inputs | outputs |  states |</span>
+<span class="sd">       +--------+---------+---------+</span>
+<span class="sd">       | 0      | 1       | 0       |</span>
+<span class="sd">       +--------+---------+---------+</span>
+<span class="sd">       |        | float   |         | </span>
+<span class="sd">       +--------+---------+---------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wave</span><span class="o">=</span><span class="s1">&#39;square&#39;</span><span class="p">,</span>
+<div class="viewcode-block" id="WaveForm.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sources.WaveForm.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wave</span><span class="o">=</span><span class="s1">&#39;square&#39;</span><span class="p">,</span>
                  <span class="n">freq</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;Hz&#39;</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">amplitude</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
                  <span class="nb">min</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">duty</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
                  <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param wave: type of waveform to generate: &#39;sine&#39;, &#39;square&#39; [default], &#39;triangle&#39;</span>
+<span class="sd">        :type wave: str, optional</span>
+<span class="sd">        :param freq: frequency, defaults to 1</span>
+<span class="sd">        :type freq: float, optional</span>
+<span class="sd">        :param unit: frequency unit, can be &#39;rad/s&#39;, defaults to &#39;Hz&#39;</span>
+<span class="sd">        :type unit: str, optional</span>
+<span class="sd">        :param amplitude: amplitude, defaults to 1</span>
+<span class="sd">        :type amplitude: float, optional</span>
+<span class="sd">        :param offset: signal offset, defaults to 0</span>
+<span class="sd">        :type offset: float, optional</span>
+<span class="sd">        :param phase: Initial phase of signal in the range [0,1], defaults to 0</span>
+<span class="sd">        :type phase: float, optional</span>
+<span class="sd">        :param min: minimum value, defaults to 0</span>
+<span class="sd">        :type min: float, optional</span>
+<span class="sd">        :param max: maximum value, defaults to 1</span>
+<span class="sd">        :type max: float, optional</span>
+<span class="sd">        :param duty: duty cycle for square wave in range [0,1], defaults to 0.5</span>
+<span class="sd">        :type duty: float, optional</span>
+<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        :return: a WAVEFORM block</span>
+<span class="sd">        :rtype: WaveForm instance</span>
+<span class="sd">        </span>
+<span class="sd">        Create a waveform generator block.</span>
 
+<span class="sd">        Examples::</span>
+<span class="sd">            </span>
+<span class="sd">            WAVEFORM(wave=&#39;sine&#39;, freq=2)   # 2Hz sine wave varying from -1 to 1</span>
+<span class="sd">            WAVEFORM(wave=&#39;square&#39;, freq=2, unit=&#39;rad/s&#39;) # 2rad/s square wave varying from -1 to 1</span>
+<span class="sd">            </span>
+<span class="sd">        The minimum and maximum values of the waveform are given by default in</span>
+<span class="sd">        terms of amplitude and offset. The signals are symmetric about the offset </span>
+<span class="sd">        value. For example::</span>
+<span class="sd">            </span>
+<span class="sd">            WAVEFORM(wave=&#39;sine&#39;) varies between -1 and +1</span>
+<span class="sd">            WAVEFORM(wave=&#39;sine&#39;, amplitude=2) varies between -2 and +2</span>
+<span class="sd">            WAVEFORM(wave=&#39;sine&#39;, offset=1) varies between 0 and +2</span>
+<span class="sd">            WAVEFORM(wave=&#39;sine&#39;, amplitude=2, offset=1) varies between -1 and +3</span>
+<span class="sd">            </span>
+<span class="sd">        Alternatively we can specify the minimum and maximum values which override</span>
+<span class="sd">        amplitude and offset::</span>
+<span class="sd">            </span>
+<span class="sd">            WAVEFORM(wave=&#39;triangle&#39;, min=0, max=5) varies between 0 and +5</span>
+<span class="sd">        </span>
+<span class="sd">        At time 0 the sine and triangle wave are zero and increasing, and the</span>
+<span class="sd">        square wave has its first rise.  We can specify a phase shift with </span>
+<span class="sd">        a number in the range [0,1] where 1 corresponds to one cycle.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="k">assert</span> <span class="mi">0</span><span class="o">&lt;</span><span class="n">duty</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;duty must be in range [0,1]&#39;</span>
@@ -160,7 +183,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">duty</span> <span class="o">=</span> <span class="n">duty</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">amplitude</span> <span class="o">=</span> <span class="n">amplitude</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">offset</span> <span class="o">=</span> <span class="n">offset</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;waveform&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;waveform&#39;</span></div>
 
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="n">T</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">freq</span>
@@ -195,32 +218,43 @@
 <span class="k">class</span> <span class="nc">Piecewise</span><span class="p">(</span><span class="n">SourceBlock</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`PIECEWISE`</span>
-
-<span class="sd">    :param ``*seq``: Sequence of time, value pairs</span>
-<span class="sd">    :type ``*seq``: list of 2-tuples</span>
-<span class="sd">    :param ``**kwargs``: common Block options</span>
-<span class="sd">    :return: a PIECEWISE block</span>
-<span class="sd">    :rtype: Piecewise instance</span>
 <span class="sd">    </span>
-<span class="sd">    Create a piecewise constant signal block.</span>
-
-<span class="sd">    Outputs a piecewise constant function of time.  This is described as</span>
-<span class="sd">    a series of 2-tupes (time, value).  The output value is taken from the</span>
-<span class="sd">    active tuple, that is, the latest one in the list whose time is no greater</span>
-<span class="sd">    than simulation time.</span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
 <span class="sd">    </span>
-<span class="sd">    Note that there is no default initial value, the list should contain</span>
-<span class="sd">    a tuple with time zero otherwise the output will be undefined.</span>
-
+<span class="sd">       +--------+---------+---------+</span>
+<span class="sd">       | inputs | outputs |  states |</span>
+<span class="sd">       +--------+---------+---------+</span>
+<span class="sd">       | 0      | 1       | 0       |</span>
+<span class="sd">       +--------+---------+---------+</span>
+<span class="sd">       |        | float   |         | </span>
+<span class="sd">       +--------+---------+---------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">seq</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Piecewise.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sources.Piecewise.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">seq</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param ``*seq``: Sequence of time, value pairs</span>
+<span class="sd">        :type ``*seq``: list of 2-tuples</span>
+<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        :return: a PIECEWISE block</span>
+<span class="sd">        :rtype: Piecewise instance</span>
+<span class="sd">        </span>
+<span class="sd">        Create a piecewise constant signal block.</span>
 
+<span class="sd">        Outputs a piecewise constant function of time.  This is described as</span>
+<span class="sd">        a series of 2-tupes (time, value).  The output value is taken from the</span>
+<span class="sd">        active tuple, that is, the latest one in the list whose time is no greater</span>
+<span class="sd">        than simulation time.</span>
+<span class="sd">        </span>
+<span class="sd">        Note that there is no default initial value, the list should contain</span>
+<span class="sd">        a tuple with time zero otherwise the output will be undefined.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         
         <span class="bp">self</span><span class="o">.</span><span class="n">t</span> <span class="o">=</span> <span class="p">[</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">seq</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="p">[</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">seq</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s2">&quot;piecewise&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s2">&quot;piecewise&quot;</span></div>
 
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
         <span class="n">i</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">t</span> <span class="o">&gt;=</span> <span class="n">_t</span> <span class="k">else</span> <span class="mi">0</span>  <span class="k">for</span> <span class="n">_t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">t</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span>
@@ -234,33 +268,45 @@
 <span class="k">class</span> <span class="nc">Step</span><span class="p">(</span><span class="n">SourceBlock</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`STEP`</span>
-
-<span class="sd">    :param T: time of step, defaults to 1</span>
-<span class="sd">    :type T: float, optional</span>
-<span class="sd">    :param off: initial value, defaults to 0</span>
-<span class="sd">    :type off: float, optional</span>
-<span class="sd">    :param on: final value, defaults to 1</span>
-<span class="sd">    :type on: float, optional</span>
-<span class="sd">    :param ``**kwargs``: common Block options</span>
-<span class="sd">    :return: a STEP block</span>
-<span class="sd">    :rtype: Step</span>
 <span class="sd">    </span>
-<span class="sd">    Create a step signal block.</span>
-
-<span class="sd">    Output a step signal that transitions from the value ``off`` to ``on``</span>
-<span class="sd">    when time equals ``T``.</span>
-
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
+<span class="sd">    </span>
+<span class="sd">       +--------+---------+---------+</span>
+<span class="sd">       | inputs | outputs |  states |</span>
+<span class="sd">       +--------+---------+---------+</span>
+<span class="sd">       | 0      | 1       | 0       |</span>
+<span class="sd">       +--------+---------+---------+</span>
+<span class="sd">       |        | float   |         | </span>
+<span class="sd">       +--------+---------+---------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+
+<div class="viewcode-block" id="Step.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sources.Step.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                  <span class="n">off</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                  <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param T: time of step, defaults to 1</span>
+<span class="sd">        :type T: float, optional</span>
+<span class="sd">        :param off: initial value, defaults to 0</span>
+<span class="sd">        :type off: float, optional</span>
+<span class="sd">        :param on: final value, defaults to 1</span>
+<span class="sd">        :type on: float, optional</span>
+<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        :return: a STEP block</span>
+<span class="sd">        :rtype: Step</span>
+<span class="sd">        </span>
+<span class="sd">        Create a step signal block.</span>
+
+<span class="sd">        Output a step signal that transitions from the value ``off`` to ``on``</span>
+<span class="sd">        when time equals ``T``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         
         <span class="bp">self</span><span class="o">.</span><span class="n">T</span> <span class="o">=</span> <span class="n">T</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">off</span> <span class="o">=</span> <span class="n">off</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">on</span> <span class="o">=</span> <span class="n">on</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s2">&quot;step&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s2">&quot;step&quot;</span></div>
 
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">t</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">:</span>
@@ -270,7 +316,6 @@
 
         <span class="c1">#print(out)</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">out</span><span class="p">]</span></div>
-
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
 
@@ -286,7 +331,7 @@
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../../index.html">bdsim</a></h1>
+<h1 class="logo"><a href="../../../index.html">Block diagram simulation</a></h1>
 
 
 

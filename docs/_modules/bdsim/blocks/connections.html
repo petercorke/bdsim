@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>bdsim.blocks.connections &#8212; bdsim 0.7 documentation</title>
+    <title>bdsim.blocks.connections &#8212; Block diagram simulation 0.7 documentation</title>
     <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
@@ -65,30 +65,42 @@
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`ITEM`</span>
 <span class="sd">    </span>
-<span class="sd">    :param item: name of dictionary item</span>
-<span class="sd">    :type item: str</span>
-<span class="sd">    :param ``*inputs``: Optional incoming connections</span>
-<span class="sd">    :type ``*inputs``: Block or Plug</span>
-<span class="sd">    :param ``**kwargs``: common Block options</span>
-<span class="sd">    :return: An ITEM block</span>
-<span class="sd">    :rtype: Item instance</span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
 <span class="sd">    </span>
-<span class="sd">    Create a signal selector block.</span>
-
-<span class="sd">    For a dictionary type inut signal select one item as the output signal.</span>
-<span class="sd">    For example::</span>
-<span class="sd">        </span>
-<span class="sd">        ITEM(&#39;xd&#39;)</span>
-<span class="sd">        </span>
-<span class="sd">    selects the ``xd`` item from the dictionary output signal of the MULTIROTOR</span>
-<span class="sd">    block.</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | inputs     | outputs |  states |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | 1          | 1       | 0       |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | dict       | any     |         | </span>
+<span class="sd">       +------------+---------+---------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 
+<div class="viewcode-block" id="Item.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Item.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param item: name of dictionary item</span>
+<span class="sd">        :type item: str</span>
+<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
+<span class="sd">        :type ``*inputs``: Block or Plug</span>
+<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        :return: An ITEM block</span>
+<span class="sd">        :rtype: Item instance</span>
+<span class="sd">        </span>
+<span class="sd">        Create a signal selector block.</span>
+
+<span class="sd">        For a dictionary type inut signal select one item as the output signal.</span>
+<span class="sd">        For example::</span>
+<span class="sd">            </span>
+<span class="sd">            ITEM(&#39;xd&#39;)</span>
+<span class="sd">            </span>
+<span class="sd">        selects the ``xd`` item from the dictionary output signal of the MULTIROTOR</span>
+<span class="sd">        block.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;item&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">item</span> <span class="o">=</span> <span class="n">item</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">item</span> <span class="o">=</span> <span class="n">item</span></div>
     
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="c1"># TODO, handle inputs that are vectors themselves</span>
@@ -102,30 +114,44 @@
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`MUX`</span>
 
-<span class="sd">    :param nin: Number of input ports, defaults to 1</span>
-<span class="sd">    :type nin: int, optional</span>
-<span class="sd">    :param ``*inputs``: Optional incoming connections</span>
-<span class="sd">    :type ``*inputs``: Block or Plug</span>
-<span class="sd">    :param ``**kwargs``: common Block options</span>
-<span class="sd">    :return: A MUX block</span>
-<span class="sd">    :rtype: Mux instance</span>
-
-<span class="sd">    Create a multiplexer block.</span>
-
-<span class="sd">    This block takes a number of scalar or vector signals and concatenates</span>
-<span class="sd">    them into a single vector signal.  For example::</span>
-<span class="sd">        </span>
-<span class="sd">        MUX(2, func1[2], sum3)</span>
-<span class="sd">        </span>
-<span class="sd">    multiplexes the outputs of blocks ``func1`` (port 2) and ``sum3`` into</span>
-<span class="sd">    a single output vector.  If the explicit inputs are omitted they can be wired</span>
-<span class="sd">    using the ``connect`` function.</span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
 <span class="sd">    </span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | inputs     | outputs |  states |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | nin        | 1       | 0       |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | float,     | A(M,)   |         |</span>
+<span class="sd">       | A(N,)      | A(M,)   |         | </span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Mux.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Mux.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param nin: Number of input ports, defaults to 1</span>
+<span class="sd">        :type nin: int, optional</span>
+<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
+<span class="sd">        :type ``*inputs``: Block or Plug</span>
+<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        :return: A MUX block</span>
+<span class="sd">        :rtype: Mux instance</span>
+
+<span class="sd">        Create a multiplexer block.</span>
+
+<span class="sd">        This block takes a number of scalar or vector signals and concatenates</span>
+<span class="sd">        them into a single vector signal.  For example::</span>
+<span class="sd">            </span>
+<span class="sd">            MUX(2, func1[2], sum3)</span>
+<span class="sd">            </span>
+<span class="sd">        multiplexes the outputs of blocks ``func1`` (port 2) and ``sum3`` into</span>
+<span class="sd">        a single output vector.  If the explicit inputs are omitted they can be wired</span>
+<span class="sd">        using the ``connect`` function.</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="n">nin</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;mux&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;mux&#39;</span></div>
     
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="c1"># TODO, handle inputs that are vectors themselves</span>
@@ -138,25 +164,38 @@
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`DEMUX`</span>
 <span class="sd">    </span>
-<span class="sd">    :param nout: DESCRIPTION, defaults to 1</span>
-<span class="sd">    :type nout: TYPE, optional</span>
-<span class="sd">    :param ``*inputs``: Optional incoming connections</span>
-<span class="sd">    :type ``*inputs``: Block or Plug</span>
-<span class="sd">    :param ``**kwargs``: common Block options</span>
-<span class="sd">    :return: A DEMUX block</span>
-<span class="sd">    :rtype: DeMux instance</span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
 <span class="sd">    </span>
-<span class="sd">    Create a demultiplexer block.</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | inputs     | outputs |  states |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | 1          | nout    | 0       |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | float,     | float   |         |</span>
+<span class="sd">       | A(nout,)   |         |         | </span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
-<span class="sd">    This block has a single input port and ``nout`` output ports.  A vector</span>
-<span class="sd">    input signal (with ``nout`` elements) is routed element-wise to individual</span>
-<span class="sd">    scalar output port.</span>
+<div class="viewcode-block" id="DeMux.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.DeMux.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param nout: DESCRIPTION, defaults to 1</span>
+<span class="sd">        :type nout: TYPE, optional</span>
+<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
+<span class="sd">        :type ``*inputs``: Block or Plug</span>
+<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        :return: A DEMUX block</span>
+<span class="sd">        :rtype: DeMux instance</span>
+<span class="sd">        </span>
+<span class="sd">        Create a demultiplexer block.</span>
+
+<span class="sd">        This block has a single input port and ``nout`` output ports.  A vector</span>
+<span class="sd">        input signal (with ``nout`` elements) is routed element-wise to individual</span>
+<span class="sd">        scalar output port.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="n">nout</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;demux&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;demux&#39;</span></div>
     
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="c1"># TODO, handle inputs that are vectors themselves</span>
@@ -169,46 +208,58 @@
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`SUBSYSTEM`</span>
 <span class="sd">    </span>
-<span class="sd">    :param subsys: Subsystem as either a filename or a ``BlockDiagram`` instance</span>
-<span class="sd">    :type subsys: str or BlockDiagram</span>
-<span class="sd">    :param ``*inputs``: Optional incoming connections</span>
-<span class="sd">    :type ``*inputs``: Block or Plug</span>
-<span class="sd">    :param ``**kwargs``: common Block options</span>
-<span class="sd">    :raises ImportError: DESCRIPTION</span>
-<span class="sd">    :raises ValueError: DESCRIPTION</span>
-<span class="sd">    :return: A SUBSYSTEM block</span>
-<span class="sd">    :rtype: SubSystem instance</span>
-<span class="sd">    </span>
-<span class="sd">    Create a subsystem block.</span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
+<span class="sd">       </span>
+<span class="sd">       +------------+------------+---------+</span>
+<span class="sd">       | inputs     | outputs    |  states |</span>
+<span class="sd">       +------------+------------+---------+</span>
+<span class="sd">       | ss.in.nout | ss.out.nin | 0       |</span>
+<span class="sd">       +------------+------------+---------+</span>
+<span class="sd">       | any        | any        |         |</span>
+<span class="sd">       +------------+------------+---------+</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
-<span class="sd">    This block represents a subsystem in a parent block diagram.  It can be</span>
-<span class="sd">    specified as either:</span>
+<div class="viewcode-block" id="SubSystem.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.SubSystem.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subsys</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param subsys: Subsystem as either a filename or a ``BlockDiagram`` instance</span>
+<span class="sd">        :type subsys: str or BlockDiagram</span>
+<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
+<span class="sd">        :type ``*inputs``: Block or Plug</span>
+<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        :raises ImportError: DESCRIPTION</span>
+<span class="sd">        :raises ValueError: DESCRIPTION</span>
+<span class="sd">        :return: A SUBSYSTEM block</span>
+<span class="sd">        :rtype: SubSystem instance</span>
 <span class="sd">        </span>
-<span class="sd">        - the name of a module which is imported and must contain only</span>
-<span class="sd">          only ``BlockDiagram`` instance, or</span>
-<span class="sd">        - a ``BlockDiagram`` instance</span>
-<span class="sd">    </span>
-<span class="sd">    The referenced block diagram must contain one or both of:</span>
-<span class="sd">    </span>
-<span class="sd">        - one ``InPort`` block, which has outputs but no inputs. These</span>
-<span class="sd">          outputs are connected to the inputs to the enclosing ``SubSystem`` block.</span>
-<span class="sd">        - one ``OutPort`` block, which has inputs but no outputs. These</span>
-<span class="sd">          inputs are connected to the outputs to the enclosing ``SubSystem`` block.</span>
-<span class="sd">          </span>
-<span class="sd">    Notes:</span>
-<span class="sd">        </span>
-<span class="sd">    - The referenced block diagram is treated like a macro and copied into </span>
-<span class="sd">      the parent block diagram at compile time. The ``SubSystem``, ``InPort`` and</span>
-<span class="sd">      ``OutPort`` blocks are eliminated, that is, all hierarchical structure is </span>
-<span class="sd">      lost.</span>
-<span class="sd">    - The same subsystem can be used multiple times, its blocks and wires</span>
-<span class="sd">       will be cloned.  Subsystems can also include subsystems.</span>
-<span class="sd">    - The number of input and output ports is not specified, they are computed</span>
-<span class="sd">      from the number of ports on the ``InPort`` and ``OutPort`` blocks within the</span>
-<span class="sd">      subsystem.</span>
-<span class="sd">    &quot;&quot;&quot;</span>    
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subsys</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="sd">        Create a subsystem block.</span>
 
+<span class="sd">        This block represents a subsystem in a parent block diagram.  It can be</span>
+<span class="sd">        specified as either:</span>
+<span class="sd">            </span>
+<span class="sd">            - the name of a module which is imported and must contain only</span>
+<span class="sd">              only ``BlockDiagram`` instance, or</span>
+<span class="sd">            - a ``BlockDiagram`` instance</span>
+<span class="sd">        </span>
+<span class="sd">        The referenced block diagram must contain one or both of:</span>
+<span class="sd">        </span>
+<span class="sd">            - one ``InPort`` block, which has outputs but no inputs. These</span>
+<span class="sd">              outputs are connected to the inputs to the enclosing ``SubSystem`` block.</span>
+<span class="sd">            - one ``OutPort`` block, which has inputs but no outputs. These</span>
+<span class="sd">              inputs are connected to the outputs to the enclosing ``SubSystem`` block.</span>
+<span class="sd">              </span>
+<span class="sd">        Notes:</span>
+<span class="sd">            </span>
+<span class="sd">        - The referenced block diagram is treated like a macro and copied into </span>
+<span class="sd">          the parent block diagram at compile time. The ``SubSystem``, ``InPort`` and</span>
+<span class="sd">          ``OutPort`` blocks are eliminated, that is, all hierarchical structure is </span>
+<span class="sd">          lost.</span>
+<span class="sd">        - The same subsystem can be used multiple times, its blocks and wires</span>
+<span class="sd">           will be cloned.  Subsystems can also include subsystems.</span>
+<span class="sd">        - The number of input and output ports is not specified, they are computed</span>
+<span class="sd">          from the number of ports on the ``InPort`` and ``OutPort`` blocks within the</span>
+<span class="sd">          subsystem.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;subsystem&#39;</span>
         
@@ -235,55 +286,77 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;argument must be filename or BlockDiagram instance&#39;</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">subsystem</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">subsys</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ssname</span> <span class="o">=</span> <span class="n">subsys</span><span class="o">.</span><span class="n">name</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ssname</span> <span class="o">=</span> <span class="n">subsys</span><span class="o">.</span><span class="n">name</span></div></div>
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 <div class="viewcode-block" id="InPort"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.InPort">[docs]</a><span class="nd">@block</span>
 <span class="k">class</span> <span class="nc">InPort</span><span class="p">(</span><span class="n">SubsystemBlock</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`INPORT`</span>
-
-<span class="sd">    :param nout: Number of output ports, defaults to 1</span>
-<span class="sd">    :type nout: int, optional</span>
-<span class="sd">    :param ``**kwargs``: common Block options</span>
-<span class="sd">    :return: An INPORT block</span>
-<span class="sd">    :rtype: InPort instance</span>
-
-<span class="sd">    Create an input port block for a subsystem.</span>
 <span class="sd">    </span>
-<span class="sd">    This block connects a subsystem to a parent block diagram.  Inputs to the</span>
-<span class="sd">    parent-level ``SubSystem`` block appear as outputs of this block.</span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
+<span class="sd">    </span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | inputs     | outputs |  states |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | 0          | nout    | 0       |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       |            | any     |         |</span>
+<span class="sd">       +------------+---------+---------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="InPort.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.InPort.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param nout: Number of output ports, defaults to 1</span>
+<span class="sd">        :type nout: int, optional</span>
+<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        :return: An INPORT block</span>
+<span class="sd">        :rtype: InPort instance</span>
 
+<span class="sd">        Create an input port block for a subsystem.</span>
+<span class="sd">        </span>
+<span class="sd">        This block connects a subsystem to a parent block diagram.  Inputs to the</span>
+<span class="sd">        parent-level ``SubSystem`` block appear as outputs of this block.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nout</span><span class="o">=</span><span class="n">nout</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;inport&#39;</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;inport&#39;</span></div></div>
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 <div class="viewcode-block" id="OutPort"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.OutPort">[docs]</a><span class="nd">@block</span>
 <span class="k">class</span> <span class="nc">OutPort</span><span class="p">(</span><span class="n">SubsystemBlock</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`OUTPORT`</span>
-
-<span class="sd">    :param nin: Number of input ports, defaults to 1</span>
-<span class="sd">    :type nin: int, optional</span>
-<span class="sd">    :param ``*inputs``: Optional incoming connections</span>
-<span class="sd">    :type ``*inputs``: Block or Plug</span>
-<span class="sd">    :param ``**kwargs``: common Block options</span>
-<span class="sd">    :return: A OUTPORT block</span>
-<span class="sd">    :rtype: OutPort instance</span>
 <span class="sd">    </span>
-<span class="sd">    Create an output port block for a subsystem.</span>
-
-<span class="sd">    This block connects a subsystem to a parent block diagram.  Outputs of the</span>
-<span class="sd">    parent-level ``SubSystem`` block are the inputs of this block.</span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
+<span class="sd">    </span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | inputs     | outputs |  states |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | nin        | 0       | 0       |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | any        |         |         |</span>
+<span class="sd">       +------------+---------+---------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="OutPort.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.OutPort.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param nin: Number of input ports, defaults to 1</span>
+<span class="sd">        :type nin: int, optional</span>
+<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
+<span class="sd">        :type ``*inputs``: Block or Plug</span>
+<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        :return: A OUTPORT block</span>
+<span class="sd">        :rtype: OutPort instance</span>
+<span class="sd">        </span>
+<span class="sd">        Create an output port block for a subsystem.</span>
 
+<span class="sd">        This block connects a subsystem to a parent block diagram.  Outputs of the</span>
+<span class="sd">        parent-level ``SubSystem`` block are the inputs of this block.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="n">nin</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;outport&#39;</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;outport&#39;</span></div></div>
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
@@ -300,7 +373,7 @@
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../../index.html">bdsim</a></h1>
+<h1 class="logo"><a href="../../../index.html">Block diagram simulation</a></h1>
 
 
 
