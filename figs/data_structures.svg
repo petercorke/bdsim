@@ -1,0 +1,454 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with EazyDraw for Mac ( http://www.eazydraw.com/ ) -->
+
+<svg
+    version="1.1"
+    xmlns:dc="http://purl.org/dc/elements/1.1/"
+    xmlns:cc="http://creativecommons.org/ns#"
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns:svg="http://www.w3.org/2000/svg"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    xmlns="http://www.w3.org/2000/svg"
+    width="560.736230469"
+    height="518.235539497"
+    viewBox="0, 0, 560.736230469, 518.235539497"
+    preserveAspectRatio="none"
+    id="svg2">
+   <defs
+       id="defs_5858B127">
+      <marker
+          orient="auto"
+          refX="0.0"
+          refY="0.0"
+          id="E38816D5_end_arrow"
+          style="overflow:visible"
+          markerUnits="userSpaceOnUse">
+         <path
+             id="E38816D5_end_arrow_path"
+             style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-opacity:1;fill-rule:nonzero;stroke-linecap:square;stroke-linejoin:miter;stroke-width:0.488037109375;stroke-miterlimit:10"
+             d="M0,0 L-7.517540966287,2.736161146605 L-7.517540966287,-2.736161146605 z"/>
+      </marker>
+      <marker
+          orient="auto"
+          refX="0.0"
+          refY="0.0"
+          id="A046D0E5_end_arrow"
+          style="overflow:visible"
+          markerUnits="userSpaceOnUse">
+         <path
+             id="A046D0E5_end_arrow_path"
+             style="fill:#C0C0C0;fill-opacity:1;stroke:#C0C0C0;stroke-opacity:1;fill-rule:nonzero;stroke-linecap:square;stroke-linejoin:miter;stroke-width:0.488037109375;stroke-miterlimit:10"
+             d="M0,0 L-7.517540966287,2.736161146605 L-7.517540966287,-2.736161146605 z"/>
+      </marker>
+      <marker
+          orient="auto"
+          refX="0.0"
+          refY="0.0"
+          id="B046D0E5_end_arrow"
+          style="overflow:visible"
+          markerUnits="userSpaceOnUse">
+         <path
+             id="B046D0E5_end_arrow_path"
+             style="fill:#FF2600;fill-opacity:1;stroke:#FF2600;stroke-opacity:1;fill-rule:nonzero;stroke-linecap:square;stroke-linejoin:miter;stroke-width:0.763061523438;stroke-miterlimit:10"
+             d="M0,0 L-7.517540966287,2.736161146605 L-7.517540966287,-2.736161146605 z"/>
+      </marker>
+   </defs>
+   <metadata
+       id="metadata7">
+      <rdf:RDF>
+         <cc:Work
+             rdf:about="">
+            <dc:format>image/svg+xml</dc:format>
+            <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+            <dc:title></dc:title>
+         </cc:Work>
+      </rdf:RDF>
+   </metadata>
+   <g
+       id="layer_Paper"
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-opacity:1;fill-rule:nonzero;stroke-linecap:square;stroke-linejoin:miter;stroke-width:1;stroke-miterlimit:10">
+      <rect
+          style="fill:none"
+          id="236297C5"
+          x="19.3681152344"
+          y="19.3681152344"
+          width="90"
+          height="36"/>
+      <rect
+          style="fill:none"
+          id="7055F7C5"
+          x="127.368115234"
+          y="19.3681152344"
+          width="90"
+          height="36"/>
+      <rect
+          style="fill:none"
+          id="335D08C5"
+          x="235.368115234"
+          y="19.3681152344"
+          width="90"
+          height="36"/>
+      <rect
+          style="fill:none"
+          id="77C918C5"
+          x="343.368115234"
+          y="19.3681152344"
+          width="90"
+          height="36"/>
+      <rect
+          style="fill:none"
+          id="45E328C5"
+          x="451.368115234"
+          y="19.3681152344"
+          width="90"
+          height="36"/>
+      <rect
+          style="fill:none"
+          id="0F6368C5"
+          x="19.3681152344"
+          y="163.368115234"
+          width="36"
+          height="36"/>
+      <rect
+          style="fill:none"
+          id="7AB2F8C5"
+          x="73.3681152344"
+          y="163.368115234"
+          width="36"
+          height="36"/>
+      <rect
+          style="fill:none"
+          id="9DAFF8C5"
+          x="127.368115234"
+          y="163.368115234"
+          width="36"
+          height="36"/>
+      <rect
+          style="fill:none"
+          id="D18309C5"
+          x="181.368115234"
+          y="163.368115234"
+          width="36"
+          height="36"/>
+      <rect
+          style="fill:none"
+          id="E86509C5"
+          x="235.368115234"
+          y="163.368115234"
+          width="36"
+          height="36"/>
+      <rect
+          style="fill:none"
+          id="DA6099C5"
+          x="289.368115234"
+          y="163.368115234"
+          width="36"
+          height="36"/>
+      <rect
+          style="fill:none"
+          id="7F0599C5"
+          x="343.368115234"
+          y="163.368115234"
+          width="36"
+          height="36"/>
+      <polygon
+          style="fill:none;stroke:#D6D6D6;stroke-width:2.63623046875"
+          id="98A4EE07"
+          points="1.368115234375,1.368115234375 559.368115234,1.368115234375 559.368115234,73.3681152344 1.368115234375,73.3681152344"/>
+      <rect
+          style="fill:none;stroke:#D6D6D6;stroke-width:2.640625"
+          id="72698AC5"
+          x="1.368115234375"
+          y="145.368115234"
+          width="396"
+          height="72"/>
+      <polygon
+          style="fill:none"
+          id="D9E68DC5"
+          points="122.113304837,91.3681152344 147.602545909,91.3681152344 147.602545909,101.734027722 157.968458397,101.734027722 157.968458397,116.044134916 147.450719716,116.044134916 147.450719716,126.561873597 122.099637134,126.561873597 122.099637134,126.430694859 121.968458397,126.430694859 121.968458397,91.5129616747 122.113304837,91.5129616747 122.113304837,91.3681152344"/>
+      <text
+          id="38FFF5E6"
+          style="stroke:none"
+          font-family="Avenir"
+          font-size="12"
+          font-weight="normal"
+          font-style="normal">
+         <tspan x="128.322458397" y="112.964994416">start</tspan>
+      </text>
+      <polygon
+          style="fill:none"
+          id="607042D5"
+          points="173.413476418,91.3681152344 198.90271749,91.3681152344 198.90271749,101.734027722 209.268629978,101.734027722 209.268629978,116.044134916 198.750891297,116.044134916 198.750891297,126.561873597 173.399808715,126.561873597 173.399808715,126.430694859 173.268629978,126.430694859 173.268629978,91.5129616747 173.413476418,91.5129616747 173.413476418,91.3681152344"/>
+      <text
+          id="A91956E6"
+          style="stroke:none"
+          font-family="Avenir"
+          font-size="12"
+          font-weight="normal"
+          font-style="normal">
+         <tspan x="180.930629978" y="112.964994416">end</tspan>
+      </text>
+      <path
+          style="fill:none;stroke-width:1.9521484375;marker-end:url(#E38816D5_end_arrow)"
+          id="E38816D5"
+          d="M136.366737815,173.890609558 C136.366737815,173.890609558 136.366737815,173.890609558 136.366737815,173.890609558 C137.962800218,161.386160529 130.296466933,158.187377787 128.229891298,150.04803591 C126.369388643,142.720325802 128.109802091,134.928088793 128.049757487,127.368115234"/>
+      <path
+          style="fill:none;stroke-width:1.9521484375;marker-end:url(#E38816D5_end_arrow)"
+          id="E29FA6D5"
+          d="M145.368115234,173.37911931 C145.368115234,173.37911931 145.368115235,173.379119311 145.368115235,173.379119311 C146.952051421,162.53860849 148.63546486,151.414870037 156.585538899,148.710069895 C168.364151888,144.702711733 180.095730493,154.878134964 181.159836463,127.368115234"/>
+      <path
+          style="fill:none;stroke-width:1.9521484375;marker-end:url(#E38816D5_end_arrow)"
+          id="207DFDD5"
+          d="M188.169557727,97.5551682575 C188.169557727,97.5551682575 188.169557727,97.5551682575 188.169557727,97.5551682575 C186.377755893,83.2176383592 182.837871232,68.8221331587 191.157659763,67.6816333281 C209.330541389,65.1904439978 246.532765916,105.470990653 244.273547571,55.8541890374"/>
+      <rect
+          style="fill:none"
+          id="5046D0E5"
+          x="104.022872238"
+          y="253.417894328"
+          width="132.158822584"
+          height="52.8635290338"/>
+      <rect
+          style="fill:none"
+          id="6046D0E5"
+          x="262.613459339"
+          y="253.417894328"
+          width="132.158822584"
+          height="52.8635290338"/>
+      <rect
+          style="fill:none"
+          id="7046D0E5"
+          x="104.022872238"
+          y="464.872010463"
+          width="52.8635290338"
+          height="52.8635290338"/>
+      <polygon
+          style="fill:none;stroke:#C0C0C0"
+          id="8046D0E5"
+          points="104.235569293,359.144952396 141.664770278,359.144952396 141.664770278,374.366583389 156.886401271,374.366583389 156.886401271,395.379993586 141.441823934,395.379993586 141.441823934,410.824570923 104.21549921,410.824570923 104.21549921,410.631943951 104.022872238,410.631943951 104.022872238,359.357649451 104.235569293,359.357649451 104.235569293,359.144952396"/>
+      <polygon
+          style="fill:none;stroke:#FF2600;stroke-width:3.05224609375"
+          id="9046D0E5"
+          points="183.530862844,359.144952396 220.960063829,359.144952396 220.960063829,374.366583389 236.181694822,374.366583389 236.181694822,395.379993586 220.737117485,395.379993586 220.737117485,410.824570923 183.51079276,410.824570923 183.51079276,410.631943951 183.318165788,410.631943951 183.318165788,359.357649451 183.530862844,359.357649451 183.530862844,359.144952396"/>
+      <path
+          style="fill:none;stroke:#C0C0C0;stroke-width:1.9521484375;marker-end:url(#A046D0E5_end_arrow)"
+          id="A046D0E5"
+          d="M124.793163606,478.286288292 C124.793163606,478.286288292 124.793163606,478.286288292 124.793163606,478.286288292 C127.136871693,459.924363171 115.879387467,455.227170273 112.844762991,443.275105394 C110.112742543,432.514866059 112.668420233,421.072500855 112.580248855,409.971198586"/>
+      <path
+          style="fill:none;stroke:#FF2600;stroke-width:3.05224609375;marker-end:url(#B046D0E5_end_arrow)"
+          id="B046D0E5"
+          d="M142.40433366,476.991406288 C142.40433366,476.991406288 142.40433366,476.99140629 142.40433366,476.99140629 C144.730235231,461.072860219 147.20221232,444.738413812 158.876350371,440.766600455 C176.172435085,434.882070051 193.399453035,449.823980646 194.962019613,409.427404903"/>
+      <path
+          style="fill:none;stroke:#FF2600;stroke-width:3.05224609375;marker-end:url(#B046D0E5_end_arrow)"
+          id="D046D0E5"
+          d="M203.282661049,373.568315352 C203.282661049,373.568315352 203.282661049,373.568315352 203.282661049,373.568315352 C200.65152304,352.514636794 195.453445387,331.375825486 207.67048379,329.701079766 C234.35611311,326.042939225 279.458960457,380.513878474 276.141453385,307.655010898"/>
+      <rect
+          style="fill:none;stroke-width:1.9521484375"
+          id="785BF7E6"
+          x="150.282898"
+          y="260.637221682"
+          width="72.1155166011"
+          height="10.5841949805"/>
+      <rect
+          style="fill:none;stroke-width:1.9521484375"
+          id="9CDE48E6"
+          x="151.024043011"
+          y="279.671102178"
+          width="81.1788900947"
+          height="10.6130593268"/>
+      <rect
+          style="fill:none;stroke-width:1.9521484375"
+          id="5DEEB8E6"
+          x="314.913432296"
+          y="259.752899215"
+          width="72.1155166011"
+          height="10.6130593268"/>
+      <rect
+          style="fill:none;stroke-width:1.9521484375"
+          id="C546F8E6"
+          x="315.604675532"
+          y="278.426679105"
+          width="52.7403909402"
+          height="10.6130593268"/>
+      <path
+          style="fill:none;stroke:#FF2600;stroke-width:3.05224609375;marker-end:url(#B046D0E5_end_arrow)"
+          id="BB504AE6"
+          d="M180.625004395,286.524848429 C180.625004395,286.524848429 180.625004395,286.524848429 180.625004395,286.524848429 C180.811110035,302.585460281 197.008434055,345.840106136 166.950161019,349.48827695 C134.097572358,353.475593686 142.664956126,435.400689487 133.702832874,465.719724145"/>
+      <path
+          style="fill:none;stroke-width:1.9521484375;stroke-dasharray:4,4;marker-end:url(#E38816D5_end_arrow)"
+          id="EA71EFE6"
+          d="M351.497432059,265.944217662 C351.497432059,265.944217662 351.49743206,265.944217662 351.49743206,265.944217662 C356.049255027,324.117910753 305.281381729,386.714634561 281.423654463,409.572669936 C262.496959669,427.706294078 197.283021794,471.899303509 160.005072436,472.953499072"/>
+      <text
+          id="FE34C0F6"
+          style="stroke:none"
+          font-family="Avenir"
+          font-size="11"
+          font-weight="normal"
+          font-style="normal">
+         <tspan x="106.484280763" y="268.510852174">inports</tspan>
+      </text>
+      <text
+          id="ACECA1F6"
+          style="stroke:none"
+          font-family="Avenir"
+          font-size="11"
+          font-weight="normal"
+          font-style="normal">
+         <tspan x="106.46232725" y="287.717918748">outports</tspan>
+      </text>
+      <text
+          id="229EF1F6"
+          style="stroke:none"
+          font-family="Avenir"
+          font-size="11"
+          font-weight="normal"
+          font-style="normal">
+         <tspan x="266.153467313" y="285.825148182">outports</tspan>
+      </text>
+      <text
+          id="5D5F12F6"
+          style="stroke:none"
+          font-family="Avenir"
+          font-size="11"
+          font-weight="normal"
+          font-style="normal">
+         <tspan x="265.789361526" y="268.963309745">inports</tspan>
+      </text>
+      <text
+          id="20AB4EF6"
+          style="stroke:none"
+          font-family="Avenir"
+          font-size="11"
+          font-weight="normal"
+          font-style="normal">
+         <tspan x="5.801874584027" y="68.4859925824">blocklist</tspan>
+      </text>
+      <text
+          id="46A0BEF6"
+          style="stroke:none"
+          font-family="Avenir"
+          font-size="11"
+          font-weight="normal"
+          font-style="normal">
+         <tspan x="5.853885702779" y="212.046075041">wirelist</tspan>
+      </text>
+      <line
+          style="fill:none;stroke:#0433FF;stroke-width:1.205078125"
+          id="F2191407"
+          x1="274.074436441"
+          y1="49.6370462748"
+          x2="302.879150727"
+          y2="86.709691042"/>
+      <g id="2DC96507_textGroup">
+         <path
+             style="fill:none;stroke:#0433FF"
+             id="2DC96507_textRect"
+             d="M258.752322782,103.042599276 L337.44985316,103.042599276 L337.44985316,119.206633199 L258.752322782,119.206633199 z"/>
+         <text
+             id="2DC96507"
+             style="fill:#0433FF;stroke:none"
+             font-family="Avenir"
+             font-size="11"
+             font-weight="normal"
+             font-style="normal">
+            <tspan x="264.280887235" y="114.571163729">Plug instance</tspan>
+         </text>
+      </g>
+      <g id="103AE607_textGroup">
+         <path
+             style="fill:none;stroke:#0433FF"
+             id="103AE607_textRect"
+             d="M301.732684946,125.150532651 L380.347443302,125.150532651 L380.347443302,141.314566574 L301.732684946,141.314566574 z"/>
+         <text
+             id="103AE607"
+             style="fill:#0433FF;stroke:none"
+             font-family="Avenir"
+             font-size="11"
+             font-weight="normal"
+             font-style="normal">
+            <tspan x="307.261249399" y="136.679097104">Wire instance</tspan>
+         </text>
+      </g>
+      <g id="A923F607_textGroup">
+         <path
+             style="fill:none;stroke:#0433FF"
+             id="A923F607_textRect"
+             d="M303.402897901,80.4122480604 L384.727772473,80.4122480604 L384.727772473,96.5762819832 L303.402897901,96.5762819832 z"/>
+         <text
+             id="A923F607"
+             style="fill:#0433FF;stroke:none"
+             font-family="Avenir"
+             font-size="11"
+             font-weight="normal"
+             font-style="normal">
+            <tspan x="308.931462354" y="91.9408125135">Block instance</tspan>
+         </text>
+      </g>
+      <line
+          style="fill:none;stroke:#0433FF;stroke-width:1.205078125"
+          id="AE96E807"
+          x1="215.075610664"
+          y1="111.496596558"
+          x2="258.604698846"
+          y2="109.845916754"/>
+      <line
+          style="fill:none;stroke:#0433FF;stroke-width:1.205078125"
+          id="D41CE807"
+          x1="300.98612789"
+          y1="134.98460649"
+          x2="258.308534988"
+          y2="167.105211847"/>
+      <path
+          style="fill:none;stroke-width:1.9521484375;marker-end:url(#E38816D5_end_arrow)"
+          id="DA7BB017"
+          d="M136.765119896,97.2554182946 C136.765119896,97.2554182946 136.765119896,97.2554182946 136.765119896,97.2554182946 C137.119425496,87.4523861537 128.627784226,82.3834669354 135.049669346,76.240186896 C138.607004227,72.8371823326 136.064107914,68.8705416353 135.892189843,56.0073655078"/>
+      <path
+          style="fill:none;stroke:#C0C0C0;stroke-width:1.9521484375;marker-end:url(#A046D0E5_end_arrow)"
+          id="9078D617"
+          d="M121.256651149,366.76636058 C121.256651149,366.76636058 121.256651149,366.76636058 121.256651149,366.76636058 C121.7283656,352.333467539 110.422786776,344.870555263 118.972739147,335.825873735 C123.708894222,330.815668711 120.323339676,324.9756286 120.094451852,306.037320274"/>
+      <g id="AD743A17_textGroup">
+         <path
+             style="fill:none;stroke:#0433FF"
+             id="AD743A17_textRect"
+             d="M3.345258860568,268.526023623 L90.8887153735,268.526023623 L90.8887153735,284.690057546 L3.345258860568,284.690057546 z"/>
+         <text
+             id="AD743A17"
+             style="fill:#0433FF;stroke:none"
+             font-family="Avenir"
+             font-size="11"
+             font-weight="normal"
+             font-style="normal">
+            <tspan x="8.873823313693" y="280.054588076">Block instance</tspan>
+         </text>
+      </g>
+      <g id="FF236D17_textGroup">
+         <path
+             style="fill:none;stroke:#0433FF"
+             id="FF236D17_textRect"
+             d="M11.9181770428,479.582873968 L90.5329353986,479.582873968 L90.5329353986,495.746907891 L11.9181770428,495.746907891 z"/>
+         <text
+             id="FF236D17"
+             style="fill:#0433FF;stroke:none"
+             font-family="Avenir"
+             font-size="11"
+             font-weight="normal"
+             font-style="normal">
+            <tspan x="17.4467414959" y="491.111438421">Wire instance</tspan>
+         </text>
+      </g>
+      <g id="7ADE9D17_textGroup">
+         <path
+             style="fill:none;stroke:#0433FF"
+             id="7ADE9D17_textRect"
+             d="M12.937819942,376.476556576 L91.6353503202,376.476556576 L91.6353503202,392.640590499 L12.937819942,392.640590499 z"/>
+         <text
+             id="7ADE9D17"
+             style="fill:#0433FF;stroke:none"
+             font-family="Avenir"
+             font-size="11"
+             font-weight="normal"
+             font-style="normal">
+            <tspan x="18.4663843951" y="388.005121029">Plug instance</tspan>
+         </text>
+      </g>
+   </g>
+</svg>
