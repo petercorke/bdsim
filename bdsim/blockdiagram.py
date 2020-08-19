@@ -232,7 +232,7 @@ class BlockDiagram:
                             if not valid:
                                 raise ImportError('class {:s} has missing/improper output method'.format(str(cls)))
                             
-                        if cls.blockclass == 'sink':
+                        if cls is SinkBlock:
                             # must have a step function
                             valid = hasattr(cls, 'step') and \
                                     callable(cls.step) and \
@@ -480,7 +480,7 @@ class BlockDiagram:
         
         # visit all stateful blocks
         for b in self.blocklist:
-            if b.blockclass == 'TransferBlock':
+            if b is TransferBlock:
                 self.nstates += b.nstates
                 if b._state_names is not None:
                     assert len(b._state_names) == b.nstates, 'number of state names not consistent with number of states'
@@ -535,12 +535,12 @@ class BlockDiagram:
                     if dest == start:
                         print('  ERROR: cycle found: ', ' - '.join([str(x) for x in path + [dest]]))
                         return True
-                    if dest.blockclass == 'function':
+                    if dest is FunctionBlock:
                         return _DFS(path + [dest]) # recurse
             return False
 
         for b in self.blocklist:
-            if b.blockclass == 'function':
+            if b is FunctionBlock:
                 # do depth first search looking for a cycle
                 if _DFS([b]):
                     error = True
@@ -765,7 +765,7 @@ class BlockDiagram:
         # get the state from each stateful block
         x0 = np.array([])
         for b in self.blocklist:
-            if b.blockclass == 'transfer':
+            if b is TransferBlock:
                 x0 = np.r_[x0, b.getstate()]
         #print('x0', x0)
         return x0
@@ -990,7 +990,7 @@ class BlockDiagram:
         
         # split the state vector to stateful blocks
         for b in self.blocklist:
-            if b.blockclass == 'transfer':
+            if b is TransferBlock:
                 x = b.setstate(x)
         
         # process blocks with initial outputs and propagate
@@ -1006,7 +1006,7 @@ class BlockDiagram:
         # gather the derivative
         YD = np.array([])
         for b in self.blocklist:
-            if b.blockclass == 'transfer':
+            if b is TransferBlock:
                 assert b.updated, str(b) + ' has incomplete inputs'
                 yd = b.deriv().flatten()
                 YD = np.r_[YD, yd]
@@ -1063,7 +1063,7 @@ class BlockDiagram:
                 
                 DEBUG('propagate', '  '*depth, '[', port, '] = ', val, ' --> ', w.end.block.name, '[', w.end.port, ']')
                 
-                if w.send(val) and w.end.block.blockclass == 'function':
+                if w.send(val) and w.end.block is FunctionBlock:
                     self._propagate(w.end.block, t, depth+1)
                 
     def reset(self):
@@ -1146,18 +1146,18 @@ class BlockDiagram:
             # add the blocks
             for b in self.blocklist:
                 options = []
-                if b.blockclass == "source":
+                if b is SourceBlock:
                     options.append("shape=box3d")
-                elif b.blockclass == "sink":
+                elif b is SinkBlock:
                     options.append("shape=folder")
-                elif b.blockclass == "function":
+                elif b is FunctionBlock:
                     if b.type == 'gain':
                         options.append("shape=triangle")
                         options.append("orientation=-90")
                         options.append('label="{:g}"'.format(b.gain))
                     elif b.type == 'sum':
                         options.append("shape=point")
-                elif b.blockclass == 'transfer':
+                elif b is TransferBlock:
                     options.append("shape=component")
                 if b.pos is not None:
                     options.append('pos="{:g},{:g}!"'.format(b.pos[0], b.pos[1]))
