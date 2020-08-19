@@ -186,7 +186,9 @@ class BlockDiagram:
             options['graphics'] = True
         
         # stash these away as a named tuple
-        self.options = namedtuple('options', options.keys(), defaults=list(defaults.values()))()
+        self.options = namedtuple(
+            'options', options.keys(), defaults=list(options.values())
+        )()
         
         # setup debug parameters from single character codes
         global debuglist
