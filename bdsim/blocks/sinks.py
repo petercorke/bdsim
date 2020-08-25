@@ -109,7 +109,7 @@ class Scope(GraphicsBlock):
        | A(N,)  |         |         | 
        +--------+---------+---------+
     """
-    
+
     def __init__(self, nin=None, styles=None, scale='auto', labels=None, grid=True, *inputs, **kwargs):
         """
         Create a block that plots input ports against time.

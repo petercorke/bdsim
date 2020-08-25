@@ -471,8 +471,8 @@ class BlockDiagram:
         for b in self.blocklist:
             try:
                 b.check()
-            except:
-                raise RuntimeError('block failed check ' + str(b))
+            except Exception as err:
+                raise RuntimeError('block failed check ' + str(b) + ' with error ' + str(err))
 
         # build a dictionary of all block names
         for b in self.blocklist:
@@ -922,8 +922,7 @@ class BlockDiagram:
                     self.evaluate([], t)
 
                     # stash the results
-                    tlist.append(integrator.t)
-                    xlist.append(integrator.y)
+                    tlist.append(t)
                     
                     # record the ports on the watchlist
                     for i, p in enumerate(pluglist):
@@ -934,7 +933,7 @@ class BlockDiagram:
 
                     # update the progress bar
                     if self.options.progress:
-                        printProgressBar(integrator.t / T, prefix='Progress:', suffix='complete', length=60)
+                        printProgressBar(t / T, prefix='Progress:', suffix='complete', length=60)
                         
                     # has any block called a stop?
                     if self.stop is not None:
@@ -962,6 +961,19 @@ class BlockDiagram:
         
         return out
         
+
+    def run_realtime(self):
+        sources = [b for b in self.blocklist if isinstance(b, SourceBlock)]
+
+        for b in self.blocklist:
+            assert not isinstance(b, TransferBlock), \
+                "Transfer blocks in realtime mode are not supported (yet)"
+
+        while not self.stop:
+            # propagate from source blocks onwards
+            for b in sources:
+                self._propagate(b, t="realtime")
+
 
     def evaluate(self, x, t):
         """
