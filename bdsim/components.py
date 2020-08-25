@@ -807,7 +807,7 @@ class GraphicsBlock(SinkBlock):
     def __init__(self, movie=None, **kwargs):
 
         super().__init__(**kwargs)
-        if not self.bd.options.animation:
+        if self.bd and not self.bd.options.animation:
             movie = None
         self.movie = movie
 

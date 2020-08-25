@@ -686,7 +686,7 @@ class MultiRotorPlot(GraphicsBlock):
     def step(self):
 
         def plot3(h, x, y, z):
-            h.set_data(x, y)
+            h.set_data(np.array(x), np.array(y))
             h.set_3d_properties(z)
             
         # READ STATE

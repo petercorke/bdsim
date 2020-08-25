@@ -136,7 +136,7 @@ class BlockDiagram:
         self._load_modules()
         
         
-    def _get_options(self, sysargs=True, **kwargs):
+    def _get_options(self, sysargs=False, **kwargs):
         
         # all switches and their default values
         defaults = {
@@ -232,7 +232,7 @@ class BlockDiagram:
                             if not valid:
                                 raise ImportError('class {:s} has missing/improper output method'.format(str(cls)))
                             
-                        if cls is SinkBlock:
+                        if issubclass(cls, SinkBlock):
                             # must have a step function
                             valid = hasattr(cls, 'step') and \
                                     callable(cls.step) and \
@@ -480,7 +480,7 @@ class BlockDiagram:
         
         # visit all stateful blocks
         for b in self.blocklist:
-            if b is TransferBlock:
+            if isinstance(b, TransferBlock):
                 self.nstates += b.nstates
                 if b._state_names is not None:
                     assert len(b._state_names) == b.nstates, 'number of state names not consistent with number of states'
@@ -535,12 +535,12 @@ class BlockDiagram:
                     if dest == start:
                         print('  ERROR: cycle found: ', ' - '.join([str(x) for x in path + [dest]]))
                         return True
-                    if dest is FunctionBlock:
+                    if isinstance(dest, FunctionBlock):
                         return _DFS(path + [dest]) # recurse
             return False
 
         for b in self.blocklist:
-            if b is FunctionBlock:
+            if isinstance(b, FunctionBlock):
                 # do depth first search looking for a cycle
                 if _DFS([b]):
                     error = True
@@ -765,7 +765,7 @@ class BlockDiagram:
         # get the state from each stateful block
         x0 = np.array([])
         for b in self.blocklist:
-            if b is TransferBlock:
+            if isinstance(b, TransferBlock):
                 x0 = np.r_[x0, b.getstate()]
         #print('x0', x0)
         return x0
@@ -990,7 +990,7 @@ class BlockDiagram:
         
         # split the state vector to stateful blocks
         for b in self.blocklist:
-            if b is TransferBlock:
+            if isinstance(b, TransferBlock):
                 x = b.setstate(x)
         
         # process blocks with initial outputs and propagate
@@ -1006,7 +1006,7 @@ class BlockDiagram:
         # gather the derivative
         YD = np.array([])
         for b in self.blocklist:
-            if b is TransferBlock:
+            if isinstance(b, TransferBlock):
                 assert b.updated, str(b) + ' has incomplete inputs'
                 yd = b.deriv().flatten()
                 YD = np.r_[YD, yd]
@@ -1063,7 +1063,7 @@ class BlockDiagram:
                 
                 DEBUG('propagate', '  '*depth, '[', port, '] = ', val, ' --> ', w.end.block.name, '[', w.end.port, ']')
                 
-                if w.send(val) and w.end.block is FunctionBlock:
+                if w.send(val) and isinstance(w.end.block, FunctionBlock):
                     self._propagate(w.end.block, t, depth+1)
                 
     def reset(self):
@@ -1146,18 +1146,18 @@ class BlockDiagram:
             # add the blocks
             for b in self.blocklist:
                 options = []
-                if b is SourceBlock:
+                if isinstance(b, SourceBlock):
                     options.append("shape=box3d")
-                elif b is SinkBlock:
+                elif isinstance(b, SinkBlock):
                     options.append("shape=folder")
-                elif b is FunctionBlock:
+                elif isinstance(b, FunctionBlock):
                     if b.type == 'gain':
                         options.append("shape=triangle")
                         options.append("orientation=-90")
                         options.append('label="{:g}"'.format(b.gain))
                     elif b.type == 'sum':
                         options.append("shape=point")
-                elif b is TransferBlock:
+                elif isinstance(b, TransferBlock):
                     options.append("shape=component")
                 if b.pos is not None:
                     options.append('pos="{:g},{:g}!"'.format(b.pos[0], b.pos[1]))

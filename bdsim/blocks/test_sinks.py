@@ -46,7 +46,7 @@ class SinkBlockTest(unittest.TestCase):
     
     def test_quadrotor(self):
         
-        from quad_model import quadrotor as qm
+        from bdsim.blocks.quad_model import quadrotor as qm
         
         b = MultiRotorPlot(qm)
         
