@@ -1,6 +1,7 @@
 import logging
 import numpy as np
-from ..components import SourceBlock, SinkBlock, block
+from ..components import SourceBlock, SinkBlock, FunctionBlock, block
+import time
 
 try:
     import cv2
@@ -46,43 +47,129 @@ try:
             for further detail.
             """
             super().__init__(nout=1, **kwargs)
-            if (not source is str) or (not source is int):
+            self.is_livestream = isinstance(source, int)
+            if not (self.is_livestream or isinstance(source, str)):
                 # coerce it into str, good if it's something like a pathlib.Path
                 source = str(source)
             self.video_capture = cv2.VideoCapture(source, *cv2_args)
-            assert self.video_capture.isOpened(), (
-                f"Camera at {source} could not be opened. "
-                "Please check the filepath / resource availability."
-            )
+            assert self.video_capture.isOpened(), f"VideoCapture at {source} could not be opened. Please check the filepath / if another process is using the camera"
+        
+        def start(self):
+            super().start()
+            if not self.is_livestream:
+                # restart the video if it is
+                self.video_capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
         
 
-        def output(self, t):
-            if t != "realtime":
+        def output(self, t=None):
+            if t != None:
+                assert not self.is_livestream, "Cannot set timestamp of live camera feed. Please run in realtime mode instead."
                 fps = self.video_capture.get(cv2.CAP_PROP_FPS)
-                # if fps attr is zero, we're using a camera
-                # TODO: check if this holds for IP cams
-                assert fps > 0, (
-                    "Cannot set timestamp of live camera feed. "
-                    "Please run in realtime mode instead."
-                )
                 frame_n = int(round(t * fps))
                 self.video_capture.set(cv2.CAP_PROP_POS_FRAMES, frame_n)
             
             _, frame = self.video_capture.read()
             return [frame]
 
-    # @block
-    # class CvtColor(Block):
+    @block
+    class CvtColor(FunctionBlock):
+
+        type = "cvtcolor"
         
-    #     def __init__(self):
+        def __init__(self, input_, from_, to, **kwargs):
+            super().__init__(inputs=[input_], nin=1, nout=1, **kwargs)
+            self.from_ = from_
+            self.to = to
+        
+        def output(self, t=None):
+            [input_] = self.inputs
+            converted = cv2.cvtColor(input_, getattr(cv2, f'COLOR_{self.from_.upper()}2{self.to.lower()}'))
+            return [converted]
 
-    # @block
-    # class Threshold(Block):
-    #     pass
+    @block
+    class InRange(FunctionBlock):
 
-    # @block
-    # class SimpleBlobDetector(Block):
-    #     pass
+        type = "inrange"
+        
+        def __init__(self, input_, lower, upper, retain_color=False, **kwargs):
+            super().__init__(inputs=[input_], nin=1, nout=1, **kwargs)
+            self.lower = lower
+            self.upper = upper
+            self.retain_color = retain_color
+
+        def output(self, t=None):
+            [input_] = self.inputs
+            mask = cv2.inRange(input_, self.lower, self.upper)
+            if self.retain_color:
+                masked = cv2.bitwise_and(
+                    input_, input_, mask=mask)
+                return [masked]
+            else:
+                return [mask]
+    
+    @block
+    class Threshold(FunctionBlock):
+
+        type = "threshold"
+        available_methods = ["binary", "binary_inv", "trunc", "tozero", "tozero_inv", "mask", "otsu", "triangle"]
+
+        # lower 
+        def __init__(self, input_, lower, upper, method="binary", **kwargs):
+            super().__init__(inputs=[input_], nin=1, nout=1, **kwargs)
+            assert method.lower() in self.available_methods, f"Thresholding method {method} unknown. Please select from methods in Threshold.available_methods list"
+
+            self.lower = lower
+            self.upper = upper
+            self.method = method
+
+
+        def output(self, t=None):
+            [input_] = self.inputs
+            output = cv2.threshold(input_, self.lower, self.upper, self.method)
+            return [output]
+
+    @block
+    class Blobs(FunctionBlock):
+        """[summary]
+
+        :param Block: [description]
+        :type Block: [type]
+
+        grayscale_threshold: only useful if input is grayscale
+            (min, max, step) TODO describe this better
+            https://github.com/opencv/opencv/blob/e5e767abc1314f918a848e0b912dc9574c19bfaf/modules/features2d/src/blobdetector.cpp#L324
+        
+        Would be nice to represent this as a subsystem block rather than a single function block,
+        ie if/when a gui is developed (for education purposes), but it would be (slightly) less efficient,
+
+        some SimpleBlobDetector features, such as color filtering, don't make sense (always 255/0 for binary image), so was omitted.
+        See: https://github.com/opencv/opencv/blob/e5e767abc1314f918a848e0b912dc9574c19bfaf/modules/features2d/src/blobdetector.cpp#L275
+        """
+
+        type = "blobs"
+
+        def __init__(self, input_, min_dist_between_blobs=10, area=None, circularity=None, inertia_ratio=None, convexivity=None, grayscale_threshold=(100, 100, 0), **kwargs):
+            super().__init__(inputs=[input_], nin=1, nout=1, **kwargs)
+            params = cv2.SimpleBlobDetector_Params()
+            params.minDistBetweenBlobs = min_dist_between_blobs
+            params.minThreshold, params.maxThreshold, params.thresholdStep = grayscale_threshold
+            if area:
+                params.filterByArea = True
+                params.minArea, params.maxArea = area
+            if circularity:
+                params.filterByCircularity = True
+                params.minCircularity, params.maxCircularity = circularity
+            if inertia_ratio:
+                params.filterByInertia = True
+                params.minInertiaRatio, params.maxInertiaRatio = inertia_ratio
+
+            self.detector = cv2.SimpleBlobDetector_create(params)
+        
+        def output(self, t=None):
+            [input_] = self.inputs
+            keypoints = self.detector.detect()
+            print('hi')
+
 
     # This probably doesn't need the opencv dependency - I think opencv just uses matplotlib anyway
     # TODO: don't require opencv for display block
@@ -104,8 +191,8 @@ try:
         """
         type = "display"
 
-        def __init__(self, *inputs, title="Display", **kwargs):
-            super().__init__(inputs=inputs, nin=1, **kwargs)
+        def __init__(self, input_, title="Display", **kwargs):
+            super().__init__(inputs=[input_], nin=1, **kwargs)
             self.title = title
 
 
