@@ -40,6 +40,7 @@ bd.connect(mux, error[1])
 bd.compile()
 bd.report()
 
-out = bd.run(block=True)
+print(bd.options)
+out = bd.run()
 
 bd.done()

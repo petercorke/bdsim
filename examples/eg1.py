@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import bdsim
+import time
 
 bd = bdsim.BlockDiagram()
 
@@ -22,9 +23,10 @@ bd.connect(plant, scope[0])
 bd.compile()   # check the diagram
 bd.report()    # list all blocks and wires
 
-out = bd.run(5, block=True, watch=[gain])  # simulate for 5s
+out = bd.run(5, watch=[plant])  # simulate for 5s
 
 bd.dotfile('bd1.dot')  # output a graphviz dot file
 bd.savefig('png')      # save all figures as pdf
 
-bd.done()
+time.sleep(10)
+#bd.done(block=True)

@@ -6,7 +6,7 @@ Created on Mon May 18 21:43:18 2020
 @author: corkep
 """
 import os
-import os.path
+from pathlib import Path
 import sys
 import importlib
 import inspect
@@ -147,7 +147,6 @@ class BlockDiagram:
             'progress': True,
             'debug': ''
             }
-        
         if sysargs:
             # command line arguments and graphics
             parser = argparse.ArgumentParser()
@@ -164,6 +163,7 @@ class BlockDiagram:
             parser.add_argument('--debug', '-d', type=str, metavar='[psd]', default=defaults['debug'], 
                                 help='debug flags')
             clargs = vars(parser.parse_args())  # get args as a dictionary
+            print(f'clargs {clargs}')
 
             
         # function arguments override the command line options
@@ -186,7 +186,7 @@ class BlockDiagram:
             options['graphics'] = True
         
         # stash these away as a named tuple
-        self.options = namedtuple('options', options.keys(), defaults=list(defaults.values()))()
+        self.options = namedtuple('options', options.keys(), defaults=list(options.values()))()
         
         # setup debug parameters from single character codes
         global debuglist
@@ -202,24 +202,24 @@ class BlockDiagram:
         if nblocks == 0:
             print('Loading blocks:')
 
-            for file in os.listdir(os.path.join(os.path.dirname(__file__), 'blocks')):
+            for file in (Path(__file__).parent / 'blocks').iterdir():
                 # scan every file ./blocks/*.py to find block definitions
                 # a block is a class that subclasses Source, Sink, Function, Transfer and
                 # has an @block decorator.
                 #
                 # The decorator adds the classes to a global variable blocklist in the
                 # component module's namespace.
-                if not file.startswith('test_') and file.endswith('.py'):
+                if not file.name.startswith('test_') and not file.name.startswith('__') and file.name.endswith('.py'):
                     # valid python module, import it
                     try:
-                        module = importlib.import_module('.' + os.path.splitext(file)[0], package='bdsim.blocks')
+                        module = importlib.import_module('.' + file.stem, package='bdsim.blocks')
                     except SyntaxError:
                         print('-- syntax error in block definiton: ' + file)
     
                     # components.blocklist grows with every block import
                     if len(blocklist) > nblocks:
                         # we just loaded some more blocks
-                        print('  loading blocks from {:s}: {:s}'.format(file, ', '.join([blockname(cls) for cls in blocklist[nblocks:]])))
+                        print('  loading blocks from {:s}: {:s}'.format(file.stem, ', '.join([blockname(cls) for cls in blocklist[nblocks:]])))
                         
                     # perform basic sanity checks on the blocks just read
                     for cls in blocklist[nblocks:]:
@@ -1182,8 +1182,7 @@ class BlockDiagram:
             
 if __name__ == "__main__":
     
-    import pathlib
-    import os.path
+    from pathlib import Path
 
-    exec(open(os.path.join(pathlib.Path(__file__).parent.absolute(), "test_blockdiagram.py")).read())
+    exec(open(Path(__file__).parent.absolute() / "test_blockdiagram.py").read())
 

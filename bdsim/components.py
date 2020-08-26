@@ -822,9 +822,11 @@ class GraphicsBlock(SinkBlock):
             self.writer.grab_frame()
 
     def done(self):
+        if self.bd.options.graphics:
+            self.fig.canvas.start_event_loop(0.001)
         if self.movie is not None:
             self.writer.finish()
-            self.cleanup()
+            # self.cleanup()
 
     def savefig(self, fname, **kwargs):
         """

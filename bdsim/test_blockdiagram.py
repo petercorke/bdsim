@@ -86,7 +86,7 @@ class WiringTest(unittest.TestCase):
         bd.evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [2, 3, 4, 5])
 
-    def test_ports2(self):
+    def test_ports3(self):
 
         bd = bdsim.BlockDiagram()
 
@@ -172,7 +172,7 @@ class WiringTest(unittest.TestCase):
         bd.evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [2, 4, 3, 5])
 
-    def test_slice5(self):
+    def test_slice6(self):
 
         bd = bdsim.BlockDiagram()
 
@@ -352,7 +352,10 @@ class ImportTest(unittest.TestCase):
         
         bd.compile()
         
+    def test_import(self):
+        import spatialmath
 
+        pass
 # ---------------------------------------------------------------------------------------#
 if __name__ == '__main__':
 
