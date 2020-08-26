@@ -17,6 +17,7 @@ import numpy as np
 import scipy.integrate as integrate
 import matplotlib
 import matplotlib.pyplot as plt
+import time
 
 from bdsim.components import *
 
@@ -401,15 +402,15 @@ class BlockDiagram:
                     self.add_wire(wire)
             elif start.isslice and not end.isslice:
                 # bundle goint to a block
-                assert start.width == start.block.nin, "bundle width doesn't match number of input ports"
+                assert start.width == end.block.nin, "bundle width doesn't match number of input ports"
                 for inport,outport in enumerate(start.portlist):
                     wire = Wire( Plug(start.block, outport, 'start'), Plug(end.block, inport, 'end'), name)
                     self.add_wire(wire)
             else:
                 wire = Wire(start, end, name)
                 self.add_wire(wire)
-        
-    def compile(self, subsystem=False, doimport=True):
+    
+    def compile(self, subsystem=False, doimport=True, eval0=True):
         """
         Compile the block diagram
         
@@ -417,6 +418,8 @@ class BlockDiagram:
         :type subsystem: bool, optional
         :param doimport: import subsystems, defaults to True
         :type doimport: bool, optional
+        :param eval0: run evaluation check, defaults to True. Turned off for realtime mode
+        :type eval0: bool, optional
         :raises RuntimeError: various block diagram errors
         :return: Compile status
         :rtype: bool
@@ -548,11 +551,12 @@ class BlockDiagram:
         # evaluate the network once to check out wire types
         x = self.getstate()
         
-        try:
-            self.evaluate(x, 0.0)
-        except RuntimeError as err:
-            print('unrecoverable error in value propagation:', err)
-            error = True
+        if eval0:
+            try:
+                self.evaluate(x, 0.0)
+            except RuntimeError as err:
+                print('unrecoverable error in value propagation:', err)
+                error = True
             
         if not error:
             self.compiled = True
@@ -963,16 +967,32 @@ class BlockDiagram:
         
 
     def run_realtime(self):
-        sources = [b for b in self.blocklist if isinstance(b, SourceBlock)]
 
         for b in self.blocklist:
             assert not isinstance(b, TransferBlock), \
                 "Transfer blocks in realtime mode are not supported (yet)"
+        
+        sources = [b for b in self.blocklist if isinstance(b, SourceBlock)]
+        self.start()
+        
+        start = time.time()
 
         while not self.stop:
+            self.reset()
+
+            elapsed = time.time() - start
+            
             # propagate from source blocks onwards
             for b in sources:
-                self._propagate(b, t="realtime")
+                self._propagate(b, t=elapsed)
+            
+            # check we have values for all
+            for b in self.blocklist:
+                if b.nin > 0 and not b.done:
+                    raise RuntimeError(str(b) + ' has incomplete inputs')
+            
+            # update state, displays, etc
+            self.step(count=False)
 
 
     def evaluate(self, x, t):
@@ -1042,6 +1062,8 @@ class BlockDiagram:
         all its inputs defined, in which case we recurse.
 
         """
+        # for debugging purposes
+        t_disp = f'{t:.3}' if t is not None else None
         
         # check for a subsystem block here, recurse to evalute it
         # execute the subsystem to obtain its outputs
@@ -1050,7 +1072,7 @@ class BlockDiagram:
         try:
             out = b.output(t)
         except Exception as err:
-            print('--Error at t={:f} when computing output of block {:s}'.format(t, str(b)))
+            print(f'--Error at t={t_disp} when computing output of block {str(b)}')
             print('  {}'.format(err))
             print('  inputs were: ', b.inputs)
             if b.nstates > 0:
@@ -1058,7 +1080,7 @@ class BlockDiagram:
             raise RuntimeError from None
 
             
-        DEBUG('propagate', '  '*depth, 'propagating: {:s} @ t={:.3f}: output = '.format(str(b),t) + str(out))
+        DEBUG('propagate', '  '*depth, f'propagating: {str(b)} @ t={t_disp}: output = {str(out)}')
 
         # check for validity
         assert isinstance(out, list) and len(out) == b.nout, 'block output is wrong type/length'
@@ -1089,7 +1111,7 @@ class BlockDiagram:
         for b in self.blocklist:
             b.reset()     
     
-    def step(self):
+    def step(self, count=True):
         """
         Tell all blocks to take action on new inputs.  Relevant to Sink
         blocks only since they have no output function to be called.
@@ -1098,7 +1120,9 @@ class BlockDiagram:
         
         for b in self.blocklist:
             b.step()
-            self.count += 1
+        
+        if count:
+            self.count += len(self.blocklist)
 
                     
     def start(self, **kwargs):

@@ -213,7 +213,7 @@ class Scope(GraphicsBlock):
                 self.labels.insert(0, 'Time')
             elif len(self.labels) == 1:
                 self.labels += [self.sourcename(i) for i in range(0, self.nin)]
-            else:
+            elif len(self.labels) != self.nin:
                 raise ValueError('incorrect number of labels specified for Scope')
             for i in range(0, self.nin):
                 args = []

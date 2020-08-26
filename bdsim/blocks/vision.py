@@ -62,8 +62,8 @@ try:
         
 
         def output(self, t=None):
-            if t != None:
-                assert not self.is_livestream, "Cannot set timestamp of live camera feed. Please run in realtime mode instead."
+            # set the frame if we're using a video
+            if t != None and not self.is_livestream:
                 fps = self.video_capture.get(cv2.CAP_PROP_FPS)
                 frame_n = int(round(t * fps))
                 self.video_capture.set(cv2.CAP_PROP_POS_FRAMES, frame_n)
@@ -76,6 +76,7 @@ try:
 
         type = "cvtcolor"
         
+        # TODO: automate 'from_', when unit system is implemented ('rgb img' will be a unit)
         def __init__(self, input_, from_, to, **kwargs):
             super().__init__(inputs=[input_], nin=1, nout=1, **kwargs)
             self.from_ = from_
@@ -83,7 +84,7 @@ try:
         
         def output(self, t=None):
             [input_] = self.inputs
-            converted = cv2.cvtColor(input_, getattr(cv2, f'COLOR_{self.from_.upper()}2{self.to.lower()}'))
+            converted = cv2.cvtColor(input_, getattr(cv2, f'COLOR_{self.from_.upper()}2{self.to.upper()}'))
             return [converted]
 
     @block
@@ -93,8 +94,8 @@ try:
         
         def __init__(self, input_, lower, upper, retain_color=False, **kwargs):
             super().__init__(inputs=[input_], nin=1, nout=1, **kwargs)
-            self.lower = lower
-            self.upper = upper
+            self.lower = np.array(lower)
+            self.upper = np.array(upper)
             self.retain_color = retain_color
 
         def output(self, t=None):
@@ -111,21 +112,24 @@ try:
     class Threshold(FunctionBlock):
 
         type = "threshold"
-        available_methods = ["binary", "binary_inv", "trunc", "tozero", "tozero_inv", "mask", "otsu", "triangle"]
+        available_methods = ["binary", "binary_inv", "trunc", "tozero", "tozero_inv", "mask"]
+        # TODO support "otsu" & "triangle"
 
         # lower 
         def __init__(self, input_, lower, upper, method="binary", **kwargs):
             super().__init__(inputs=[input_], nin=1, nout=1, **kwargs)
-            assert method.lower() in self.available_methods, f"Thresholding method {method} unknown. Please select from methods in Threshold.available_methods list"
+            assert method in self.available_methods, \
+                f"Thresholding method {method} unsupported. Please select from methods in Threshold.available_methods list"
 
             self.lower = lower
             self.upper = upper
-            self.method = method
+
+            self.method = getattr(cv2, f'THRESH_{method.upper()}')
 
 
         def output(self, t=None):
             [input_] = self.inputs
-            output = cv2.threshold(input_, self.lower, self.upper, self.method)
+            _, output = cv2.threshold(input_, self.lower, self.upper, self.method)
             return [output]
 
     @block
@@ -148,7 +152,7 @@ try:
 
         type = "blobs"
 
-        def __init__(self, input_, min_dist_between_blobs=10, area=None, circularity=None, inertia_ratio=None, convexivity=None, grayscale_threshold=(100, 100, 0), **kwargs):
+        def __init__(self, input_, top_k=None, min_dist_between_blobs=10, area=None, circularity=None, inertia_ratio=None, convexivity=None, grayscale_threshold=(100, 100, 0), **kwargs):
             super().__init__(inputs=[input_], nin=1, nout=1, **kwargs)
             params = cv2.SimpleBlobDetector_Params()
             params.minDistBetweenBlobs = min_dist_between_blobs
@@ -164,11 +168,13 @@ try:
                 params.minInertiaRatio, params.maxInertiaRatio = inertia_ratio
 
             self.detector = cv2.SimpleBlobDetector_create(params)
-        
+            self.top_k = top_k
+
+
         def output(self, t=None):
             [input_] = self.inputs
-            keypoints = self.detector.detect()
-            print('hi')
+            keypoints = self.detector.detect(input_)
+            return [keypoints[:self.top_k] if self.top_k else keypoints]
 
 
     # This probably doesn't need the opencv dependency - I think opencv just uses matplotlib anyway
@@ -200,9 +206,7 @@ try:
             input_ = self.inputs[0]
             try:
                 cv2.imshow(self.title, input_)
-                print('waiting')
                 cv2.waitKey(1) # cv2 needs this to actually show, apparently
-                print('done')
             except Exception as e:
                 raise Exception(
                     f"Expected input to be an HxW[xC] ndarray, got {input_}"
