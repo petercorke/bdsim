@@ -110,7 +110,7 @@ class Scope(GraphicsBlock):
        +--------+---------+---------+
     """
 
-    def __init__(self, nin=None, styles=None, scale='auto', labels=None, grid=True, *inputs, **kwargs):
+    def __init__(self, *inputs, nin=None, styles=None, scale='auto', labels=None, grid=True, **kwargs):
         """
         Create a block that plots input ports against time.
         
@@ -213,7 +213,7 @@ class Scope(GraphicsBlock):
                 self.labels.insert(0, 'Time')
             elif len(self.labels) == 1:
                 self.labels += [self.sourcename(i) for i in range(0, self.nin)]
-            elif len(self.labels) != self.nin:
+            elif len(self.labels) + 1 == self.nin:
                 raise ValueError('incorrect number of labels specified for Scope')
             for i in range(0, self.nin):
                 args = []

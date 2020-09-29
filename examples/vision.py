@@ -1,36 +1,48 @@
+import cv2
 import bdsim
-from pathlib import Path
 
 bd = bdsim.BlockDiagram()
+p = bd.param  # alias for brevity
 cap = bd.CAMERA(0)
-bd.DISPLAY(cap, "Feed")
 
-gray = bd.CVTCOLOR(cap, 'bgr', 'hsv')
-bd.DISPLAY(gray, title="Greyscaled")
+hsv = bd.CVTCOLOR(cap, cv2.COLOR_BGR2HSV)
 
-masked = bd.INRANGE(cap,
-    [35, 18, 54],
-    [67, 176, 160])
-bd.DISPLAY(masked, title="Masked")
+thresholded = bd.INRANGE(hsv, tinker=True)
+bd.DISPLAY(thresholded, "HSV")
 
-blobs = bd.BLOBS(masked, top_k=1)
-def biggest_blob_stats(blobs):
-    try:
-        blob = blobs[0]
-        return blob.cx, blob.cy, blob.size
-    except IndexError:
-        return [None] * 3
+opened = bd.OPENMASK(thresholded, kernel=p(("ellipse", 3, 3)))
+# p = opened.parameter(“kernel”)
+# p = opened.parameter(“kernel”, “thing1”, minval=0, maxval=7)
+# opened.__dict__[“kernel”]
+# opened.getattr(“kernel”)
 
-picker = bd.FUNCTION(biggest_blob_stats, blobs, nout=3)
+blobs = bd.BLOBS(opened, top_k=1, tinker=True)
 
-blob_scope = bd.SCOPE(nin=3, labels=['cx', 'cy', 'size'], name='Blob vs Time')
-bd.connect(picker[0:3], blob_scope)
+blob_vis = bd.DRAWKEYPOINTS(opened, blobs)
+bd.DISPLAY(blob_vis, "Blobs")
 
-blob_xy_scope = bd.SCOPEXY(name='Blob Trajectory')
-bd.connect(picker[0:2], blob_xy_scope)
+# def biggest_blob_stats(blobs):
+#     try:
+#         blob = blobs[0]
+#         return blob.cx, blob.cy, blob.size
+#     except IndexError:
+#         return [None] * 3
 
-bd.compile(eval0=False)
+# picker = bd.FUNCTION(biggest_blob_stats, blobs, nout=3)
+
+# blob_scope = bd.SCOPE(
+#     picker[0:3],
+#     nin=3,
+#     labels=['BlobX', 'BlobY', 'BlobSize'],
+#     name='Blob vs Time')
+
+# blob_xy_scope = bd.SCOPEXY(
+#     picker[0:2],
+#     name='Blob Trajectory')
+
+bd.compile()
+
 try:
-    bd.run_realtime()
+    bd.run_realtime(tuner=True)
 finally:
     bd.done()

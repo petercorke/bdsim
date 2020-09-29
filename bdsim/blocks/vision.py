@@ -1,7 +1,11 @@
 import logging
 import numpy as np
-from ..components import SourceBlock, SinkBlock, FunctionBlock, block
-import time
+from bdsim.components import SourceBlock, SinkBlock, FunctionBlock, SubsystemBlock, block
+from bdsim.tuning import TunableBlock, Param, HyperParam
+
+_U8_T = np.iinfo(np.uint8)
+_3CH_UINT8_MIN = np.full((3,), _U8_T.min)
+_3CH_UINT8_MAX = np.full((3,), _U8_T.max)
 
 try:
     import cv2
@@ -10,21 +14,21 @@ try:
     class Camera(SourceBlock):
         """
         :blockname:`CAMERA`
-        
+
         .. table::
         :align: left
-        
+
         +--------+---------+---------+
         | inputs | outputs |  states |
         +--------+---------+---------+
         | 0      | 1       | 0       |
         +--------+---------+---------+
-        |        | float,  |         | 
+        |        | float,  |         |
         |        | A(N,)   |         |
         +--------+---------+---------+
         """
-        type = "camera"
 
+        type = "camera"
 
         def __init__(self, source, *cv2_args, **kwargs):
             """
@@ -36,8 +40,8 @@ try:
             :param ``**kwargs``: common Block options
             :return: a VIDEOCAPTURE block
             :rtype: VideoCapture instance
-            
-            Creates a VideoCapture block. 
+
+            Creates a VideoCapture block.
 
             Examples::
                 TODO
@@ -52,88 +56,264 @@ try:
                 # coerce it into str, good if it's something like a pathlib.Path
                 source = str(source)
             self.video_capture = cv2.VideoCapture(source, *cv2_args)
-            assert self.video_capture.isOpened(), f"VideoCapture at {source} could not be opened. Please check the filepath / if another process is using the camera"
-        
-        def start(self):
-            super().start()
+            assert (
+                self.video_capture.isOpened()
+            ), "VideoCapture at {source} could not be opened." \
+                "Please check the filepath / if another process is using the camera" \
+                .format(source=source)
+
+        def start(self, **kwargs):
+            super().start(**kwargs)
             if not self.is_livestream:
                 # restart the video if it is
                 self.video_capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
-        
 
         def output(self, t=None):
             # set the frame if we're using a video
-            if t != None and not self.is_livestream:
+            if t is not None and not self.is_livestream:
                 fps = self.video_capture.get(cv2.CAP_PROP_FPS)
                 frame_n = int(round(t * fps))
                 self.video_capture.set(cv2.CAP_PROP_POS_FRAMES, frame_n)
-            
+
             _, frame = self.video_capture.read()
+            assert frame is not None, "An unknown error occured in OpenCV: camera disconnected or video file ended"
             return [frame]
 
     @block
     class CvtColor(FunctionBlock):
 
         type = "cvtcolor"
-        
-        # TODO: automate 'from_', when unit system is implemented ('rgb img' will be a unit)
-        def __init__(self, input_, from_, to, **kwargs):
-            super().__init__(inputs=[input_], nin=1, nout=1, **kwargs)
-            self.from_ = from_
-            self.to = to
-        
-        def output(self, t=None):
-            [input_] = self.inputs
-            converted = cv2.cvtColor(input_, getattr(cv2, f'COLOR_{self.from_.upper()}2{self.to.upper()}'))
+
+        # TODO: automate 'from_', when unit system is implemented ('rgb pixel' will be a unit)
+
+        def __init__(self, input, cvt_code, **kwargs):
+            super().__init__(inputs=[input], nin=1, nout=1, **kwargs)
+            self.cvt_code = cvt_code
+
+        def output(self, _t=None):
+            [input] = self.inputs
+            try:
+                converted = cv2.cvtColor(input, self.cvt_code)
+            except AttributeError as e:
+                raise Exception(
+                    "Available methods are: {methods}".format(
+                        methods=', '.join(
+                            attr for attr in dir(cv2)
+                            if attr.startswith('COLOR_'))
+                    )
+                ) from e
             return [converted]
 
     @block
-    class InRange(FunctionBlock):
+    class InRange(FunctionBlock, TunableBlock):
 
         type = "inrange"
-        
-        def __init__(self, input_, lower, upper, retain_color=False, **kwargs):
-            super().__init__(inputs=[input_], nin=1, nout=1, **kwargs)
-            self.lower = np.array(lower)
-            self.upper = np.array(upper)
-            self.retain_color = retain_color
 
-        def output(self, t=None):
-            [input_] = self.inputs
-            mask = cv2.inRange(input_, self.lower, self.upper)
-            if self.retain_color:
-                masked = cv2.bitwise_and(
-                    input_, input_, mask=mask)
-                return [masked]
-            else:
-                return [mask]
-    
+        def __init__(self, input, lower=(0, 0, 0), upper=(255, 255, 255), **kwargs):
+            super().__init__(inputs=[input], nin=1, nout=1, **kwargs)
+
+            self.lower = self._param('lower', Param.map(lower, np.array),
+                                    min=_3CH_UINT8_MIN, max=_3CH_UINT8_MAX)
+            self.upper = self._param('upper', Param.map(upper, np.array),
+                                    min=_3CH_UINT8_MIN, max=_3CH_UINT8_MAX)
+
+        def output(self, _t=None):
+            [input] = self.inputs
+            mask = cv2.inRange(input, self.lower, self.upper)
+            return [mask]
+
+    @block
+    class Mask(FunctionBlock):
+        type = "mask"
+
+        def __init__(self, input, **kwargs):
+            super().__init__(inputs=[input], nin=2, nout=1, **kwargs)
+
+        def output(self, _t=None):
+            [input, mask] = self.inputs
+            masked = cv2.bitwise_and(input, input, mask=mask)
+            return [masked]
+
     @block
     class Threshold(FunctionBlock):
 
         type = "threshold"
-        available_methods = ["binary", "binary_inv", "trunc", "tozero", "tozero_inv", "mask"]
+        available_methods = [
+            "binary",
+            "binary_inv",
+            "trunc",
+            "tozero",
+            "tozero_inv",
+            "mask",
+        ]
         # TODO support "otsu" & "triangle"
 
-        # lower 
-        def __init__(self, input_, lower, upper, method="binary", **kwargs):
-            super().__init__(inputs=[input_], nin=1, nout=1, **kwargs)
-            assert method in self.available_methods, \
-                f"Thresholding method {method} unsupported. Please select from methods in Threshold.available_methods list"
+        def __init__(self, input, lower, upper, method="binary", **kwargs):
+            super().__init__(inputs=[input], nin=1, nout=1, **kwargs)
+            assert (
+                method in self.available_methods
+            ), "Thresholding method {method} unsupported. Please select from methods in Threshold.available_methods list" \
+                .format(method=method)
+
+            for l, u in zip(lower, upper):
+                assert l <= u, "all lower vals must be less than corresponding upper"
 
             self.lower = lower
             self.upper = upper
+            self.method = getattr(cv2, "THRESH_{method}".format(method=method.upper()))
 
-            self.method = getattr(cv2, f'THRESH_{method.upper()}')
+        def output(self, _t=None):
+            [input] = self.inputs
+            _, output = cv2.threshold(
+                input, self.lower, self.upper, self.method)
+            return [output]
+
+    class KernelParam2d(HyperParam):
+        # pylint: disable = attribute-defined-outside-init
+
+        available_types = ["ellipse", "rect", "cross"]
+
+        def __init__(self, spec=("ellipse", 3, 3), **kwargs):
+            # pylint: disable = useless-super-delegation
+            super().__init__(spec, **kwargs)
+
+            type, width, height = ("custom", *self.val.shape) if isinstance(self.val, np.ndarray) else self.val
+
+            # bind the method to a single object so we can exclude it from param udate recursion later
+            # in python each self.func bound method is a different object so it can't
+            # be checked for equality unless saved like so.
+            # Need to think of a cleaner way to do this
+            self.setup_kernel = self._setup_kernel
+
+            self.array, self.type, self.width, self.height = \
+                self.create_params((
+                    ('array', self.val if type == 'custom' else None), # will get set in self.setup_kernel if not custom
+                    ('type', Param(type, oneof=["custom", *self.available_types])),
+                    ('width', Param(width, min=3, max=12)),
+                    ('height', Param(height, min=3, max=12))
+                ), on_change=self.setup_kernel)
+            self.setup_kernel()
 
 
-        def output(self, t=None):
-            [input_] = self.inputs
-            _, output = cv2.threshold(input_, self.lower, self.upper, self.method)
+        def _setup_kernel(self, _=None):
+            type = self.type.val
+            if type == "custom":
+                self.show(self.array)
+                self.hide(self.width, self.height)
+            else:
+                assert (
+                    type in self.available_types
+                ), "Morphological Kernel type {type} unsupported. Please select from {types}" \
+                    .format(type=type, types=self.available_types)
+
+                self.show(self.width, self.height)
+                self.hide(self.array)
+
+                self.array.set_val(cv2.getStructuringElement(
+                        getattr(cv2, "MORPH_%s" % type.upper()),
+                        (self.width.val, self.height.val)
+                    ), exclude_cb=self.setup_kernel)
+
+            self.val = self.array.val
+
+    class _Morphological(FunctionBlock, TunableBlock):
+        type = "morphological"
+
+        def __init__(self, input, diadic_func, kernel, iterations, **kwargs):
+            super().__init__(inputs=[input] if input else [], nin=1, nout=1, **kwargs)
+
+            self.diadic_func = diadic_func
+            self.kernel = self._param('kernel', KernelParam2d(kernel))
+            self.iterations = self._param('iterations', iterations, min=1, max=10)
+
+        def output(self, _t=None):
+            [input] = self.inputs
+            output = self.diadic_func(input, self.kernel, self.iterations)
             return [output]
 
     @block
-    class Blobs(FunctionBlock):
+    class Erode(_Morphological):
+
+        type = "erode"
+
+        def __init__(self, input, iterations=1, kernel=("ellipse", 3, 3), **kwargs):
+            super().__init__(
+                input,
+                diadic_func=cv2.erode,
+                kernel=kernel,
+                iterations=iterations,
+                **kwargs,
+            )
+
+    @block
+    class Dilate(_Morphological):
+
+        type = "dilate"
+
+        def __init__(self, input, iterations=1, kernel=("ellipse", 3, 3), **kwargs):
+            super().__init__(
+                input,
+                diadic_func=cv2.dilate,
+                kernel=kernel,
+                iterations=iterations,
+                **kwargs,
+            )
+
+    @block
+    class OpenMask(SubsystemBlock, TunableBlock):
+
+        type = "openmask"
+
+        def __init__(self, input, iterations=1, kernel=("ellipse", 3, 3), **kwargs):
+            super().__init__(
+                inputs=[input],
+                nin=1,
+                nout=1
+            )
+            args = dict(input=None,
+                        kernel=self._param('kernel', KernelParam2d(kernel)),
+                        iterations=self._param('iterations', iterations, min=1, max=10),
+                        bd=self.bd, is_subblock=True)
+
+            # I would expect cv2.morphologyEx() to be faster than an cv2.erode -> cv2.dilate
+            # but preliminary benchmarks show this isn't the case.
+            self.dilate = Dilate(**args)
+            self.erode = Erode(**args)
+
+        def output(self, _t=None):
+            self.erode.inputs = self.inputs
+            eroded = self.erode.output()
+            self.dilate.inputs = eroded
+            return self.dilate.output()
+
+    @block
+    class CloseMask(SubsystemBlock, TunableBlock):
+
+        type = "closemask"
+
+        def __init__(self, input, iterations=1, kernel=("ellipse", 3, 3), **kwargs):
+            # TODO Propagate name in some way to aid debugging
+            super().__init__(
+                inputs=[input],
+                nin=1,
+                nout=1
+            )
+            args = dict(input=None, tinker=kwargs['tinker'],
+                        kernel=self._param('kernel', kernel),
+                        iterations=self._param('iterations', iterations, min=1, max=10),
+                        bd=self.bd, is_subblock=True)
+
+            self.dilate = Dilate(**args)
+            self.erode = Erode(**args)
+
+        def output(self, _t=None):
+            self.dilate.inputs = self.inputs
+            dilated = self.dilate.output()
+            self.erode.inputs = dilated
+            return self.erode.output()
+
+    @block
+    class Blobs(FunctionBlock, TunableBlock):
         """[summary]
 
         :param Block: [description]
@@ -142,7 +322,7 @@ try:
         grayscale_threshold: only useful if input is grayscale
             (min, max, step) TODO describe this better
             https://github.com/opencv/opencv/blob/e5e767abc1314f918a848e0b912dc9574c19bfaf/modules/features2d/src/blobdetector.cpp#L324
-        
+
         Would be nice to represent this as a subsystem block rather than a single function block,
         ie if/when a gui is developed (for education purposes), but it would be (slightly) less efficient,
 
@@ -152,30 +332,63 @@ try:
 
         type = "blobs"
 
-        def __init__(self, input_, top_k=None, min_dist_between_blobs=10, area=None, circularity=None, inertia_ratio=None, convexivity=None, grayscale_threshold=(100, 100, 0), **kwargs):
-            super().__init__(inputs=[input_], nin=1, nout=1, **kwargs)
+        def __init__(
+            self,
+            input,
+            top_k=None,
+            min_dist_between_blobs=10,
+            area=None,
+            circularity=None,
+            inertia_ratio=None,
+            convexivity=None,
+            grayscale_threshold=(50, 220, 10),
+            **kwargs
+        ):
+            super().__init__(inputs=[input], nin=1, nout=1, **kwargs)
+
+            self.top_k = self._param('top_k', top_k, min=0, max=10)
+
+            self.min_dist_between_blobs = self._sbd_param('min_dist_between_blobs',
+                                                          min_dist_between_blobs, 0, 1e3, log_scale=2)
+            self.area = self._sbd_param('area', area, 1, 1e6, log_scale=2, default=50)
+            self.circularity = self._sbd_param('circularity', circularity, 0, 1, default=0.5)
+            self.inertia_ratio = self._sbd_param('inertia_ratio', inertia_ratio, 0, 1, default=0.5)
+            self.convexivity = self._sbd_param('convexivity', convexivity, 0, 1, default=0.5)
+            self.grayscale_threshold = self._sbd_param('grayscale_threshold', grayscale_threshold, 0, 1, default=0.5)
+
+            self._setup_sbd()
+
+        def _sbd_param(self, name, val, min, max, **kwargs):
+            return self._param(name, val, min=min, max=max,
+                              on_change=self._setup_sbd, **kwargs)
+
+        def _setup_sbd(self, _=None): # unused param to work with on_change
             params = cv2.SimpleBlobDetector_Params()
-            params.minDistBetweenBlobs = min_dist_between_blobs
-            params.minThreshold, params.maxThreshold, params.thresholdStep = grayscale_threshold
-            if area:
-                params.filterByArea = True
-                params.minArea, params.maxArea = area
-            if circularity:
-                params.filterByCircularity = True
-                params.minCircularity, params.maxCircularity = circularity
-            if inertia_ratio:
-                params.filterByInertia = True
-                params.minInertiaRatio, params.maxInertiaRatio = inertia_ratio
+            params.minDistBetweenBlobs = self.min_dist_between_blobs
+            (
+                params.minThreshold,
+                params.maxThreshold,
+                params.thresholdStep,
+            ) = self.grayscale_threshold
+
+            if self.area:
+                params.minArea, params.maxArea = self.area
+            params.filterByArea = bool(self.area)
+
+            if self.circularity:
+                params.minCircularity, params.maxCircularity = self.circularity
+            params.filterByCircularity = bool(self.circularity)
+
+            if self.inertia_ratio:
+                params.minInertiaRatio, params.maxInertiaRatio = self.inertia_ratio
+            params.filterByInertia = bool(self.inertia_ratio)
 
             self.detector = cv2.SimpleBlobDetector_create(params)
-            self.top_k = top_k
 
-
-        def output(self, t=None):
-            [input_] = self.inputs
-            keypoints = self.detector.detect(input_)
+        def output(self, _t=None):
+            [input] = self.inputs
+            keypoints = self.detector.detect(input)
             return [keypoints[:self.top_k] if self.top_k else keypoints]
-
 
     # This probably doesn't need the opencv dependency - I think opencv just uses matplotlib anyway
     # TODO: don't require opencv for display block
@@ -183,40 +396,54 @@ try:
     class Display(SinkBlock):
         """
         :blockname:`DISPLAY`
-        
+
         .. table::
         :align: left
-        
+
         +-------------+---------+---------+
         | inputs      | outputs |  states |
         +-------------+---------+---------+
         | 1           | 0       | 0       |
         +-------------+---------+---------+
-        | A(H, W, C)  |         |         | 
+        | A(H, W, C)  |         |         |
         +-------------+---------+---------+
         """
+
         type = "display"
 
-        def __init__(self, input_, title="Display", **kwargs):
-            super().__init__(inputs=[input_], nin=1, **kwargs)
+        def __init__(self, input, title="Display", **kwargs):
+            super().__init__(inputs=[input], nin=1, **kwargs)
             self.title = title
 
-
         def step(self):
-            input_ = self.inputs[0]
+            [input] = self.inputs
             try:
-                cv2.imshow(self.title, input_)
-                cv2.waitKey(1) # cv2 needs this to actually show, apparently
+                cv2.imshow(self.title, input)
+                cv2.waitKey(1)  # cv2 needs this to actually show, apparently
             except Exception as e:
                 raise Exception(
-                    f"Expected input to be an HxW[xC] ndarray, got {input_}"
-                    f"\nOpenCV error: {e}"
-                )
-
+                    ("Expected input to be an HxW[xC] ndarray, got {input}").format(input=input)
+                ) from e
 
         def stop(self):
             # TODO: Check if overkill to ensure that self.title never changes?
             cv2.destroyWindow(self.title)
 
-except ModuleNotFoundError:
-    logging.warn("OpenCV not installed. Vision blocks will not be available")
+    @block
+    class DrawKeypoints(FunctionBlock):
+
+        type = "drawkeypoints"
+
+        def __init__(self, image, keypoints, color=(0, 0, 255), **kwargs):
+            super().__init__(inputs=[image, keypoints],
+                             nin=2, nout=1, **kwargs)
+            self.color = color
+
+        def output(self, _t=None):
+            [image, keypoints] = self.inputs
+            drawn = cv2.drawKeypoints(image, keypoints, np.array([]), self.color,
+                cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+            return [drawn]
+
+except ImportError:
+    logging.warning("OpenCV not installed. Vision blocks will not be available")

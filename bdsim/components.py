@@ -9,14 +9,13 @@ import matplotlib.pyplot as plt
 from matplotlib import animation
 from collections import UserDict
 
-from collections import UserDict
 
 class Struct(UserDict):
     """
     A dict like object that allows items to be added by attribute or by key.
-    
+
     For example::
-        
+
         >>> d = Struct('thing')
         >>> d.a = 1
         >>> d['b'] = 2
@@ -29,7 +28,6 @@ class Struct(UserDict):
         >>> str(d)
         "thing {'a': 1, 'b': 2}"
     """
-    
     def __init__(self, name='Struct'):
         super().__init__()
         self.name = name
@@ -39,25 +37,32 @@ class Struct(UserDict):
             super().__setattr__(name, value)
         else:
             self.data[name] = value
-        
+
     def __getattr__(self, name):
         return self.data[name]
-        
+
     def __str__(self):
-        return self.name + ' ' + str({k:v for k, v in self.data.items() if not k.startswith('_')})
-    
+        return self.name + ' ' + str(
+            {k: v
+             for k, v in self.data.items() if not k.startswith('_')})
+
     def __repr__(self):
         def fmt(k, v):
             if isinstance(v, np.ndarray):
-                return '{:12s}| {:12s}'.format(k, type(v).__name__ + ' ' + str(v.shape)) 
+                return '{:12s}| {:12s}'.format(
+                    k,
+                    type(v).__name__ + ' ' + str(v.shape))
             else:
                 return '{:12s}| {:12s}'.format(k, type(v).__name__)
-        return self.name + ':\n' + '\n'.join([fmt(k,v) for k, v in self.data.items() if not k.startswith('_')])
+
+        return self.name + ':\n' + '\n'.join(
+            [fmt(k, v) for k, v in self.data.items() if not k.startswith('_')])
+
 
 class Wire:
     """
     Create a wire.
-    
+
     :param start: Plug at the start of a wire, defaults to None
     :type start: Plug, optional
     :param end: Plug at the end of a wire, defaults to None
@@ -72,12 +77,11 @@ class Wire:
 
     A wire records all the connections defined by the user.  At compile time
     wires are used to build inter-block references.
-    
+
     Between two blocks, a wire can connect one or more ports, ie. it can connect
     a set of output ports on one block to a same sized set of input ports on 
     another block.
-    """      
-                
+    """
     def __init__(self, start=None, end=None, name=None):
 
         self.name = name
@@ -92,18 +96,18 @@ class Wire:
     def info(self):
         """
         Interactive display of wire properties.
-        
+
         Displays all attributes of the wire for debugging purposes.
 
         """
         print("wire:")
-        for k,v in self.__dict__.items():
-            print("  {:8s}{:s}".format(k+":", str(v)))
-            
+        for k, v in self.__dict__.items():
+            print("  {:8s}{:s}".format(k + ":", str(v)))
+
     def send(self, value):
         """
         Send a value to the port at end of this wire.
-        
+
         :param value: A port value
         :type value: float, numpy.ndarray, etc.
 
@@ -111,47 +115,50 @@ class Wire:
         """
         # dest is a Wire
         return self.end.block.setinput(self.end.port, value)
-        
+
     def __repr__(self):
         """
         Display wire with name and connection details.
-        
+
         :return: Long-form wire description
         :rtype: str
-        
+
         String format::
-            
+
             wire.5: d2goal[0] --> Kv[0]
 
         """
         return str(self) + ": " + self.fullname
-    
+
     @property
     def fullname(self):
         """
         Display wire connection details.
-        
+
         :return: Wire name
         :rtype: str
 
         String format::
-            
+
             d2goal[0] --> Kv[0]
-            
+
         """
-        return "{:s}[{:d}] --> {:s}[{:d}]".format(str(self.start.block), self.start.port, str(self.end.block), self.end.port)
-    
+        return "{:s}[{:d}] --> {:s}[{:d}]".format(str(self.start.block),
+                                                  self.start.port,
+                                                  str(self.end.block),
+                                                  self.end.port)
+
     def __str__(self):
         """
         Display wire name.
-        
+
         :return: Wire name
         :rtype: str
 
         String format::
-            
+
             wire.5
-            
+
         """
         s = "wire."
         if self.name is not None:
@@ -162,14 +169,14 @@ class Wire:
             s += '??'
         return s
 
-        
 
-# ------------------------------------------------------------------------- # 
+# ------------------------------------------------------------------------- #
+
 
 class Plug:
     """
     Create a plug.
-    
+
     :param block: The block being plugged into
     :type block: Block
     :param port: The port on the block, defaults to 0
@@ -178,31 +185,29 @@ class Plug:
     :type type: str, optional
     :return: Plug object
     :rtype: Plug
-    
+
     Plugs are the interface between a wire and block and have information
     about port number and wire end. Plugs are on the end of each wire, and connect a 
     Wire to a specific port on a Block.
-    
+
     The ``type`` argument indicates if the ``Plug`` is at:
         - the start of a wire, ie. the port is an output port
         - the end of a wire, ie. the port is an input port
-        
+
     A plug can specify a set of ports on a block.
 
     """
-
     def __init__(self, block, port=0, type=None):
 
         self.block = block
         self.port = port
         self.type = type  # start
-        
-    
+
     @property
     def isslice(self):
         """
         Test if port number is a slice.
-        
+
         :return: Whether the port is a slice
         :rtype: bool
 
@@ -210,17 +215,17 @@ class Plug:
         for a simple index, eg. ``[2]``.
         """
         return isinstance(self.port, slice)
-    
+
     @property
     def portlist(self):
         """
         Return port numbers.
-        
+
         :return: Port numbers
         :rtype: int or list of int
-        
+
         If the port is a simple index, eg. ``[2]`` returns 2.
-        
+
         If the port is a slice, eg. ``[0:3]``, returns [0, 1, 2].
 
         """
@@ -284,7 +289,7 @@ class Plug:
         # block * plug
         s = left.block.bd
         #assert isinstance(right, Block), 'arguments to * must be blocks not ports (for now)'
-        w = s.connect(left, right)  # add a wire
+        s.connect(left, right)  # add a wire
         #print('plug * ' + str(w))
         return right
 
@@ -325,8 +330,8 @@ class Plug:
         """
         return str(self.block) + "[" + str(self.port) + "]"
 
-# ------------------------------------------------------------------------- #
 
+# ------------------------------------------------------------------------- #
 
 blocklist = []
 
@@ -355,10 +360,11 @@ def block(cls):
         raise ValueError('@block used on non Block subclass')
     return cls
 
+
 # ------------------------------------------------------------------------- #
 
-class Block:
 
+class Block:
     """
     Construct a new block object.
 
@@ -390,7 +396,6 @@ class Block:
     the superclass initializer for each block in the library.
 
     """
-
     def __new__(cls, *args, bd=None, **kwargs):
         """
         Construct a new Block object.
@@ -417,9 +422,26 @@ class Block:
         block.nstates = 0
         return block
 
-    _latex_remove = str.maketrans({'$':'', '\\':'', '{':'', '}':'', '^':'', '_':''})
+    _latex_remove = str.maketrans({
+        '$': '',
+        '\\': '',
+        '{': '',
+        '}': '',
+        '^': '',
+        '_': ''
+    })
 
-    def __init__(self, name=None, inames=None, onames=None, snames=None, pos=None, nin=None, nout=None, inputs=None, bd=None, **kwargs):
+    def __init__(self,
+                 name=None,
+                 inames=None,
+                 onames=None,
+                 snames=None,
+                 pos=None,
+                 nin=None,
+                 nout=None,
+                 inputs=None,
+                 bd=None,
+                 **kwargs):
 
         # print('Block constructor, bd = ', bd)
         if name is not None:
@@ -437,6 +459,7 @@ class Block:
         self._outport_names = None
         self._state_names = None
         self.initd = True
+        self.bd = self.bd or bd
 
         if nin is not None:
             self.nin = nin
@@ -467,26 +490,26 @@ class Block:
 
         """
         print("block: " + type(self).__name__)
-        for k,v in self.__dict__.items():
+        for k, v in self.__dict__.items():
             if k != 'sim':
-                print("  {:11s}{:s}".format(k+":", str(v)))
+                print("  {:11s}{:s}".format(k + ":", str(v)))
 
     # for use in unit testing
     def _eval(self, *inputs, t=None):
         """
         Evaluate a block for unit testing.
-        
+
         :param *inputs: List of input port values
         :type *inputs: list
         :param t: Simulation time, defaults to None
         :type t: float, optional
         :return: Block output port values
         :rtype: list
-        
+
         The output ports of the block are evaluated for a given set of input
         port values and simulation time. Input and output port values are treated
         as lists.
-        
+
         Mostly used for making concise unit tests.
 
         """
@@ -729,7 +752,8 @@ class Block:
 
     def add_inport(self, w):
         port = w.end.port
-        assert self.inports[port] is None, 'attempting to connect second wire to an input'
+        assert self.inports[
+            port] is None, 'attempting to connect second wire to an input'
         self.inports[port] = w
 
     def setinput(self, port, value):
@@ -766,7 +790,9 @@ class Block:
 
     def check(self):  # check validity of block parameters at start
         assert self.nin > 0 or self.nout > 0, 'no inputs or outputs specified'
-        assert hasattr(self, 'initd') and self.initd, 'Block superclass not initalized. was super().__init__ called?'
+        assert hasattr(
+            self, 'initd'
+        ) and self.initd, 'Block superclass not initalized. was super().__init__ called?'
 
     def done(self, **kwargs):  # end of simulation
         pass
@@ -774,13 +800,14 @@ class Block:
     def step(self):  # valid
         pass
 
+
 class SinkBlock(Block):
     """
     A SinkBlock is a subclass of Block that represents a block that has inputs
     but no outputs. Typically used to save data to a variable, file or 
     graphics.
     """
-    blockclass='sink'
+    blockclass = 'sink'
 
     def __init__(self, **kwargs):
         # print('Sink constructor')
@@ -803,7 +830,6 @@ class GraphicsBlock(SinkBlock):
 
     The animation is saved as an MP4 video in the specified file.
     """
-
     def __init__(self, movie=None, **kwargs):
 
         super().__init__(**kwargs)
@@ -813,7 +839,8 @@ class GraphicsBlock(SinkBlock):
 
     def start(self):
         if self.movie is not None:
-            self.writer = animation.FFMpegWriter(fps=10, extra_args=['-vcodec', 'libx264'])
+            self.writer = animation.FFMpegWriter(
+                fps=10, extra_args=['-vcodec', 'libx264'])
             self.writer.setup(fig=self.fig, outfile=self.movie)
 
     def step(self):
@@ -877,13 +904,14 @@ class TransferBlock(Block):
 
     def setstate(self, x):
         self._x = x[:self.nstates]  # take as much state vector as we need
-        return x[self.nstates:]     # return the rest
+        return x[self.nstates:]  # return the rest
 
     def getstate(self):
         return self._x0
 
     def check(self):
-        assert len(self._x0) == self.nstates, 'incorrect length for initial state'
+        assert len(
+            self._x0) == self.nstates, 'incorrect length for initial state'
         assert self.nin > 0 or self.nout > 0, 'no inputs or outputs specified'
 
 
@@ -903,14 +931,25 @@ class FunctionBlock(Block):
 
 class SubsystemBlock(Block):
     """
-    A Function is a subclass of Block that represents a block that has inputs
-    and outputs but no state variables.  Typically used to describe operations
-    such as gain, summation or various mappings.
+    A Subsystem is a subclass of block that contains a group of blocks within it
+    and a predefined set of inputs and outputs. It is synonymous to Simulink's groups.
+
+    When Subclassing SubsystemBlock, all connections between blocks within should be
+    performed in the constructor.
     """
     blockclass = 'subsystem'
 
     def __init__(self, **kwargs):
         # print('Subsystem constructor')
         super().__init__(**kwargs)
-        self.nstates = 0
 
+    # def _run(self, sub_block, inputs, t=None):
+    #     "helper function to make processing internal blocks less cumbersome"
+    #     sub_block.inputs = inputs
+    #     return sub_block.output(t)
+
+    # def _sequential(self, sub_blocks, inputs, t=None):
+    #     "helper function to run blocks sequentially"
+    #     for block in sub_blocks:
+    #         inputs = self._run(block, inputs, t)
+    #     return inputs
