@@ -9,4 +9,7 @@ recommonmark
 sphinx_markdown_tables
 sphinx_rtd_theme
 matplotlib
-spatialmath
+spatialmath-python
+# minor opencv versions after this are incompatible with PyQt5 - at least in python3.5
+opencv-python==4.1.*
+PyQt5
