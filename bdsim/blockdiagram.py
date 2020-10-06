@@ -19,7 +19,8 @@ import scipy.integrate as integrate
 import matplotlib
 import matplotlib.pyplot as plt
 
-from bdsim.tuning import Param, QtTuner
+from bdsim.tuning.parameter import Param
+from bdsim.tuning.tuners.qt import QtTuner
 from bdsim.components import Block, Plug, blocklist, Wire, SourceBlock, TransferBlock, GraphicsBlock, Struct
 from bdsim.blocks import vision
 
