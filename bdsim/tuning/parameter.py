@@ -1,4 +1,7 @@
 from numbers import Real
+from collections import OrderedDict
+from collections.abc import Iterable
+from abc import ABC, abstractmethod
 import numpy as np
 
 
@@ -14,47 +17,51 @@ class Param:
 
         if isinstance(val, Param):
             if not issubclass(val.__class__, cls):
-                val.__class__ = cls  # set the class so that super() doesn't complain when passing in a Param as a 'new NumParam' etc
+                # set the class so that super() doesn't complain when passing in a Param as a 'new NumParam' etc
+                val.__class__ = cls
             return val
         else:
-            # choose the correct paramtype based on the kweargs passed
+            # choose the correct paramtype based on the kwargs passed
             # always check for optionalparam first because it also has kwargs describing the underlying type
-            ParamType = OptionalParam if 'default' in kwargs else \
+            param_cls = OptionalParam if 'default' in kwargs else \
+                cls if cls is not Param else \
                 NumParam if _is_num(val) else \
                 EnumParam if 'oneof' in kwargs else \
                 VecParam if _is_vector(val) else \
                 cls
-            return super().__new__(ParamType)
+            param = super().__new__(param_cls)
+
+            # __init__ will not run after this unless param is of class cls,
+            # For more specific param types such as RangeParam with 'default' in the kwargs,
+            # the OptionalParam should wrap the RangeParam but doesn't get it's __init__ called, unless:
+            if not isinstance(param, cls):
+                # we do it manually
+                param_cls.__init__(param, val, cls=cls, **kwargs)
+
+            return param
 
     def __init__(
             self,
             val,
-            *,  # force kwargs over positional args
+            *,  # force the use of keyword arguments
             name=None,
             on_change=None,
             created_by_user=False,
             **_kwargs):
         "the real init, this way __new__ can choose whether or not to __init__"
+        self.attrs = getattr(self, 'attrs', set())
 
-        # if this is an existing param, (see __new__), only set unset stuff
-        try:
-            self.val = val if self.val is None else self.val
-            self.name = self.name or name
+        self.val = self.attr('val', val)
+        self.name = self.attr('name', name)
+        self.gui_attrs = self.attr('gui_attrs', set(('name',)))
+        self.on_change_cbs = self.attr(
+            'on_change_cbs', [on_change] if on_change else [])
+        self.gui_reconstructor_cbs = self.attr('gui_reconstructor_cbs', [])
+        self.created_by_user = self.attr('created_by_user', created_by_user)
 
-            if on_change:
-                self.on_change(on_change)
-
-        except AttributeError:  # if the attribute doesn't exist it means this is a new param - init all
-
-            self.val = val
-            self.name = name
-            self.gui_attrs = set(('name', ))
-            self.on_change_cbs = [on_change] if on_change else []
-            self.gui_reconstructor_cbs = []
-            self.created_by_user = created_by_user
-
-            # is should only be set in TunableBlock.param
-            self.used_in = []  # list of (TunableBlock, arg_name: str) tuples
+        # this should only be added to in TunableBlock.param
+        # list of (TunableBlock, arg_name: str) tuples
+        self.used_in = self.attr('used_in', [])
 
     def override(self, **kwargs):
         for attr, val in kwargs.items():
@@ -69,28 +76,33 @@ class Param:
 
     # add a callback for val change
     def on_change(self, cb):
-        # insert it to the start so that setup callbacks happen first
+        # insert it to the start so that setup callbacks (called last) happen first
         self.on_change_cbs.insert(0, cb)
 
     # add a functional API too, to enable triggering with exclusions (to prevent infinite recursion)
     def set_val(self, val, exclude_cb=None):
+        # coalesce single exclude_cb and multiple into tuple
+        if not isinstance(exclude_cb, Iterable):
+            exclude_cb = (exclude_cb, )
+
         if val is not self.val:  # only trigger if the value actually changed
             super().__setattr__('val', val)
-            for cb in self.on_change_cbs:
-                if cb is not exclude_cb:
-                    cb(val)
+            # copy the list so that if more cbs are added to self.on_change_cbs during
+            # callback execution, they don't get run (leading to infinite callbacks)
+            cbs = list(cb for cb in self.on_change_cbs if cb not in exclude_cb)
+            for cb in cbs:
+                cb(val)
 
     def __setattr__(self, attr, val):
-        if not hasattr(
-                self, attr
-        ):  # if the first time setting this, don't do anything special
-            super().__setattr__(attr, val)
-        elif attr == 'val':
+        # don't trigger the callbacks on the first val 'set', but do on all others
+        if attr == 'val' and hasattr(self, attr):
             self.set_val(val)
         else:
             super().__setattr__(attr, val)
 
-            if attr in self.gui_attrs:
+            # gui_attrs may not exist in the first Param constructor call
+            # pylint: disable=unsupported-membership-test
+            if attr in getattr(self, 'gui_attrs', ()):
                 self.reconstruct_gui()
 
     def reconstruct_gui(self):
@@ -107,7 +119,7 @@ class Param:
         """
         self.gui_reconstructor_cbs.append(cb)
 
-    @classmethod
+    @ classmethod
     def map(cls, maybe_param, fn):
         "helper function to monad-map a variable that may or may not be a parameter"
         if isinstance(maybe_param, cls):
@@ -117,112 +129,157 @@ class Param:
 
         return maybe_param
 
-    def attr(self, attr, default):
+    def attr(self, attr, default, _set=True):
         "returns attr if self has attr or it's none, otherwise return default"
-        return getattr(self, attr) \
-            if hasattr(self, attr) and attr is not None \
-            else default
+        self.attrs.add(attr)
+        val = getattr(self, attr, default)
+        if val is None:
+            val = default
+        return val
 
 
 class NumParam(Param):
-    def __init__(self, val, min=None, max=None, log_scale=None, **kwargs):
+    def __init__(self, val, min=None, max=None, step=None, log_scale=False, **kwargs):
+        "step only works if log_scale is False, and only affects gui's"
         super().__init__(val, **kwargs)
 
         self.min = self.attr('min', min)
         self.max = self.attr('max', max)
+        self.step = self.attr('step', step)
         self.log_scale = self.attr('log_scale', log_scale)
 
         self.gui_attrs.update({'min', 'max', 'log_scale'})
 
 
 class VecParam(NumParam):
-    # displays differently to singular NumParam in the gui
-    pass
+    def __init__(self, val, min=None, max=None, **kwargs):
+        super().__init__(val=np.array(val),
+                         min=None if min is None else np.array(min),
+                         max=None if max is None else np.array(max),
+                         **kwargs)
 
 
 class EnumParam(Param):
-    def __init__(self, val, oneof=[], **kwargs):
+    def __init__(self, val, oneof=None, **kwargs):
         super().__init__(val, **kwargs)
 
         self.oneof = self.attr('oneof', oneof)
         self.gui_attrs.update({'oneof'})
 
 
-class HyperParam(Param):
+class HyperParam(Param, ABC):
     """
     A HyperParam is a parameter that is made up of a group of other parameters.
     Unlik Params, which are typically instantiated directly, HyperParam implementations should subclass this.
     Examples of a HyperParam could include a kernel that can be instantiated fromkwar
     either a description (type, width, height), of which each is a parameter.
     """
+
     def __init__(self, val, **kwargs):
-        super().__init__(val, **kwargs)
+        super().__init__(val=None, **kwargs)
 
         # hyperparam setups can be intricate so better to hard reset these attrs every time
-        self.params = {}  # sub-parameters
-        self.hidden = set()
+        self.params = self.attr('params', OrderedDict())  # sub-parameters
+        self.hidden = self.attr('hidden', set())
 
-    def param(self, name, val, **kwargs):
+        # bind the method to a single object so we can exclude it from param update recursion later
+        # in python each self.func bound method is a different object so it can't
+        # be checked for equality unless saved like so.
+        # Need to think of a cleaner way to do this
+        self.update = self.update  # I know this looks very strange, but it works
+
+    # pylint: disable=method-hidden
+    @ abstractmethod
+    def update(self, _updated_val=None):
+        pass
+
+    def param(self, name, val, on_change=None, cls=Param, **kwargs):
         """
         Registers a sub-parameter for control generation.
         The order in which these are called determine the order of the GUI controls displayed.
         """
-        param = Param(val, **kwargs)
+        # by default call the update function
+        if not on_change:
+            on_change = self.update
 
-        param.used_in.append((self.full_name(), name))
+        # TODO: revisit
+        # if name in self.params:
+        #     param = self.params[name]
+        #     v_param = Param(val)
+        #     for attr in param.attrs:
+        #         if getattr(param, attr) is None:
+        #             setattr(param, attr, getattr(v_param, attr, None) or )
 
-        if name not in self.params:
+        if name in self.params:
+            param = self.params[name]
+        else:
+            param = cls(val, on_change=on_change, **kwargs)
+            param.on_change(lambda val: setattr(self, name, val))
+            param.used_in.append((self.full_name(), name))
             self.params[name] = param
 
-        return param
+        return param.val
 
-    def create_params(self, param_specs, **kwargs):
-        """
-        Helper function to create parameters,
-        link their on_change callbacks to a setup function,
-        then return the parameters.
-        """
-        return tuple(
-            self.param(name, val, **kwargs) for name, val in param_specs)
+    def show_only(self, *params):
+        self.show(*params)
+        prev = self.hidden
+        self.hidden = (prev - set(params)
+                       ).union(set(p for p in self.params if p not in params))
+        if prev != self.hidden:
+            self.reconstruct_gui()
 
     def show(self, *params):
-        for param in params:
-            try:
-                self.hidden.remove(param)
-            except KeyError:
-                pass  # don't panic if it's already shown
+        prev = self.hidden
+        self.hidden = prev - set(params)  # god I love python sometimes
+        if prev != self.hidden:
+            self.reconstruct_gui()
 
     def hide(self, *params):
-        for param in params:
-            self.hidden.add(param)
+        prev = self.hidden
+        self.hidden = prev.union(set(params))
+        if prev != self.hidden:
+            self.reconstruct_gui()
 
 
 class OptionalParam(HyperParam):
     # Expects a val that can be None. In a GUI, will be guarded by a checkbox
 
-    def __init__(self, val, default, **kwargs):
+    def __init__(self, val, default=None, **kwargs):
         super().__init__(val, **kwargs)
 
-        # remove kwargs that should'nt be passed down to the underlying value param
-        for kw in ('on_change', 'name', 'default'):
-            kwargs.pop(kw, None)
-
         self.default = default
-        self.enabled = self.param('enabled', \
-            val is not None, on_change=self._on_enabled_change)
-        self._val = self.param('val', val, on_change=self.set_val, **kwargs)
+        self.enabled = self.param('enabled', val is not None)
 
-    def _on_enabled_change(self, enabled):
-        if enabled:
-            self.val = self._val.val or self.default
+        subvalue_kwargs = {k: v for k, v in kwargs.items(
+        ) if k not in ('on_change', 'name', 'default')}
+        self.enabled_value = self.param(
+            'enabled_value', val if val else default, **subvalue_kwargs)
+        self.update()
+
+    def update(self, _=None):
+        if self.enabled:
+            self.show('enabled_value')
+            self.val = self.enabled_value or self.default
         else:
+            self.hide('enabled_value')
             self.val = None
 
 
+class RangeParam(HyperParam):
+    def __init__(self, val, min, max, step=None, log_scale=False, **kwargs):
+        super().__init__(val, **kwargs)
+        lower, upper = val if val else (None, None)
+        shared_kwargs = dict(min=min, max=max, step=step, log_scale=log_scale)
+        self.lower = self.param('lower', lower, **shared_kwargs)
+        self.upper = self.param('upper', upper, **shared_kwargs)
+
+    def update(self, _=None):
+        self.val = self.lower, self.upper
+
+
 def _is_vector(x):
-    # only accept numpy arrays to be vectors
-    return isinstance(x, np.ndarray) and x.ndim == 1 \
-        and np.issubdtype(x.dtype, np.number)
+    return isinstance(x, np.ndarray) and x.ndim == 1 and np.issubdtype(x.dtype, np.number) \
+        or isinstance(x, Iterable) and all(isinstance(x_i, Real) for x_i in x)
 
 
 def _is_num(x):

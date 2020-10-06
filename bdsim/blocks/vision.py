@@ -1,11 +1,8 @@
 import logging
 import numpy as np
 from bdsim.components import SourceBlock, SinkBlock, FunctionBlock, SubsystemBlock, block
-from bdsim.tuning import TunableBlock, Param, HyperParam
-
-_U8_T = np.iinfo(np.uint8)
-_3CH_UINT8_MIN = np.full((3,), _U8_T.min)
-_3CH_UINT8_MAX = np.full((3,), _U8_T.max)
+from bdsim.tuning import TunableBlock
+from bdsim.tuning.parameter import HyperParam, RangeParam
 
 try:
     import cv2
@@ -112,10 +109,10 @@ try:
         def __init__(self, input, lower=(0, 0, 0), upper=(255, 255, 255), **kwargs):
             super().__init__(inputs=[input], nin=1, nout=1, **kwargs)
 
-            self.lower = self._param('lower', Param.map(lower, np.array),
-                                    min=_3CH_UINT8_MIN, max=_3CH_UINT8_MAX)
-            self.upper = self._param('upper', Param.map(upper, np.array),
-                                    min=_3CH_UINT8_MIN, max=_3CH_UINT8_MAX)
+            self.lower = self._param('lower', lower,
+                                     min=np.array((0, 0, 0)), max=np.array((255, 255, 255)))
+            self.upper = self._param('upper', upper,
+                                     min=np.array((0, 0, 0)), max=np.array((255, 255, 255)))
 
         def output(self, _t=None):
             [input] = self.inputs
@@ -160,7 +157,8 @@ try:
 
             self.lower = lower
             self.upper = upper
-            self.method = getattr(cv2, "THRESH_{method}".format(method=method.upper()))
+            self.method = getattr(
+                cv2, "THRESH_{method}".format(method=method.upper()))
 
         def output(self, _t=None):
             [input] = self.inputs
@@ -168,63 +166,60 @@ try:
                 input, self.lower, self.upper, self.method)
             return [output]
 
-    class KernelParam2d(HyperParam):
-        # pylint: disable = attribute-defined-outside-init
+    class KernelParam2D(HyperParam):
 
         available_types = ["ellipse", "rect", "cross"]
 
         def __init__(self, spec=("ellipse", 3, 3), **kwargs):
-            # pylint: disable = useless-super-delegation
             super().__init__(spec, **kwargs)
 
-            type, width, height = ("custom", *self.val.shape) if isinstance(self.val, np.ndarray) else self.val
+            type, width, height = spec if isinstance(spec, tuple) else \
+                ("custom", *spec.shape) if isinstance(spec, np.ndarray) else \
+                (None, None, None)
 
-            # bind the method to a single object so we can exclude it from param udate recursion later
-            # in python each self.func bound method is a different object so it can't
-            # be checked for equality unless saved like so.
-            # Need to think of a cleaner way to do this
-            self.setup_kernel = self._setup_kernel
+            # self.array = self.param('array', self.val if type == 'custom' else None)
+            self.type = self.param(
+                'type', type, oneof=self.available_types)
+            self.width = self.param('width', width, min=3, max=12)
+            self.height = self.param('height', height, min=3, max=12)
+            self.update()
 
-            self.array, self.type, self.width, self.height = \
-                self.create_params((
-                    ('array', self.val if type == 'custom' else None), # will get set in self.setup_kernel if not custom
-                    ('type', Param(type, oneof=["custom", *self.available_types])),
-                    ('width', Param(width, min=3, max=12)),
-                    ('height', Param(height, min=3, max=12))
-                ), on_change=self.setup_kernel)
-            self.setup_kernel()
+        def update(self, _=None):
+            # TODO: allow for custom kernel with matrix editor (see commented out code)
+            # if type == "custom":
+            #     # self.show(self.array)
+            #     self.hide(self.width, self.height)
+            # else:
+            assert (
+                self.type in self.available_types
+            ), "Morphological Kernel type {type} unsupported. Please select from {types}" \
+                .format(type=self.type, types=self.available_types)
 
+            # self.show('width', 'height')
+            # self.hide(self.array)
 
-        def _setup_kernel(self, _=None):
-            type = self.type.val
-            if type == "custom":
-                self.show(self.array)
-                self.hide(self.width, self.height)
-            else:
-                assert (
-                    type in self.available_types
-                ), "Morphological Kernel type {type} unsupported. Please select from {types}" \
-                    .format(type=type, types=self.available_types)
+            # self.array.set_val(cv2.getStructuringElement(
+            #         getattr(cv2, "MORPH_%s" % type.upper()),
+            #         (self.width.val, self.height.val)
+            #     ), exclude_cb=self.setup_kernel)
 
-                self.show(self.width, self.height)
-                self.hide(self.array)
-
-                self.array.set_val(cv2.getStructuringElement(
-                        getattr(cv2, "MORPH_%s" % type.upper()),
-                        (self.width.val, self.height.val)
-                    ), exclude_cb=self.setup_kernel)
-
-            self.val = self.array.val
+            # self.val = self.array.val
+            self.val = cv2.getStructuringElement(
+                getattr(cv2, "MORPH_%s" % self.type.upper()),
+                (self.width, self.height)
+            )
 
     class _Morphological(FunctionBlock, TunableBlock):
         type = "morphological"
 
         def __init__(self, input, diadic_func, kernel, iterations, **kwargs):
-            super().__init__(inputs=[input] if input else [], nin=1, nout=1, **kwargs)
+            super().__init__(inputs=[input]
+                             if input else [], nin=1, nout=1, **kwargs)
 
             self.diadic_func = diadic_func
-            self.kernel = self._param('kernel', KernelParam2d(kernel))
-            self.iterations = self._param('iterations', iterations, min=1, max=10)
+            self.kernel = self._param('kernel', KernelParam2D(kernel))
+            self.iterations = self._param(
+                'iterations', iterations, min=1, max=10)
 
         def output(self, _t=None):
             [input] = self.inputs
@@ -268,17 +263,21 @@ try:
             super().__init__(
                 inputs=[input],
                 nin=1,
-                nout=1
+                nout=1,
+                **kwargs
             )
-            args = dict(input=None,
-                        kernel=self._param('kernel', KernelParam2d(kernel)),
-                        iterations=self._param('iterations', iterations, min=1, max=10),
-                        bd=self.bd, is_subblock=True)
+
+            morphblock_kwargs = dict(input=None,
+                                     kernel=self._param(
+                                         'kernel', KernelParam2D(kernel), ret_param=True),
+                                     iterations=self._param(
+                                         'iterations', iterations, min=1, max=10, ret_param=True),
+                                     bd=self.bd, is_subblock=True)
 
             # I would expect cv2.morphologyEx() to be faster than an cv2.erode -> cv2.dilate
             # but preliminary benchmarks show this isn't the case.
-            self.dilate = Dilate(**args)
-            self.erode = Erode(**args)
+            self.dilate = Dilate(**morphblock_kwargs)
+            self.erode = Erode(**morphblock_kwargs)
 
         def output(self, _t=None):
             self.erode.inputs = self.inputs
@@ -296,11 +295,13 @@ try:
             super().__init__(
                 inputs=[input],
                 nin=1,
-                nout=1
+                nout=1,
+                **kwargs
             )
             args = dict(input=None, tinker=kwargs['tinker'],
                         kernel=self._param('kernel', kernel),
-                        iterations=self._param('iterations', iterations, min=1, max=10),
+                        iterations=self._param(
+                            'iterations', iterations, min=1, max=10),
                         bd=self.bd, is_subblock=True)
 
             self.dilate = Dilate(**args)
@@ -346,23 +347,27 @@ try:
         ):
             super().__init__(inputs=[input], nin=1, nout=1, **kwargs)
 
-            self.top_k = self._param('top_k', top_k, min=0, max=10)
+            self.top_k = self._param('top_k', top_k, min=1, max=10, default=1)
 
             self.min_dist_between_blobs = self._sbd_param('min_dist_between_blobs',
-                                                          min_dist_between_blobs, 0, 1e3, log_scale=2)
-            self.area = self._sbd_param('area', area, 1, 1e6, log_scale=2, default=50)
-            self.circularity = self._sbd_param('circularity', circularity, 0, 1, default=0.5)
-            self.inertia_ratio = self._sbd_param('inertia_ratio', inertia_ratio, 0, 1, default=0.5)
-            self.convexivity = self._sbd_param('convexivity', convexivity, 0, 1, default=0.5)
-            self.grayscale_threshold = self._sbd_param('grayscale_threshold', grayscale_threshold, 0, 1, default=0.5)
+                                                          min_dist_between_blobs, min=0, max=1e3, log_scale=2)
+            self.area = self._sbd_param('area', RangeParam(
+                area, min=1, max=2**21, default=(50, 2**21), log_scale=True))
+            self.circularity = self._sbd_param('circularity', RangeParam(
+                circularity, min=0, max=1, default=(0.5, 1)))
+            self.inertia_ratio = self._sbd_param('inertia_ratio', RangeParam(
+                inertia_ratio, min=0, max=1, default=(0.5, 1)))
+            self.convexivity = self._sbd_param('convexivity', RangeParam(
+                convexivity, min=0, max=1, default=(0.5, 1)))
+            self.grayscale_threshold = self._sbd_param(
+                'grayscale_threshold', grayscale_threshold, min=(0, 0, 1), max=(255, 255, 255))
 
             self._setup_sbd()
 
-        def _sbd_param(self, name, val, min, max, **kwargs):
-            return self._param(name, val, min=min, max=max,
-                              on_change=self._setup_sbd, **kwargs)
+        def _sbd_param(self, name, val, **kwargs):
+            return self._param(name, val, on_change=self._setup_sbd, **kwargs)
 
-        def _setup_sbd(self, _=None): # unused param to work with on_change
+        def _setup_sbd(self, _=None):  # unused param to work with on_change
             params = cv2.SimpleBlobDetector_Params()
             params.minDistBetweenBlobs = self.min_dist_between_blobs
             (
@@ -390,8 +395,6 @@ try:
             keypoints = self.detector.detect(input)
             return [keypoints[:self.top_k] if self.top_k else keypoints]
 
-    # This probably doesn't need the opencv dependency - I think opencv just uses matplotlib anyway
-    # TODO: don't require opencv for display block
     @block
     class Display(SinkBlock):
         """
@@ -422,7 +425,8 @@ try:
                 cv2.waitKey(1)  # cv2 needs this to actually show, apparently
             except Exception as e:
                 raise Exception(
-                    ("Expected input to be an HxW[xC] ndarray, got {input}").format(input=input)
+                    ("Expected input to be an HxW[xC] ndarray, got {input}").format(
+                        input=input)
                 ) from e
 
         def stop(self):
@@ -442,8 +446,9 @@ try:
         def output(self, _t=None):
             [image, keypoints] = self.inputs
             drawn = cv2.drawKeypoints(image, keypoints, np.array([]), self.color,
-                cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+                                      cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
             return [drawn]
 
 except ImportError:
-    logging.warning("OpenCV not installed. Vision blocks will not be available")
+    logging.warning(
+        "OpenCV not installed. Vision blocks will not be available")

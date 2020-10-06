@@ -30,13 +30,13 @@ class TunableBlock(Block, ABC):
         """
         assert name in self.params, \
             "Attempted to get param {name} which doesn't exist on block of class {classname}. Available params are {params}" \
-                .format(name=name, classname=self.__class__.__name__, params=[self.params.keys()])
+            .format(name=name, classname=self.__class__.__name__, params=[self.params.keys()])
 
         self._param(name, val, created_by_user=True, **kwargs)
 
         return self.params[name]
 
-    def _param(self, name, val, **kwargs):
+    def _param(self, name, val, ret_param=False, **kwargs):
         """
         Creates a Param spec. If the user requested this directly (by passing in a Param for val):
             - add this block into it's param.used_in list,
@@ -52,25 +52,26 @@ class TunableBlock(Block, ABC):
 
             def __init__(self, num_param=99):
                 self.num_param = self._param('num_param', num_param, min=0, max=200)
+
+        If ret_param is specified will return the Param object rather than it's val
         """
         # if the param already exists
         if name in self.params:
             # ensure the block constructor didn't accidentally double up on param defs
             if 'created_by_user' in kwargs:
                 # override any user-set params
-                param = self.params[name]
-                param.override(val=val, **kwargs)
+                self.params[name].override(val=val, **kwargs)
             else:
                 assert name not in self.params, \
                     "Assigning the same parameter to a block twice: {name}. This may be unintended"\
-                        .format(name=name)
+                    .format(name=name)
         else:
             param = Param(val, **kwargs)
             self.params[name] = param
 
         # the val either needs to be created by bd.param() or tinker mode on,
         # as well as not already used at the top level (to prevent repeated gui controls)
-        # then we should give it what it needs to be functional in the gui
+        # then we should set it up to be functional in the gui
         if self.tinker or param.created_by_user and param not in self.bd.gui_params:
 
             self.bd.gui_params.append(param)
@@ -78,4 +79,4 @@ class TunableBlock(Block, ABC):
             param.on_change(lambda val: setattr(self, name, val))
             param.used_in.append((self, name))
 
-        return param.val
+        return param if ret_param else param.val
