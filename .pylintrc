@@ -60,7 +60,8 @@ confidence=
 # --enable=similarities". If you want to run only the classes checker, but have
 # no Warning level messages displayed, use "--disable=all --enable=classes
 # --disable=W".
-disable=redefined-builtin,
+disable=
+      redefined-builtin, # I like using 'input', 'min' and 'max' as variables in certain scopes. TODO: discuss this
           # temporary during dev
           missing-function-docstring, missing-class-docstring, missing-module-docstring, fixme
 #         print-statement,
