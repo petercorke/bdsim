@@ -1347,10 +1347,13 @@ class BlockDiagram:
             print('  outputs: ', b.output(t=0))
 
     # TODO: save_params() and load_params()
-    def param(self, init, force_gui=False, **kwargs):
+    def param(self, *init, force_gui=False, **kwargs):
+        if len(init) == 1:
+            init = init[0]
+
         param = Param(init, created_by_user=True, **kwargs)
 
-        # force the inclusion of the gui control at the index of insertion,
+        # if `force_gui`, include the gui control at the index of insertion,
         # even if it's not used by any blocks.
         if force_gui:
             self.gui_params.append(param)
