@@ -4,6 +4,7 @@ from .parameter import Param
 
 
 class TunableBlock(Block, ABC):
+    # TODO: this could be merged into Block, if permitted
     def __init__(self, tinker=False, is_subblock=False, **kwargs):
         super().__init__(**kwargs)
 
@@ -11,7 +12,7 @@ class TunableBlock(Block, ABC):
         self.is_subblock = is_subblock
         self.params = {}
 
-    def param(self, name, val, **kwargs):
+    def param(self, name, val=None, **kwargs):
         """
         A user-facing function to get a reference to a parameter after this object's instantiation,
         and override any attrs with user-defined ones. This is the mutative alternative
@@ -29,10 +30,11 @@ class TunableBlock(Block, ABC):
         Note: Some blocks may assign parameters to different names than its constructor arguments.
         """
         assert name in self.params, \
-            "Attempted to get param {name} which doesn't exist on block of class {classname}. Available params are {params}" \
+            ("Attempted to get param {name} which doesn't exist on block of class {classname}. Available params are {params}"
+             "If calling from a TunableBloc constructor, you may be using self.param instead of self._param") \
             .format(name=name, classname=self.__class__.__name__, params=[self.params.keys()])
 
-        self._param(name, val, created_by_user=True, **kwargs)
+        self._param(name, val=val, created_by_user=True, **kwargs)
 
         return self.params[name]
 
@@ -60,21 +62,29 @@ class TunableBlock(Block, ABC):
             # ensure the block constructor didn't accidentally double up on param defs
             if 'created_by_user' in kwargs:
                 # override any user-set params
-                self.params[name].override(val=val, **kwargs)
+                param = self.params[name]
+                if val is None:
+                    param.override(**kwargs)
+                elif isinstance(val, Param):
+                    self.params[name] = param = Param(val, **kwargs)
+                else:
+                    param.override(val=val, **kwargs)
             else:
                 assert name not in self.params, \
-                    "Assigning the same parameter to a block twice: {name}. This may be unintended"\
+                    ("Assigning the same parameter to a block twice: {name}. This may be unintended. "
+                     "If getting a reference to an existing param after block creation, use the block.param() method, not block._param()")\
                     .format(name=name)
         else:
             param = Param(val, **kwargs)
             self.params[name] = param
 
         # the val either needs to be created by bd.param() or tinker mode on,
-        # as well as not already used at the top level (to prevent repeated gui controls)
         # then we should set it up to be functional in the gui
-        if self.tinker or param.created_by_user and param not in self.bd.gui_params:
+        if self.tinker or param.created_by_user:
 
-            self.bd.gui_params.append(param)
+            # don't double up on controls
+            if param not in self.bd.gui_params:
+                self.bd.gui_params.append(param)
             # bind the on_change handler
             param.on_change(lambda val: setattr(self, name, val))
             param.used_in.append((self, name))

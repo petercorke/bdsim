@@ -157,10 +157,12 @@ class QtTuner(Tuner, QWidget):
                 val = _rescale_slider_val(val, log, self.param.step)
                 label.setText(_val_str(val))
                 # do the update
-                self.param.val[idx] = val
+                # use a new vec/list to actually trigger callbacks in self.param.set_val
+                new_vec = self.param.val.copy()
+                new_vec[idx] = val
                 # trigger update for external callbacks
                 self.param.set_val(
-                    self.param.val, exclude_cb=self.on_param_change)
+                    new_vec, exclude_cb=self.on_param_change)
             return on_slider_change
 
         def on_param_change(self, val):

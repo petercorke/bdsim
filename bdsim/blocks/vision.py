@@ -184,8 +184,8 @@ try:
             # self.array = self.param('array', self.val if type == 'custom' else None)
             self.type = self.param(
                 'type', type, oneof=self.available_types)
-            self.width = self.param('width', width, min=3, max=12, step=2)
-            self.height = self.param('height', height, min=3, max=12, step=2)
+            self.width = self.param('width', width, min=3, max=12, step=1)
+            self.height = self.param('height', height, min=3, max=12, step=1)
             self.update()
 
         def update(self, _=None):
@@ -346,7 +346,8 @@ try:
             circularity=None,
             inertia_ratio=None,
             convexivity=None,
-            grayscale_threshold=(50, 220, 10),
+            # TODO: come up with better defaults
+            grayscale_threshold=(253, 255, 1),
             **kwargs
         ):
             super().__init__(inputs=[input], nin=1, nout=1, **kwargs)
@@ -354,6 +355,8 @@ try:
             self.top_k = self._param(
                 'top_k', top_k, min=1, max=10, default=1, step=1)
 
+            self.blob_color = self._param(
+                'blob_color', 255, oneof=(0, 255), on_change=self._setup_sbd)
             self.min_dist_between_blobs = self._param('min_dist_between_blobs',
                                                       min_dist_between_blobs, min=0, max=1e3, log_scale=True, on_change=self._setup_sbd)
             self.area = self._param('area', RangeParam(
@@ -371,6 +374,7 @@ try:
 
         def _setup_sbd(self, _=None):  # unused param to work with on_change
             params = cv2.SimpleBlobDetector_Params()
+            params.blobColor = self.blob_color
             params.minDistBetweenBlobs = self.min_dist_between_blobs
             (
                 params.minThreshold,
@@ -395,6 +399,7 @@ try:
         def output(self, _t=None):
             [input] = self.inputs
             keypoints = self.detector.detect(input)
+            print(keypoints)
             return [keypoints[:self.top_k] if self.top_k else keypoints]
 
     @block

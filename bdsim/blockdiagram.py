@@ -1080,8 +1080,8 @@ class BlockDiagram:
 
         return out
 
-    def run_realtime(self, tuner=False):
-        if tuner:
+    def run_realtime(self, tuner=None):
+        if issubclass(tuner, QtTuner):
             self._lazy_init_qt_app()
             tuner = QtTuner(self.gui_params)
             tuner.show()
@@ -1348,11 +1348,41 @@ class BlockDiagram:
             print('  outputs: ', b.output(t=0))
 
     # TODO: save_params() and load_params()
-    def param(self, *init, force_gui=False, **kwargs):
+    def param(self, *init, name=None, min=None, max=None, log_scale=False, step=None, oneof=None, default=None, force_gui=False):
+        """Create a parameter and register it with the blockdiagram engine
+
+        Most keyword arguments passed here will override the sensible defaults for params used by TunableBlocks,
+        so use with caution!
+
+        :param *init: Initial value of the param. If wanting a tuple, can be multiple values to save on extra brackets.
+        :type *init: Union[any, :class:`.Param`], required
+        :param name: name of the param. If provided, will become the label on the gui - otherwise will be list of "block.param" where it is used by blocks, defaults to None
+        :type max: str, optional
+        :param min: minimum of the value. If provided with max, a GUI can present a slider control, defaults to None
+        :type min: number, optional
+        :param max: maximum of the value. If provided with max, a GUI can present a slider control, defaults to None
+        :type max: number, optional
+        :param log_scale: Whether or not to use a log-scaling slider. will override 'step', defaults to False
+        :type log_scale: bool, optional
+        :param step: the step interval of a slider. Disabled by 'log_scale' if  provided, defaults to None
+        :type step: number, optional
+        :param oneof: a list or tuple of options. Will produce a dropdown menu if provided, defaults to None
+        :type oneof: iterable, optional
+        :param default: the default value for an OptionalParam. Setting this allows '*init' to be None. Will produce a controls shown/hidden by an .enabled checkbox - switching the value between None and it's underlying value when enabled, defaults to None
+        :type default: Union[any :class:`.Param`], optional
+        :param force_gui: If a parameter is not used by any blocks, it will not be shown in a gui. set this True to override this behaviour, defaults to False
+        :type force_gui: bool, optional
+        :return: returns a :class:`.Param` object that may then be passed into a :class:`.TunableBlock` for use.
+        :rtype: :class:`.Param`
+        """
         if len(init) == 1:
             init = init[0]
 
-        param = Param(init, created_by_user=True, **kwargs)
+        kwargs = {k: v for k, v in dict(name=name, created_by_user=True, min=min, max=max, step=step,
+                                        log_scale=log_scale, oneof=oneof, default=default).items()
+                  if v is not None}
+
+        param = Param(init, **kwargs)
 
         # if `force_gui`, include the gui control at the index of insertion,
         # even if it's not used by any blocks.

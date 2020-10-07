@@ -25,8 +25,8 @@ class Param:
             # always check for optionalparam first because it also has kwargs describing the underlying type
             param_cls = OptionalParam if 'default' in kwargs else \
                 cls if cls is not Param else \
-                NumParam if _is_num(val) else \
                 EnumParam if 'oneof' in kwargs else \
+                NumParam if _is_num(val) else \
                 VecParam if _is_vector(val) else \
                 cls
             param = super().__new__(param_cls)
@@ -56,12 +56,18 @@ class Param:
         self.gui_attrs = self.attr('gui_attrs', set(('name',)))
         self.on_change_cbs = self.attr(
             'on_change_cbs', [on_change] if on_change else [])
+        # if a new callback is being added
+        if on_change is not None and on_change not in self.on_change_cbs:
+            self.on_change(on_change)
+
         self.gui_reconstructor_cbs = self.attr('gui_reconstructor_cbs', [])
         self.created_by_user = self.attr('created_by_user', created_by_user)
 
         # this should only be added to in TunableBlock.param
         # list of (TunableBlock, arg_name: str) tuples
         self.used_in = self.attr('used_in', [])
+
+    # TODO: potentially add validate()?
 
     def override(self, **kwargs):
         for attr, val in kwargs.items():
@@ -148,7 +154,7 @@ class NumParam(Param):
         self.step = self.attr('step', step)
         self.log_scale = self.attr('log_scale', log_scale)
 
-        self.gui_attrs.update({'min', 'max', 'log_scale'})
+        self.gui_attrs.update({'min', 'max', 'log_scale', 'step'})
 
 
 class VecParam(NumParam):
@@ -163,6 +169,7 @@ class EnumParam(Param):
     def __init__(self, val, oneof=None, **kwargs):
         super().__init__(val, **kwargs)
 
+        # TODO: support enums or dict mappings "choicename" -> value. Perhaps a bidict?
         self.oneof = self.attr('oneof', oneof)
         self.gui_attrs.update({'oneof'})
 
@@ -202,18 +209,12 @@ class HyperParam(Param, ABC):
         if not on_change:
             on_change = self.update
 
-        # TODO: revisit
-        # if name in self.params:
-        #     param = self.params[name]
-        #     v_param = Param(val)
-        #     for attr in param.attrs:
-        #         if getattr(param, attr) is None:
-        #             setattr(param, attr, getattr(v_param, attr, None) or )
-
         if name in self.params:
             param = self.params[name]
         else:
-            param = cls(val, on_change=on_change, **kwargs)
+            param = cls(val, **kwargs)
+            # set this afterwards to avoid a callback after the initial self.val = ...
+            param.on_change(on_change)
             param.on_change(lambda val: setattr(self, name, val))
             param.used_in.append((self.full_name(), name))
             self.params[name] = param
@@ -272,6 +273,7 @@ class RangeParam(HyperParam):
         shared_kwargs = dict(min=min, max=max, step=step, log_scale=log_scale)
         self.lower = self.param('lower', lower, **shared_kwargs)
         self.upper = self.param('upper', upper, **shared_kwargs)
+        self.update()
 
     def update(self, _=None):
         self.val = self.lower, self.upper
