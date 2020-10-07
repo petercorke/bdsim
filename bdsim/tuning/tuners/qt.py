@@ -17,7 +17,7 @@ def _val_str(val):
         val_str
 
 
-def _create_slider(parent: QWidget, min, max, val, on_change, log_scale):
+def _create_slider(parent: QWidget, min, max, val, on_change, log_scale, step):
     slider_wrapper = QWidget(parent)
     wrapper_layout = QHBoxLayout(slider_wrapper)
     wrapper_layout.setContentsMargins(0, 0, 0, 0)
@@ -37,25 +37,27 @@ def _create_slider(parent: QWidget, min, max, val, on_change, log_scale):
         # make sure it's max when slider val == 100
         log_base = (max - log_offset)**(1 / 100)
         log = (log_base, log_offset)
-        val = _maybe_log_scale(val, log, reverse=True)
 
     else:
-        slider.setMinimum(min)
-        slider.setMaximum(max)
+        # TODO: ensure that this rounding doesn't cause problems
+        slider.setMinimum(round(min / step))
+        slider.setMaximum(round(max / step))
         log = None
 
+    val = _rescale_slider_val(val, log, step, reverse=True)
     slider.setValue(val)
 
     slider.valueChanged.connect(on_change)
     return slider, label, log, slider_wrapper
 
 
-def _maybe_log_scale(val, log, reverse=False):
+def _rescale_slider_val(val, log, step, reverse=False):
     if log:
         (base, offset) = log
-        val = math.log(val - offset, base) if reverse \
+        return math.log(val - offset, base) if reverse \
             else base ** val + offset
-    return val
+    else:
+        return val / step if reverse else val * step
 
 
 def _clear_layout(layout):
@@ -116,19 +118,20 @@ class QtTuner(Tuner, QWidget):
             self._layout.addWidget(QLabel(p.full_name(), self))
 
             self.slider, self.label, self.log, slider_wrapper = _create_slider(
-                self, p.min, p.max, p.val, self.on_slider_change, p.log_scale)
+                self, p.min, p.max, p.val, self.on_slider_change, p.log_scale, p.step)
 
             self._layout.addWidget(slider_wrapper)
 
         def on_slider_change(self, val):
-            val = _maybe_log_scale(val, self.log)
+            val = _rescale_slider_val(val, self.log, self.param.step)
             self.label.setText(_val_str(val))
             # trigger update for other callbacks
             self.param.set_val(val, exclude_cb=self.on_param_change)
 
         def on_param_change(self, val):
             self.label.setText(_val_str(val))
-            val = _maybe_log_scale(val, self.log, reverse=True)
+            val = _rescale_slider_val(
+                val, self.log, self.param.step, reverse=True)
             self.slider.setValue(val)
 
     class VecEditor(ParamEditor):
@@ -143,7 +146,7 @@ class QtTuner(Tuner, QWidget):
             for idx, (val, min, max) in enumerate(zip(p.val, p.min, p.max)):
                 slider, label, log, slider_wrapper = _create_slider(
                     self, min, max, val, self.get_on_slider_change(
-                        idx), p.log_scale
+                        idx), p.log_scale, p.step
                 )
                 self.sliders.append((slider, label, log))
                 collapsible.addWidget(slider_wrapper)
@@ -151,7 +154,7 @@ class QtTuner(Tuner, QWidget):
         def get_on_slider_change(self, idx):
             def on_slider_change(val):
                 _slider, label, log = self.sliders[idx]
-                val = _maybe_log_scale(val, log)
+                val = _rescale_slider_val(val, log, self.param.step)
                 label.setText(_val_str(val))
                 # do the update
                 self.param.val[idx] = val
@@ -163,7 +166,7 @@ class QtTuner(Tuner, QWidget):
         def on_param_change(self, val):
             for scalar, (slider, label, log) in zip(val, self.sliders):
                 label.setText(_val_str(scalar))
-                scalar = _maybe_log_scale(scalar, log)
+                scalar = _rescale_slider_val(scalar, log, self.param.step)
                 slider.setValue(scalar)
 
     class Dropdown(ParamEditor):
@@ -179,7 +182,7 @@ class QtTuner(Tuner, QWidget):
             self._layout.addWidget(self.dropdown)
 
         def on_param_change(self, val):
-            self.dropdown.setCurrentIndex(self.param.oneof.find(val))
+            self.dropdown.setCurrentIndex(self.param.oneof.index(val))
 
         def on_dropdown_changed(self, idx):
             self.param.set_val(

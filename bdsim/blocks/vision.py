@@ -1,7 +1,7 @@
 import logging
 import numpy as np
 from bdsim.components import SourceBlock, SinkBlock, FunctionBlock, SubsystemBlock, block
-from bdsim.tuning import TunableBlock
+from bdsim.tuning.tunable_block import TunableBlock
 from bdsim.tuning.parameter import HyperParam, RangeParam
 
 try:
@@ -77,7 +77,7 @@ try:
             return [frame]
 
     @block
-    class CvtColor(FunctionBlock):
+    class CvtColor(FunctionBlock, TunableBlock):
 
         type = "cvtcolor"
 
@@ -85,7 +85,11 @@ try:
 
         def __init__(self, input, cvt_code, **kwargs):
             super().__init__(inputs=[input], nin=1, nout=1, **kwargs)
+
             self.cvt_code = cvt_code
+            # TODO: turn cvt_code into a param:
+            # self.cvt_code = self._param('cvt_code', cvt_code, oneof=[getattr(
+            #     cv2, code) for code in dir(cv2) if code.startswith('COLOR_')])
 
         def output(self, _t=None):
             [input] = self.inputs
@@ -110,9 +114,9 @@ try:
             super().__init__(inputs=[input], nin=1, nout=1, **kwargs)
 
             self.lower = self._param('lower', lower,
-                                     min=np.array((0, 0, 0)), max=np.array((255, 255, 255)))
+                                     min=np.array((0, 0, 0)), max=np.array((255, 255, 255)), step=1)
             self.upper = self._param('upper', upper,
-                                     min=np.array((0, 0, 0)), max=np.array((255, 255, 255)))
+                                     min=np.array((0, 0, 0)), max=np.array((255, 255, 255)), step=1)
 
         def output(self, _t=None):
             [input] = self.inputs
@@ -180,8 +184,8 @@ try:
             # self.array = self.param('array', self.val if type == 'custom' else None)
             self.type = self.param(
                 'type', type, oneof=self.available_types)
-            self.width = self.param('width', width, min=3, max=12)
-            self.height = self.param('height', height, min=3, max=12)
+            self.width = self.param('width', width, min=3, max=12, step=2)
+            self.height = self.param('height', height, min=3, max=12, step=2)
             self.update()
 
         def update(self, _=None):
@@ -219,7 +223,7 @@ try:
             self.diadic_func = diadic_func
             self.kernel = self._param('kernel', KernelParam2D(kernel))
             self.iterations = self._param(
-                'iterations', iterations, min=1, max=10)
+                'iterations', iterations, min=1, max=10, step=1)
 
         def output(self, _t=None):
             [input] = self.inputs
@@ -271,7 +275,7 @@ try:
                                      kernel=self._param(
                                          'kernel', KernelParam2D(kernel), ret_param=True),
                                      iterations=self._param(
-                                         'iterations', iterations, min=1, max=10, ret_param=True),
+                                         'iterations', iterations, ret_param=True),
                                      bd=self.bd, is_subblock=True)
 
             # I would expect cv2.morphologyEx() to be faster than an cv2.erode -> cv2.dilate
@@ -301,7 +305,7 @@ try:
             args = dict(input=None, tinker=kwargs['tinker'],
                         kernel=self._param('kernel', kernel),
                         iterations=self._param(
-                            'iterations', iterations, min=1, max=10),
+                            'iterations', iterations, min=1, max=10, step=1),
                         bd=self.bd, is_subblock=True)
 
             self.dilate = Dilate(**args)
@@ -347,25 +351,23 @@ try:
         ):
             super().__init__(inputs=[input], nin=1, nout=1, **kwargs)
 
-            self.top_k = self._param('top_k', top_k, min=1, max=10, default=1)
+            self.top_k = self._param(
+                'top_k', top_k, min=1, max=10, default=1, step=1)
 
-            self.min_dist_between_blobs = self._sbd_param('min_dist_between_blobs',
-                                                          min_dist_between_blobs, min=0, max=1e3, log_scale=2)
-            self.area = self._sbd_param('area', RangeParam(
-                area, min=1, max=2**21, default=(50, 2**21), log_scale=True))
-            self.circularity = self._sbd_param('circularity', RangeParam(
-                circularity, min=0, max=1, default=(0.5, 1)))
-            self.inertia_ratio = self._sbd_param('inertia_ratio', RangeParam(
-                inertia_ratio, min=0, max=1, default=(0.5, 1)))
-            self.convexivity = self._sbd_param('convexivity', RangeParam(
-                convexivity, min=0, max=1, default=(0.5, 1)))
-            self.grayscale_threshold = self._sbd_param(
-                'grayscale_threshold', grayscale_threshold, min=(0, 0, 1), max=(255, 255, 255))
+            self.min_dist_between_blobs = self._param('min_dist_between_blobs',
+                                                      min_dist_between_blobs, min=0, max=1e3, log_scale=True, on_change=self._setup_sbd)
+            self.area = self._param('area', RangeParam(
+                area, min=1, max=2**21, default=(50, 2**21), log_scale=True), on_change=self._setup_sbd)
+            self.circularity = self._param('circularity', RangeParam(
+                circularity, min=0, max=1, default=(0.5, 1), step=0.01), on_change=self._setup_sbd)
+            self.inertia_ratio = self._param('inertia_ratio', RangeParam(
+                inertia_ratio, min=0, max=1, default=(0.5, 1), step=0.01), on_change=self._setup_sbd)
+            self.convexivity = self._param('convexivity', RangeParam(
+                convexivity, min=0, max=1, default=(0.5, 1), step=0.01), on_change=self._setup_sbd)
+            self.grayscale_threshold = self._param(
+                'grayscale_threshold', grayscale_threshold, min=(0, 0, 1), max=(255, 255, 255), step=1, on_change=self._setup_sbd)
 
             self._setup_sbd()
-
-        def _sbd_param(self, name, val, **kwargs):
-            return self._param(name, val, on_change=self._setup_sbd, **kwargs)
 
         def _setup_sbd(self, _=None):  # unused param to work with on_change
             params = cv2.SimpleBlobDetector_Params()
