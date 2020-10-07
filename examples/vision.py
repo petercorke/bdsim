@@ -1,6 +1,7 @@
 import cv2
 import bdsim
 import pydoc
+import math
 
 bd = bdsim.BlockDiagram()
 
@@ -38,6 +39,30 @@ blob_vis = bd.DRAWKEYPOINTS(dilated, blobs)
 bd.DISPLAY(blob_vis, "Blobs")
 
 
+def biggest_blob_stats(blobs):
+    try:
+        blob = blobs[0]
+        return [*(blob.pt), blob.size]
+    except IndexError:
+        return [None] * 3
+
+
+# pull out stats to track
+picker = bd.FUNCTION(biggest_blob_stats, blobs, nout=3)
+
+
+# plot biggest blob trajectory over time
+blob_scope = bd.SCOPE(
+    picker[0:3],
+    nin=3,
+    labels=['BlobX', 'BlobY', 'BlobSize'],
+    name='Blob vs Time')
+
+blob_xy_scope = bd.SCOPEXY(
+    picker[0:2],
+    name='Blob Trajectory')
+
+
 bd.compile()
 
 try:
@@ -47,24 +72,4 @@ try:
 finally:
     bd.done()
 
-# def biggest_blob_stats(blobs):
-#     try:
-#         blob = blobs[0]
-#         return blob.cx, blob.cy, blob.size
-#     except IndexError:
-#         return [None] * 3
-
-
-# picker = bd.FUNCTION(biggest_blob_stats, blobs, nout=3)
-
-# # plot biggest blob trajectory over time
-# blob_scope = bd.SCOPE(
-#     picker[0:3],
-#     nin=3,
-#     labels=['BlobX', 'BlobY', 'BlobSize'],
-#     name='Blob vs Time')
-
 # plot biggest blob trajectory over pixel space
-# blob_xy_scope = bd.SCOPEXY(
-#     picker[0:2],
-#     name='Blob Trajectory')
