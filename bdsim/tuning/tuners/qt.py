@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QWidget, QLabel, QSlider, QVBoxLayout, QHBoxLayout, 
     QComboBox, QPlainTextEdit, QLayout, QCheckBox
 
 from bdsim.tuning.parameter import HyperParam, NumParam, EnumParam, VecParam, Param, OptionalParam
-from bdsim.lib.qt_collapsible import Collapsible
+from .qt_collapsible import Collapsible
 from .tuner import Tuner
 
 
