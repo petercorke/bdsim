@@ -48,7 +48,6 @@ class Param:
             on_change=None,
             created_by_user=False,
             **_kwargs):
-        "the real init, this way __new__ can choose whether or not to __init__"
         self.attrs = getattr(self, 'attrs', set())
 
         self.val = self.attr('val', val)
@@ -178,7 +177,7 @@ class HyperParam(Param, ABC):
     """
     A HyperParam is a parameter that is made up of a group of other parameters.
     Unlik Params, which are typically instantiated directly, HyperParam implementations should subclass this.
-    Examples of a HyperParam could include a kernel that can be instantiated fromkwar
+    Examples of a HyperParam could include a kernel object that could be a just an ndarray
     either a description (type, width, height), of which each is a parameter.
     """
 
