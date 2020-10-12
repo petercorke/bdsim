@@ -66,7 +66,7 @@ try:
                 self.video_capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
         def output(self, t=None):
-            # set the frame if we're using a video
+            # set the frame index if we're using a video file
             if t is not None and not self.is_livestream:
                 fps = self.video_capture.get(cv2.CAP_PROP_FPS)
                 frame_n = int(round(t * fps))
@@ -399,7 +399,6 @@ try:
         def output(self, _t=None):
             [input] = self.inputs
             keypoints = self.detector.detect(input)
-            print(keypoints)
             return [keypoints[:self.top_k] if self.top_k else keypoints]
 
     @block
@@ -421,20 +420,32 @@ try:
 
         type = "display"
 
-        def __init__(self, input, title="Display", **kwargs):
+        FPS_AV_FACTOR = 1 / 15  # smaller number averages over more frames
+        FPS_AV_FACTOR_INV = 1 - FPS_AV_FACTOR
+        FPS_COLOR = (0, 255, 255)  # yellow
+
+        def __init__(self, input, title="Display", show_fps=False, **kwargs):
             super().__init__(inputs=[input], nin=1, **kwargs)
             self.title = title
+            self.show_fps = show_fps
+            if show_fps:
+                self.fps = 30  # seems a decent init value
+                self.last_t = None
 
         def step(self):
             [input] = self.inputs
-            try:
-                cv2.imshow(self.title, input)
-                cv2.waitKey(1)  # cv2 needs this to actually show, apparently
-            except Exception as e:
-                raise Exception(
-                    ("Expected input to be an HxW[xC] ndarray, got {input}").format(
-                        input=input)
-                ) from e
+            if self.show_fps:
+                frequency = 1 / \
+                    (self.bd.t - self.last_t) if self.last_t else self.fps
+                # moving average formula
+                self.fps = self.FPS_AV_FACTOR * frequency + self.FPS_AV_FACTOR_INV * self.fps
+                input = cv2.putText(input, "%d FPS" % int(self.fps), (0, 16),
+                                    cv2.FONT_HERSHEY_PLAIN, 1,
+                                    self.FPS_COLOR if len(input.shape) == 3 else 255)  # use white if it's grayscale
+                self.last_t = self.bd.t
+            cv2.imshow(self.title, input)
+            # cv2 needs this to actually show. this uses a lot of cpu. maybe matplotlib could do it instead.
+            cv2.waitKey(1)
 
         def stop(self):
             # TODO: Check if overkill to ensure that self.title never changes?
