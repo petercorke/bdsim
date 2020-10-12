@@ -49,7 +49,7 @@ class TcpTuner(Tuner):
 
             elif isinstance(param, NumParam):
                 # can be either float or int
-                return retrieve('q' if type(param.val) is int  # i64
+                return retrieve('q' if isinstance(param.val, int)  # i64
                                 else 'd')  # f64
 
             elif isinstance(param, EnumParam):
