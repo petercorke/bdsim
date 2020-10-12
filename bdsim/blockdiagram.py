@@ -14,13 +14,13 @@ import re
 import argparse
 import time
 from collections import Counter, namedtuple
+import logging
 import numpy as np
 import scipy.integrate as integrate
 import matplotlib
 import matplotlib.pyplot as plt
 
 from bdsim.tuning.parameter import Param
-from bdsim.tuning.tuners.qt import QtTuner
 from bdsim.components import Block, Plug, blocklist, Wire, SourceBlock, TransferBlock, GraphicsBlock, Struct
 from bdsim.blocks import vision
 
@@ -72,7 +72,7 @@ def init_wrap(cls):
 
 class BlockDiagram:
     """
-    Block diagram class.  This object is the parent of all blocks and wires in 
+    Block diagram class.  This object is the parent of all blocks and wires in
     the system.
 
     :ivar wirelist: all wires in the diagram
@@ -158,7 +158,7 @@ class BlockDiagram:
 
             - 'p' debug network value propagation
             - 's' debug state vector
-            - 'd' debug state derivative 
+            - 'd' debug state derivative
 
         """
 
@@ -174,7 +174,7 @@ class BlockDiagram:
         self.checkfinite = True
         self.blockcounter = Counter()
         self.name = name
-        self.qt_app = None  # used by both .tuners.QtTuner and for matplotlib backend
+        self.qt_app = None  # used by both tuning.tuners.QtTuner and for matplotlib backend
 
         # process command line and constructor options
         self._get_options(**kwargs)
@@ -373,7 +373,7 @@ class BlockDiagram:
                 print('Available: %d x %d' % (rect.width(), rect.height()))
                 sw = rect.width()
                 sh = rect.height()
-                #dpi = screen.physicalDotsPerInch()
+                # dpi = screen.physicalDotsPerInch()
                 dpiscale = screen.devicePixelRatio(
                 )  # is 2.0 for Mac laptop screen
             elif mpl_backend == 'TkAgg':
@@ -396,7 +396,7 @@ class BlockDiagram:
             ]
 
             # resize the figure
-            #plt.figure(num=f.number, figsize=self.figsize)
+            # plt.figure(num=f.number, figsize=self.figsize)
             f.set_size_inches(self.figsize, forward=True)
             plt.ion()
         else:
@@ -409,7 +409,7 @@ class BlockDiagram:
                     row * self.figsize[1] * self.dpi)
 
         self.fignum += 1
-        #print('create figure', self.fignum, row, col)
+        # print('create figure', self.fignum, row, col)
         return f
 
     def add_block(self, block):
@@ -865,7 +865,7 @@ class BlockDiagram:
         for b in self.blocklist:
             if b.blockclass == 'transfer':
                 x0 = np.r_[x0, b.getstate()]
-        #print('x0', x0)
+        # print('x0', x0)
         return x0
 
     def run(self,
@@ -1079,12 +1079,11 @@ class BlockDiagram:
 
         return out
 
-    def run_realtime(self, tuner=None):
-        if issubclass(tuner, QtTuner):
-            self._lazy_init_qt_app()
-            tuner = QtTuner(self.gui_params)
-            tuner.show()
-            tuner.activateWindow()  # focus the tuner
+    def run_realtime(self, tuner=None, max_time=None):
+        tuner.setup(self.gui_params, self)
+
+        if max_time:
+            self.T = max_time
 
         for b in self.blocklist:
             assert not isinstance(b, TransferBlock), \
@@ -1096,7 +1095,7 @@ class BlockDiagram:
 
         start = time.time()
 
-        while not self.stop:
+        while not self.stop and (max_time is None or self.t < max_time):
             self.reset()
 
             self.t = time.time() - start
@@ -1112,6 +1111,8 @@ class BlockDiagram:
 
             # update state, displays, etc
             self.step(count=False)
+
+            tuner.update()
 
     def evaluate(self, x, t):
         """
@@ -1131,7 +1132,7 @@ class BlockDiagram:
 
 
         """
-        #print('in evaluate at t=', t)
+        # print('in evaluate at t=', t)
         self.t = t
         DEBUG('state', '>>>>>>>>> t=', t, ', x=', x, '>>>>>>>>>>>>>>>>')
 

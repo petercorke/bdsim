@@ -27,7 +27,7 @@ class Param:
                 cls if cls is not Param else \
                 EnumParam if 'oneof' in kwargs else \
                 NumParam if _is_num(val) else \
-                VecParam if _is_vector(val) else \
+                VecParam if _is_vectorlike(val) else \
                 cls
             param = super().__new__(param_cls)
 
@@ -278,7 +278,7 @@ class RangeParam(HyperParam):
         self.val = self.lower, self.upper
 
 
-def _is_vector(x):
+def _is_vectorlike(x):
     return isinstance(x, np.ndarray) and x.ndim == 1 and np.issubdtype(x.dtype, np.number) \
         or isinstance(x, Iterable) and all(isinstance(x_i, Real) for x_i in x)
 

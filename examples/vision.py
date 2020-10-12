@@ -2,13 +2,15 @@ import cv2
 import bdsim
 import pydoc
 import math
+import cProfile
+from bdsim.tuning.tuners import QtTuner
 
 bd = bdsim.BlockDiagram()
 
 # setup hsv stream
 cap = bd.CAMERA(0)
 hsv = bd.CVTCOLOR(cap, cv2.COLOR_BGR2HSV)
-bd.DISPLAY(hsv, "HSV")
+bd.DISPLAY(hsv, "HSV", show_fps=True)
 
 # the bd.param function should be used to create a parameter functionally that can be passed in
 # as an argument to one or more block constructors that support a parameter of that type from that keyword
@@ -36,39 +38,40 @@ blobs = bd.BLOBS(eroded, top_k=1, area=(2000, 999999),
 
 # draw the blobs found on the screen
 blob_vis = bd.DRAWKEYPOINTS(dilated, blobs)
-bd.DISPLAY(blob_vis, "Blobs")
+bd.DISPLAY(blob_vis, "Blobs", show_fps=True)
 
 
-def biggest_blob_stats(blobs):
-    try:
-        blob = blobs[0]
-        return [*(blob.pt), blob.size]
-    except IndexError:
-        return [None] * 3
+# def biggest_blob_stats(blobs):
+#     try:
+#         blob = blobs[0]
+#         return [*(blob.pt), blob.size]
+#     except IndexError:
+#         return [None] * 3
 
 
-# pull out stats to track
-picker = bd.FUNCTION(biggest_blob_stats, blobs, nout=3)
+# # pull out stats to track
+# picker = bd.FUNCTION(biggest_blob_stats, blobs, nout=3)
 
 
-# plot biggest blob trajectory over time
-blob_scope = bd.SCOPE(
-    picker[0:3],
-    nin=3,
-    labels=['BlobX', 'BlobY', 'BlobSize'],
-    name='Blob vs Time')
+# # plot biggest blob trajectory over time
+# blob_scope = bd.SCOPE(
+#     picker[0:3],
+#     nin=3,
+#     labels=['BlobX', 'BlobY', 'BlobSize'],
+#     name='Blob vs Time')
 
-blob_xy_scope = bd.SCOPEXY(
-    picker[0:2],
-    name='Blob Trajectory')
+# blob_xy_scope = bd.SCOPEXY(
+#     picker[0:2],
+#     name='Blob Trajectory')
 
 
 bd.compile()
 
+
 try:
     # Pick the tuner gui(s) you want to use. So far QtTuner is implemented.
-    bd.run_realtime(tuner=bdsim.tuning.tuners.QtTuner)
-    # ROSTuner and WebTuner are WIP
+    # cProfile.run('bd.run_realtime(tuner=QtTuner(bd=bd), max_time=10)')
+    bd.run_realtime(tuner=QtTuner(bd=bd))  # , max_time=10)
 finally:
     bd.done()
 

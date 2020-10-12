@@ -5,8 +5,9 @@ from PyQt5.QtWidgets import QWidget, QLabel, QSlider, QVBoxLayout, QHBoxLayout, 
     QComboBox, QPlainTextEdit, QLayout, QCheckBox
 
 from bdsim.tuning.parameter import HyperParam, NumParam, EnumParam, VecParam, Param, OptionalParam
+from bdsim import BlockDiagram
 from .qt_collapsible import Collapsible
-from .tuner import Tuner
+from .tuner import AsyncTuner
 
 
 def _val_str(val):
@@ -70,22 +71,19 @@ def _clear_layout(layout):
             widget.deleteLater()
             if isinstance(widget, QtTuner.ParamEditor):
                 widget.cleanup()
-            # widget.deleteLater()
-            # widget.destroyed.connect(lambda widget: widget.__del__())
-            # sleep to let the Qt event loop run and actually perform the deletion
         else:
             _clear_layout(item.layout())
 
 
-class QtTuner(Tuner, QWidget):
-
+class QtTuner(QWidget, AsyncTuner):
     class ParamEditor(QWidget):
         def __init__(self, param: Param, parent: QWidget):
             super().__init__(parent)
+            self.tuner = parent
 
             self.param = param
             # bind the method to a constant python obj so we can remove it
-            # later upon __del__ (when gui_reconstruction causes this to go hidden)
+            # later upon cleanup (when gui_reconstruction causes this to go hidden)
             self.on_param_change = self.on_param_change
             self.param.on_change(self.on_param_change)
 
@@ -111,6 +109,10 @@ class QtTuner(Tuner, QWidget):
         def cleanup(self):
             self.param.on_change_cbs.remove(self.on_param_change)
 
+        def queue_update(self, val):
+            self.tuner.queue_update(lambda: self.param.set_val(
+                val, exclude_cb=self.on_param_change))
+
     class NumEditor(ParamEditor):
         def setup(self):
             p = self.param  # for brevity
@@ -126,7 +128,7 @@ class QtTuner(Tuner, QWidget):
             val = _rescale_slider_val(val, self.log, self.param.step)
             self.label.setText(_val_str(val))
             # trigger update for other callbacks
-            self.param.set_val(val, exclude_cb=self.on_param_change)
+            self.queue_update(val)
 
         def on_param_change(self, val):
             self.label.setText(_val_str(val))
@@ -161,8 +163,7 @@ class QtTuner(Tuner, QWidget):
                 new_vec = self.param.val.copy()
                 new_vec[idx] = val
                 # trigger update for external callbacks
-                self.param.set_val(
-                    new_vec, exclude_cb=self.on_param_change)
+                self.queue_update(new_vec)
             return on_slider_change
 
         def on_param_change(self, val):
@@ -187,8 +188,7 @@ class QtTuner(Tuner, QWidget):
             self.dropdown.setCurrentIndex(self.param.oneof.index(val))
 
         def on_dropdown_changed(self, idx):
-            self.param.set_val(
-                self.param.oneof[idx], exclude_cb=self.on_param_change)
+            self.queue_update(self.param.oneof[idx])
 
     class TextInput(ParamEditor):
         def setup(self):
@@ -202,15 +202,13 @@ class QtTuner(Tuner, QWidget):
             self.textedit.setPlainText(val)
 
         def on_textedit_change(self):
-            self.param.set_val(self.textedit.toPlainText(),
-                               exclude_cb=self.on_param_change)
+            self.queue_update(self.textedit.toPlainText())
 
     class Checkbox(ParamEditor):
         def setup(self):
             self.checkbox = QCheckBox(self.param.full_name(), self)
             self.checkbox.setChecked(self.param.val)
-            self.checkbox.toggled.connect(lambda checked: self.param.set_val(
-                checked, exclude_cb=self.on_param_change))
+            self.checkbox.toggled.connect(self.queue_update)
             self._layout.addWidget(self.checkbox)
 
         def on_param_change(self, val):
@@ -249,22 +247,22 @@ class QtTuner(Tuner, QWidget):
         def on_param_change(self, _val=None):
             pass  # explicit pass - the subtuner will handle everything
 
-        def cleanup(self):
+        def cleanup(self):  # may be extrenuous
             super().cleanup()
             self.sub_tuner.cleanup()
 
-    def __init__(self, parameters, parent=None, title="BDSim Tuner"):
-        Tuner.__init__(self, parameters, title)
-        QWidget.__init__(self, parent)
+    def __init__(self, parent=None, title="BDSim Tuner"):
+        super().__init__(self, parent)
+        self.title = title
         self.editors = []
 
-        self.setup_gui()
+    def setup(self, parameters, bd):
+        bd._lazy_init_qt_app()
 
-    def setup_gui(self):
         main_layout = QVBoxLayout(self)
         main_layout.setSizeConstraint(QLayout.SetFixedSize)
 
-        for param in self.parameters:
+        for param in parameters:
             editor_cls = QtTuner.VecEditor if isinstance(param, VecParam) else \
                 QtTuner.NumEditor if isinstance(param, NumParam) else \
                 QtTuner.Dropdown if isinstance(param, EnumParam) else \
@@ -282,6 +280,14 @@ class QtTuner(Tuner, QWidget):
         self.setLayout(main_layout)
         self.setWindowTitle(self.title)
         self.show()
+        self.activateWindow()
+
+    def update(self):
+        # update all subtuners as well
+        super().update()
+        for editor in self.editors:
+            if isinstance(editor, self.HyperParamEditor):
+                editor.sub_tuner.update()
 
     def cleanup(self):
         for editor in self.editors:

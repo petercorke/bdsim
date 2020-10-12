@@ -1,4 +1,23 @@
 class Tuner:
-    def __init__(self, parameters, title="BDSim Tuner"):
-        self.title = title
-        self.parameters = parameters
+
+    def setup(self, params, bd):
+        # if needed
+        pass
+
+    def update(self):
+        raise NotImplementedError()
+
+
+class AsyncTuner(Tuner):
+
+    def __init__(self):
+        super().__init__(self)
+        self.queued_updates = []
+
+    def update(self):
+        for update in self.queued_updates:
+            update()
+        self.queued_updates = []
+
+    def queue_update(self, update_fn):
+        self.queued_updates.append(update_fn)
