@@ -5,8 +5,7 @@ from PyQt5.QtWidgets import QWidget, QLabel, QSlider, QVBoxLayout, QHBoxLayout, 
     QComboBox, QPlainTextEdit, QLayout, QCheckBox
 
 from bdsim.tuning.parameter import HyperParam, NumParam, EnumParam, VecParam, Param, OptionalParam
-from bdsim import BlockDiagram
-from .qt_collapsible import Collapsible
+from ._qt_collapsible import Collapsible
 from .tuner import AsyncTuner
 
 
@@ -256,13 +255,13 @@ class QtTuner(QWidget, AsyncTuner):
         self.title = title
         self.editors = []
 
-    def setup(self, parameters, bd):
+    def setup(self, params, bd):
         bd._lazy_init_qt_app()
 
         main_layout = QVBoxLayout(self)
         main_layout.setSizeConstraint(QLayout.SetFixedSize)
 
-        for param in parameters:
+        for param in params:
             editor_cls = QtTuner.VecEditor if isinstance(param, VecParam) else \
                 QtTuner.NumEditor if isinstance(param, NumParam) else \
                 QtTuner.Dropdown if isinstance(param, EnumParam) else \

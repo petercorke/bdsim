@@ -53,6 +53,7 @@ bd.DISPLAY(blob_vis, "Blobs", show_fps=True)
 # picker = bd.FUNCTION(biggest_blob_stats, blobs, nout=3)
 
 
+# TODO: increase plotting performance - these reduce framerate to 7fps
 # # plot biggest blob trajectory over time
 # blob_scope = bd.SCOPE(
 #     picker[0:3],
@@ -69,9 +70,7 @@ bd.compile()
 
 
 try:
-    # Pick the tuner gui(s) you want to use. So far QtTuner is implemented.
-    # cProfile.run('bd.run_realtime(tuner=QtTuner(bd=bd), max_time=10)')
-    bd.run_realtime(tuner=QtTuner(bd=bd))  # , max_time=10)
+    bd.run_realtime(tuner=bdsim.tuning.tuners.TcpClientTuner())
 finally:
     bd.done()
 

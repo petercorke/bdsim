@@ -14,13 +14,13 @@ import re
 import argparse
 import time
 from collections import Counter, namedtuple
-import logging
 import numpy as np
 import scipy.integrate as integrate
 import matplotlib
 import matplotlib.pyplot as plt
 
 from bdsim.tuning.parameter import Param
+from bdsim.tuning.tuners.tuner import Tuner
 from bdsim.components import Block, Plug, blocklist, Wire, SourceBlock, TransferBlock, GraphicsBlock, Struct
 from bdsim.blocks import vision
 
@@ -1079,7 +1079,7 @@ class BlockDiagram:
 
         return out
 
-    def run_realtime(self, tuner=None, max_time=None):
+    def run_realtime(self, tuner:Tuner=None, max_time=None):
         tuner.setup(self.gui_params, self)
 
         if max_time:
