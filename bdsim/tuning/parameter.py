@@ -185,7 +185,8 @@ class HyperParam(Param, ABC):
         super().__init__(val=None, **kwargs)
 
         # hyperparam setups can be intricate so better to hard reset these attrs every time
-        self.params = self.attr('params', OrderedDict())  # sub-parameters
+        # sub-parameters - shouldn't change after instantiation
+        self.params = self.attr('params', OrderedDict())
         self.hidden = self.attr('hidden', set())
 
         # bind the method to a single object so we can exclude it from param update recursion later

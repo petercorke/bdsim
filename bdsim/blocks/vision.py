@@ -1,5 +1,12 @@
 import logging
 import numpy as np
+import random
+
+# TODO: use raw sockets, kachunk with tuner.update()... also - is this in micropython? (doubt it)
+import flask
+from threading import Thread
+from time import sleep
+
 from bdsim.components import SourceBlock, SinkBlock, FunctionBlock, SubsystemBlock, block
 from bdsim.tuning.tunable_block import TunableBlock
 from bdsim.tuning.parameter import HyperParam, RangeParam
@@ -114,16 +121,16 @@ try:
             super().__init__(inputs=[input], nin=1, nout=1, **kwargs)
 
             self.lower = self._param('lower', lower,
-                                     min=np.array((0, 0, 0)), max=np.array((255, 255, 255)), step=1)
+                                     min=(0, 0, 0), max=(255, 255, 255), step=1)
             self.upper = self._param('upper', upper,
-                                     min=np.array((0, 0, 0)), max=np.array((255, 255, 255)), step=1)
+                                     min=(0, 0, 0), max=(255, 255, 255), step=1)
 
         def output(self, _t=None):
             [input] = self.inputs
             mask = cv2.inRange(input, self.lower, self.upper)
             return [mask]
 
-    @block
+    @ block
     class Mask(FunctionBlock):
         type = "mask"
 
@@ -135,7 +142,7 @@ try:
             masked = cv2.bitwise_and(input, input, mask=mask)
             return [masked]
 
-    @block
+    @ block
     class Threshold(FunctionBlock):
 
         type = "threshold"
@@ -424,10 +431,32 @@ try:
         FPS_AV_FACTOR_INV = 1 - FPS_AV_FACTOR
         FPS_COLOR = (0, 255, 255)  # yellow
 
-        def __init__(self, input, title="Display", show_fps=False, **kwargs):
+        def __init__(self, input, title="Display", show_fps=False, web_stream=False, **kwargs):
             super().__init__(inputs=[input], nin=1, **kwargs)
             self.title = title
             self.show_fps = show_fps
+            self.web_stream = web_stream
+            if web_stream:
+                app = flask.Flask('dirtywebstreamer')
+                self.new_frame = None
+
+                @app.route("/")
+                def video_feed():
+                    def poll_frames():
+                        while True:
+                            if self.new_frame is not None:
+                                yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' +
+                                      bytearray(self.new_frame) + b'\r\n')
+                                self.new_frame = None
+                                sleep(0) # handoff to main thread
+                    # return the response generated along with the specific media
+                    # type (mime type)
+                    return flask.Response(poll_frames(),
+                                          mimetype="multipart/x-mixed-replace; boundary=frame")
+
+                Thread(target=app.run, kwargs=dict(
+                    host='0.0.0.0', port=7645), daemon=True).start()
+
             if show_fps:
                 self.fps = 30  # seems a decent init value
                 self.last_t = None
@@ -443,9 +472,15 @@ try:
                                     cv2.FONT_HERSHEY_PLAIN, 1,
                                     self.FPS_COLOR if len(input.shape) == 3 else 255)  # use white if it's grayscale
                 self.last_t = self.bd.t
-            cv2.imshow(self.title, input)
-            # cv2 needs this to actually show. this uses a lot of cpu. maybe matplotlib could do it instead.
-            cv2.waitKey(1)
+
+            # just quick and dirty for now
+            if self.web_stream:
+                _ret, jpg = cv2.imencode('.jpg', input)
+                self.new_frame = jpg
+            else:
+                cv2.imshow(self.title, input)
+                # cv2 needs this to actually show. this uses a lot of cpu. maybe matplotlib could do it instead.
+                cv2.waitKey(1)
 
         def stop(self):
             # TODO: Check if overkill to ensure that self.title never changes?

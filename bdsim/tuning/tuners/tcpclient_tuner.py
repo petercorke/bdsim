@@ -1,11 +1,14 @@
 from socket import socket
-# from select import poll, POLLIN, POLLOUT
+from select import poll, POLLIN
 import numpy as np
 import msgpack
+from bidict import bidict
+from typing import List
 
-from bdsim.tuning.parameter import HyperParam
+from bdsim.tuning.parameter import HyperParam, VecParam, Param
 from .tuner import Tuner
 
+# TODO: review this timeout value
 TIMEOUT = 1e-6
 
 
@@ -13,68 +16,92 @@ class TcpClientTuner(Tuner):
     "client for a tuning server such as bdsim-webtuner"
 
     def __init__(self, hostname="localhost", port=31337):
-        self.id2param = []  # id -> param
+        self.id2param = bidict({})  # id <-> param
 
         # setup socket
-        self.socket = socket()
-        # dont block; throw error instead TODO: review this timeout value
-        self.socket.settimeout(TIMEOUT)
-        self.socket.connect((hostname, port))  # TODO: handle failure
-        # convert to a file-like stream for efficiency & ergonomics
-        self.stream = self.socket.makefile(mode='rwb', buffering=0)
+        self.sock = sock = socket()
+        # dont block; throw error instead
+        sock.settimeout(TIMEOUT)
+        sock.connect((hostname, port))  # TODO: handle failure
+        # turn sock into file-like stream for efficiency (according to micropython docs)
+        self.stream = sock.makefile('rwb')
 
-        # # poll for updates
-        # self.poll = poll()
-        # self.poll.register(sock, POLLIN | POLLOUT)
+        # implement update poll to prevent the socket from timing out when reading data
+        self.poll = poll()
+        self.poll.register(sock, POLLIN)
 
         # unpack the data from msgpack into JSON for easy fast deserialization
-        self.unpacker = msgpack.Unpacker(self.stream)
+        # self.unpacker = msgpack.Unpacker(use_list=False, raw=False)
+        self.unpacker = msgpack.Unpacker()
 
     def setup(self, params, _bd=None):
         self.setup_param_map(params)
 
-        # temporary inverse mapping
-        param2id = {param: param_id for param_id, param
-                    in enumerate(self.id2param)}
+        msgpack.pack(self.get_param_defs(params), self.stream)
+        self.stream.flush()
+
+    def get_param_defs(self, params):
+        # recursively produce parameter definitions to be serialized by msgpack
 
         # transmit the parameter definitions
-        # this is almost a one-off so doesn't need to be super efficient - use descriptive key names
-        json_param_defs = {}
-        for param_id, param in enumerate(self.id2param):
-            param_def = json_param_defs[param_id] = {}
+        param_defs = []
+        for param in params:
+            param_def = {'id': self.id2param.inverse[param]}
             for attr in param.gui_attrs:
                 val = getattr(param, attr)
-                param_def[attr] = val.tolist() if isinstance(
-                    val, np.ndarray) else val
+                if val is not None:
+                    param_def[attr] = val.tolist() if isinstance(val, np.ndarray) \
+                        else val
 
-            param_def['val'] = param.val.tolist() \
-                if isinstance(param.val, np.ndarray) else param.val
+            # if it doesn't have a user-set name, use its "used-in" string
+            if 'name' not in param_def:
+                param_def['name'] = param.full_name()
 
             if isinstance(param, HyperParam):
-                param_def['params'] = [param2id[subparam]
-                                       for subparam in param.params.vals()]
-
-        print(json_param_defs)
-        msgpack.pack(json_param_defs, self.stream)
-
-    def setup_param_map(self, params):
-        for param in params:
-            if isinstance(param, HyperParam):
-                # recurse through subparameters
-                self.setup_param_map(param.params.values())
+                # construct {subparam_name: subparam_def}. could be rewritten better
+                param_def['params'] = {k: self.get_param_defs(
+                    [v])[0] for k, v in param.params.items()}
+                param_def['hidden'] = list(param.hidden)
             else:
-                # only build the param map for primitives
-                self.id2param.append(param)
+                param_def['val'] = param.val.tolist() \
+                    if isinstance(param.val, np.ndarray) else param.val
+
+            param_defs.append(param_def)
+
+        return param_defs
+
+    def setup_param_map(self, params: List[Param]):
+        for param in params:
+            id = len(self.id2param)
+            self.id2param[id] = param
+
+            def gui_reconstructor(param):
+                msgpack.pack(self.get_param_defs([param]), self.stream)
+                self.stream.flush()
+
+            param.register_gui_reconstructor(gui_reconstructor)
+            if isinstance(param, HyperParam):
+                # recurse through sub-parameters
+                self.setup_param_map(param.params.values())
 
     def update(self):
         # Anything new on the line?
-        # if self.poll.poll():
+        if self.poll.poll(TIMEOUT):
+            # read all available streamed bytes and process any complete param changes
+            # all param updates should be a JSON-like tuple of [id, val]
 
-        # read all available streamed bytes and process any complete param changes
-        # all param updates should be a JSON-tuple of [id, val]
-        try:
+            # TODO: review this buffer size
+            self.unpacker.feed(self.sock.recv(2048))
+
             for param_id, val in self.unpacker:
-                self.id2param[param_id].val = val
-        except OSError as e:
-            # Reset his so unpacker is allowed to call stream.read() again
-            self.stream._timeout_occurred = False
+                param = self.id2param[param_id]
+
+                # decode vectors into np arrays
+                param.val = np.array(val) if isinstance(
+                    param, VecParam) else val
+        # try:
+        #     # self.unpacker.feed(self.socket.recv(2**16))
+        # except OSError as e:
+        #     # Reset his so unpacker is allowed to call stream.read() again
+        #     # self.stream._timeout_occurred = False
+        #     pass

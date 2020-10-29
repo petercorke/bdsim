@@ -10,19 +10,19 @@ bd = bdsim.BlockDiagram()
 # setup hsv stream
 cap = bd.CAMERA(0)
 hsv = bd.CVTCOLOR(cap, cv2.COLOR_BGR2HSV)
-bd.DISPLAY(hsv, "HSV", show_fps=True)
+# bd.DISPLAY(hsv, "HSV", show_fps=True)
 
 # the bd.param function should be used to create a parameter functionally that can be passed in
 # as an argument to one or more block constructors that support a parameter of that type from that keyword
 print(pydoc.render_doc(bd.param))  # display docs
 
 # by wrapping param args with bd.param, you are making it editable via GUI controls / over network
-# the value you pass to it are its initial value
+# the value you pass to it is its initial value
 thresholded = bd.INRANGE(hsv,
                          lower=bd.param(53, 103, 55),
                          upper=bd.param(133, 195, 174))
 
-# you can create your parameters first and share them between blocks
+# you can create your parameters first and share them between blocks later
 n_iterations = bd.param(1)
 # shares 'iterations' between erode and dilate
 dilated = bd.DILATE(thresholded, iterations=n_iterations)
@@ -38,7 +38,7 @@ blobs = bd.BLOBS(eroded, top_k=1, area=(2000, 999999),
 
 # draw the blobs found on the screen
 blob_vis = bd.DRAWKEYPOINTS(dilated, blobs)
-bd.DISPLAY(blob_vis, "Blobs", show_fps=True)
+bd.DISPLAY(blob_vis, "Blobs", show_fps=True, web_stream=True)
 
 
 # def biggest_blob_stats(blobs):
