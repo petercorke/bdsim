@@ -153,6 +153,9 @@ class NumParam(Param):
         self.step = self.attr('step', step)
         self.log_scale = self.attr('log_scale', log_scale)
 
+        assert self.min > 0 if self.log_scale else True, \
+            "log_scaled parameters cannot have a value greater than 1"
+
         self.gui_attrs.update({'min', 'max', 'log_scale', 'step'})
 
 

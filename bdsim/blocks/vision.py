@@ -365,7 +365,7 @@ try:
             self.blob_color = self._param(
                 'blob_color', 255, oneof=(0, 255), on_change=self._setup_sbd)
             self.min_dist_between_blobs = self._param('min_dist_between_blobs',
-                                                      min_dist_between_blobs, min=0, max=1e3, log_scale=True, on_change=self._setup_sbd)
+                                                      min_dist_between_blobs, min=1, max=1e3, log_scale=True, on_change=self._setup_sbd)
             self.area = self._param('area', RangeParam(
                 area, min=1, max=2**21, default=(50, 2**21), log_scale=True), on_change=self._setup_sbd)
             self.circularity = self._param('circularity', RangeParam(
