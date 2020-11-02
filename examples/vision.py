@@ -3,7 +3,6 @@ import bdsim
 import pydoc
 import math
 import cProfile
-from bdsim.tuning.tuners import QtTuner
 
 bd = bdsim.BlockDiagram()
 
