@@ -4,7 +4,7 @@ import random
 
 # TODO: use raw sockets, kachunk with tuner.update()... also - is this in micropython? (doubt it)
 import flask
-from threading import Thread
+from threading import Thread, Condition
 from time import sleep
 
 from bdsim.components import SourceBlock, SinkBlock, FunctionBlock, SubsystemBlock, block
@@ -439,16 +439,18 @@ try:
             if web_stream:
                 app = flask.Flask('dirtywebstreamer')
                 self.new_frame = None
+                # TODO: make this work for more than one receiver
+                self.new_frame_lock = Condition()
 
                 @app.route("/")
                 def video_feed():
                     def poll_frames():
+                        self.new_frame_lock.acquire()
                         while True:
-                            if self.new_frame is not None:
-                                yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' +
-                                      bytearray(self.new_frame) + b'\r\n')
-                                self.new_frame = None
-                                sleep(0) # handoff to main thread
+                            print('waiting')
+                            self.new_frame_lock.wait()
+                            yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' +
+                                  bytearray(self.new_frame) + b'\r\n')
                     # return the response generated along with the specific media
                     # type (mime type)
                     return flask.Response(poll_frames(),
@@ -475,11 +477,14 @@ try:
 
             # just quick and dirty for now
             if self.web_stream:
+                self.new_frame_lock.acquire()
                 _ret, jpg = cv2.imencode('.jpg', input)
                 self.new_frame = jpg
+                self.new_frame_lock.notifyAll()
+                self.new_frame_lock.release()
             else:
                 cv2.imshow(self.title, input)
-                # cv2 needs this to actually show. this uses a lot of cpu. maybe matplotlib could do it instead.
+                # cv2 needs this to actually show. this blocking maybe matplotlib could do it instead.
                 cv2.waitKey(1)
 
         def stop(self):
