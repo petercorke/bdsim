@@ -4,7 +4,7 @@ import random
 
 # TODO: use raw sockets, kachunk with tuner.update()... also - is this in micropython? (doubt it)
 import flask
-from threading import Thread, Condition
+from threading import Thread, Lock
 from time import sleep
 
 from bdsim.components import SourceBlock, SinkBlock, FunctionBlock, SubsystemBlock, block
@@ -439,18 +439,24 @@ try:
             if web_stream:
                 app = flask.Flask('dirtywebstreamer')
                 self.new_frame = None
-                # TODO: make this work for more than one receiver
-                self.new_frame_lock = Condition()
+                # maintain a lock for each mjpeg http stream. Can't think of a better way to do this
+                self.new_frame_locks = []
 
                 @app.route("/")
                 def video_feed():
+
                     def poll_frames():
-                        self.new_frame_lock.acquire()
-                        while True:
-                            print('waiting')
-                            self.new_frame_lock.wait()
-                            yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' +
-                                  bytearray(self.new_frame) + b'\r\n')
+                        # maintain a lock for the lifetime of this generator, and
+                        new_frame_lock = Lock()
+                        self.new_frame_locks.append(new_frame_lock)
+                        try:
+                            while True:
+                                new_frame_lock.acquire()
+                                yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' +
+                                      bytearray(self.new_frame) + b'\r\n')
+                        except GeneratorExit:
+                            self.new_frame_locks.remove(new_frame_lock)
+
                     # return the response generated along with the specific media
                     # type (mime type)
                     return flask.Response(poll_frames(),
@@ -477,19 +483,22 @@ try:
 
             # just quick and dirty for now
             if self.web_stream:
-                self.new_frame_lock.acquire()
                 _ret, jpg = cv2.imencode('.jpg', input)
                 self.new_frame = jpg
-                self.new_frame_lock.notifyAll()
-                self.new_frame_lock.release()
+
+                # let mjpeg stream clients know that a new frame is available
+                for lock in self.new_frame_locks:
+                    if lock.locked():
+                        lock.release()
             else:
                 cv2.imshow(self.title, input)
                 # cv2 needs this to actually show. this blocking maybe matplotlib could do it instead.
                 cv2.waitKey(1)
 
         def stop(self):
-            # TODO: Check if overkill to ensure that self.title never changes?
-            cv2.destroyWindow(self.title)
+            if not self.web_stream:
+                # TODO: Check if overkill to ensure that self.title never changes?
+                cv2.destroyWindow(self.title)
 
     @block
     class DrawKeypoints(FunctionBlock):
