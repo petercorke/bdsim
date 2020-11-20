@@ -1,18 +1,11 @@
 class Tuner:
 
+    def __init__(self):
+        self.queued_updates = []
+
     def setup(self, params, bd):
         # if needed
         pass
-
-    def update(self):
-        raise NotImplementedError()
-
-
-class AsyncTuner(Tuner):
-
-    def __init__(self):
-        super().__init__(self)
-        self.queued_updates = []
 
     def update(self):
         for update in self.queued_updates:

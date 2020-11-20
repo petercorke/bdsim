@@ -1079,8 +1079,7 @@ class BlockDiagram:
 
         return out
 
-    def run_realtime(self, tuner:Tuner=None, max_time=None):
-        tuner.setup(self.gui_params, self)
+    def run_realtime(self, tuner: Tuner = None, max_time=None):
 
         if max_time:
             self.T = max_time
@@ -1088,6 +1087,9 @@ class BlockDiagram:
         for b in self.blocklist:
             assert not isinstance(b, TransferBlock), \
                 "Transfer blocks in realtime mode are not supported (yet)"
+
+        if tuner:
+            tuner.setup(self.gui_params, self)
 
         sources = [b for b in self.blocklist if isinstance(b, SourceBlock)]
 
@@ -1112,7 +1114,8 @@ class BlockDiagram:
             # update state, displays, etc
             self.step(count=False)
 
-            tuner.update()
+            if tuner:
+                tuner.update()
 
     def evaluate(self, x, t):
         """

@@ -1,10 +1,9 @@
+import pydoc
 import cv2
 import bdsim
-import pydoc
-import math
-import cProfile
 
 bd = bdsim.BlockDiagram()
+tuner = bdsim.tuning.tuners.TcpClientTuner()
 
 # setup hsv stream
 cap = bd.CAMERA(0)
@@ -37,39 +36,37 @@ blobs = bd.BLOBS(eroded, top_k=1, area=(2000, 999999),
 
 # draw the blobs found on the screen
 blob_vis = bd.DRAWKEYPOINTS(dilated, blobs)
-bd.DISPLAY(blob_vis, "Blobs", show_fps=True, web_stream=True)
+
+# host the stream through the tuner app
+bd.DISPLAY(blob_vis, "Blobs", show_fps=True, web_stream_host=tuner)
 
 
-# def biggest_blob_stats(blobs):
-#     try:
-#         blob = blobs[0]
-#         return [*(blob.pt), blob.size]
-#     except IndexError:
-#         return [None] * 3
+def biggest_blob_stats(blobs):
+    try:
+        blob = blobs[0]
+        return [*(blob.pt), blob.size]
+    except IndexError:
+        return [None] * 3
 
 
-# # pull out stats to track
-# picker = bd.FUNCTION(biggest_blob_stats, blobs, nout=3)
+# pull out stats to track
+picker = bd.FUNCTION(biggest_blob_stats, blobs, nout=3)
 
-
-# TODO: increase plotting performance - these reduce framerate to 7fps
-# # plot biggest blob trajectory over time
-# blob_scope = bd.SCOPE(
-#     picker[0:3],
-#     nin=3,
-#     labels=['BlobX', 'BlobY', 'BlobSize'],
-#     name='Blob vs Time')
-
-# blob_xy_scope = bd.SCOPEXY(
-#     picker[0:2],
-#     name='Blob Trajectory')
+# plot biggest blob trajectory over time
+# display it through the tuner app
+blob_scope = bd.SCOPE(
+    picker[0:3],
+    nin=3,
+    labels=['BlobX', 'BlobY', 'BlobSize'],
+    name='Blob vs Time',
+    tuner=tuner)
 
 
 bd.compile()
 
 
 try:
-    bd.run_realtime(tuner=bdsim.tuning.tuners.TcpClientTuner())
+    bd.run_realtime(tuner=tuner)
 finally:
     bd.done()
 

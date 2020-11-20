@@ -1,13 +1,12 @@
 import logging
-import numpy as np
 import random
-
-# TODO: use raw sockets, kachunk with tuner.update()... also - is this in micropython? (doubt it)
-import flask
 from threading import Thread, Lock
-from time import sleep
+
+import numpy as np
+import flask
 
 from bdsim.components import SourceBlock, SinkBlock, FunctionBlock, SubsystemBlock, block
+from bdsim.tuning.tuners import Tuner
 from bdsim.tuning.tunable_block import TunableBlock
 from bdsim.tuning.parameter import HyperParam, RangeParam
 
@@ -431,39 +430,64 @@ try:
         FPS_AV_FACTOR_INV = 1 - FPS_AV_FACTOR
         FPS_COLOR = (0, 255, 255)  # yellow
 
-        def __init__(self, input, title="Display", show_fps=False, web_stream=False, **kwargs):
+        def __init__(self, input, title="Display", show_fps=False, web_stream_host=None, **kwargs):
             super().__init__(inputs=[input], nin=1, **kwargs)
             self.title = title
             self.show_fps = show_fps
-            self.web_stream = web_stream
-            if web_stream:
-                app = flask.Flask('dirtywebstreamer')
+            self.web_stream_host = web_stream_host
+
+            # TODO: web-stream via HTTP stream over raw sockets so it'll work in micropython
+            # OR/AND, do so over websockets without jpeg encoding
+            if web_stream_host is not None:
+                app = flask.Flask('dirtywebstream')
                 self.new_frame = None
                 # maintain a lock for each mjpeg http stream. Can't think of a better way to do this
                 self.new_frame_locks = []
 
                 @app.route("/")
                 def video_feed():
-
                     def poll_frames():
-                        # maintain a lock for the lifetime of this generator, and
+                        # maintain a lock for the lifetime of this generator - cleanup when client d/c's
                         new_frame_lock = Lock()
                         self.new_frame_locks.append(new_frame_lock)
                         try:
                             while True:
                                 new_frame_lock.acquire()
-                                yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' +
+                                yield(b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' +
                                       bytearray(self.new_frame) + b'\r\n')
                         except GeneratorExit:
                             self.new_frame_locks.remove(new_frame_lock)
 
-                    # return the response generated along with the specific media
-                    # type (mime type)
                     return flask.Response(poll_frames(),
                                           mimetype="multipart/x-mixed-replace; boundary=frame")
 
-                Thread(target=app.run, kwargs=dict(
-                    host='0.0.0.0', port=7645), daemon=True).start()
+                def host_web_stream():
+                    if isinstance(web_stream_host, Tuner):
+                        host, port = web_stream_host.register_video_stream()
+                        # TODO: host the stream as a part of the tuner itself - through its raw socket,
+                        # rather than flask here
+                        app.run(host, port)
+                    else:
+                        import webbrowser
+
+                        # start web stream and let bdsim choose the address
+                        if web_stream_host is True:
+                            # TODO: review this default host - localhost is the typical standard but I find that annoying
+                            host, port = '0.0.0.0', 7645
+                            # keep trying 0.0.0.0 ports - counting up
+                            while True:
+                                try:
+                                    app.run(host, port)
+                                except OSError as e:
+                                    if 'Address already in use' in str(e):
+                                        port += 1
+                                    else:
+                                        raise Exception('unexpected error', e)
+                        else:
+                            host, port = web_stream_host
+                            app.run(host, port)
+
+                Thread(target=host_web_stream, daemon=True).start()
 
             if show_fps:
                 self.fps = 30  # seems a decent init value
@@ -482,7 +506,7 @@ try:
                 self.last_t = self.bd.t
 
             # just quick and dirty for now
-            if self.web_stream:
+            if self.web_stream_host:
                 _ret, jpg = cv2.imencode('.jpg', input)
                 self.new_frame = jpg
 
@@ -496,7 +520,7 @@ try:
                 cv2.waitKey(1)
 
         def stop(self):
-            if not self.web_stream:
+            if not self.web_stream_host:
                 # TODO: Check if overkill to ensure that self.title never changes?
                 cv2.destroyWindow(self.title)
 

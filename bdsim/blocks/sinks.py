@@ -10,9 +10,9 @@ Sink blocks:
 
 # The constructor of each class ``MyClass`` with a ``@block`` decorator becomes a method ``MYCLASS()`` of the BlockDiagram instance.
 
-import numpy as np
-from math import pi, sqrt, sin, cos, atan2
+from math import pi, sin, cos
 
+import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import Polygon
 
@@ -20,6 +20,7 @@ from matplotlib.pyplot import Polygon
 import spatialmath.base as sm
 
 from bdsim.components import SinkBlock, GraphicsBlock, block
+from bdsim.tuning.tuners.tcpclient_tuner import TcpClientTuner
 
 
 # ------------------------------------------------------------------------ #
@@ -84,7 +85,7 @@ class Print(SinkBlock):
             if isinstance(value, (int, float)):
                 print(prefix, self.format.format(value))
             elif isinstance(value, np.ndarray):
-                with np.printoptions(formatter={'all': lambda x: fmt.format(x)}):
+                with np.printoptions(formatter={'all': self.format.format}):
                     print(prefix, value)
             else:
                 print(prefix, str(value))
@@ -110,7 +111,7 @@ class Scope(GraphicsBlock):
        +--------+---------+---------+
     """
 
-    def __init__(self, *inputs, nin=None, styles=None, scale='auto', labels=None, grid=True, **kwargs):
+    def __init__(self, *inputs, nin=None, styles=None, scale='auto', labels=None, grid=True, tuner: TcpClientTuner=None, **kwargs):
         """
         Create a block that plots input ports against time.
 
@@ -195,14 +196,18 @@ class Scope(GraphicsBlock):
 
         self.line = [None]*nin
         self.scale = scale
-
         self.labels = labels
+
+        self.tuner = tuner
+        self.scope_id = tuner.register_signal_scope(self.name, nin, styles=styles, labels=labels) \
+            if tuner else None
+            
         # TODO, wire width
         # inherit names from wires, block needs to be able to introspect
 
     def start(self, **kwargs):
         # create the plot
-        if self.bd.options.graphics:
+        if self.bd.options.graphics and not self.tuner:
             super().reset()   # TODO should this be here?
             self.fig = self.bd.create_figure()
             self.ax = self.fig.gca()
@@ -248,7 +253,9 @@ class Scope(GraphicsBlock):
 
     def step(self):
         # inputs are set
-        if self.bd.options.graphics:
+        if self.tuner:
+            self.tuner.queue_signal_update(self.scope_id, self.bd.t, self.inputs)
+        elif self.bd.options.graphics:
             self.tdata = np.append(self.tdata, self.bd.t)
             for i, input in enumerate(self.inputs):
                 self.ydata[i] = np.append(self.ydata[i], input)
@@ -265,7 +272,7 @@ class Scope(GraphicsBlock):
             super().step()
 
     def done(self, block=False, **kwargs):
-        if self.bd.options.graphics:
+        if self.bd.options.graphics and not self.tuner:
             plt.show(block=block)
             super().done()
 
