@@ -1,0 +1,5 @@
+{
+    "python.pythonPath": "/home/cal/.conda/envs/bdsim/bin/python",
+    "python.linting.pylintEnabled": true,
+    "python.linting.enabled": true
+}

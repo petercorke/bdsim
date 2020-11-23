@@ -134,7 +134,7 @@ class Param:
 
         return maybe_param
 
-    def attr(self, attr, default, _set=True):
+    def attr(self, attr, default):
         "returns attr if self has attr or it's none, otherwise return default"
         self.attrs.add(attr)
         val = getattr(self, attr, default)
@@ -191,6 +191,7 @@ class HyperParam(Param, ABC):
         # sub-parameters - shouldn't change after instantiation
         self.params = self.attr('params', OrderedDict())
         self.hidden = self.attr('hidden', set())
+        self.gui_attrs.update({'hidden'})
 
         # bind the method to a single object so we can exclude it from param update recursion later
         # in python each self.func bound method is a different object so it can't

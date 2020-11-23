@@ -1088,14 +1088,16 @@ class BlockDiagram:
             assert not isinstance(b, TransferBlock), \
                 "Transfer blocks in realtime mode are not supported (yet)"
 
-        if tuner:
-            tuner.setup(self.gui_params, self)
 
         sources = [b for b in self.blocklist if isinstance(b, SourceBlock)]
 
         self.start()
-
         start = time.time()
+
+        if tuner:
+            # needs to happen after self.start() because the autogen'd block-names
+            # are used internally
+            tuner.setup(self.gui_params, self)
 
         while not self.stop and (max_time is None or self.t < max_time):
             self.reset()

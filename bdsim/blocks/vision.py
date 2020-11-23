@@ -436,13 +436,20 @@ try:
             self.show_fps = show_fps
             self.web_stream_host = web_stream_host
 
-            # TODO: web-stream via HTTP stream over raw sockets so it'll work in micropython
-            # OR/AND, do so over websockets without jpeg encoding
-            if web_stream_host is not None:
-                app = flask.Flask('dirtywebstream')
+            if web_stream_host:
                 self.new_frame = None
                 # maintain a lock for each mjpeg http stream. Can't think of a better way to do this
                 self.new_frame_locks = []
+
+            if self.show_fps:
+                self.fps = 30  # seems a decent init value
+                self.last_t = None
+
+        def start(self):
+            # TODO: web-stream via HTTP stream over raw sockets so it'll work in micropython
+            # OR/AND, do so over websockets without jpeg encoding
+            if self.web_stream_host is not None:
+                app = flask.Flask('dirtywebstream')
 
                 @app.route("/")
                 def video_feed():
@@ -462,16 +469,12 @@ try:
                                           mimetype="multipart/x-mixed-replace; boundary=frame")
 
                 def host_web_stream():
-                    if isinstance(web_stream_host, Tuner):
-                        host, port = web_stream_host.register_video_stream()
-                        # TODO: host the stream as a part of the tuner itself - through its raw socket,
-                        # rather than flask here
-                        app.run(host, port)
+                    if isinstance(self.web_stream_host, Tuner):
+                        self.web_stream_host.register_video_stream(video_feed, name=self.name)
+                        
                     else:
-                        import webbrowser
-
                         # start web stream and let bdsim choose the address
-                        if web_stream_host is True:
+                        if self.web_stream_host is True:
                             # TODO: review this default host - localhost is the typical standard but I find that annoying
                             host, port = '0.0.0.0', 7645
                             # keep trying 0.0.0.0 ports - counting up
@@ -484,14 +487,10 @@ try:
                                     else:
                                         raise Exception('unexpected error', e)
                         else:
-                            host, port = web_stream_host
+                            host, port = self.web_stream_host
                             app.run(host, port)
 
                 Thread(target=host_web_stream, daemon=True).start()
-
-            if show_fps:
-                self.fps = 30  # seems a decent init value
-                self.last_t = None
 
         def step(self):
             [input] = self.inputs
