@@ -430,9 +430,8 @@ try:
         FPS_AV_FACTOR_INV = 1 - FPS_AV_FACTOR
         FPS_COLOR = (0, 255, 255)  # yellow
 
-        def __init__(self, input, title="Display", show_fps=False, web_stream_host=None, **kwargs):
-            super().__init__(inputs=[input], nin=1, **kwargs)
-            self.title = title
+        def __init__(self, input, name="Display", show_fps=False, web_stream_host=None, **kwargs):
+            super().__init__(inputs=[input], nin=1, name=name, **kwargs)
             self.show_fps = show_fps
             self.web_stream_host = web_stream_host
 
@@ -514,14 +513,14 @@ try:
                     if lock.locked():
                         lock.release()
             else:
-                cv2.imshow(self.title, input)
+                cv2.imshow(self.name, input)
                 # cv2 needs this to actually show. this blocking maybe matplotlib could do it instead.
                 cv2.waitKey(1)
 
         def stop(self):
             if not self.web_stream_host:
-                # TODO: Check if overkill to ensure that self.title never changes?
-                cv2.destroyWindow(self.title)
+                # TODO: Check if overkill to ensure that self.name never changes?
+                cv2.destroyWindow(self.name)
 
     @block
     class DrawKeypoints(FunctionBlock):
