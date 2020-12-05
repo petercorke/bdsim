@@ -18,6 +18,7 @@ If you're using bdsim and encounter errors with the latest version from GitHub t
   *  hybrid continuous-discrete systems, 
   *  events associated with strong non-linearities or discontinuous inputs,
   *  allow the state vector to be updated (ie. as would be required to renormalize a unit-quaternion state).
+* Extend to support bond graphs, or a hybrid of bond graphs and block diagrams.
 * There is no graphical layout tool or graphical editor
 * There are many more blocks that could be created but of immediate interest are:
  * real-time blocks that interface to ADCs, DACs and PWM channels
