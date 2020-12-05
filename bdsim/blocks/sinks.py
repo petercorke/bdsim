@@ -264,7 +264,7 @@ class Scope(GraphicsBlock):
         
     def done(self, block=False, **kwargs):
         if self.bd.options.graphics:
-                plt.show(block=block)
+            plt.show(block=block)
         super().done()
 
 # ------------------------------------------------------------------------ #
