@@ -1,9 +1,10 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>bdsim.blockdiagram &#8212; Block diagram simulation 0.7 documentation</title>
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -13,7 +14,7 @@
     <script src="../../_static/underscore.js"></script>
     <script src="../../_static/doctools.js"></script>
     <script src="../../_static/language_data.js"></script>
-    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
    
@@ -23,9 +24,65 @@
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head><body>
-  
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/BDSimLogo_NoBackgnd@2x.png" alt="Logo"/>
+            </a></p>
+<h1 class="logo"><a href="../../index.html">Block diagram simulation</a></h1>
 
-    <div class="document">
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=petercorke&repo=bdsim&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Code documentation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../bdsim.html">bdsim package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bdsim.blocks.html">Blocks</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
       <div class="documentwrapper">
         <div class="bodywrapper">
           
@@ -41,7 +98,7 @@
 <span class="sd">@author: corkep</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">os.path</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">importlib</span>
 <span class="kn">import</span> <span class="nn">inspect</span>
@@ -182,7 +239,6 @@
             <span class="s1">&#39;progress&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
             <span class="s1">&#39;debug&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span>
             <span class="p">}</span>
-        
         <span class="k">if</span> <span class="n">sysargs</span><span class="p">:</span>
             <span class="c1"># command line arguments and graphics</span>
             <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">()</span>
@@ -199,6 +255,7 @@
             <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--debug&#39;</span><span class="p">,</span> <span class="s1">&#39;-d&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;[psd]&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">defaults</span><span class="p">[</span><span class="s1">&#39;debug&#39;</span><span class="p">],</span> 
                                 <span class="n">help</span><span class="o">=</span><span class="s1">&#39;debug flags&#39;</span><span class="p">)</span>
             <span class="n">clargs</span> <span class="o">=</span> <span class="nb">vars</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">())</span>  <span class="c1"># get args as a dictionary</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;clargs </span><span class="si">{</span><span class="n">clargs</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
 
             
         <span class="c1"># function arguments override the command line options</span>
@@ -221,7 +278,7 @@
             <span class="n">options</span><span class="p">[</span><span class="s1">&#39;graphics&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
         
         <span class="c1"># stash these away as a named tuple</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s1">&#39;options&#39;</span><span class="p">,</span> <span class="n">options</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">defaults</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">defaults</span><span class="o">.</span><span class="n">values</span><span class="p">()))()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s1">&#39;options&#39;</span><span class="p">,</span> <span class="n">options</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">defaults</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">values</span><span class="p">()))()</span>
         
         <span class="c1"># setup debug parameters from single character codes</span>
         <span class="k">global</span> <span class="n">debuglist</span>
@@ -237,24 +294,24 @@
         <span class="k">if</span> <span class="n">nblocks</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Loading blocks:&#39;</span><span class="p">)</span>
 
-            <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s1">&#39;blocks&#39;</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s1">&#39;blocks&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">iterdir</span><span class="p">():</span>
                 <span class="c1"># scan every file ./blocks/*.py to find block definitions</span>
                 <span class="c1"># a block is a class that subclasses Source, Sink, Function, Transfer and</span>
                 <span class="c1"># has an @block decorator.</span>
                 <span class="c1">#</span>
                 <span class="c1"># The decorator adds the classes to a global variable blocklist in the</span>
                 <span class="c1"># component module&#39;s namespace.</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">file</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;test_&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">file</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.py&#39;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">file</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;test_&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">file</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;__&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">file</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.py&#39;</span><span class="p">):</span>
                     <span class="c1"># valid python module, import it</span>
                     <span class="k">try</span><span class="p">:</span>
-                        <span class="n">module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">file</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="n">package</span><span class="o">=</span><span class="s1">&#39;bdsim.blocks&#39;</span><span class="p">)</span>
+                        <span class="n">module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="n">file</span><span class="o">.</span><span class="n">stem</span><span class="p">,</span> <span class="n">package</span><span class="o">=</span><span class="s1">&#39;bdsim.blocks&#39;</span><span class="p">)</span>
                     <span class="k">except</span> <span class="ne">SyntaxError</span><span class="p">:</span>
                         <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;-- syntax error in block definiton: &#39;</span> <span class="o">+</span> <span class="n">file</span><span class="p">)</span>
     
                     <span class="c1"># components.blocklist grows with every block import</span>
                     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">blocklist</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">nblocks</span><span class="p">:</span>
                         <span class="c1"># we just loaded some more blocks</span>
-                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;  loading blocks from </span><span class="si">{:s}</span><span class="s1">: </span><span class="si">{:s}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">blockname</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">blocklist</span><span class="p">[</span><span class="n">nblocks</span><span class="p">:]])))</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;  loading blocks from </span><span class="si">{:s}</span><span class="s1">: </span><span class="si">{:s}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">file</span><span class="o">.</span><span class="n">stem</span><span class="p">,</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">blockname</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">blocklist</span><span class="p">[</span><span class="n">nblocks</span><span class="p">:]])))</span>
                         
                     <span class="c1"># perform basic sanity checks on the blocks just read</span>
                     <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">blocklist</span><span class="p">[</span><span class="n">nblocks</span><span class="p">:]:</span>
@@ -1217,10 +1274,9 @@
             
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     
-    <span class="kn">import</span> <span class="nn">pathlib</span>
-    <span class="kn">import</span> <span class="nn">os.path</span>
+    <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 
-    <span class="n">exec</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">absolute</span><span class="p">(),</span> <span class="s2">&quot;test_blockdiagram.py&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+    <span class="n">exec</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">absolute</span><span class="p">()</span> <span class="o">/</span> <span class="s2">&quot;test_blockdiagram.py&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
 
 </pre></div>
 
@@ -1228,60 +1284,13 @@
           
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../index.html">Block diagram simulation</a></h1>
-
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption"><span class="caption-text">Code documentation:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../bdsim.html">bdsim package</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../bdsim.blocks.html">Blocks</a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../index.html">Documentation overview</a><ul>
-  <li><a href="../index.html">Module code</a><ul>
-  </ul></li>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
+    <div class="clearer"></div>
+  </div>
     <div class="footer">
       &copy;2020, Peter Corke.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.4</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>

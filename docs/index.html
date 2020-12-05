@@ -1,9 +1,10 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Block diagram simulator &#8212; Block diagram simulation 0.7 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -13,7 +14,7 @@
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
     <script src="_static/language_data.js"></script>
-    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="bdsim package" href="bdsim.html" />
@@ -24,53 +25,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head><body>
-  
-
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          
-
-          <div class="body" role="main">
-            
-  <div class="section" id="block-diagram-simulator">
-<h1>Block diagram simulator<a class="headerlink" href="#block-diagram-simulator" title="Permalink to this headline">¶</a></h1>
-<p>This Python package enables modelling and simulation of dynamic systems conceptualized in block diagram form, but represented in terms of Python class and method calls.</p>
-<p>Unlike Simulink or LabView we write Python code rather than drawing boxes and wires.  Wires can communicate any Python type such as scalars, strings, lists, dictionaries, numpy arrays, other objects, and even functions.</p>
-<div class="toctree-wrapper compound">
-<p class="caption"><span class="caption-text">Code documentation:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="bdsim.html">bdsim package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="bdsim.html#module-bdsim.blockdiagram">BlockDiagram class</a></li>
-<li class="toctree-l2"><a class="reference internal" href="bdsim.html#components">Components</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="bdsim.blocks.html">Blocks</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="bdsim.blocks.html#module-bdsim.blocks.sources">Source blocks</a></li>
-<li class="toctree-l2"><a class="reference internal" href="bdsim.blocks.html#module-bdsim.blocks.sinks">Sink blocks</a></li>
-<li class="toctree-l2"><a class="reference internal" href="bdsim.blocks.html#module-bdsim.blocks.functions">Function blocks</a></li>
-<li class="toctree-l2"><a class="reference internal" href="bdsim.blocks.html#module-bdsim.blocks.transfers">Transfer blocks</a></li>
-<li class="toctree-l2"><a class="reference internal" href="bdsim.blocks.html#module-bdsim.blocks.robots">Robot blocks</a></li>
-<li class="toctree-l2"><a class="reference internal" href="bdsim.blocks.html#module-bdsim.blocks.connections">Connection blocks</a></li>
-<li class="toctree-l2"><a class="reference internal" href="bdsim.blocks.html#module-bdsim.blocks.io">io blocks</a></li>
-<li class="toctree-l2"><a class="reference internal" href="bdsim.blocks.html#module-bdsim.blocks.vision">Vision blocks</a></li>
-</ul>
-</li>
-</ul>
-</div>
-</div>
-
-
-          </div>
-          
-        </div>
-      </div>
+  <div class="document">
+    
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="#">
+              <img class="logo" src="_static/BDSimLogo_NoBackgnd@2x.png" alt="Logo"/>
+            </a></p>
 <h1 class="logo"><a href="#">Block diagram simulation</a></h1>
 
 
 
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=petercorke&repo=bdsim&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
 
 
 
@@ -111,13 +83,51 @@
 
         </div>
       </div>
-      <div class="clearer"></div>
-    </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="block-diagram-simulator">
+<h1>Block diagram simulator<a class="headerlink" href="#block-diagram-simulator" title="Permalink to this headline">¶</a></h1>
+<p>This Python package enables modelling and simulation of dynamic systems conceptualized in block diagram form, but represented in terms of Python class and method calls.</p>
+<p>Unlike Simulink or LabView we write Python code rather than drawing boxes and wires.  Wires can communicate any Python type such as scalars, strings, lists, dictionaries, numpy arrays, other objects, and even functions.</p>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Code documentation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="bdsim.html">bdsim package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bdsim.html#module-bdsim.blockdiagram">BlockDiagram class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bdsim.html#components">Components</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bdsim.blocks.html">Blocks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bdsim.blocks.html#module-bdsim.blocks.sources">Source blocks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bdsim.blocks.html#module-bdsim.blocks.sinks">Sink blocks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bdsim.blocks.html#module-bdsim.blocks.functions">Function blocks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bdsim.blocks.html#module-bdsim.blocks.transfers">Transfer blocks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bdsim.blocks.html#module-bdsim.blocks.robots">Robot blocks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bdsim.blocks.html#module-bdsim.blocks.connections">Connection blocks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bdsim.blocks.html#module-bdsim.blocks.io">io blocks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bdsim.blocks.html#module-bdsim.blocks.vision">Vision blocks</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
     <div class="footer">
       &copy;2020, Peter Corke.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.4</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
