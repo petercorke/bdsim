@@ -5,10 +5,24 @@
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/petercorke/bdsim/graphs/commit-activity)
 [![GitHub license](https://img.shields.io/github/license/Naereen/StrapDown.js.svg)](https://github.com/petercorke/bdsim/blob/master/LICENSE)
 
-- GitHub repository: [https://github.com/petercorke/bdsim](https://github.com/petercorke/bdsim)
-- Examples and details: [https://github.com/petercorke/bdsim/wiki](https://github.com/petercorke/bdsim/wiki)
-- Documentation: [https://petercorke.github.io/bdsim](https://petercorke.github.io/bdsim)
-- Dependencies: `numpy`, `scipy`, `matplotlib`, `spatialmath`, `ffmpeg` (if rendering animations as a movie)
+
+<table style="border:0px">
+<tr style="border:0px">
+<td style="border:0px">
+<img src="https://github.com/petercorke/bdsim/raw/master/figs/BDSimLogo_NoBackgnd@2x.png" width="300"></td>
+<td style="border:0px">
+A Python block diagram simulation package</a>
+<ul>
+<li><a href="https://github.com/petercorke/bdsim">GitHub repository </a></li>
+<li><a href="https://petercorke.github.io/bdsim">Documentation</a></li>
+<li><a href="https://github.com/petercorke/bdsim/wiki">Examples and details</a></li>
+<li><a href="installation#">Installation</a></li>
+<li>Dependencies: `numpy`, `scipy`, `matplotlib`, `spatialmath`, `ffmpeg` (if rendering animations as a movie)</li>
+</ul>
+</td>
+</tr>
+</table>
+
 
 # Block diagram simulation
 
