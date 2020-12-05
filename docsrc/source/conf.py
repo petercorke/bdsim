@@ -60,6 +60,15 @@ exclude_patterns = ['test_*']
 html_theme = 'alabaster'
 html_show_sourcelink = True
 
+html_theme_options = {
+    'github_user': 'petercorke',
+    'github_repo': 'bdsim',
+    'github_button': True,
+    'fixed_sidebar': True,
+}
+
+html_logo = '../../figs/BDSimLogo_NoBackgnd@2x.png'
+
 autoclass_content = "class"
 
 # Add any paths that contain custom static files (such as style sheets) here,
