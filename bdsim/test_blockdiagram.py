@@ -351,11 +351,7 @@ class ImportTest(unittest.TestCase):
         bd.connect(f2, scope2)
         
         bd.compile()
-        
-    def test_import(self):
-        import spatialmath
 
-        pass
 # ---------------------------------------------------------------------------------------#
 if __name__ == '__main__':
 
