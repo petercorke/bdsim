@@ -15,8 +15,8 @@ import argparse
 from collections import Counter, namedtuple
 import numpy as np
 import scipy.integrate as integrate
-import matplotlib
-import matplotlib.pyplot as plt
+
+from ansitable import ANSITable, Column
 
 from bdsim.components import *
 
@@ -271,74 +271,6 @@ class BlockDiagram:
                 self.blockdict[blocktype].append(bindname)
             else:
                 self.blockdict[blocktype] = [bindname]
-            
-    def create_figure(self):
-
-        def move_figure(f, x, y):
-            """Move figure's upper left corner to pixel (x, y)"""
-            backend = matplotlib.get_backend()
-            if backend == 'TkAgg':
-                f.canvas.manager.window.wm_geometry("+%d+%d" % (x, y))
-            elif backend == 'WXAgg':
-                f.canvas.manager.window.SetPosition((x, y))
-            else:
-                # This works for QT and GTK
-                # You can also use window.setGeometry
-                f.canvas.manager.window.move(x, y)
-                
-        if self.fignum == 0:
-            # no figures yet created, lazy initialization
-            
-            matplotlib.use(self.options.backend)            
-            mpl_backend = matplotlib.get_backend()
-            print('matplotlib backend is', mpl_backend)
-            
-            dpiscale = 1
-            if mpl_backend == 'Qt5Agg':
-                from PyQt5 import QtWidgets
-                app = QtWidgets.QApplication([])
-                screen = app.primaryScreen()
-                print('Screen: %s' % screen.name())
-                size = screen.size()
-                print('Size: %d x %d' % (size.width(), size.height()))
-                rect = screen.availableGeometry()
-                print('Available: %d x %d' % (rect.width(), rect.height()))
-                sw = rect.width()
-                sh = rect.height()
-                #dpi = screen.physicalDotsPerInch()
-                dpiscale = screen.devicePixelRatio() # is 2.0 for Mac laptop screen
-            elif mpl_backend == 'TkAgg':
-                window = plt.get_current_fig_manager().window
-                sw =  window.winfo_screenwidth()
-                sh =  window.winfo_screenheight()
-                print('Size: %d x %d' % (sw, sh))
-            self.screensize_pix = (sw, sh)
-            self.tiles = [int(x) for x in self.options.tiles.split('x')]
-            
-            # create a figure at default size to get dpi (TODO better way?)
-            f = plt.figure(figsize=(1,1))
-            self.dpi = f.dpi / dpiscale
-            print('dpi', self.dpi)
-            
-            # compute fig size in inches (width, height)
-            self.figsize = [ self.screensize_pix[0] / self.tiles[1] / self.dpi , self.screensize_pix[1] / self.tiles[0] / self.dpi ]
-            
-            # resize the figure
-            #plt.figure(num=f.number, figsize=self.figsize)
-            f.set_size_inches(self.figsize, forward=True)
-            plt.ion()
-        else:
-            f = plt.figure(figsize=self.figsize)
-            
-        # move the figure to right place on screen
-        row = self.fignum // self.tiles[0]
-        col = self.fignum % self.tiles[0]
-        move_figure(f, col * self.figsize[0] * self.dpi, row * self.figsize[1] * self.dpi)
-        
-        self.fignum += 1
-        #print('create figure', self.fignum, row, col)
-        return f
-        
     
     def add_block(self, block):
         block.id = len(self.blocklist)
@@ -626,149 +558,7 @@ class BlockDiagram:
             top.add_block(b)   # add remaining blocks from subsystem
             b.name = '/'.join(path + [b.name])
         top.wirelist.extend(subsys.subsystem.wirelist)  # add remaining wires from subsystem
-        
-    def report(self):
-        """
-        Print a tabular report about the block diagram
-
-        """
-        
-        class TableFormat:
-            
-            def __init__(self, table, colsep = 2):
-                """
-                Tabular printing
-                
-                :param table: format string
-                :type table: str
-                :param extrasep: extra separation between columns, default 2
-                :type extrasep: int
-                :return: a format string
-                :rtype: str
-                
-                Given an input string like::
-                
-                    "col1[s] col2[d] col3[10s] col4[3d]"
-                    
-                where the square brackets denote type  (as per `format`) and the
-                number if given is a minumum column width.  The actual column width
-                is the maximum of the given value and the width of the heading text
-                plus `extrasep`.
-                
-                Then print the header and a separator line::
-                
-                col1  col2  col3        col4
-                ----  ----  ----------  ----
     
-                and return a format string that can be used with `format` to format
-                the arguments for subsequent data rows.
-                """
-                # parse the format line
-                re_fmt = re.compile(r"([a-zA-Z]+)\[(\-?[0-9]*|\*)([a-z])\]")
-                
-                colheads = []
-                varwidth = {}
-                columns = []
-                
-                for i, col in enumerate(table.split(' ')):
-                    m = re_fmt.search(col)
-                    colhead = m.group(1)
-                    colwidth = m.group(2)
-                    if colwidth == '':
-                        colwidth = len(colhead) + colsep
-                        coljust = '<'
-                    elif colwidth == '*':
-                        varwidth[i] = 0
-                        colwidth = None
-                        coljust = '<'
-                    else:
-                        w = int(colwidth)
-                        if w < 0:
-                            coljust = '>'
-                            w = -w
-                        else:
-                            coljust = '<'
-                        colwidth = max(w, len(colhead) + colsep)
-                    colfmt = m.group(3)
-                    columns.append( (colhead, colfmt, coljust, colwidth) )
-                else:
-                    self.ncols = i + 1
-                    
-                self.data = []
-                self.colsep = colsep
-                self.columns = columns
-                self.varwidth = varwidth
-
-            
-            def add(self, *data):
-                assert len(data) == self.ncols, 'wrong number of data items added'
-                self.data.append(data)
-                for k,v in self.varwidth.items():
-                    self.varwidth[k] = max(v, len(data[k]))
-            
-            def print(self):
-                hfmt = ""
-                cfmt = ""
-                sep = ""
-                
-                colheads = []
-                for i, col in enumerate(self.columns):
-                    colhead, colfmt, coljust, colwidth = col
-                    
-                    colheads.append(colhead)
-                    
-                    if colwidth is None:
-                        colwidth = self.varwidth[i]
-                        
-                    if colfmt == 'd':
-                        hfmt += "{:>%ds}" % (colwidth,)
-                    else:
-                        hfmt += "{:%ds}" % (colwidth,)
-                        
-                    cfmt += "{:%s%d%s}" % (coljust, colwidth, colfmt)
-                    hfmt += ' ' * self.colsep
-                    cfmt += ' ' * self.colsep
-                    sep += '-' * colwidth + '  '
-                    
-                print(hfmt.format(*colheads))
-                print(sep)
-                
-                for d in self.data:
-                    print( cfmt.format(*d))
-        
-        # print all the blocks
-        print('\nBlocks::\n')
-        cfmt = TableFormat("id[3d] name[*s] nin[2d] nout[2d] nstate[2d]")
-        for b in self.blocklist:
-            cfmt.add( b.id, str(b), b.nin, b.nout, b.nstates)
-        cfmt.print()
-        
-        # print all the wires
-        print('\nWires::\n')
-        cfmt = TableFormat("id[3d] from[-6s] to[-6s] description[*s] type[*s]")
-        for w in self.wirelist:
-            start = "{:d}[{:d}]".format(w.start.block.id, w.start.port)
-            end = "{:d}[{:d}]".format(w.end.block.id, w.end.port)
-            
-            value = w.end.block.inputs[w.end.port]
-            typ = type(value).__name__
-            if isinstance(value, np.ndarray):
-                typ += ' {:s}'.format(str(value.shape))
-            cfmt.add( w.id, start, end, w.fullname, typ)
-        cfmt.print()
-        print('\nState variables: {:d}'.format(self.nstates))
-        
-        if not self.compiled:
-            print('** System has not been compiled, or had a compile time error')
-            
-    def getstate(self):
-        # get the state from each stateful block
-        x0 = np.array([])
-        for b in self.blocklist:
-            if b.blockclass == 'transfer':
-                x0 = np.r_[x0, b.getstate()]
-        #print('x0', x0)
-        return x0
         
     def run(self, T=10.0, dt=0.1, solver='RK45', 
             block=False, checkfinite=True, watch=[],
@@ -1065,7 +855,62 @@ class BlockDiagram:
                 
                 if w.send(val) and w.end.block.blockclass == 'function':
                     self._propagate(w.end.block, t, depth+1)
-                
+
+    def report(self):
+        """
+        Print a tabular report about the block diagram
+
+        """
+        
+        # print all the blocks
+        print('\nBlocks::\n')
+        table = ANSITable(
+                Column("id"),
+                Column("name"),
+                Column("nin"),
+                Column("nout"),
+                Column("nstate"),
+                border="thin"
+            )
+        for b in self.blocklist:
+            table.row( b.id, str(b), b.nin, b.nout, b.nstates)
+        table.print()
+        
+        # print all the wires
+        print('\nWires::\n')
+        table = ANSITable(
+                Column("id"),
+                Column("from", headalign="^"),
+                Column("to", headalign="^"),
+                Column("description", headalign="^", colalign="<"),
+                Column("type", headalign="^", colalign="<"),
+                border="thin"
+            )
+        for w in self.wirelist:
+            start = "{:d}[{:d}]".format(w.start.block.id, w.start.port)
+            end = "{:d}[{:d}]".format(w.end.block.id, w.end.port)
+            
+            value = w.end.block.inputs[w.end.port]
+            typ = type(value).__name__
+            if isinstance(value, np.ndarray):
+                typ += ' {:s}'.format(str(value.shape))
+            table.row( w.id, start, end, w.fullname, typ)
+        table.print()
+
+        print('\nState variables: {:d}'.format(self.nstates))
+        
+        if not self.compiled:
+            print('** System has not been compiled, or had a compile time error')
+            
+    def getstate(self):
+        # get the state from each stateful block
+        x0 = np.array([])
+        for b in self.blocklist:
+            if b.blockclass == 'transfer':
+                x0 = np.r_[x0, b.getstate()]
+        #print('x0', x0)
+        return x0
+                        
     def reset(self):
         """
         Reset conditions within every active block.  Most importantly, all
@@ -1117,10 +962,7 @@ class BlockDiagram:
             
     def savefig(self, format='pdf', **kwargs):
         for b in self.blocklist:
-            if isinstance(b, GraphicsBlock):
-                fname = str(b) + '.' + format
-                print('saving {} -> {}'.format(str(b), fname))
-                b.savefig(fname, **kwargs)
+            b.savefig(format=format, **kwargs)
         
     def dotfile(self, file):
         """

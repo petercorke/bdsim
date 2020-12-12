@@ -774,6 +774,9 @@ class Block:
     def step(self):  # valid
         pass
 
+    def savefig(self, *pos, **kwargs):
+        pass
+
 class SinkBlock(Block):
     """
     A SinkBlock is a subclass of Block that represents a block that has inputs
@@ -788,62 +791,6 @@ class SinkBlock(Block):
         self.nout = 0
         self.nstates = 0
 
-
-class GraphicsBlock(SinkBlock):
-    """
-    A GraphicsBlock is a subclass of SinkBlock that represents a block that has inputs
-    but no outputs. Typically used to save data to a variable, file or
-    raphics.
-
-    :param movie: Save animation in this file, defaults to None
-    :type movie: str, optional
-    :param ``**kwargs``: common Block options
-    :return: A PRINT block
-    :rtype: Print instance
-
-    The animation is saved as an MP4 video in the specified file.
-    """
-
-    def __init__(self, movie=None, **kwargs):
-
-        super().__init__(**kwargs)
-        if not self.bd.options.animation:
-            movie = None
-        self.movie = movie
-
-    def start(self):
-        if self.movie is not None:
-            self.writer = animation.FFMpegWriter(fps=10, extra_args=['-vcodec', 'libx264'])
-            self.writer.setup(fig=self.fig, outfile=self.movie)
-
-    def step(self):
-        super().step()
-        if self.movie is not None:
-            self.writer.grab_frame()
-
-    def done(self):
-        if self.bd.options.graphics:
-            self.fig.canvas.start_event_loop(0.001)
-        if self.movie is not None:
-            self.writer.finish()
-            # self.cleanup()
-
-    def savefig(self, fname, **kwargs):
-        """
-        Save the figure as an image file
-
-        :param fname: Name of file to save graphics to
-        :type fname: str
-        :param ``**kwargs``: Options passed to `savefig <https://matplotlib.org/3.2.2/api/_as_gen/matplotlib.pyplot.savefig.html>`_
-
-        The file format is taken from the file extension and can be
-        jpeg, png or pdf.
-        """
-        try:
-            plt.figure(self.fig.number)
-            plt.savefig(fname, **kwargs)
-        except:
-            pass
 
 
 class SourceBlock(Block):
