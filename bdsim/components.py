@@ -4,6 +4,7 @@
 Components of the simulation system, namely blocks, wires and plugs.
 """
 
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import animation
@@ -325,6 +326,35 @@ class Plug:
         """
         return str(self.block) + "[" + str(self.port) + "]"
 
+# ------------------------------------------------------------------------- #
+
+clocklist = []
+
+class Clock:
+
+    def __init__(self, arg, offset=0, unit='s', name=None):
+        global clocklist
+        if unit == 's':
+            self.T = arg
+        elif unit == 'ms':
+            self.T = arg / 1000
+        elif unit == 'Hz':
+            self.T = 1 / arg
+
+        self.offset = offset
+
+        self.name = "clock." + str(len(clocklist))
+
+        clocklist.append(self)
+
+        # events happen at time t = kT + offset
+
+    def __str__(self):
+        return "{}: T={}, offset={}".format(self.name, self.T, self.offset)
+
+    def next(self, t):
+        
+        return math.ceil((t + self.offset) / self.T) * self.T + self.offset
 # ------------------------------------------------------------------------- #
 
 
@@ -863,3 +893,9 @@ class SubsystemBlock(Block):
         super().__init__(**kwargs)
         self.nstates = 0
 
+
+# c = Clock(5)
+# c1 = Clock(5, 2)
+
+# print(c, c1)
+# print(c.next(0), c1.next(0))
