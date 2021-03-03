@@ -37,9 +37,9 @@ which we can express concisely with `bdsim` as (see [`bdsim/examples/eg1.py`](ht
 ```python
      1	#!/usr/bin/env python3
      2	
-     3	import bdsim.simulation as sim
+     3	import bdsim
      4	
-     5	bd = sim.Simulation()
+     5	bd = bdsim.BlockDiagram()
      6	
      7	# define the blocks
      8	demand = bd.STEP(T=1, pos=(0,0), name='demand')
