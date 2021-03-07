@@ -15,6 +15,7 @@ from math import sin, cos, atan2, sqrt, pi
 
 import matplotlib.pyplot as plt
 import inspect
+from spatialmath import base
 
 from bdsim.components import TransferBlock, block
 
@@ -79,34 +80,41 @@ class Integrator(TransferBlock):
             - a vector, of the same shape as ``x0`` that applies elementwise to
               the state.
         """
+        self.type = 'INTEGRATOR'
         super().__init__(nin=1, nout=1, inputs=inputs, **kwargs)
 
-        if isinstance(x0, np.ndarray):
-            assert len(x0.shape) == 1, 'state must be a vector'
-            self.nstates = x0.shape[0]
-            if min is None:
-                min = [-math.inf] * self.nstates
-            else:
-                assert len(
-                    min) == self.nstates, 'minimum bound length must match x0'
-
-            if max is None:
-                max = [math.inf] * self.nstates
-            else:
-                assert len(
-                    max) == self.nstates, 'mmaximum bound length must match x0'
-        elif isinstance(x0, (int, float)):
+        if isinstance(x0, (int, float)):
             self.nstates = 1
             if min is None:
                 min = -math.inf
             if max is None:
                 max = math.inf
+                
+        else:
+            if isinstance(x0, np.ndarray):
+                if x0.ndim > 1:
+                    raise ValueError('state must be a 1D vector')
+            else:
+                x0 = base.getvector(x0)
+
+            self.nstates = x0.shape[0]
+            if min is None:
+                min = [-math.inf] * self.nstates
+            elif len(min) != self.nstates:
+                raise ValueError('minimum bound length must match x0')
+
+            if max is None:
+                max = [math.inf] * self.nstates
+            elif len(max) != self.nstates:
+                raise ValueError('maximum bound length must match x0')
+
         self._x0 = np.r_[x0]
         self.min = np.r_[min]
         self.max = np.r_[max]
+        print('nstates', self.nstates)
 
     def output(self, t=None):
-        return list(self._x)
+        return [self._x]
 
     def deriv(self):
         xd = np.array(self.inputs)
