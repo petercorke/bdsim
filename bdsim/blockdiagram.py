@@ -134,7 +134,7 @@ class BlockDiagram:
         self._get_options(**kwargs)
 
         ##load modules from the blocks folder
-        self._load_modules()
+        self._load_blocks()
         
         
     def _get_options(self, sysargs=True, **kwargs):
@@ -197,51 +197,79 @@ class BlockDiagram:
             debuglist.append('state')
         if 'd' in self.options.debug:
             debuglist.append('deriv')
+
             
-    def _load_modules(self):
+    def _load_blocks(self):
+        """
+        Load blocks
+
+        Load all block definitions.
+
+        Reads blocks from .py files found in bdsim/bdsim/blocks and folders
+        given by colon separated list in envariable BDSIMPATH.
+
+        The constructors of all classes within the module become a bound method
+        of self.
+
+        :raises ImportError: [description]
+        :raises ImportError: [description]
+        :return: [description]
+        :rtype: [type]
+        """
         nblocks = len(blocklist)
         if nblocks == 0:
+            blockpath = [Path(__file__).parent / 'blocks']
+            path = os.getenv('BDSIMPATH')
+            if path is not None:
+                for p in path.split(':'):
+                    blockpath.append(Path(p))            
+            
             print('Loading blocks:')
 
-            for file in (Path(__file__).parent / 'blocks').iterdir():
-                # scan every file ./blocks/*.py to find block definitions
-                # a block is a class that subclasses Source, Sink, Function, Transfer and
-                # has an @block decorator.
-                #
-                # The decorator adds the classes to a global variable blocklist in the
-                # component module's namespace.
-                if not file.name.startswith('test_') and not file.name.startswith('__') and file.name.endswith('.py'):
-                    # valid python module, import it
-                    try:
-                        module = importlib.import_module('.' + file.stem, package='bdsim.blocks')
-                    except SyntaxError:
-                        print('-- syntax error in block definiton: ' + file)
-    
-                    # components.blocklist grows with every block import
-                    if len(blocklist) > nblocks:
-                        # we just loaded some more blocks
-                        print('  loading blocks from {:s}: {:s}'.format(file.stem, ', '.join([blockname(cls) for cls in blocklist[nblocks:]])))
-                        
-                    # perform basic sanity checks on the blocks just read
-                    for cls in blocklist[nblocks:]:
-                        
-                        if cls.blockclass in ('source', 'transfer', 'function'):
-                            # must have an output function
-                            valid = hasattr(cls, 'output') and \
-                                    callable(cls.output) and \
-                                    len(inspect.signature(cls.output).parameters) == 2
-                            if not valid:
-                                raise ImportError('class {:s} has missing/improper output method'.format(str(cls)))
+            for path in blockpath:  # for each folder on the path
+                for file in path.iterdir():  # for each file in the folder
+                    # scan every file *.py to find block definitions
+                    # a block is a class that subclasses Source, Sink, Function, Transfer and
+                    # has an @block decorator.
+                    #
+                    # The decorator adds the classes to a global variable blocklist in the
+                    # component module's namespace.
+                    if not file.name.startswith('test_') and not file.name.startswith('__') and file.name.endswith('.py'):
+                        # valid python module, import it
+                        try:
+                            # module = importlib.import_module('.' + file.stem, package='bdsim.blocks')
+                            spec = importlib.util.spec_from_file_location(file.name, file)
+                            module = importlib.util.module_from_spec(spec)
+                            spec.loader.exec_module(module)
+                            # module = importlib.import_module('.' + file.stem, package='bdsim.blocks')
+                        except SyntaxError:
+                            print(f"-- syntax error in block definiton: {file}")
+        
+                        # components.blocklist grows with every block import
+                        if len(blocklist) > nblocks:
+                            # we just loaded some more blocks
+                            print('  loading blocks from {:s}: {:s}'.format(str(file), ', '.join([blockname(cls) for cls in blocklist[nblocks:]])))
                             
-                        if cls.blockclass == 'sink':
-                            # must have a step function
-                            valid = hasattr(cls, 'step') and \
-                                    callable(cls.step) and \
-                                    len(inspect.signature(cls.step).parameters) == 1
-                            if not valid:
-                                raise ImportError('class {:s} has missing/improper step method'.format(str(cls)))
+                        # perform basic sanity checks on the blocks just read
+                        for cls in blocklist[nblocks:]:
+                            
+                            if cls.blockclass in ('source', 'transfer', 'function'):
+                                # must have an output function
+                                valid = hasattr(cls, 'output') and \
+                                        callable(cls.output) and \
+                                        len(inspect.signature(cls.output).parameters) == 2
+                                if not valid:
+                                    raise ImportError('class {:s} has missing/improper output method'.format(str(cls)))
                                 
-                    nblocks = len(blocklist)
+                            if cls.blockclass == 'sink':
+                                # must have a step function
+                                valid = hasattr(cls, 'step') and \
+                                        callable(cls.step) and \
+                                        len(inspect.signature(cls.step).parameters) == 1
+                                if not valid:
+                                    raise ImportError('class {:s} has missing/improper step method'.format(str(cls)))
+                                    
+                        nblocks = len(blocklist)
         
         def new_method(cls, bd):
             def block_init_wrapper(self, *args, **kwargs):
@@ -267,7 +295,7 @@ class BlockDiagram:
             # set a bound version of this function as an attribute of the instance
             setattr(self, bindname, f.__get__(self))
             
-            blocktype = cls.__module__.split('.')[2]
+            blocktype = cls.__module__.split('.')[1]
             if blocktype in self.blockdict:
                 self.blockdict[blocktype].append(bindname)
             else:
