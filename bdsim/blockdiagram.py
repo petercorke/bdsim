@@ -128,7 +128,10 @@ class BlockDiagram:
         self.stop = None
         self.checkfinite = True
         self.blockcounter = Counter()
+        self.debugger = True
         self.name = name
+        self.debug_stop = False
+        self.t_stop = None  # time-based breakpoint
 
         # process command line and constructor options
         self._get_options(**kwargs)
@@ -590,7 +593,7 @@ class BlockDiagram:
     
         
     def run(self, T=10.0, dt=0.1, solver='RK45', 
-            block=False, checkfinite=True, watch=[],
+            block=False, checkfinite=True, watch=[], debug=False,
             **kwargs):
         """
         Run the block diagram
@@ -643,6 +646,9 @@ class BlockDiagram:
         self.count = 0
         self.stop = None # allow any block to stop.BlockDiagram by setting this to the block's name
         self.checkfinite = checkfinite
+        if debug:
+            self.debug_stop = True
+            self.options.progress = False
         
         # preproces the watchlist
         pluglist = []
@@ -778,7 +784,7 @@ class BlockDiagram:
         # pause until all graphics blocks close
         self.done(block=block)
         # print(self.count, ' integrator steps')
-        
+
         return out
         
 
@@ -829,8 +835,44 @@ class BlockDiagram:
                 assert b.updated, str(b) + ' has incomplete inputs'
                 yd = b.deriv().flatten()
                 YD = np.r_[YD, yd]
+
+        if self.debug_stop:
+            self._debugger()
+
         DEBUG('deriv', YD)
+
+
         return YD
+
+    def _debugger(self):
+
+        if self.t_stop is not None and self.t < self.t_stop:
+            return
+
+        self.t_stop = None
+        while True:
+            cmd = input(f"(bdsim, t={self.t}) ")
+
+            if len(cmd) == 0:
+                continue
+
+            if cmd[0] == 'p':
+                # print variables
+                for b in self.blocklist:
+                    if b.nout > 0:
+                        print(b.name, b.output(t=self.t))
+            elif cmd[0] == 's':
+                # step
+                break
+            elif cmd[0] == 'c':
+                # continue
+                self.debug_stop = False
+                break
+            elif cmd[0] == 't':
+                self.t_stop = float(cmd[1:])
+                break
+            elif cmd[0] == 'q':
+                sys.exit(1)
 
     def _propagate(self, b, t, depth=0):
         """
