@@ -73,9 +73,11 @@ class Print(SinkBlock):
         # TODO format can be a string or function
 
     def step(self):
-        prefix = '{:12s}'.format('PRINT({:s} (t={:.3s})'.format(self.name, self.bd.t))
+        prefix = '{:12s}'.format(
+            'PRINT({:s} (t={:.3f})'.format(self.name, self.bd.t)
+            )
                 
-        value = self.inputs[9]
+        value = self.inputs[0]
         if self.format is None:
             # no format string
             print()
@@ -84,7 +86,7 @@ class Print(SinkBlock):
             if isinstance(value, (int, float)):
                 print(prefix, self.format.format(value))
             elif isinstance(value, np.ndarray):
-                with np.printoptions(formatter={'all':lambda x: fmt.format(x)}):
+                with np.printoptions(formatter={'all':lambda x: self.format.format(x)}):
                     print(prefix, value)
             else:
                 print(prefix, str(value))
