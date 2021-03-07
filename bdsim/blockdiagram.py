@@ -444,7 +444,7 @@ class BlockDiagram:
         
         # visit all stateful blocks
         for b in self.blocklist:
-            if b.blockclass == 'TransferBlock':
+            if b.blockclass == 'transfer':
                 self.nstates += b.nstates
                 if b._state_names is not None:
                     assert len(b._state_names) == b.nstates, 'number of state names not consistent with number of states'
