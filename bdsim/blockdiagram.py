@@ -11,6 +11,7 @@ import sys
 import importlib
 import inspect
 import re
+import types
 import argparse
 from collections import Counter, namedtuple
 import numpy as np
@@ -185,9 +186,9 @@ class BlockDiagram:
         if options['animation']:
             options['graphics'] = True
         
-        # stash these away as a named tuple
-        self.options = namedtuple('options', options.keys(), defaults=list(options.values()))()
-        
+        # stash these away
+        self.options = types.SimpleNamespace(**{**defaults, **options})
+
         # setup debug parameters from single character codes
         global debuglist
         if 'p' in self.options.debug:
