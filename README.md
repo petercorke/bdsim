@@ -1,4 +1,4 @@
-![PyPI - Downloads](https://img.shields.io/pypi/dm/bdsim)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/bdsim)](https://pypistats.org/packages/bdsim)
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/bdsim)](https://pypi.python.org/pypi/bdsim/)
 [![PyPI version fury.io](https://badge.fury.io/py/bdsim.svg)](https://pypi.python.org/pypi/bdsim/)
 [![PyPI status](https://img.shields.io/pypi/status/ansicolortags.svg)](https://pypi.python.org/pypi/bdsim/)
@@ -80,24 +80,29 @@ Line 22 shows a report, in tabular form, showing all the blocks and wires in the
 ```python
 Blocks::
 
-  id  name                  nin    nout    nstate  
-----  ------------------  -----  ------  --------  
-0     source.step.demand  0      1       0         
-1     function.sum.b1     2      1       0         
-2     function.gain.b2    1      1       0         
-3     transfer.LTI.plant  1      1       1         
-4     sink.scope.b4       2      0       0         
+┌───┬─────────┬─────┬──────┬────────┐
+│id │    name │ nin │ nout │ nstate │
+├───┼─────────┼─────┼──────┼────────┤
+│ 0 │  demand │   0 │    1 │      0 │
+│ 1 │   sum.0 │   2 │    1 │      0 │
+│ 2 │  gain.0 │   1 │    1 │      0 │
+│ 3 │   plant │   1 │    1 │      1 │
+│ 4 │ scope.0 │   2 │    0 │      0 │
+└───┴─────────┴─────┴──────┴────────┘
+
 
 Wires::
 
-  id  from    to      description                     type     
-----  ------  ------  ------------------------------  -------  
-0       0[0]    1[0]  step.demand[0] --> sum.b1[0]    int      
-1       0[0]    4[1]  step.demand[0] --> scope.b4[1]  int      
-2       3[0]    1[1]  LTI.plant[0] --> sum.b1[1]      float64  
-3       1[0]    2[0]  sum.b1[0] --> gain.b2[0]        float64  
-4       2[0]    3[0]  gain.b2[0] --> LTI.plant[0]     float64  
-5       3[0]    4[0]  LTI.plant[0] --> scope.b4[0]    float64  
+┌───┬──────┬──────┬──────────────────────────┬─────────┐
+│id │ from │  to  │       description        │  type   │
+├───┼──────┼──────┼──────────────────────────┼─────────┤
+│ 0 │ 0[0] │ 1[0] │ demand[0] --> sum.0[0]   │ int     │
+│ 1 │ 0[0] │ 4[1] │ demand[0] --> scope.0[1] │ int     │
+│ 2 │ 3[0] │ 1[1] │ plant[0] --> sum.0[1]    │ float64 │
+│ 3 │ 1[0] │ 2[0] │ sum.0[0] --> gain.0[0]   │ float64 │
+│ 4 │ 2[0] │ 3[0] │ gain.0[0] --> plant[0]   │ float64 │
+│ 5 │ 3[0] │ 4[0] │ plant[0] --> scope.0[0]  │ float64 │
+└───┴──────┴──────┴──────────────────────────┴─────────┘
 ```
 
 Line 24 runs the simulation for 5 seconds 
