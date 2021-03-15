@@ -1021,8 +1021,15 @@ class BlockDiagram:
                 
                 DEBUG('propagate', '  '*depth, '[', port, '] = ', val, ' --> ', w.end.block.name, '[', w.end.port, ']')
                 
-                if w.send(val) and w.end.block.blockclass == 'function':
-                    self._propagate(w.end.block, t, depth+1)
+                # send value to wire
+                if w.send(val):
+                    # destination block is complete, recurse
+                    if w.end.block.blockclass == 'function':
+                        self._propagate(w.end.block, t, depth+1)
+                    elif w.end.block.type in ('inport', 'outport'):
+                        self._propagate(w.end.block, t, depth+1)
+
+    # ---------------------------------------------------------------------- #
 
     def report(self):
         """
