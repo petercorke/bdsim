@@ -852,6 +852,9 @@ class BlockDiagram:
                     if self.stop is not None:
                         print('\n--- stop requested at t={:f} by {:s}'.format(self.t, str(self.stop)))
                         break
+
+                    if self.debug_stop:
+                        self._debugger()
                     
                 # save buffered data in a Struct
                 out = Struct('results')
@@ -943,6 +946,8 @@ class BlockDiagram:
                 for b in self.blocklist:
                     if b.nout > 0:
                         print(b.name, b.output(t=self.t))
+            elif cmd[0] == 'i':
+                print(integrator.status, integrator.step_size, integrator.nfev)
             elif cmd[0] == 's':
                 # step
                 break
@@ -955,6 +960,15 @@ class BlockDiagram:
                 break
             elif cmd[0] == 'q':
                 sys.exit(1)
+            elif cmd[0] in 'h?':
+                print("p    print all outputs")
+                print("i    print integrator status")
+                print("s    single step")
+                print("c    continue")
+                print("t T  stop at or after time T")
+                print("q    quit")
+
+    # ---------------------------------------------------------------------- #
 
     def _propagate(self, b, t, depth=0):
         """
