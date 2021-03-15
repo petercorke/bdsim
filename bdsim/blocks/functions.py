@@ -479,7 +479,8 @@ class Interpolate(FunctionBlock):
         else:
             nin = 1
         super().__init__(nin=nin, nout=1, inputs=inputs, **kwargs)
-            
+        self.type = 'function'
+
         if xy is None:
             # process separate x and y vectors
             x = np.array(x)
@@ -496,13 +497,13 @@ class Interpolate(FunctionBlock):
             elif isinstance(xy, np.ndarray):
                 x = xy[:,0]
                 y = xy[:,1:]
-        self.f = scipy.interpolate.interp1d(x=x, y=y, kind=kind, axis=0, **kwargs)
+        self.f = scipy.interpolate.interp1d(x=x, y=y, kind=kind, axis=0)
         self.x = x
                 
     def start(self, **kwargs):
         if self.time:
             assert self.x[0] <= 0, 'interpolation not defined for t=0'
-            assert self.x[-1] >= self.T, 'interpolation not defined for t=T'
+            assert self.x[-1] >= self.bd.T, 'interpolation not defined for t=T'
         
     def output(self, t=None):
         if self.time:
