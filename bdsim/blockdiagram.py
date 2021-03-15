@@ -338,7 +338,7 @@ class BlockDiagram:
         for k,v in self.blockdict.items():
             print('{:12s}: '.format(k), ', '.join(v))
     
-    def connect(self, *args, name=None):
+    def connect(self, start, *ends, name=None):
         
         """
         TODO:
@@ -346,15 +346,13 @@ class BlockDiagram:
             block[1] = SigGen()  # use setitem
             block[1] = SumJunction(block2[3], block3[4]) * Gain(value=2)
         """
-                
-        start = args[0]
-        
+                        
         # convert to default plug on port 0 if need be
         if isinstance(start, Block):
             start = Plug(start, 0)
         start.type = 'start'
 
-        for end in args[1:]:
+        for end in ends:
             if isinstance(end, Block):
                 end = Plug(end, 0)
             end.type = 'end'
