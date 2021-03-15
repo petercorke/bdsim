@@ -402,19 +402,7 @@ class BlockDiagram:
         
         # namethe elements
         self.nblocks = len(self.blocklist)
-        # for b in self.blocklist:
-        #     if b.name is None:
-        #         i = self.blockcounter[b.type]
-        #         self.blockcounter[b.type] += 1
-        #         b.name = "{:s}.{:d}".format(b.type, i)
         self.nwires = len(self.wirelist)
-        # for (i,w) in enumerate(self.wirelist):
-        #     # w.id = i 
-        #     # if w.name is None:
-        #     #     w.name = "wire {:d}".format(i)
-        #     if w.start.block.blockclass == 'source':
-        #         w.blockclass = 'source'
-        
 
         error = False
         
@@ -426,12 +414,12 @@ class BlockDiagram:
             print('\nCompiling:')
         
         # process all subsystem imports
-        ssblocks = [b for b in self.blocklist if b.type == 'subsystem']
-        for b in ssblocks:
-            print('  importing subsystem', b.name)
-            if b.ssvar is not None:
-                print('-- Wiring in subsystem', b, 'from module local variable ', b.ssvar)
-            self._flatten(b, [b.name])
+        # ssblocks = [b for b in self.blocklist if b.type == 'subsystem']
+        # for b in ssblocks:
+        #     print('  importing subsystem', b.name)
+        #     if b.ssvar is not None:
+        #         print('-- Wiring in subsystem', b, 'from module local variable ', b.ssvar)
+        self.blocklist, self.wirelist = self._subsystem_import(self, None)
 
         # run block specific checks
         for b in self.blocklist:
@@ -525,74 +513,129 @@ class BlockDiagram:
             
         return self.compiled
     
-    #flatten the hierarchy
-    
-    def _flatten(top, subsys, path):
-        subsystems = [b for b in subsys.subsystem.blocklist if b.type == 'subsystem']
-        # recursively flatten all subsystems
-        for ss in subsystems:
-            flatten(top, ss, path + [ss.name] )
+
+    def _subsystem_import(self, bd, sspath):
         
-        # compile this subsystem TODO
-        if subsys.subsystem.compiled is False:
-            ok = subsys.subsystem.compile(subsystem=True)
-            if not ok:
-                raise ImportError('cant compile subsystem')
-        # sort the subsystem blocks into categories
-        inports = []
-        outports = []
-        others = []
-        for b in subsys.subsystem.blocklist:
-            if b.type == 'inport':
-                inports.append(b)
-            elif b.type == 'outport':
-                outports.append(b)
-            else:
-                others.append(b)
-        if len(inports) >1:
-            raise ImportError('subsystem has more than one input port element')
-        if len(outports) > 1:
-            raise ImportError('subsystem has more than one output port element')
-        if len(inports) == 0 and len(outports) == 0:
-            raise ImportError('subsystem has no input or output port elements')
+        blocks = []
+        wires = bd.wirelist
+
+        for b in bd.blocklist:
+            # rename the block to include subsystem path
+            if sspath is not None:
+                b.name = sspath + '/' + b.name
             
-        # connect the input port
-        inport = inports[0]
-        for w in top.wirelist:
-            if w.end.block == subsys:
-                # this top-level wire is input to subsystem
-                # reroute it
-                port = w.end.port
-                for w2 in inport.outports[port]:
-                    # w2 is the wire from INPORT to others within subsystem
+            if b.type == 'subsystem':
+                # deal with a subsystem
+                #  - recurse to import it
+                #  - add its blocks and wires to the set
+                ssb, ssw = self._subsystem_import(b.subsystem, b.name)
+                blocks.extend(ssb)
+                wires.extend(ssw)
+
+                # INPORT/OUTPORT blocks now become simple pass throughs
+                # same number of inputs and outputs
+                b.inport.nin = b.inport.nout
+                b.outport.nout = b.outport.nin
+
+                # modify the wiring, keep the INPORT/OUTPORT blocks but lose
+                # the SUBSYSTEM blocks
+                for w in bd.wirelist:
+                    # for all wires at this level, find those that connect
+                    # to the subsystem and tweak them
+                    if w.start.block == b:
+                        # SS output
+                        w.start.block = b.outport
+                    if w.end.block == b:
+                        # SS input
+                        w.end.block = b.inport
+
+            else:
+                # not a subsystem, just add the block to the list
+                blocks.append(b)
+
+        # systematically renumber all blocks and wires
+        for i, b in enumerate(blocks):
+            b.id = i
+        for i, w in enumerate(wires):
+            w.id = i
+        return blocks, wires
+
+
+    # # ---------------------------------------------------------------------- #
+    # def _flatten(top, subsys, path):
+
+    #     #flatten the hierarchy
+
+    #     subsystems = [b for b in subsys.subsystem.blocklist if b.type == 'subsystem']
+    #     # recursively flatten all subsystems
+    #     for ss in subsystems:
+    #         print('flattening', ss)
+    #         top._flatten(ss, path + [ss.name] )
+        
+    #     # compile this subsystem TODO
+    #     if subsys.subsystem.compiled is False:
+    #         ok = subsys.subsystem.compile(subsystem=True)
+    #         if not ok:
+    #             raise ImportError(f"cannot compile subsystem {subsys.name}")
+    #     # sort the subsystem blocks into categories
+    #     inports = []
+    #     outports = []
+    #     others = []
+    #     for b in subsys.subsystem.blocklist:
+    #         if b.type == 'inport':
+    #             inports.append(b)
+    #         elif b.type == 'outport':
+    #             outports.append(b)
+    #         else:
+    #             others.append(b)
+    #     if len(inports) >1:
+    #         raise ImportError('subsystem has more than one input port element')
+    #     if len(outports) > 1:
+    #         raise ImportError('subsystem has more than one output port element')
+    #     if len(inports) == 0 and len(outports) == 0:
+    #         raise ImportError('subsystem has no input or output port elements')
+            
+    #     # connect the input port
+    #     inport = inports[0]
+    #     for w in top.wirelist:
+    #         if w.end.block == subsys:
+    #             # this top-level wire is input to subsystem
+    #             # reroute it
+    #             port = w.end.port
+    #             for w2 in inport.outports[port]:
+    #                 # w2 is the wire from INPORT to others within subsystem
                     
-                    # make w2 start at the source driving INPORT
-                    w2.start.block = w.start.block
-                    w2.start.port = w.start.port
-        # remove all wires connected to the inport
-        top.wirelist = [w for w in top.wirelist if w.end.block != subsys]
+    #                 # make w2 start at the source driving INPORT
+    #                 w2.start.block = w.start.block
+    #                 w2.start.port = w.start.port
+    #     # remove all wires connected to the inport
+    #     top.wirelist = [w for w in top.wirelist if w.end.block != subsys]
                 
-        # connect the output port
-        outport = outports[0]
-        for w in top.wirelist:
-            if w.start.block == subsys:
-                # this top-level wire is output from subsystem
-                # reroute it
-                port = w.start.port
-                w2 = outport.inports[port]
-                # w2 is the wire to OUTPORT from others within subsystem
+    #     # connect the output port
+    #     outport = outports[0]
+    #     for w in top.wirelist:
+    #         if w.start.block == subsys:
+    #             # this top-level wire is output from subsystem
+    #             # reroute it
+    #             port = w.start.port
+    #             w2 = outport.inports[port]
+    #             # w2 is the wire to OUTPORT from others within subsystem
                 
-                # make w2 end at the destination from OUTPORT
-                w2.end.block = w.end.block
-                w2.end.port = w.end.port
-        # remove all wires connected to the outport
-        top.wirelist = [w for w in top.wirelist if w.start.block != subsys]
-        top.blocklist.remove(subsys)
-        for b in others:
-            top.add_block(b)   # add remaining blocks from subsystem
-            b.name = '/'.join(path + [b.name])
-        top.wirelist.extend(subsys.subsystem.wirelist)  # add remaining wires from subsystem
+    #             # make w2 end at the destination from OUTPORT
+    #             w2.end.block = w.end.block
+    #             w2.end.port = w.end.port
+    #     # remove all wires connected to the outport
+    #     top.wirelist = [w for w in top.wirelist if w.start.block != subsys]
+    #     try:
+    #         top.blocklist.remove(subsys)
+    #     except:
+    #         print('HACK')
+    #     for b in others:
+    #         top.add_block(b)   # add remaining blocks from subsystem
+    #         b.name = '/'.join(path + [b.name])
+    #     top.wirelist.extend(subsys.subsystem.wirelist)  # add remaining wires from subsystem
     
+    # ---------------------------------------------------------------------- #
         
     def run(self, T=10.0, dt=0.1, solver='RK45', 
             block=False, checkfinite=True, watch=[], debug=False,
