@@ -80,7 +80,7 @@ class Integrator(TransferBlock):
             - a vector, of the same shape as ``x0`` that applies elementwise to
               the state.
         """
-        self.type = 'INTEGRATOR'
+        self.type = 'integrator'
         super().__init__(nin=1, nout=1, inputs=inputs, **kwargs)
 
         if isinstance(x0, (int, float)):
