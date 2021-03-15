@@ -225,15 +225,32 @@ class BlockDiagram:
         """
         nblocks = len(blocklist)
         if nblocks == 0:
+            # add bdsim blocks folder
             blockpath = [Path(__file__).parent / 'blocks']
-            path = os.getenv('BDSIMPATH')
-            if path is not None:
-                for p in path.split(':'):
-                    blockpath.append(Path(p))            
+
+            # add RTB and MVTB if they exist
+            try:
+                import roboticstoolbox.blocks as pkg
+                blockpath.append(Path(pkg.__path__[0]))
+            except ImportError:
+                pass
+            try:
+                import machinvevisiontoolbox.blocks as pkg
+                blockpath.append(Path(pkg.__path__[0]))
+            except ImportError:
+                pass
+
+            # path = os.getenv('BDSIMPATH')
+            # if path is not None:
+            #     for p in path.split(':'):
+            #         blockpath.append(Path(p))            
             
             print('Loading blocks:')
 
             for path in blockpath:  # for each folder on the path
+                if not path.exists():
+                    print(f"WARNING: path does not exist: {path}")
+                    continue
                 for file in path.iterdir():  # for each file in the folder
                     # scan every file *.py to find block definitions
                     # a block is a class that subclasses Source, Sink, Function, Transfer and
