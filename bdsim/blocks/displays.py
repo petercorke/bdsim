@@ -45,7 +45,7 @@ class Scope(GraphicsBlock):
        +--------+---------+---------+
     """
     
-    def __init__(self, nin=None, styles=None, scale='auto', labels=None, grid=True, *inputs, **kwargs):
+    def __init__(self, nin=1, vector=0, styles=None, scale='auto', labels=None, grid=True, *inputs, **kwargs):
         """
         Create a block that plots input ports against time.
         
@@ -74,6 +74,9 @@ class Scope(GraphicsBlock):
             - a dict of options for `Line2D <https://matplotlib.org/3.2.2/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D>`_ or 
             - a  MATLAB-style linestyle like 'k--'
         
+        The number of inputs will be inferred from the length of the ``labels``
+        list if not specified.
+
         If multiple lines are plotted then a heterogeneous list of styles, dicts or strings,
         one per line must be given.
         
@@ -86,9 +89,9 @@ class Scope(GraphicsBlock):
             SCOPE()
             SCOPE(nin=2)
             SCOPE(nin=2, scale=[-1,2])
-            SCOPE(style=['k', 'r--'])
-            SCOPE(style='k--')
-            SCOPE(style={'color:', 'red, 'linestyle': '--''})
+            SCOPE(styles=['k', 'r--'])
+            SCOPE(styles='k--')
+            SCOPE(styles={'color:', 'red, 'linestyle': '--''})
             
         .. figure:: ../../figs/Figure_1.png
            :width: 500px
@@ -96,43 +99,58 @@ class Scope(GraphicsBlock):
 
            Example of scope display.
         """
-
-        self.type = 'scope'
-        if styles is not None:
-            self.styles = list(styles)
-            if nin is not None:
-                assert nin == len(styles), 'need one style per input'
+        def listify(s):
+            if isinstance(s, str):
+                return [s]
+            elif isinstance(s, (list, tuple)):
+                return s
             else:
-                nin = len(styles)
+                raise ValueError('unknown argument to listify')
+
+        nplots = None
+        self.type = 'scope'
+
+        if styles is not None:
+            self.styles = listify(styles)
+            if nplots is not None:
+                assert nplots == len(styles), 'need one style per input'
+            else:
+                nplots = len(styles)
 
         if labels is not None:
-            self.labels = list(labels)
-            if nin is not None:
-                assert nin == len(labels), 'need one label per input'
+            self.labels = listify(labels)
+            if nplots is not None:
+                assert nplots == len(labels), 'need one label per input'
             else:
-                nin = len(labels)
+                nplots = len(labels)
         else:
-            self.labels = labels
+            self.labels = None
 
-        if nin is None:
-            nin = 1
+        if vector > 0 and nin > 1:
+            raise ValueError('if vector > 0 nin must be 1')
+
+        if nplots is None:
+            if vector > 0:
+                nplots = vector
+            else:
+                nplots = nin
+
+        self.nplots = nplots
+        self.vector = vector
         
         super().__init__(nin=nin, inputs=inputs, **kwargs)
 
-        
         if styles is None:
-            self.styles = [ None ] * nin
+            self.styles = [ None ] * nplots
+      
+        self.xlabel = 'Time (s)'
         
         self.grid = grid
-                 
-        # init the arrays that hold the data
-        self.tdata = np.array([])
-        self.ydata = [np.array([]),] * nin
         
-        self.line = [None]*nin
+        self.line = [None] * nplots
         self.scale = scale
         
-        self.labels = labels
+
         # TODO, wire width
         # inherit names from wires, block needs to be able to introspect
         
@@ -140,17 +158,17 @@ class Scope(GraphicsBlock):
         # create the plot
         if self.bd.options.graphics:
             super().reset()   # TODO should this be here?
+
+            # init the arrays that hold the data
+            self.tdata = np.array([])
+            self.ydata = [np.array([]),] * self.nplots
+
+            # create the figures
             self.fig = self.create_figure()
             self.ax = self.fig.gca()
-            # figure out the labels
-            if self.labels is None:
-                self.labels = [self.sourcename(i) for i in range(0, self.nin)]
-                self.labels.insert(0, 'Time')
-            elif len(self.labels) == 1:
-                self.labels += [self.sourcename(i) for i in range(0, self.nin)]
-            else:
-                raise ValueError('incorrect number of labels specified for Scope')
-            for i in range(0, self.nin):
+            
+            # create empty lines with defined styles
+            for i in range(0, self.nplots):
                 args = []
                 kwargs = {}
                 style = self.styles[i]
@@ -159,20 +177,26 @@ class Scope(GraphicsBlock):
                 elif isinstance(style, str):
                     args = [style]
                 self.line[i], = self.ax.plot(self.tdata, self.ydata[i], *args, label=self.styles[i], **kwargs)
-            self.ax.set_ylabel(','.join(self.labels[1:]))
+
+            # label the axes
+            if self.labels is not None:
+                self.ax.set_ylabel(','.join(self.labels))
+            self.ax.set_xlabel(self.xlabel)
+            self.ax.set_title(self.name)
+
+            # grid control
             if self.grid is True:
                 self.ax.grid(self.grid)
             elif isinstance(self.grid, (list, tuple)):
                 self.ax.grid(True, *self.grid)
-                
+            
+            # set limits
             self.ax.set_xlim(0, self.bd.T)
-            self.ax.set_xlabel(self.labels[0])
 
-            self.ax.set_title(self.name)
             if self.scale != 'auto':
                 self.ax.set_ylim(*self.scale)
             if self.labels is not None:
-                self.ax.legend(self.labels[1:])
+                self.ax.legend(self.labels)
 
             plt.draw()
             plt.show(block=False)
@@ -183,10 +207,21 @@ class Scope(GraphicsBlock):
         # inputs are set
         if self.bd.options.graphics:
             self.tdata = np.append(self.tdata, self.bd.t)
-            for i,input in enumerate(self.inputs):
-                self.ydata[i] = np.append(self.ydata[i], input)
+
+            if self.vector:
+                # vector input on the input
+                data = self.inputs[0]
+                assert len(data) == self.nplots, 'vector input wrong width'
+                for i,input in enumerate(data):
+                    self.ydata[i] = np.append(self.ydata[i], input)
+            else:
+                # stash data from the inputs
+                assert len(self.inputs) == self.nplots, 'insufficient inputs'
+                for i,input in enumerate(self.inputs):
+                    self.ydata[i] = np.append(self.ydata[i], input)
+
             plt.figure(self.fig.number)
-            for i in range(0, self.nin):
+            for i in range(0, self.nplots):
                 self.line[i].set_data(self.tdata, self.ydata[i])
         
             if self.bd.options.animation:
