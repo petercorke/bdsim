@@ -1065,10 +1065,13 @@ class BlockDiagram:
             start = "{:d}[{:d}]".format(w.start.block.id, w.start.port)
             end = "{:d}[{:d}]".format(w.end.block.id, w.end.port)
             
-            value = w.end.block.inputs[w.end.port]
-            typ = type(value).__name__
-            if isinstance(value, np.ndarray):
-                typ += ' {:s}'.format(str(value.shape))
+            try:
+                value = w.end.block.inputs[w.end.port]
+                typ = type(value).__name__
+                if isinstance(value, np.ndarray):
+                    typ += ' {:s}'.format(str(value.shape))
+            except:
+                typ = '??'
             table.row( w.id, start, end, w.fullname, typ)
         table.print()
 
