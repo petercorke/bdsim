@@ -375,6 +375,8 @@ class BlockDiagram:
                 wire = Wire(start, end, name)
                 self.add_wire(wire)
         
+    # ---------------------------------------------------------------------- #
+
     def compile(self, subsystem=False, doimport=True):
         """
         Compile the block diagram
@@ -420,6 +422,13 @@ class BlockDiagram:
         #     if b.ssvar is not None:
         #         print('-- Wiring in subsystem', b, 'from module local variable ', b.ssvar)
         self.blocklist, self.wirelist = self._subsystem_import(self, None)
+
+        # check that wires all point to valid blocks
+        for w in self.wirelist:
+            if w.start.block not in self.blocklist:
+                raise RuntimeError(f"wire {w} starts at unreferenced block {w.start.block}")
+            if w.end.block not in self.blocklist:
+                raise RuntimeError(f"wire {w} ends at unreferenced block {w.end.block}")
 
         # run block specific checks
         for b in self.blocklist:
