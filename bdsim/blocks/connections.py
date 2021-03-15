@@ -314,6 +314,11 @@ class InPort(SubsystemBlock):
         super().__init__(nout=nout, **kwargs)
         self.type = 'inport'
 
+    def output(self, t=None):
+        # signal feed through
+
+        return self.inputs
+
 # ------------------------------------------------------------------------ #
 @block
 class OutPort(SubsystemBlock):
@@ -350,6 +355,9 @@ class OutPort(SubsystemBlock):
         super().__init__(nin=nin, inputs=inputs, **kwargs)
         self.type = 'outport'
 
+    def output(self, t=None):
+        # signal feed through
+        return self.inputs
 
 if __name__ == "__main__":
 
