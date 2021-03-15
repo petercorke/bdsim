@@ -1045,10 +1045,11 @@ class BlockDiagram:
                 Column("nin"),
                 Column("nout"),
                 Column("nstate"),
+                Column("type", headalign="^", colalign="<"),
                 border="thin"
             )
         for b in self.blocklist:
-            table.row( b.id, str(b), b.nin, b.nout, b.nstates)
+            table.row( b.id, str(b), b.nin, b.nout, b.nstates, b.type)
         table.print()
         
         # print all the wires
