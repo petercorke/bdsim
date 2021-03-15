@@ -917,29 +917,23 @@ class BlockDiagram:
                 raise RuntimeError(str(b) + ' has incomplete inputs')
             
         # gather the derivative
-        YD = np.array([])
-        for b in self.blocklist:
-            if b.blockclass == 'transfer':
-                assert b.updated, str(b) + ' has incomplete inputs'
-                yd = b.deriv().flatten()
-                YD = np.r_[YD, yd]
-
-        if self.debug_stop:
-            self._debugger()
+        YD = self.deriv()
 
         DEBUG('deriv', YD)
 
 
         return YD
 
-    def _debugger(self):
+    # ---------------------------------------------------------------------- #
+
+    def _debugger(self, integrator=None):
 
         if self.t_stop is not None and self.t < self.t_stop:
             return
 
         self.t_stop = None
         while True:
-            cmd = input(f"(bdsim, t={self.t}) ")
+            cmd = input(f"(bdsim, t={self.t:.4f}) ")
 
             if len(cmd) == 0:
                 continue
@@ -1116,7 +1110,21 @@ class BlockDiagram:
             except:
                 self._error_handler('step', b)
 
-                    
+    def deriv(self):
+        """
+        Harvest derivatives from all blocks .
+        """
+        YD = np.array([])
+        for b in self.blocklist:
+            if b.blockclass == 'transfer':
+                try:
+                    assert b.updated, 'block has incomplete inputs'
+                    yd = b.deriv().flatten()
+                    YD = np.r_[YD, yd]
+                except:
+                    self._error_handler('deriv', b)                    
+        return YD
+
     def start(self, **kwargs):
         """
         Inform all active blocks that.BlockDiagram is about to start.  Open files,
