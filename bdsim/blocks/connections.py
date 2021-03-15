@@ -250,7 +250,34 @@ class SubSystem(SubsystemBlock):
         else:
             raise ValueError('argument must be filename or BlockDiagram instance')
 
+        # check if valid input and output ports
+        ninp = 0
+        noutp = 0
+        for b in subsys.blocklist:
+            if b.type == 'inport':
+                ninp += 1
+            elif b.type == 'outport':
+                noutp += 1
+        
+        if ninp > 1:
+            raise ValueError('subsystem cannot have more than one INPORT block')
+        if noutp > 1:
+            raise ValueError('subsystem cannot have more than one OUTPORT block')
+        if ninp + noutp == 0:
+            raise ValueError('subsystem cannot have zero INPORT or OUTPORT blocks')
+
+        # it's valid, make a deep copy
         self.subsystem = copy.deepcopy(subsys)
+
+        # get references to the input and output port blocks
+        self.inport = None
+        self.outport = None
+        for b in self.subsystem.blocklist:
+            if b.type == 'inport':
+                self.inport = b
+            elif b.type == 'outport':
+                self.outport = b
+
         self.ssname = subsys.name
 
 # ------------------------------------------------------------------------ #
