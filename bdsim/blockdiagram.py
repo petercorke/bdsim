@@ -527,16 +527,20 @@ class BlockDiagram:
 
         # evaluate the network once to check out wire types
         x = self.getstate()
-        
-        try:
-            self.evaluate(x, 0.0)
-        except RuntimeError as err:
-            print('unrecoverable error in value propagation:', err)
-            error = True
+
+        if not subsystem:
+            try:
+                self.evaluate(x, 0.0)
+            except RuntimeError as err:
+                print('\nFrom compile: unrecoverable error in value propagation:', err)
+                error = True
             
-        if not error:
+        if error:
+            if not subsystem:
+                raise RuntimeError('could not compile system')
+        else:
             self.compiled = True
-            
+        
         return self.compiled
     
 
@@ -664,7 +668,7 @@ class BlockDiagram:
     # ---------------------------------------------------------------------- #
         
     def run(self, T=10.0, dt=0.1, solver='RK45', 
-            block=False, checkfinite=True, watch=[], debug=False,
+            block=False, checkfinite=True, minstepsize=1e-6, watch=[], debug=False,
             **kwargs):
         """
         Run the block diagram
@@ -679,6 +683,8 @@ class BlockDiagram:
         :type block: bool
         :param checkfinite: error if inf or nan on any wire, default True
         :type checkfinite: bool
+        :param minstepsize: minimum step length, default 1e-6
+        :type minstepsize: float
         :param watch: list of input ports to log
         :type watch: list
         :param ``**kwargs``: passed to ``scipy.integrate``
@@ -709,7 +715,9 @@ class BlockDiagram:
             - a ``Plug`` reference, ie. a block with an index or attribute
             - a string of the form "block[i]" which is port i of the block named block.
         
-
+        .. note:: Simulation stops if the step time falls below ``minsteplength``
+            which typically indicates that the solver is struggling with a very
+            harsh non-linearity.
         """
         
         assert self.compiled, 'Network has not been compiled'
@@ -743,7 +751,7 @@ class BlockDiagram:
             plugnamelist.append(str(plug))
 
         try:        
-            # tell all blocks we're doing a.BlockDiagram
+            # tell all blocks we're doing a BlockDiagram
             self.start()
     
             # get initial state from the stateful blocks
@@ -762,7 +770,7 @@ class BlockDiagram:
                 scipy_integrator = integrate.__dict__[solver]  # get user specified integrator
 
                 integrator = scipy_integrator(lambda t, y: self.evaluate(y, t),
-                                              t0=0.0, y0=x0, t_bound=T, max_step=dt)
+                                              t0=0.0, y0=x0, t_bound=T, max_step=dt, **kwargs)
 
                 # initialize list of time and states
                 tlist = []
@@ -772,10 +780,11 @@ class BlockDiagram:
                 while integrator.status == 'running':
 
                     # step the integrator, calls _deriv multiple times
-                    integrator.step()
+                    message = integrator.step()
 
                     if integrator.status == 'failed':
-                        print('integration completed with failed status ')
+                        print(fg('red') + f"\nintegration completed with failed status: {message}" + attr(0))
+                        break
 
                     # stash the results
                     tlist.append(integrator.t)
@@ -794,8 +803,15 @@ class BlockDiagram:
 
                     # has any block called a stop?
                     if self.stop is not None:
-                        print('\n--- stop requested at t={:f} by {:s}'.format(self.t, str(self.stop)))
+                        print(fg('red') + f"\n--- stop requested at t={self.t:.4f} by {self.stop:s}" + attr(0))
                         break
+
+                    if minstepsize is not None and integrator.step_size < minstepsize:
+                        print(fg('red') + f"\n--- stopping on minimum step size at t={self.t:.4f} with last stepsize {integrator.step_size:g}" + attr(0))
+                        break
+
+                    if self.debug_stop:
+                        self._debugger(integrator)
 
                 # save buffered data in a Struct
                 out = Struct('results')
@@ -850,7 +866,7 @@ class BlockDiagram:
         except RuntimeError as err:
             # bad things happens, print a message and return no result
             print('unrecoverable error in evaluation: ', err)
-            return None
+            raise
 
         # pause until all graphics blocks close
         self.done(block=block)
@@ -858,6 +874,7 @@ class BlockDiagram:
 
         return out
         
+    # ---------------------------------------------------------------------- #
 
     def evaluate(self, x, t):
         """
@@ -982,6 +999,7 @@ class BlockDiagram:
 
         # check for validity
         assert isinstance(out, list) and len(out) == b.nout, 'block output is wrong type/length'
+
         # TODO check output validity once at the start
         
         # check it has no nan or inf values
@@ -1043,14 +1061,31 @@ class BlockDiagram:
         
         if not self.compiled:
             print('** System has not been compiled, or had a compile time error')
-            
+
+    # ---------------------------------------------------------------------- #
+
+    def _error_handler(self, where, block):
+        err = sys.exc_info()  # get the exception
+
+        import traceback
+
+        print(fg('red'))
+        print(f"[{where}]: exception {err[0].__name__} occurred in {block.type} block {block.name}  ")
+        print(f">>>> {err[1]}\n")
+        traceback.print_tb(err[2])
+        print(attr(0))
+        raise RuntimeError('Fatal failure')
+
     def getstate(self):
         # get the state from each stateful block
         x0 = np.array([])
         for b in self.blocklist:
-            if b.blockclass == 'transfer':
-                x0 = np.r_[x0, b.getstate()]
-        #print('x0', x0)
+            try:
+                if b.blockclass == 'transfer':
+                    x0 = np.r_[x0, b.getstate()]
+                #print('x0', x0)
+            except:
+                self._error_handler('getstate', b)
         return x0
                         
     def reset(self):
@@ -1062,8 +1097,11 @@ class BlockDiagram:
 
         """
         for b in self.blocklist:
-            b.reset()     
-    
+            try:
+                b.reset()     
+            except:
+                self._error_handler('reset', b)
+
     def step(self):
         """
         Tell all blocks to take action on new inputs.  Relevant to Sink
@@ -1072,8 +1110,11 @@ class BlockDiagram:
         # TODO could be done by output method, even if no outputs
         
         for b in self.blocklist:
-            b.step()
-            self.count += 1
+            try:
+                b.step()
+                self.count += 1
+            except:
+                self._error_handler('step', b)
 
                     
     def start(self, **kwargs):
@@ -1085,10 +1126,11 @@ class BlockDiagram:
         
         """            
         for b in self.blocklist:
+            # print('starting block', b)
             try:
                 b.start(**kwargs)
             except:
-                raise RuntimeError('error in start method of block: ' + str(b) + ' - ' + str(sys.exc_info()[1])) from None
+                self._error_handler('start, b')
                 
             
     def done(self, **kwargs):
