@@ -111,7 +111,7 @@ class Mux(FunctionBlock):
             MUX(2, func1[2], sum3)
             
         multiplexes the outputs of blocks ``func1`` (port 2) and ``sum3`` into
-        a single output vector.  If the explicit inputs are omitted they can be wired
+        a single output vector as a 1D array.  If the explicit inputs are omitted they can be wired
         using the ``connect`` function.
         
         """
@@ -120,7 +120,7 @@ class Mux(FunctionBlock):
     
     def output(self, t=None):
         # TODO, handle inputs that are vectors themselves
-        return [ np.r_[self.inputs] ]
+        return [ np.array(self.inputs).flatten() ]
 
 
 # ------------------------------------------------------------------------ #
