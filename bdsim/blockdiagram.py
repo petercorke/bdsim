@@ -495,7 +495,7 @@ class BlockDiagram:
             # check all outputs are connected
             for port,connections in enumerate(b.outports):
                 if len(connections) == 0:
-                    print('  WARNING: block {:s} output {:d} is not connected'.format(str(b), port))
+                    print('  INFORMATION: block {:s} output {:d} is not connected'.format(str(b), port))
                     
             if b._inport_names is not None:
                 assert len(b._inport_names) == b.nin, 'incorrect number of input names given: ' + str(b)
