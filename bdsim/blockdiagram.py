@@ -16,6 +16,10 @@ import argparse
 from collections import Counter, namedtuple
 import numpy as np
 import scipy.integrate as integrate
+from colored import fg, attr
+import tempfile
+import subprocess
+import webbrowser
 
 from ansitable import ANSITable, Column
 
@@ -1029,13 +1033,25 @@ class BlockDiagram:
         
         """
         for b in self.blocklist:
-            b.done(**kwargs)
+            try:
+                b.done(**kwargs)
+            except:
+                self._error_handler('done', b)
+
+        
+    def closefigs(self):
+        print('fignum', self.fignum)
+        for i in range(self.fignum):
+            print('close', i+1)
+            plt.close(i+1)
+            plt.pause(0.1)
+        self.fignum = 0
             
     def savefig(self, format='pdf', **kwargs):
         for b in self.blocklist:
             b.savefig(format=format, **kwargs)
         
-    def dotfile(self, file):
+    def dotfile(self, filename):
         """
         Write a GraphViz dot file representing the network.
         
@@ -1047,45 +1063,63 @@ class BlockDiagram:
             % dot -Tpng -o out.png dotfile.dot
 
         """
-        with open(file, 'w') as file:
+
+        if isinstance(filename, str):
+            file = open(filename, 'w')
+        else:
+            file = filename
             
-            header = r"""digraph G {
+        header = r"""digraph G {
 
     graph [splines=ortho, rankdir=LR]
     node [shape=box]
     
     """
-            file.write(header)
-            # add the blocks
-            for b in self.blocklist:
-                options = []
-                if b.blockclass == "source":
-                    options.append("shape=box3d")
-                elif b.blockclass == "sink":
-                    options.append("shape=folder")
-                elif b.blockclass == "function":
-                    if b.type == 'gain':
-                        options.append("shape=triangle")
-                        options.append("orientation=-90")
-                        options.append('label="{:g}"'.format(b.gain))
-                    elif b.type == 'sum':
-                        options.append("shape=point")
-                elif b.blockclass == 'transfer':
-                    options.append("shape=component")
-                if b.pos is not None:
-                    options.append('pos="{:g},{:g}!"'.format(b.pos[0], b.pos[1]))
-                options.append('xlabel=<<BR/><FONT POINT-SIZE="8" COLOR="blue">{:s}</FONT>>'.format(b.type))
-                file.write('\t"{:s}" [{:s}]\n'.format(b.name, ', '.join(options)))
-            
-            # add the wires
-            for w in self.wirelist:
-                options = []
-                #options.append('xlabel="{:s}"'.format(w.name))
-                if w.end.block.type == 'sum':
-                    options.append('headlabel="{:s} "'.format(w.end.block.signs[w.end.port]))
-                file.write('\t"{:s}" -> "{:s}" [{:s}]\n'.format(w.start.block.name, w.end.block.name, ', '.join(options)))
+        file.write(header)
+        # add the blocks
+        for b in self.blocklist:
+            options = []
+            if b.blockclass == "source":
+                options.append("shape=box3d")
+            elif b.blockclass == "sink":
+                options.append("shape=folder")
+            elif b.blockclass == "function":
+                if b.type == 'gain':
+                    options.append("shape=triangle")
+                    options.append("orientation=-90")
+                    options.append('label="{:g}"'.format(b.gain))
+                elif b.type == 'sum':
+                    options.append("shape=point")
+            elif b.blockclass == 'transfer':
+                options.append("shape=component")
+            if b.pos is not None:
+                options.append('pos="{:g},{:g}!"'.format(b.pos[0], b.pos[1]))
+            options.append('xlabel=<<BR/><FONT POINT-SIZE="8" COLOR="blue">{:s}</FONT>>'.format(b.type))
+            file.write('\t"{:s}" [{:s}]\n'.format(b.name, ', '.join(options)))
+        
+        # add the wires
+        for w in self.wirelist:
+            options = []
+            #options.append('xlabel="{:s}"'.format(w.name))
+            if w.end.block.type == 'sum':
+                options.append('headlabel="{:s} "'.format(w.end.block.signs[w.end.port]))
+            file.write('\t"{:s}" -> "{:s}" [{:s}]\n'.format(w.start.block.name, w.end.block.name, ', '.join(options)))
 
-            file.write('}\n')
+        file.write('}\n')
+
+    def showgraph(self, **kwargs):
+        # create the temporary dotfile
+        dotfile = tempfile.TemporaryFile(mode="w")
+        self.dotfile(dotfile, **kwargs)
+
+        # rewind the dot file, create PDF file in the filesystem, run dot
+        dotfile.seek(0)
+        pdffile = tempfile.NamedTemporaryFile(suffix=".pdf", delete=False)
+        subprocess.run("dot -Tpdf", shell=True, stdin=dotfile, stdout=pdffile)
+
+        # open the PDF file in browser (hopefully portable), then cleanup
+        webbrowser.open(f"file://{pdffile.name}")
+        os.remove(pdffile.name)
             
     def blockvalues(self):
         for b in self.blocklist:
