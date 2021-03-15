@@ -6,7 +6,7 @@ Blocks
 The block diagrams comprise blocks which belong to one of a number of different categories. These come from
 the package ``bdsim.blocks``.
 
-.. inheritance-diagram:: bdsim.components.SourceBlock bdsim.components.SinkBlock bdsim.components.GraphicsBlock bdsim.components.FunctionBlock bdsim.components.TransferBlock bdsim.components.SubsystemBlock
+.. inheritance-diagram:: bdsim.components.SourceBlock bdsim.components.SinkBlock bdsim.graphics.GraphicsBlock bdsim.components.FunctionBlock bdsim.components.TransferBlock bdsim.components.SubsystemBlock
 
 
 Source blocks
@@ -50,16 +50,6 @@ Transfer blocks
    :special-members: __init__
    :exclude-members: output, reset, step, start, done, deriv
 
-Robot blocks
-------------
-
-.. automodule:: bdsim.blocks.robots
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :special-members: __init__
-   :exclude-members: output, reset, step, start, done, deriv
-
 Connection blocks
 -----------------
 
@@ -69,6 +59,40 @@ Connection blocks
    :show-inheritance:
    :special-members: __init__
    :exclude-members: output, reset, step, start, done
+
+Robot blocks
+------------
+
+Arm robots
+^^^^^^^^^^
+
+.. automodule:: roboticstoolbox.blocks.arm
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :special-members: __init__
+   :exclude-members: output, reset, step, start, done, deriv
+
+Mobile robots
+^^^^^^^^^^^^^
+
+.. automodule:: roboticstoolbox.blocks.mobile
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :special-members: __init__
+   :exclude-members: output, reset, step, start, done, deriv
+
+Multi rotor flying robots
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automodule:: roboticstoolbox.blocks.uav
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :special-members: __init__
+   :exclude-members: output, reset, step, start, done, deriv
+
 
 io blocks
 ---------
