@@ -203,7 +203,7 @@
 <span class="sd">            MUX(2, func1[2], sum3)</span>
 <span class="sd">            </span>
 <span class="sd">        multiplexes the outputs of blocks ``func1`` (port 2) and ``sum3`` into</span>
-<span class="sd">        a single output vector.  If the explicit inputs are omitted they can be wired</span>
+<span class="sd">        a single output vector as a 1D array.  If the explicit inputs are omitted they can be wired</span>
 <span class="sd">        using the ``connect`` function.</span>
 <span class="sd">        </span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -212,7 +212,7 @@
     
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="c1"># TODO, handle inputs that are vectors themselves</span>
-        <span class="k">return</span> <span class="p">[</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">]</span> <span class="p">]</span></div>
+        <span class="k">return</span> <span class="p">[</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span> <span class="p">]</span></div>
 
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
@@ -342,7 +342,34 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;argument must be filename or BlockDiagram instance&#39;</span><span class="p">)</span>
 
+        <span class="c1"># check if valid input and output ports</span>
+        <span class="n">ninp</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">noutp</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">subsys</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;inport&#39;</span><span class="p">:</span>
+                <span class="n">ninp</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">elif</span> <span class="n">b</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;outport&#39;</span><span class="p">:</span>
+                <span class="n">noutp</span> <span class="o">+=</span> <span class="mi">1</span>
+        
+        <span class="k">if</span> <span class="n">ninp</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;subsystem cannot have more than one INPORT block&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">noutp</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;subsystem cannot have more than one OUTPORT block&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ninp</span> <span class="o">+</span> <span class="n">noutp</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;subsystem cannot have zero INPORT or OUTPORT blocks&#39;</span><span class="p">)</span>
+
+        <span class="c1"># it&#39;s valid, make a deep copy</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">subsystem</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">subsys</span><span class="p">)</span>
+
+        <span class="c1"># get references to the input and output port blocks</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inport</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outport</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">subsystem</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;inport&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">inport</span> <span class="o">=</span> <span class="n">b</span>
+            <span class="k">elif</span> <span class="n">b</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;outport&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">outport</span> <span class="o">=</span> <span class="n">b</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">ssname</span> <span class="o">=</span> <span class="n">subsys</span><span class="o">.</span><span class="n">name</span></div></div>
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
@@ -377,7 +404,12 @@
 <span class="sd">        parent-level ``SubSystem`` block appear as outputs of this block.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nout</span><span class="o">=</span><span class="n">nout</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;inport&#39;</span></div></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;inport&#39;</span></div>
+
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="c1"># signal feed through</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span></div>
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 <div class="viewcode-block" id="OutPort"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.OutPort">[docs]</a><span class="nd">@block</span>
@@ -413,8 +445,11 @@
 <span class="sd">        parent-level ``SubSystem`` block are the inputs of this block.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="n">nin</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;outport&#39;</span></div></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;outport&#39;</span></div>
 
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="c1"># signal feed through</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span></div>
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
 

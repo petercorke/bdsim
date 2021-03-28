@@ -57,8 +57,8 @@
 <li class="toctree-l2"><a class="reference internal" href="#module-bdsim.blocks.sinks">Sink blocks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-bdsim.blocks.functions">Function blocks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-bdsim.blocks.transfers">Transfer blocks</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-bdsim.blocks.robots">Robot blocks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-bdsim.blocks.connections">Connection blocks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#robot-blocks">Robot blocks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-bdsim.blocks.io">io blocks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-bdsim.blocks.vision">Vision blocks</a></li>
 </ul>
@@ -103,15 +103,14 @@
 <h1>Blocks<a class="headerlink" href="#blocks" title="Permalink to this headline">¶</a></h1>
 <p>The block diagrams comprise blocks which belong to one of a number of different categories. These come from
 the package <code class="docutils literal notranslate"><span class="pre">bdsim.blocks</span></code>.</p>
-<div class="graphviz"><img src="_images/inheritance-86d07af98fe6af9f4f231c158ecf13d9010aa8ec.png" alt="Inheritance diagram of bdsim.components.SourceBlock, bdsim.components.SinkBlock, bdsim.components.GraphicsBlock, bdsim.components.FunctionBlock, bdsim.components.TransferBlock, bdsim.components.SubsystemBlock" usemap="#inheritance2fdfb15a6a" class="inheritance graphviz" /></div>
-<map id="inheritance2fdfb15a6a" name="inheritance2fdfb15a6a">
+<div class="graphviz"><img src="_images/inheritance-00e00602a76479f177342c9e44399fa23e344b20.png" alt="Inheritance diagram of bdsim.components.SourceBlock, bdsim.components.SinkBlock, bdsim.graphics.GraphicsBlock, bdsim.components.FunctionBlock, bdsim.components.TransferBlock, bdsim.components.SubsystemBlock" usemap="#inheritance978cde46aa" class="inheritance graphviz" /></div>
+<map id="inheritance978cde46aa" name="inheritance978cde46aa">
 <area shape="rect" id="node1" href="bdsim.html#bdsim.components.Block" target="_top" title="Construct a new block object." alt="" coords="5,104,175,129"/>
 <area shape="rect" id="node2" href="bdsim.html#bdsim.components.FunctionBlock" target="_top" title="A FunctionBlock is a subclass of Block that represents a block that has inputs" alt="" coords="231,5,449,31"/>
-<area shape="rect" id="node4" href="bdsim.html#bdsim.components.SinkBlock" target="_top" title="A SinkBlock is a subclass of Block that represents a block that has inputs" alt="" coords="243,55,437,80"/>
-<area shape="rect" id="node5" href="bdsim.html#bdsim.components.SourceBlock" target="_top" title="A SourceBlock is a subclass of Block that represents a block that has outputs" alt="" coords="235,104,445,129"/>
-<area shape="rect" id="node6" href="bdsim.html#bdsim.components.SubsystemBlock" target="_top" title="A Function is a subclass of Block that represents a block that has inputs" alt="" coords="223,153,457,179"/>
-<area shape="rect" id="node7" href="bdsim.html#bdsim.components.TransferBlock" target="_top" title="A TransferBlock is a subclass of Block that represents a block with inputs" alt="" coords="231,203,449,228"/>
-<area shape="rect" id="node3" href="bdsim.html#bdsim.components.GraphicsBlock" target="_top" title="A GraphicsBlock is a subclass of SinkBlock that represents a block that has inputs" alt="" coords="505,55,727,80"/>
+<area shape="rect" id="node3" href="bdsim.html#bdsim.components.SinkBlock" target="_top" title="A SinkBlock is a subclass of Block that represents a block that has inputs" alt="" coords="243,55,437,80"/>
+<area shape="rect" id="node4" href="bdsim.html#bdsim.components.SourceBlock" target="_top" title="A SourceBlock is a subclass of Block that represents a block that has outputs" alt="" coords="235,104,445,129"/>
+<area shape="rect" id="node5" href="bdsim.html#bdsim.components.SubsystemBlock" target="_top" title="A Function is a subclass of Block that represents a block that has inputs" alt="" coords="223,153,457,179"/>
+<area shape="rect" id="node6" href="bdsim.html#bdsim.components.TransferBlock" target="_top" title="A TransferBlock is a subclass of Block that represents a block with inputs" alt="" coords="231,203,449,228"/>
 </map><div class="section" id="module-bdsim.blocks.sources">
 <span id="source-blocks"></span><h2>Source blocks<a class="headerlink" href="#module-bdsim.blocks.sources" title="Permalink to this headline">¶</a></h2>
 <p>Source blocks:</p>
@@ -367,63 +366,6 @@ a number in the range [0,1] where 1 corresponds to one cycle.</p>
 <li><p>that perform graphics are a subclass of  <code class="docutils literal notranslate"><span class="pre">GraphicsBlock</span></code> → <code class="docutils literal notranslate"><span class="pre">SinkBlock</span></code> → <code class="docutils literal notranslate"><span class="pre">Block</span></code></p></li>
 </ul>
 <dl class="py class">
-<dt id="bdsim.blocks.sinks.MultiRotorPlot">
-<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.sinks.</code><code class="sig-name descname">MultiRotorPlot</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#MultiRotorPlot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.MultiRotorPlot" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.GraphicsBlock" title="bdsim.components.GraphicsBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.GraphicsBlock</span></code></a></p>
-<p><p style="border:10px; background-color:#000000; padding: 1em; color: white; font-size: 30px; font-weight: bold;">MULTIROTORPLOT</p></p>
-<table class="docutils align-left">
-<colgroup>
-<col style="width: 31%" />
-<col style="width: 35%" />
-<col style="width: 35%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>1</p></td>
-<td><p>0</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td><p>dict</p></td>
-<td></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<dl class="py method">
-<dt id="bdsim.blocks.sinks.MultiRotorPlot.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">inputs</span></em>, <em class="sig-param"><span class="n">scale</span><span class="o">=</span><span class="default_value">[- 2, 2, - 2, 2, 10]</span></em>, <em class="sig-param"><span class="n">flapscale</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">projection</span><span class="o">=</span><span class="default_value">'ortho'</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#MultiRotorPlot.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.MultiRotorPlot.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<em>dict</em>) – A dictionary of vehicle geometric and inertial properties</p></li>
-<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
-<li><p><strong>scale</strong> (<em>array_like</em>) – dimensions of workspace: xmin, xmax, ymin, ymax, zmin, zmax</p></li>
-<li><p><strong>flapscale</strong> (<em>float</em>) – exagerate flapping angle by this factor, default is 1</p></li>
-<li><p><strong>projection</strong> (<em>str</em>) – 3D projection: ortho or perspective, defaults to ‘ortho’</p></li>
-<li><p><strong>**kwargs</strong> – common Block options</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>a MULTIROTOPLOT block</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>MultiRobotPlot instance</p>
-</dd>
-</dl>
-<p>Create a block that displays/animates a multi-rotor flying vehicle.</p>
-<div class="figure align-default" id="id1">
-<a class="reference internal image-reference" href="_images/multirotorplot.png"><img alt="example of generated graphic" src="_images/multirotorplot.png" style="width: 500px;" /></a>
-<p class="caption"><span class="caption-text">Example of quad-rotor display.</span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
-</div>
-<p>Written by Pauline Pounds 2004</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
 <dt id="bdsim.blocks.sinks.Print">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.sinks.</code><code class="sig-name descname">Print</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#Print"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.Print" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.SinkBlock" title="bdsim.components.SinkBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SinkBlock</span></code></a></p>
@@ -486,156 +428,6 @@ at each simulation time step.</p>
 </dd></dl>
 
 <dl class="py class">
-<dt id="bdsim.blocks.sinks.Scope">
-<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.sinks.</code><code class="sig-name descname">Scope</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#Scope"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.Scope" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.GraphicsBlock" title="bdsim.components.GraphicsBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.GraphicsBlock</span></code></a></p>
-<p><p style="border:10px; background-color:#000000; padding: 1em; color: white; font-size: 30px; font-weight: bold;">SCOPE</p></p>
-<table class="docutils align-left">
-<colgroup>
-<col style="width: 31%" />
-<col style="width: 35%" />
-<col style="width: 35%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>1</p></td>
-<td><p>0</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td><p>float,
-A(N,)</p></td>
-<td></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<dl class="py method">
-<dt id="bdsim.blocks.sinks.Scope.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">nin</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">styles</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">scale</span><span class="o">=</span><span class="default_value">'auto'</span></em>, <em class="sig-param"><span class="n">labels</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">grid</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">inputs</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#Scope.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.Scope.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a block that plots input ports against time.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>nin</strong> (<em>int</em><em>, </em><em>optional</em>) – number of inputs, defaults to length of style vector if given,
-otherwise 1</p></li>
-<li><p><strong>styles</strong> (<em>optional str</em><em> or </em><em>dict</em><em>, </em><em>list of strings</em><em> or </em><em>dicts; one per line</em>) – styles for each line to be plotted</p></li>
-<li><p><strong>scale</strong> (<em>2-element sequence</em>) – y-axis scale, defaults to ‘auto’</p></li>
-<li><p><strong>labels</strong> (<em>sequence of strings</em>) – vertical axis labels</p></li>
-<li><p><strong>grid</strong> (<em>bool</em><em> or </em><em>sequence</em>) – draw a grid, default is on. Can be boolean or a tuple of 
-options for grid()</p></li>
-<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
-<li><p><strong>**kwargs</strong> – common Block options</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A SCOPE block</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>Scope instance</p>
-</dd>
-</dl>
-<p>Create a block that plots input ports against time.</p>
-<p>Each line can have its own color or style which is specified by:</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>a dict of options for <a class="reference external" href="https://matplotlib.org/3.2.2/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D">Line2D</a> or</p></li>
-<li><p>a  MATLAB-style linestyle like ‘k–’</p></li>
-</ul>
-</div></blockquote>
-<p>If multiple lines are plotted then a heterogeneous list of styles, dicts or strings,
-one per line must be given.</p>
-<p>The vertical scale factor defaults to auto-scaling but can be fixed by
-providing a 2-tuple [ymin, ymax]. All lines are plotted against the
-same vertical scale.</p>
-<p>Examples:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SCOPE</span><span class="p">()</span>
-<span class="n">SCOPE</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-<span class="n">SCOPE</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">])</span>
-<span class="n">SCOPE</span><span class="p">(</span><span class="n">style</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="s1">&#39;r--&#39;</span><span class="p">])</span>
-<span class="n">SCOPE</span><span class="p">(</span><span class="n">style</span><span class="o">=</span><span class="s1">&#39;k--&#39;</span><span class="p">)</span>
-<span class="n">SCOPE</span><span class="p">(</span><span class="n">style</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;color:&#39;</span><span class="p">,</span> <span class="s1">&#39;red, &#39;</span><span class="n">linestyle</span><span class="s1">&#39;: &#39;</span><span class="o">--</span><span class="s1">&#39;&#39;</span><span class="p">})</span>
-</pre></div>
-</div>
-<div class="figure align-default" id="id2">
-<a class="reference internal image-reference" href="_images/Figure_1.png"><img alt="example of generated graphic" src="_images/Figure_1.png" style="width: 500px;" /></a>
-<p class="caption"><span class="caption-text">Example of scope display.</span><a class="headerlink" href="#id2" title="Permalink to this image">¶</a></p>
-</div>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt id="bdsim.blocks.sinks.ScopeXY">
-<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.sinks.</code><code class="sig-name descname">ScopeXY</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#ScopeXY"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.ScopeXY" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.GraphicsBlock" title="bdsim.components.GraphicsBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.GraphicsBlock</span></code></a></p>
-<p><p style="border:10px; background-color:#000000; padding: 1em; color: white; font-size: 30px; font-weight: bold;">SCOPEXY</p></p>
-<table class="docutils align-left">
-<colgroup>
-<col style="width: 31%" />
-<col style="width: 35%" />
-<col style="width: 35%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>2</p></td>
-<td><p>0</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td><p>float</p></td>
-<td></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<dl class="py method">
-<dt id="bdsim.blocks.sinks.ScopeXY.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">style</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">inputs</span></em>, <em class="sig-param"><span class="n">scale</span><span class="o">=</span><span class="default_value">'auto'</span></em>, <em class="sig-param"><span class="n">labels</span><span class="o">=</span><span class="default_value">['X', 'Y']</span></em>, <em class="sig-param"><span class="n">init</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#ScopeXY.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.ScopeXY.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>style</strong> (<em>optional str</em><em> or </em><em>dict</em>) – line style</p></li>
-<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
-<li><p><strong>scale</strong> (<em>2-</em><em> or </em><em>4-element sequence</em>) – y-axis scale, defaults to ‘auto’</p></li>
-<li><p><strong>labels</strong> (<em>2-element tuple</em><em> or </em><em>list</em>) – axis labels (xlabel, ylabel)</p></li>
-<li><p><strong>**kwargs</strong> – common Block options</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A SCOPEXY block</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>ScopeXY instance</p>
-</dd>
-</dl>
-<p>Create an XY scope.</p>
-<p>This block has two inputs which are plotted against each other. Port 0
-is the horizontal axis, and port 1 is the vertical axis.</p>
-<p>The line style is given by either:</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>a dict of options for <code class="docutils literal notranslate"><span class="pre">plot</span></code>, or</p></li>
-<li><p>as a simple MATLAB-style linestyle like <code class="docutils literal notranslate"><span class="pre">'k--'</span></code>.</p></li>
-</ul>
-</div></blockquote>
-<p>The scale factor defaults to auto-scaling but can be fixed by
-providing either:</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>a 2-tuple [min, max] which is used for the x- and y-axes</p></li>
-<li><p>a 4-tuple [xmin, xmax, ymin, ymax]</p></li>
-</ul>
-</div></blockquote>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
 <dt id="bdsim.blocks.sinks.Stop">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.sinks.</code><code class="sig-name descname">Stop</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#Stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.Stop" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.SinkBlock" title="bdsim.components.SinkBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SinkBlock</span></code></a></p>
@@ -680,81 +472,6 @@ providing either:</p>
 </dd>
 </dl>
 <p>Conditionally stop the simulation.</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt id="bdsim.blocks.sinks.VehiclePlot">
-<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.sinks.</code><code class="sig-name descname">VehiclePlot</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#VehiclePlot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.VehiclePlot" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.GraphicsBlock" title="bdsim.components.GraphicsBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.GraphicsBlock</span></code></a></p>
-<p><p style="border:10px; background-color:#000000; padding: 1em; color: white; font-size: 30px; font-weight: bold;">VEHICLEPLOT</p></p>
-<table class="docutils align-left">
-<colgroup>
-<col style="width: 31%" />
-<col style="width: 35%" />
-<col style="width: 35%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>3</p></td>
-<td><p>0</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td><p>float</p></td>
-<td></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<dl class="py method">
-<dt id="bdsim.blocks.sinks.VehiclePlot.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">inputs</span></em>, <em class="sig-param"><span class="n">path</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">pathstyle</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">shape</span><span class="o">=</span><span class="default_value">'triangle'</span></em>, <em class="sig-param"><span class="n">color</span><span class="o">=</span><span class="default_value">'blue'</span></em>, <em class="sig-param"><span class="n">fill</span><span class="o">=</span><span class="default_value">'white'</span></em>, <em class="sig-param"><span class="n">size</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">scale</span><span class="o">=</span><span class="default_value">'auto'</span></em>, <em class="sig-param"><span class="n">labels</span><span class="o">=</span><span class="default_value">['X', 'Y']</span></em>, <em class="sig-param"><span class="n">square</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">init</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#VehiclePlot.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.VehiclePlot.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
-<li><p><strong>path</strong> (<em>bool</em><em>, </em><em>optional</em>) – plot path taken by vehicle, defaults to True</p></li>
-<li><p><strong>pathstyle</strong> (<em>str</em><em> or </em><em>dict</em><em>, </em><em>optional</em>) – linestyle for path, defaults to None</p></li>
-<li><p><strong>shape</strong> (<em>str</em><em>, </em><em>optional</em>) – vehicle shape: ‘triangle’ (default) or ‘box’</p></li>
-<li><p><strong>color</strong> (<em>str</em><em>, </em><em>optional</em>) – vehicle outline color, defaults to “blue”</p></li>
-<li><p><strong>fill</strong> (<em>str</em><em>, </em><em>optional</em>) – vehicle fill color, defaults to “white”</p></li>
-<li><p><strong>size</strong> (<em>float</em><em>, </em><em>optional</em>) – length of vehicle, defaults to 1</p></li>
-<li><p><strong>scale</strong> (<em>2-</em><em> or </em><em>4-element sequence</em>) – x- and y-axis scale, defaults to ‘auto’</p></li>
-<li><p><strong>labels</strong> (<em>2-element tuple</em><em> or </em><em>list</em>) – axis labels (xlabel, ylabel)</p></li>
-<li><p><strong>square</strong> (<em>bool</em><em>, </em><em>optional</em>) – Set aspect ratio to 1, defaults to True</p></li>
-<li><p><strong>init</strong> (<em>callable</em><em>, </em><em>optional</em>) – initialize graphics, defaults to None</p></li>
-<li><p><strong>**kwargs</strong> – common Block options</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A VEHICLEPLOT block</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>VehiclePlot instance</p>
-</dd>
-</dl>
-<p>Create a vehicle animation similar to the figure below.</p>
-<p>Notes:</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>The <code class="docutils literal notranslate"><span class="pre">init</span></code> function is called after the axes are initialized
-and can be used to draw application specific detail on the
-plot. In the example below, this is the dot and star.</p></li>
-<li><p>A dynamic trail, showing path to date can be animated if
-the option <code class="docutils literal notranslate"><span class="pre">path</span></code> is True.</p></li>
-<li><p>Two shapes of vehicle can be drawn, a narrow triangle and a box
-(as seen below).</p></li>
-</ul>
-</div></blockquote>
-<div class="figure align-default" id="id3">
-<a class="reference internal image-reference" href="_images/rvc4_4.gif"><img alt="example of generated graphic" src="_images/rvc4_4.gif" style="width: 500px;" /></a>
-<p class="caption"><span class="caption-text">Example of vehicle display (animated).  The label at the top is the
-block name.</span><a class="headerlink" href="#id3" title="Permalink to this image">¶</a></p>
-</div>
 </dd></dl>
 
 </dd></dl>
@@ -1385,291 +1102,6 @@ form.</p>
 </dd></dl>
 
 </div>
-<div class="section" id="module-bdsim.blocks.robots">
-<span id="robot-blocks"></span><h2>Robot blocks<a class="headerlink" href="#module-bdsim.blocks.robots" title="Permalink to this headline">¶</a></h2>
-<p>Robot blocks:
-- have inputs and outputs
-- are a subclass of <code class="docutils literal notranslate"><span class="pre">FunctionBlock</span></code> → <code class="docutils literal notranslate"><span class="pre">Block</span></code> for kinematics and have no states
-- are a subclass of <code class="docutils literal notranslate"><span class="pre">TransferBlock</span></code> → <code class="docutils literal notranslate"><span class="pre">Block</span></code> for dynamics and have states</p>
-<dl class="py class">
-<dt id="bdsim.blocks.robots.Bicycle">
-<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.robots.</code><code class="sig-name descname">Bicycle</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/robots.html#Bicycle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.robots.Bicycle" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.TransferBlock" title="bdsim.components.TransferBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></a></p>
-<p><p style="border:10px; background-color:#000000; padding: 1em; color: white; font-size: 30px; font-weight: bold;">BICYCLE</p></p>
-<table class="docutils align-left">
-<colgroup>
-<col style="width: 40%" />
-<col style="width: 30%" />
-<col style="width: 30%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>2</p></td>
-<td><p>3</p></td>
-<td><p>3</p></td>
-</tr>
-<tr class="row-odd"><td><p>float</p></td>
-<td><p>float</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<dl class="py method">
-<dt id="bdsim.blocks.robots.Bicycle.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">inputs</span></em>, <em class="sig-param"><span class="n">x0</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">L</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">vlim</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">slim</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/robots.html#Bicycle.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.robots.Bicycle.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
-<li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – Inital state, defaults to 0</p></li>
-<li><p><strong>L</strong> (<em>float</em><em>, </em><em>optional</em>) – Wheelbase, defaults to 1</p></li>
-<li><p><strong>vlim</strong> (<em>float</em><em>, </em><em>optional</em>) – Velocity limit, defaults to 1</p></li>
-<li><p><strong>slim</strong> (<em>float</em><em>, </em><em>optional</em>) – Steering limit, defaults to 1</p></li>
-<li><p><strong>**kwargs</strong> – common Block options</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>a BICYCLE block</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>Bicycle instance</p>
-</dd>
-</dl>
-<p>Create a vehicle model with Bicycle kinematics.</p>
-<p>Bicycle kinematic model with state <span class="math notranslate nohighlight">\([x, y,        heta]\)</span>.</p>
-<p>The block has two input ports:</p>
-<blockquote>
-<div><ol class="arabic simple">
-<li><p>Vehicle speed (metres/sec).  The velocity limit <code class="docutils literal notranslate"><span class="pre">vlim</span></code> is
-applied to the magnitude of this input.</p></li>
-<li><p>Steering wheel angle (radians).  The steering limit <code class="docutils literal notranslate"><span class="pre">slim</span></code>
-is applied to the magnitude of this input.</p></li>
-</ol>
-</div></blockquote>
-<p>and three output ports:</p>
-<blockquote>
-<div><ol class="arabic simple">
-<li><p>x position in the world frame (metres)</p></li>
-<li><p>y positon in the world frame (metres)</p></li>
-<li><p>heading angle with respect to the world frame (radians)</p></li>
-</ol>
-</div></blockquote>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt id="bdsim.blocks.robots.DiffSteer">
-<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.robots.</code><code class="sig-name descname">DiffSteer</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/robots.html#DiffSteer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.robots.DiffSteer" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.TransferBlock" title="bdsim.components.TransferBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></a></p>
-<p><p style="border:10px; background-color:#000000; padding: 1em; color: white; font-size: 30px; font-weight: bold;">DIFFSTEER</p></p>
-<table class="docutils align-left">
-<colgroup>
-<col style="width: 40%" />
-<col style="width: 30%" />
-<col style="width: 30%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>2</p></td>
-<td><p>3</p></td>
-<td><p>3</p></td>
-</tr>
-<tr class="row-odd"><td><p>float</p></td>
-<td><p>float</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<dl class="py method">
-<dt id="bdsim.blocks.robots.DiffSteer.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">inputs</span></em>, <em class="sig-param"><span class="n">R</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">W</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">x0</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/robots.html#DiffSteer.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.robots.DiffSteer.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
-<li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – Inital state, defaults to 0</p></li>
-<li><p><strong>R</strong> (<em>float</em><em>, </em><em>optional</em>) – Wheel radius, defaults to 1</p></li>
-<li><p><strong>W</strong> – Wheel separation in lateral direction, defaults to 1</p></li>
-<li><p><strong>**kwargs</strong> – common Block options</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>a DIFFSTEER block</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>DifSteer instance</p>
-</dd>
-</dl>
-<p>Create a differential steer vehicle model with Unicycle kinematics, with inputs
-given as wheel angular velocity.</p>
-<p>Unicycle kinematic model with state <span class="math notranslate nohighlight">\([x, y, \theta]\)</span>.</p>
-<p>The block has two input ports:</p>
-<blockquote>
-<div><ol class="arabic simple">
-<li><p>Left-wheel angular velocity (radians/sec).</p></li>
-<li><p>Right-wheel angular velocity (radians/sec).</p></li>
-</ol>
-</div></blockquote>
-<p>and three output ports:</p>
-<blockquote>
-<div><ol class="arabic simple">
-<li><p>x position in the world frame (metres)</p></li>
-<li><p>y positon in the world frame (metres)</p></li>
-<li><p>heading angle with respect to the world frame (radians)</p></li>
-</ol>
-</div></blockquote>
-<p>Note:</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>wheel velocity is defined such that if both are positive the vehicle
-moves forward.</p></li>
-</ul>
-</div></blockquote>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt id="bdsim.blocks.robots.MultiRotor">
-<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.robots.</code><code class="sig-name descname">MultiRotor</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/robots.html#MultiRotor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.robots.MultiRotor" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.TransferBlock" title="bdsim.components.TransferBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></a></p>
-<p><p style="border:10px; background-color:#000000; padding: 1em; color: white; font-size: 30px; font-weight: bold;">MULTIROTOR</p></p>
-<table class="docutils align-left">
-<colgroup>
-<col style="width: 40%" />
-<col style="width: 30%" />
-<col style="width: 30%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>1</p></td>
-<td><p>1</p></td>
-<td><p>16</p></td>
-</tr>
-<tr class="row-odd"><td><p>A(4,)</p></td>
-<td><p>dict</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<dl class="py method">
-<dt id="bdsim.blocks.robots.MultiRotor.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">inputs</span></em>, <em class="sig-param"><span class="n">groundcheck</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">speedcheck</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">x0</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/robots.html#MultiRotor.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.robots.MultiRotor.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<em>dict</em>) – Vehicle geometric and inertial parameters</p></li>
-<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
-<li><p><strong>groundcheck</strong> (<em>bool</em>) – Prevent vehicle moving below ground , defaults to True</p></li>
-<li><p><strong>speedcheck</strong> (<em>bool</em>) – Check for zero rotor speed, defaults to True</p></li>
-<li><p><strong>x0</strong> (<em>TYPE</em><em>, </em><em>optional</em>) – Initial state, defaults to all zeros</p></li>
-<li><p><strong>**kwargs</strong> – common Block options</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>a MULTIROTOR block</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>MultiRotor instance</p>
-</dd>
-</dl>
-<p>Create a a multi-rotor dynamic model block.</p>
-<p>The block has one input port which is a vector of input rotor speeds
-in (radians/sec).  These are, looking down, clockwise from the front rotor
-which lies on the x-axis.</p>
-<p>The block has one output port which is a dictionary signal with the
-following items:</p>
-<blockquote>
-<div><ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">x</span></code> pose in the world frame as <span class="math notranslate nohighlight">\([x, y, z, \theta_Y, \theta_P, \theta_R]\)</span></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">vb</span></code> translational velocity in the world frame (metres/sec)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">w</span></code> angular rates in the world frame as yaw-pitch-roll rates (radians/second)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">a1s</span></code> longitudinal flapping angles (radians)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">b1s</span></code> lateral flapping angles (radians)</p></li>
-</ul>
-</div></blockquote>
-<p>Based on MATLAB code developed by Pauline Pounds 2004.</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt id="bdsim.blocks.robots.Unicycle">
-<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.robots.</code><code class="sig-name descname">Unicycle</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/robots.html#Unicycle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.robots.Unicycle" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.TransferBlock" title="bdsim.components.TransferBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></a></p>
-<p><p style="border:10px; background-color:#000000; padding: 1em; color: white; font-size: 30px; font-weight: bold;">UNICYCLE</p></p>
-<table class="docutils align-left">
-<colgroup>
-<col style="width: 40%" />
-<col style="width: 30%" />
-<col style="width: 30%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>2</p></td>
-<td><p>3</p></td>
-<td><p>3</p></td>
-</tr>
-<tr class="row-odd"><td><p>float</p></td>
-<td><p>float</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<dl class="py method">
-<dt id="bdsim.blocks.robots.Unicycle.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">inputs</span></em>, <em class="sig-param"><span class="n">x0</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/robots.html#Unicycle.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.robots.Unicycle.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
-<li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – Inital state, defaults to 0</p></li>
-<li><p><strong>*inputs</strong> – Optional incoming connections</p></li>
-<li><p><strong>**kwargs</strong> – common Block options</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>a UNICYCLE block</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>Unicycle instance</p>
-</dd>
-</dl>
-<p>Create a vehicle model with Unicycle kinematics.</p>
-<p>Unicycle kinematic model with state <span class="math notranslate nohighlight">\([x, y, \theta]\)</span>.</p>
-<p>The block has two input ports:</p>
-<blockquote>
-<div><ol class="arabic simple">
-<li><p>Vehicle speed (metres/sec).</p></li>
-<li><p>Angular velocity (radians/sec).</p></li>
-</ol>
-</div></blockquote>
-<p>and three output ports:</p>
-<blockquote>
-<div><ol class="arabic simple">
-<li><p>x position in the world frame (metres)</p></li>
-<li><p>y positon in the world frame (metres)</p></li>
-<li><p>heading angle with respect to the world frame (radians)</p></li>
-</ol>
-</div></blockquote>
-</dd></dl>
-
-</dd></dl>
-
-</div>
 <div class="section" id="module-bdsim.blocks.connections">
 <span id="connection-blocks"></span><h2>Connection blocks<a class="headerlink" href="#module-bdsim.blocks.connections" title="Permalink to this headline">¶</a></h2>
 <p>Connection blocks are in two categories:</p>
@@ -1905,7 +1337,7 @@ them into a single vector signal.  For example:</p>
 </pre></div>
 </div>
 <p>multiplexes the outputs of blocks <code class="docutils literal notranslate"><span class="pre">func1</span></code> (port 2) and <code class="docutils literal notranslate"><span class="pre">sum3</span></code> into
-a single output vector.  If the explicit inputs are omitted they can be wired
+a single output vector as a 1D array.  If the explicit inputs are omitted they can be wired
 using the <code class="docutils literal notranslate"><span class="pre">connect</span></code> function.</p>
 </dd></dl>
 
@@ -2050,6 +1482,1145 @@ subsystem.</p></li>
 
 </dd></dl>
 
+</div>
+<div class="section" id="robot-blocks">
+<h2>Robot blocks<a class="headerlink" href="#robot-blocks" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-roboticstoolbox.blocks.arm">
+<span id="arm-robots"></span><h3>Arm robots<a class="headerlink" href="#module-roboticstoolbox.blocks.arm" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="roboticstoolbox.blocks.arm.ArmPlot">
+<em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.arm.</code><code class="sig-name descname">ArmPlot</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#ArmPlot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.ArmPlot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.graphics.GraphicsBlock</span></code></p>
+<p><p style="border:10px; background-color:#000000; padding: 1em; color: white; font-size: 30px; font-weight: bold;">ARMPLOT</p></p>
+<table class="docutils align-left">
+<colgroup>
+<col style="width: 31%" />
+<col style="width: 35%" />
+<col style="width: 35%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>inputs</p></td>
+<td><p>outputs</p></td>
+<td><p>states</p></td>
+</tr>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>0</p></td>
+<td><p>0</p></td>
+</tr>
+<tr class="row-odd"><td><p>ndarray</p></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt id="roboticstoolbox.blocks.arm.ArmPlot.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">robot</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">inputs</span></em>, <em class="sig-param"><span class="n">q0</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">backend</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#ArmPlot.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.ArmPlot.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>robot</strong> (<em>Robot subclass</em>) – Robot model</p></li>
+<li><p><strong>backend</strong> (<em>str</em>) – RTB backend name, default is pyplot</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>An ARMPLOT block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>ArmPlot instance</p>
+</dd>
+</dl>
+<p>Create a robot animation.</p>
+<p>Notes:</p>
+<blockquote>
+<div><blockquote>
+<div><ul class="simple">
+<li><p>Uses RTB <code class="docutils literal notranslate"><span class="pre">plot</span></code> method</p></li>
+</ul>
+</div></blockquote>
+<p>Example of vehicle display (animated).  The label at the top is the
+block name.</p>
+</div></blockquote>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="roboticstoolbox.blocks.arm.CirclePath">
+<em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.arm.</code><code class="sig-name descname">CirclePath</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#CirclePath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.CirclePath" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.SourceBlock" title="bdsim.components.SourceBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SourceBlock</span></code></a></p>
+<p><p style="border:10px; background-color:#000000; padding: 1em; color: white; font-size: 30px; font-weight: bold;">CIRCLEPATH</p></p>
+<table class="docutils align-left">
+<colgroup>
+<col style="width: 40%" />
+<col style="width: 30%" />
+<col style="width: 30%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>inputs</p></td>
+<td><p>outputs</p></td>
+<td><p>states</p></td>
+</tr>
+<tr class="row-even"><td><p>0 or 1</p></td>
+<td><p>1</p></td>
+<td><p>0</p></td>
+</tr>
+<tr class="row-odd"><td><p>float</p></td>
+<td><p>float</p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt id="roboticstoolbox.blocks.arm.CirclePath.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">radius</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">centre</span><span class="o">=</span><span class="default_value">0, 0, 0</span></em>, <em class="sig-param"><span class="n">pose</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">phase</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">frequency</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">unit</span><span class="o">=</span><span class="default_value">'rps'</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">inputs</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#CirclePath.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.CirclePath.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y0</strong> (<em>array_like</em><em>(</em><em>m</em><em>)</em>) – initial value</p></li>
+<li><p><strong>yf</strong> (<em>array_like</em><em>(</em><em>m</em><em>)</em>) – final value</p></li>
+<li><p><strong>time</strong> (<em>bool</em>) – x is simulation time, defaults to False</p></li>
+<li><p><strong>traj</strong> (<em>str</em>) – trajectory type: ‘lspb’ [default] or ‘tpoly’</p></li>
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>TRAJ block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Traj instance</p>
+</dd>
+</dl>
+<p>Create a trajectory block.</p>
+<p>A block that generates a trajectory using a trapezoidal or quintic
+polynomial profile.</p>
+<p>A simple triangle function with domain [0,10] and range [0,1] can be
+defined by:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">INTERPOLATE</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">10</span><span class="p">),</span> <span class="n">y</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>We might also express this as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">INTERPOLATE</span><span class="p">(</span><span class="n">xy</span><span class="o">=</span><span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">0</span><span class="p">)])</span>
+</pre></div>
+</div>
+<p>The distance along the trajectory comes from:</p>
+<ul class="simple">
+<li><p>Input port 0</p></li>
+<li><p>Simulation time, if <code class="docutils literal notranslate"><span class="pre">time=True</span></code>.  In this case the block has no
+input ports and is a <code class="docutils literal notranslate"><span class="pre">Source</span></code> not a <code class="docutils literal notranslate"><span class="pre">Function</span></code>.</p></li>
+</ul>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="roboticstoolbox.blocks.arm.Delta2Tr">
+<em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.arm.</code><code class="sig-name descname">Delta2Tr</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#Delta2Tr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.Delta2Tr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<p><p style="border:10px; background-color:#000000; padding: 1em; color: white; font-size: 30px; font-weight: bold;">DELTA2TR</p></p>
+<table class="docutils align-left">
+<colgroup>
+<col style="width: 39%" />
+<col style="width: 32%" />
+<col style="width: 29%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>inputs</p></td>
+<td><p>outputs</p></td>
+<td><p>states</p></td>
+</tr>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>1</p></td>
+<td><p>0</p></td>
+</tr>
+<tr class="row-odd"><td><p>ndarray(6)</p></td>
+<td><p>SE3</p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt id="roboticstoolbox.blocks.arm.Delta2Tr.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">inputs</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#Delta2Tr.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.Delta2Tr.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a DELTA2TR block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Delta2Tr instance</p>
+</dd>
+</dl>
+<p>Delta to SE(3)</p>
+<p>The block has one input port:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>delta as an ndarray(6,n)</p></li>
+</ol>
+</div></blockquote>
+<p>and one output port:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>T as an SE3</p></li>
+</ol>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Seealso</dt>
+<dd class="field-odd"><p><code class="xref py py-func docutils literal notranslate"><span class="pre">spatialmath.base.delta2tr()</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="roboticstoolbox.blocks.arm.Forward_Kinematics">
+<em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.arm.</code><code class="sig-name descname">Forward_Kinematics</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#Forward_Kinematics"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.Forward_Kinematics" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<p><p style="border:10px; background-color:#000000; padding: 1em; color: white; font-size: 30px; font-weight: bold;">FORWARD_KINEMATICS</p></p>
+<table class="docutils align-left">
+<colgroup>
+<col style="width: 40%" />
+<col style="width: 30%" />
+<col style="width: 30%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>inputs</p></td>
+<td><p>outputs</p></td>
+<td><p>states</p></td>
+</tr>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>1</p></td>
+<td><p>0</p></td>
+</tr>
+<tr class="row-odd"><td><p>ndarray</p></td>
+<td><p>SE3</p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt id="roboticstoolbox.blocks.arm.Forward_Kinematics.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">robot</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">args</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">inputs</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#Forward_Kinematics.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.Forward_Kinematics.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>robot</strong> (<em>Robot subclass</em>) – Robot model</p></li>
+<li><p><strong>args</strong> (<em>dict</em>) – Options for fkine</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a FORWARD_KINEMATICS block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Foward_Kinematics instance</p>
+</dd>
+</dl>
+<p>Robot arm forward kinematic model.</p>
+<p>The block has one input port:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Joint configuration vector as an ndarray.</p></li>
+</ol>
+</div></blockquote>
+<p>and one output port:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>End-effector pose as an SE(3) object</p></li>
+</ol>
+</div></blockquote>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="roboticstoolbox.blocks.arm.Foward_Dynamics">
+<em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.arm.</code><code class="sig-name descname">Foward_Dynamics</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#Foward_Dynamics"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.Foward_Dynamics" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.TransferBlock" title="bdsim.components.TransferBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></a></p>
+<p><p style="border:10px; background-color:#000000; padding: 1em; color: white; font-size: 30px; font-weight: bold;">FORWARD_DYNAMICS</p></p>
+<table class="docutils align-left">
+<colgroup>
+<col style="width: 40%" />
+<col style="width: 30%" />
+<col style="width: 30%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>inputs</p></td>
+<td><p>outputs</p></td>
+<td><p>states</p></td>
+</tr>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>3</p></td>
+<td><p>0</p></td>
+</tr>
+<tr class="row-odd"><td><p>ndarray</p></td>
+<td><p>ndarray,
+ndarray,
+ndarray</p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt id="roboticstoolbox.blocks.arm.Foward_Dynamics.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">robot</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">inputs</span></em>, <em class="sig-param"><span class="n">q0</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#Foward_Dynamics.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.Foward_Dynamics.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>robot</strong> (<em>Robot subclass</em>) – Robot model</p></li>
+<li><p><strong>end</strong> (<em>Link</em><em> or </em><em>str</em>) – Link to compute pose of, defaults to end-effector</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a FORWARD_DYNAMICS block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Foward_Dynamics instance</p>
+</dd>
+</dl>
+<p>Robot arm forward dynamics model.</p>
+<p>The block has one input port:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Joint configuration vector as an ndarray.</p></li>
+</ol>
+</div></blockquote>
+<p>and three output ports:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>joint configuration</p></li>
+<li><p>joint velocity</p></li>
+<li><p>joint acceleration</p></li>
+</ol>
+</div></blockquote>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="roboticstoolbox.blocks.arm.Inverse_Dynamics">
+<em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.arm.</code><code class="sig-name descname">Inverse_Dynamics</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#Inverse_Dynamics"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.Inverse_Dynamics" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<p><p style="border:10px; background-color:#000000; padding: 1em; color: white; font-size: 30px; font-weight: bold;">INVERSE_DYNAMICS</p></p>
+<table class="docutils align-left">
+<colgroup>
+<col style="width: 40%" />
+<col style="width: 30%" />
+<col style="width: 30%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>inputs</p></td>
+<td><p>outputs</p></td>
+<td><p>states</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>1</p></td>
+<td><p>0</p></td>
+</tr>
+<tr class="row-odd"><td><p>ndarray,
+ndarray,
+ndarray</p></td>
+<td><p>ndarray</p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt id="roboticstoolbox.blocks.arm.Inverse_Dynamics.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">robot</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">inputs</span></em>, <em class="sig-param"><span class="n">gravity</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#Inverse_Dynamics.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.Inverse_Dynamics.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>robot</strong> (<em>Robot subclass</em>) – Robot model</p></li>
+<li><p><strong>gravity</strong> (<em>Link</em><em> or </em><em>str</em>) – Link to compute pose of, defaults to end-effector</p></li>
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>an INVERSE_DYNAMICS block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Inverse_Dynamics instance</p>
+</dd>
+</dl>
+<p>Robot arm forward dynamics model.</p>
+<p>The block has three input port:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Joint configuration vector as an ndarray.</p></li>
+<li><p>Joint velocity vector as an ndarray.</p></li>
+<li><p>Joint acceleration vector as an ndarray.</p></li>
+</ol>
+</div></blockquote>
+<p>and one output ports:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>joint torque/force</p></li>
+</ol>
+</div></blockquote>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="roboticstoolbox.blocks.arm.Inverse_Kinematics">
+<em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.arm.</code><code class="sig-name descname">Inverse_Kinematics</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#Inverse_Kinematics"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.Inverse_Kinematics" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<p><p style="border:10px; background-color:#000000; padding: 1em; color: white; font-size: 30px; font-weight: bold;">INVERSE_KINEMATICS</p></p>
+<table class="docutils align-left">
+<colgroup>
+<col style="width: 40%" />
+<col style="width: 30%" />
+<col style="width: 30%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>inputs</p></td>
+<td><p>outputs</p></td>
+<td><p>states</p></td>
+</tr>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>1</p></td>
+<td><p>0</p></td>
+</tr>
+<tr class="row-odd"><td><p>SE3</p></td>
+<td><p>ndarray</p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt id="roboticstoolbox.blocks.arm.Inverse_Kinematics.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">robot</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">q0</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">useprevious</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">ik</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">inputs</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#Inverse_Kinematics.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.Inverse_Kinematics.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>robot</strong> (<em>Robot subclass</em>) – Robot model</p></li>
+<li><p><strong>q0</strong> (<em>array_like</em><em>(</em><em>n</em><em>)</em>) – Initial joint angles</p></li>
+<li><p><strong>useprevious</strong> (<em>bool</em>) – Use previous IK solution as q0</p></li>
+<li><p><strong>ik</strong> (<em>callable f</em><em>(</em><em>T</em><em>)</em>) – Specify an IK function, default is ikine_LM</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>an INVERSE_KINEMATICS block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Inverse_Kinematics instance</p>
+</dd>
+</dl>
+<p>Robot arm inverse kinematic model.</p>
+<p>The block has one input port:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>End-effector pose as an SE(3) object</p></li>
+</ol>
+</div></blockquote>
+<p>and one output port:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Joint configuration vector as an ndarray.</p></li>
+</ol>
+</div></blockquote>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="roboticstoolbox.blocks.arm.Jacobian">
+<em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.arm.</code><code class="sig-name descname">Jacobian</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#Jacobian"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.Jacobian" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<p><p style="border:10px; background-color:#000000; padding: 1em; color: white; font-size: 30px; font-weight: bold;">JACOBIAN</p></p>
+<table class="docutils align-left">
+<colgroup>
+<col style="width: 40%" />
+<col style="width: 30%" />
+<col style="width: 30%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>inputs</p></td>
+<td><p>outputs</p></td>
+<td><p>states</p></td>
+</tr>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>1</p></td>
+<td><p>0</p></td>
+</tr>
+<tr class="row-odd"><td><p>ndarray</p></td>
+<td><p>ndarray</p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt id="roboticstoolbox.blocks.arm.Jacobian.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">robot</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">inputs</span></em>, <em class="sig-param"><span class="n">frame</span><span class="o">=</span><span class="default_value">'0'</span></em>, <em class="sig-param"><span class="n">inverse</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">pinv</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">transpose</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#Jacobian.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.Jacobian.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>robot</strong> (<em>Robot subclass</em>) – Robot model</p></li>
+<li><p><strong>frame</strong> (<em>str</em>) – Frame to compute Jacobian for: ‘0’ (default) or ‘e’</p></li>
+<li><p><strong>inverse</strong> (<em>bool</em>) – output inverse of Jacobian</p></li>
+<li><p><strong>pinv</strong> (<em>bool</em>) – output pseudo-inverse of Jacobian</p></li>
+<li><p><strong>transpose</strong> (<em>bool</em>) – output transpose of Jacobian</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a JACOBIAN block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Jacobian instance</p>
+</dd>
+</dl>
+<p>Robot arm Jacobian.</p>
+<p>The block has one input port:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Joint configuration vector as an ndarray.</p></li>
+</ol>
+</div></blockquote>
+<p>and one output port:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Jacobian matrix as an ndarray(6,n)</p></li>
+</ol>
+</div></blockquote>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="roboticstoolbox.blocks.arm.Point2Tr">
+<em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.arm.</code><code class="sig-name descname">Point2Tr</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#Point2Tr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.Point2Tr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<p><p style="border:10px; background-color:#000000; padding: 1em; color: white; font-size: 30px; font-weight: bold;">POINT2TR</p></p>
+<table class="docutils align-left">
+<colgroup>
+<col style="width: 39%" />
+<col style="width: 32%" />
+<col style="width: 29%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>inputs</p></td>
+<td><p>outputs</p></td>
+<td><p>states</p></td>
+</tr>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>1</p></td>
+<td><p>0</p></td>
+</tr>
+<tr class="row-odd"><td><p>ndarray(3)</p></td>
+<td><p>SE3</p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt id="roboticstoolbox.blocks.arm.Point2Tr.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">T</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">inputs</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#Point2Tr.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.Point2Tr.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>T</strong> (<em>SE3</em>) – the transform</p></li>
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a POINT2TR block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Point2Tr instance</p>
+</dd>
+</dl>
+<p>The block has one input port:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>a 3D point as an ndarray(3)</p></li>
+</ol>
+</div></blockquote>
+<p>and one output port:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>T as an SE3 with its position part replaced by the input</p></li>
+</ol>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Seealso</dt>
+<dd class="field-odd"><p><code class="xref py py-func docutils literal notranslate"><span class="pre">spatialmath.base.delta2tr()</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="roboticstoolbox.blocks.arm.Tr2Delta">
+<em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.arm.</code><code class="sig-name descname">Tr2Delta</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#Tr2Delta"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.Tr2Delta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<p><p style="border:10px; background-color:#000000; padding: 1em; color: white; font-size: 30px; font-weight: bold;">TR2DELTA</p></p>
+<table class="docutils align-left">
+<colgroup>
+<col style="width: 36%" />
+<col style="width: 36%" />
+<col style="width: 27%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>inputs</p></td>
+<td><p>outputs</p></td>
+<td><p>states</p></td>
+</tr>
+<tr class="row-even"><td><p>2</p></td>
+<td><p>1</p></td>
+<td><p>0</p></td>
+</tr>
+<tr class="row-odd"><td><p>SE3, SE3</p></td>
+<td><p>ndarray(6)</p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt id="roboticstoolbox.blocks.arm.Tr2Delta.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">inputs</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#Tr2Delta.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.Tr2Delta.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a TR2DELTA block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Tr2Delta instance</p>
+</dd>
+</dl>
+<p>Difference between T1 and T2 as a 6-vector</p>
+<p>The block has two input port:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>T1 as an SE3.</p></li>
+<li><p>T2 as an SE3.</p></li>
+</ol>
+</div></blockquote>
+<p>and one output port:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>delta as an ndarray(6,n)</p></li>
+</ol>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Seealso</dt>
+<dd class="field-odd"><p><code class="xref py py-func docutils literal notranslate"><span class="pre">spatialmath.base.tr2delta()</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="roboticstoolbox.blocks.arm.Traj">
+<em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.arm.</code><code class="sig-name descname">Traj</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#Traj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.Traj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<p><p style="border:10px; background-color:#000000; padding: 1em; color: white; font-size: 30px; font-weight: bold;">TRAJ</p></p>
+<table class="docutils align-left">
+<colgroup>
+<col style="width: 40%" />
+<col style="width: 30%" />
+<col style="width: 30%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>inputs</p></td>
+<td><p>outputs</p></td>
+<td><p>states</p></td>
+</tr>
+<tr class="row-even"><td><p>0 or 1</p></td>
+<td><p>1</p></td>
+<td><p>0</p></td>
+</tr>
+<tr class="row-odd"><td><p>float</p></td>
+<td><p>float</p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt id="roboticstoolbox.blocks.arm.Traj.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">y0</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">yf</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">T</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">time</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">traj</span><span class="o">=</span><span class="default_value">'lspb'</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">inputs</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#Traj.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.Traj.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y0</strong> (<em>array_like</em><em>(</em><em>m</em><em>)</em>) – initial value</p></li>
+<li><p><strong>yf</strong> (<em>array_like</em><em>(</em><em>m</em><em>)</em>) – final value</p></li>
+<li><p><strong>time</strong> (<em>bool</em>) – x is simulation time, defaults to False</p></li>
+<li><p><strong>traj</strong> (<em>str</em>) – trajectory type: ‘lspb’ [default] or ‘tpoly’</p></li>
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>TRAJ block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Traj instance</p>
+</dd>
+</dl>
+<p>Create a trajectory block.</p>
+<p>A block that generates a trajectory using a trapezoidal or quintic
+polynomial profile.</p>
+<p>A simple triangle function with domain [0,10] and range [0,1] can be
+defined by:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">INTERPOLATE</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">10</span><span class="p">),</span> <span class="n">y</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>We might also express this as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">INTERPOLATE</span><span class="p">(</span><span class="n">xy</span><span class="o">=</span><span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">0</span><span class="p">)])</span>
+</pre></div>
+</div>
+<p>The distance along the trajectory comes from:</p>
+<ul class="simple">
+<li><p>Input port 0</p></li>
+<li><p>Simulation time, if <code class="docutils literal notranslate"><span class="pre">time=True</span></code>.  In this case the block has no
+input ports and is a <code class="docutils literal notranslate"><span class="pre">Source</span></code> not a <code class="docutils literal notranslate"><span class="pre">Function</span></code>.</p></li>
+</ul>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-roboticstoolbox.blocks.mobile">
+<span id="mobile-robots"></span><h3>Mobile robots<a class="headerlink" href="#module-roboticstoolbox.blocks.mobile" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="roboticstoolbox.blocks.mobile.Bicycle">
+<em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.mobile.</code><code class="sig-name descname">Bicycle</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/mobile.html#Bicycle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.mobile.Bicycle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.TransferBlock" title="bdsim.components.TransferBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></a></p>
+<p><p style="border:10px; background-color:#000000; padding: 1em; color: white; font-size: 30px; font-weight: bold;">BICYCLE</p></p>
+<table class="docutils align-left">
+<colgroup>
+<col style="width: 40%" />
+<col style="width: 30%" />
+<col style="width: 30%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>inputs</p></td>
+<td><p>outputs</p></td>
+<td><p>states</p></td>
+</tr>
+<tr class="row-even"><td><p>2</p></td>
+<td><p>3</p></td>
+<td><p>3</p></td>
+</tr>
+<tr class="row-odd"><td><p>float</p></td>
+<td><p>float</p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt id="roboticstoolbox.blocks.mobile.Bicycle.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">inputs</span></em>, <em class="sig-param"><span class="n">x0</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">L</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">vlim</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">slim</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/mobile.html#Bicycle.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.mobile.Bicycle.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – Inital state, defaults to 0</p></li>
+<li><p><strong>L</strong> (<em>float</em><em>, </em><em>optional</em>) – Wheelbase, defaults to 1</p></li>
+<li><p><strong>vlim</strong> (<em>float</em><em>, </em><em>optional</em>) – Velocity limit, defaults to 1</p></li>
+<li><p><strong>slim</strong> (<em>float</em><em>, </em><em>optional</em>) – Steering limit, defaults to 1</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a BICYCLE block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Bicycle instance</p>
+</dd>
+</dl>
+<p>Create a vehicle model with Bicycle kinematics.</p>
+<p>Bicycle kinematic model with state <span class="math notranslate nohighlight">\([x, y,        heta]\)</span>.</p>
+<p>The block has two input ports:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Vehicle speed (metres/sec).  The velocity limit <code class="docutils literal notranslate"><span class="pre">vlim</span></code> is
+applied to the magnitude of this input.</p></li>
+<li><p>Steering wheel angle (radians).  The steering limit <code class="docutils literal notranslate"><span class="pre">slim</span></code>
+is applied to the magnitude of this input.</p></li>
+</ol>
+</div></blockquote>
+<p>and three output ports:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>x position in the world frame (metres)</p></li>
+<li><p>y positon in the world frame (metres)</p></li>
+<li><p>heading angle with respect to the world frame (radians)</p></li>
+</ol>
+</div></blockquote>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="roboticstoolbox.blocks.mobile.DiffSteer">
+<em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.mobile.</code><code class="sig-name descname">DiffSteer</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/mobile.html#DiffSteer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.mobile.DiffSteer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.TransferBlock" title="bdsim.components.TransferBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></a></p>
+<p><p style="border:10px; background-color:#000000; padding: 1em; color: white; font-size: 30px; font-weight: bold;">DIFFSTEER</p></p>
+<table class="docutils align-left">
+<colgroup>
+<col style="width: 40%" />
+<col style="width: 30%" />
+<col style="width: 30%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>inputs</p></td>
+<td><p>outputs</p></td>
+<td><p>states</p></td>
+</tr>
+<tr class="row-even"><td><p>2</p></td>
+<td><p>3</p></td>
+<td><p>3</p></td>
+</tr>
+<tr class="row-odd"><td><p>float</p></td>
+<td><p>float</p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt id="roboticstoolbox.blocks.mobile.DiffSteer.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">inputs</span></em>, <em class="sig-param"><span class="n">R</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">W</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">x0</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/mobile.html#DiffSteer.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.mobile.DiffSteer.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – Inital state, defaults to 0</p></li>
+<li><p><strong>R</strong> (<em>float</em><em>, </em><em>optional</em>) – Wheel radius, defaults to 1</p></li>
+<li><p><strong>W</strong> – Wheel separation in lateral direction, defaults to 1</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a DIFFSTEER block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>DifSteer instance</p>
+</dd>
+</dl>
+<p>Create a differential steer vehicle model with Unicycle kinematics, with inputs
+given as wheel angular velocity.</p>
+<p>Unicycle kinematic model with state <span class="math notranslate nohighlight">\([x, y, \theta]\)</span>.</p>
+<p>The block has two input ports:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Left-wheel angular velocity (radians/sec).</p></li>
+<li><p>Right-wheel angular velocity (radians/sec).</p></li>
+</ol>
+</div></blockquote>
+<p>and three output ports:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>x position in the world frame (metres)</p></li>
+<li><p>y positon in the world frame (metres)</p></li>
+<li><p>heading angle with respect to the world frame (radians)</p></li>
+</ol>
+</div></blockquote>
+<p>Note:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>wheel velocity is defined such that if both are positive the vehicle
+moves forward.</p></li>
+</ul>
+</div></blockquote>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="roboticstoolbox.blocks.mobile.Unicycle">
+<em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.mobile.</code><code class="sig-name descname">Unicycle</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/mobile.html#Unicycle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.mobile.Unicycle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.TransferBlock" title="bdsim.components.TransferBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></a></p>
+<p><p style="border:10px; background-color:#000000; padding: 1em; color: white; font-size: 30px; font-weight: bold;">UNICYCLE</p></p>
+<table class="docutils align-left">
+<colgroup>
+<col style="width: 40%" />
+<col style="width: 30%" />
+<col style="width: 30%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>inputs</p></td>
+<td><p>outputs</p></td>
+<td><p>states</p></td>
+</tr>
+<tr class="row-even"><td><p>2</p></td>
+<td><p>3</p></td>
+<td><p>3</p></td>
+</tr>
+<tr class="row-odd"><td><p>float</p></td>
+<td><p>float</p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt id="roboticstoolbox.blocks.mobile.Unicycle.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">inputs</span></em>, <em class="sig-param"><span class="n">x0</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/mobile.html#Unicycle.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.mobile.Unicycle.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – Inital state, defaults to 0</p></li>
+<li><p><strong>*inputs</strong> – Optional incoming connections</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a UNICYCLE block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Unicycle instance</p>
+</dd>
+</dl>
+<p>Create a vehicle model with Unicycle kinematics.</p>
+<p>Unicycle kinematic model with state <span class="math notranslate nohighlight">\([x, y, \theta]\)</span>.</p>
+<p>The block has two input ports:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Vehicle speed (metres/sec).</p></li>
+<li><p>Angular velocity (radians/sec).</p></li>
+</ol>
+</div></blockquote>
+<p>and three output ports:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>x position in the world frame (metres)</p></li>
+<li><p>y positon in the world frame (metres)</p></li>
+<li><p>heading angle with respect to the world frame (radians)</p></li>
+</ol>
+</div></blockquote>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="roboticstoolbox.blocks.mobile.VehiclePlot">
+<em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.mobile.</code><code class="sig-name descname">VehiclePlot</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/mobile.html#VehiclePlot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.mobile.VehiclePlot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.graphics.GraphicsBlock</span></code></p>
+<p><p style="border:10px; background-color:#000000; padding: 1em; color: white; font-size: 30px; font-weight: bold;">VEHICLEPLOT</p></p>
+<table class="docutils align-left">
+<colgroup>
+<col style="width: 31%" />
+<col style="width: 35%" />
+<col style="width: 35%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>inputs</p></td>
+<td><p>outputs</p></td>
+<td><p>states</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>0</p></td>
+<td><p>0</p></td>
+</tr>
+<tr class="row-odd"><td><p>float</p></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt id="roboticstoolbox.blocks.mobile.VehiclePlot.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">inputs</span></em>, <em class="sig-param"><span class="n">path</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">pathstyle</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">shape</span><span class="o">=</span><span class="default_value">'triangle'</span></em>, <em class="sig-param"><span class="n">color</span><span class="o">=</span><span class="default_value">'blue'</span></em>, <em class="sig-param"><span class="n">fill</span><span class="o">=</span><span class="default_value">'white'</span></em>, <em class="sig-param"><span class="n">size</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">scale</span><span class="o">=</span><span class="default_value">'auto'</span></em>, <em class="sig-param"><span class="n">labels</span><span class="o">=</span><span class="default_value">['X', 'Y']</span></em>, <em class="sig-param"><span class="n">square</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">init</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/mobile.html#VehiclePlot.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.mobile.VehiclePlot.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>path</strong> (<em>bool</em><em>, </em><em>optional</em>) – plot path taken by vehicle, defaults to True</p></li>
+<li><p><strong>pathstyle</strong> (<em>str</em><em> or </em><em>dict</em><em>, </em><em>optional</em>) – linestyle for path, defaults to None</p></li>
+<li><p><strong>shape</strong> (<em>str</em><em>, </em><em>optional</em>) – vehicle shape: ‘triangle’ (default) or ‘box’</p></li>
+<li><p><strong>color</strong> (<em>str</em><em>, </em><em>optional</em>) – vehicle outline color, defaults to “blue”</p></li>
+<li><p><strong>fill</strong> (<em>str</em><em>, </em><em>optional</em>) – vehicle fill color, defaults to “white”</p></li>
+<li><p><strong>size</strong> (<em>float</em><em>, </em><em>optional</em>) – length of vehicle, defaults to 1</p></li>
+<li><p><strong>scale</strong> (<em>2-</em><em> or </em><em>4-element sequence</em>) – x- and y-axis scale, defaults to ‘auto’</p></li>
+<li><p><strong>labels</strong> (<em>2-element tuple</em><em> or </em><em>list</em>) – axis labels (xlabel, ylabel)</p></li>
+<li><p><strong>square</strong> (<em>bool</em><em>, </em><em>optional</em>) – Set aspect ratio to 1, defaults to True</p></li>
+<li><p><strong>init</strong> (<em>callable</em><em>, </em><em>optional</em>) – initialize graphics, defaults to None</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A VEHICLEPLOT block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>VehiclePlot instance</p>
+</dd>
+</dl>
+<p>Create a vehicle animation similar to the figure below.</p>
+<p>Notes:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>The <code class="docutils literal notranslate"><span class="pre">init</span></code> function is called after the axes are initialized
+and can be used to draw application specific detail on the
+plot. In the example below, this is the dot and star.</p></li>
+<li><p>A dynamic trail, showing path to date can be animated if
+the option <code class="docutils literal notranslate"><span class="pre">path</span></code> is True.</p></li>
+<li><p>Two shapes of vehicle can be drawn, a narrow triangle and a box
+(as seen below).</p></li>
+</ul>
+</div></blockquote>
+<div class="figure align-default" id="id2">
+<a class="reference internal image-reference" href="_images/rvc4_4.gif"><img alt="example of generated graphic" src="_images/rvc4_4.gif" style="width: 500px;" /></a>
+<p class="caption"><span class="caption-text">Example of vehicle display (animated).  The label at the top is the
+block name.</span><a class="headerlink" href="#id2" title="Permalink to this image">¶</a></p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-roboticstoolbox.blocks.uav">
+<span id="multi-rotor-flying-robots"></span><h3>Multi rotor flying robots<a class="headerlink" href="#module-roboticstoolbox.blocks.uav" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="roboticstoolbox.blocks.uav.MultiRotor">
+<em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.uav.</code><code class="sig-name descname">MultiRotor</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/uav.html#MultiRotor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.uav.MultiRotor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.TransferBlock" title="bdsim.components.TransferBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></a></p>
+<p><p style="border:10px; background-color:#000000; padding: 1em; color: white; font-size: 30px; font-weight: bold;">MULTIROTOR</p></p>
+<table class="docutils align-left">
+<colgroup>
+<col style="width: 40%" />
+<col style="width: 30%" />
+<col style="width: 30%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>inputs</p></td>
+<td><p>outputs</p></td>
+<td><p>states</p></td>
+</tr>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>1</p></td>
+<td><p>16</p></td>
+</tr>
+<tr class="row-odd"><td><p>A(4,)</p></td>
+<td><p>dict</p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt id="roboticstoolbox.blocks.uav.MultiRotor.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">inputs</span></em>, <em class="sig-param"><span class="n">groundcheck</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">speedcheck</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">x0</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/uav.html#MultiRotor.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.uav.MultiRotor.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>dict</em>) – Vehicle geometric and inertial parameters</p></li>
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>groundcheck</strong> (<em>bool</em>) – Prevent vehicle moving below ground , defaults to True</p></li>
+<li><p><strong>speedcheck</strong> (<em>bool</em>) – Check for zero rotor speed, defaults to True</p></li>
+<li><p><strong>x0</strong> (<em>TYPE</em><em>, </em><em>optional</em>) – Initial state, defaults to all zeros</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a MULTIROTOR block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>MultiRotor instance</p>
+</dd>
+</dl>
+<p>Create a a multi-rotor dynamic model block.</p>
+<p>The block has one input port which is a vector of input rotor speeds
+in (radians/sec).  These are, looking down, clockwise from the front rotor
+which lies on the x-axis.</p>
+<p>The block has one output port which is a dictionary signal with the
+following items:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">x</span></code> pose in the world frame as <span class="math notranslate nohighlight">\([x, y, z, \theta_Y, \theta_P, \theta_R]\)</span></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">vb</span></code> translational velocity in the world frame (metres/sec)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">w</span></code> angular rates in the world frame as yaw-pitch-roll rates (radians/second)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">a1s</span></code> longitudinal flapping angles (radians)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">b1s</span></code> lateral flapping angles (radians)</p></li>
+</ul>
+</div></blockquote>
+<p>Based on MATLAB code developed by Pauline Pounds 2004.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="roboticstoolbox.blocks.uav.MultiRotorPlot">
+<em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.uav.</code><code class="sig-name descname">MultiRotorPlot</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/uav.html#MultiRotorPlot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.uav.MultiRotorPlot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.graphics.GraphicsBlock</span></code></p>
+<p><p style="border:10px; background-color:#000000; padding: 1em; color: white; font-size: 30px; font-weight: bold;">MULTIROTORPLOT</p></p>
+<table class="docutils align-left">
+<colgroup>
+<col style="width: 31%" />
+<col style="width: 35%" />
+<col style="width: 35%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>inputs</p></td>
+<td><p>outputs</p></td>
+<td><p>states</p></td>
+</tr>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>0</p></td>
+<td><p>0</p></td>
+</tr>
+<tr class="row-odd"><td><p>dict</p></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt id="roboticstoolbox.blocks.uav.MultiRotorPlot.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">inputs</span></em>, <em class="sig-param"><span class="n">scale</span><span class="o">=</span><span class="default_value">[- 2, 2, - 2, 2, 10]</span></em>, <em class="sig-param"><span class="n">flapscale</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">projection</span><span class="o">=</span><span class="default_value">'ortho'</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/uav.html#MultiRotorPlot.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.uav.MultiRotorPlot.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>dict</em>) – A dictionary of vehicle geometric and inertial properties</p></li>
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>scale</strong> (<em>array_like</em>) – dimensions of workspace: xmin, xmax, ymin, ymax, zmin, zmax</p></li>
+<li><p><strong>flapscale</strong> (<em>float</em>) – exagerate flapping angle by this factor, default is 1</p></li>
+<li><p><strong>projection</strong> (<em>str</em>) – 3D projection: ortho or perspective, defaults to ‘ortho’</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a MULTIROTOPLOT block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>MultiRobotPlot instance</p>
+</dd>
+</dl>
+<p>Create a block that displays/animates a multi-rotor flying vehicle.</p>
+<div class="figure align-default" id="id3">
+<a class="reference internal image-reference" href="_images/multirotorplot.png"><img alt="example of generated graphic" src="_images/multirotorplot.png" style="width: 500px;" /></a>
+<p class="caption"><span class="caption-text">Example of quad-rotor display.</span><a class="headerlink" href="#id3" title="Permalink to this image">¶</a></p>
+</div>
+<p>Written by Pauline Pounds 2004</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
 </div>
 <div class="section" id="module-bdsim.blocks.io">
 <span id="io-blocks"></span><h2>io blocks<a class="headerlink" href="#module-bdsim.blocks.io" title="Permalink to this headline">¶</a></h2>

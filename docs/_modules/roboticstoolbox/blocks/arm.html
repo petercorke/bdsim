@@ -1,0 +1,918 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>roboticstoolbox.blocks.arm &#8212; Block diagram simulation 0.7 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/BDSimLogo_NoBackgnd@2x.png" alt="Logo"/>
+            </a></p>
+<h1 class="logo"><a href="../../../index.html">Block diagram simulation</a></h1>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=petercorke&repo=bdsim&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Code documentation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../bdsim.html">bdsim package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../bdsim.blocks.html">Blocks</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for roboticstoolbox.blocks.arm</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">sin</span><span class="p">,</span> <span class="n">cos</span><span class="p">,</span> <span class="n">atan2</span><span class="p">,</span> <span class="n">tan</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">pi</span>
+
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">spatialmath</span> <span class="kn">import</span> <span class="n">base</span><span class="p">,</span> <span class="n">SE3</span>
+
+<span class="kn">from</span> <span class="nn">bdsim.components</span> <span class="kn">import</span> <span class="n">TransferBlock</span><span class="p">,</span> <span class="n">FunctionBlock</span><span class="p">,</span> <span class="n">SourceBlock</span><span class="p">,</span> <span class="n">block</span>
+<span class="kn">from</span> <span class="nn">bdsim.graphics</span> <span class="kn">import</span> <span class="n">GraphicsBlock</span>
+
+<span class="kn">from</span> <span class="nn">roboticstoolbox</span> <span class="kn">import</span> <span class="n">tpoly_func</span><span class="p">,</span> <span class="n">lspb_func</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Robot blocks:</span>
+<span class="sd">- have inputs and outputs</span>
+<span class="sd">- are a subclass of ``FunctionBlock`` |rarr| ``Block`` for kinematics and have no states</span>
+<span class="sd">- are a subclass of ``TransferBlock`` |rarr| ``Block`` for dynamics and have states</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1"># The constructor of each class ``MyClass`` with a ``@block`` decorator becomes a method ``MYCLASS()`` of the BlockDiagram instance.</span>
+
+<span class="c1"># ------------------------------------------------------------------------ #</span>
+<div class="viewcode-block" id="Forward_Kinematics"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.arm.Forward_Kinematics">[docs]</a><span class="nd">@block</span>
+<span class="k">class</span> <span class="nc">Forward_Kinematics</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :blockname:`FORWARD_KINEMATICS`</span>
+<span class="sd">    </span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
+<span class="sd">    </span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | inputs     | outputs |  states |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | 1          | 1       | 0       |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | ndarray    | SE3     |         | </span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Forward_Kinematics.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.arm.Forward_Kinematics.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">robot</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">{},</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
+<span class="sd">        :type ``*inputs``: Block or Plug</span>
+<span class="sd">        :param robot: Robot model</span>
+<span class="sd">        :type robot: Robot subclass</span>
+<span class="sd">        :param args: Options for fkine</span>
+<span class="sd">        :type args: dict</span>
+<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        :return: a FORWARD_KINEMATICS block</span>
+<span class="sd">        :rtype: Foward_Kinematics instance</span>
+<span class="sd">        </span>
+<span class="sd">        Robot arm forward kinematic model.</span>
+<span class="sd">        </span>
+<span class="sd">        The block has one input port:</span>
+<span class="sd">            </span>
+<span class="sd">            1. Joint configuration vector as an ndarray.</span>
+<span class="sd">            </span>
+<span class="sd">        and one output port:</span>
+<span class="sd">            </span>
+<span class="sd">            1. End-effector pose as an SE(3) object</span>
+
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;forward-kinematics&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">robot</span> <span class="o">=</span> <span class="n">robot</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="n">args</span>
+            
+        <span class="bp">self</span><span class="o">.</span><span class="n">inport_names</span><span class="p">((</span><span class="s1">&#39;q&#39;</span><span class="p">,))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outport_names</span><span class="p">((</span><span class="s1">&#39;T&#39;</span><span class="p">,))</span></div>
+        
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">fkine</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">)]</span></div>
+
+<div class="viewcode-block" id="Inverse_Kinematics"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.arm.Inverse_Kinematics">[docs]</a><span class="nd">@block</span>
+<span class="k">class</span> <span class="nc">Inverse_Kinematics</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :blockname:`INVERSE_KINEMATICS`</span>
+<span class="sd">    </span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
+<span class="sd">    </span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | inputs     | outputs |  states |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | 1          | 1       | 0       |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | SE3        | ndarray |         | </span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Inverse_Kinematics.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.arm.Inverse_Kinematics.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">robot</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">q0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">useprevious</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ik</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param robot: Robot model</span>
+<span class="sd">        :type robot: Robot subclass</span>
+<span class="sd">        :param q0: Initial joint angles</span>
+<span class="sd">        :type q0: array_like(n)</span>
+<span class="sd">        :param useprevious: Use previous IK solution as q0</span>
+<span class="sd">        :type useprevious: bool</span>
+<span class="sd">        :param ik: Specify an IK function, default is ikine_LM</span>
+<span class="sd">        :type ik: callable f(T)</span>
+<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
+<span class="sd">        :type ``*inputs``: Block or Plug</span>
+<span class="sd">        :return: an INVERSE_KINEMATICS block</span>
+<span class="sd">        :rtype: Inverse_Kinematics instance</span>
+<span class="sd">        </span>
+<span class="sd">        Robot arm inverse kinematic model.</span>
+<span class="sd">        </span>
+<span class="sd">        The block has one input port:</span>
+<span class="sd">            </span>
+<span class="sd">            1. End-effector pose as an SE(3) object</span>
+<span class="sd">            </span>
+<span class="sd">        and one output port:</span>
+<span class="sd">            </span>
+<span class="sd">            1. Joint configuration vector as an ndarray.</span>
+
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;inverse-kinematics&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">robot</span> <span class="o">=</span> <span class="n">robot</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">q0</span> <span class="o">=</span> <span class="n">q0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qprev</span> <span class="o">=</span> <span class="n">q0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">useprevious</span> <span class="o">=</span> <span class="n">useprevious</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ik</span> <span class="o">=</span> <span class="kc">None</span>
+            
+        <span class="bp">self</span><span class="o">.</span><span class="n">inport_names</span><span class="p">((</span><span class="s1">&#39;T&#39;</span><span class="p">,))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outport_names</span><span class="p">((</span><span class="s1">&#39;q&#39;</span><span class="p">,))</span></div>
+    
+    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">useprevious</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qprev</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">q0</span>
+
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">useprevious</span><span class="p">:</span>
+            <span class="n">q0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qprev</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">q0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">q0</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ik</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">sol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">ikine_LM</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">q0</span><span class="o">=</span><span class="n">q0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ik</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">sol</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;inverse kinematic failure for pose&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">useprevious</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qprev</span> <span class="o">=</span> <span class="n">sol</span><span class="o">.</span><span class="n">q</span>
+
+        <span class="k">return</span> <span class="p">[</span><span class="n">sol</span><span class="o">.</span><span class="n">q</span><span class="p">]</span></div>
+<span class="c1"># ------------------------------------------------------------------------ #</span>
+<div class="viewcode-block" id="Jacobian"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.arm.Jacobian">[docs]</a><span class="nd">@block</span>
+<span class="k">class</span> <span class="nc">Jacobian</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :blockname:`JACOBIAN`</span>
+<span class="sd">    </span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
+<span class="sd">    </span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | inputs     | outputs |  states |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | 1          | 1       | 0       |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | ndarray    | ndarray |         | </span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Jacobian.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.arm.Jacobian.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">robot</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">frame</span><span class="o">=</span><span class="s1">&#39;0&#39;</span><span class="p">,</span> <span class="n">inverse</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">pinv</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">transpose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
+<span class="sd">        :type ``*inputs``: Block or Plug</span>
+<span class="sd">        :param robot: Robot model</span>
+<span class="sd">        :type robot: Robot subclass</span>
+<span class="sd">        :param frame: Frame to compute Jacobian for: &#39;0&#39; (default) or &#39;e&#39;</span>
+<span class="sd">        :type frame: str</span>
+<span class="sd">        :param inverse: output inverse of Jacobian</span>
+<span class="sd">        :type inverse: bool</span>
+<span class="sd">        :param pinv: output pseudo-inverse of Jacobian</span>
+<span class="sd">        :type pinv: bool</span>
+<span class="sd">        :param transpose: output transpose of Jacobian</span>
+<span class="sd">        :type transpose: bool</span>
+<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        :return: a JACOBIAN block</span>
+<span class="sd">        :rtype: Jacobian instance</span>
+<span class="sd">        </span>
+<span class="sd">        Robot arm Jacobian.</span>
+<span class="sd">        </span>
+<span class="sd">        The block has one input port:</span>
+<span class="sd">            </span>
+<span class="sd">            1. Joint configuration vector as an ndarray.</span>
+<span class="sd">            </span>
+<span class="sd">        and one output port:</span>
+<span class="sd">            </span>
+<span class="sd">            1. Jacobian matrix as an ndarray(6,n)</span>
+
+<span class="sd">        .. notes::</span>
+<span class="sd">            - Only one of ``inverse`` or ``pinv`` can be True</span>
+<span class="sd">            - ``inverse`` or ``pinv`` can be used in conjunction with ``transpose``</span>
+<span class="sd">            - ``inverse`` requires that the Jacobian is square</span>
+<span class="sd">            - If ``inverse`` is True and the Jacobian is singular a runtime</span>
+<span class="sd">              error will occur.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;jacobian&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">robot</span> <span class="o">=</span> <span class="n">robot</span>
+
+        <span class="k">if</span> <span class="n">frame</span> <span class="o">==</span> <span class="s1">&#39;0&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">jfunc</span> <span class="o">=</span> <span class="n">robot</span><span class="o">.</span><span class="n">jacob0</span>
+        <span class="k">elif</span> <span class="n">frame</span> <span class="o">==</span> <span class="s1">&#39;e&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">jfunc</span> <span class="o">=</span> <span class="n">robot</span><span class="o">.</span><span class="n">jacobe</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;unknown frame&#39;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">inverse</span> <span class="ow">and</span> <span class="n">robot</span><span class="o">.</span><span class="n">n</span> <span class="o">!=</span> <span class="mi">6</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;cannot invert a non square Jacobian&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">inverse</span> <span class="ow">and</span> <span class="n">pinv</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;can only set one of inverse and pinv&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inverse</span> <span class="o">=</span> <span class="n">inverse</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pinv</span> <span class="o">=</span> <span class="n">pinv</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transpose</span> <span class="o">=</span> <span class="n">transpose</span>
+            
+        <span class="bp">self</span><span class="o">.</span><span class="n">inport_names</span><span class="p">((</span><span class="s1">&#39;q&#39;</span><span class="p">,))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outport_names</span><span class="p">((</span><span class="s1">&#39;J&#39;</span><span class="p">,))</span></div>
+        
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">J</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">jfunc</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">inverse</span><span class="p">:</span>
+            <span class="n">J</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">J</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pinv</span><span class="p">:</span>
+            <span class="n">J</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">pinv</span><span class="p">(</span><span class="n">J</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">transpose</span><span class="p">:</span>
+            <span class="n">J</span> <span class="o">=</span> <span class="n">J</span><span class="o">.</span><span class="n">T</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">J</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Tr2Delta"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.arm.Tr2Delta">[docs]</a><span class="nd">@block</span>
+<span class="k">class</span> <span class="nc">Tr2Delta</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :blockname:`TR2DELTA`</span>
+<span class="sd">    </span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
+<span class="sd">    </span>
+<span class="sd">       +------------+------------+---------+</span>
+<span class="sd">       | inputs     | outputs    |  states |</span>
+<span class="sd">       +------------+------------+---------+</span>
+<span class="sd">       | 2          | 1          | 0       |</span>
+<span class="sd">       +------------+------------+---------+</span>
+<span class="sd">       | SE3, SE3   | ndarray(6) |         | </span>
+<span class="sd">       +------------+------------+---------+</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Tr2Delta.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.arm.Tr2Delta.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
+<span class="sd">        :type ``*inputs``: Block or Plug</span>
+<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        :return: a TR2DELTA block</span>
+<span class="sd">        :rtype: Tr2Delta instance</span>
+<span class="sd">        </span>
+<span class="sd">        Difference between T1 and T2 as a 6-vector</span>
+<span class="sd">        </span>
+<span class="sd">        The block has two input port:</span>
+<span class="sd">            </span>
+<span class="sd">            1. T1 as an SE3.</span>
+<span class="sd">            2. T2 as an SE3.</span>
+<span class="sd">            </span>
+<span class="sd">        and one output port:</span>
+<span class="sd">            </span>
+<span class="sd">            1. delta as an ndarray(6,n)</span>
+
+<span class="sd">        :seealso: :func:`spatialmath.base.tr2delta`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;tr2delta&#39;</span>
+           
+        <span class="bp">self</span><span class="o">.</span><span class="n">inport_names</span><span class="p">((</span><span class="s1">&#39;T1&#39;</span><span class="p">,</span> <span class="s1">&#39;T2&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outport_names</span><span class="p">((</span><span class="s1">&#39;$\delta$&#39;</span><span class="p">,))</span></div>
+        
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">base</span><span class="o">.</span><span class="n">tr2delta</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">A</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">A</span><span class="p">)]</span></div>
+
+<span class="c1"># ------------------------------------------------------------------------ #</span>
+
+<div class="viewcode-block" id="Delta2Tr"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.arm.Delta2Tr">[docs]</a><span class="nd">@block</span>
+<span class="k">class</span> <span class="nc">Delta2Tr</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :blockname:`DELTA2TR`</span>
+<span class="sd">    </span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
+<span class="sd">    </span>
+<span class="sd">       +------------+----------+---------+</span>
+<span class="sd">       | inputs     | outputs  |  states |</span>
+<span class="sd">       +------------+----------+---------+</span>
+<span class="sd">       | 1          | 1        | 0       |</span>
+<span class="sd">       +------------+----------+---------+</span>
+<span class="sd">       | ndarray(6) | SE3      |         | </span>
+<span class="sd">       +------------+----------+---------+</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Delta2Tr.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.arm.Delta2Tr.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
+<span class="sd">        :type ``*inputs``: Block or Plug</span>
+<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        :return: a DELTA2TR block</span>
+<span class="sd">        :rtype: Delta2Tr instance</span>
+<span class="sd">        </span>
+<span class="sd">        Delta to SE(3)</span>
+<span class="sd">        </span>
+<span class="sd">        The block has one input port:</span>
+<span class="sd">            </span>
+<span class="sd">            1. delta as an ndarray(6,n)</span>
+<span class="sd">            </span>
+<span class="sd">        and one output port:</span>
+<span class="sd">            </span>
+<span class="sd">            1. T as an SE3</span>
+
+<span class="sd">        :seealso: :func:`spatialmath.base.delta2tr`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;delta2tr&#39;</span>
+           
+        <span class="bp">self</span><span class="o">.</span><span class="n">inport_names</span><span class="p">((</span><span class="s1">&#39;$\delta$&#39;</span><span class="p">,))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outport_names</span><span class="p">((</span><span class="s1">&#39;T&#39;</span><span class="p">,))</span></div>
+        
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">SE3</span><span class="o">.</span><span class="n">Delta</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span></div>
+
+<span class="c1"># ------------------------------------------------------------------------ #</span>
+
+<div class="viewcode-block" id="Point2Tr"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.arm.Point2Tr">[docs]</a><span class="nd">@block</span>
+<span class="k">class</span> <span class="nc">Point2Tr</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :blockname:`POINT2TR`</span>
+<span class="sd">    </span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
+<span class="sd">    </span>
+<span class="sd">       +------------+----------+---------+</span>
+<span class="sd">       | inputs     | outputs  |  states |</span>
+<span class="sd">       +------------+----------+---------+</span>
+<span class="sd">       | 1          | 1        | 0       |</span>
+<span class="sd">       +------------+----------+---------+</span>
+<span class="sd">       | ndarray(3) | SE3      |         | </span>
+<span class="sd">       +------------+----------+---------+</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Point2Tr.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.arm.Point2Tr.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param T: the transform</span>
+<span class="sd">        :type T: SE3</span>
+<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
+<span class="sd">        :type ``*inputs``: Block or Plug</span>
+<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        :return: a POINT2TR block</span>
+<span class="sd">        :rtype: Point2Tr instance</span>
+<span class="sd">        </span>
+<span class="sd">        The block has one input port:</span>
+<span class="sd">            </span>
+<span class="sd">            1. a 3D point as an ndarray(3)</span>
+<span class="sd">            </span>
+<span class="sd">        and one output port:</span>
+<span class="sd">            </span>
+<span class="sd">            1. T as an SE3 with its position part replaced by the input</span>
+
+<span class="sd">        :seealso: :func:`spatialmath.base.delta2tr`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;point2tr&#39;</span>
+           
+        <span class="bp">self</span><span class="o">.</span><span class="n">inport_names</span><span class="p">((</span><span class="s1">&#39;t&#39;</span><span class="p">,))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outport_names</span><span class="p">((</span><span class="s1">&#39;T&#39;</span><span class="p">,))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pose</span> <span class="o">=</span> <span class="n">T</span></div>
+        
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">T</span> <span class="o">=</span> <span class="n">SE3</span><span class="o">.</span><span class="n">SO3</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pose</span><span class="o">.</span><span class="n">R</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">T</span><span class="p">]</span></div>
+
+<span class="c1"># ------------------------------------------------------------------------ #</span>
+<div class="viewcode-block" id="Foward_Dynamics"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.arm.Foward_Dynamics">[docs]</a><span class="nd">@block</span>
+<span class="k">class</span> <span class="nc">Foward_Dynamics</span><span class="p">(</span><span class="n">TransferBlock</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :blockname:`FORWARD_DYNAMICS`</span>
+<span class="sd">    </span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
+<span class="sd">    </span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | inputs     | outputs |  states |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | 1          | 3       | 0       |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | ndarray    | ndarray,|         | </span>
+<span class="sd">       |            | ndarray,|         |</span>
+<span class="sd">       |            | ndarray |         |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Foward_Dynamics.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.arm.Foward_Dynamics.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">robot</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">q0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
+<span class="sd">        :type ``*inputs``: Block or Plug</span>
+<span class="sd">        :param robot: Robot model</span>
+<span class="sd">        :type robot: Robot subclass</span>
+<span class="sd">        :param end: Link to compute pose of, defaults to end-effector</span>
+<span class="sd">        :type end: Link or str</span>
+<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        :return: a FORWARD_DYNAMICS block</span>
+<span class="sd">        :rtype: Foward_Dynamics instance</span>
+<span class="sd">        </span>
+<span class="sd">        Robot arm forward dynamics model.</span>
+<span class="sd">        </span>
+<span class="sd">        The block has one input port:</span>
+<span class="sd">            </span>
+<span class="sd">            1. Joint configuration vector as an ndarray.</span>
+<span class="sd">            </span>
+<span class="sd">        and three output ports:</span>
+<span class="sd">            </span>
+<span class="sd">            1. joint configuration</span>
+<span class="sd">            2. joint velocity</span>
+<span class="sd">            3. joint acceleration</span>
+
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;forward-dynamics&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">robot</span> <span class="o">=</span> <span class="n">robot</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span> <span class="o">=</span> <span class="n">robot</span><span class="o">.</span><span class="n">n</span> <span class="o">*</span> <span class="mi">2</span>
+
+        <span class="c1"># state vector is [q qd]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">inport_names</span><span class="p">((</span><span class="s1">&#39;$</span><span class="se">\t</span><span class="s1">au$&#39;</span><span class="p">,))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outport_names</span><span class="p">((</span><span class="s1">&#39;q&#39;</span><span class="p">,</span> <span class="s1">&#39;qd&#39;</span><span class="p">,</span> <span class="s1">&#39;qdd&#39;</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">q0</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">q0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">robot</span><span class="o">.</span><span class="n">n</span><span class="p">,))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">q0</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">getvector</span><span class="p">(</span><span class="n">q0</span><span class="p">,</span> <span class="n">robot</span><span class="o">.</span><span class="n">n</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="n">q0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">robot</span><span class="o">.</span><span class="n">n</span><span class="p">,))]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_qdd</span> <span class="o">=</span> <span class="kc">None</span></div>
+        
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">n</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">[:</span><span class="n">n</span><span class="p">]</span>
+        <span class="n">qd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">[</span><span class="n">n</span><span class="p">:]</span>
+        <span class="n">qdd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qdd</span>  <span class="c1"># from last deriv</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">q</span><span class="p">,</span> <span class="n">qd</span><span class="p">,</span> <span class="n">qdd</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">deriv</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># return [qd qdd]</span>
+        <span class="n">Q</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">n</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span> <span class="o">==</span> <span class="n">n</span><span class="p">,</span> <span class="s1">&#39;torque vector wrong size&#39;</span>
+
+        <span class="n">q</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">[:</span><span class="n">n</span><span class="p">]</span>
+        <span class="n">qd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">[</span><span class="n">n</span><span class="p">:]</span>
+        <span class="n">qdd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">accel</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">qd</span><span class="p">,</span> <span class="n">Q</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_qdd</span> <span class="o">=</span> <span class="n">qdd</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="n">qd</span><span class="p">,</span> <span class="n">qdd</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Inverse_Dynamics"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.arm.Inverse_Dynamics">[docs]</a><span class="nd">@block</span>
+<span class="k">class</span> <span class="nc">Inverse_Dynamics</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :blockname:`INVERSE_DYNAMICS`</span>
+<span class="sd">    </span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
+<span class="sd">    </span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | inputs     | outputs |  states |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | 3          | 1       | 0       |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | ndarray,   | ndarray |         | </span>
+<span class="sd">       | ndarray,   |         |         |</span>
+<span class="sd">       | ndarray    |         |         |  </span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Inverse_Dynamics.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.arm.Inverse_Dynamics.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">robot</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">gravity</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        :param robot: Robot model</span>
+<span class="sd">        :type robot: Robot subclass</span>
+<span class="sd">        :param gravity: Link to compute pose of, defaults to end-effector</span>
+<span class="sd">        :type gravity: Link or str</span>
+<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
+<span class="sd">        :type ``*inputs``: Block or Plug</span>
+<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        :return: an INVERSE_DYNAMICS block</span>
+<span class="sd">        :rtype: Inverse_Dynamics instance</span>
+<span class="sd">        </span>
+<span class="sd">        Robot arm forward dynamics model.</span>
+<span class="sd">        </span>
+<span class="sd">        The block has three input port:</span>
+<span class="sd">            </span>
+<span class="sd">            1. Joint configuration vector as an ndarray.</span>
+<span class="sd">            2. Joint velocity vector as an ndarray.</span>
+<span class="sd">            3. Joint acceleration vector as an ndarray.</span>
+<span class="sd">            </span>
+<span class="sd">        and one output ports:</span>
+<span class="sd">            </span>
+<span class="sd">            1. joint torque/force</span>
+
+<span class="sd">        .. TODO:: end-effector wrench input, base wrench output, payload input</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;inverse-dynamics&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">robot</span> <span class="o">=</span> <span class="n">robot</span>
+
+        <span class="c1"># state vector is [q qd]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">inport_names</span><span class="p">((</span><span class="s1">&#39;q&#39;</span><span class="p">,</span> <span class="s1">&#39;qd&#39;</span><span class="p">,</span> <span class="s1">&#39;qdd&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outport_names</span><span class="p">((</span><span class="s1">&#39;$</span><span class="se">\t</span><span class="s1">au$&#39;</span><span class="p">,))</span></div>
+        
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">tau</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">rne</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">tau</span><span class="p">]</span></div>
+
+        
+<span class="c1"># ------------------------------------------------------------------------ #</span>
+
+<div class="viewcode-block" id="ArmPlot"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.arm.ArmPlot">[docs]</a><span class="nd">@block</span>
+<span class="k">class</span> <span class="nc">ArmPlot</span><span class="p">(</span><span class="n">GraphicsBlock</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :blockname:`ARMPLOT`</span>
+<span class="sd">    </span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
+<span class="sd">    </span>
+<span class="sd">       +--------+---------+---------+</span>
+<span class="sd">       | inputs | outputs |  states |</span>
+<span class="sd">       +--------+---------+---------+</span>
+<span class="sd">       | 1      | 0       | 0       |</span>
+<span class="sd">       +--------+---------+---------+</span>
+<span class="sd">       | ndarray|         |         | </span>
+<span class="sd">       +--------+---------+---------+</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+        
+<div class="viewcode-block" id="ArmPlot.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.arm.ArmPlot.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">robot</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">q0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
+<span class="sd">        :type ``*inputs``: Block or Plug</span>
+<span class="sd">        :param robot: Robot model</span>
+<span class="sd">        :type robot: Robot subclass</span>
+<span class="sd">        :param backend: RTB backend name, default is pyplot</span>
+<span class="sd">        :type backend: str</span>
+<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        :return: An ARMPLOT block</span>
+<span class="sd">        :rtype: ArmPlot instance</span>
+
+
+<span class="sd">        Create a robot animation.</span>
+<span class="sd">        </span>
+<span class="sd">        Notes:</span>
+<span class="sd">            </span>
+<span class="sd">            - Uses RTB ``plot`` method</span>
+
+<span class="sd">           Example of vehicle display (animated).  The label at the top is the</span>
+<span class="sd">           block name.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;armplot&#39;</span>
+
+        <span class="k">if</span> <span class="n">q0</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">q0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">robot</span><span class="o">.</span><span class="n">n</span><span class="p">,))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">robot</span> <span class="o">=</span> <span class="n">robot</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">backend</span> <span class="o">=</span> <span class="n">backend</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">q0</span> <span class="o">=</span> <span class="n">q0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="o">=</span> <span class="kc">None</span></div>
+        
+    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># create the plot</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">graphics</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_figure</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q0</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="p">,</span> <span class="n">fig</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fig</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        
+    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># inputs are set</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">graphics</span><span class="p">:</span>
+            
+            <span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">q</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        
+    <span class="k">def</span> <span class="nf">done</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">graphics</span><span class="p">:</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="n">block</span><span class="p">)</span>
+            
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">done</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="Traj"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.arm.Traj">[docs]</a><span class="nd">@block</span>
+<span class="k">class</span> <span class="nc">Traj</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :blockname:`TRAJ`</span>
+<span class="sd">    </span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
+<span class="sd">    </span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | inputs     | outputs |  states |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | 0 or 1     | 1       | 0       |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | float      | float   |         | </span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Traj.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.arm.Traj.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y0</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">yf</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">time</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">traj</span><span class="o">=</span><span class="s1">&#39;lspb&#39;</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        :param y0: initial value</span>
+<span class="sd">        :type y0: array_like(m)</span>
+<span class="sd">        :param yf: final value</span>
+<span class="sd">        :type yf: array_like(m)</span>
+<span class="sd">        :param time: x is simulation time, defaults to False</span>
+<span class="sd">        :type time: bool</span>
+<span class="sd">        :param traj: trajectory type: &#39;lspb&#39; [default] or &#39;tpoly&#39;</span>
+<span class="sd">        :type traj: str</span>
+<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
+<span class="sd">        :type ``*inputs``: Block or Plug</span>
+<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        :return: TRAJ block</span>
+<span class="sd">        :rtype: Traj instance</span>
+<span class="sd">        </span>
+<span class="sd">        Create a trajectory block.</span>
+<span class="sd">    </span>
+<span class="sd">        A block that generates a trajectory using a trapezoidal or quintic</span>
+<span class="sd">        polynomial profile.</span>
+<span class="sd">        </span>
+<span class="sd">        A simple triangle function with domain [0,10] and range [0,1] can be</span>
+<span class="sd">        defined by::</span>
+<span class="sd">            </span>
+<span class="sd">            INTERPOLATE(x=(0,5,10), y=(0,1,0))</span>
+<span class="sd">        </span>
+<span class="sd">        We might also express this as::</span>
+<span class="sd">            </span>
+<span class="sd">            INTERPOLATE(xy=[(0,0), (5,1), (10,0)])</span>
+<span class="sd">        </span>
+<span class="sd">        The distance along the trajectory comes from:</span>
+<span class="sd">            </span>
+<span class="sd">        - Input port 0</span>
+<span class="sd">        - Simulation time, if ``time=True``.  In this case the block has no</span>
+<span class="sd">          input ports and is a ``Source`` not a ``Function``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">=</span> <span class="n">time</span>
+        <span class="k">if</span> <span class="n">time</span><span class="p">:</span>
+            <span class="n">nin</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">blockclass</span> <span class="o">=</span> <span class="s1">&#39;source&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="n">nin</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;function&#39;</span>
+
+        <span class="n">y0</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">getvector</span><span class="p">(</span><span class="n">y0</span><span class="p">)</span>
+        <span class="n">yf</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">getvector</span><span class="p">(</span><span class="n">yf</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">y0</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">yf</span><span class="p">),</span> <span class="s1">&#39;y0 and yf must have same length&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">y0</span> <span class="o">=</span> <span class="n">y0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">yf</span> <span class="o">=</span> <span class="n">yf</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">=</span> <span class="n">time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">T</span> <span class="o">=</span> <span class="n">T</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">traj</span> <span class="o">=</span> <span class="n">traj</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">outport_names</span><span class="p">((</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;yd&#39;</span><span class="p">,</span> <span class="s1">&#39;ydd&#39;</span><span class="p">))</span></div>
+                
+    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;interpolation not defined for t=0&#39;</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="s1">&#39;interpolation not defined for t=T&#39;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">traj</span> <span class="o">==</span> <span class="s1">&#39;lspb&#39;</span><span class="p">:</span>
+            <span class="n">trajfunc</span> <span class="o">=</span> <span class="n">lspb_func</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">traj</span> <span class="o">==</span> <span class="s1">&#39;tpoly&#39;</span><span class="p">:</span>
+            <span class="n">trajfunc</span> <span class="o">=</span> <span class="n">tpoly_func</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">trajfuncs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y0</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">trajfuncs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">trajfunc</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y0</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">yf</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">))</span>
+        
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="p">:</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y0</span><span class="p">)):</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">trajfuncs</span><span class="p">[</span><span class="n">i</span><span class="p">](</span><span class="n">t</span><span class="p">))</span>
+
+        <span class="c1"># we have a list of tuples out[i][j]</span>
+        <span class="c1"># i is the timestep, j is y/yd/ydd</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="p">[</span><span class="n">o</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">out</span><span class="p">]</span>
+        <span class="n">yd</span> <span class="o">=</span> <span class="p">[</span><span class="n">o</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">out</span><span class="p">]</span>
+        <span class="n">ydd</span> <span class="o">=</span> <span class="p">[</span><span class="n">o</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">out</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">yd</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">ydd</span><span class="p">)]</span></div>
+
+<div class="viewcode-block" id="CirclePath"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.arm.CirclePath">[docs]</a><span class="nd">@block</span>
+<span class="k">class</span> <span class="nc">CirclePath</span><span class="p">(</span><span class="n">SourceBlock</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :blockname:`CIRCLEPATH`</span>
+<span class="sd">    </span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
+<span class="sd">    </span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | inputs     | outputs |  states |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | 0 or 1     | 1       | 0       |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | float      | float   |         | </span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="CirclePath.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.arm.CirclePath.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">radius</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">centre</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">pose</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">frequency</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;rps&#39;</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        :param y0: initial value</span>
+<span class="sd">        :type y0: array_like(m)</span>
+<span class="sd">        :param yf: final value</span>
+<span class="sd">        :type yf: array_like(m)</span>
+<span class="sd">        :param time: x is simulation time, defaults to False</span>
+<span class="sd">        :type time: bool</span>
+<span class="sd">        :param traj: trajectory type: &#39;lspb&#39; [default] or &#39;tpoly&#39;</span>
+<span class="sd">        :type traj: str</span>
+<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
+<span class="sd">        :type ``*inputs``: Block or Plug</span>
+<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        :return: TRAJ block</span>
+<span class="sd">        :rtype: Traj instance</span>
+<span class="sd">        </span>
+<span class="sd">        Create a trajectory block.</span>
+<span class="sd">    </span>
+<span class="sd">        A block that generates a trajectory using a trapezoidal or quintic</span>
+<span class="sd">        polynomial profile.</span>
+<span class="sd">        </span>
+<span class="sd">        A simple triangle function with domain [0,10] and range [0,1] can be</span>
+<span class="sd">        defined by::</span>
+<span class="sd">            </span>
+<span class="sd">            INTERPOLATE(x=(0,5,10), y=(0,1,0))</span>
+<span class="sd">        </span>
+<span class="sd">        We might also express this as::</span>
+<span class="sd">            </span>
+<span class="sd">            INTERPOLATE(xy=[(0,0), (5,1), (10,0)])</span>
+<span class="sd">        </span>
+<span class="sd">        The distance along the trajectory comes from:</span>
+<span class="sd">            </span>
+<span class="sd">        - Input port 0</span>
+<span class="sd">        - Simulation time, if ``time=True``.  In this case the block has no</span>
+<span class="sd">          input ports and is a ``Source`` not a ``Function``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">blockclass</span> <span class="o">=</span> <span class="s1">&#39;circlepath&#39;</span>
+
+        <span class="k">if</span> <span class="n">unit</span> <span class="o">==</span> <span class="s1">&#39;rps&#39;</span><span class="p">:</span>
+            <span class="n">omega</span> <span class="o">=</span> <span class="n">frequency</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span>
+            <span class="n">phase</span> <span class="o">=</span> <span class="n">frequency</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span>
+        <span class="k">elif</span> <span class="n">unit</span> <span class="o">==</span> <span class="s1">&#39;rad&#39;</span><span class="p">:</span>
+            <span class="n">omega</span> <span class="o">=</span> <span class="n">frequency</span>
+            <span class="n">phase</span> <span class="o">=</span> <span class="n">phase</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;bad units: rps or rad&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">radius</span> <span class="o">=</span> <span class="n">radius</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">centre</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;centre must be a 3 vector&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">centre</span> <span class="o">=</span> <span class="n">centre</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pose</span> <span class="o">=</span> <span class="n">pose</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">omega</span> <span class="o">=</span> <span class="n">omega</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phase</span> <span class="o">=</span> <span class="n">phase</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">outport_names</span><span class="p">((</span><span class="s1">&#39;y&#39;</span><span class="p">,))</span></div>
+        
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">t</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">omega</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">centre</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">centre</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">centre</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pose</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pose</span> <span class="o">*</span> <span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        
+        <span class="k">return</span> <span class="p">[</span><span class="n">p</span><span class="p">]</span></div>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+
+    <span class="kn">import</span> <span class="nn">pathlib</span>
+    <span class="kn">import</span> <span class="nn">os.path</span>
+
+    <span class="n">exec</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">absolute</span><span class="p">(),</span> <span class="s2">&quot;test_robots.py&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &copy;2020, Peter Corke.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

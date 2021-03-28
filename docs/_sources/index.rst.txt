@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Block diagram simulator
-=======================
+Block diagrams for Python
+=========================
 
 This Python package enables modelling and simulation of dynamic systems conceptualized in block diagram form, but represented in terms of Python class and method calls.
 

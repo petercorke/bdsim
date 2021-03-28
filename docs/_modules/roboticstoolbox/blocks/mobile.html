@@ -1,0 +1,520 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>roboticstoolbox.blocks.mobile &#8212; Block diagram simulation 0.7 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/BDSimLogo_NoBackgnd@2x.png" alt="Logo"/>
+            </a></p>
+<h1 class="logo"><a href="../../../index.html">Block diagram simulation</a></h1>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=petercorke&repo=bdsim&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Code documentation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../bdsim.html">bdsim package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../bdsim.blocks.html">Blocks</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for roboticstoolbox.blocks.mobile</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">sin</span><span class="p">,</span> <span class="n">cos</span><span class="p">,</span> <span class="n">atan2</span><span class="p">,</span> <span class="n">tan</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">pi</span>
+
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">matplotlib.patches</span> <span class="kn">import</span> <span class="n">Polygon</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="kn">from</span> <span class="nn">bdsim.components</span> <span class="kn">import</span> <span class="n">TransferBlock</span><span class="p">,</span> <span class="n">block</span>
+<span class="kn">from</span> <span class="nn">bdsim.graphics</span> <span class="kn">import</span> <span class="n">GraphicsBlock</span>
+
+<span class="kn">from</span> <span class="nn">spatialmath</span> <span class="kn">import</span> <span class="n">base</span>
+
+<span class="c1"># ------------------------------------------------------------------------ #</span>
+<div class="viewcode-block" id="Bicycle"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.mobile.Bicycle">[docs]</a><span class="nd">@block</span>
+<span class="k">class</span> <span class="nc">Bicycle</span><span class="p">(</span><span class="n">TransferBlock</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :blockname:`BICYCLE`</span>
+<span class="sd">    </span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
+<span class="sd">    </span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | inputs     | outputs |  states |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | 2          | 3       | 3       |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | float      | float   |         | </span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Bicycle.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.mobile.Bicycle.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">L</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">vlim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">slim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
+<span class="sd">        :type ``*inputs``: Block or Plug</span>
+<span class="sd">        :param x0: Inital state, defaults to 0</span>
+<span class="sd">        :type x0: array_like, optional</span>
+<span class="sd">        :param L: Wheelbase, defaults to 1</span>
+<span class="sd">        :type L: float, optional</span>
+<span class="sd">        :param vlim: Velocity limit, defaults to 1</span>
+<span class="sd">        :type vlim: float, optional</span>
+<span class="sd">        :param slim: Steering limit, defaults to 1</span>
+<span class="sd">        :type slim: float, optional</span>
+<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        :return: a BICYCLE block</span>
+<span class="sd">        :rtype: Bicycle instance</span>
+<span class="sd">        </span>
+<span class="sd">        Create a vehicle model with Bicycle kinematics.</span>
+<span class="sd">        </span>
+<span class="sd">        Bicycle kinematic model with state :math:`[x, y, \theta]`.  </span>
+<span class="sd">        </span>
+<span class="sd">        The block has two input ports:</span>
+<span class="sd">            </span>
+<span class="sd">            1. Vehicle speed (metres/sec).  The velocity limit ``vlim`` is</span>
+<span class="sd">               applied to the magnitude of this input.</span>
+<span class="sd">            2. Steering wheel angle (radians).  The steering limit ``slim``</span>
+<span class="sd">               is applied to the magnitude of this input.</span>
+<span class="sd">            </span>
+<span class="sd">        and three output ports:</span>
+<span class="sd">            </span>
+<span class="sd">            1. x position in the world frame (metres)</span>
+<span class="sd">            2. y positon in the world frame (metres)</span>
+<span class="sd">            3. heading angle with respect to the world frame (radians)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span> <span class="o">=</span> <span class="mi">3</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vlim</span> <span class="o">=</span> <span class="n">vlim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">slim</span> <span class="o">=</span> <span class="n">slim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;bicycle&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">L</span> <span class="o">=</span> <span class="n">L</span>
+        <span class="k">if</span> <span class="n">x0</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">nstates</span><span class="p">,))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">x0</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span><span class="p">,</span> <span class="s2">&quot;x0 is </span><span class="si">{:d}</span><span class="s2"> long, should be </span><span class="si">{:d}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x0</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_x0</span> <span class="o">=</span> <span class="n">x0</span>
+            
+        <span class="bp">self</span><span class="o">.</span><span class="n">inport_names</span><span class="p">((</span><span class="s1">&#39;v&#39;</span><span class="p">,</span> <span class="s1">&#39;$\gamma$&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outport_names</span><span class="p">((</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;$\theta$&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state_names</span><span class="p">((</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;$\theta$&#39;</span><span class="p">))</span></div>
+        
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">deriv</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        
+        <span class="c1"># get inputs and clip them</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vlim</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">vlim</span><span class="p">))</span>
+        <span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">gamma</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">slim</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">slim</span><span class="p">))</span>
+        
+        <span class="n">xd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="n">v</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="n">v</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="n">v</span> <span class="o">*</span> <span class="n">tan</span><span class="p">(</span><span class="n">gamma</span><span class="p">)</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">L</span> <span class="p">]</span>
+        <span class="k">return</span> <span class="n">xd</span></div>
+    
+<span class="c1"># ------------------------------------------------------------------------ #</span>
+<div class="viewcode-block" id="Unicycle"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.mobile.Unicycle">[docs]</a><span class="nd">@block</span>
+<span class="k">class</span> <span class="nc">Unicycle</span><span class="p">(</span><span class="n">TransferBlock</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :blockname:`UNICYCLE`</span>
+<span class="sd">    </span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
+<span class="sd">    </span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | inputs     | outputs |  states |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | 2          | 3       | 3       |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | float      | float   |         | </span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Unicycle.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.mobile.Unicycle.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
+<span class="sd">        :type ``*inputs``: Block or Plug</span>
+<span class="sd">        :param x0: Inital state, defaults to 0</span>
+<span class="sd">        :type x0: array_like, optional</span>
+<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
+<span class="sd">        :type ``*inputs``: Block or Plug</span>
+<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        :return: a UNICYCLE block</span>
+<span class="sd">        :rtype: Unicycle instance</span>
+<span class="sd">        </span>
+<span class="sd">        Create a vehicle model with Unicycle kinematics.</span>
+
+<span class="sd">        Unicycle kinematic model with state :math:`[x, y, \theta]`.</span>
+<span class="sd">        </span>
+<span class="sd">        The block has two input ports:</span>
+<span class="sd">            </span>
+<span class="sd">            1. Vehicle speed (metres/sec).</span>
+<span class="sd">            2. Angular velocity (radians/sec).</span>
+<span class="sd">            </span>
+<span class="sd">        and three output ports:</span>
+<span class="sd">            </span>
+<span class="sd">            1. x position in the world frame (metres)</span>
+<span class="sd">            2. y positon in the world frame (metres)</span>
+<span class="sd">            3. heading angle with respect to the world frame (radians)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>        
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span> <span class="o">=</span> <span class="mi">3</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;unicycle&#39;</span>
+        
+        <span class="k">if</span> <span class="n">x0</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">slef</span><span class="o">.</span><span class="n">nstates</span><span class="p">,))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">x0</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span><span class="p">,</span> <span class="s2">&quot;x0 is </span><span class="si">{:d}</span><span class="s2"> long, should be </span><span class="si">{:d}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x0</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_x0</span> <span class="o">=</span> <span class="n">x0</span></div>
+        
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">deriv</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">omega</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">xd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="n">v</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="n">v</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="n">omega</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">xd</span></div>
+    
+<span class="c1"># ------------------------------------------------------------------------ #</span>
+<div class="viewcode-block" id="DiffSteer"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.mobile.DiffSteer">[docs]</a><span class="nd">@block</span>
+<span class="k">class</span> <span class="nc">DiffSteer</span><span class="p">(</span><span class="n">TransferBlock</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :blockname:`DIFFSTEER`</span>
+<span class="sd">    </span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
+<span class="sd">    </span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | inputs     | outputs |  states |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | 2          | 3       | 3       |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | float      | float   |         | </span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="DiffSteer.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.mobile.DiffSteer.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">R</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">W</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
+<span class="sd">        :type ``*inputs``: Block or Plug</span>
+<span class="sd">        :param x0: Inital state, defaults to 0</span>
+<span class="sd">        :type x0: array_like, optional</span>
+<span class="sd">        :param R: Wheel radius, defaults to 1</span>
+<span class="sd">        :type R: float, optional</span>
+<span class="sd">        :param W: Wheel separation in lateral direction, defaults to 1</span>
+<span class="sd">        :type R: float, optional</span>
+<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        :return: a DIFFSTEER block</span>
+<span class="sd">        :rtype: DifSteer instance</span>
+<span class="sd">        </span>
+<span class="sd">        Create a differential steer vehicle model with Unicycle kinematics, with inputs</span>
+<span class="sd">        given as wheel angular velocity.</span>
+<span class="sd">        </span>
+<span class="sd">        Unicycle kinematic model with state :math:`[x, y, \theta]`.</span>
+
+<span class="sd">        The block has two input ports:</span>
+<span class="sd">            </span>
+<span class="sd">            1. Left-wheel angular velocity (radians/sec).</span>
+<span class="sd">            2. Right-wheel angular velocity (radians/sec).</span>
+<span class="sd">            </span>
+<span class="sd">        and three output ports:</span>
+<span class="sd">            </span>
+<span class="sd">            1. x position in the world frame (metres)</span>
+<span class="sd">            2. y positon in the world frame (metres)</span>
+<span class="sd">            3. heading angle with respect to the world frame (radians)</span>
+
+<span class="sd">        Note:</span>
+
+<span class="sd">            - wheel velocity is defined such that if both are positive the vehicle</span>
+<span class="sd">              moves forward.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span> <span class="o">=</span> <span class="mi">3</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;diffsteer&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">R</span> <span class="o">=</span> <span class="n">R</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">W</span> <span class="o">=</span> <span class="n">W</span>
+        
+        <span class="k">if</span> <span class="n">x0</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">slef</span><span class="o">.</span><span class="n">nstates</span><span class="p">,))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">x0</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span><span class="p">,</span> <span class="s2">&quot;x0 is </span><span class="si">{:d}</span><span class="s2"> long, should be </span><span class="si">{:d}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x0</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_x0</span> <span class="o">=</span> <span class="n">x0</span></div>
+        
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">deriv</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">R</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">omega</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">W</span>
+    
+        <span class="n">xd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="n">v</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="n">v</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="n">omega</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">xd</span></div>
+    
+<span class="c1"># ------------------------------------------------------------------------ #</span>
+
+<div class="viewcode-block" id="VehiclePlot"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.mobile.VehiclePlot">[docs]</a><span class="nd">@block</span>
+<span class="k">class</span> <span class="nc">VehiclePlot</span><span class="p">(</span><span class="n">GraphicsBlock</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :blockname:`VEHICLEPLOT`</span>
+<span class="sd">    </span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
+<span class="sd">    </span>
+<span class="sd">       +--------+---------+---------+</span>
+<span class="sd">       | inputs | outputs |  states |</span>
+<span class="sd">       +--------+---------+---------+</span>
+<span class="sd">       | 3      | 0       | 0       |</span>
+<span class="sd">       +--------+---------+---------+</span>
+<span class="sd">       | float  |         |         | </span>
+<span class="sd">       +--------+---------+---------+</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="c1"># TODO add ability to render an image instead of an outline</span>
+    
+<div class="viewcode-block" id="VehiclePlot.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.mobile.VehiclePlot.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">pathstyle</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="s1">&#39;triangle&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;blue&quot;</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="s2">&quot;white&quot;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="s1">&#39;Y&#39;</span><span class="p">],</span> <span class="n">square</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
+<span class="sd">        :type ``*inputs``: Block or Plug</span>
+<span class="sd">        :param path: plot path taken by vehicle, defaults to True</span>
+<span class="sd">        :type path: bool, optional</span>
+<span class="sd">        :param pathstyle: linestyle for path, defaults to None</span>
+<span class="sd">        :type pathstyle: str or dict, optional</span>
+<span class="sd">        :param shape: vehicle shape: &#39;triangle&#39; (default) or &#39;box&#39;</span>
+<span class="sd">        :type shape: str, optional</span>
+<span class="sd">        :param color: vehicle outline color, defaults to &quot;blue&quot;</span>
+<span class="sd">        :type color: str, optional</span>
+<span class="sd">        :param fill: vehicle fill color, defaults to &quot;white&quot;</span>
+<span class="sd">        :type fill: str, optional</span>
+<span class="sd">        :param size: length of vehicle, defaults to 1</span>
+<span class="sd">        :type size: float, optional</span>
+<span class="sd">        :param scale: x- and y-axis scale, defaults to &#39;auto&#39;</span>
+<span class="sd">        :type scale: 2- or 4-element sequence</span>
+<span class="sd">        :param labels: axis labels (xlabel, ylabel)</span>
+<span class="sd">        :type labels: 2-element tuple or list</span>
+<span class="sd">        :param square: Set aspect ratio to 1, defaults to True</span>
+<span class="sd">        :type square: bool, optional</span>
+<span class="sd">        :param init: initialize graphics, defaults to None</span>
+<span class="sd">        :type init: callable, optional</span>
+<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        :return: A VEHICLEPLOT block</span>
+<span class="sd">        :rtype: VehiclePlot instance</span>
+
+
+<span class="sd">        Create a vehicle animation similar to the figure below.</span>
+<span class="sd">        </span>
+<span class="sd">        Notes:</span>
+<span class="sd">            </span>
+<span class="sd">            - The ``init`` function is called after the axes are initialized</span>
+<span class="sd">              and can be used to draw application specific detail on the</span>
+<span class="sd">              plot. In the example below, this is the dot and star.</span>
+<span class="sd">            - A dynamic trail, showing path to date can be animated if</span>
+<span class="sd">              the option ``path`` is True.</span>
+<span class="sd">            - Two shapes of vehicle can be drawn, a narrow triangle and a box</span>
+<span class="sd">              (as seen below).</span>
+<span class="sd">        </span>
+<span class="sd">        .. figure:: ../../figs/rvc4_4.gif</span>
+<span class="sd">           :width: 500px</span>
+<span class="sd">           :alt: example of generated graphic</span>
+
+<span class="sd">           Example of vehicle display (animated).  The label at the top is the</span>
+<span class="sd">           block name.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xdata</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ydata</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;vehicle&#39;</span>
+        <span class="k">if</span> <span class="n">init</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">callable</span><span class="p">(</span><span class="n">init</span><span class="p">),</span> <span class="s1">&#39;graphics init function must be callable&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">init</span> <span class="o">=</span> <span class="n">init</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">square</span> <span class="o">=</span> <span class="n">square</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span>
+        <span class="k">if</span> <span class="n">path</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pathstyle</span> <span class="o">=</span> <span class="n">pathstyle</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">color</span> <span class="o">=</span> <span class="n">color</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fill</span> <span class="o">=</span> <span class="n">fill</span>
+        
+        <span class="k">if</span> <span class="n">scale</span> <span class="o">!=</span> <span class="s1">&#39;auto&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">scale</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">scale</span> <span class="o">=</span> <span class="n">scale</span> <span class="o">*</span> <span class="mi">2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">=</span> <span class="n">scale</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">labels</span> <span class="o">=</span> <span class="n">labels</span>
+        
+        <span class="n">d</span> <span class="o">=</span> <span class="n">size</span>
+        <span class="k">if</span> <span class="n">shape</span> <span class="o">==</span> <span class="s1">&#39;triangle&#39;</span><span class="p">:</span>
+            <span class="n">L</span> <span class="o">=</span> <span class="n">d</span>
+            <span class="n">W</span> <span class="o">=</span> <span class="mf">0.6</span><span class="o">*</span><span class="n">d</span>
+            <span class="n">vertices</span> <span class="o">=</span> <span class="p">[(</span><span class="n">L</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="n">L</span><span class="p">,</span> <span class="o">-</span><span class="n">W</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="n">L</span><span class="p">,</span> <span class="n">W</span><span class="p">)]</span>
+        <span class="k">elif</span> <span class="n">shape</span> <span class="o">==</span> <span class="s1">&#39;box&#39;</span><span class="p">:</span>
+            <span class="n">L1</span> <span class="o">=</span> <span class="n">d</span>
+            <span class="n">L2</span> <span class="o">=</span> <span class="n">d</span>
+            <span class="n">W</span> <span class="o">=</span> <span class="mf">0.6</span><span class="o">*</span><span class="n">d</span>
+            <span class="n">vertices</span> <span class="o">=</span> <span class="p">[(</span><span class="o">-</span><span class="n">L1</span><span class="p">,</span> <span class="n">W</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.6</span><span class="o">*</span><span class="n">L2</span><span class="p">,</span> <span class="n">W</span><span class="p">),</span> <span class="p">(</span><span class="n">L2</span><span class="p">,</span> <span class="mf">0.5</span><span class="o">*</span><span class="n">W</span><span class="p">),</span> <span class="p">(</span><span class="n">L2</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="o">*</span><span class="n">W</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.6</span><span class="o">*</span><span class="n">L2</span><span class="p">,</span> <span class="o">-</span><span class="n">W</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="n">L1</span><span class="p">,</span> <span class="o">-</span><span class="n">W</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;bad vehicle shape specified&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vertices_hom</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">e2h</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">vertices</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vertices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">vertices</span><span class="p">)</span></div>
+
+        
+    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># create the plot</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">graphics</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_figure</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fig</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">square</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s1">&#39;equal&#39;</span><span class="p">)</span>
+
+            <span class="n">args</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">:</span>
+                <span class="n">style</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pathstyle</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">style</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                    <span class="n">kwargs</span> <span class="o">=</span> <span class="n">style</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">style</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                    <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="n">style</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">line</span><span class="p">,</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xdata</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ydata</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">poly</span> <span class="o">=</span> <span class="n">Polygon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vertices</span><span class="p">,</span> <span class="n">closed</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">color</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fill</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">vehicle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">poly</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">!=</span> <span class="s1">&#39;auto&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="mi">4</span><span class="p">])</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">init</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="p">)</span>
+                
+            <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        
+    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># inputs are set</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">graphics</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">xdata</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ydata</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="c1">#plt.figure(self.fig.number)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">line</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xdata</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ydata</span><span class="p">)</span>
+            <span class="n">T</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">transl2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">@</span> <span class="n">base</span><span class="o">.</span><span class="n">trot2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+            <span class="n">new</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">h2e</span><span class="p">(</span><span class="n">T</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">vertices_hom</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">vehicle</span><span class="o">.</span><span class="n">set_xy</span><span class="p">(</span><span class="n">new</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">animation</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">flush_events</span><span class="p">()</span>
+        
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">==</span> <span class="s1">&#39;auto&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">relim</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">autoscale_view</span><span class="p">()</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        
+    <span class="k">def</span> <span class="nf">done</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">graphics</span><span class="p">:</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="n">block</span><span class="p">)</span>
+            
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">done</span><span class="p">()</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &copy;2020, Peter Corke.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

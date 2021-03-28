@@ -107,6 +107,7 @@
 
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">from</span> <span class="nn">spatialmath</span> <span class="kn">import</span> <span class="n">base</span>
 
 <span class="kn">from</span> <span class="nn">bdsim.components</span> <span class="kn">import</span> <span class="n">TransferBlock</span><span class="p">,</span> <span class="n">block</span>
 
@@ -171,34 +172,41 @@
 <span class="sd">            - a vector, of the same shape as ``x0`` that applies elementwise to</span>
 <span class="sd">              the state.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;integrator&#39;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
-            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">x0</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;state must be a vector&#39;</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span> <span class="o">=</span> <span class="n">x0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="k">if</span> <span class="nb">min</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="nb">min</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span>
-                    <span class="nb">min</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span><span class="p">,</span> <span class="s1">&#39;minimum bound length must match x0&#39;</span>
-
-            <span class="k">if</span> <span class="nb">max</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="nb">max</span> <span class="o">=</span> <span class="p">[</span><span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span>
-                    <span class="nb">max</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span><span class="p">,</span> <span class="s1">&#39;mmaximum bound length must match x0&#39;</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span> <span class="o">=</span> <span class="mi">1</span>
             <span class="k">if</span> <span class="nb">min</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="nb">min</span> <span class="o">=</span> <span class="o">-</span><span class="n">math</span><span class="o">.</span><span class="n">inf</span>
             <span class="k">if</span> <span class="nb">max</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="nb">max</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span>
+                
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">x0</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;state must be a 1D vector&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">x0</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">getvector</span><span class="p">(</span><span class="n">x0</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span> <span class="o">=</span> <span class="n">x0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">min</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="nb">min</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="nb">min</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;minimum bound length must match x0&#39;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">max</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="nb">max</span> <span class="o">=</span> <span class="p">[</span><span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="nb">max</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;maximum bound length must match x0&#39;</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">_x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="n">x0</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">min</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="nb">min</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="nb">max</span><span class="p">]</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="nb">max</span><span class="p">]</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;nstates&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">deriv</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">xd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">)</span>
