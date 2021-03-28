@@ -255,7 +255,7 @@ class BDSim:
             tnext = min(next)
 
             while tnext <= T:
-                print(tnext)
+                # print(tnext)
 
                 # run system until next clock time
                 self._run_interval(bd, tprev, tnext, state=state)
@@ -350,7 +350,7 @@ class BDSim:
             else:
                 # block diagram has no states
     
-                for t in np.arange(t0, T, dt):  # step through the time range
+                for t in np.arange(t0, T, state.dt):  # step through the time range
 
                     # evaluate the block diagram
                     bd.evaluate([], t)
@@ -359,7 +359,7 @@ class BDSim:
                     state.tlist.append(t)
                     
                     # record the ports on the watchlist
-                    for i, p in enumerate(pluglist):
+                    for i, p in enumerate(state.watchlist):
                         state.plist[i].append(p.block.output(t)[p.port])
 
                     # update all blocks that need to know
@@ -369,12 +369,12 @@ class BDSim:
 
                         
                     # has any block called a stop?
-                    if bd.stop is not None:
-                        print('\n--- stop requested at t={:f} by {:s}'.format(bd.t, str(bd.stop)))
+                    if bd.state.stop is not None:
+                        print(fg('red') + f"\n--- stop requested at t={bd.state.t:.4f} by {bd.state.stop}" + attr(0))
                         break
 
-                    if bd.debug_stop:
-                        bd._debugger()
+                    if bd.state.debug_stop:
+                        bd._debugger(integrator)
 
                 
         except RuntimeError as err:

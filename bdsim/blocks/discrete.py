@@ -23,7 +23,7 @@ from bdsim.components import ClockedBlock, block
 
 
 @block
-class Sampler(ClockedBlock):
+class ZOH(ClockedBlock):
 
     def __init__(self, clock, *inputs, x0=0, min=None, max=None, **kwargs):
         """
@@ -36,12 +36,12 @@ class Sampler(ClockedBlock):
         :param max: Maximum value of state, defaults to None
         :type max: float or array_like, optional
         :param ``**kwargs``: common Block options
-        :return: an INTEGRATOR block
+        :return: a ZOH block
         :rtype: Integrator instance
 
-        Create an integrator block.
+        Create a zero-order hold block.
 
-        Output is the time integral of the input.  The state can be a scalar or a
+        Output is the input at the previous clock time.  The state can be a scalar or a
         vector, this is given by the type of ``x0``.
 
         The minimum and maximum values can be:
@@ -60,16 +60,15 @@ class Sampler(ClockedBlock):
         x0 = base.getvector(x0)
         self._x0 = x0
         self.nstates = x0.shape[0]
-        print('nstates', self.nstates)
+        # print('nstates', self.nstates)
 
     def output(self, t=None):
-        print('* output, x is ', self._x)
+        # print('* output, x is ', self._x)
         return [self._x]
 
     def next(self):
         xnext = np.array(self.inputs)
         return xnext
-
 
 # ------------------------------------------------------------------------ 
 

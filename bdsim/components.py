@@ -949,7 +949,7 @@ class ClockedBlock(Block):
 
     def setstate(self, x):
         self._x = x[:self.nstates]  # take as much state vector as we need
-        print('** set block state to ', self._x)
+        # print('** set block state to ', self._x)
         return x[self.nstates:]     # return the rest
 
     def getstate0(self):
