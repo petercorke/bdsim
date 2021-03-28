@@ -4,7 +4,8 @@
 
 import bdsim
 
-bd = bdsim.BlockDiagram()
+sim = bdsim.BDSim()
+bd = sim.blockdiagram()
     
 steer = bd.PIECEWISE( (0,0), (3,0.5), (4,0), (5,-0.5), (6,0), name='steering')
 speed = bd.CONSTANT(1, name='speed')
@@ -22,8 +23,8 @@ bd.connect(bike[2], tscope)
 bd.compile()
 bd.report()
 
-out = bd.run(dt=0.05, block=True)
+out = sim.run(bd, dt=0.05)
 
-bd.savefig('pdf')
+sim.savefigs(bd, format='pdf')
 
-bd.done()
+bd.done(block=True)

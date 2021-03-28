@@ -6,7 +6,8 @@ import bdsim
 import math
 import numpy as np
 
-bd = bdsim.BlockDiagram()
+sim = bdsim.BDSim()
+bd = sim.blockdiagram()
 
 #x0 = [8, 5, math.pi/2]
 x0 = [5, 2, 0]
@@ -58,6 +59,6 @@ bd.connect(bike[2], hscope)
 bd.compile()
 bd.report()
 
-out = bd.run(20, block=True)
+out = sim.run(bd, 20)
 
-bd.done()
+bd.done(block=True)

@@ -1,5 +1,6 @@
 import matplotlib
 import matplotlib.pyplot as plt
+from matplotlib import animation
 from bdsim import SinkBlock
 
 class GraphicsBlock(SinkBlock):
@@ -19,14 +20,17 @@ class GraphicsBlock(SinkBlock):
     def __init__(self, movie=None, **kwargs):
 
         super().__init__(**kwargs)
-        if not self.bd.options.animation:
-            movie = None
+
         self.movie = movie
 
     def start(self):
+        if self.movie is not None and not self.bd.options.animation:
+            print('enabling global animation option to allow movie option on block', self)
+            self.bd.options.animation = True
         if self.movie is not None:
             self.writer = animation.FFMpegWriter(fps=10, extra_args=['-vcodec', 'libx264'])
             self.writer.setup(fig=self.fig, outfile=self.movie)
+            print('movie block', self, ' --> ', self.movie)
 
     def step(self):
         super().step()
@@ -40,7 +44,7 @@ class GraphicsBlock(SinkBlock):
             self.writer.finish()
             # self.cleanup()
 
-    def savefig(self, name=None, format='pdf', **kwargs):
+    def savefig(self, filename=None, format='pdf', **kwargs):
         """
         Save the figure as an image file
 
@@ -53,11 +57,11 @@ class GraphicsBlock(SinkBlock):
         """
         try:
             plt.figure(self.fig.number)  # make block's figure the current one
-            if name is None:
-                name = self.name
-            name += "." + format
-            print('saving {} -> {}'.format(str(self), name))
-            plt.savefig(fname, **kwargs)  # save the current figure
+            if filename is None:
+                filename = self.name
+            filename += "." + format
+            print('saving {} -> {}'.format(str(self), filename))
+            plt.savefig(filename, **kwargs)  # save the current figure
 
         except:
             pass
@@ -76,24 +80,33 @@ class GraphicsBlock(SinkBlock):
                 # This works for QT and GTK
                 # You can also use window.setGeometry
                 f.canvas.manager.window.move(x, y)
-                
-        if self.bd.fignum == 0:
+        
+        gstate = self.bd.state
+        options = self.bd.options
+
+        if gstate.fignum == 0:
             # no figures yet created, lazy initialization
             
-            matplotlib.use(self.bd.options.backend)            
+            matplotlib.use(options.backend)            
             mpl_backend = matplotlib.get_backend()
-            print('matplotlib backend is', mpl_backend)
+
+            # split the string            
+            ntiles = [int(x) for x in options.tiles.split('x')]
             
             dpiscale = 1
+            print("Graphics:")
+            print('  backend:', mpl_backend)
+
             if mpl_backend == 'Qt5Agg':
                 from PyQt5 import QtWidgets
                 app = QtWidgets.QApplication([])
                 screen = app.primaryScreen()
-                print('Screen: %s' % screen.name())
+                if screen.name is not None:
+                    print('  Screen: %s' % screen.name())
                 size = screen.size()
-                print('Size: %d x %d' % (size.width(), size.height()))
+                print('  Size: %d x %d' % (size.width(), size.height()))
                 rect = screen.availableGeometry()
-                print('Available: %d x %d' % (rect.width(), rect.height()))
+                print('  Available: %d x %d' % (rect.width(), rect.height()))
                 sw = rect.width()
                 sh = rect.height()
                 #dpi = screen.physicalDotsPerInch()
@@ -102,31 +115,36 @@ class GraphicsBlock(SinkBlock):
                 window = plt.get_current_fig_manager().window
                 sw =  window.winfo_screenwidth()
                 sh =  window.winfo_screenheight()
-                print('Size: %d x %d' % (sw, sh))
-            self.bd.screensize_pix = (sw, sh)
-            self.bd.tiles = [int(x) for x in self.bd.options.tiles.split('x')]
-            
+                print('  Size: %d x %d' % (sw, sh))
+
             # create a figure at default size to get dpi (TODO better way?)
             f = plt.figure(figsize=(1,1))
-            self.bd.dpi = f.dpi / dpiscale
-            print('dpi', self.bd.dpi)
+            dpi = f.dpi / dpiscale
+            print('  dpi', dpi)
             
             # compute fig size in inches (width, height)
-            self.bd.figsize = [ self.bd.screensize_pix[0] / self.bd.tiles[1] / self.bd.dpi , self.bd.screensize_pix[1] / self.bd.tiles[0] / self.bd.dpi ]
-            
+            figsize = [ sw / ntiles[1] / dpi , sh / ntiles[0] / dpi ]
+
+            # save graphics info away in state
+            gstate.figsize = figsize
+            gstate.dpi = dpi
+            gstate.screensize_pix = (sw, sh)
+            gstate.ntiles = ntiles
+
             # resize the figure
             #plt.figure(num=f.number, figsize=self.figsize)
-            f.set_size_inches(self.bd.figsize, forward=True)
+            f.set_size_inches(figsize, forward=True)
             plt.ion()
         else:
-            f = plt.figure(figsize=self.bd.figsize)
+            f = plt.figure(figsize=gstate.figsize)
             
         # move the figure to right place on screen
-        row = self.bd.fignum // self.bd.tiles[0]
-        col = self.bd.fignum % self.bd.tiles[0]
-        move_figure(f, col * self.bd.figsize[0] * self.bd.dpi, row * self.bd.figsize[1] * self.bd.dpi)
+        row = gstate.fignum // gstate.ntiles[0]
+        col = gstate.fignum % gstate.ntiles[0]
+        move_figure(f, col * gstate.figsize[0] * gstate.dpi, row * gstate.figsize[1] * gstate.dpi)
         
-        self.bd.fignum += 1
+        gstate.fignum += 1
         #print('create figure', self.fignum, row, col)
         return f
-        
+
+            

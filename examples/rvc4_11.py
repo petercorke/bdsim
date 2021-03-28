@@ -5,7 +5,8 @@
 import bdsim
 import math
 
-bd = bdsim.BlockDiagram()
+sim = bdsim.BDSim()
+bd = sim.blockdiagram()
 
 # parameters
 xg = [5, 5, math.pi/2]
@@ -102,6 +103,6 @@ bd.compile()
 bd.report()
 bd.dotfile('rvc4_11.dot')
 
-out = bd.run(block=True)
+out = sim.run(bd)
 
-bd.done()
+bd.done(block=True)

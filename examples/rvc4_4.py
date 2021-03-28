@@ -5,7 +5,8 @@
 import bdsim
 import math
 
-bd = bdsim.BlockDiagram()
+sim = bdsim.BDSim()
+bd = sim.blockdiagram()
 
 def background_graphics(ax):
     ax.plot(5, 5, '*')
@@ -40,7 +41,6 @@ bd.connect(mux, error[1])
 bd.compile()
 bd.report()
 
-print(bd.options)
-out = bd.run()
+out = sim.run(bd)
 
-bd.done()
+sim.done(bd)

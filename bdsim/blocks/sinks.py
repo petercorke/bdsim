@@ -136,7 +136,7 @@ class Stop(SinkBlock):
         else:
             raise RuntimeError('input to stop must be boolean or callable')
         if stop:
-            self.bd.stop = self
+            self.bd.state.stop = self
 
 if __name__ == "__main__":
 

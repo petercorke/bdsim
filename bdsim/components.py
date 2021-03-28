@@ -45,7 +45,7 @@ class Struct(UserDict):
         return self.data[name]
         
     def __str__(self):
-        return self.name + ' ' + str({k:v for k, v in self.data.items() if not k.startswith('_')})
+        return self.name + ' ' + str({k for k, v in self.data.items() if not k.startswith('_')})
     
     def __repr__(self):
         def fmt(k, v):
@@ -101,7 +101,7 @@ class Wire:
         for k,v in self.__dict__.items():
             print("  {:8s}{:s}".format(k+":", str(v)))
             
-    def send(self, value):
+    def send(self, value, sinks=True):
         """
         Send a value to the port at end of this wire.
         
@@ -164,7 +164,6 @@ class Wire:
         return s
 
         
-
 # ------------------------------------------------------------------------- # 
 
 class Plug:
@@ -332,7 +331,7 @@ clocklist = []
 
 class Clock:
 
-    def __init__(self, arg, offset=0, unit='s', name=None):
+    def __init__(self, arg, unit='s', offset=0, name=None):
         global clocklist
         if unit == 's':
             self.T = arg
@@ -343,18 +342,51 @@ class Clock:
 
         self.offset = offset
 
+        self.blocklist = []
+
+        self.x = None  # discrete state vector numpy.ndarray
+
         self.name = "clock." + str(len(clocklist))
 
         clocklist.append(self)
 
         # events happen at time t = kT + offset
 
+    def add_block(self, block):
+        self.blocklist.append(block)
+
     def __str__(self):
-        return "{}: T={}, offset={}".format(self.name, self.T, self.offset)
+        s = f"{self.name}: T={self.T} sec"
+        if self.offset != 0:
+            s += f", offset={self.offset}"
+        s += f", clocking {len(self.blocklist)} blocks"
+        return s
+
+    def getstate0(self):
+        # get the state from each stateful block on this clock
+        x0 = np.array([])
+        for b in self.blocklist:
+            x0 = np.r_[x0, b.getstate0()]
+            #print('x0', x0)
+        return x0
+
+    def getstate(self):
+
+        x = np.array([])
+        for b in self.blocklist:
+            # update dstate
+            assert b.updated, 'clocked block has incomplete inputs'
+            x = np.r_[x, b.next().flatten()]
+
+        return x
+
+    def setstate(self):
+        x = self._x
+        for b in self.blocklist:
+            x = b.setstate(x)  # send it to blocks        
 
     def next(self, t):
-        
-        return math.ceil((t + self.offset) / self.T) * self.T + self.offset
+        return (math.floor((t - self.offset) / self.T) + 1) * self.T + self.offset
 # ------------------------------------------------------------------------- #
 
 
@@ -445,6 +477,7 @@ class Block:
         block.nin = 0
         block.nout = 0
         block.nstates = 0
+        block.ndstates = 0
         return block
 
     _latex_remove = str.maketrans({'$':'', '\\':'', '{':'', '}':'', '^':'', '_':''})
@@ -456,6 +489,7 @@ class Block:
             self.name_tex = name
             self.name = self._fixname(name)
         else:
+            self.name_tex = None
             self.name = None
         self.pos = pos
         self.id = None
@@ -852,13 +886,13 @@ class TransferBlock(Block):
     def reset(self):
         super().reset()
         self._x = self._x0
-        return self._x
+        # return self._x
 
     def setstate(self, x):
         self._x = x[:self.nstates]  # take as much state vector as we need
         return x[self.nstates:]     # return the rest
 
-    def getstate(self):
+    def getstate0(self):
         return self._x0
 
     def check(self):
@@ -893,6 +927,38 @@ class SubsystemBlock(Block):
         super().__init__(**kwargs)
         self.nstates = 0
 
+class ClockedBlock(Block):
+    """
+    A ClockedBlock is a subclass of Block that represents a block with inputs
+    outputs and discrete states. Typically used to describe a discrete time dynamic
+    system, either linear or nonlinear.
+    """
+    blockclass = 'clocked'
+
+    def __init__(self, clock=None, **kwargs):
+        # print('Clocked constructor')
+        super().__init__(**kwargs)
+        assert clock is not None, 'clocked block must have a clock'
+        self.clock = clock
+        clock.add_block(self)
+
+    def reset(self):
+        super().reset()
+        # self._x = self._x0
+        # return self._x
+
+    def setstate(self, x):
+        self._x = x[:self.nstates]  # take as much state vector as we need
+        print('** set block state to ', self._x)
+        return x[self.nstates:]     # return the rest
+
+    def getstate0(self):
+        return self._x0
+
+    def check(self):
+        assert len(self._x0) == self.nstates, 'incorrect length for initial state'
+        assert self.nin > 0 or self.nout > 0, 'no inputs or outputs specified'
+        self._x = self._x0
 
 # c = Clock(5)
 # c1 = Clock(5, 2)

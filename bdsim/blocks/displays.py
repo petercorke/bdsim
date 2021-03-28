@@ -89,9 +89,10 @@ class Scope(GraphicsBlock):
             SCOPE()
             SCOPE(nin=2)
             SCOPE(nin=2, scale=[-1,2])
-            SCOPE(styles=['k', 'r--'])
             SCOPE(styles='k--')
-            SCOPE(styles={'color:', 'red, 'linestyle': '--''})
+            SCOPE(styles=[{'color': 'blue'}, {'color': 'red', 'linestyle': '--'}])
+            SCOPE(styles=['k', 'r--'])
+
             
         .. figure:: ../../figs/Figure_1.png
            :width: 500px
@@ -134,6 +135,8 @@ class Scope(GraphicsBlock):
                 nplots = vector
             else:
                 nplots = nin
+        else:
+            nin = nplots
 
         self.nplots = nplots
         self.vector = vector
@@ -182,7 +185,7 @@ class Scope(GraphicsBlock):
             if self.labels is not None:
                 self.ax.set_ylabel(','.join(self.labels))
             self.ax.set_xlabel(self.xlabel)
-            self.ax.set_title(self.name)
+            self.ax.set_title(self.name_tex)
 
             # grid control
             if self.grid is True:
@@ -191,7 +194,7 @@ class Scope(GraphicsBlock):
                 self.ax.grid(True, *self.grid)
             
             # set limits
-            self.ax.set_xlim(0, self.bd.T)
+            self.ax.set_xlim(0, self.bd.state.T)
 
             if self.scale != 'auto':
                 self.ax.set_ylim(*self.scale)
@@ -206,7 +209,7 @@ class Scope(GraphicsBlock):
     def step(self):
         # inputs are set
         if self.bd.options.graphics:
-            self.tdata = np.append(self.tdata, self.bd.t)
+            self.tdata = np.append(self.tdata, self.bd.state.t)
 
             if self.vector:
                 # vector input on the input
@@ -220,7 +223,7 @@ class Scope(GraphicsBlock):
                 for i,input in enumerate(self.inputs):
                     self.ydata[i] = np.append(self.ydata[i], input)
 
-            plt.figure(self.fig.number)
+            plt.figure(self.fig.number)  # make current
             for i in range(0, self.nplots):
                 self.line[i].set_data(self.tdata, self.ydata[i])
         

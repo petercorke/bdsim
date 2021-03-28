@@ -25,8 +25,8 @@ path = np.array([
 robot_traj = rtb.mstraj(path[1:,:], qdmax=speed, q0=path[0,:], dt=0.1, tacc=tacc).q
 total_time =robot_traj.shape[0] * dt + look_ahead / speed
 
-
-bd = bdsim.BlockDiagram(graphics=False)
+sim = bdsim.BDSim(graphics=False)
+bd = sim.blockdiagram()
 
 def background_graphics(ax):
     ax.plot(path[:,0], path[:,1], 'r', linewidth=3, alpha=0.7)
@@ -82,6 +82,6 @@ bd.report()
 
 print('\nSimulating for ', total_time, ' seconds')
 
-out = bd.run(T=total_time, block=True)
+out = sim.run(bd, T=total_time)
 
-bd.done()
+bd.done(block=True)

@@ -10,41 +10,23 @@ from pathlib import Path
 import sys
 import importlib
 import inspect
-import re
-import types
-import argparse
 from collections import Counter, namedtuple
 import numpy as np
-import scipy.integrate as integrate
 from colored import fg, attr
-import tempfile
-import subprocess
-import webbrowser
+
 
 from ansitable import ANSITable, Column
 
 from bdsim.components import *
 
-debuglist = [] # ('propagate', 'state', 'deriv')
 
-def DEBUG(debug, *args):
-    if debug in debuglist:
-        print('DEBUG.{:s}: '.format(debug), *args)
+def isdebug(debug):
+    # nonlocal debuglist
+    # return debug in debuglist
+    return False
 
-# print a progress bar
-# https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console
-def printProgressBar (fraction, prefix='', suffix='', decimals=1, length=50, fill = '█', printEnd = "\r"):
-    
-    percent = ("{0:." + str(decimals) + "f}").format(fraction * 100)
-    filledLength = int(length * fraction)
-    bar = fill * filledLength + '-' * (length - filledLength)
-    print(f'\r{prefix} |{bar}| {percent}% {suffix}', end = printEnd)
 
-# convert class name to BLOCK name
-def blockname(cls):
-    return cls.__name__.strip('_').upper()
 # ------------------------------------------------------------------------- #    
-
 
 class BlockDiagram:
     """
@@ -59,272 +41,36 @@ class BlockDiagram:
     :vartype x: np.ndarray
     :ivar compiled: diagram has successfully compiled
     :vartype compiled: bool
-    :ivar T: maximum simulation time (seconds)
-    :vartype T: float
-    :ivar t: current simulation time (seconds)
-    :vartype t: float
-    :ivar fignum: number of next matplotlib figure to create
-    :vartype fignum: int
-    :ivar stop: reference to block wanting to stop simulation, else None
-    :vartype stop: Block subclass
-    :ivar checkfinite: halt simulation if any wire has inf or nan
-    :vartype checkfinite: bool
     :ivar blockcounter: unique counter for each block type
     :vartype blockcounter: collections.Counter
     :ivar blockdict: index of all blocks by category
     :vartype blockdict: dict of lists
     :ivar name: name of this diagram
     :vartype name: str
-    :ivar graphics: enable graphics
-    :vartype graphics: bool
     """
     
     def __init__(self, name='main', **kwargs):
-        """
-        :param name: diagram name, defaults to 'main'
-        :type name: str, optional
-        :param sysargs: process options from sys.argv, defaults to True
-        :type sysargs: bool, optional
-        :param graphics: enable graphics, defaults to True
-        :type graphics: bool, optional
-        :param animation: enable animation, defaults to False
-        :type animation: bool, optional
-        :param progress: enable progress bar, defaults to True
-        :type progress: bool, optional
-        :param debug: debug options, defaults to None
-        :type debug: str, optional
-        :param backend: matplotlib backend, defaults to 'Qt5Agg''
-        :type backend: str, optional
-        :param tiles: figure tile layout on monitor, defaults to '3x4'
-        :type tiles: str, optional
-        :raises ImportError: syntax error in block
-        :return: parent object for blockdiagram
-        :rtype: BlockDiagram
-        
-        The instance has a number of factory methods that return instances of blocks.
-        
-        ===================  =========  ========  ===========================================
-        Command line switch  Argument   Default   Behaviour
-        ===================  =========  ========  ===========================================
-        --nographics, -g     graphics   True      enable graphical display
-        --animation, -a      animation  False     update graphics at each time step
-        --noprogress, -p     progress   True      display simulation progress bar
-        --backend BE         backend    'Qt5Agg'  matplotlib backend
-        --tiles RxC, -t RxC  tiles      '3x4'     arrangement of figure tiles on the display
-        --debug F, -d F      debug      ''        debug flag string
-        ===================  =========  ========  ===========================================
-        
-        The debug string comprises single letter flags:
-            
-            - 'p' debug network value propagation
-            - 's' debug state vector
-            - 'd' debug state derivative 
 
-        """
 
         self.wirelist = []      # list of all wires
         self.blocklist = []     # list of all blocks
-        self.x = None           # state vector numpy.ndarray
+        self.clocklist = []     # list of all clock sources
         self.compiled = False   # network has been compiled
-        self.T = None           # maximum.BlockDiagram time
-        self.t = None           # current time
-        self.fignum = 0
-        self.stop = None
-        self.checkfinite = True
         self.blockcounter = Counter()
-        self.debugger = True
         self.name = name
-        self.debug_stop = False
-        self.t_stop = None  # time-based breakpoint
+        self.nstates = 0
+        self.ndstates = 0
 
-        # process command line and constructor options
-        self._get_options(**kwargs)
 
-        ##load modules from the blocks folder
-        self._load_blocks()
+        self.options = None
         
-        
-    def _get_options(self, sysargs=True, **kwargs):
-        
-        # all switches and their default values
-        defaults = {
-            'backend': 'Qt5Agg',
-            'tiles': '3x4',
-            'graphics': True,
-            'animation': False,
-            'progress': True,
-            'debug': ''
-            }
-        if sysargs:
-            # command line arguments and graphics
-            parser = argparse.ArgumentParser()
-            parser.add_argument('--backend', '-b', type=str, metavar='BACKEND', default=defaults['backend'],
-                                help='matplotlib backend to choose')
-            parser.add_argument('--tiles', '-t', type=str, default=defaults['tiles'], metavar='ROWSxCOLS',
-                                help='window tiling as NxM')
-            parser.add_argument('--nographics', '-g', default=defaults['graphics'], action='store_const', const=False, dest='graphics',
-                                help='disable graphic display')
-            parser.add_argument('--animation', '-a', default=defaults['animation'], action='store_const', const=True,
-                                help='animate graphics')
-            parser.add_argument('--noprogress', '-p', default=defaults['progress'], action='store_const', const=False, dest='progress',
-                        help='animate graphics')
-            parser.add_argument('--debug', '-d', type=str, metavar='[psd]', default=defaults['debug'], 
-                                help='debug flags')
-            clargs = vars(parser.parse_args())  # get args as a dictionary
-            print(f'clargs {clargs}')
 
-            
-        # function arguments override the command line options
-        # provide a list of argument names and default values
-        options = {}
-        for option, default in defaults.items():
-            if option in kwargs:
-                # first priority is to constructor argument
-                assert type(kwargs[option]) is type(default), 'passed argument ' + opt + ' has wrong type'
-                options[option] = kwargs[option]
-            elif sysargs and option in clargs:
-                # if not provided, drop through to command line argument
-                options[option] = clargs[option]
-            else:
-                # drop through to the default value
-                options[option] = default
-            
-        # ensure graphics is enabled if animation is requested
-        if options['animation']:
-            options['graphics'] = True
-        
-        # stash these away
-        self.options = types.SimpleNamespace(**{**defaults, **options})
-
-        # setup debug parameters from single character codes
-        global debuglist
-        if 'p' in self.options.debug:
-            debuglist.append('propagate')
-        if 's' in self.options.debug:
-            debuglist.append('state')
-        if 'd' in self.options.debug:
-            debuglist.append('deriv')
-
-            
-    def _load_blocks(self):
-        """
-        Load blocks
-
-        Load all block definitions.
-
-        Reads blocks from .py files found in bdsim/bdsim/blocks and folders
-        given by colon separated list in envariable BDSIMPATH.
-
-        The constructors of all classes within the module become a bound method
-        of self.
-
-        :raises ImportError: [description]
-        :raises ImportError: [description]
-        :return: [description]
-        :rtype: [type]
-        """
-        nblocks = len(blocklist)
-        if nblocks == 0:
-            # add bdsim blocks folder
-            blockpath = [Path(__file__).parent / 'blocks']
-
-            # add RTB and MVTB if they exist
-            try:
-                import roboticstoolbox.blocks as pkg
-                blockpath.append(Path(pkg.__path__[0]))
-            except ImportError:
-                pass
-            try:
-                import machinvevisiontoolbox.blocks as pkg
-                blockpath.append(Path(pkg.__path__[0]))
-            except ImportError:
-                pass
-
-            # path = os.getenv('BDSIMPATH')
-            # if path is not None:
-            #     for p in path.split(':'):
-            #         blockpath.append(Path(p))            
-            
-            print('Loading blocks:')
-
-            for path in blockpath:  # for each folder on the path
-                if not path.exists():
-                    print(f"WARNING: path does not exist: {path}")
-                    continue
-                for file in path.iterdir():  # for each file in the folder
-                    # scan every file *.py to find block definitions
-                    # a block is a class that subclasses Source, Sink, Function, Transfer and
-                    # has an @block decorator.
-                    #
-                    # The decorator adds the classes to a global variable blocklist in the
-                    # component module's namespace.
-                    if not file.name.startswith('test_') and not file.name.startswith('__') and file.name.endswith('.py'):
-                        # valid python module, import it
-                        try:
-                            # module = importlib.import_module('.' + file.stem, package='bdsim.blocks')
-                            spec = importlib.util.spec_from_file_location(file.name, file)
-                            module = importlib.util.module_from_spec(spec)
-                            spec.loader.exec_module(module)
-                            # module = importlib.import_module('.' + file.stem, package='bdsim.blocks')
-                        except SyntaxError:
-                            print(f"-- syntax error in block definiton: {file}")
-        
-                        # components.blocklist grows with every block import
-                        if len(blocklist) > nblocks:
-                            # we just loaded some more blocks
-                            print('  loading blocks from {:s}: {:s}'.format(str(file), ', '.join([blockname(cls) for cls in blocklist[nblocks:]])))
-                            
-                        # perform basic sanity checks on the blocks just read
-                        for cls in blocklist[nblocks:]:
-                            
-                            if cls.blockclass in ('source', 'transfer', 'function'):
-                                # must have an output function
-                                valid = hasattr(cls, 'output') and \
-                                        callable(cls.output) and \
-                                        len(inspect.signature(cls.output).parameters) == 2
-                                if not valid:
-                                    raise ImportError('class {:s} has missing/improper output method'.format(str(cls)))
-                                
-                            if cls.blockclass == 'sink':
-                                # must have a step function
-                                valid = hasattr(cls, 'step') and \
-                                        callable(cls.step) and \
-                                        len(inspect.signature(cls.step).parameters) == 1
-                                if not valid:
-                                    raise ImportError('class {:s} has missing/improper step method'.format(str(cls)))
-                                    
-                        nblocks = len(blocklist)
-        
-        def new_method(cls, bd):
-            def block_init_wrapper(self, *args, **kwargs):
-                block = cls(*args, bd=bd, **kwargs)
-                self.add_block(block)
-                return block
-            
-            # return a function that invokes the class constructor
-            f = block_init_wrapper
-            # move the __init__ docstring to the class to allow BLOCK.__doc__
-            cls.__doc__ = cls.__init__.__doc__  
-            return f
-        
-        # bind the block constructors as new methods on this instance
-        self.blockdict = {}
-        for cls in blocklist:
-            # create a function to invoke the block's constructor
-            f = new_method(cls, self)
-            
-            # create the new method name, strip underscores and capitalize
-            bindname = blockname(cls)
-            
-            # set a bound version of this function as an attribute of the instance
-            setattr(self, bindname, f.__get__(self))
-            
-            blocktype = cls.__module__.split('.')[1]
-            if blocktype in self.blockdict:
-                self.blockdict[blocktype].append(bindname)
-            else:
-                self.blockdict[blocktype] = [bindname]
     
+    def clock(self, *args, **kwargs):
+        clock = Clock(*args, **kwargs)
+        self.clocklist.append(clock)
+        return clock
+
     def add_block(self, block):
         block.id = len(self.blocklist)
         if block.name is None:
@@ -426,7 +172,9 @@ class BlockDiagram:
         error = False
         
         self.nstates = 0
+        self.ndstates = 0
         self.statenames = []
+        self.dstatenames = []
         self.blocknames = {}
         
         if not subsystem:
@@ -468,13 +216,20 @@ class BlockDiagram:
                 else:
                     # create default state names
                     self.statenames.extend([b.name + 'x' + str(i) for i in range(0, b.nstates)])
+            if b.blockclass == 'clocked':
+                self.ndstates += b.nstates
+                if b._state_names is not None:
+                    assert len(b._state_names) == b.nstates, 'number of state names not consistent with number of states'
+                    self.dstatenames.extend(b._state_names)
+                else:
+                    # create default state names
+                    self.statenames.extend([b.name + 'X' + str(i) for i in range(0, b.nstates)])
 
         # initialize lists of input and output ports
         for b in self.blocklist:
             b.outports = [[] for i in range(0, b.nout)]
             b.inports = [None for i in range(0, b.nin)]
         
-         
         # connect the source and destination blocks to each wire
         for w in self.wirelist:
             try:
@@ -526,11 +281,14 @@ class BlockDiagram:
                     error = True
 
         # evaluate the network once to check out wire types
-        x = self.getstate()
+        x = self.getstate0()
+
+        for clock in self.clocklist:
+            clock._x = clock.getstate0()
 
         if not subsystem:
             try:
-                self.evaluate(x, 0.0)
+                self.evaluate(x, 0.0, sinks=False)
             except RuntimeError as err:
                 print('\nFrom compile: unrecoverable error in value propagation:', err)
                 error = True
@@ -591,295 +349,13 @@ class BlockDiagram:
         return blocks, wires
 
 
-    # # ---------------------------------------------------------------------- #
-    # def _flatten(top, subsys, path):
-
-    #     #flatten the hierarchy
-
-    #     subsystems = [b for b in subsys.subsystem.blocklist if b.type == 'subsystem']
-    #     # recursively flatten all subsystems
-    #     for ss in subsystems:
-    #         print('flattening', ss)
-    #         top._flatten(ss, path + [ss.name] )
-        
-    #     # compile this subsystem TODO
-    #     if subsys.subsystem.compiled is False:
-    #         ok = subsys.subsystem.compile(subsystem=True)
-    #         if not ok:
-    #             raise ImportError(f"cannot compile subsystem {subsys.name}")
-    #     # sort the subsystem blocks into categories
-    #     inports = []
-    #     outports = []
-    #     others = []
-    #     for b in subsys.subsystem.blocklist:
-    #         if b.type == 'inport':
-    #             inports.append(b)
-    #         elif b.type == 'outport':
-    #             outports.append(b)
-    #         else:
-    #             others.append(b)
-    #     if len(inports) >1:
-    #         raise ImportError('subsystem has more than one input port element')
-    #     if len(outports) > 1:
-    #         raise ImportError('subsystem has more than one output port element')
-    #     if len(inports) == 0 and len(outports) == 0:
-    #         raise ImportError('subsystem has no input or output port elements')
-            
-    #     # connect the input port
-    #     inport = inports[0]
-    #     for w in top.wirelist:
-    #         if w.end.block == subsys:
-    #             # this top-level wire is input to subsystem
-    #             # reroute it
-    #             port = w.end.port
-    #             for w2 in inport.outports[port]:
-    #                 # w2 is the wire from INPORT to others within subsystem
-                    
-    #                 # make w2 start at the source driving INPORT
-    #                 w2.start.block = w.start.block
-    #                 w2.start.port = w.start.port
-    #     # remove all wires connected to the inport
-    #     top.wirelist = [w for w in top.wirelist if w.end.block != subsys]
-                
-    #     # connect the output port
-    #     outport = outports[0]
-    #     for w in top.wirelist:
-    #         if w.start.block == subsys:
-    #             # this top-level wire is output from subsystem
-    #             # reroute it
-    #             port = w.start.port
-    #             w2 = outport.inports[port]
-    #             # w2 is the wire to OUTPORT from others within subsystem
-                
-    #             # make w2 end at the destination from OUTPORT
-    #             w2.end.block = w.end.block
-    #             w2.end.port = w.end.port
-    #     # remove all wires connected to the outport
-    #     top.wirelist = [w for w in top.wirelist if w.start.block != subsys]
-    #     try:
-    #         top.blocklist.remove(subsys)
-    #     except:
-    #         print('HACK')
-    #     for b in others:
-    #         top.add_block(b)   # add remaining blocks from subsystem
-    #         b.name = '/'.join(path + [b.name])
-    #     top.wirelist.extend(subsys.subsystem.wirelist)  # add remaining wires from subsystem
     
     # ---------------------------------------------------------------------- #
-        
-    def run(self, T=10.0, dt=0.1, solver='RK45', 
-            block=False, checkfinite=True, minstepsize=1e-6, watch=[], debug=False,
-            **kwargs):
-        """
-        Run the block diagram
-        
-        :param T: maximum integration time, defaults to 10.0
-        :type T: float, optional
-        :param dt: maximum time step, defaults to 0.1
-        :type dt: float, optional
-        :param solver: integration method, defaults to ``RK45``
-        :type solver: str, optional
-        :param block: matplotlib block at end of run, default False
-        :type block: bool
-        :param checkfinite: error if inf or nan on any wire, default True
-        :type checkfinite: bool
-        :param minstepsize: minimum step length, default 1e-6
-        :type minstepsize: float
-        :param watch: list of input ports to log
-        :type watch: list
-        :param ``**kwargs``: passed to ``scipy.integrate``
-        :return: time history of signals and states
-        :rtype: Sim class
-        
-        Assumes that the network has been compiled.
-        
-        Graphics display in all blocks can be disabled using the `graphics`
-        option to the ``BlockDiagram`` instance.
-        
-        
-        Results are returned in a class with attributes:
-            
-        - ``t`` the time vector: ndarray, shape=(M,)
-        - ``x`` is the state vector: ndarray, shape=(M,N)
-        - ``xnames`` is a list of the names of the states corresponding to columns of `x`, eg. "plant.x0",
-          defined for the block using the ``snames`` argument
-        - ``uN'` for a watched input where N is the index of the port mentioned in the ``watch`` argument
-        - ``unames`` is a list of the names of the input ports being watched, same order as in ``watch`` argument
-        
-        If there are no dynamic elements in the diagram, ie. no states, then ``x`` and ``xnames`` are not
-        present.
-        
-        The ``watch`` argument is a list of one or more input ports whose value during simulation
-        will be recorded.  The elements of the list can be:
-            - a ``Block`` reference, which is interpretted as input port 0
-            - a ``Plug`` reference, ie. a block with an index or attribute
-            - a string of the form "block[i]" which is port i of the block named block.
-        
-        .. note:: Simulation stops if the step time falls below ``minsteplength``
-            which typically indicates that the solver is struggling with a very
-            harsh non-linearity.
-        """
-        
-        assert self.compiled, 'Network has not been compiled'
-        self.T = T
-        self.count = 0
-        self.stop = None # allow any block to stop.BlockDiagram by setting this to the block's name
-        self.checkfinite = checkfinite
-        if debug:
-            self.debug_stop = True
-            self.options.progress = False
-        
-        # preproces the watchlist
-        pluglist = []
-        plugnamelist = []
-        re_block = re.compile(r'(?P<name>[^[]+)(\[(?P<port>[0-9]+)\])')
-        for n in watch:
-            if isinstance(n, str):
-                # a name was given, with optional port number
-                m = re_block.match(n)
-                name = m.group('name')
-                port = m.group('port')
-                b = self.blocknames[name]
-                plug = b[port]
-            elif isinstance(n, Block):
-                # a block was given, defaults to port 0
-                plug = n[0]
-            elif isinstance(n, Plug):
-                # a plug was given
-                plug = n
-            pluglist.append(plug)
-            plugnamelist.append(str(plug))
-
-        try:        
-            # tell all blocks we're doing a BlockDiagram
-            self.start()
     
-            # get initial state from the stateful blocks
-            x0 = self.getstate()
-            if len(x0) > 0:
-                print('initial state x0 = ', x0)
-    
-            if self.options.progress:
-                printProgressBar(0, prefix='Progress:', suffix='complete', length=60)
 
-            # out = scipy.integrate.solve_ivp.BlockDiagram._deriv, args=(self,), t_span=(0,T), y0=x0, 
-            #             method=solver, t_eval=np.linspace(0, T, 100), events=None, **kwargs)
-            if len(x0) > 0:
-                # block diagram contains states, solve it using numerical integration
-
-                scipy_integrator = integrate.__dict__[solver]  # get user specified integrator
-
-                integrator = scipy_integrator(lambda t, y: self.evaluate(y, t),
-                                              t0=0.0, y0=x0, t_bound=T, max_step=dt, **kwargs)
-
-                # initialize list of time and states
-                tlist = []
-                xlist = []
-                plist = [[] for p in pluglist]
-                
-                while integrator.status == 'running':
-
-                    # step the integrator, calls _deriv multiple times
-                    message = integrator.step()
-
-                    if integrator.status == 'failed':
-                        print(fg('red') + f"\nintegration completed with failed status: {message}" + attr(0))
-                        break
-
-                    # stash the results
-                    tlist.append(integrator.t)
-                    xlist.append(integrator.y)
-                    
-                    # record the ports on the watchlist
-                    for i, p in enumerate(pluglist):
-                        plist[i].append(p.block.inputs[p.port])
-                    
-                    # update all blocks that need to know
-                    self.step()
-                    
-                    # update the progress bar
-                    if self.options.progress:
-                        printProgressBar(integrator.t / T, prefix='Progress:', suffix='complete', length=60)
-
-                    # has any block called a stop?
-                    if self.stop is not None:
-                        print(fg('red') + f"\n--- stop requested at t={self.t:.4f} by {self.stop:s}" + attr(0))
-                        break
-
-                    if minstepsize is not None and integrator.step_size < minstepsize:
-                        print(fg('red') + f"\n--- stopping on minimum step size at t={self.t:.4f} with last stepsize {integrator.step_size:g}" + attr(0))
-                        break
-
-                    if self.debug_stop:
-                        self._debugger(integrator)
-
-                # save buffered data in a Struct
-                out = Struct('results')
-                out.t = np.array(tlist)
-                out.x = np.array(xlist)
-                out.xnames = self.statenames
-                for i, p in enumerate(pluglist):
-                    out['u'+str(i)] = np.array(plist[i])
-                out.unames = plugnamelist
-            else:
-                # block diagram has no states
-                
-                # initialize list of time and states
-                tlist = []
-                plist = [[] for p in pluglist]
-                
-                for t in np.arange(0, T, dt):  # step through the time range
-
-                    # evaluate the block diagram
-                    self.evaluate([], t)
-
-                    # stash the results
-                    tlist.append(integrator.t)
-                    xlist.append(integrator.y)
-                    
-                    # record the ports on the watchlist
-                    for i, p in enumerate(pluglist):
-                        plist[i].append(p.block.inputs[p.port])
-
-                    # update all blocks that need to know
-                    self.step()
-
-                    # update the progress bar
-                    if self.options.progress:
-                        printProgressBar(integrator.t / T, prefix='Progress:', suffix='complete', length=60)
-                        
-                    # has any block called a stop?
-                    if self.stop is not None:
-                        print('\n--- stop requested at t={:f} by {:s}'.format(self.t, str(self.stop)))
-                        break
-
-                    if self.debug_stop:
-                        self._debugger()
-                    
-                # save buffered data in a Struct
-                out = Struct('results')
-                out.t = np.array(tlist)
-                for i, p in enumerate(pluglist):
-                    out['u'+str(i)] = np.array(plist[i])
-                out.unames = plugnamelist
-                
-            if self.options.progress:
-                print('\r' + ' '* 90 + '\r')
-                
-        except RuntimeError as err:
-            # bad things happens, print a message and return no result
-            print('unrecoverable error in evaluation: ', err)
-            raise
-
-        # pause until all graphics blocks close
-        self.done(block=block)
-        # print(self.count, ' integrator steps')
-
-        return out
-        
     # ---------------------------------------------------------------------- #
 
-    def evaluate(self, x, t):
+    def evaluate(self, x, t, checkfinite=True, debuglist=[], sinks=True):
         """
         Evaluate all blocks in the network
         
@@ -898,8 +374,13 @@ class BlockDiagram:
 
         """
         #print('in evaluate at t=', t)
-        self.t = t
-        DEBUG('state', '>>>>>>>>> t=', t, ', x=', x, '>>>>>>>>>>>>>>>>')
+
+        try:
+            self.state.t = t
+        except:
+            pass
+
+        self.DEBUG('state', '>>>>>>>>> t=', t, ', x=', x, '>>>>>>>>>>>>>>>>')
         
         # reset all the blocks ready for the evalation
         self.reset()
@@ -908,11 +389,17 @@ class BlockDiagram:
         for b in self.blocklist:
             if b.blockclass == 'transfer':
                 x = b.setstate(x)
-        
+
+        # split the discrete state vector to clocked blocks
+        for clock in self.clocklist:
+            clock.setstate()
+
+        self.DEBUG('propagate', 't={:.3f}'.format(t))
+
         # process blocks with initial outputs and propagate
         for b in self.blocklist:
-            if b.blockclass in ('source', 'transfer'):
-                self._propagate(b, t)
+            if b.blockclass in ('source', 'transfer', 'clocked'):
+                self._propagate(b, t, sinks=sinks)
                 
         # check we have values for all
         for b in self.blocklist:
@@ -922,7 +409,7 @@ class BlockDiagram:
         # gather the derivative
         YD = self.deriv()
 
-        DEBUG('deriv', YD)
+        self.DEBUG('deriv', YD)
 
 
         return YD
@@ -970,7 +457,7 @@ class BlockDiagram:
 
     # ---------------------------------------------------------------------- #
 
-    def _propagate(self, b, t, depth=0):
+    def _propagate(self, b, t, depth=0, checkfinite=True, sinks=True):
         """
         Propagate values of a block to all connected inputs.
         
@@ -992,6 +479,7 @@ class BlockDiagram:
         # execute the subsystem to obtain its outputs
 
         # get output of block at time t
+
         try:
             out = b.output(t)
         except Exception as err:
@@ -999,11 +487,11 @@ class BlockDiagram:
             print('  {}'.format(err))
             print('  inputs were: ', b.inputs)
             if b.nstates > 0:
-                print('  state was: ', b.x)
+                print('  state was: ', b._x)
+
             raise RuntimeError from None
 
-            
-        DEBUG('propagate', '  '*depth, 'propagating: {:s} @ t={:.3f}: output = '.format(str(b),t) + str(out))
+        self.DEBUG('propagate', '  '*depth, 'block {:s}: output = '.format(str(b),t) + str(out))
 
         # check for validity
         assert isinstance(out, list) and len(out) == b.nout, 'block output is wrong type/length'
@@ -1011,7 +499,7 @@ class BlockDiagram:
         # TODO check output validity once at the start
         
         # check it has no nan or inf values
-        if self.checkfinite and isinstance(out, (int, float, np.ndarray)) and not np.isfinite(out).any():
+        if checkfinite and isinstance(out, (int, float, np.ndarray)) and not np.isfinite(out).any():
             raise RuntimeError('block outputs nan')
         
         # propagate block outputs to all downstream connected blocks
@@ -1019,7 +507,7 @@ class BlockDiagram:
             val = out[port]
             for w in outwires:     # every wire
                 
-                DEBUG('propagate', '  '*depth, '[', port, '] = ', val, ' --> ', w.end.block.name, '[', w.end.port, ']')
+                self.DEBUG('propagate', '  ', '  '*depth, '[', port, '] = ', val, ' --> ', w.end.block.name, '[', w.end.port, ']')
                 
                 # send value to wire
                 if w.send(val):
@@ -1045,11 +533,12 @@ class BlockDiagram:
                 Column("nin"),
                 Column("nout"),
                 Column("nstate"),
+                Column("ndstate"),
                 Column("type", headalign="^", colalign="<"),
                 border="thin"
             )
         for b in self.blocklist:
-            table.row( b.id, str(b), b.nin, b.nout, b.nstates, b.type)
+            table.row( b.id, str(b), b.nin, b.nout, b.nstates, b.ndstates, b.type)
         table.print()
         
         # print all the wires
@@ -1076,7 +565,25 @@ class BlockDiagram:
             table.row( w.id, start, end, w.fullname, typ)
         table.print()
 
-        print('\nState variables: {:d}'.format(self.nstates))
+        if self.ndstates > 0:
+            # print all the clocked blocks
+            print('\nClocked blocks::\n')
+            table = ANSITable(
+                    Column("id"),
+                    Column("block"),
+                    Column("clock"),
+                    Column("period"),
+                    Column("offset"),
+                    border="thin"
+                )
+            for b in self.blocklist:
+                if b.blockclass == 'clocked':
+                    c = b.clock
+                    table.row( b.id, str(b), c.name, c.T, c.offset)
+            table.print()
+
+        print('\nState variables:          {:d}'.format(self.nstates))
+        print('Discrete state variables: {:d}'.format(self.ndstates))
         
         if not self.compiled:
             print('** System has not been compiled, or had a compile time error')
@@ -1095,16 +602,16 @@ class BlockDiagram:
         print(attr(0))
         raise RuntimeError('Fatal failure')
 
-    def getstate(self):
+    def getstate0(self):
         # get the state from each stateful block
         x0 = np.array([])
         for b in self.blocklist:
             try:
                 if b.blockclass == 'transfer':
-                    x0 = np.r_[x0, b.getstate()]
+                    x0 = np.r_[x0, b.getstate0()]
                 #print('x0', x0)
             except:
-                self._error_handler('getstate', b)
+                self._error_handler('getstate0', b)
         return x0
                         
     def reset(self):
@@ -1131,7 +638,7 @@ class BlockDiagram:
         for b in self.blocklist:
             try:
                 b.step()
-                self.count += 1
+                self.state.count += 1
             except:
                 self._error_handler('step', b)
 
@@ -1163,9 +670,13 @@ class BlockDiagram:
             try:
                 b.start(**kwargs)
             except:
-                self._error_handler('start, b')
+                self._error_handler('start', b)
                 
-            
+    def initialstate(self):
+        for b in self.blocklist:
+            if b.blockclass in ('transfer', 'clocked'):
+                b._x = b._x0
+
     def done(self, **kwargs):
         """
         Inform all active blocks that.BlockDiagram is complete.  Close files,
@@ -1179,19 +690,6 @@ class BlockDiagram:
                 b.done(**kwargs)
             except:
                 self._error_handler('done', b)
-
-        
-    def closefigs(self):
-        print('fignum', self.fignum)
-        for i in range(self.fignum):
-            print('close', i+1)
-            plt.close(i+1)
-            plt.pause(0.1)
-        self.fignum = 0
-            
-    def savefig(self, format='pdf', **kwargs):
-        for b in self.blocklist:
-            b.savefig(format=format, **kwargs)
         
     def dotfile(self, filename):
         """
@@ -1249,29 +747,44 @@ class BlockDiagram:
 
         file.write('}\n')
 
-    def showgraph(self, **kwargs):
-        # create the temporary dotfile
-        dotfile = tempfile.TemporaryFile(mode="w")
-        self.dotfile(dotfile, **kwargs)
 
-        # rewind the dot file, create PDF file in the filesystem, run dot
-        dotfile.seek(0)
-        pdffile = tempfile.NamedTemporaryFile(suffix=".pdf", delete=False)
-        subprocess.run("dot -Tpdf", shell=True, stdin=dotfile, stdout=pdffile)
-
-        # open the PDF file in browser (hopefully portable), then cleanup
-        webbrowser.open(f"file://{pdffile.name}")
-        os.remove(pdffile.name)
             
     def blockvalues(self):
         for b in self.blocklist:
             print('Block {:s}:'.format(b.name))
             print('  inputs:  ', b.inputs)
-            print('  outputs: ', b.output(t=0))  
+            print('  outputs: ', b.output(t=0))
+
+    def DEBUG(self, debug, *args):
+        if debug in self.options.debuglist:
+            print('DEBUG.{:s}: '.format(debug), *args)
             
 if __name__ == "__main__":
-    
-    from pathlib import Path
 
-    exec(open(Path(__file__).parent.absolute() / "test_blockdiagram.py").read())
+    import bdsim
+    bd = bdsim.BlockDiagram()
+
+    # define the blocks
+    demand = bd.STEP(T=1, pos=(0,0), name='demand')
+    sum = bd.SUM('+-', pos=(1,0))
+    gain = bd.GAIN(10, pos=(1.5,0))
+    plant = bd.LTI_SISO(0.5, [2, 1], name='plant', pos=(3,0))
+    #scope = bd.SCOPE(pos=(4,0), styles=[{'color': 'blue'}, {'color': 'red', 'linestyle': '--'})
+    scope = bd.SCOPE(nin=2, styles=['k', 'r--'], pos=(4,0))
+
+    # connect the blocks
+    bd.connect(demand, sum[0], scope[1])
+    bd.connect(plant, sum[1])
+    bd.connect(sum, gain)
+    bd.connect(gain, plant)
+    bd.connect(plant, scope[0])
+
+    bd.compile()   # check the diagram
+    bd.report()    # list all blocks and wires
+    bd.run(5, debug=True)
+
+    
+    # from pathlib import Path
+
+    # exec(open(Path(__file__).parent.absolute() / "test_blockdiagram.py").read())
 
