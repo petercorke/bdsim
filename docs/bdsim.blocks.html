@@ -1,106 +1,185 @@
 
-<!DOCTYPE html>
 
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Blocks &#8212; Block diagram simulation 0.7 documentation</title>
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
-    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/doctools.js"></script>
-    <script src="_static/language_data.js"></script>
-    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Block library &mdash; Block diagram simulation 0.7 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="bdsim package" href="bdsim.html" />
+    <link rel="prev" title="bdsim package" href="bdsim.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
    
-  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
-
-  </head><body>
-  <div class="document">
+  <div class="wy-grid-for-nav">
     
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-            <p class="logo"><a href="index.html">
-              <img class="logo" src="_static/BDSimLogo_NoBackgnd@2x.png" alt="Logo"/>
-            </a></p>
-<h1 class="logo"><a href="index.html">Block diagram simulation</a></h1>
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
 
+          
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> Block diagram simulation
+          
 
+          
+            
+            <img src="_static/BDSimLogo_NoBackgnd@2x.png" class="logo" alt="Logo"/>
+          
+          </a>
 
+          
+            
+            
+          
 
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
 
+          
+        </div>
 
-<p>
-<iframe src="https://ghbtns.com/github-btn.html?user=petercorke&repo=bdsim&type=watch&count=true&size=large&v=2"
-  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
-</p>
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption"><span class="caption-text">Code documentation:</span></p>
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Code documentation:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="bdsim.html">bdsim package</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Blocks</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Block library</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#module-bdsim.blocks.sources">Source blocks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-bdsim.blocks.sinks">Sink blocks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-bdsim.blocks.functions">Function blocks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-bdsim.blocks.transfers">Transfer blocks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-bdsim.blocks.discrete">Discrete-time blocks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-bdsim.blocks.connections">Connection blocks</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#robot-blocks">Robot blocks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#robot-blocks">Robot blocks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#module-roboticstoolbox.blocks.arm">Arm robots</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-roboticstoolbox.blocks.mobile">Mobile robots</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-roboticstoolbox.blocks.uav">Multi rotor flying robots</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#module-bdsim.blocks.io">io blocks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-bdsim.blocks.vision">Vision blocks</a></li>
 </ul>
 </li>
 </ul>
 
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="bdsim.html" title="previous chapter">bdsim package</a></li>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
+            
+          
         </div>
+        
       </div>
-      <div class="documentwrapper">
-        <div class="bodywrapper">
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Block diagram simulation</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
           
 
-          <div class="body" role="main">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Block library</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
             
-  <div class="section" id="blocks">
-<h1>Blocks<a class="headerlink" href="#blocks" title="Permalink to this headline">¶</a></h1>
+            <a href="_sources/bdsim.blocks.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <div class="rst-breadcrumbs-buttons" role="navigation" aria-label="breadcrumb navigation">
+      
+      
+        <a href="bdsim.html" class="btn btn-neutral float-left" title="bdsim package" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+  </div>
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="block-library">
+<h1>Block library<a class="headerlink" href="#block-library" title="Permalink to this headline">¶</a></h1>
 <p>The block diagrams comprise blocks which belong to one of a number of different categories. These come from
 the package <code class="docutils literal notranslate"><span class="pre">bdsim.blocks</span></code>.</p>
 <div class="graphviz"><img src="_images/inheritance-00e00602a76479f177342c9e44399fa23e344b20.png" alt="Inheritance diagram of bdsim.components.SourceBlock, bdsim.components.SinkBlock, bdsim.graphics.GraphicsBlock, bdsim.components.FunctionBlock, bdsim.components.TransferBlock, bdsim.components.SubsystemBlock" usemap="#inheritance978cde46aa" class="inheritance graphviz" /></div>
@@ -1098,6 +1177,65 @@ form.</p>
 </div>
 <p>is the transfer function <span class="math notranslate nohighlight">\(\frac{s+2}{2s^2+3s-4}\)</span>.</p>
 </dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-bdsim.blocks.discrete">
+<span id="discrete-time-blocks"></span><h2>Discrete-time blocks<a class="headerlink" href="#module-bdsim.blocks.discrete" title="Permalink to this headline">¶</a></h2>
+<p>Transfer blocks:</p>
+<ul class="simple">
+<li><p>have inputs and outputs</p></li>
+<li><p>have state variables</p></li>
+<li><p>are a subclass of <code class="docutils literal notranslate"><span class="pre">TransferBlock</span></code> → <code class="docutils literal notranslate"><span class="pre">Block</span></code></p></li>
+</ul>
+<dl class="py class">
+<dt id="bdsim.blocks.discrete.ZOH">
+<em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.discrete.</code><code class="sig-name descname">ZOH</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/discrete.html#ZOH"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.discrete.ZOH" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="bdsim.html#bdsim.components.ClockedBlock" title="bdsim.components.ClockedBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.ClockedBlock</span></code></a></p>
+<dl class="py method">
+<dt id="bdsim.blocks.discrete.ZOH.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">clock</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">inputs</span></em>, <em class="sig-param"><span class="n">x0</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">min</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">max</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/discrete.html#ZOH.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.discrete.ZOH.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="bdsim.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="bdsim.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – Initial state, defaults to 0</p></li>
+<li><p><strong>min</strong> (<em>float</em><em> or </em><em>array_like</em><em>, </em><em>optional</em>) – Minimum value of state, defaults to None</p></li>
+<li><p><strong>max</strong> (<em>float</em><em> or </em><em>array_like</em><em>, </em><em>optional</em>) – Maximum value of state, defaults to None</p></li>
+<li><p><strong>**kwargs</strong> – common Block options</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a ZOH block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Integrator instance</p>
+</dd>
+</dl>
+<p>Create a zero-order hold block.</p>
+<p>Output is the input at the previous clock time.  The state can be a scalar or a
+vector, this is given by the type of <code class="docutils literal notranslate"><span class="pre">x0</span></code>.</p>
+<p>The minimum and maximum values can be:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>a scalar, in which case the same value applies to every element of 
+the state vector, or</p></li>
+<li><p>a vector, of the same shape as <code class="docutils literal notranslate"><span class="pre">x0</span></code> that applies elementwise to
+the state.</p></li>
+</ul>
+</div></blockquote>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If input is not a scalar, <code class="docutils literal notranslate"><span class="pre">x0</span></code> must have the shape of the
+input signal.</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="bdsim.blocks.discrete.ZOH.next">
+<code class="sig-name descname">next</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/discrete.html#ZOH.next"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.discrete.ZOH.next" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
@@ -2643,26 +2781,72 @@ following items:</p>
 </div>
 
 
+           </div>
+           
           </div>
-          
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="bdsim.html" class="btn btn-neutral float-left" title="bdsim package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, Peter Corke
+      <span class="lastupdated">
+        Last updated on 01-Apr-2021.
+      </span>
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
         </div>
       </div>
-    <div class="clearer"></div>
+
+    </section>
+
   </div>
-    <div class="footer">
-      &copy;2020, Peter Corke.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-      |
-      <a href="_sources/bdsim.blocks.rst.txt"
-          rel="nofollow">Page source</a>
-    </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+    <!-- Theme Analytics -->
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'G-11Q6WJM565', 'auto');
+    ga('send', 'pageview');
+    </script>
 
     
+   
 
-    
-  </body>
+</body>
 </html>

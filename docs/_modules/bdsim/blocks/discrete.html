@@ -1,0 +1,584 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>bdsim.blocks.discrete &mdash; Block diagram simulation 0.7 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home" alt="Documentation Home"> Block diagram simulation
+          
+
+          
+            
+            <img src="../../../_static/BDSimLogo_NoBackgnd@2x.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Code documentation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../bdsim.html">bdsim package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../bdsim.blocks.html">Block library</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Block diagram simulation</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>bdsim.blocks.discrete</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for bdsim.blocks.discrete</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Transfer blocks:</span>
+
+<span class="sd">- have inputs and outputs</span>
+<span class="sd">- have state variables</span>
+<span class="sd">- are a subclass of ``TransferBlock`` |rarr| ``Block``</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1"># The constructor of each class ``MyClass`` with a ``@block`` decorator becomes a method ``MYCLASS()`` of the BlockDiagram instance.</span>
+
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">sin</span><span class="p">,</span> <span class="n">cos</span><span class="p">,</span> <span class="n">atan2</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">pi</span>
+
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">from</span> <span class="nn">spatialmath</span> <span class="kn">import</span> <span class="n">base</span>
+
+<span class="kn">from</span> <span class="nn">bdsim.components</span> <span class="kn">import</span> <span class="n">ClockedBlock</span><span class="p">,</span> <span class="n">block</span>
+
+<span class="c1"># ------------------------------------------------------------------------ </span>
+
+
+<div class="viewcode-block" id="ZOH"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.discrete.ZOH">[docs]</a><span class="nd">@block</span>
+<span class="k">class</span> <span class="nc">ZOH</span><span class="p">(</span><span class="n">ClockedBlock</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ZOH.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.discrete.ZOH.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clock</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
+<span class="sd">        :type ``*inputs``: Block or Plug</span>
+<span class="sd">        :param x0: Initial state, defaults to 0</span>
+<span class="sd">        :type x0: array_like, optional</span>
+<span class="sd">        :param min: Minimum value of state, defaults to None</span>
+<span class="sd">        :type min: float or array_like, optional</span>
+<span class="sd">        :param max: Maximum value of state, defaults to None</span>
+<span class="sd">        :type max: float or array_like, optional</span>
+<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        :return: a ZOH block</span>
+<span class="sd">        :rtype: Integrator instance</span>
+
+<span class="sd">        Create a zero-order hold block.</span>
+
+<span class="sd">        Output is the input at the previous clock time.  The state can be a scalar or a</span>
+<span class="sd">        vector, this is given by the type of ``x0``.</span>
+
+<span class="sd">        The minimum and maximum values can be:</span>
+
+<span class="sd">            - a scalar, in which case the same value applies to every element of </span>
+<span class="sd">              the state vector, or</span>
+<span class="sd">            - a vector, of the same shape as ``x0`` that applies elementwise to</span>
+<span class="sd">              the state.</span>
+
+<span class="sd">        .. note:: If input is not a scalar, ``x0`` must have the shape of the</span>
+<span class="sd">            input signal.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;sampler&#39;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="n">clock</span><span class="o">=</span><span class="n">clock</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="n">x0</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">getvector</span><span class="p">(</span><span class="n">x0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_x0</span> <span class="o">=</span> <span class="n">x0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span> <span class="o">=</span> <span class="n">x0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
+        <span class="c1"># print(&#39;nstates&#39;, self.nstates)</span>
+
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="c1"># print(&#39;* output, x is &#39;, self._x)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">]</span>
+
+<div class="viewcode-block" id="ZOH.next"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.discrete.ZOH.next">[docs]</a>    <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">xnext</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">xnext</span></div></div>
+
+<span class="c1"># ------------------------------------------------------------------------ </span>
+
+
+<span class="c1"># @block</span>
+<span class="c1"># class DIntegrator(TransferBlock):</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
+<span class="c1">#     :blockname:`INTEGRATOR`</span>
+    
+<span class="c1">#     .. table::</span>
+<span class="c1">#        :align: left</span>
+    
+<span class="c1">#        +------------+---------+---------+</span>
+<span class="c1">#        | inputs     | outputs |  states |</span>
+<span class="c1">#        +------------+---------+---------+</span>
+<span class="c1">#        | 1          | 1       | N       |</span>
+<span class="c1">#        +------------+---------+---------+</span>
+<span class="c1">#        | float,     | float,  |         | </span>
+<span class="c1">#        | A(N,)      | A(N,)   |         |</span>
+<span class="c1">#        +------------+---------+---------+</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
+
+<span class="c1">#     def __init__(self, *inputs, x0=0, min=None, max=None, **kwargs):</span>
+<span class="c1">#         &quot;&quot;&quot;</span>
+<span class="c1">#         :param ``*inputs``: Optional incoming connections</span>
+<span class="c1">#         :type ``*inputs``: Block or Plug</span>
+<span class="c1">#         :param x0: Initial state, defaults to 0</span>
+<span class="c1">#         :type x0: array_like, optional</span>
+<span class="c1">#         :param min: Minimum value of state, defaults to None</span>
+<span class="c1">#         :type min: float or array_like, optional</span>
+<span class="c1">#         :param max: Maximum value of state, defaults to None</span>
+<span class="c1">#         :type max: float or array_like, optional</span>
+<span class="c1">#         :param ``**kwargs``: common Block options</span>
+<span class="c1">#         :return: an INTEGRATOR block</span>
+<span class="c1">#         :rtype: Integrator instance</span>
+
+<span class="c1">#         Create an integrator block.</span>
+
+<span class="c1">#         Output is the time integral of the input.  The state can be a scalar or a</span>
+<span class="c1">#         vector, this is given by the type of ``x0``.</span>
+
+<span class="c1">#         The minimum and maximum values can be:</span>
+
+<span class="c1">#             - a scalar, in which case the same value applies to every element of </span>
+<span class="c1">#               the state vector, or</span>
+<span class="c1">#             - a vector, of the same shape as ``x0`` that applies elementwise to</span>
+<span class="c1">#               the state.</span>
+<span class="c1">#         &quot;&quot;&quot;</span>
+<span class="c1">#         self.type = &#39;integrator&#39;</span>
+<span class="c1">#         super().__init__(nin=1, nout=1, inputs=inputs, **kwargs)</span>
+
+<span class="c1">#         if isinstance(x0, (int, float)):</span>
+<span class="c1">#             self.nstates = 1</span>
+<span class="c1">#             if min is None:</span>
+<span class="c1">#                 min = -math.inf</span>
+<span class="c1">#             if max is None:</span>
+<span class="c1">#                 max = math.inf</span>
+                
+<span class="c1">#         else:</span>
+<span class="c1">#             if isinstance(x0, np.ndarray):</span>
+<span class="c1">#                 if x0.ndim &gt; 1:</span>
+<span class="c1">#                     raise ValueError(&#39;state must be a 1D vector&#39;)</span>
+<span class="c1">#             else:</span>
+<span class="c1">#                 x0 = base.getvector(x0)</span>
+
+<span class="c1">#             self.nstates = x0.shape[0]</span>
+<span class="c1">#             if min is None:</span>
+<span class="c1">#                 min = [-math.inf] * self.nstates</span>
+<span class="c1">#             elif len(min) != self.nstates:</span>
+<span class="c1">#                 raise ValueError(&#39;minimum bound length must match x0&#39;)</span>
+
+<span class="c1">#             if max is None:</span>
+<span class="c1">#                 max = [math.inf] * self.nstates</span>
+<span class="c1">#             elif len(max) != self.nstates:</span>
+<span class="c1">#                 raise ValueError(&#39;maximum bound length must match x0&#39;)</span>
+
+<span class="c1">#         self._x0 = np.r_[x0]</span>
+<span class="c1">#         self.min = np.r_[min]</span>
+<span class="c1">#         self.max = np.r_[max]</span>
+<span class="c1">#         print(&#39;nstates&#39;, self.nstates)</span>
+
+<span class="c1">#     def output(self, t=None):</span>
+<span class="c1">#         return [self._x]</span>
+
+<span class="c1">#     def deriv(self):</span>
+<span class="c1">#         xd = np.array(self.inputs)</span>
+<span class="c1">#         for i in range(0, self.nstates):</span>
+<span class="c1">#             if self._x[i] &lt; self.min[i] or self._x[i] &gt; self.max[i]:</span>
+<span class="c1">#                 xd[i] = 0</span>
+<span class="c1">#         return xd</span>
+
+<span class="c1"># ------------------------------------------------------------------------ #</span>
+
+
+<span class="c1"># @block</span>
+<span class="c1"># class LTI_SS(TransferBlock):</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
+<span class="c1">#     :blockname:`LTI_SS`</span>
+    
+<span class="c1">#     .. table::</span>
+<span class="c1">#        :align: left</span>
+    
+<span class="c1">#        +------------+---------+---------+</span>
+<span class="c1">#        | inputs     | outputs |  states |</span>
+<span class="c1">#        +------------+---------+---------+</span>
+<span class="c1">#        | 1          | 01      | nc      |</span>
+<span class="c1">#        +------------+---------+---------+</span>
+<span class="c1">#        | float,     | float,  |         | </span>
+<span class="c1">#        | A(nb,)     | A(nc,)  |         |</span>
+<span class="c1">#        +------------+---------+---------+</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
+
+<span class="c1">#     def __init__(self, *inputs, A=None, B=None, C=None, x0=None, verbose=False, **kwargs):</span>
+<span class="c1">#         r&quot;&quot;&quot;</span>
+<span class="c1">#         :param ``*inputs``: Optional incoming connections</span>
+<span class="c1">#         :type ``*inputs``: Block or Plug</span>
+<span class="c1">#         :param N: numerator coefficients, defaults to 1</span>
+<span class="c1">#         :type N: array_like, optional</span>
+<span class="c1">#         :param D: denominator coefficients, defaults to [1, 1]</span>
+<span class="c1">#         :type D: array_like, optional</span>
+<span class="c1">#         :param x0: initial states, defaults to zero</span>
+<span class="c1">#         :type x0: array_like, optional</span>
+<span class="c1">#         :param ``**kwargs``: common Block options</span>
+<span class="c1">#         :return: A SCOPE block</span>
+<span class="c1">#         :rtype: LTI_SISO instance</span>
+
+<span class="c1">#         Create a state-space LTI block.</span>
+
+<span class="c1">#         Describes the dynamics of a single-input single-output (SISO) linear</span>
+<span class="c1">#         time invariant (LTI) system described by numerator and denominator</span>
+<span class="c1">#         polynomial coefficients.</span>
+
+<span class="c1">#         Coefficients are given in the order from highest order to zeroth </span>
+<span class="c1">#         order, ie. :math:`2s^2 - 4s +3` is ``[2, -4, 3]``.</span>
+
+<span class="c1">#         Only proper transfer functions, where order of numerator is less</span>
+<span class="c1">#         than denominator are allowed.</span>
+
+<span class="c1">#         The order of the states in ``x0`` is consistent with controller canonical</span>
+<span class="c1">#         form.</span>
+
+<span class="c1">#         Examples::</span>
+
+<span class="c1">#             LTI_SISO(N=[1,2], D=[2, 3, -4])</span>
+
+<span class="c1">#         is the transfer function :math:`\frac{s+2}{2s^2+3s-4}`.</span>
+<span class="c1">#         &quot;&quot;&quot;</span>
+<span class="c1">#         #print(&#39;in SS constructor&#39;)</span>
+<span class="c1">#         self.type = &#39;LTI SS&#39;</span>
+
+<span class="c1">#         assert A.shape[0] == A.shape[1], &#39;A must be square&#39;</span>
+<span class="c1">#         n = A.shape[0]</span>
+<span class="c1">#         if len(B.shape) == 1:</span>
+<span class="c1">#             nin = 1</span>
+<span class="c1">#             B = B.reshape((n, 1))</span>
+<span class="c1">#         else:</span>
+<span class="c1">#             nin = B.shape[1]</span>
+<span class="c1">#         assert B.shape[0] == n, &#39;B must have same number of rows as A&#39;</span>
+
+<span class="c1">#         if len(C.shape) == 1:</span>
+<span class="c1">#             nout = 1</span>
+<span class="c1">#             assert C.shape[0] == n, &#39;C must have same number of columns as A&#39;</span>
+<span class="c1">#             C = C.reshape((1, n))</span>
+<span class="c1">#         else:</span>
+<span class="c1">#             nout = C.shape[0]</span>
+<span class="c1">#             assert C.shape[1] == n, &#39;C must have same number of columns as A&#39;</span>
+
+<span class="c1">#         super().__init__(nin=nin, nout=nout, inputs=inputs, **kwargs)</span>
+
+<span class="c1">#         self.A = A</span>
+<span class="c1">#         self.B = B</span>
+<span class="c1">#         self.C = C</span>
+
+<span class="c1">#         self.nstates = A.shape[0]</span>
+
+<span class="c1">#         if x0 is None:</span>
+<span class="c1">#             self._x0 = np.zeros((self.nstates,))</span>
+<span class="c1">#         else:</span>
+<span class="c1">#             self._x0 = x0</span>
+
+<span class="c1">#     def output(self, t=None):</span>
+<span class="c1">#         return list(self.C @ self._x)</span>
+
+<span class="c1">#     def deriv(self):</span>
+<span class="c1">#         return self.A @ self._x + self.B @ np.array(self.inputs)</span>
+<span class="c1"># # ------------------------------------------------------------------------ #</span>
+
+
+<span class="c1"># @block</span>
+<span class="c1"># class LTI_SISO(LTI_SS):</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
+<span class="c1">#     :blockname:`LTI_SISO`</span>
+    
+<span class="c1">#     .. table::</span>
+<span class="c1">#        :align: left</span>
+    
+<span class="c1">#        +------------+---------+---------+</span>
+<span class="c1">#        | inputs     | outputs |  states |</span>
+<span class="c1">#        +------------+---------+---------+</span>
+<span class="c1">#        | 1          | 1       | n       |</span>
+<span class="c1">#        +------------+---------+---------+</span>
+<span class="c1">#        | float      | float   |         | </span>
+<span class="c1">#        +------------+---------+---------+</span>
+     
+<span class="c1">#     &quot;&quot;&quot;</span>
+
+<span class="c1">#     def __init__(self, N=1, D=[1, 1], *inputs, x0=None, verbose=False, **kwargs):</span>
+<span class="c1">#         r&quot;&quot;&quot;</span>
+<span class="c1">#         :param N: numerator coefficients, defaults to 1</span>
+<span class="c1">#         :type N: array_like, optional</span>
+<span class="c1">#         :param D: denominator coefficients, defaults to [1, 1]</span>
+<span class="c1">#         :type D: array_like, optional</span>
+<span class="c1">#         :param ``*inputs``: Optional incoming connections</span>
+<span class="c1">#         :type ``*inputs``: Block or Plug</span>
+<span class="c1">#         :param x0: initial states, defaults to zero</span>
+<span class="c1">#         :type x0: array_like, optional</span>
+<span class="c1">#         :param ``**kwargs``: common Block options</span>
+<span class="c1">#         :return: A SCOPE block</span>
+<span class="c1">#         :rtype: LTI_SISO instance</span>
+
+<span class="c1">#         Create a SISO LTI block.</span>
+
+<span class="c1">#         Describes the dynamics of a single-input single-output (SISO) linear</span>
+<span class="c1">#         time invariant (LTI) system described by numerator and denominator</span>
+<span class="c1">#         polynomial coefficients.</span>
+
+<span class="c1">#         Coefficients are given in the order from highest order to zeroth </span>
+<span class="c1">#         order, ie. :math:`2s^2 - 4s +3` is ``[2, -4, 3]``.</span>
+
+<span class="c1">#         Only proper transfer functions, where order of numerator is less</span>
+<span class="c1">#         than denominator are allowed.</span>
+
+<span class="c1">#         The order of the states in ``x0`` is consistent with controller canonical</span>
+<span class="c1">#         form.</span>
+
+<span class="c1">#         Examples::</span>
+
+<span class="c1">#             LTI_SISO(N=[1, 2], D=[2, 3, -4])</span>
+
+<span class="c1">#         is the transfer function :math:`\frac{s+2}{2s^2+3s-4}`.</span>
+<span class="c1">#         &quot;&quot;&quot;</span>
+<span class="c1">#         #print(&#39;in SISO constscutor&#39;)</span>
+
+<span class="c1">#         if not isinstance(N, list):</span>
+<span class="c1">#             N = [N]</span>
+<span class="c1">#         if not isinstance(D, list):</span>
+<span class="c1">#             D = [D]</span>
+<span class="c1">#         self.N = N</span>
+<span class="c1">#         self.D = N</span>
+<span class="c1">#         n = len(D) - 1</span>
+<span class="c1">#         nn = len(N)</span>
+<span class="c1">#         if x0 is None:</span>
+<span class="c1">#             x0 = np.zeros((n,))</span>
+<span class="c1">#         assert nn &lt;= n, &#39;direct pass through is not supported&#39;</span>
+
+<span class="c1">#         # convert to numpy arrays</span>
+<span class="c1">#         N = np.r_[np.zeros((len(D) - len(N),)), np.array(N)]</span>
+<span class="c1">#         D = np.array(D)</span>
+
+<span class="c1">#         # normalize the coefficients to obtain</span>
+<span class="c1">#         #</span>
+<span class="c1">#         #   b_0 s^n + b_1 s^(n-1) + ... + b_n</span>
+<span class="c1">#         #   ---------------------------------</span>
+<span class="c1">#         #   a_0 s^n + a_1 s^(n-1) + ....+ a_n</span>
+
+<span class="c1">#         # normalize so leading coefficient of denominator is one</span>
+<span class="c1">#         D0 = D[0]</span>
+<span class="c1">#         D = D / D0</span>
+<span class="c1">#         N = N / D0</span>
+
+<span class="c1">#         A = np.eye(len(D) - 1, k=1)  # control canonic (companion matrix) form</span>
+<span class="c1">#         A[-1, :] = -D[1:]</span>
+
+<span class="c1">#         B = np.zeros((n, 1))</span>
+<span class="c1">#         B[-1] = 1</span>
+
+<span class="c1">#         C = (N[1:] - N[0] * D[1:]).reshape((1, n))</span>
+
+<span class="c1">#         if verbose:</span>
+<span class="c1">#             print(&#39;A=&#39;, A)</span>
+<span class="c1">#             print(&#39;B=&#39;, B)</span>
+<span class="c1">#             print(&#39;C=&#39;, C)</span>
+
+<span class="c1">#         super().__init__(A=A, B=B, C=C, x0=x0, **kwargs)</span>
+<span class="c1">#         self.type = &#39;LTI&#39;</span>
+
+
+<span class="c1"># if __name__ == &quot;__main__&quot;:</span>
+
+<span class="c1">#     import pathlib</span>
+<span class="c1">#     import os.path</span>
+
+<span class="c1">#     exec(open(os.path.join(pathlib.Path(</span>
+<span class="c1">#         __file__).parent.absolute(), &quot;test_transfers.py&quot;)).read())</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, Peter Corke
+      <span class="lastupdated">
+        Last updated on 01-Apr-2021.
+      </span>
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+    <!-- Theme Analytics -->
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'G-11Q6WJM565', 'auto');
+    ga('send', 'pageview');
+    </script>
+
+    
+   
+
+</body>
+</html>
