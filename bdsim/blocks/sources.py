@@ -60,6 +60,42 @@ class Constant(SourceBlock):
         return [self.value]               
 
 # ------------------------------------------------------------------------ #
+@block
+class Time(SourceBlock):
+    """
+    :blockname:`TIME`
+    
+    .. table::
+       :align: left
+    
+       +--------+---------+---------+
+       | inputs | outputs |  states |
+       +--------+---------+---------+
+       | 0      | 1       | 0       |
+       +--------+---------+---------+
+       |        | float   |         | 
+       +--------+---------+---------+
+    """
+
+    def __init__(self, value=None, **kwargs):
+        """
+        :param ``**kwargs``: common Block options
+        :return: a TIME block
+        :rtype: Time instance
+        
+        Create a time block.
+
+        This block has only one output port, but the value can be any 
+        Python type, so long as the connected input port can handle it.
+        For example float, list or numpy ndarray.
+
+        """
+        super().__init__(nout=1, **kwargs)
+        self.type = 'time'
+
+    def output(self, t=None):
+        return [t]  
+# ------------------------------------------------------------------------ #
 
 @block
 class WaveForm(SourceBlock):
