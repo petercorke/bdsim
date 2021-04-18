@@ -4,7 +4,7 @@
 
 import bdsim
 
-sim = bdsim.BDSim()
+sim = bdsim.BDSim(verbose=True)
 bd = sim.blockdiagram()
     
 steer = bd.PIECEWISE( (0,0), (3,0.5), (4,0), (5,-0.5), (6,0), name='steering')

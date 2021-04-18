@@ -6,14 +6,14 @@ import time
 sim = bdsim.BDSim()
 bd = sim.blockdiagram()
 
-clock = bd.clock(2, 'Hz')
+clock = bd.clock(50, 'Hz')
 
 # define the blocks
 
 sine = bd.WAVEFORM('sine', freq=0.2, unit='Hz')
 zoh = bd.ZOH(clock)
 
-scope = bd.SCOPE()
+scope = bd.SCOPE(stairs=True)
 
 # connect the blocks
 bd.connect(sine, zoh)
