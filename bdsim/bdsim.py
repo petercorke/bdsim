@@ -74,7 +74,7 @@ class BDSimState:
 
 class BDSim:
 
-    def __init__(self, verbose=False, **kwargs):
+    def __init__(self, **kwargs):
         """
         :param sysargs: process options from sys.argv, defaults to True
         :type sysargs: bool, optional
@@ -100,11 +100,12 @@ class BDSim:
         ===================  =========  ========  ===========================================
         Command line switch  Argument   Default   Behaviour
         ===================  =========  ========  ===========================================
-        --nographics, -g     graphics   True      enable graphical display
-        --animation, -a      animation  False     update graphics at each time step
-        --noprogress, -p     progress   True      display simulation progress bar
+        --nographics, -g                          enable graphical display
+        --animation, -a                           update graphics at each time step
+        --noprogress, -p                          do not display simulation progress bar
         --backend BE         backend    'Qt5Agg'  matplotlib backend
         --tiles RxC, -t RxC  tiles      '3x4'     arrangement of figure tiles on the display
+        --verbose, -v                             be verbose
         --debug F, -d F      debug      ''        debug flag string
         ===================  =========  ========  ===========================================
 
@@ -113,7 +114,7 @@ class BDSim:
         self.options = self.get_options(**kwargs)
 
         # load modules from the blocks folder
-        self.blocklibrary = self.load_blocks(verbose) #self.verbose)
+        self.blocklibrary = self.load_blocks(self.options.verbose) #self.verbose)
 
     def __str__(self):
         s = f"BDSim: {len(self.blocklibrary)} blocks in library\n"
@@ -576,6 +577,11 @@ class BDSim:
         return blocks
 
     def get_options(sysargs=True, **kwargs):
+        # option priority (high to low)
+        #  command line
+        #  argument to BDSim()
+        #  defaults
+
         
         # all switches and their default values
         defaults = {
@@ -584,11 +590,12 @@ class BDSim:
             'graphics': True,
             'animation': False,
             'progress': True,
+            'verbose': False,
             'debug': ''
             }
         if sysargs:
             # command line arguments and graphics
-            parser = argparse.ArgumentParser()
+            parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
             parser.add_argument('--backend', '-b', type=str, metavar='BACKEND', default=defaults['backend'],
                                 help='matplotlib backend to choose')
             parser.add_argument('--tiles', '-t', type=str, default=defaults['tiles'], metavar='ROWSxCOLS',
@@ -598,27 +605,16 @@ class BDSim:
             parser.add_argument('--animation', '-a', default=defaults['animation'], action='store_const', const=True,
                                 help='animate graphics')
             parser.add_argument('--noprogress', '-p', default=defaults['progress'], action='store_const', const=False, dest='progress',
-                        help='animate graphics')
-            parser.add_argument('--debug', '-d', type=str, metavar='[psd]', default=defaults['debug'], 
+                                help='animate graphics')
+            parser.add_argument('--verbose', '-v', default=defaults['verbose'], action='store_const', const=True,
+                                help='debug flags')
+            parser.add_argument('--debug', '-d', type=str, metavar='[psd]', default=defaults['debug'],
                                 help='debug flags')
             clargs = vars(parser.parse_args())  # get args as a dictionary
             # print(f'clargs {clargs}')
 
-            
-        # function arguments override the command line options
-        # provide a list of argument names and default values
-        options = {}
-        for option, default in defaults.items():
-            if option in kwargs:
-                # first priority is to constructor argument
-                assert type(kwargs[option]) is type(default), 'passed argument ' + option + ' has wrong type'
-                options[option] = kwargs[option]
-            elif sysargs and option in clargs:
-                # if not provided, drop through to command line argument
-                options[option] = clargs[option]
-            else:
-                # drop through to the default value
-                options[option] = default
+
+        options = {**kwargs, **clargs}
             
         # ensure graphics is enabled if animation is requested
         if options['animation']:
