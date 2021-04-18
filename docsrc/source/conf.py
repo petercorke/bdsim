@@ -60,15 +60,26 @@ exclude_patterns = ['test_*']
 html_theme = 'alabaster'
 html_show_sourcelink = True
 
+html_theme = 'sphinx_rtd_theme'
+#html_theme = 'alabaster'
+#html_theme = 'pyramid'
+#html_theme = 'sphinxdoc'
+
 html_theme_options = {
-    'github_user': 'petercorke',
-    'github_repo': 'bdsim',
-    'github_button': True,
-    'fixed_sidebar': True,
-}
+    #'github_user': 'petercorke',
+    #'github_repo': 'spatialmath-python',
+    #'logo_name': False,
+    'logo_only': False,
+    #'description': 'Spatial maths and geometry for Python',
+    'display_version': True,
+    'prev_next_buttons_location': 'both',
+    'analytics_id': 'G-11Q6WJM565',
+
+    }
+html_favicon = 'favicon.ico'
 
 html_logo = '../../figs/BDSimLogo_NoBackgnd@2x.png'
-
+html_last_updated_fmt = '%d-%b-%Y'
 autoclass_content = "class"
 
 # Add any paths that contain custom static files (such as style sheets) here,
