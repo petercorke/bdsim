@@ -344,7 +344,7 @@ class Clock:
 
         self.blocklist = []
 
-        self.x = None  # discrete state vector numpy.ndarray
+        self.x = []  # discrete state vector numpy.ndarray
 
         self.name = "clock." + str(len(clocklist))
 
@@ -354,6 +354,9 @@ class Clock:
 
     def add_block(self, block):
         self.blocklist.append(block)
+
+    def __repr__(self):
+        return str(self)
 
     def __str__(self):
         s = f"{self.name}: T={self.T} sec"
@@ -386,7 +389,12 @@ class Clock:
             x = b.setstate(x)  # send it to blocks        
 
     def next(self, t):
-        return (math.floor((t - self.offset) / self.T) + 1) * self.T + self.offset
+        # return (math.floor((t - self.offset) / self.T) + 1) * self.T + self.offset
+        k = int((t - self.offset) / self.T + 0.5)
+        return (k + 1) * self.T + self.offset
+
+    def savestate(self):
+        self.x.append(self.getstate())
 # ------------------------------------------------------------------------- #
 
 
@@ -948,17 +956,19 @@ class ClockedBlock(Block):
         # return self._x
 
     def setstate(self, x):
-        self._x = x[:self.nstates]  # take as much state vector as we need
+        self._x = x[:self.ndstates]  # take as much state vector as we need
         # print('** set block state to ', self._x)
-        return x[self.nstates:]     # return the rest
+        return x[self.ndstates:]     # return the rest
 
     def getstate0(self):
         return self._x0
 
     def check(self):
-        assert len(self._x0) == self.nstates, 'incorrect length for initial state'
+        assert len(self._x0) == self.ndstates, 'incorrect length for initial state'
+
         assert self.nin > 0 or self.nout > 0, 'no inputs or outputs specified'
         self._x = self._x0
+
 
 # c = Clock(5)
 # c1 = Clock(5, 2)
