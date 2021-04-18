@@ -259,7 +259,7 @@ class ScopeXY(GraphicsBlock):
        +--------+---------+---------+
     """
 
-    def __init__(self, style=None, *inputs, scale='auto', labels=['X', 'Y'], init=None, **kwargs):
+    def __init__(self, style=None, *inputs, scale='auto', aspect='equal', labels=['X', 'Y'], init=None, **kwargs):
         """
         :param style: line style
         :type style: optional str or dict
@@ -303,6 +303,7 @@ class ScopeXY(GraphicsBlock):
             if len(scale) == 2:
                 scale = scale * 2
         self.scale = scale
+        self.aspect = aspect
         self.labels = labels
         
     def start(self, **kwargs):
@@ -329,6 +330,7 @@ class ScopeXY(GraphicsBlock):
             if self.scale != 'auto':
                 self.ax.set_xlim(*self.scale[0:2])
                 self.ax.set_ylim(*self.scale[2:4])
+            self.ax.set_aspect(self.aspect)
             if self.init is not None:
                 self.init(self.ax)
 
