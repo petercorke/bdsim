@@ -280,6 +280,11 @@ class BlockDiagram:
                 if _DFS([b]):
                     error = True
 
+
+        if error:
+            if not subsystem:
+                raise RuntimeError('could not compile system')
+
         # evaluate the network once to check out wire types
         x = self.getstate0()
 
@@ -399,7 +404,11 @@ class BlockDiagram:
         # process blocks with initial outputs and propagate
         for b in self.blocklist:
             if b.blockclass in ('source', 'transfer', 'clocked'):
-                self._propagate(b, t, sinks=sinks)
+                try:
+                    self._propagate(b, t, sinks=sinks)
+                except BaseException:
+                    self._error_handler('evaluate: source', b)
+                    
                 
         # check we have values for all
         for b in self.blocklist:
@@ -494,7 +503,10 @@ class BlockDiagram:
         self.DEBUG('propagate', '  '*depth, 'block {:s}: output = '.format(str(b),t) + str(out))
 
         # check for validity
-        assert isinstance(out, list) and len(out) == b.nout, 'block output is wrong type/length'
+        if not isinstance(out, list):
+            raise AssertionError(f"block output {b} is not list: {type(out)}")
+        if len(out) != b.nout:
+            raise AssertionError(f"block output {b} is wrong length: {len(out)} instead of {b.nout}")
 
         # TODO check output validity once at the start
         
@@ -652,6 +664,10 @@ class BlockDiagram:
                 try:
                     assert b.updated, 'block has incomplete inputs'
                     yd = b.deriv().flatten()
+                    if not isinstance(yd, np.ndarray):
+                        raise AssertionError(f"deriv: block {b} did not return ndarray")
+                    if yd.ndim != 1 or yd.shape[0] != b.nstates:
+                        raise AssertionError(f"deriv: block {b} returns wrong shape {yd.shape}, should be ({b.nstates},)")
                     YD = np.r_[YD, yd]
                 except:
                     self._error_handler('deriv', b)                    
