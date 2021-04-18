@@ -45,7 +45,7 @@ class Scope(GraphicsBlock):
        +--------+---------+---------+
     """
     
-    def __init__(self, nin=1, vector=0, styles=None, scale='auto', labels=None, grid=True, *inputs, **kwargs):
+    def __init__(self, nin=1, vector=0, styles=None, stairs=False, scale='auto', labels=None, grid=True, *inputs, **kwargs):
         """
         Create a block that plots input ports against time.
         
@@ -149,6 +149,7 @@ class Scope(GraphicsBlock):
         self.xlabel = 'Time (s)'
         
         self.grid = grid
+        self.stairs = stairs
         
         self.line = [None] * nplots
         self.scale = scale
@@ -224,8 +225,14 @@ class Scope(GraphicsBlock):
                     self.ydata[i] = np.append(self.ydata[i], input)
 
             plt.figure(self.fig.number)  # make current
-            for i in range(0, self.nplots):
-                self.line[i].set_data(self.tdata, self.ydata[i])
+            if self.stairs:
+                for i in range(0, self.nplots):
+                    t = np.repeat(self.tdata, 2)
+                    y = np.repeat(self.ydata[i], 2)
+                    self.line[i].set_data(t[1:], y[:-1])
+            else:
+                for i in range(0, self.nplots):
+                    self.line[i].set_data(self.tdata, self.ydata[i])
         
             if self.bd.options.animation:
                 self.fig.canvas.flush_events()
