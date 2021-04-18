@@ -59,7 +59,7 @@ class ZOH(ClockedBlock):
 
         x0 = base.getvector(x0)
         self._x0 = x0
-        self.nstates = x0.shape[0]
+        self.ndstates = len(x0)
         # print('nstates', self.nstates)
 
     def output(self, t=None):
@@ -73,92 +73,90 @@ class ZOH(ClockedBlock):
 # ------------------------------------------------------------------------ 
 
 
-# @block
-# class DIntegrator(TransferBlock):
-#     """
-#     :blockname:`INTEGRATOR`
+@block
+class DIntegrator(ClockedBlock):
+    """
+    :blockname:`INTEGRATOR`
     
-#     .. table::
-#        :align: left
+    .. table::
+       :align: left
     
-#        +------------+---------+---------+
-#        | inputs     | outputs |  states |
-#        +------------+---------+---------+
-#        | 1          | 1       | N       |
-#        +------------+---------+---------+
-#        | float,     | float,  |         | 
-#        | A(N,)      | A(N,)   |         |
-#        +------------+---------+---------+
-#     """
+       +------------+---------+---------+
+       | inputs     | outputs |  states |
+       +------------+---------+---------+
+       | 1          | 1       | N       |
+       +------------+---------+---------+
+       | float,     | float,  |         | 
+       | A(N,)      | A(N,)   |         |
+       +------------+---------+---------+
+    """
 
-#     def __init__(self, *inputs, x0=0, min=None, max=None, **kwargs):
-#         """
-#         :param ``*inputs``: Optional incoming connections
-#         :type ``*inputs``: Block or Plug
-#         :param x0: Initial state, defaults to 0
-#         :type x0: array_like, optional
-#         :param min: Minimum value of state, defaults to None
-#         :type min: float or array_like, optional
-#         :param max: Maximum value of state, defaults to None
-#         :type max: float or array_like, optional
-#         :param ``**kwargs``: common Block options
-#         :return: an INTEGRATOR block
-#         :rtype: Integrator instance
+    def __init__(self, clock, *inputs, x0=0, gain=1.0, min=None, max=None, **kwargs):
+        """
+        :param ``*inputs``: Optional incoming connections
+        :type ``*inputs``: Block or Plug
+        :param x0: Initial state, defaults to 0
+        :type x0: array_like, optional
+        :param min: Minimum value of state, defaults to None
+        :type min: float or array_like, optional
+        :param max: Maximum value of state, defaults to None
+        :type max: float or array_like, optional
+        :param ``**kwargs``: common Block options
+        :return: an INTEGRATOR block
+        :rtype: Integrator instance
 
-#         Create an integrator block.
+        Create an integrator block.
 
-#         Output is the time integral of the input.  The state can be a scalar or a
-#         vector, this is given by the type of ``x0``.
+        Output is the time integral of the input.  The state can be a scalar or a
+        vector, this is given by the type of ``x0``.
 
-#         The minimum and maximum values can be:
+        The minimum and maximum values can be:
 
-#             - a scalar, in which case the same value applies to every element of 
-#               the state vector, or
-#             - a vector, of the same shape as ``x0`` that applies elementwise to
-#               the state.
-#         """
-#         self.type = 'integrator'
-#         super().__init__(nin=1, nout=1, inputs=inputs, **kwargs)
+            - a scalar, in which case the same value applies to every element of 
+              the state vector, or
+            - a vector, of the same shape as ``x0`` that applies elementwise to
+              the state.
+        """
+        self.type = 'discrete-integrator'
+        super().__init__(nin=1, nout=1, inputs=inputs, clock=clock, **kwargs)
 
-#         if isinstance(x0, (int, float)):
-#             self.nstates = 1
-#             if min is None:
-#                 min = -math.inf
-#             if max is None:
-#                 max = math.inf
+        if isinstance(x0, (int, float)):
+            self.ndstates = 1
+            if min is None:
+                min = -math.inf
+            if max is None:
+                max = math.inf
                 
-#         else:
-#             if isinstance(x0, np.ndarray):
-#                 if x0.ndim > 1:
-#                     raise ValueError('state must be a 1D vector')
-#             else:
-#                 x0 = base.getvector(x0)
+        else:
+            if isinstance(x0, np.ndarray):
+                if x0.ndim > 1:
+                    raise ValueError('state must be a 1D vector')
+            else:
+                x0 = base.getvector(x0)
 
-#             self.nstates = x0.shape[0]
-#             if min is None:
-#                 min = [-math.inf] * self.nstates
-#             elif len(min) != self.nstates:
-#                 raise ValueError('minimum bound length must match x0')
+            self.ndstates = x0.shape[0]
+            if min is None:
+                min = [-math.inf] * self.nstates
+            elif len(min) != self.nstates:
+                raise ValueError('minimum bound length must match x0')
 
-#             if max is None:
-#                 max = [math.inf] * self.nstates
-#             elif len(max) != self.nstates:
-#                 raise ValueError('maximum bound length must match x0')
+            if max is None:
+                max = [math.inf] * self.nstates
+            elif len(max) != self.nstates:
+                raise ValueError('maximum bound length must match x0')
 
-#         self._x0 = np.r_[x0]
-#         self.min = np.r_[min]
-#         self.max = np.r_[max]
-#         print('nstates', self.nstates)
+        self._x0 = np.r_[x0]
+        self.min = np.r_[min]
+        self.max = np.r_[max]
+        self.gain = gain
+        print('nstates', self.nstates)
 
-#     def output(self, t=None):
-#         return [self._x]
+    def output(self, t=None):
+        return [self._x]
 
-#     def deriv(self):
-#         xd = np.array(self.inputs)
-#         for i in range(0, self.nstates):
-#             if self._x[i] < self.min[i] or self._x[i] > self.max[i]:
-#                 xd[i] = 0
-#         return xd
+    def next(self):
+        xnext = self._x + self.gain * self.clock.T * np.array(self.inputs[0])
+        return xnext
 
 # ------------------------------------------------------------------------ #
 
