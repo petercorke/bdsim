@@ -235,13 +235,21 @@ class BDSim:
         bd.state = state
 
         x0 = bd.getstate0()
-        print('initial state x0 = ', x0)
+        print('initial state  x0 = ', x0)
+
+        ndstates = 0
+        for clock in bd.clocklist:
+            nds = 0
+            for b in clock.blocklist:
+                nds += b.ndstates
+            ndstates += nds
+            print(clock.name, 'initial dstate x0 = ', clock.getstate())
 
         # tell all blocks we're starting a BlockDiagram
         bd.start()
         self.progress(0)
 
-        if bd.ndstates == 0:
+        if ndstates == 0:
             # no discrete time states
             self._run_interval(bd, 0, T, state=state)
         else:
@@ -250,13 +258,12 @@ class BDSim:
             tprev = 0
             for clock in bd.clocklist:
                 next.append(clock.next(tprev))  # append time of next sample
-                clock.x = clock.getstate0()  # get state of all blocks on this clock
+                #clock.x = clock.getstate0()  # get state of all blocks on this clock
             
             # choose the nearest sample time
             tnext = min(next)
 
             while tnext <= T:
-                # print(tnext)
 
                 # run system until next clock time
                 self._run_interval(bd, tprev, tnext, state=state)
@@ -267,6 +274,8 @@ class BDSim:
                         # it was this clock that ticked
                         clock = bd.clocklist[i]
 
+                        clock.savestate()
+
                         # update the next time for this clock
                         next[i] = clock.next(tprev)
 
@@ -274,6 +283,7 @@ class BDSim:
                         clock._x = clock.getstate()
 
                     tnext = min(next)
+
 
         # self.progress_done()  # cleanup the progress bar
         print()
@@ -342,17 +352,16 @@ class BDSim:
                         break
 
                     if state.minstepsize is not None and integrator.step_size < state.minstepsize:
-                        print(fg('red') + f"\n--- stopping on minimum step size at t={bd.t:.4f} with last stepsize {integrator.step_size:g}" + attr(0))
+                        print(fg('red') + f"\n--- stopping on minimum step size at t={bd.state.t:.4f} with last stepsize {integrator.step_size:g}" + attr(0))
                         break
 
                     if bd.state.debug_stop:
                         bd._debugger(integrator)
 
-            else:
-                # block diagram has no states
+            elif len(clocklist) == 0:
+                # block diagram has no continuous states
     
                 for t in np.arange(t0, T, state.dt):  # step through the time range
-
                     # evaluate the block diagram
                     bd.evaluate([], t)
 
@@ -376,6 +385,33 @@ class BDSim:
 
                     if bd.state.debug_stop:
                         bd._debugger(integrator)
+
+            else:
+                # block diagram has no continuous states
+    
+                t = t0
+                # evaluate the block diagram
+                bd.evaluate([], t)
+
+                # stash the results
+                state.tlist.append(t)
+                
+                # record the ports on the watchlist
+                for i, p in enumerate(state.watchlist):
+                    state.plist[i].append(p.block.output(t)[p.port])
+
+                # update all blocks that need to know
+                bd.step()
+
+                self.progress()  # update the progress bar
+
+                    
+                # has any block called a stop?
+                if bd.state.stop is not None:
+                    print(fg('red') + f"\n--- stop requested at t={bd.state.t:.4f} by {bd.state.stop}" + attr(0))
+
+                if bd.state.debug_stop:
+                    bd._debugger(integrator)
 
                 
         except RuntimeError as err:
