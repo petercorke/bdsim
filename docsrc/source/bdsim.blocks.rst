@@ -1,5 +1,5 @@
-Blocks
-======
+Block library
+=============
 
 .. include:: <isonum.txt>
 
@@ -44,6 +44,16 @@ Transfer blocks
 ---------------
 
 .. automodule:: bdsim.blocks.transfers
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :special-members: __init__
+   :exclude-members: output, reset, step, start, done, deriv
+
+Discrete-time blocks
+--------------------
+
+.. automodule:: bdsim.blocks.discrete
    :members:
    :undoc-members:
    :show-inheritance:
