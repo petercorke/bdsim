@@ -8,35 +8,104 @@ Define real-time i/o blocks for use in block diagrams.  These are blocks that:
 """
 # The constructor of each class ``MyClass`` with a ``@block`` decorator becomes a method ``MYCLASS()`` of the BlockDiagram instance.
 
-from bdsim.components import SinkBlock, SourceBlock, block
+from typing import Any, Optional, Tuple, Union
+import numpy as np  # type: ignore
+
+from bdsim.components import Block, Clock, ClockedBlock, Plug, SinkBlock, block
+from bdsim.blocks.discrete import ZOH
 
 """
 could have if/else chain here to define these classes according to the platform
 or define each hardware in its own file, protected by if platform
 
 
-Need some kind of synchronous update, evaluate the network, then wait for 
+Need some kind of synchronous update, evaluate the network, then wait for
 sample time then update all analog blocks.  Perhaps a new kachunk method.
 """
 
-# class _AnalogIn(Source):
-#     pass
 
-# class _AnalogOut(Sink):
-#     pass
+@block
+class ADC(ZOH):
+    "A simulated model of an analog - digital converter"
 
-# class _PWMOut(Sink):
-#     pass
+    def __init__(
+        self,
+        clock: Clock,
+        inp: Optional[Union[Block, Plug]],
+        *,
+        bit_width: int,
+        v_range: Tuple[float, float],
+        **kwargs: Any
+    ):
+        super().__init__(clock, *(inp,) if inp else (), **kwargs)
+        self.v_range = v_range
+        self.quant_n_idxs = bit_width ** 2 - 1
+        min_, max_ = self.v_range
+        self.quant_step_size = (max_ - min_) / self.quant_n_idxs
 
-# class _DigitalIn(Source):
-#     pass
+    def next(self):
+        inp: float = self.inputs[0]  # type: ignore
 
-# class _DigitalOut(Sink):
-#     pass
+        res = None
+        min_, max_ = self.v_range
+        if inp < min_:
+            res = min_
+        elif inp > max_:
+            res = max_
+        else:
+            # adc quantization
+            step_idx = round((inp - min_) / self.quant_step_size)
+            res = step_idx * self.quant_step_size + min_
+        return np.array(res)
 
-# """
-# digital i/o, specify a number a list of bit ports
-# """
 
-# class _Screen(Sink):
-#     pass
+on_tally = {}
+off_tally = {}
+
+
+@block
+class PWM(ClockedBlock):
+    """A simulated model of an ideal PWM generator.
+    Takes a duty cycle as input and produces a PWM signal.
+    """
+
+    def __init__(
+        self,
+        clock: Clock,
+        duty_cycle: Optional[Union[Block, Plug]] = None,
+        *,
+        freq: int,
+        v_range: Tuple[float, float],
+        duty0: int = 0,
+        **kwargs: Any
+    ):
+        super().__init__(clock, nin=1, nout=1,  # type: ignore
+                         inputs=(duty_cycle,) if duty_cycle else (), **kwargs)
+        self.type = "pwm"
+        self.times: Optional[tuple[float, float]] = None  # (last, next)
+        self.duty: float = 0
+        self.T = 1 / freq
+
+        # TODO: simulate slew rate
+        # TODO: x0 represents offset? maybe a (last, next) tuple?
+        self._x0 = [duty0]  # I don't like this
+        self.ndstates = 1
+        self.v_range = v_range
+
+    def output(self, t: float):
+        duty = self._x[0]
+        t_cycle = t % self.T
+        t_on = self._x[0] * self.T
+        v_off, v_on = self.v_range
+        is_on = t_cycle <= t_on
+        if duty not in on_tally:
+            on_tally[duty] = 0
+            off_tally[duty] = 0
+        (on_tally if is_on else off_tally)[duty] += 1
+        return [v_on if is_on else v_off]
+
+    def next(self):
+        return np.array(self.inputs)
+
+    def done(self, **kwargs):
+        print()

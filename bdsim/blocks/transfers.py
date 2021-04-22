@@ -9,6 +9,7 @@ Transfer blocks:
 # The constructor of each class ``MyClass`` with a ``@block`` decorator becomes a method ``MYCLASS()`` of the BlockDiagram instance.
 
 
+from typing import List
 import numpy as np
 import math
 from math import sin, cos, atan2, sqrt, pi
@@ -40,10 +41,10 @@ from bdsim.components import TransferBlock, block
 class Integrator(TransferBlock):
     """
     :blockname:`INTEGRATOR`
-    
+
     .. table::
        :align: left
-    
+
        +------------+---------+---------+
        | inputs     | outputs |  states |
        +------------+---------+---------+
@@ -89,7 +90,7 @@ class Integrator(TransferBlock):
                 min = -math.inf
             if max is None:
                 max = math.inf
-                
+
         else:
             if isinstance(x0, np.ndarray):
                 if x0.ndim > 1:
@@ -130,10 +131,10 @@ class Integrator(TransferBlock):
 class LTI_SS(TransferBlock):
     """
     :blockname:`LTI_SS`
-    
+
     .. table::
        :align: left
-    
+
        +------------+---------+---------+
        | inputs     | outputs |  states |
        +------------+---------+---------+
@@ -199,7 +200,7 @@ class LTI_SS(TransferBlock):
             nout = C.shape[0]
             assert C.shape[1] == n, 'C must have same number of columns as A'
 
-        super().__init__(nin=nin, nout=nout, inputs=inputs, **kwargs)
+        super().__init__(inputs=inputs, nin=nin, nout=nout, **kwargs)
 
         self.A = A
         self.B = B
@@ -224,10 +225,10 @@ class LTI_SS(TransferBlock):
 class LTI_SISO(LTI_SS):
     """
     :blockname:`LTI_SISO`
-    
+
     .. table::
        :align: left
-    
+
        +------------+---------+---------+
        | inputs     | outputs |  states |
        +------------+---------+---------+
@@ -235,7 +236,7 @@ class LTI_SISO(LTI_SS):
        +------------+---------+---------+
        | float      | float   |         | 
        +------------+---------+---------+
-     
+
     """
 
     def __init__(self, N=1, D=[1, 1], *inputs, x0=None, verbose=False, **kwargs):
@@ -274,49 +275,49 @@ class LTI_SISO(LTI_SS):
         is the transfer function :math:`\frac{s+2}{2s^2+3s-4}`.
         """
         #print('in SISO constscutor')
-
-        if not isinstance(N, list):
-            N = [N]
-        if not isinstance(D, list):
-            D = [D]
-        self.N = N
-        self.D = N
-        n = len(D) - 1
-        nn = len(N)
-        if x0 is None:
-            x0 = np.zeros((n,))
-        assert nn <= n, 'direct pass through is not supported'
-
-        # convert to numpy arrays
-        N = np.r_[np.zeros((len(D) - len(N),)), np.array(N)]
-        D = np.array(D)
-
-        # normalize the coefficients to obtain
-        #
-        #   b_0 s^n + b_1 s^(n-1) + ... + b_n
-        #   ---------------------------------
-        #   a_0 s^n + a_1 s^(n-1) + ....+ a_n
-
-        # normalize so leading coefficient of denominator is one
-        D0 = D[0]
-        D = D / D0
-        N = N / D0
-
-        A = np.eye(len(D) - 1, k=1)  # control canonic (companion matrix) form
-        A[-1, :] = -D[1:]
-
-        B = np.zeros((n, 1))
-        B[-1] = 1
-
-        C = (N[1:] - N[0] * D[1:]).reshape((1, n))
-
-        if verbose:
-            print('A=', A)
-            print('B=', B)
-            print('C=', C)
-
-        super().__init__(A=A, B=B, C=C, x0=x0, **kwargs)
+        A, B, C = siso_to_ss(list(N), list(D), verbose)
+        super().__init__(*inputs, A=A, B=B, C=C, x0=x0, **kwargs)
         self.type = 'LTI'
+
+
+def siso_to_ss(N: List[float], D: List[float], verbose: bool = False):
+    if not isinstance(N, list):
+        N = [N]
+    if not isinstance(D, list):
+        D = [D]
+    n = len(D) - 1
+    nn = len(N)
+    assert nn <= n, 'direct pass through is not supported'
+
+    # convert to numpy arrays
+    N = np.r_[np.zeros((len(D) - len(N),)), np.array(N)]
+    D = np.array(D)
+
+    # normalize the coefficients to obtain
+    #
+    #   b_0 s^n + b_1 s^(n-1) + ... + b_n
+    #   ---------------------------------
+    #   a_0 s^n + a_1 s^(n-1) + ....+ a_n
+
+    # normalize so leading coefficient of denominator is one
+    D0 = D[0]
+    D = D / D0
+    N = N / D0
+
+    A = np.eye(len(D) - 1, k=1)  # control canonic (companion matrix) form
+    A[-1, :] = -D[1:]
+
+    B = np.zeros((n, 1))
+    B[-1] = 1
+
+    C = (N[1:] - N[0] * D[1:]).reshape((1, n))
+
+    if verbose:
+        print('A=', A)
+        print('B=', B)
+        print('C=', C)
+
+    return A, B, C
 
 
 if __name__ == "__main__":

@@ -9,6 +9,8 @@ Transfer blocks:
 # The constructor of each class ``MyClass`` with a ``@block`` decorator becomes a method ``MYCLASS()`` of the BlockDiagram instance.
 
 
+from typing import List, Optional
+from bdsim.blocks.transfers import LTI_SS, siso_to_ss
 import numpy as np
 import math
 from math import sin, cos, atan2, sqrt, pi
@@ -17,9 +19,9 @@ import matplotlib.pyplot as plt
 import inspect
 from spatialmath import base
 
-from bdsim.components import ClockedBlock, block
+from bdsim.components import Clock, ClockedBlock, block, TransferBlock
 
-# ------------------------------------------------------------------------ 
+# ------------------------------------------------------------------------
 
 
 @block
@@ -63,24 +65,23 @@ class ZOH(ClockedBlock):
         # print('nstates', self.nstates)
 
     def output(self, t=None):
-        # print('* output, x is ', self._x)
         return [self._x]
 
     def next(self):
         xnext = np.array(self.inputs)
         return xnext
 
-# ------------------------------------------------------------------------ 
+# ------------------------------------------------------------------------
 
 
 @block
 class DIntegrator(ClockedBlock):
     """
     :blockname:`INTEGRATOR`
-    
+
     .. table::
        :align: left
-    
+
        +------------+---------+---------+
        | inputs     | outputs |  states |
        +------------+---------+---------+
@@ -126,7 +127,7 @@ class DIntegrator(ClockedBlock):
                 min = -math.inf
             if max is None:
                 max = math.inf
-                
+
         else:
             if isinstance(x0, np.ndarray):
                 if x0.ndim > 1:
@@ -161,197 +162,119 @@ class DIntegrator(ClockedBlock):
 # ------------------------------------------------------------------------ #
 
 
-# @block
-# class LTI_SS(TransferBlock):
-#     """
-#     :blockname:`LTI_SS`
-    
-#     .. table::
-#        :align: left
-    
-#        +------------+---------+---------+
-#        | inputs     | outputs |  states |
-#        +------------+---------+---------+
-#        | 1          | 01      | nc      |
-#        +------------+---------+---------+
-#        | float,     | float,  |         | 
-#        | A(nb,)     | A(nc,)  |         |
-#        +------------+---------+---------+
-#     """
+@block
+class Discrete_LTI_SS(ClockedBlock, LTI_SS):
+    """
+    :blockname:`LTI_SS`
 
-#     def __init__(self, *inputs, A=None, B=None, C=None, x0=None, verbose=False, **kwargs):
-#         r"""
-#         :param ``*inputs``: Optional incoming connections
-#         :type ``*inputs``: Block or Plug
-#         :param N: numerator coefficients, defaults to 1
-#         :type N: array_like, optional
-#         :param D: denominator coefficients, defaults to [1, 1]
-#         :type D: array_like, optional
-#         :param x0: initial states, defaults to zero
-#         :type x0: array_like, optional
-#         :param ``**kwargs``: common Block options
-#         :return: A SCOPE block
-#         :rtype: LTI_SISO instance
+    .. table::
+       :align: left
 
-#         Create a state-space LTI block.
+       +------------+---------+---------+
+       | inputs     | outputs |  states |
+       +------------+---------+---------+
+       | 1          | 01      | nc      |
+       +------------+---------+---------+
+       | float,     | float,  |         |
+       | A(nb,)     | A(nc,)  |         |
+       +------------+---------+---------+
+    """
 
-#         Describes the dynamics of a single-input single-output (SISO) linear
-#         time invariant (LTI) system described by numerator and denominator
-#         polynomial coefficients.
+    def __init__(self, clock: Clock, *inputs, **kwargs):
+        r"""
+        :param ``*inputs``: Optional incoming connections
+        :type ``*inputs``: Block or Plug
+        :param N: numerator coefficients, defaults to 1
+        :type N: array_like, optional
+        :param D: denominator coefficients, defaults to [1, 1]
+        :type D: array_like, optional
+        :param x0: initial states, defaults to zero
+        :type x0: array_like, optional
+        :param ``**kwargs``: common Block options
+        :return: A SCOPE block
+        :rtype: LTI_SISO instance
 
-#         Coefficients are given in the order from highest order to zeroth 
-#         order, ie. :math:`2s^2 - 4s +3` is ``[2, -4, 3]``.
+        Create a discrete-time state-space LTI block (in the z domain).
+        """
 
-#         Only proper transfer functions, where order of numerator is less
-#         than denominator are allowed.
+        ClockedBlock.__init__(self, clock, **kwargs)
+        LTI_SS.__init__(self, *inputs, **kwargs)
+        self.type = 'Discrete LTI SS'
+        self.out: Optional[List[float]] = None
 
-#         The order of the states in ``x0`` is consistent with controller canonical
-#         form.
+    def output(self, t=None):
+        return self.out
 
-#         Examples::
+    def deriv(self):
+        raise NotImplementedError("Clocked blocks should not be derived.")
 
-#             LTI_SISO(N=[1,2], D=[2, 3, -4])
-
-#         is the transfer function :math:`\frac{s+2}{2s^2+3s-4}`.
-#         """
-#         #print('in SS constructor')
-#         self.type = 'LTI SS'
-
-#         assert A.shape[0] == A.shape[1], 'A must be square'
-#         n = A.shape[0]
-#         if len(B.shape) == 1:
-#             nin = 1
-#             B = B.reshape((n, 1))
-#         else:
-#             nin = B.shape[1]
-#         assert B.shape[0] == n, 'B must have same number of rows as A'
-
-#         if len(C.shape) == 1:
-#             nout = 1
-#             assert C.shape[0] == n, 'C must have same number of columns as A'
-#             C = C.reshape((1, n))
-#         else:
-#             nout = C.shape[0]
-#             assert C.shape[1] == n, 'C must have same number of columns as A'
-
-#         super().__init__(nin=nin, nout=nout, inputs=inputs, **kwargs)
-
-#         self.A = A
-#         self.B = B
-#         self.C = C
-
-#         self.nstates = A.shape[0]
-
-#         if x0 is None:
-#             self._x0 = np.zeros((self.nstates,))
-#         else:
-#             self._x0 = x0
-
-#     def output(self, t=None):
-#         return list(self.C @ self._x)
-
-#     def deriv(self):
-#         return self.A @ self._x + self.B @ np.array(self.inputs)
-# # ------------------------------------------------------------------------ #
+    def next(self):
+        # difference equation
+        dx = self.A @ self._x + self.B @ np.array(self.inputs)
+        new_x = self._x + dx
+        self.out = list(self.C @ new_x)  # "hold" the state until next update
+        return new_x
+        # ------------------------------------------------------------------------ #
 
 
-# @block
-# class LTI_SISO(LTI_SS):
-#     """
-#     :blockname:`LTI_SISO`
-    
-#     .. table::
-#        :align: left
-    
-#        +------------+---------+---------+
-#        | inputs     | outputs |  states |
-#        +------------+---------+---------+
-#        | 1          | 1       | n       |
-#        +------------+---------+---------+
-#        | float      | float   |         | 
-#        +------------+---------+---------+
-     
-#     """
+@block
+class Discrete_LTI_SISO(Discrete_LTI_SS):
+    """
+    :blockname:`LTI_SISO`
 
-#     def __init__(self, N=1, D=[1, 1], *inputs, x0=None, verbose=False, **kwargs):
-#         r"""
-#         :param N: numerator coefficients, defaults to 1
-#         :type N: array_like, optional
-#         :param D: denominator coefficients, defaults to [1, 1]
-#         :type D: array_like, optional
-#         :param ``*inputs``: Optional incoming connections
-#         :type ``*inputs``: Block or Plug
-#         :param x0: initial states, defaults to zero
-#         :type x0: array_like, optional
-#         :param ``**kwargs``: common Block options
-#         :return: A SCOPE block
-#         :rtype: LTI_SISO instance
+    .. table::
+       :align: left
 
-#         Create a SISO LTI block.
+       +------------+---------+---------+
+       | inputs     | outputs |  states |
+       +------------+---------+---------+
+       | 1          | 1       | n       |
+       +------------+---------+---------+
+       | float      | float   |         |
+       +------------+---------+---------+
 
-#         Describes the dynamics of a single-input single-output (SISO) linear
-#         time invariant (LTI) system described by numerator and denominator
-#         polynomial coefficients.
+    """
 
-#         Coefficients are given in the order from highest order to zeroth 
-#         order, ie. :math:`2s^2 - 4s +3` is ``[2, -4, 3]``.
+    def __init__(self, clock: Clock, N=1, D=[1, 1], *inputs, x0=None, verbose=False, **kwargs):
+        r"""
+        :param N: numerator coefficients, defaults to 1
+        :type N: array_like, optional
+        :param D: denominator coefficients, defaults to [1, 1]
+        :type D: array_like, optional
+        :param ``*inputs``: Optional incoming connections
+        :type ``*inputs``: Block or Plug
+        :param x0: initial states, defaults to zero
+        :type x0: array_like, optional
+        :param ``**kwargs``: common Block options
+        :return: A SCOPE block
+        :rtype: LTI_SISO instance
 
-#         Only proper transfer functions, where order of numerator is less
-#         than denominator are allowed.
+        Create a SISO LTI block.
 
-#         The order of the states in ``x0`` is consistent with controller canonical
-#         form.
+        Describes the dynamics of a single-input single-output (SISO) linear
+        time invariant (LTI) system described by numerator and denominator
+        polynomial coefficients.
 
-#         Examples::
+        Coefficients are given in the order from highest order to zeroth
+        order, ie. :math:`2s^2 - 4s +3` is ``[2, -4, 3]``.
 
-#             LTI_SISO(N=[1, 2], D=[2, 3, -4])
+        Only proper transfer functions, where order of numerator is less
+        than denominator are allowed.
 
-#         is the transfer function :math:`\frac{s+2}{2s^2+3s-4}`.
-#         """
-#         #print('in SISO constscutor')
+        The order of the states in ``x0`` is consistent with controller canonical
+        form.
 
-#         if not isinstance(N, list):
-#             N = [N]
-#         if not isinstance(D, list):
-#             D = [D]
-#         self.N = N
-#         self.D = N
-#         n = len(D) - 1
-#         nn = len(N)
-#         if x0 is None:
-#             x0 = np.zeros((n,))
-#         assert nn <= n, 'direct pass through is not supported'
+        Examples::
 
-#         # convert to numpy arrays
-#         N = np.r_[np.zeros((len(D) - len(N),)), np.array(N)]
-#         D = np.array(D)
+            LTI_SISO(N=[1, 2], D=[2, 3, -4])
 
-#         # normalize the coefficients to obtain
-#         #
-#         #   b_0 s^n + b_1 s^(n-1) + ... + b_n
-#         #   ---------------------------------
-#         #   a_0 s^n + a_1 s^(n-1) + ....+ a_n
+        is the transfer function :math:`\frac{s+2}{2s^2+3s-4}`.
+        """
+        #print('in SISO constscutor')
 
-#         # normalize so leading coefficient of denominator is one
-#         D0 = D[0]
-#         D = D / D0
-#         N = N / D0
-
-#         A = np.eye(len(D) - 1, k=1)  # control canonic (companion matrix) form
-#         A[-1, :] = -D[1:]
-
-#         B = np.zeros((n, 1))
-#         B[-1] = 1
-
-#         C = (N[1:] - N[0] * D[1:]).reshape((1, n))
-
-#         if verbose:
-#             print('A=', A)
-#             print('B=', B)
-#             print('C=', C)
-
-#         super().__init__(A=A, B=B, C=C, x0=x0, **kwargs)
-#         self.type = 'LTI'
+        A, B, C = siso_to_ss(list(N), list(D), verbose)
+        super().__init__(clock=clock, A=A, B=B, C=C, x0=x0, inputs=inputs, **kwargs)
+        self.type = 'Discrete LTI SISO'
 
 
 # if __name__ == "__main__":
