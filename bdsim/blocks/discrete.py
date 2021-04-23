@@ -180,7 +180,7 @@ class Discrete_LTI_SS(ClockedBlock, LTI_SS):
        +------------+---------+---------+
     """
 
-    def __init__(self, clock: Clock, *inputs, **kwargs):
+    def __init__(self, clock: Clock, *inputs, x0=None, **kwargs):
         r"""
         :param ``*inputs``: Optional incoming connections
         :type ``*inputs``: Block or Plug
@@ -202,8 +202,15 @@ class Discrete_LTI_SS(ClockedBlock, LTI_SS):
         self.type = 'Discrete LTI SS'
         self.out: Optional[List[float]] = None
 
+        if x0 is None:
+            self._x0 = np.zeros((self.nstates,))
+        else:
+            self._x0 = x0
+        self._output = list(self.C @ self._x0)
+        self.ndstates = len(self._x0)
+
     def output(self, t=None):
-        return self.out
+        return self._output
 
     def deriv(self):
         raise NotImplementedError("Clocked blocks should not be derived.")
@@ -212,7 +219,8 @@ class Discrete_LTI_SS(ClockedBlock, LTI_SS):
         # difference equation
         dx = self.A @ self._x + self.B @ np.array(self.inputs)
         new_x = self._x + dx
-        self.out = list(self.C @ new_x)  # "hold" the state until next update
+        # "hold" the state until next update
+        self._output = list(self.C @ new_x)
         return new_x
         # ------------------------------------------------------------------------ #
 

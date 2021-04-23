@@ -275,7 +275,7 @@ class LTI_SISO(LTI_SS):
         is the transfer function :math:`\frac{s+2}{2s^2+3s-4}`.
         """
         #print('in SISO constscutor')
-        A, B, C = siso_to_ss(list(N), list(D), verbose)
+        A, B, C = siso_to_ss(N, list(D), verbose)
         super().__init__(*inputs, A=A, B=B, C=C, x0=x0, **kwargs)
         self.type = 'LTI'
 
