@@ -11,7 +11,8 @@ duty = bd.TIME()  # essentially a ramp input
 
 pwm = bd.PWM(clock, duty, freq=PWM_FREQ, v_range=(0, 1))
 
-scope = bd.SCOPE(nin=2, labels=["Duty Cycle", "PWM Signal"])
+scope = bd.SCOPE(nin=2, labels=["Duty Cycle", "PWM Signal"],
+                 stairs=[False, True])
 scope[0] = duty
 scope[1] = pwm
 

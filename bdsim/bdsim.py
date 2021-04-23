@@ -238,8 +238,8 @@ class BDSim:
 
         bd.state = state
 
-        x0 = bd.getstate0()
-        print('initial state  x0 = ', x0)
+        state.x = bd.getstate0()
+        print('initial state  x0 = ', state.x)
 
         ndstates = 0
         for clock in bd.clocklist:
@@ -284,7 +284,7 @@ class BDSim:
                         next[i] = clock.next(tprev)
 
                         # get the new state
-                        clock._x = clock.getstate()
+                        clock._x = clock.x[-1]
 
                     tnext = min(next)
 
@@ -313,8 +313,6 @@ class BDSim:
             # out = scipy.integrate.solve_ivp.BlockDiagram._deriv, args=(self,), t_span=(0,T), y0=x0,
             #             method=solver, t_eval=np.linspace(0, T, 100), events=None, **kwargs)
             if bd.nstates > 0:
-
-                x0 = bd.getstate0()
                 # print('initial state x0 = ', x0)
 
                 # block diagram contains states, solve it using numerical integration
@@ -323,7 +321,7 @@ class BDSim:
                     state.solver]  # get user specified integrator
 
                 integrator = scipy_integrator(lambda t, y: bd.evaluate(y, t),
-                                              t0=t0, y0=x0, t_bound=T, max_step=state.dt, **state.intargs)
+                                              t0=t0, y0=state.x, t_bound=T, max_step=state.dt, **state.intargs)
 
                 while integrator.status == 'running':
 
@@ -338,6 +336,7 @@ class BDSim:
                     # stash the results
                     state.tlist.append(integrator.t)
                     state.xlist.append(integrator.y)
+                    state.x = integrator.y
 
                     # record the ports on the watchlist
                     for i, p in enumerate(state.watchlist):

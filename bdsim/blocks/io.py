@@ -59,10 +59,6 @@ class ADC(ZOH):
         return np.array(res)
 
 
-on_tally = {}
-off_tally = {}
-
-
 @block
 class PWM(ClockedBlock):
     """A simulated model of an ideal PWM generator.
@@ -95,17 +91,9 @@ class PWM(ClockedBlock):
     def output(self, t: float):
         duty = self._x[0]
         t_cycle = t % self.T
-        t_on = self._x[0] * self.T
+        t_on = duty * self.T
         v_off, v_on = self.v_range
-        is_on = t_cycle <= t_on
-        if duty not in on_tally:
-            on_tally[duty] = 0
-            off_tally[duty] = 0
-        (on_tally if is_on else off_tally)[duty] += 1
-        return [v_on if is_on else v_off]
+        return [v_on if t_cycle <= t_on else v_off]
 
     def next(self):
         return np.array(self.inputs)
-
-    def done(self, **kwargs):
-        print()

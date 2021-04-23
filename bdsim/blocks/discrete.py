@@ -217,8 +217,7 @@ class Discrete_LTI_SS(ClockedBlock, LTI_SS):
 
     def next(self):
         # difference equation
-        dx = self.A @ self._x + self.B @ np.array(self.inputs)
-        new_x = self._x + dx
+        new_x = self.A @ self._x + self.B @ np.array(self.inputs)
         # "hold" the state until next update
         self._output = list(self.C @ new_x)
         return new_x

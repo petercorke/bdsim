@@ -10,7 +10,8 @@ signal = bd.SUM('++', sine, square)
 
 sampled = bd.ADC(clock, signal, bit_width=8, v_range=(-5, 5))
 
-scope = bd.SCOPE(nin=2, labels=["OG Signal", "ADC Sampled"])
+scope = bd.SCOPE(nin=2, labels=["OG Signal", "ADC Sampled"],
+                 stairs=[False, True])
 scope[0] = signal
 scope[1] = sampled
 
