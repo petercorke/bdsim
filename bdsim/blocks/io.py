@@ -73,6 +73,7 @@ class PWM(ClockedBlock):
         freq: int,
         v_range: Tuple[float, float],
         duty0: int = 0,
+        approximate: bool = True,
         **kwargs: Any
     ):
         super().__init__(clock, nin=1, nout=1,  # type: ignore
@@ -87,13 +88,17 @@ class PWM(ClockedBlock):
         self._x0 = [duty0]  # I don't like this
         self.ndstates = 1
         self.v_range = v_range
+        self.approximate = approximate
 
     def output(self, t: float):
         duty = self._x[0]
-        t_cycle = t % self.T
-        t_on = duty * self.T
         v_off, v_on = self.v_range
-        return [v_on if t_cycle <= t_on else v_off]
+        if self.approximate:
+            return [duty * (v_on - v_off) + v_off]
+        else:
+            t_cycle = t % self.T
+            t_on = duty * self.T
+            return [v_on if t_cycle <= t_on else v_off]
 
     def next(self):
         return np.array(self.inputs)

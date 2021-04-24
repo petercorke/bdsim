@@ -633,14 +633,14 @@ class BDSim:
             clargs = vars(parser.parse_args())  # get args as a dictionary
             # print(f'clargs {clargs}')
 
-        options = {**kwargs, **clargs}
+        options = {**defaults, **kwargs}
 
         # ensure graphics is enabled if animation is requested
         if options['animation']:
             options['graphics'] = True
 
         # stash these away
-        options = types.SimpleNamespace(**{**defaults, **options})
+        options = types.SimpleNamespace(**options)
 
         # setup debug parameters from single character codes
         debuglist = []
