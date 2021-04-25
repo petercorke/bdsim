@@ -39,7 +39,7 @@ class ADC(ZOH):
     ):
         super().__init__(clock, *(inp,) if inp else (), **kwargs)
         self.v_range = v_range
-        self.quant_n_idxs = bit_width ** 2 - 1
+        self.quant_n_idxs = 2 ** bit_width - 1
         min_, max_ = self.v_range
         self.quant_step_size = (max_ - min_) / self.quant_n_idxs
 
