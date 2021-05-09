@@ -9,12 +9,12 @@ Transfer blocks:
 # The constructor of each class ``MyClass`` with a ``@block`` decorator becomes a method ``MYCLASS()`` of the BlockDiagram instance.
 
 
+
 import numpy as np
+import scipy.signal
 import math
 from math import sin, cos, atan2, sqrt, pi
-
 import matplotlib.pyplot as plt
-import inspect
 from spatialmath import base
 
 from bdsim.components import TransferBlock, block
@@ -298,17 +298,22 @@ class LTI_SISO(LTI_SS):
         #   a_0 s^n + a_1 s^(n-1) + ....+ a_n
 
         # normalize so leading coefficient of denominator is one
-        D0 = D[0]
-        D = D / D0
-        N = N / D0
+        # D0 = D[0]
+        # D = D / D0
+        # N = N / D0
 
-        A = np.eye(len(D) - 1, k=1)  # control canonic (companion matrix) form
-        A[-1, :] = -D[1:]
+        # A = np.eye(len(D) - 1, k=1)  # control canonic (companion matrix) form
+        # A[-1, :] = -D[1:]
 
-        B = np.zeros((n, 1))
-        B[-1] = 1
+        # B = np.zeros((n, 1))
+        # B[-1] = 1
 
-        C = (N[1:] - N[0] * D[1:]).reshape((1, n))
+        # C = (N[1:] - N[0] * D[1:]).reshape((1, n))
+
+        A, B, C, D = scipy.signal.tf2ss(N, D)
+
+        if len(np.flatnonzero(D)) > 0:
+            raise ValueError('D matrix is not zero')
 
         if verbose:
             print('A=', A)
