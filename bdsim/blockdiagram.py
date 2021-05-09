@@ -140,7 +140,7 @@ class BlockDiagram:
         
     # ---------------------------------------------------------------------- #
 
-    def compile(self, subsystem=False, doimport=True):
+    def compile(self, subsystem=False, doimport=True, report=True):
         """
         Compile the block diagram
         
@@ -296,6 +296,10 @@ class BlockDiagram:
 
         for clock in self.clocklist:
             clock._x = clock.getstate0()
+
+        if report:
+            self.report()
+            self.plan_print()
 
         if not subsystem:
             try:
