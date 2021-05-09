@@ -20,11 +20,6 @@ from ansitable import ANSITable, Column
 from bdsim.components import *
 
 
-def isdebug(debug):
-    # nonlocal debuglist
-    # return debug in debuglist
-    return False
-
 
 # ------------------------------------------------------------------------- #    
 
