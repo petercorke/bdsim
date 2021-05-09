@@ -60,11 +60,15 @@ class BlockDiagram:
         self.name = name
         self.nstates = 0
         self.ndstates = 0
+        self._issubsystem = False
 
 
         self.options = None
         
 
+    @property
+    def issubsystem(self):
+        return self._issubsystem
     
     def clock(self, *args, **kwargs):
         clock = Clock(*args, **kwargs)
