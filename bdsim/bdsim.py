@@ -278,7 +278,7 @@ class BDSim:
                         # it was this clock that ticked
                         clock = bd.clocklist[i]
 
-                        clock.savestate()
+                        clock.savestate(t)
 
                         # update the next time for this clock
                         next[i] = clock.next(tprev)
@@ -302,6 +302,15 @@ class BDSim:
         out.t = np.array(state.tlist)
         out.x = np.array(state.xlist)
         out.xnames = bd.statenames
+
+        # save clocked states
+        for c in bd.clocklist:
+            name = c.name.replace('.', '')
+            clockdata = Struct(name)
+            clockdata.t = np.array(c.t)
+            clockdata.x = np.array(c.x)
+            out.add(name, clockdata)
+
         for i, p in enumerate(watchlist):
             out['y'+str(i)] = np.array(state.plist[i])
         out.ynames = watchnamelist

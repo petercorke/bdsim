@@ -5,6 +5,7 @@ Components of the simulation system, namely blocks, wires and plugs.
 """
 
 import math
+from re import S
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import animation
@@ -36,24 +37,41 @@ class Struct(UserDict):
         self.name = name
 
     def __setattr__(self, name, value):
+        # invoked by struct[name] = value
         if name in ['data', 'name']:
             super().__setattr__(name, value)
         else:
             self.data[name] = value
-        
+    
+    def add(self, name, value):
+        self.data[name] = value
+
     def __getattr__(self, name):
         return self.data[name]
         
-    def __str__(self):
-        return self.name + ' ' + str({k for k, v in self.data.items() if not k.startswith('_')})
-    
     def __repr__(self):
-        def fmt(k, v):
-            if isinstance(v, np.ndarray):
-                return '{:12s}| {:12s}'.format(k, type(v).__name__ + ' ' + str(v.shape)) 
+        return str(self)
+    
+    def __str__(self):
+        def fmt(k, v, indent=0):
+            if isinstance(v, Struct):
+                s = '{:12s}| {:12s}\n'.format(k, type(v).__name__)
+                for k, v in v.items():
+                    s += fmt(k, v, indent + 1)
+                return s
+            elif isinstance(v, np.ndarray):
+                s = '            > ' * indent + '{:12s}| {:12s}\n'.format(k, type(v).__name__ + ' ' + str(v.shape))
             else:
-                return '{:12s}| {:12s}'.format(k, type(v).__name__)
-        return self.name + ':\n' + '\n'.join([fmt(k,v) for k, v in self.data.items() if not k.startswith('_')])
+                s = '            > ' * indent + '{:12s}| {:12s}\n'.format(k, type(v).__name__)
+            return s
+
+        s = ''
+        for k, v in self.data.items():
+            if k.startswith('_'):
+                continue
+            s += fmt(k, v)
+
+        return self.name + ':\n' + s
 
 class Wire:
     """
@@ -345,6 +363,7 @@ class Clock:
         self.blocklist = []
 
         self.x = []  # discrete state vector numpy.ndarray
+        self.t = []
 
         self.name = "clock." + str(len(clocklist))
 
@@ -378,7 +397,6 @@ class Clock:
         x = np.array([])
         for b in self.blocklist:
             # update dstate
-            assert b.updated, 'clocked block has incomplete inputs'
             x = np.r_[x, b.next().flatten()]
 
         return x
@@ -393,7 +411,9 @@ class Clock:
         k = int((t - self.offset) / self.T + 0.5)
         return (k + 1) * self.T + self.offset
 
-    def savestate(self):
+    def savestate(self, t):
+        # save clock state at time t
+        self.t.append(t)
         self.x.append(self.getstate())
 # ------------------------------------------------------------------------- #
 
