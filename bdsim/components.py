@@ -509,6 +509,7 @@ class Block:
         self._outport_names = None
         self._state_names = None
         self.initd = True
+        self._clocked = False
 
         if nin is not None:
             self.nin = nin
@@ -542,6 +543,10 @@ class Block:
         for k,v in self.__dict__.items():
             if k != 'sim':
                 print("  {:11s}{:s}".format(k+":", str(v)))
+
+    @property
+    def isclocked(self):
+        return self._clocked
 
     # for use in unit testing
     def _eval(self, *inputs, t=None):
@@ -947,6 +952,7 @@ class ClockedBlock(Block):
         # print('Clocked constructor')
         super().__init__(**kwargs)
         assert clock is not None, 'clocked block must have a clock'
+        self._clocked = True
         self.clock = clock
         clock.add_block(self)
 
