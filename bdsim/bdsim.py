@@ -69,7 +69,6 @@ class BDSimState:
         self.checkfinite = True
 
         self.debugger = True
-        self.debug_stop = False
         self.t_stop = None  # time-based breakpoint
 
 class BDSim:
@@ -100,12 +99,12 @@ class BDSim:
         ===================  =========  ========  ===========================================
         Command line switch  Argument   Default   Behaviour
         ===================  =========  ========  ===========================================
-        --nographics, -g                          enable graphical display
-        --animation, -a                           update graphics at each time step
-        --noprogress, -p                          do not display simulation progress bar
+        --nographics, -g     graphics   True      enable graphical display
+        --animation, -a      animation  True      update graphics at each time step
+        --noprogress, -p     progress   True      do not display simulation progress bar
         --backend BE         backend    'Qt5Agg'  matplotlib backend
         --tiles RxC, -t RxC  tiles      '3x4'     arrangement of figure tiles on the display
-        --verbose, -v                             be verbose
+        --verbose, -v        verbose    False     be verbose
         --debug F, -d F      debug      ''        debug flag string
         ===================  =========  ========  ===========================================
 
@@ -201,8 +200,13 @@ class BDSim:
         state.minstepsize = minstepsize
         state.stop = None # allow any block to stop.BlockDiagram by setting this to the block's name
         state.checkfinite = checkfinite
+        state.options = copy.copy(self.options)
         if debug:
-            state.debug_stop = True
+            # append debug flags
+            if debug not in state.options.debug:
+                state.options.debug += debug        
+        
+        if len(state.options.debug) > 0:
             state.options.progress = False
 
         # preproces the watchlist
@@ -355,7 +359,7 @@ class BDSim:
                         print(fg('red') + f"\n--- stopping on minimum step size at t={bd.state.t:.4f} with last stepsize {integrator.step_size:g}" + attr(0))
                         break
 
-                    if bd.state.debug_stop:
+                    if 'i' in bd.state.options.debug:
                         bd._debugger(integrator)
 
             elif len(clocklist) == 0:
@@ -383,7 +387,7 @@ class BDSim:
                         print(fg('red') + f"\n--- stop requested at t={bd.state.t:.4f} by {bd.state.stop}" + attr(0))
                         break
 
-                    if bd.state.debug_stop:
+                    if 'i' in bd.state.options.debug:
                         bd._debugger(integrator)
 
             else:
@@ -410,7 +414,7 @@ class BDSim:
                 if bd.state.stop is not None:
                     print(fg('red') + f"\n--- stop requested at t={bd.state.t:.4f} by {bd.state.stop}" + attr(0))
 
-                if bd.state.debug_stop:
+                if 'i' in bd.state.options.debug:
                     bd._debugger(integrator)
 
                 
@@ -613,64 +617,66 @@ class BDSim:
         return blocks
 
     def get_options(sysargs=True, **kwargs):
-        # option priority (high to low)
-        #  command line
-        #  argument to BDSim()
-        #  defaults
-
-        
+        # option priority (high to low):
+        #  - command line
+        #  - argument to BDSim()
+        #  - defaults
         # all switches and their default values
         defaults = {
             'backend': 'Qt5Agg',
             'tiles': '3x4',
             'graphics': True,
-            'animation': False,
+            'animation': True,
             'progress': True,
             'verbose': False,
             'debug': ''
             }
+        
+        # any passed kwargs can override the defaults
+        options = {**defaults, **kwargs} # second argument has precedence
+
         if sysargs:
             # command line arguments and graphics
-            parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-            parser.add_argument('--backend', '-b', type=str, metavar='BACKEND', default=defaults['backend'],
-                                help='matplotlib backend to choose')
-            parser.add_argument('--tiles', '-t', type=str, default=defaults['tiles'], metavar='ROWSxCOLS',
-                                help='window tiling as NxM')
-            parser.add_argument('--nographics', '-g', default=defaults['graphics'], action='store_const', const=False, dest='graphics',
-                                help='disable graphic display')
-            parser.add_argument('--animation', '-a', default=defaults['animation'], action='store_const', const=True,
-                                help='animate graphics')
-            parser.add_argument('--noprogress', '-p', default=defaults['progress'], action='store_const', const=False, dest='progress',
-                                help='animate graphics')
-            parser.add_argument('--verbose', '-v', default=defaults['verbose'], action='store_const', const=True,
-                                help='debug flags')
-            parser.add_argument('--debug', '-d', type=str, metavar='[psd]', default=defaults['debug'],
-                                help='debug flags')
-            clargs = vars(parser.parse_args())  # get args as a dictionary
-            # print(f'clargs {clargs}')
+            parser = argparse.ArgumentParser(
+                    formatter_class=argparse.ArgumentDefaultsHelpFormatter
+                    )
+            parser.add_argument('--backend', '-b', type=str, metavar='BACKEND',
+                default=options['backend'],
+                help='matplotlib backend to choose')
+            parser.add_argument('--tiles', '-t', type=str, metavar='ROWSxCOLS',
+                default=options['tiles'],
+                help='window tiling as NxM')
+            parser.add_argument('--nographics', '-g', 
+                default=options['graphics'], 
+                action='store_const', const=False, dest='graphics',
+                help='disable graphic display')
+            parser.add_argument('--animation', '-a', 
+                default=options['animation'], 
+                action='store_const', const=True,
+                help='animate graphics')
+            parser.add_argument('--noprogress', '-p', 
+                default=options['progress'],
+                action='store_const', const=False, dest='progress',
+                help='animate graphics')
+            parser.add_argument('--verbose', '-v', 
+                default=options['verbose'],
+                action='store_const', const=True,
+                help='debug flags')
+            parser.add_argument('--debug', '-d', type=str, metavar='[psd]',
+                default=options['debug'],
+                help='debug flags: p/ropagate, s/tate, d/eriv, i/nteractive')
+            options = vars(parser.parse_args())  # get args as a dictionary
 
-
-        options = {**kwargs, **clargs}
-            
         # ensure graphics is enabled if animation is requested
         if options['animation']:
             options['graphics'] = True
+
+        if options['verbose']:
+            for k, v in options.items():
+                print('{:10s}: {:}'.format(k, v))
         
         # stash these away
-        options = types.SimpleNamespace(**{**defaults, **options})
-
-        # setup debug parameters from single character codes
-        debuglist = []
-        if 'p' in options.debug:
-            debuglist.append('propagate')
-        if 's' in options.debug:
-            debuglist.append('state')
-        if 'd' in options.debug:
-            debuglist.append('deriv')
-        if 'i' in options.debug:
-            debuglist.append('interactive')
-
-        options.debuglist = debuglist
+        options = types.SimpleNamespace(**options)
 
         return options
         

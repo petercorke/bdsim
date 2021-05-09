@@ -772,7 +772,7 @@ class BlockDiagram:
             print('  outputs: ', b.output(t=0))
 
     def DEBUG(self, debug, *args):
-        if debug in self.options.debuglist:
+        if debug[0] in self.options.debug:
             print('DEBUG.{:s}: '.format(debug), *args)
             
 if __name__ == "__main__":
