@@ -324,7 +324,7 @@ class BDSim:
 
                 scipy_integrator = integrate.__dict__[state.solver]  # get user specified integrator
 
-                integrator = scipy_integrator(lambda t, y: bd.evaluate(y, t),
+                integrator = scipy_integrator(lambda t, y: bd.evaluate_plan(y, t),
                                                 t0=t0, y0=x0, t_bound=T, max_step=state.dt, **state.intargs)
 
 
@@ -367,7 +367,7 @@ class BDSim:
     
                 for t in np.arange(t0, T, state.dt):  # step through the time range
                     # evaluate the block diagram
-                    bd.evaluate([], t)
+                    bd.evaluate_plan([], t)
 
                     # stash the results
                     state.tlist.append(t)
@@ -395,7 +395,7 @@ class BDSim:
     
                 t = t0
                 # evaluate the block diagram
-                bd.evaluate([], t)
+                bd.evaluate_plan([], t)
 
                 # stash the results
                 state.tlist.append(t)

@@ -486,6 +486,7 @@ class Block:
         block.nout = 0
         block.nstates = 0
         block.ndstates = 0
+        block._sequence = None
         return block
 
     _latex_remove = str.maketrans({'$':'', '\\':'', '{':'', '}':'', '^':'', '_':''})
@@ -819,18 +820,10 @@ class Block:
         :type port: int
         :param value: Input value
         :type val: any
-        :return: If all inputs have been received
-        :rtype: bool
-
         """
         # stash it away
         self.inputs[port] = value
 
-        # check if all inputs have been assigned
-        if all([x is not None for x in self.inputs]):
-            self.updated = True
-            # self.update()
-        return self.updated
 
     def setinputs(self, *pos):
         assert len(pos) == self.nin, 'mismatch in number of inputs'
@@ -974,6 +967,7 @@ class ClockedBlock(Block):
 
         assert self.nin > 0 or self.nout > 0, 'no inputs or outputs specified'
         self._x = self._x0
+
 
 
 # c = Clock(5)
