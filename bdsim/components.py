@@ -4,13 +4,8 @@
 Components of the simulation system, namely blocks, wires and plugs.
 """
 
-import math
-from re import S
+from typing import Union
 import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib import animation
-from collections import UserDict
-
 from collections import UserDict
 
 class Struct(UserDict):
@@ -182,9 +177,100 @@ class Wire:
         return s
 
         
-# ------------------------------------------------------------------------- # 
+# ------------------------------------------------------------------------- #
 
-class Plug:
+
+_Signal = Union['Plug', 'Block', np.ndarray, complex, float, int] # for better intellisense
+
+class Signal:
+    """
+    An input to or output from a Block.
+    Practically, this includes either Plugs or Blocks with just 1 output.
+    All Blocks will inherit from this class for convenience sake, but
+    only blocks with 1 output can use these methods without error.
+
+    Mainly used for convenience with operator overloads.
+    """
+
+    # needed to play nice with numpy arrays. see https://stackoverflow.com/a/60613204
+    __numpy_ufunc__ = None # Numpy up to 13.0
+    __array_ufunc__ = None # Numpy 13.0 and above
+
+    def _get_plug(self):
+        if isinstance(self):
+            assert len(self.outports) == 1, \
+                "Attempted to use a Signal.method() on a Block with multiple outputs (must have just 1)"
+            return Plug(self, 0)
+        elif isinstance(self, Plug):
+            return self
+        else:
+            raise RuntimeError("Signal subclasses must subclass either Block or Plug")
+
+    def __add__(self, other: _Signal):
+        if not isinstance(other, Signal):
+            # must be a constant. wrap it.
+            other: Block = self.bd.CONSTANT(other)
+
+        if self.type == 'sum':
+            # if we're alread a sum block, just extend ourselves
+            self.nin += 1
+            self.signs += '+'
+            self[self.nin - 1] = other
+            return self
+
+        elif other.type == 'sum':
+            # if the other is a sum block, just extend it
+            other.nin += 1
+            other.signs += '+'
+            other[other.nin - 1] = self
+            return other
+
+        else:
+            # otherwise create a new one and wrap this in it
+            return self.bd.SUM('++', self, other)
+        
+        
+
+    def __radd__(self, other: _Signal):
+        if not isinstance(other, Signal):
+            # must be a constant. wrap it.
+            other: Block = self.bd.CONSTANT(other)
+        # __add__ in reverse
+        x = Signal.__add__(other, self)
+        return x
+
+    def __mul__(self, other: _Signal):
+        if not isinstance(other, Signal):
+            # must be a constant. wrap it.
+            other: Block = self.bd.CONSTANT(other)
+
+        if self.type == 'prod':
+            # if we're alread a product block, just extend ourselves
+            self.nin += 1
+            self.signs += '*'
+            self[self.nin - 1] = other
+            return self
+
+        elif other.type == 'prod':
+            # if the other is a product block, just extend it
+            other.nin += 1
+            other.signs += '*'
+            other[other.nin - 1] = self
+            return other
+
+        else:
+            # otherwise create a new one and wrap this in it
+            return self.bd.PROD('**', self, other)
+    
+    def __rmul__(self, other: _Signal):
+        # __mul__ in reverse
+        return Signal.__mul__(other, self)
+
+        
+    
+
+
+class Plug(Signal):
     """
     Create a plug.
     
@@ -264,7 +350,7 @@ class Plug:
         """
         return len(self.portlist)
 
-    def __mul__(left, right):
+    def __rshift__(left, right):
         """
         Operator for implicit wiring.
 
@@ -277,24 +363,24 @@ class Plug:
 
         Implements implicit wiring, where the left-hand operator is a Plug, for example::
 
-            a = bike[2] * bd.GAIN(3)
+            a = bike[2] >> bd.GAIN(3)
 
         will connect port 2 of ``bike`` to the input of the GAIN block.
 
         Note that::
 
-           a = bike[2] * func[1]
+           a = bike[2] >> func[1]
 
         will connect port 2 of ``bike`` to port 1 of ``func``, and port 1 of ``func``
         will be assigned to ``a``.  To specify a different outport port on ``func``
         we need to use parentheses::
 
-            a = (bike[2] * func[1])[0]
+            a = (bike[2] >> func[1])[0]
 
         which will connect port 2 of ``bike`` to port 1 of ``func``, and port 0 of ``func``
         will be assigned to ``a``.
 
-        :seealso: Block.__mul__
+        :seealso: Block.__rshift__
         """
 
         # called for the cases:
@@ -305,6 +391,7 @@ class Plug:
         w = s.connect(left, right)  # add a wire
         #print('plug * ' + str(w))
         return right
+
 
     def __setitem__(self, port, src):
         """
@@ -447,7 +534,8 @@ def block(cls):
 
 # ------------------------------------------------------------------------- #
 
-class Block:
+
+class Block(Signal):
 
     """
     Construct a new block object.
@@ -678,7 +766,7 @@ class Block:
             # regular case, add attribute to the instance's dictionary
             self.__dict__[name] = value
 
-    def __mul__(left, right):
+    def __rshift__(left, right):
         """
         Operator for implicit wiring.
 
@@ -691,7 +779,7 @@ class Block:
 
         Implements implicit wiring, for example::
 
-            a = bd.CONSTANT(1) * bd.GAIN(2)
+            a = bd.CONSTANT(1) >> bd.GAIN(2)
 
         will connect the output of the CONSTANT block to the input of the
         GAIN block.  The result will be GAIN block, whose output in this case
@@ -699,18 +787,18 @@ class Block:
 
         Note that::
 
-           a = bd.CONSTANT(1) * func[1]
+           a = bd.CONSTANT(1) >> func[1]
 
         will connect port 0 of CONSTANT to port 1 of ``func``, and port 1 of ``func``
         will be assigned to ``a``.  To specify a different outport port on ``func``
         we need to use parentheses::
 
-            a = (bd.CONSTANT(1) * func[1])[0]
+            a = (bd.CONSTANT(1) >> func[1])[0]
 
         which will connect port 0 of CONSTANT ` to port 1 of ``func``, and port 0 of ``func``
         will be assigned to ``a``.
 
-        :seealso: Plug.__mul__
+        :seealso: Plug.__rshift__
 
         """
         # called for the cases:
