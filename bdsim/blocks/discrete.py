@@ -216,6 +216,9 @@ class Discrete_LTI_SS(ClockedBlock, LTI_SS):
         raise NotImplementedError("Clocked blocks should not be derived.")
 
     def next(self):
+        # bandaid for compilation stage
+        if all(inp is None for inp in self.inputs):
+            self.inputs = [0] * len(self.inputs)
         # difference equation
         new_x = self.A @ self._x + self.B @ np.array(self.inputs)
         # "hold" the state until next update
