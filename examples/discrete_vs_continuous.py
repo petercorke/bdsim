@@ -4,7 +4,7 @@ from scipy.signal import cont2discrete, tf2ss
 sim = BDSim()
 bd = sim.blockdiagram()
 
-clock = bd.clock(50, 'Hz')
+clock = bd.clock(20, 'Hz')
 
 step = bd.STEP(T=0)
 

@@ -3,7 +3,7 @@ from typing import Optional, Union
 from bdsim import BlockDiagram, Block, Plug, BDSim
 from scipy.signal import tf2ss, TransferFunction
 
-sim = BDSim(animation=True, backend='TkAgg')
+sim = BDSim(animation=True)
 bd: BlockDiagram = sim.blockdiagram()
 
 Signal = Union[Block, Plug]
@@ -16,18 +16,6 @@ FREQ = 50
 R = 4.7e3
 L = 100e-3
 C = 100e-6
-
-# SMOOTHING_R = 100
-# SMOOTHING_C = 1e-3
-
-
-# def low_pass_filter(V_i: Signal, r: float, c: float):
-#     "Transfer function for a low-pass filter"
-#     return bd.LTI_SISO(
-#         1,
-#         (r * c, 1),
-#         V_i
-#     )
 
 
 def vc_rlc(V_s: Signal, r: float, l: float, c: float):
@@ -65,7 +53,6 @@ def control_rlc(reference: Signal):
     # max frequency allowable by ESP32 for smoothest output
     pwm_v = bd.PWM(clock, duty, freq=1000, v_range=(0, 3.3), pin=PWM_PIN)
 
-    # V_s = low_pass_filter(pwm_v, SMOOTHING_R, SMOOTHING_C)
     V_c = vc_rlc(pwm_v, R, L, C)
 
     adc = bd.ADC(clock, V_c, bit_width=12, v_range=(0, 3.6), pin=ADC_PIN)
@@ -80,6 +67,7 @@ def run_test():
 
     target = bd.STEP(T=0)
     # target = bd.WAVEFORM('sine')
+
     inp, adc, output = control_rlc(target)
     scope = bd.SCOPE(
         labels=["Reference", "PWM", "ADC Reading", "Output"]

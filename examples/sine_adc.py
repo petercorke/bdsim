@@ -8,12 +8,17 @@ sine = bd.WAVEFORM('sine', 2)
 square = bd.WAVEFORM('square', 3)
 signal = bd.SUM('++', sine, square)
 
-sampled = bd.ADC(clock, signal, bit_width=8, v_range=(-5, 5))
+bit_widths = [4, 8, 12]
+sampled = [
+    bd.ADC(clock, signal, bit_width=w, v_range=(-2, 2))
+    for w in bit_widths
+]
 
-scope = bd.SCOPE(nin=2, labels=["OG Signal", "ADC Sampled"],
-                 stairs=[False, True])
+scope = bd.SCOPE(labels=["Signal"] + [f"{w}bit ADC" for w in bit_widths],
+                 stairs=[False] + [True] * len(bit_widths))
 scope[0] = signal
-scope[1] = sampled
+for idx, block in enumerate(sampled):
+    scope[idx + 1] = block
 
 bd.compile()
 

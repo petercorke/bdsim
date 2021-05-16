@@ -2,19 +2,21 @@ from bdsim import BDSim
 
 PWM_FREQ = 20
 
-sim = BDSim()
+sim = BDSim(backend='TkAgg')
 bd = sim.blockdiagram()
 
 clock = bd.clock(50, 'Hz')
 
 duty = bd.TIME()  # essentially a ramp input
 
-pwm = bd.PWM(clock, duty, freq=PWM_FREQ, v_range=(0, 1))
+approx = bd.PWM(clock, duty, freq=PWM_FREQ, v_range=(0, 3.3))
+actual = bd.PWM(clock, duty, freq=PWM_FREQ, v_range=(0, 3.3), approximate=False)
 
-scope = bd.SCOPE(nin=2, labels=["Duty Cycle", "PWM Signal"],
-                 stairs=[False, True])
+scope = bd.SCOPE(labels=["Duty Cycle", "Approx PWM V", "Actual PWM V"],
+                 stairs=[False, True, True])
 scope[0] = duty
-scope[1] = pwm
+scope[1] = approx
+scope[2] = actual
 
 bd.compile()
 
