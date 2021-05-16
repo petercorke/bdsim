@@ -75,8 +75,8 @@ class TransferTest(unittest.TestCase):
     def test_LTI_SISO(self):
         
         block = LTI_SISO( [2, 1], [2, 4, 6])
-        nt.assert_equal(block.A, np.array([[0, 1], [-2, -3]]))
-        nt.assert_equal(block.B, np.array([[0], [1]]))
+        nt.assert_equal(block.A, np.array([[-2, -3], [1, 0]]))
+        nt.assert_equal(block.B, np.array([[1], [0]]))
         nt.assert_equal(block.C, np.array([[1, 0.5]]))
     
     def test_integrator(self):

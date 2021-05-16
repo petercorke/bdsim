@@ -20,11 +20,6 @@ from ansitable import ANSITable, Column
 from bdsim.components import *
 
 
-def isdebug(debug):
-    # nonlocal debuglist
-    # return debug in debuglist
-    return False
-
 
 # ------------------------------------------------------------------------- #    
 
@@ -60,11 +55,15 @@ class BlockDiagram:
         self.name = name
         self.nstates = 0
         self.ndstates = 0
+        self._issubsystem = False
 
 
         self.options = None
         
 
+    @property
+    def issubsystem(self):
+        return self._issubsystem
     
     def clock(self, *args, **kwargs):
         clock = Clock(*args, **kwargs)
@@ -140,7 +139,7 @@ class BlockDiagram:
         
     # ---------------------------------------------------------------------- #
 
-    def compile(self, subsystem=False, doimport=True):
+    def compile(self, subsystem=False, doimport=True, report=True):
         """
         Compile the block diagram
         
@@ -165,7 +164,7 @@ class BlockDiagram:
 
         """
         
-        # namethe elements
+        # name the elements
         self.nblocks = len(self.blocklist)
         self.nwires = len(self.wirelist)
 
@@ -226,12 +225,16 @@ class BlockDiagram:
         for b in self.blocklist:
             b.outports = [[] for i in range(0, b.nout)]
             b.inports = [None for i in range(0, b.nin)]
+            b._parents = [None for i in range(0, b.nin)]
         
         # connect the source and destination blocks to each wire
         for w in self.wirelist:
             try:
                 w.start.block.add_outport(w)
                 w.end.block.add_inport(w)
+
+                w.end.block._parents[w.end.port] = w.start.block
+
             except:
                 print('error connecting wire ', w.fullname + ': ', sys.exc_info()[1])
                 error = True
@@ -277,10 +280,12 @@ class BlockDiagram:
                 if _DFS([b]):
                     error = True
 
-
         if error:
             if not subsystem:
                 raise RuntimeError('could not compile system')
+
+        # create the execution plan/schedule
+        self.execution_plan()
 
         # evaluate the network once to check out wire types
         x = self.getstate0()
@@ -288,9 +293,13 @@ class BlockDiagram:
         for clock in self.clocklist:
             clock._x = clock.getstate0()
 
+        if report:
+            self.report()
+            self.plan_print()
+
         if not subsystem:
             try:
-                self.evaluate(x, 0.0, sinks=False)
+                self.evaluate_plan(x, 0.0, sinks=False)
             except RuntimeError as err:
                 print('\nFrom compile: unrecoverable error in value propagation:', err)
                 error = True
@@ -302,7 +311,6 @@ class BlockDiagram:
             self.compiled = True
         
         return self.compiled
-    
 
     def _subsystem_import(self, bd, sspath):
         
@@ -354,28 +362,26 @@ class BlockDiagram:
     
     # ---------------------------------------------------------------------- #
     
-
-    # ---------------------------------------------------------------------- #
-
-    def evaluate(self, x, t, checkfinite=True, debuglist=[], sinks=True):
+    def evaluate_plan(self, x, t, checkfinite=True, debuglist=[], sinks=True):
         """
         Evaluate all blocks in the network
-        
-        :param x: state
-        :type x: numpy.ndarray
-        :param t: current time
-        :type t: float
-        :return: state derivative
-        :rtype: numpy.ndarray
-        
+
+        :param x: state :type x: numpy.ndarray :param t: current time :type t:
+        float :param checkfinite: check for Inf or Nan values in block outputs
+        :type checkfinite: bool :return: state derivative :rtype: numpy.ndarray
+
         Performs the following steps:
-            
-        1. Partition the state vector to all stateful blocks
-        2. Propogate known block output ports to connected input ports
 
+        1. Partition the state vector ``x`` to all stateful blocks
+        2. Execute the blocks in the order given by the ``plan``. The block
+           outputs are "sent" to their connected inputs.
 
+        Sink blocks are not executed here, but after completion their inputs
+        will all be valid.
         """
-        #print('in evaluate at t=', t)
+
+        # TODO: don't copy outputs to inputs of next block, have inputs
+        # pull the value from connected inputs
 
         try:
             self.state.t = t
@@ -398,20 +404,51 @@ class BlockDiagram:
 
         self.DEBUG('propagate', 't={:.3f}'.format(t))
 
-        # process blocks with initial outputs and propagate
-        for b in self.blocklist:
-            if b.blockclass in ('source', 'transfer', 'clocked'):
+        for sequence, group in enumerate(self.plan):
+
+            self.DEBUG('propagate', '---- sequence = ', sequence)
+
+            for b in group:
+                # ask the block for output, check for errors
                 try:
-                    self._propagate(b, t, sinks=sinks)
-                except BaseException:
-                    self._error_handler('evaluate: source', b)
-                    
+                    out = b.output(t)
+                except Exception as err:
+                    # output method failed, report it
+                    print('--Error at t={:f} when computing output of block {:s}'.format(t, str(b)))
+                    print('  {}'.format(err))
+                    print('  inputs were: ', b.inputs)
+                    if b.nstates > 0:
+                        print('  state was: ', b._x)
+
+                    raise RuntimeError from None
+
+                self.DEBUG('propagate', 'block {:s}: output = '.format(str(b),t) + str(out))
+
+                # check that output is a list of correct length
+                if not isinstance(out, list):
+                    raise AssertionError(f"block {b} output {b} must be a list: {type(out)}")
+                if len(out) != b.nout:
+                    raise AssertionError(f"block {b} output {b} has incorrect length: {len(out)} instead of {b.nout}")
+
+                # TODO check output validity once at the start
                 
-        # check we have values for all
-        for b in self.blocklist:
-            if b.nin > 0 and not b.done:
-                raise RuntimeError(str(b) + ' has incomplete inputs')
-            
+                # check it has no nan or inf values
+                if checkfinite and isinstance(out, (int, float, np.ndarray)) and not np.isfinite(out).any():
+                    raise RuntimeError(f"block {b} output contains NaN")
+
+                # send block outputs to all downstream connected blocks
+                for (port, outwires) in enumerate(b.outports): # every port
+                    value = out[port]
+                    for w in outwires:     # every wire
+                        
+                        self.DEBUG('propagate', '  [', port, '] = ', value, ' --> ', w.end.block.name, '[', w.end.port, ']')
+                        
+                        # send value to wire
+                        w.send(value)
+
+                        # TODO send return status no longer needed
+                        # TODO use common error handler in all cases above
+
         # gather the derivative
         YD = self.deriv()
 
@@ -419,6 +456,123 @@ class BlockDiagram:
 
 
         return YD
+
+    def execution_plan(self):
+        """
+        Create execution plan
+
+        The plan is saved in the attribute ``plan`` and is a list
+        ``[L0, L1, ... LN]`` where each ``Li`` is a list of blocks.  The blocks
+        in the lists are executed sequentially, ie. all the blocks in ``L0``
+        then all the blocks in ``L1`` etc.
+
+        The plan ensures that the inputs of all blocks in ``Li`` have been
+        previously computed.
+
+        .. note::
+            - The plan is essentially a dataflow graph. 
+            - The blocks in list ``Li`` could potentially be executed in
+              parallel.
+            - Constant blocks and stateful blocks are all executed in ``L0``
+            - The block attribute ``_sequence`` is ``i`` and indicates its
+              execution order
+
+        :seealso: :func:`plan_print`, :func:`plan_dotfile`
+        """
+
+        plan = []
+        group = []
+        for b in self.blocklist:
+            b._sequence = None
+            if b.blockclass in ('source', 'transfer', 'clocked'):
+                b._sequence = 0
+                group.append(b)
+        plan.append(group)
+        sequence = len(plan)
+
+        while True:
+            group = []
+            for b in self.blocklist:
+                if b._sequence is not None:
+                    continue  # already has a sequence assigned
+                
+                if all([p._sequence < sequence if p._sequence is not None else False for p in b._parents]):
+                    group.append(b)
+
+            for b in group.copy():
+                b._sequence = sequence
+                if b.blockclass in ('sink',):
+                    group.remove(b)
+            if len(group) == 0:
+                break
+            plan.append(group)
+            sequence += 1
+
+        self.plan = plan
+    
+    def plan_print(self):
+        """
+        Display execution plan in tabular form
+
+        :seealso: :func:`execution_plan`, :func:`plan_dotfile`
+        """
+        table = ANSITable(
+            Column("Sequence"),
+            Column("Blocks", colalign='<', headalign='^'),
+            border='thin'
+        )
+
+        for sequence, group in enumerate(self.plan):
+            table.row(sequence, ', '.join([str(b) for b in group]))
+        
+        table.print()
+
+    def plan_dotfile(self, filename):
+        """
+        Write a GraphViz dot file representing the execution schedule
+        
+        :param file: Name of file to write to
+        :type file: str
+
+        The file can be processed using neato or dot::
+            
+            % dot -Tpng -o out.png dotfile.dot
+
+        Display execution plan as a dataflow graph.
+
+        :seealso: :func:`execution_plan`, :func:`plan_print`
+        """
+
+        if isinstance(filename, str):
+            file = open(filename, 'w')
+        else:
+            file = filename
+            
+        header = r"""digraph G {
+
+    graph [splines=ortho, rankdir=LR, splines=spline]
+    node [shape=box]
+    
+    """
+        file.write(header)
+
+        for sequence, group in enumerate(self.plan):
+            # for each execution group, place the blocks in a subgraph
+            file.write('\tsubgraph step{:d} {{\n'.format(sequence))
+            file.write('\t\trank=same;\n')
+
+            for b in group:
+                file.write('\t\t"{:s}"\n'.format(b.name))
+
+            file.write('\t}\n\n')
+
+        # connect them to their parents, except if a transfer block
+        for b in self.blocklist:
+            if not b.blockclass == 'transfer':
+                for p in b._parents:
+                    file.write('\t"{:s}" -> "{:s}"\n'.format(p.name, b.name))
+
+        file.write('}\n')
 
     # ---------------------------------------------------------------------- #
 
@@ -463,77 +617,11 @@ class BlockDiagram:
 
     # ---------------------------------------------------------------------- #
 
-    def _propagate(self, b, t, depth=0, checkfinite=True, sinks=True):
-        """
-        Propagate values of a block to all connected inputs.
-        
-        :param b: Block with valid output
-        :type b: Block
-        :param t: current time
-        :type t: float
-
-        When all inputs to a block are available, its output can be computed
-        using its `output` method (which may also be a function of time).
-        
-        This value is presented to each connected input port via its
-        `setinput` method.  That method returns True if the block now has
-        all its inputs defined, in which case we recurse.
-
-        """
-        
-        # check for a subsystem block here, recurse to evalute it
-        # execute the subsystem to obtain its outputs
-
-        # get output of block at time t
-
-        try:
-            out = b.output(t)
-        except Exception as err:
-            print('--Error at t={:f} when computing output of block {:s}'.format(t, str(b)))
-            print('  {}'.format(err))
-            print('  inputs were: ', b.inputs)
-            if b.nstates > 0:
-                print('  state was: ', b._x)
-
-            raise RuntimeError from None
-
-        self.DEBUG('propagate', '  '*depth, 'block {:s}: output = '.format(str(b),t) + str(out))
-
-        # check for validity
-        if not isinstance(out, list):
-            raise AssertionError(f"block output {b} is not list: {type(out)}")
-        if len(out) != b.nout:
-            raise AssertionError(f"block output {b} is wrong length: {len(out)} instead of {b.nout}")
-
-        # TODO check output validity once at the start
-        
-        # check it has no nan or inf values
-        if checkfinite and isinstance(out, (int, float, np.ndarray)) and not np.isfinite(out).any():
-            raise RuntimeError('block outputs nan')
-        
-        # propagate block outputs to all downstream connected blocks
-        for (port, outwires) in enumerate(b.outports): # every port
-            val = out[port]
-            for w in outwires:     # every wire
-                
-                self.DEBUG('propagate', '  ', '  '*depth, '[', port, '] = ', val, ' --> ', w.end.block.name, '[', w.end.port, ']')
-                
-                # send value to wire
-                if w.send(val):
-                    # destination block is complete, recurse
-                    if w.end.block.blockclass == 'function':
-                        self._propagate(w.end.block, t, depth+1)
-                    elif w.end.block.type in ('inport', 'outport'):
-                        self._propagate(w.end.block, t, depth+1)
-
-    # ---------------------------------------------------------------------- #
-
     def report(self):
         """
         Print a tabular report about the block diagram
 
         """
-        
         # print all the blocks
         print('\nBlocks::\n')
         table = ANSITable(
@@ -659,7 +747,6 @@ class BlockDiagram:
         for b in self.blocklist:
             if b.blockclass == 'transfer':
                 try:
-                    assert b.updated, 'block has incomplete inputs'
                     yd = b.deriv().flatten()
                     if not isinstance(yd, np.ndarray):
                         raise AssertionError(f"deriv: block {b} did not return ndarray")
@@ -759,8 +846,6 @@ class BlockDiagram:
             file.write('\t"{:s}" -> "{:s}" [{:s}]\n'.format(w.start.block.name, w.end.block.name, ', '.join(options)))
 
         file.write('}\n')
-
-
             
     def blockvalues(self):
         for b in self.blocklist:
@@ -769,7 +854,7 @@ class BlockDiagram:
             print('  outputs: ', b.output(t=0))
 
     def DEBUG(self, debug, *args):
-        if debug in self.options.debuglist:
+        if debug[0] in self.options.debug:
             print('DEBUG.{:s}: '.format(debug), *args)
             
 if __name__ == "__main__":

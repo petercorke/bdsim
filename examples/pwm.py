@@ -1,11 +1,11 @@
 from bdsim import BDSim
 
-PWM_FREQ = 20
+PWM_FREQ = 50
 
-sim = BDSim(backend='TkAgg')
+sim = BDSim()
 bd = sim.blockdiagram()
 
-clock = bd.clock(50, 'Hz')
+clock = bd.clock(PWM_FREQ, 'Hz')
 
 duty = bd.TIME()  # essentially a ramp input
 
@@ -20,5 +20,5 @@ scope[2] = actual
 
 bd.compile()
 
-sim.run(bd, T=1, dt=1 / PWM_FREQ / 10)
+sim.run(bd, T=1, dt=1 / PWM_FREQ)
 sim.done(bd, block=True)

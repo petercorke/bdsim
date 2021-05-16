@@ -11,11 +11,10 @@ Transfer blocks:
 
 from typing import List
 import numpy as np
+import scipy.signal
 import math
 from math import sin, cos, atan2, sqrt, pi
-
 import matplotlib.pyplot as plt
-import inspect
 from spatialmath import base
 
 from bdsim.components import TransferBlock, block
@@ -293,22 +292,23 @@ def siso_to_ss(N: List[float], D: List[float], verbose: bool = False):
     N = np.r_[np.zeros((len(D) - len(N),)), np.array(N)]
     D = np.array(D)
 
-    # normalize the coefficients to obtain
-    #
-    #   b_0 s^n + b_1 s^(n-1) + ... + b_n
-    #   ---------------------------------
-    #   a_0 s^n + a_1 s^(n-1) + ....+ a_n
-
     # normalize so leading coefficient of denominator is one
-    D0 = D[0]
-    D = D / D0
-    N = N / D0
+    # D0 = D[0]
+    # D = D / D0
+    # N = N / D0
 
-    A = np.eye(len(D) - 1, k=1)  # control canonic (companion matrix) form
-    A[-1, :] = -D[1:]
+    # A = np.eye(len(D) - 1, k=1)  # control canonic (companion matrix) form
+    # A[-1, :] = -D[1:]
 
-    B = np.zeros((n, 1))
-    B[-1] = 1
+    # B = np.zeros((n, 1))
+    # B[-1] = 1
+
+    # C = (N[1:] - N[0] * D[1:]).reshape((1, n))
+
+    A, B, C, D = scipy.signal.tf2ss(N, D)
+
+    if len(np.flatnonzero(D)) > 0:
+        raise ValueError('D matrix is not zero')
 
     C = (N[1:] - N[0] * D[1:]).reshape((1, n))
 
