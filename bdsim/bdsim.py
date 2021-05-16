@@ -368,11 +368,6 @@ class BDSim:
                             fg('red') + f"\n--- stop requested at t={bd.state.t:.4f} by {bd.state.stop}" + attr(0))
                         break
 
-                    if state.minstepsize is not None and integrator.step_size < state.minstepsize:
-                        print(
-                            fg('red') + f"\n--- stopping on minimum step size at t={bd.state.t:.4f} with last stepsize {integrator.step_size:g}" + attr(0))
-                        break
-
                     if 'i' in bd.state.options.debug:
                         bd._debugger(integrator)
 
