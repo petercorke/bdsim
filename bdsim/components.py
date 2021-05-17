@@ -4,9 +4,14 @@
 Components of the simulation system, namely blocks, wires and plugs.
 """
 
-from typing import Callable, Type, Union
+from typing import Callable, Optional, TYPE_CHECKING, Type, TypeVar, Union
 import numpy as np
 from collections import UserDict
+
+if TYPE_CHECKING:
+    from .blocks.functions import Sum, Prod
+
+T = TypeVar('T')
 
 class Struct(UserDict):
     """
@@ -207,14 +212,15 @@ class Signal:
         else:
             raise RuntimeError("Signal subclasses must subclass either Block or Plug")
 
-    def _op(self, other: _Operand, *, block_type: str, op: str, ops_attr_name: str, block_constructor: Type['Block']):
+    def _op(self, other: _Operand, *, block_type: str, op: str, complement: Optional[str]=None) -> 'Block':
         other_: Signal = other if isinstance(other, Signal) else self.bd.CONSTANT(other)
-
+        ops_attr_name = 'signs' if block_type == 'sum' else 'ops'
+        
+        # use a tacked-on `_op_chainable` attr to decide if we can chain this.
         if isinstance(self, Block) and self.type == block_type:
-            # if we're alread a sum block, just extend ourselves
+            # append `op` as the last op
             self.nin += 1
-            # append "*" or "+" etc. as the last op
-            setattr(self, ops_attr_name, getattr(self, ops_attr_name) + op)
+            self.__dict__[ops_attr_name] = self.__dict__[ops_attr_name] + op
             self[self.nin - 1] = other_
             return self
 
@@ -231,44 +237,67 @@ class Signal:
             assert all(old_sources)
 
             other_.nin += 1
-            # insert "*" or "+" etc. as the first op
-            setattr(other_, ops_attr_name, op + getattr(other_, ops_attr_name))
             other_[0] = self
             for i, source in enumerate(old_sources):
                 other_[i + 1] = source
-                
+
+            ops = other_.__dict__[ops_attr_name]
+
+            # if complement is defined, we should negate all old ops here.
+            # eg: block - bd.SUM('-++', ...) becomes bd.SUM('++--', block, ...)
+            # eg2: block / bd.PROD('/**', ...) becomes bd.PROD('**//', block, ...)
+            if complement:
+                # if 1 - bd.SUM(...), etc, negate all ops
+                ops = complement + \
+                    (''.join(op if op_ == complement else complement for op_ in ops))
+            else:
+                # otherwise, insert op as the 1st op
+                ops = op + ops
+            other_.__dict__[ops_attr_name] = ops
+
             return other_
 
         else:
-            # otherwise create a new one and wrap this in it
-            return block_constructor(op * 2, self._get_plug(), other_._get_plug())
+            # if neither are of BlockType, create a new one and wrap this in it
+            block_constructor = self.bd.SUM if block_type == 'sum' else self.bd.PROD
+            return block_constructor(
+                complement + op if complement else op * 2,
+                self._get_plug(),
+                other_._get_plug())
 
     
-    def _rop(self, other: _Numeric, op: Callable[['Signal', _Operand], None]):
+    def _rop(self, other: _Numeric, op: Callable[['Signal', _Operand], T]) -> T:
         # other must be a _Numeric, otherwise __add__ would have succeeded.
         # wrap it and run the method
         return op(self.bd.CONSTANT(other), self)
     
-    def __add__(self, other: _Operand):
-        return self._op(other,
-            block_type="sum", op="+",
-            ops_attr_name="signs",
-            block_constructor=self.bd.SUM)
-        
+
+    def __add__(self, other: _Operand) -> 'Sum':
+        return self._op(other, block_type='sum', op="+")
 
     def __radd__(self, other: _Numeric):
         return self._rop(other, Signal.__add__)
+    
 
-    def __mul__(self, other: _Operand):
-        return self._op(other,
-            block_type="prod", op="*",
-            ops_attr_name="ops",
-            block_constructor=self.bd.PROD)
+    def __sub__(self, other: _Operand) -> 'Sum':
+        return self._op(other, block_type='sum', op="-", complement="+")
+
+    def __rsub__(self, other: _Numeric):
+        return self._rop(other, Signal.__sub__)
+
+
+    def __mul__(self, other: _Operand) -> 'Prod':
+        return self._op(other, block_type='prod', op="*")
     
     def __rmul__(self, other: _Numeric):
         return self._rop(other, Signal.__mul__)
 
-        
+
+    def __truediv__(self, other: _Operand) -> 'Prod':
+        return self._op(other, block_type='prod', op="/", complement="*")
+    
+    def __rtruediv__(self, other: _Numeric):
+        return self._rop(other, Signal.__truediv__)       
     
 
 

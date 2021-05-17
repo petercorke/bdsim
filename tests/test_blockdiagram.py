@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 
-from typing import List
+from typing import List, Type, Union
 from numpy.lib.arraysetops import isin
 import bdsim
-# from bdsim.blocks.functions import Sum
 import numpy as np
 import scipy.interpolate
 import math
@@ -16,54 +15,55 @@ class BlockTest(unittest.TestCase):
     pass
 
 sim = bdsim.BDSim()
+from bdsim.blocks.functions import Sum, Prod
+
+# values used in operator tests
+a = np.random.rand(1, 1)
+b = np.random.rand(1, 1)
+c = np.random.rand(1, 1)
+d = np.random.rand(1, 1)
+A = np.random.rand(5, 5, 5)
+B = np.random.rand(5, 5, 5)
+C = np.random.rand(5, 5, 5)
+D = np.random.rand(5, 5, 5)
 
 class TestSignalOperators(unittest.TestCase):
 
     def assertEqual(self, a, b):
         if isinstance(a, np.ndarray):
-            self.assertTrue((a == b).all())
+            nt.assert_almost_equal(a, b)
         else:
             unittest.TestCase.assertEqual(self, a, b)
-    
-    def _test_op(self, bd, x, *operands, expected, block_type, default_op, ops_attr_name, ops=None, operand_types=None):
-        n = len(operands)
 
-        if not ops:
-            ops = default_op * n
 
-        if not operand_types:
-            operand_types = ['constant'] * n
-
-        self.assertIs(x.type, block_type)
+    def _test_op(self, bd, x: Union[Sum, Prod], *operands, expected, block_type, ops):
+        self.assertEqual(x.type, block_type)
+        assert len(operands) == len(ops)
         self.assertEqual(x.nin, len(ops))
-        self.assertEqual(getattr(x, ops_attr_name), ops)
+        self.assertEqual(
+            ops,
+            x.signs if x.type == 'sum' else x.ops
+        )
         
         is_compiled = bd.compile()
         self.assertTrue(is_compiled)
 
-        for i, (operand, blocktype) in enumerate(zip(operands, operand_types)):
+        for i, operand in enumerate(operands):
             block = x.inports[i].start.block
-            self.assertEqual(block.type, blocktype)
-            
-            if blocktype == 'constant':
+            if block.type == 'constant':
                 self.assertEqual(block.value, operand)
 
         [out] = x.output()
         self.assertEqual(out, expected)
 
-    
 
-    def _test_add(self, bd, x, *operands, signs=None, operand_types=None):
+    def _test_sum(self, bd, x, *operands):
         self._test_op(bd, x, *operands,
             expected = sum(operands),
             block_type = 'sum',
-            default_op = '+',
-            ops_attr_name = 'signs',
-            ops = signs,
-            operand_types = operand_types)
-    
+            ops = '+' * len(operands))
 
-    def _test_mul(self, bd, x, *operands, ops=None, operand_types=None):
+    def _test_prod(self, bd, x, *operands):
         expected = 1
         for operand in operands:
             expected *= operand
@@ -71,53 +71,54 @@ class TestSignalOperators(unittest.TestCase):
         self._test_op(bd, x, *operands,
             expected = expected,
             block_type = 'prod',
-            default_op = '*',
-            ops_attr_name = 'ops',
-            ops = ops,
-            operand_types = operand_types)
+            ops = '*' * len(operands))
+    
+    def _test_output(self, f_exp, B):
+        bd = sim.blockdiagram()
 
-    def test_add_constblock_and_constblock(self):
-        a = np.random.rand(1, 1)
-        b = np.random.rand(1, 1)
+        block = f_exp(bd.CONSTANT(B))
+        expected = f_exp(B)
+
+        is_compiled = bd.compile()
+        self.assertTrue(is_compiled)
+
+        [out] = block.output()
+        self.assertEqual(out, expected)
+
+
+    def test_sum_constblock_and_constblock(self):
         bd = sim.blockdiagram()
         x = bd.CONSTANT(a) + bd.CONSTANT(b)
-        self._test_add(bd, x, a, b)
+        self._test_sum(bd, x, a, b)
 
 
-    def test_add_constblock_and_num(self):
-        a = np.random.rand(1, 1)
-        b = np.random.rand(1, 1)
+    def test_sum_constblock_and_num(self):
         bd = sim.blockdiagram()
         x = bd.CONSTANT(a) + b
-        self._test_add(bd, x, a, b)
+        self._test_sum(bd, x, a, b)
 
 
-    def test_add_num_and_constblock(self):
-        a = np.random.rand(1, 1)
-        b = np.random.rand(1, 1)
+    def test_sum_num_and_constblock(self):
         bd = sim.blockdiagram()
         x = a + bd.CONSTANT(b)
-        self._test_add(bd, x, a, b)
+        self._test_sum(bd, x, a, b)
 
-    def test_add_nested(self):
-        a = np.random.rand(1, 1)
-        b = np.random.rand(1, 1)
-        c = np.random.rand(1, 1)
+    def test_sum_many_flat(self):
         bd = sim.blockdiagram()
-        x = (a + bd.CONSTANT(b)) + c
-        self._test_add(bd, x, a, b, c)
+        x = a + bd.CONSTANT(b) + c + d
+        self._test_sum(bd, x, a, b, c, d)
 
-    def test_add_ndarrays(self):
-        a = np.random.rand(5, 5, 5)
-        b = np.random.rand(5, 5, 5)
-        c = np.random.rand(5, 5, 5)
+    def test_sum_many_nested(self):
         bd = sim.blockdiagram()
-        x = a + (bd.CONSTANT(b) + c)
-        self._test_add(bd, x, a, b, c)
+        x = a + ((bd.CONSTANT(b) + c) + d)
+        self._test_sum(bd, x, a, b, c, d)
+
+    def test_sum_many_elementwise(self):
+        bd = sim.blockdiagram()
+        x = A + bd.CONSTANT(B) + C + D
+        self._test_sum(bd, x, A, B, C, D)
     
-    def test_add_multioutputblocks_fail(self):
-        a = np.random.rand(1, 1)
-        b = np.random.rand(1, 1)
+    def test_sum_multioutputblocks_fail(self):
         bd = sim.blockdiagram()
 
         inp = bd.CONSTANT(a)
@@ -127,47 +128,39 @@ class TestSignalOperators(unittest.TestCase):
             doubleup + b
         self.assertIn("Attempted to use a Signal.__operator__ with a Block with multiple outputs (must have just 1)", str(cm.exception))
 
-    def test_mul_constblock_and_constblock(self):
-        a = np.random.rand(1, 1)
-        b = np.random.rand(1, 1)
+
+    def test_prod_constblock_and_constblock(self):
         bd = sim.blockdiagram()
         x = bd.CONSTANT(a) * bd.CONSTANT(b)
-        self._test_mul(bd, x, a, b)
+        self._test_prod(bd, x, a, b)
     
-    def test_mul_constblock_and_num(self):
-        a = np.random.rand(1, 1)
-        b = np.random.rand(1, 1)
+    def test_prod_constblock_and_num(self):
         bd = sim.blockdiagram()
         x = bd.CONSTANT(a) * b
-        self._test_mul(bd, x, a, b)
+        self._test_prod(bd, x, a, b)
 
 
-    def test_mul_num_and_constblock(self):
-        a = np.random.rand(1, 1)
-        b = np.random.rand(1, 1)
+    def test_prod_num_and_constblock(self):
         bd = sim.blockdiagram()
         x = a * bd.CONSTANT(b)
-        self._test_mul(bd, x, a, b)
+        self._test_prod(bd, x, a, b)
 
-    def test_mul_nested(self):
-        a = np.random.rand(1, 1)
-        b = np.random.rand(1, 1)
-        c = np.random.rand(1, 1)
+    def test_prod_many_flat(self):
         bd = sim.blockdiagram()
-        x = (a * bd.CONSTANT(b)) * c
-        self._test_mul(bd, x, a, b, c)
+        x = a * bd.CONSTANT(b) * c * d
+        self._test_prod(bd, x, a, b, c, d)
 
-    def test_mul_ndarrays(self):
-        a = np.random.rand(5, 5, 5)
-        b = np.random.rand(5, 5, 5)
-        c = np.random.rand(5, 5, 5)
+    def test_prod_many_nested(self):
         bd = sim.blockdiagram()
-        x = a * (bd.CONSTANT(b) * c)
-        self._test_mul(bd, x, a, b, c)
+        x = a * ((bd.CONSTANT(b) * c) * d)
+        self._test_prod(bd, x, a, b, c, d)
+
+    def test_prod_many_elementwise(self):
+        bd = sim.blockdiagram()
+        x = A * bd.CONSTANT(B) * C * D
+        self._test_prod(bd, x, A, B, C, D)
     
-    def test_mul_multioutputblocks_fail(self):
-        a = np.random.rand(1, 1)
-        b = np.random.rand(1, 1)
+    def test_prod_multioutputblocks_fail(self):
         bd = sim.blockdiagram()
 
         inp = bd.CONSTANT(a)
@@ -177,6 +170,30 @@ class TestSignalOperators(unittest.TestCase):
             doubleup + b
         self.assertIn("Attempted to use a Signal.__operator__ with a Block with multiple outputs (must have just 1)", str(cm.exception))
 
+    def test_prod_many_elementwise(self):
+        bd = sim.blockdiagram()
+        x = A * bd.CONSTANT(B) * C * D
+        self._test_prod(bd, x, A, B, C, D)
+
+    def test_subadd_many_elementwise(self):
+        bd = sim.blockdiagram()
+        expr = lambda B: A - (B - C) - D
+        self._test_op(bd,
+            expr(bd.CONSTANT(B)),
+            A, B, C, D,
+            ops = '+-+-',
+            expected = expr(B),
+            block_type = 'sum')
+
+    def test_div_many_elementwise(self):
+        bd = sim.blockdiagram()
+        expr = lambda B: A / (B / C) / D
+        self._test_op(bd,
+            expr(bd.CONSTANT(B)),
+            A, B, C, D,
+            expected = expr(B),
+            block_type = 'prod',
+            ops = '*/*/')
 
 
 
