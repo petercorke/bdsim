@@ -136,25 +136,18 @@ class Prod(FunctionBlock):
         self.matrix = matrix
         
     def output(self, t=None):
+        prod = 1
         for i,input in enumerate(self.inputs):
-            if i == 0:
-                if self.ops[i] == '*':
-                    prod = input
+            if self.ops[i] == '*':
+                if self.matrix:
+                    prod = prod @ input
                 else:
-                    if self.matrix:
-                        prod = numpy.linalg.inv(input)
-                    prod = 1.0 / input
+                    prod *= input
             else:
-                if self.ops[i] == '*':
-                    if self.matrix:
-                        prod = prod @ input
-                    else:
-                        prod *= input
+                if self.matrix:
+                    prod = prod @ numpy.linalg.inv(input)
                 else:
-                    if self.matrix:
-                        prod = prod @ numpy.linalg.inv(input)
-                    else:
-                        prod /= input
+                    prod /= input
 
         return [prod]
 
