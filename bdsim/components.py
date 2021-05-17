@@ -4,7 +4,7 @@
 Components of the simulation system, namely blocks, wires and plugs.
 """
 
-from typing import Union
+from typing import Callable, Type, Union
 import numpy as np
 from collections import UserDict
 
@@ -180,7 +180,8 @@ class Wire:
 # ------------------------------------------------------------------------- #
 
 
-_Signal = Union['Plug', 'Block', np.ndarray, complex, float, int] # for better intellisense
+_Numeric = Union[np.ndarray, complex, float, int]
+_Operand = Union['Signal', 'Plug', 'Block', _Numeric]
 
 class Signal:
     """
@@ -197,74 +198,75 @@ class Signal:
     __array_ufunc__ = None # Numpy 13.0 and above
 
     def _get_plug(self):
-        if isinstance(self):
-            assert len(self.outports) == 1, \
-                "Attempted to use a Signal.method() on a Block with multiple outputs (must have just 1)"
+        if isinstance(self, Block):
+            assert self.nout == 1, \
+                "Attempted to use a Signal.__operator__ with a Block with multiple outputs (must have just 1): {}".format(self)
             return Plug(self, 0)
         elif isinstance(self, Plug):
             return self
         else:
             raise RuntimeError("Signal subclasses must subclass either Block or Plug")
 
-    def __add__(self, other: _Signal):
-        if not isinstance(other, Signal):
-            # must be a constant. wrap it.
-            other: Block = self.bd.CONSTANT(other)
+    def _op(self, other: _Operand, *, block_type: str, op: str, ops_attr_name: str, block_constructor: Type['Block']):
+        other_: Signal = other if isinstance(other, Signal) else self.bd.CONSTANT(other)
 
-        if self.type == 'sum':
+        if isinstance(self, Block) and self.type == block_type:
             # if we're alread a sum block, just extend ourselves
             self.nin += 1
-            self.signs += '+'
-            self[self.nin - 1] = other
+            # append "*" or "+" etc. as the last op
+            setattr(self, ops_attr_name, getattr(self, ops_attr_name) + op)
+            self[self.nin - 1] = other_
             return self
 
-        elif other.type == 'sum':
-            # if the other is a sum block, just extend it
-            other.nin += 1
-            other.signs += '+'
-            other[other.nin - 1] = self
-            return other
+        elif isinstance(other_, Block) and other_.type == block_type:
+            # if the other is an op block, insert ourselves as the first source.
+            # This is a little trickier without changing too much core code.
+            # this is required to retain the order of operations.
+            old_sources = [None] * other.nin
+            for w in self.bd.wirelist.copy():
+                if w.end.block is other:
+                    old_sources[w.end.port] = w.start
+                    # the old wire is now invalid
+                    self.bd.wirelist.remove(w)
+            assert all(old_sources)
+
+            other_.nin += 1
+            # insert "*" or "+" etc. as the first op
+            setattr(other_, ops_attr_name, op + getattr(other_, ops_attr_name))
+            other_[0] = self
+            for i, source in enumerate(old_sources):
+                other_[i + 1] = source
+                
+            return other_
 
         else:
             # otherwise create a new one and wrap this in it
-            return self.bd.SUM('++', self, other)
-        
-        
+            return block_constructor(op * 2, self._get_plug(), other_._get_plug())
 
-    def __radd__(self, other: _Signal):
-        if not isinstance(other, Signal):
-            # must be a constant. wrap it.
-            other: Block = self.bd.CONSTANT(other)
-        # __add__ in reverse
-        x = Signal.__add__(other, self)
-        return x
-
-    def __mul__(self, other: _Signal):
-        if not isinstance(other, Signal):
-            # must be a constant. wrap it.
-            other: Block = self.bd.CONSTANT(other)
-
-        if self.type == 'prod':
-            # if we're alread a product block, just extend ourselves
-            self.nin += 1
-            self.signs += '*'
-            self[self.nin - 1] = other
-            return self
-
-        elif other.type == 'prod':
-            # if the other is a product block, just extend it
-            other.nin += 1
-            other.signs += '*'
-            other[other.nin - 1] = self
-            return other
-
-        else:
-            # otherwise create a new one and wrap this in it
-            return self.bd.PROD('**', self, other)
     
-    def __rmul__(self, other: _Signal):
-        # __mul__ in reverse
-        return Signal.__mul__(other, self)
+    def _rop(self, other: _Numeric, op: Callable[['Signal', _Operand], None]):
+        # other must be a _Numeric, otherwise __add__ would have succeeded.
+        # wrap it and run the method
+        return op(self.bd.CONSTANT(other), self)
+    
+    def __add__(self, other: _Operand):
+        return self._op(other,
+            block_type="sum", op="+",
+            ops_attr_name="signs",
+            block_constructor=self.bd.SUM)
+        
+
+    def __radd__(self, other: _Numeric):
+        return self._rop(other, Signal.__add__)
+
+    def __mul__(self, other: _Operand):
+        return self._op(other,
+            block_type="prod", op="*",
+            ops_attr_name="ops",
+            block_constructor=self.bd.PROD)
+    
+    def __rmul__(self, other: _Numeric):
+        return self._rop(other, Signal.__mul__)
 
         
     

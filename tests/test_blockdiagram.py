@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from typing import List
 from numpy.lib.arraysetops import isin
 import bdsim
 # from bdsim.blocks.functions import Sum
@@ -18,28 +19,62 @@ sim = bdsim.BDSim()
 
 class TestSignalOperators(unittest.TestCase):
 
-    def _test_add(self, bd, x, *operands, signs=None, operand_types=None):
+    def assertEqual(self, a, b):
+        if isinstance(a, np.ndarray):
+            self.assertTrue((a == b).all())
+        else:
+            unittest.TestCase.assertEqual(self, a, b)
+    
+    def _test_op(self, bd, x, *operands, expected, block_type, default_op, ops_attr_name, ops=None, operand_types=None):
         n = len(operands)
 
-        if not signs:
-            signs = '+' * n
+        if not ops:
+            ops = default_op * n
 
         if not operand_types:
             operand_types = ['constant'] * n
 
-        assert x.type == 'sum'
-        assert x.nin == len(signs)
-        assert x.signs == signs
+        self.assertIs(x.type, block_type)
+        self.assertEqual(x.nin, len(ops))
+        self.assertEqual(getattr(x, ops_attr_name), ops)
         
-        assert bd.compile()
+        is_compiled = bd.compile()
+        self.assertTrue(is_compiled)
 
-        for i, (op, blocktype) in enumerate(zip(operands, operand_types)):
-            assert x.inports[i].start.block.type == blocktype
+        for i, (operand, blocktype) in enumerate(zip(operands, operand_types)):
+            block = x.inports[i].start.block
+            self.assertEqual(block.type, blocktype)
+            
             if blocktype == 'constant':
-                assert x.inports[i].start.block.value == op
+                self.assertEqual(block.value, operand)
 
         [out] = x.output()
-        assert out == sum(operands)
+        self.assertEqual(out, expected)
+
+    
+
+    def _test_add(self, bd, x, *operands, signs=None, operand_types=None):
+        self._test_op(bd, x, *operands,
+            expected = sum(operands),
+            block_type = 'sum',
+            default_op = '+',
+            ops_attr_name = 'signs',
+            ops = signs,
+            operand_types = operand_types)
+    
+
+    def _test_mul(self, bd, x, *operands, ops=None, operand_types=None):
+        expected = 1
+        for operand in operands:
+            expected *= operand
+
+        self._test_op(bd, x, *operands,
+            expected = expected,
+            block_type = 'prod',
+            default_op = '*',
+            ops_attr_name = 'ops',
+            ops = ops,
+            operand_types = operand_types)
 
     def test_add_constblock_and_constblock(self):
         a = np.random.rand(1, 1)
@@ -67,10 +102,80 @@ class TestSignalOperators(unittest.TestCase):
     def test_add_nested(self):
         a = np.random.rand(1, 1)
         b = np.random.rand(1, 1)
+        c = np.random.rand(1, 1)
         bd = sim.blockdiagram()
-        x = (a + bd.CONSTANT(b)) + b
-        self._test_add(bd, x, a, b, b)
+        x = (a + bd.CONSTANT(b)) + c
+        self._test_add(bd, x, a, b, c)
 
+    def test_add_ndarrays(self):
+        a = np.random.rand(5, 5, 5)
+        b = np.random.rand(5, 5, 5)
+        c = np.random.rand(5, 5, 5)
+        bd = sim.blockdiagram()
+        x = a + (bd.CONSTANT(b) + c)
+        self._test_add(bd, x, a, b, c)
+    
+    def test_add_multioutputblocks_fail(self):
+        a = np.random.rand(1, 1)
+        b = np.random.rand(1, 1)
+        bd = sim.blockdiagram()
+
+        inp = bd.CONSTANT(a)
+        doubleup = bd.FUNCTION(lambda z: [z, z], inp, nout=2)
+
+        with self.assertRaises(AssertionError) as cm:
+            doubleup + b
+        self.assertIn("Attempted to use a Signal.__operator__ with a Block with multiple outputs (must have just 1)", str(cm.exception))
+
+    def test_mul_constblock_and_constblock(self):
+        a = np.random.rand(1, 1)
+        b = np.random.rand(1, 1)
+        bd = sim.blockdiagram()
+        x = bd.CONSTANT(a) * bd.CONSTANT(b)
+        self._test_mul(bd, x, a, b)
+    
+    def test_mul_constblock_and_num(self):
+        a = np.random.rand(1, 1)
+        b = np.random.rand(1, 1)
+        bd = sim.blockdiagram()
+        x = bd.CONSTANT(a) * b
+        self._test_mul(bd, x, a, b)
+
+
+    def test_mul_num_and_constblock(self):
+        a = np.random.rand(1, 1)
+        b = np.random.rand(1, 1)
+        bd = sim.blockdiagram()
+        x = a * bd.CONSTANT(b)
+        self._test_mul(bd, x, a, b)
+
+    def test_mul_nested(self):
+        a = np.random.rand(1, 1)
+        b = np.random.rand(1, 1)
+        c = np.random.rand(1, 1)
+        bd = sim.blockdiagram()
+        x = (a * bd.CONSTANT(b)) * c
+        self._test_mul(bd, x, a, b, c)
+
+    def test_mul_ndarrays(self):
+        a = np.random.rand(5, 5, 5)
+        b = np.random.rand(5, 5, 5)
+        c = np.random.rand(5, 5, 5)
+        bd = sim.blockdiagram()
+        x = a * (bd.CONSTANT(b) * c)
+        self._test_mul(bd, x, a, b, c)
+    
+    def test_mul_multioutputblocks_fail(self):
+        a = np.random.rand(1, 1)
+        b = np.random.rand(1, 1)
+        bd = sim.blockdiagram()
+
+        inp = bd.CONSTANT(a)
+        doubleup = bd.FUNCTION(lambda z: [z, z], inp, nout=2)
+
+        with self.assertRaises(AssertionError) as cm:
+            doubleup + b
+        self.assertIn("Attempted to use a Signal.__operator__ with a Block with multiple outputs (must have just 1)", str(cm.exception))
 
 
 
