@@ -4,12 +4,14 @@
 Components of the simulation system, namely blocks, wires and plugs.
 """
 
-from typing import Callable, Optional, TYPE_CHECKING, Type, TypeVar, Union
+from typing import Callable, List, Optional, TYPE_CHECKING, Tuple, Type, TypeVar, Union
+from typing_extensions import Literal
 import numpy as np
 from collections import UserDict
 
 if TYPE_CHECKING:
     from .blocks.functions import Sum, Prod
+    from .blockdiagram import BlockDiagram
 
 T = TypeVar('T')
 
@@ -186,7 +188,7 @@ class Wire:
 
 
 _Numeric = Union[np.ndarray, complex, float, int]
-_Operand = Union['Signal', 'Plug', 'Block', _Numeric]
+_Operand = Union['Plug', 'Block', 'BlockExpression', _Numeric]
 
 class Signal:
     """
@@ -196,109 +198,155 @@ class Signal:
     only blocks with 1 output can use these methods without error.
 
     Mainly used for convenience with operator overloads.
-    """
+    """        
+
 
     # needed to play nice with numpy arrays. see https://stackoverflow.com/a/60613204
     __numpy_ufunc__ = None # Numpy up to 13.0
     __array_ufunc__ = None # Numpy 13.0 and above
 
-    def _get_plug(self):
+    def _get_plug(self) -> 'Plug':
         if isinstance(self, Block):
-            assert self.nout == 1, \
-                "Attempted to use a Signal.__operator__ with a Block with multiple outputs (must have just 1): {}".format(self)
             return Plug(self, 0)
         elif isinstance(self, Plug):
             return self
         else:
             raise RuntimeError("Signal subclasses must subclass either Block or Plug")
 
-    def _op(self, other: _Operand, *, block_type: str, op: str, complement: Optional[str]=None) -> 'Block':
-        other_: Signal = other if isinstance(other, Signal) else self.bd.CONSTANT(other)
-        ops_attr_name = 'signs' if block_type == 'sum' else 'ops'
+
+    def __add__(self, other: _Operand) -> 'BlockExpression':
+        return BlockExpression(self, other, '+')
+
+    def __radd__(self, other: _Numeric) -> 'BlockExpression':
+        return BlockExpression(other, self, '+')
+    
+
+    def __sub__(self, other: _Operand) -> 'BlockExpression':
+        return BlockExpression(self, other, '-')
+
+    def __rsub__(self, other: _Numeric) -> 'BlockExpression':
+        return BlockExpression(other, self, '-')
+
+
+    def __mul__(self, other: _Operand) -> 'BlockExpression':
+        return BlockExpression(self, other, '*')
+    
+    def __rmul__(self, other: _Numeric) -> 'BlockExpression':
+        return BlockExpression(other, self, '*')
+
+
+    def __truediv__(self, other: _Operand) -> 'BlockExpression':
+        return BlockExpression(self, other, '/')
+    
+    def __rtruediv__(self, other: _Numeric) -> 'BlockExpression':
+        return BlockExpression(other, self, '/') 
+    
+
+class BlockExpression(Signal):
+    # Mirrors the Block class.
+    # Stores information about nested algebraic expressions made up of constants and other Blocks / Plugs
+    # Upon BlockDiagram.connect()ion, produces Prod, Sum and Gain blocks dutifully describing the expression
+
+    def __init__(self, left: _Operand, right: _Operand, op: Literal['+', '-', '*', '/']):
+        self.left = left
+        self.right = right
+        self.op = op
+
+        # once this is set, the BlockExpression is no longer "'etherial'".
+        # It owns a `Block` registered  in the block diagram that '.consolidate()d it'
+        self.block: Optional[Block] = None
+        self._flatten_result = None
+
+        for inp in (left, right):
+            if isinstance(inp, Block):
+                assert inp.nout == 1, \
+                    "Attempted to use a Signal.__operator__ with a Block with multiple outputs (must have just 1): {}".format(self)
+            
+
+
+    def _flatten(self) -> Tuple[str, List[_Operand]]: # (operations, operands)
+        """flatten this BlockExpression along similar operations.
+        Because BlockExpression's are heirarchical, A BlockExpression of `((1 - 7) / 5) * 22) * input`
+        can re-represented as `(1 - 7) / 5 * 22 * input" which involves fewer OpBlock operations,
+        making the BlockDiagram cleaner and more performant. PS; I've made the conscious
+        choice here not to optimize for numerical computation when producing the block diagram.
+        for example, we could work out that `(1 - 7) / 5) * 22 == -29.8`,
+        but that is not probably what the user wants to express when producing `BlockExpressions`
+        with multiple numerical constants. Primarily used by self.consolidate(). Output is cached.
+        """
+
+        if self._flatten_result: # output is cached
+           return self._flatten_result
         
-        # use a tacked-on `_op_chainable` attr to decide if we can chain this.
-        if isinstance(self, Block) and self.type == block_type:
-            # append `op` as the last op
-            self.nin += 1
-            self.__dict__[ops_attr_name] = self.__dict__[ops_attr_name] + op
-            self[self.nin - 1] = other_
-            return self
+        opset = '+-' if self.op in '+-' else '*/'
 
-        elif isinstance(other_, Block) and other_.type == block_type:
-            # if the other is an op block, insert ourselves as the first source.
-            # This is a little trickier without changing too much core code.
-            # this is required to retain the order of operations.
-            old_sources = [None] * other.nin
-            for w in self.bd.wirelist.copy():
-                if w.end.block is other:
-                    old_sources[w.end.port] = w.start
-                    # the old wire is now invalid
-                    self.bd.wirelist.remove(w)
-            assert all(old_sources)
-
-            other_.nin += 1
-            other_[0] = self
-            for i, source in enumerate(old_sources):
-                other_[i + 1] = source
-
-            ops = other_.__dict__[ops_attr_name]
-
-            # if complement is defined, we should negate all old ops here.
-            # eg: block - bd.SUM('-++', ...) becomes bd.SUM('++--', block, ...)
-            # eg2: block / bd.PROD('/**', ...) becomes bd.PROD('**//', block, ...)
-            if complement:
-                # if 1 - bd.SUM(...), etc, negate all ops
-                ops = complement + \
-                    (''.join(op if op_ == complement else complement for op_ in ops))
-            else:
-                # otherwise, insert op as the 1st op
-                ops = op + ops
-            other_.__dict__[ops_attr_name] = ops
-
-            return other_
+        if isinstance(self.left, BlockExpression) and self.left.op in opset:
+            if self.left.block:
+                ops = opset[0]
+                inputs = [self.left.block]
+                
+            left_ops, left_inputs = self.left._flatten()
+            ops = left_ops
+            inputs = left_inputs
 
         else:
-            # if neither are of BlockType, create a new one and wrap this in it
-            block_constructor = self.bd.SUM if block_type == 'sum' else self.bd.PROD
-            return block_constructor(
-                complement + op if complement else op * 2,
-                self._get_plug(),
-                other_._get_plug())
+            ops = opset[0] # always either + or * (non-negatory)
+            block = getattr(self.left, 'block', None)
 
-    
-    def _rop(self, other: _Numeric, op: Callable[['Signal', _Operand], T]) -> T:
-        # other must be a _Numeric, otherwise __add__ would have succeeded.
-        # wrap it and run the method
-        return op(self.bd.CONSTANT(other), self)
-    
+            inputs = [block if block else self.left] # self.left is either a `BlockExpression` or another `_Operand` here
+        
+        
+        if isinstance(self.right, BlockExpression) and self.right.op in opset:
+                
+            right_ops, right_inputs = self.right._flatten()
+            inputs += right_inputs
+            if self.op == opset[1]:
+                # self.op is negatory ('-' or '/'). Negate all right ops
+                right_ops = ''.join(opset[0] if op == opset[1] else opset[1] for op in right_ops)
+            ops += right_ops
 
-    def __add__(self, other: _Operand) -> 'Sum':
-        return self._op(other, block_type='sum', op="+")
+        else:
+            ops += self.op # otherwise, do self.op; either ('*' or '/'), or ('+' or '-')
+            inputs += [getattr(self.right, 'block', self.right)]
 
-    def __radd__(self, other: _Numeric):
-        return self._rop(other, Signal.__add__)
-    
-
-    def __sub__(self, other: _Operand) -> 'Sum':
-        return self._op(other, block_type='sum', op="-", complement="+")
-
-    def __rsub__(self, other: _Numeric):
-        return self._rop(other, Signal.__sub__)
+        self._flatten_result = ops, inputs # cache output
+        return ops, inputs
 
 
-    def __mul__(self, other: _Operand) -> 'Prod':
-        return self._op(other, block_type='prod', op="*")
-    
-    def __rmul__(self, other: _Numeric):
-        return self._rop(other, Signal.__mul__)
+    def get_block(self, bd: 'BlockDiagram') -> 'Block':
+        """Get the Block that this BlockExpression Represents.
+        Notifies this BlockExpression that it's being used in a way that
+        requires it to become a real `Block` if it hasn't already done so.
+        """
+        if self.block: # output is cached
+            return self.block
+        
+        # get a flattened version of the nested set of BlockExpressions
+        ops, inputs = self._flatten()
 
+        inputs = [inp.get_block(bd) if isinstance(inp, BlockExpression) else inp for inp in inputs]
 
-    def __truediv__(self, other: _Operand) -> 'Prod':
-        return self._op(other, block_type='prod', op="/", complement="*")
-    
-    def __rtruediv__(self, other: _Numeric):
-        return self._rop(other, Signal.__truediv__)       
-    
+        # check if its appropriate to produce a gain block
+        if len(ops) == 2 and '*' in ops:
+            gain = next((inp for inp in inputs if not isinstance(inp, Signal)), None)
+
+            if gain is not None:
+                inp = next((inp for inp in inputs if isinstance(inp, Signal)), None)
+                self.block = bd.GAIN(gain, inp._get_plug())
+
+        # if we're not using a gain block, produce the op-block
+        if not self.block:
+            constructor = bd.SUM if ops[0] in '+-' else bd.PROD
+            
+            self.block = constructor(ops, *(
+                inp._get_plug() if isinstance(inp, Signal) \
+                    else bd.CONSTANT(inp)
+                    for inp in inputs
+            ))
+
+        # return the cached output
+        return self.block
+
 
 
 class Plug(Signal):

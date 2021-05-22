@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from bdsim.components import BlockExpression
 from typing import List, Type, Union
 from numpy.lib.arraysetops import isin
 import bdsim
@@ -36,19 +37,24 @@ class TestSignalOperators(unittest.TestCase):
             unittest.TestCase.assertEqual(self, a, b)
 
 
-    def _test_op(self, bd, x: Union[Sum, Prod], *operands, expected, block_type, ops):
+    def _test_op(self, bd, x: Union[Sum, Prod, BlockExpression], *operands, expected, block_type, ops, nin=None):
+        if isinstance(x, BlockExpression):
+            x = x.get_block(bd)
         self.assertEqual(x.type, block_type)
         assert len(operands) == len(ops)
-        self.assertEqual(x.nin, len(ops))
-        self.assertEqual(
-            ops,
-            x.signs if x.type == 'sum' else x.ops
-        )
-        
+        self.assertEqual(x.nin, (nin or len(ops)))
+        if not nin:
+            self.assertEqual(
+                ops,
+                x.signs if x.type == 'sum' else x.ops
+            )
+            
         is_compiled = bd.compile()
         self.assertTrue(is_compiled)
 
         for i, operand in enumerate(operands):
+            if nin and i == nin - 1:
+                break
             block = x.inports[i].start.block
             if block.type == 'constant':
                 self.assertEqual(block.value, operand)
@@ -63,20 +69,23 @@ class TestSignalOperators(unittest.TestCase):
             block_type = 'sum',
             ops = '+' * len(operands))
 
-    def _test_prod(self, bd, x, *operands):
+    def _test_prod(self, bd, x, *operands, expect_gain = False):
         expected = 1
         for operand in operands:
             expected *= operand
 
         self._test_op(bd, x, *operands,
             expected = expected,
-            block_type = 'prod',
-            ops = '*' * len(operands))
+            block_type = 'gain' if expect_gain else 'prod',
+            ops = '*' * len(operands),
+            nin = 1 if expect_gain else len(operands))
     
     def _test_output(self, f_exp, B):
         bd = sim.blockdiagram()
 
-        block = f_exp(bd.CONSTANT(B))
+        expr = f_exp(bd.CONSTANT(B))
+        block = expr.get_block(bd)
+
         expected = f_exp(B)
 
         is_compiled = bd.compile()
@@ -137,13 +146,13 @@ class TestSignalOperators(unittest.TestCase):
     def test_prod_constblock_and_num(self):
         bd = sim.blockdiagram()
         x = bd.CONSTANT(a) * b
-        self._test_prod(bd, x, a, b)
+        self._test_prod(bd, x, a, b, expect_gain=True)
 
 
     def test_prod_num_and_constblock(self):
         bd = sim.blockdiagram()
         x = a * bd.CONSTANT(b)
-        self._test_prod(bd, x, a, b)
+        self._test_prod(bd, x, a, b, expect_gain=True)
 
     def test_prod_many_flat(self):
         bd = sim.blockdiagram()
@@ -185,15 +194,9 @@ class TestSignalOperators(unittest.TestCase):
             expected = expr(B),
             block_type = 'sum')
 
-    def test_div_many_elementwise(self):
-        bd = sim.blockdiagram()
+    def test_divmul_many_elementwise(self):
         expr = lambda B: A / (B / C) / D
-        self._test_op(bd,
-            expr(bd.CONSTANT(B)),
-            A, B, C, D,
-            expected = expr(B),
-            block_type = 'prod',
-            ops = '*/*/')
+        self._test_output(expr, B)
 
 
 
