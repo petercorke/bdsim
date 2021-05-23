@@ -241,6 +241,7 @@ class Signal:
     def __rtruediv__(self, other: _Numeric) -> 'BlockExpression':
         return BlockExpression(other, self, '/') 
     
+indent_level = 0
 
 class BlockExpression(Signal):
     # Mirrors the Block class.
@@ -261,7 +262,26 @@ class BlockExpression(Signal):
             if isinstance(inp, Block):
                 assert inp.nout == 1, \
                     "Attempted to use a Signal.__operator__ with a Block with multiple outputs (must have just 1): {}".format(self)
-            
+
+
+    def __repr__(self) -> str:
+        global indent_level
+        indent_level += 1
+        def summarize(obj):
+            if isinstance(obj, np.ndarray):
+                return "ndarray({})".format(obj.shape)
+            else:
+                return repr(obj)
+
+        res = "BlockExpression(\n{}{} {} {}\n{})".format(
+            indent_level * '  ',
+            summarize(self.left),
+            self.op,
+            summarize(self.right),
+            (indent_level - 1) * '  ')
+        
+        indent_level -= 1
+        return res
 
 
     def _flatten(self) -> Tuple[str, List[_Operand]]: # (operations, operands)
@@ -291,13 +311,13 @@ class BlockExpression(Signal):
 
         else:
             ops = opset[0] # always either + or * (non-negatory)
-            block = getattr(self.left, 'block', None)
 
-            inputs = [block if block else self.left] # self.left is either a `BlockExpression` or another `_Operand` here
+            # self.left is either a `BlockExpression` or another `_Operand` here
+            inputs = [getattr(self.left, 'block', None) or self.left] 
         
         
         if isinstance(self.right, BlockExpression) and self.right.op in opset:
-                
+
             right_ops, right_inputs = self.right._flatten()
             inputs += right_inputs
             if self.op == opset[1]:
@@ -307,7 +327,7 @@ class BlockExpression(Signal):
 
         else:
             ops += self.op # otherwise, do self.op; either ('*' or '/'), or ('+' or '-')
-            inputs += [getattr(self.right, 'block', self.right)]
+            inputs += [getattr(self.right, 'block', None) or self.right]
 
         self._flatten_result = ops, inputs # cache output
         return ops, inputs
@@ -327,12 +347,15 @@ class BlockExpression(Signal):
         inputs = [inp.get_block(bd) if isinstance(inp, BlockExpression) else inp for inp in inputs]
 
         # check if its appropriate to produce a gain block
-        if len(ops) == 2 and '*' in ops:
+        if len(ops) == 2 and ops[0] in '*/':
             gain = next((inp for inp in inputs if not isinstance(inp, Signal)), None)
 
             if gain is not None:
                 inp = next((inp for inp in inputs if isinstance(inp, Signal)), None)
-                self.block = bd.GAIN(gain, inp._get_plug())
+                # TODO: make the (1 / gain) Gain more apparent come dotfile generation / console printing
+                self.block = bd.GAIN(
+                    gain if ops[inputs.index(gain)] == '*' else 1 / gain,
+                    inp._get_plug())
 
         # if we're not using a gain block, produce the op-block
         if not self.block:

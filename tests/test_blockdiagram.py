@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from numpy import random
 from bdsim.components import BlockExpression
 from typing import List, Type, Union
 from numpy.lib.arraysetops import isin
@@ -19,10 +20,10 @@ sim = bdsim.BDSim()
 from bdsim.blocks.functions import Sum, Prod
 
 # values used in operator tests
-a = np.random.rand(1, 1)
-b = np.random.rand(1, 1)
-c = np.random.rand(1, 1)
-d = np.random.rand(1, 1)
+a = random.rand()
+b = random.rand()
+c = random.rand()
+d = random.rand()
 A = np.random.rand(5, 5, 5)
 B = np.random.rand(5, 5, 5)
 C = np.random.rand(5, 5, 5)
@@ -80,19 +81,21 @@ class TestSignalOperators(unittest.TestCase):
             ops = '*' * len(operands),
             nin = 1 if expect_gain else len(operands))
     
-    def _test_output(self, f_exp, B):
-        bd = sim.blockdiagram()
+    def _test_output(self, f_exp, *inputs, bd=None):
+        if not bd:
+            bd = sim.blockdiagram()
 
-        expr = f_exp(bd.CONSTANT(B))
+        expr = f_exp(*(bd.CONSTANT(x) for x in inputs))
         block = expr.get_block(bd)
 
-        expected = f_exp(B)
+        expected = f_exp(*inputs)
 
         is_compiled = bd.compile()
         self.assertTrue(is_compiled)
 
         [out] = block.output()
         self.assertEqual(out, expected)
+        return bd
 
 
     def test_sum_constblock_and_constblock(self):
@@ -197,6 +200,17 @@ class TestSignalOperators(unittest.TestCase):
     def test_divmul_many_elementwise(self):
         expr = lambda B: A / (B / C) / D
         self._test_output(expr, B)
+    
+    def test_complex_multiple_expressions(self):
+        expr1 = lambda a, B: a * A + B / c
+        expr2 = lambda a, B, D: expr1(a, B) * D
+        expr3 = lambda a, B, D: expr2(a, B, D) / D
+        expr4 = lambda a, B, D, C: C - expr3(a, B, D)
+
+        bd = self._test_output(expr1, a, B)
+        self._test_output(expr2, a, B, D, bd=bd)
+        self._test_output(expr3, a, B, D, bd=bd)
+        self._test_output(expr4, a, B, D, C, bd=bd)
 
 
 
