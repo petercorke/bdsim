@@ -140,12 +140,13 @@ class Prod(FunctionBlock):
         for i,input in enumerate(self.inputs):
             if self.ops[i] == '*':
                 if self.matrix:
-                    prod = prod @ input
+                    prod = input if prod is 1 else prod @ input
                 else:
                     prod *= input
             else:
                 if self.matrix:
-                    prod = prod @ numpy.linalg.inv(input)
+                    inv = numpy.linalg.inv(input)
+                    prod = inv if prod is 1 else prod @ inv
                 else:
                     prod /= input
 

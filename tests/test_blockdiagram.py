@@ -211,7 +211,18 @@ class TestSignalOperators(unittest.TestCase):
         self._test_output(expr2, a, B, D, bd=bd)
         self._test_output(expr3, a, B, D, bd=bd)
         self._test_output(expr4, a, B, D, C, bd=bd)
+    
+    def test_matmul(self):
+        self._test_output(lambda A: A @ B, A)
+    
+    def test_matmul_many(self):
+        self._test_output(lambda A, C: A @ B @ (C @ D), A, C)
+    
+    def test_matmul_premul(self):
+        self._test_output(lambda B: A @ B, B)
 
+    def test_neg(self):
+        self._test_output(lambda A: -A, A)
 
 
 

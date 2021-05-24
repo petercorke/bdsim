@@ -239,8 +239,21 @@ class Signal:
         return BlockExpression(self, other, '/')
     
     def __rtruediv__(self, other: _Numeric) -> 'BlockExpression':
-        return BlockExpression(other, self, '/') 
+        return BlockExpression(other, self, '/')
+
+
+    def __neg__(self) -> 'BlockExpression':
+        return BlockExpression(self, -1, '*')
+
+
+    def __matmul__(self, other: _Operand) -> 'BlockExpression':
+        return BlockExpression(self, other, '@')
     
+    def __rmatmul__(self, other: _Numeric) -> 'BlockExpression':
+        return BlockExpression(other, self, '@')
+
+
+
 indent_level = 0
 
 class BlockExpression(Signal):
@@ -298,7 +311,9 @@ class BlockExpression(Signal):
         if self._flatten_result: # output is cached
            return self._flatten_result
         
-        opset = '+-' if self.op in '+-' else '*/'
+        opset = '+-' if self.op in '+-' else \
+                '*/' if self.op in '*/' else \
+                '@'
 
         if isinstance(self.left, BlockExpression) and self.left.op in opset:
             if self.left.block:
@@ -320,7 +335,7 @@ class BlockExpression(Signal):
 
             right_ops, right_inputs = self.right._flatten()
             inputs += right_inputs
-            if self.op == opset[1]:
+            if self.op != opset[0]:
                 # self.op is negatory ('-' or '/'). Negate all right ops
                 right_ops = ''.join(opset[0] if op == opset[1] else opset[1] for op in right_ops)
             ops += right_ops
@@ -347,27 +362,41 @@ class BlockExpression(Signal):
         inputs = [inp.get_block(bd) if isinstance(inp, BlockExpression) else inp for inp in inputs]
 
         # check if its appropriate to produce a gain block
-        if len(ops) == 2 and ops[0] in '*/':
-            gain = next((inp for inp in inputs if not isinstance(inp, Signal)), None)
+        if len(ops) == 2 and ops[0] in '*/@' and any(not isinstance(inp, Signal) for inp in inputs):
 
-            if gain is not None:
-                inp = next((inp for inp in inputs if isinstance(inp, Signal)), None)
-                # TODO: make the (1 / gain) Gain more apparent come dotfile generation / console printing
-                self.block = bd.GAIN(
-                    gain if ops[inputs.index(gain)] == '*' else 1 / gain,
-                    inp._get_plug())
+            # ensure 'gain' is a numerical constant
+            gain, inp = inputs
+            if isinstance(inp, Signal):
+                gain_op = ops[0]
+                premul = True
+            else:
+                # we've got the order wrong here
+                inp, gain = inputs
+                gain_op = ops[1]
+                premul = False
 
-        # if we're not using a gain block, produce the op-block
-        if not self.block:
-            constructor = bd.SUM if ops[0] in '+-' else bd.PROD
-            
-            self.block = constructor(ops, *(
-                inp._get_plug() if isinstance(inp, Signal) \
-                    else bd.CONSTANT(inp)
-                    for inp in inputs
-            ))
+            # TODO: make the (1 / gain) Gain more apparent come dotfile generation / console printing
+            self.block = bd.GAIN(
+                1 / gain if gain_op == '/' else gain,
+                inp._get_plug(),
+                premul=premul)
+            return self.block
+        
+        checked_inputs = (
+            inp._get_plug() if isinstance(inp, Signal) \
+                else bd.CONSTANT(inp)
+                for inp in inputs
+        )
 
-        # return the cached output
+
+        if ops[0] in '+-':
+            self.block = bd.SUM(ops, *checked_inputs)
+        else:
+            self.block = bd.PROD(
+                ops.replace('@', '*'),
+                *checked_inputs,
+                matrix=ops[0] == '@')
+
         return self.block
 
 
