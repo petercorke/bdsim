@@ -4,16 +4,14 @@
 Components of the simulation system, namely blocks, wires and plugs.
 """
 
-from typing import Callable, List, Optional, TYPE_CHECKING, Tuple, Type, TypeVar, Union
+from typing import List, Optional, TYPE_CHECKING, Tuple, Union
 from typing_extensions import Literal
 import numpy as np
 from collections import UserDict
 
 if TYPE_CHECKING:
-    from .blocks.functions import Sum, Prod
     from .blockdiagram import BlockDiagram
 
-T = TypeVar('T')
 
 class Struct(UserDict):
     """
