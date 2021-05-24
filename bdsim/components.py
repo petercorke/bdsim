@@ -265,7 +265,7 @@ class BlockExpression(Signal):
         self.op = op
 
         # once this is set, the BlockExpression is no longer "'etherial'".
-        # It owns a `Block` registered  in the block diagram that '.consolidate()d it'
+        # It owns a `Block` registered  in the block diagram that '.get_block()d it'
         self.block: Optional[Block] = None
         self._flatten_result = None
 
@@ -303,7 +303,7 @@ class BlockExpression(Signal):
         choice here not to optimize for numerical computation when producing the block diagram.
         for example, we could work out that `(1 - 7) / 5) * 22 == -29.8`,
         but that is not probably what the user wants to express when producing `BlockExpressions`
-        with multiple numerical constants. Primarily used by self.consolidate(). Output is cached.
+        with multiple numerical constants. Primarily used by self.get_block(). Output is cached.
         """
 
         if self._flatten_result: # output is cached

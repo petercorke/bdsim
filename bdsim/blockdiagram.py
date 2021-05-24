@@ -108,6 +108,9 @@ class BlockDiagram:
             block[1] = SigGen()  # use setitem
             block[1] = SumJunction(block2[3], block3[4]) * Gain(value=2)
         """
+
+        if isinstance(start, BlockExpression):
+            start = start.get_block()
                         
         # convert to default plug on port 0 if need be
         if isinstance(start, Block):
