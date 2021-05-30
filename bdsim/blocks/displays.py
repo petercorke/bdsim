@@ -257,13 +257,13 @@ class ScopeXY(GraphicsBlock):
     .. table::
        :align: left
     
-       +--------+---------+---------+
-       | inputs | outputs |  states |
-       +--------+---------+---------+
-       | 2      | 0       | 0       |
-       +--------+---------+---------+
-       | float  |         |         | 
-       +--------+---------+---------+
+    +--------+---------+---------+
+    | inputs | outputs |  states |
+    +--------+---------+---------+
+    | 2      | 0       | 0       |
+    +--------+---------+---------+
+    | float  |         |         | 
+    +--------+---------+---------+
     """
 
     def __init__(self, style=None, *inputs, scale='auto', aspect='equal', labels=['X', 'Y'], init=None, **kwargs):

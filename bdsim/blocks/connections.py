@@ -33,13 +33,13 @@ class Item(FunctionBlock):
     .. table::
        :align: left
     
-       +------------+---------+---------+
-       | inputs     | outputs |  states |
-       +------------+---------+---------+
-       | 1          | 1       | 0       |
-       +------------+---------+---------+
-       | dict       | any     |         | 
-       +------------+---------+---------+
+    +------------+---------+---------+
+    | inputs     | outputs |  states |
+    +------------+---------+---------+
+    | 1          | 1       | 0       |
+    +------------+---------+---------+
+    | dict       | any     |         | 
+    +------------+---------+---------+
     """
 
     def __init__(self, item, *inputs, **kwargs):
@@ -61,6 +61,8 @@ class Item(FunctionBlock):
             
         selects the ``xd`` item from the dictionary output signal of the MULTIROTOR
         block.
+
+        :seealso: :class:`Dict`
         """
 
         super().__init__(nin=1, nout=1, **kwargs)
@@ -73,6 +75,59 @@ class Item(FunctionBlock):
         assert self.item in self.inputs[0], 'Item is not in signal dict'
         return [self.inputs[0][self.item]]
 
+class Dict(FunctionBlock):
+
+    """
+    :blockname:`DICT`
+    
+    .. table::
+       :align: left
+    
+    +------------+---------+---------+
+    | inputs     | outputs |  states |
+    +------------+---------+---------+
+    | N          | 1       | 0       |
+    +------------+---------+---------+
+    | any        | dict    |         | 
+    +------------+---------+---------+
+    """
+
+    def __init__(self, item, *inputs, **kwargs):
+        """
+        :param keys: list of dictionary keys
+        :type keys: list
+        :param ``*inputs``: Optional incoming connections
+        :type ``*inputs``: Block or Plug
+        :param ``**kwargs``: common Block options
+        :return: A DICT block
+        :rtype: Dict instance
+        
+        Create a dictionary block.  Inputs are assigned to a dictionary
+        output using the corresponding names from ``keys``.
+
+        For a dictionary type inut signal select one item as the output signal.
+        For example::
+            
+            DICT(['x', 'xd', 'xdd'])
+            
+        assigns the three inputs to the elements ``x``, ``xd``, ``xdd`` of
+        the output dictionary respectively.
+
+        This is somewhat like a multiplexer :class:`Mux` but allows for
+        named heterogeneous data.
+
+        :seealso: :class:`Item` :class:`Mux`
+        """
+
+        super().__init__(nin=1, nout=1, **kwargs)
+        self.type = 'item'
+        self.item = item
+    
+    def output(self, t=None):
+        # TODO, handle inputs that are vectors themselves
+        assert isinstance(self.inputs[0], dict), 'Input signal must be a dict'
+        assert self.item in self.inputs[0], 'Item is not in signal dict'
+        return [self.inputs[0][self.item]]
 # ------------------------------------------------------------------------ #
 @block
 class Mux(FunctionBlock):
@@ -83,14 +138,14 @@ class Mux(FunctionBlock):
        :align: left
     
 
-       +------------+---------+---------+
-       | inputs     | outputs |  states |
-       +------------+---------+---------+
-       | nin        | 1       | 0       |
-       +------------+---------+---------+
-       | float,     | A(M,)   |         |
-       | A(N,)      | A(M,)   |         | 
-       +------------+---------+---------+
+    +------------+---------+---------+
+    | inputs     | outputs |  states |
+    +------------+---------+---------+
+    | nin        | 1       | 0       |
+    +------------+---------+---------+
+    | float,     | A(M,)   |         |
+    | A(N,)      | A(M,)   |         | 
+    +------------+---------+---------+
     """
 
     def __init__(self, nin=1, *inputs, **kwargs):
@@ -110,10 +165,11 @@ class Mux(FunctionBlock):
             
             MUX(2, func1[2], sum3)
             
-        multiplexes the outputs of blocks ``func1`` (port 2) and ``sum3`` into
-        a single output vector as a 1D array.  If the explicit inputs are omitted they can be wired
-        using the ``connect`` function.
+        multiplexes the outputs of blocks ``func1`` (port 2) and ``sum3`` into a
+        single output vector as a 1D array.  If the explicit inputs are omitted
+        they can be wired using the ``connect`` function.
         
+        :seealso: :class:`Dict`
         """
         super().__init__(nin=nin, nout=1, inputs=inputs, **kwargs)
         self.type = 'mux'
@@ -132,14 +188,14 @@ class DeMux(FunctionBlock):
     .. table::
        :align: left
     
-       +------------+---------+---------+
-       | inputs     | outputs |  states |
-       +------------+---------+---------+
-       | 1          | nout    | 0       |
-       +------------+---------+---------+
-       | float,     | float   |         |
-       | A(nout,)   |         |         | 
-       +------------+---------+---------+
+    +------------+---------+---------+
+    | inputs     | outputs |  states |
+    +------------+---------+---------+
+    | 1          | nout    | 0       |
+    +------------+---------+---------+
+    | float,     | float   |         |
+    | A(nout,)   |         |         | 
+    +------------+---------+---------+
     """
 
     def __init__(self, nout=1, *inputs, **kwargs):
@@ -176,13 +232,13 @@ class SubSystem(SubsystemBlock):
     .. table::
        :align: left
        
-       +------------+------------+---------+
-       | inputs     | outputs    |  states |
-       +------------+------------+---------+
-       | ss.in.nout | ss.out.nin | 0       |
-       +------------+------------+---------+
-       | any        | any        |         |
-       +------------+------------+---------+
+    +------------+------------+---------+
+    | inputs     | outputs    |  states |
+    +------------+------------+---------+
+    | ss.in.nout | ss.out.nin | 0       |
+    +------------+------------+---------+
+    | any        | any        |         |
+    +------------+------------+---------+
     """
 
     def __init__(self, subsys, *inputs, **kwargs):
@@ -289,13 +345,13 @@ class InPort(SubsystemBlock):
     .. table::
        :align: left
     
-       +------------+---------+---------+
-       | inputs     | outputs |  states |
-       +------------+---------+---------+
-       | 0          | nout    | 0       |
-       +------------+---------+---------+
-       |            | any     |         |
-       +------------+---------+---------+
+    +------------+---------+---------+
+    | inputs     | outputs |  states |
+    +------------+---------+---------+
+    | 0          | nout    | 0       |
+    +------------+---------+---------+
+    |            | any     |         |
+    +------------+---------+---------+
     """
     
     def __init__(self, nout=1, **kwargs):
@@ -328,13 +384,13 @@ class OutPort(SubsystemBlock):
     .. table::
        :align: left
     
-       +------------+---------+---------+
-       | inputs     | outputs |  states |
-       +------------+---------+---------+
-       | nin        | 0       | 0       |
-       +------------+---------+---------+
-       | any        |         |         |
-       +------------+---------+---------+
+    +------------+---------+---------+
+    | inputs     | outputs |  states |
+    +------------+---------+---------+
+    | nin        | 0       | 0       |
+    +------------+---------+---------+
+    | any        |         |         |
+    +------------+---------+---------+
     """
 
     def __init__(self, nin=1, *inputs, **kwargs):
