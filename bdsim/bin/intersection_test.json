@@ -1,0 +1,196 @@
+{
+    "id": 2577859679040,
+    "scene_width": 7168.000000000001,
+    "scene_height": 4032.0000000000005,
+    "blocks": [
+        {
+            "id": 2577892749072,
+            "block_type": "Gain",
+            "title": "Gain Block",
+            "pos_x": 200.0,
+            "pos_y": -140.0,
+            "icon": ":/Icons_Reference/Icons/gain.png",
+            "inputs": [
+                {
+                    "id": 2577892802416,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 1,
+                    "socket_type": 1
+                }
+            ],
+            "outputs": [
+                {
+                    "id": 2577892802464,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 3,
+                    "socket_type": 2
+                }
+            ],
+            "variables": [
+                [
+                    "Gain",
+                    0
+                ],
+                [
+                    "Premul",
+                    false
+                ]
+            ]
+        },
+        {
+            "id": 2577892846608,
+            "block_type": "Function",
+            "title": "Function Block",
+            "pos_x": -160.0,
+            "pos_y": -140.0,
+            "icon": ":/Icons_Reference/Icons/function.png",
+            "inputs": [
+                {
+                    "id": 2577892846704,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 1,
+                    "socket_type": 1
+                }
+            ],
+            "outputs": [
+                {
+                    "id": 2577892846752,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 3,
+                    "socket_type": 2
+                }
+            ],
+            "variables": [
+                [
+                    "Function",
+                    "Provide Function?"
+                ],
+                [
+                    "No. of inputs",
+                    1
+                ],
+                [
+                    "No. of outputs",
+                    1
+                ],
+                [
+                    "Dict",
+                    false
+                ],
+                [
+                    "Args",
+                    {
+                        "__tuple__": true,
+                        "items": []
+                    }
+                ],
+                [
+                    "Kwargs",
+                    {}
+                ]
+            ]
+        },
+        {
+            "id": 2577892863568,
+            "block_type": "Clip",
+            "title": "Clip Block",
+            "pos_x": -420.0,
+            "pos_y": -260.0,
+            "icon": ":/Icons_Reference/Icons/clip.png",
+            "inputs": [
+                {
+                    "id": 2577892863616,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 1,
+                    "socket_type": 1
+                }
+            ],
+            "outputs": [
+                {
+                    "id": 2577892863664,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 3,
+                    "socket_type": 2
+                }
+            ],
+            "variables": [
+                [
+                    "Min",
+                    -Infinity
+                ],
+                [
+                    "Max",
+                    Infinity
+                ]
+            ]
+        },
+        {
+            "id": 2577892863808,
+            "block_type": "Interpolate",
+            "title": "Interpolate Block",
+            "pos_x": -100.0,
+            "pos_y": 20.0,
+            "icon": ":/Icons_Reference/Icons/interpolate.png",
+            "inputs": [
+                {
+                    "id": 2577892896832,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 1,
+                    "socket_type": 1
+                }
+            ],
+            "outputs": [
+                {
+                    "id": 2577892896880,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 3,
+                    "socket_type": 2
+                }
+            ],
+            "variables": [
+                [
+                    "X",
+                    null
+                ],
+                [
+                    "Y",
+                    null
+                ],
+                [
+                    "XY",
+                    null
+                ],
+                [
+                    "Time",
+                    false
+                ],
+                [
+                    "Kind",
+                    "linear"
+                ]
+            ]
+        }
+    ],
+    "wires": [
+        {
+            "id": 2577892863424,
+            "start_socket": 2577892802416,
+            "end_socket": 2577892846752,
+            "wire_type": 3
+        },
+        {
+            "id": 2577892897024,
+            "start_socket": 2577892896832,
+            "end_socket": 2577892863664,
+            "wire_type": 3
+        }
+    ]
+}

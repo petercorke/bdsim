@@ -10,10 +10,19 @@ from bdedit.block_wire import Wire, WIRE_TYPE_DIRECT, WIRE_TYPE_BEZIER, WIRE_TYP
 
 MODE_NONE = 1
 MODE_WIRE_DRAG = 2
-
 EDGE_DRAG_LIM = 10
-
 DEBUG = False
+
+# =============================================================================
+# 
+# GraphicsView will handle many of the press/click events as well as containing
+# the logic for draw wires and how they can connect. Here mouse click events
+# are used to drag the wires from a start to a end socket, when click is
+# dragged from a socket mode == MODE_WIRE_DRAG will be set to true and a
+# wire will follow the mouse till a end socket is set or mode == MODE_WIRE_DRAG
+# is false and the wire will be deleted.
+# 
+# =============================================================================
 
 
 class GraphicsView(QGraphicsView):
@@ -27,24 +36,26 @@ class GraphicsView(QGraphicsView):
         self.setScene(self.grScene)
 
         self.mode = MODE_NONE
-        self.editingFlag = False
 
-        self.zoomInFactor = 1.25
-        self.zoomClamp = True
-        self.zoom = 10
+        self._default_zoom_level = 7
+        self.zoom = self._default_zoom_level
         self.zoomStep = 1
-        self.zoomRange = [0, 5]
+        self.zoomRange = [0, 10]
+        
+# =============================================================================
+# Initialize the UI        
+# =============================================================================
 
     def initUI(self):
         self.setRenderHints(QPainter.Antialiasing | QPainter.HighQualityAntialiasing | QPainter.TextAntialiasing | QPainter.SmoothPixmapTransform)
         self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
-
-        # self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        # self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-
         self.setDragMode(QGraphicsView.RubberBandDrag)
-
         self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
+
+
+# =============================================================================
+# This will shut the parameter window used for editing the block properties.
+# =============================================================================
 
     def closeParamWindows(self):
         if len(self.grScene.scene.blocks) != 0:
@@ -52,6 +63,11 @@ class GraphicsView(QGraphicsView):
                 if block.parameterWindow is not None:
                     block.parameterWindow.setVisible(False)
                     block._param_visible = False
+   
+                    
+# =============================================================================
+# Removes the selected block or wire from the scene.                    
+# =============================================================================
 
     def deleteSelected(self):
         for item in self.grScene.selectedItems():
@@ -60,10 +76,20 @@ class GraphicsView(QGraphicsView):
             elif isinstance(item, GraphicsBlock) or isinstance(item, GraphicsSocketBlock):
                 item.block.remove()
 
+
+# =============================================================================
+# Flip the block so that the input and output sockets change sides
+# =============================================================================
+
     def flipBlockSockets(self):
         for item in self.grScene.selectedItems():
             if isinstance(item, GraphicsBlock) or isinstance(item, GraphicsSocketBlock):
                 item.block.updateSocketPositions()
+                
+                
+# =============================================================================
+# Checks how for the cursor has moved, this will be used when the wire is dragged to check that wire has been dragged away from the start socket so that when it is released on a socket we know its not the start socket.  
+# =============================================================================
 
     def dist_click_release(self, event):
         # ___________________measures that the cursor has moved a reasonable distance___________________________
@@ -73,12 +99,24 @@ class GraphicsView(QGraphicsView):
 
         return (mouseMoved.x() * mouseMoved.x() + mouseMoved.y() * mouseMoved.y()) > edgeThreshSqr
 
+
+# =============================================================================
+# Returns the object at the click location, it will be used to check what has been clicked when starting to drag a wire. 
+# =============================================================================
+
     def getItemAtClick(self, event):
         pos = event.pos()
         obj = self.itemAt(pos)
         return obj
 
-
+# =============================================================================
+# Initiates the checking of intersection points of all wires within the scene.
+# =============================================================================		
+		
+    def intersectionTest(self):
+        # checking for intersections is being done here
+        if len(self.grScene.scene.wires) > 0:
+            self.grScene.scene.wires[0].checkIntersection2()
 
 # =============================================================================
 # 
@@ -91,31 +129,40 @@ class GraphicsView(QGraphicsView):
 # =============================================================================
  
     def edgeDragStart(self, item):
-        # print('view::edgeDragStart ~ Start dragging edge')
-        # print('view::edgeDragStart ~ assign Start Socket to:', item.socket)
+        
         if DEBUG: print("socket is input socket:", item.socket.isInputSocket())
         if DEBUG: print("socket is output socket:", item.socket.isOutputSocket())
-        # self.previousEdge = item.socket.wires
-        # self.last_start_socket = item.socket
-        # self.dragEdge = Wire(self.grScene.scene, item.socket, None, WIRE_TYPE_STEP)
-        # self.dragEdge = Wire(self.grScene.scene, item.socket, None, WIRE_TYPE_BEZIER)
-        # self.dragEdge = Wire(self.grScene.scene, item.socket, None, WIRE_TYPE_DIRECT)
         
         self.drag_start_socket = item.socket
-        # self.drag_wire = Wire(self.grScene.scene, item.socket, None, WIRE_TYPE_DIRECT)
         self.drag_wire = Wire(self.grScene.scene, item.socket, None, WIRE_TYPE_STEP)
         if DEBUG: print('View::wireDragStart ~   dragwire:', self.drag_wire)
 
+
+# =============================================================================
+# 
+# This will be used to set the end socket, the place where the wire has been 
+# released will be checked and if it is a graphic socket and is not the start 
+# socket then we can add the wire. Next some check will be made to see that 
+# inputs are not connected to inputs and outputs are not connected to outputs,
+#  that blocks don’t have more than one wire connected to a input but outputs
+#  can and that connector blocks cant be used to brake any of these rules.
+#  If these conditions are passed the  wire that was dragged will be deleted
+#  and a new wire will be created with the start socket being the block the 
+#  drag started at and the end socket being the socket the wire was dragged 
+#  to, if the conditions not met the wire is simply removed.
+# 
+# =============================================================================
+
     def edgeDragEnd(self, item):
+        
+        
         self.mode = MODE_NONE
 
         if DEBUG: print('View::edgeDragEnd ~ End dragging edge')
         self.drag_wire.remove()
         self.drag_wire = None
 
-        # ### IF TIME AVALIBLE this code should be packaged into a check_connections function '
-        # ##  wires and socket connections seem to be working
-        # #   NEEDS LOT OF TESTING
+
 
         if type(item) is GraphicsSocket:
             if item.socket != self.drag_start_socket:
@@ -126,7 +173,7 @@ class GraphicsView(QGraphicsView):
                 if not item.socket.is_multi_wire:
                     item.socket.removeAllEdges()
 
-                # we wanna keep all the wires coming from start socket
+                # we want to keep all the wires coming from start socket
                 if not self.drag_start_socket.is_multi_wire:
                     self.drag_start_socket.removeAllWires()
 
@@ -186,10 +233,19 @@ class GraphicsView(QGraphicsView):
                 
                 if DEBUG: print('View::edgeDragEnd ~ everything done.')
                 return False
+# =============================================================================
+# 
+# Here key press events are detected, there are 4 key press we use here, the 
+# delete key will be used for deleting blocks and wires, the F key is used to
+# flip blocks and the S and L keys are used to save and load. When one of these
+# keys is pressed the associated function will be called. 
+# 
+# =============================================================================
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Delete or event.key() == Qt.Key_Backspace:
             self.deleteSelected()
+            self.intersectionTest()
         elif event.key() == Qt.Key_F:
             self.flipBlockSockets()
         elif event.key() == Qt.Key_S and event.modifiers() & Qt.ControlModifier:
@@ -198,6 +254,14 @@ class GraphicsView(QGraphicsView):
             self.grScene.scene.loadFromFile("graph_testing.json.txt")
         else:
             super().keyPressEvent(event)
+
+
+# =============================================================================
+# 
+# Here mouse press events will be detected and their respective functions
+# called.
+# 
+# =============================================================================
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MiddleButton:
@@ -209,6 +273,13 @@ class GraphicsView(QGraphicsView):
             self.rightMouseButtonPress(event)
         else:
             super().mousePressEvent(event)
+            
+
+# =============================================================================
+# 
+# These functions will be called when the mouse button is released.
+# 
+# =============================================================================
 
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.MiddleButton:
@@ -219,6 +290,16 @@ class GraphicsView(QGraphicsView):
             self.rightMouseButtonRelease(event)
         else:
             super().mouseReleaseEvent(event)
+            
+# =============================================================================
+#             
+#   The left mouse button press will run getItemAtClick and call the 
+#   appropriate function base on the item returned. If a graphics Socket 
+#   is clicked then start dragging a wire, if it’s a graphic wire it will 
+#   end the dragging wire and try and set the end socket, otherwise the 
+#   event is ignored.
+# 
+# =============================================================================
 
     def leftMouseButtonPress(self, event):
         item = self.getItemAtClick(event)
@@ -253,6 +334,16 @@ class GraphicsView(QGraphicsView):
                     return
 
         super().mousePressEvent(event)
+        
+# =============================================================================
+#         
+# On the release of the left mouse button getItemAtClick is called to check what
+# the mouse wase released on if a wire is being dragged it will check how
+# far the wire has moved then end the drag and try to connect a socket.
+# Then the check intersection code will be run to check for and mark wire
+# intersections.  
+#         
+# =============================================================================
 
     def leftMouseButtonRelease(self, event):
         # get item which we clicked
@@ -276,17 +367,26 @@ class GraphicsView(QGraphicsView):
         super().mouseReleaseEvent(event)
 
 
+
+# =============================================================================
+# nothing is linked to a right mouse click
+# =============================================================================
+
     def rightMouseButtonPress(self, event):
-        
-        #checking for intersections is being done here 
-        if len(self.grScene.scene.wires) > 0: 
-            self.grScene.scene.wires[0].checkintersection()
-            
-       
         return super().mousePressEvent(event)
+    
+    
+# =============================================================================
+# nothing is linked to a right mouse Release  
+# =============================================================================
 
     def rightMouseButtonRelease(self, event):
         return super().mouseReleaseEvent(event)
+    
+    
+# =============================================================================
+#  NOT SURE WHATS HAPPENING HERE   
+# =============================================================================
 
     def middleMouseButtonPress(self, event):
         releaseEvent = QMouseEvent(QEvent.MouseButtonRelease, event.localPos(), event.screenPos(),
@@ -297,32 +397,46 @@ class GraphicsView(QGraphicsView):
                                 Qt.LeftButton, event.buttons() | Qt.LeftButton, event.modifiers())
         super().mousePressEvent(fakeEvent)
 
+# =============================================================================
+#  NOT SURE WHATS HAPPENING HERE   
+# =============================================================================
+
     def middleMouseButtonRelease(self, event):
         fakeEvent = QMouseEvent(event.type(), event.localPos(), event.screenPos(),
                                 Qt.LeftButton, event.buttons() & ~Qt.LeftButton, event.modifiers())
         super().mouseReleaseEvent(fakeEvent)
         self.setDragMode(QGraphicsView.NoDrag)
 
-    def wheelEvent(self, event):
-        # calculate our zoom Factor
-        zoomOutFactor = 1 / self.zoomInFactor
 
-        # calculate zoom
+# =============================================================================
+# 
+# The mouse wheel is used for zooming in and out on the work area
+#  
+# =============================================================================
+  
+    def wheelEvent(self, event):
         if event.angleDelta().y() > 0:
-            zoomFactor = self.zoomInFactor
+            zoomFactor = 1.25
             self.zoom += self.zoomStep
         else:
-            zoomFactor = zoomOutFactor
+            zoomFactor = 0.8
             self.zoom -= self.zoomStep
 
-        clamped = False
-        if self.zoom < self.zoomRange[0]: self.zoom, clamped = self.zoomRange[0], True
-        if self.zoom > self.zoomRange[1]: self.zoom, clamped = self.zoomRange[1], True
-
-        # set scene scale
-        if not clamped or self.zoomClamp is False:
+        if self.zoomRange[0]-1 <= self.zoom <= self.zoomRange[1]:
             self.scale(zoomFactor, zoomFactor)
-
+        elif self.zoom < self.zoomRange[0]-1:
+            self.zoom = self.zoomRange[0]-1
+        elif self.zoom > self.zoomRange[1]:
+            self.zoom = self.zoomRange[1]
+            
+            
+# =============================================================================
+#             
+# If a wire is dragging then as the mouse moves the wire will be redrawn with
+# the coordinates of the mouse.
+# 
+# =============================================================================
+    
     def mouseMoveEvent(self, event):
         super().mouseMoveEvent(event)
 
@@ -331,3 +445,4 @@ class GraphicsView(QGraphicsView):
             self.drag_wire.grWire.setDestination(pos.x(), pos.y())
             self.drag_wire.grWire.update()
 
+        self.intersectionTest()

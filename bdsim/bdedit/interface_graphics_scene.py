@@ -54,13 +54,32 @@ class GraphicsScene(QGraphicsScene):
             if block.grBlock.isSelected():
                 block.updateConnectedEdges()
 
-        # # Code for collision detection of items in the scene
-        # for block in self.scene.blocks:
-        #     # For each output socket of a block
-        #     for outSocket in block.inputs:
-        #         # Grab the wire if the socket has a wire
-        #         if outSocket.wire:
-        #             print(self.collidingItems(outSocket.wire.grWire, mode=Qt.IntersectsItemShape))
+    def drawForeground(self, painter, rect):
+        super().drawForeground(painter, rect)
+
+        # If there are intersection points to draw
+        if self.scene.intersection_list:
+
+            # Check the current colour mode of the scene and set the pen to that colour
+            self.checkMode()
+            painter.setPen(QPen(self._color_background))
+            painter.setBrush(QBrush(self._color_background))
+
+            # Paint each intersection point
+            for intersection_point in self.scene.intersection_list:
+                x = intersection_point[0]
+                y = intersection_point[1]
+                painter.drawRect(x-8, y-8, 16, 16)
+
+            pen = QPen(QColor("#000000"))
+            pen.setWidth(5)
+            painter.setPen(pen)
+
+            # Go through each intersection point and paint back the vertical lines
+            for intersection_point in self.scene.intersection_list:
+                x = intersection_point[0]
+                y = intersection_point[1]
+                painter.drawLine(x, y-6, x, y+6)
 
     def drawBackground(self, painter, rect):
         super().drawBackground(painter, rect)
@@ -93,7 +112,9 @@ class GraphicsScene(QGraphicsScene):
 
             # draw the lines
             painter.setPen(self._pen_light)
-            painter.drawLines(*lines_light)
+            try: painter.drawLines(*lines_light)
+            except TypeError: painter.drawLines(lines_light)
 
             painter.setPen(self._pen_dark)
-            painter.drawLines(*lines_dark)
+            try: painter.drawLines(*lines_dark)
+            except TypeError: painter.drawLines(lines_dark)

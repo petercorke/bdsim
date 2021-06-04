@@ -170,7 +170,6 @@ class Block(Serializable):
             else: self.outputs[i].position = RIGHT
             [x,y] = self.getSocketPosition(i, self.outputs[i].position)
             self.outputs[i].grSocket.setPos(*[float(x), float(y)])
-        print()
 
         self.updateConnectedEdges()
 

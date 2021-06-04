@@ -28,8 +28,8 @@ class ParamWindow(QWidget):
         self._parameter_line_width = 150
         self._yOffset = 20
         self._width = 300 * self.block.window.scale
-        self._xOffset = self.block.scene.sceneWidth()//2 - self._width
-        self._height = self.block.scene.sceneHeight()//2 - self._yOffset
+        self._xOffset = self.block.scene.getSceneWidth() // 2 - self._width
+        self._height = self.block.scene.getSceneHeight() // 2 - self._yOffset
         self.setFixedWidth(self._width)
 
         self.initUI()

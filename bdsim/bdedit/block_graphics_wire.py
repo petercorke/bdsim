@@ -30,14 +30,15 @@ class GraphicsWire(QGraphicsPathItem):
         super().__init__()
 
         self.wire = edge
-        self.wire_coordinates = []
-        self.horizontal_segments = []
-        self.vertical_segments = []
+        self.wire.wire_coordinates = []
+        self.wire.horizontal_segments = []
+        self.wire.vertical_segments = []
 
 
-        self._color = QColor("#001000")
+        self._color = QColor("#000000")
         self._color_selected = QColor("#00ff00")
-        self._color_inter = QColor("#E0E0E0") # THIS NEEDS TO BE THE SAME AS THE BACKGROUND
+        # self._color_inter = QColor("#E0E0E0") # THIS NEEDS TO BE THE SAME AS THE BACKGROUND
+        self._color_inter = QColor("#E74C3C") # Used for easier debugging of where the intersection is found
         self._color_inter_light = QColor("#E0E0E0")
         self._color_inter_dark = QColor("#999999")
         self._color_line = QColor("#ff0000")
@@ -51,7 +52,6 @@ class GraphicsWire(QGraphicsPathItem):
         self._pen_inter_light.setWidth(15)
         self._pen_inter_dark.setWidth(15)
         self._pen_selected.setWidth(8)
-
 
         self.setFlag(QGraphicsItem.ItemIsSelectable)
         self.setZValue(-1)
@@ -116,38 +116,48 @@ class GraphicsWire(QGraphicsPathItem):
 # 	not the wire is selected.
 # 
 # =============================================================================
-
     def paint(self, painter, styles, widget=None):
-        
-        painter.setPen(self._color_inter)
-        painter.setPen(self._pen_inter)
-        
-        # Check the background colour and change the marks to match
-        if self.wire.scene.grScene.mode == 'Light':
-            
-            painter.setPen(self._color_inter_light)
-            painter.setPen(self._pen_inter_light)
-        elif self.wire.scene.grScene.mode == 'Dark':
-            
-            painter.setPen(self._color_inter_dark)
-            painter.setPen(self._pen_inter_dark)
-        
-        # for each intersection draw a mark that matches the background
-        if len(self.wire.intersectionsx) > 0:
-            i = 0
-            while(i<len(self.wire.intersectionsx)):
-                
-                x = self.wire.intersectionsx[i]
-                y = self.wire.intersectionsy[i]
-                # painter.drawEllipse(x-7.5, y-7.5, 15, 15)
-                painter.drawRect(x-6, y-6, 12, 12)
-                i += 1
-        #update position and draw it on top of the intersection marks
-        self.updatePath()
 
+        self.setZValue(-1)
         painter.setPen(self._pen if not self.isSelected() else self._pen_selected)
         painter.setBrush(Qt.NoBrush)
         painter.drawPath(self.path())
+
+        # # Check the background colour and change the marks to match
+        # if self.wire.scene.grScene.mode == 'Light':
+        #     painter.setPen(self._color_inter_light)
+        #     painter.setPen(self._pen_inter_light)
+        #
+        # elif self.wire.scene.grScene.mode == 'Dark':
+        #     painter.setPen(self._color_inter_dark)
+        #     painter.setPen(self._pen_inter_dark)
+
+        # for each intersection draw a mark that matches the background
+        # if len(self.wire.intersectionsx) > 0:
+        #     i = 0
+        #     while(i<len(self.wire.intersectionsx)):
+        #
+        #         x = self.wire.intersectionsx[i]
+        #         y = self.wire.intersectionsy[i]
+        #         # painter.drawEllipse(x-7.5, y-7.5, 15, 15)
+        #         painter.drawRect(x-6, y-6, 12, 12)
+        #         i += 1
+        #update position and draw it on top of the intersection marks
+
+        # if self.wire.intersections:
+        #     # print("wire, intersections:", [self.wire, self.wire.intersections])
+        #     painter.setPen(self._color_inter)
+        #     painter.setPen(self._pen_inter)
+        #
+        #     for intersection_point in self.wire.intersections:
+        #         x = intersection_point[0]
+        #         y = intersection_point[1]
+        #         painter.drawRect(x-6, y-6, 12, 12)
+        #
+        #         self.setZValue(-2)
+
+        # Update the wire with the drawn intersection point(s)
+        self.updatePath()
         
 
 # =============================================================================
@@ -168,17 +178,17 @@ class GraphicsWire(QGraphicsPathItem):
 
     def updateLineSegments(self):
         # If the wire coordinates exist
-        if self.wire_coordinates:
-            self.horizontal_segments.clear()
-            self.vertical_segments.clear()
-            for counter in range(0, len(self.wire_coordinates)-1):
+        if self.wire.wire_coordinates:
+            self.wire.horizontal_segments.clear()
+            self.wire.vertical_segments.clear()
+            for counter in range(0, len(self.wire.wire_coordinates)-1):
                 # Line segments always alternate, from horizontal to vertical to horizontal etc.
                 # Even iterations of coordinate points are always the beginning to horizontal segments
                 # Append a line represented as ((x1,y2),(x2,y2)) to either horizontal or vertical line segment list
                 if counter % 2 == 0:
-                    self.horizontal_segments.append((self.wire_coordinates[counter], (self.wire_coordinates[counter+1])))
+                    self.wire.horizontal_segments.append((self.wire.wire_coordinates[counter], (self.wire.wire_coordinates[counter+1])))
                 else:
-                    self.vertical_segments.append((self.wire_coordinates[counter], (self.wire_coordinates[counter+1])))
+                    self.wire.vertical_segments.append((self.wire.wire_coordinates[counter], (self.wire.wire_coordinates[counter+1])))
 
 # =============================================================================
 #     
@@ -190,15 +200,15 @@ class GraphicsWire(QGraphicsPathItem):
     def updateWireCoordinates(self, new_coordinates):
         # Update current wire coordinates, if the new coordinates are different
         # Also update the horizontal and vertical line segments
-        if new_coordinates != self.wire_coordinates:
-            self.wire_coordinates.clear()
-            self.wire_coordinates = new_coordinates
+        if new_coordinates != self.wire.wire_coordinates:
+            self.wire.wire_coordinates.clear()
+            self.wire.wire_coordinates = new_coordinates
             self.updateLineSegments()
 
             # print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-            # print("coordinates:", [self.wire_coordinates])
-            # print("\nhorizontal lines:", [self.horizontal_segments])
-            # print("\nvertical lines:", [self.vertical_segments])
+            # print("coordinates:", [self.wire.wire_coordinates])
+            # print("\nhorizontal lines:", [self.wire.horizontal_segments])
+            # print("\nvertical lines:", [self.wire.vertical_segments])
             # print("-------------------------------------------------------")
 
 # =============================================================================
@@ -495,18 +505,21 @@ class GraphicsWireStep(GraphicsWire):
 
             # Source block (start socket) is right of destination block (end socket)
             if sx > dx:
-                if DEBUG: print("Wire style: G")
-                # Draw normal step line
-                # ---------------------------
-                #              |-<-(s-block)
-                #              |
-                #  (d-block)-<-|
-                # ---------------------------
-                path.lineTo(sx - xDist, sy)
-                path.lineTo(sx - xDist, dy)
+                # If start socket is not on same height as end socket
+                # Otherwise a straight line will be drawn when this logic is passed through
+                if sy != dy:
+                    if DEBUG: print("Wire style: G")
+                    # Draw normal step line
+                    # ---------------------------
+                    #              |-<-(s-block)
+                    #              |
+                    #  (d-block)-<-|
+                    # ---------------------------
+                    path.lineTo(sx - xDist, sy)
+                    path.lineTo(sx - xDist, dy)
 
-                temporary_wire_coordinates.append((sx - xDist, sy))
-                temporary_wire_coordinates.append((sx - xDist, dy))
+                    temporary_wire_coordinates.append((sx - xDist, sy))
+                    temporary_wire_coordinates.append((sx - xDist, dy))
 
             # Source block (start socket) is equal to or left of destination block (end socket)
             else:
@@ -681,6 +694,7 @@ class GraphicsWireStep(GraphicsWire):
             temporary_wire_coordinates.append((sx - xDist, sy))
             temporary_wire_coordinates.append((sx - xDist, dy))
 
+        if DEBUG: print("Wire style: O")
         # Finish the path to the destination
         path.lineTo(dx, dy)
         temporary_wire_coordinates.append((dx, dy))

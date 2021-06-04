@@ -1,6 +1,7 @@
 from bdedit.block_graphics_wire import *
 from bdedit.interface_serialize import Serializable
 from collections import OrderedDict
+import time
 
 WIRE_TYPE_DIRECT = 1
 WIRE_TYPE_BEZIER = 2
@@ -27,14 +28,13 @@ class Wire(Serializable):
         # default init
         self._start_socket = None
         self._end_socket = None
-        
-              
+
         self.wire_coordinates = []
         self.horizontal_segments = []
         self.vertical_segments = []
         
         self.wirepath = None
-        self.intersection = []
+        self.intersections = []
         self.intersectionsx = []
         self.intersectionsy = []
         self.wire_pointsx = []
@@ -237,6 +237,72 @@ class Wire(Serializable):
         return True
     
     
+# =============================================================================
+#
+# 	 Detail how this works Required
+# 	
+# 
+# =============================================================================
+    def checkIntersection2(self):
+        # Clear the intersection list stored within the scene of any previous intersection points
+        self.scene.intersection_list.clear()
+
+        # Grab the number of wires currently in the scene
+        number_of_wires = len(self.scene.wires)
+
+        # If there are more than 1 wires, check for overlapping
+        if number_of_wires > 1:
+
+            # Iterate through each wire in list of wires
+            for i in range(0, number_of_wires):
+
+                # If the wire has a vertical segment, check intersections against other wires
+                # Else ignore (as wire only has horizontal segments, and these cant create an intersection point
+                # unless a vertical line passes through them)
+
+                wire_has_vert = self.scene.wires[i].vertical_segments
+                if wire_has_vert:
+
+                    # Check each vertical segment against horizontal segments of other wires
+                    for vertical_segment in wire_has_vert:
+
+                        for j in range(0, number_of_wires):
+
+                            # If j==i this means the same wire is being checked, ignore checking this wire (cannot overlap with itself)
+                            if j != i:
+
+                                # Iterate through each horizontal segments of the wire being checked
+                                for horizontal_segment in self.scene.wires[j].horizontal_segments:
+
+                                    # In a vertical wire with points [(a1,b1), (a2,b2)], the horizontal coordinates will be
+                                    # equal, hence the wire is essentially [(a,b1), (a,b2)]
+
+                                    # In a horizontal wire with points [(x1,y1), (x2,y2)], the vertical coordinates will be
+                                    # equal, hence the wire is essentially [(x1,y), (x2,y)]
+
+                                    # If vertical points of wire with a vertical segment, are intersecting the y coordinate
+                                    # of a horizontal segment of the wire being checked against
+                                    # Essentially checking if b1 <= y <= b2 (if y is between b1 and b2)
+                                    if vertical_segment[0][1] <= horizontal_segment[0][1] <= vertical_segment[1][1] or \
+                                       vertical_segment[0][1] >= horizontal_segment[0][1] >= vertical_segment[1][1]:
+                                        if DEBUG: print("y coords of vert segment within y coord of horizontal seg")
+
+                                        # There may be a possible intersection, so now
+                                        # check if the horizontal points of wire with a vertical segment, intersects through
+                                        # the x coordinate of a horizontal segment of the wire being checked against
+                                        # Essentially checking if x1 <= a <= x2 (if a is between x1 and x2)
+                                        if horizontal_segment[0][0] <= vertical_segment[0][0] <= horizontal_segment[1][0] or \
+                                           horizontal_segment[0][0] >= vertical_segment[0][0] >= horizontal_segment[1][0]:
+                                            if DEBUG: print("x coord of vert segment within x coords of horizontal seg")
+
+                                            # An intersection is found, append the point to the wire's list of intersections
+                                            # The intersection point is (a, y)
+                                            # (a -> x coord from vertical segment, y -> y coord from horizontal segment)
+											
+                                            # Append intersection point into list of intersection points
+                                            if (vertical_segment[0][0], horizontal_segment[0][1]) not in self.scene.intersection_list:
+                                                self.scene.intersection_list.append((vertical_segment[0][0], horizontal_segment[0][1]))
+
 # =============================================================================
 #
 # 	This function will check for intersections in the wires by first looking at

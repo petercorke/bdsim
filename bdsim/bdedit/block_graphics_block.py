@@ -184,21 +184,23 @@ class GraphicsBlock(QGraphicsItem):
         pos = QPointF(x, y)
         self.setPos(pos)
 
-        if self.pos().x() < self.scene().sceneRect().x():
+        # 20 is the width of the smaller grid squares
+        padding = 20
+        if self.pos().x() < self.scene().sceneRect().x() + padding:
             # left
-            self.setPos(self.scene().sceneRect().x(), self.pos().y())
+            self.setPos(self.scene().sceneRect().x() + padding, self.pos().y())
 
-        if self.pos().y() < self.scene().sceneRect().y():
-            # bottom
-            self.setPos(self.pos().x(), self.scene().sceneRect().y())
-
-        if self.pos().x() > (self.scene().sceneRect().x() + self.scene().sceneRect().width() - self.width):
-            # right
-            self.setPos(self.scene().sceneRect().x() + self.scene().sceneRect().width() - self.width, self.pos().y())
-
-        if self.pos().y() > (self.scene().sceneRect().y() + self.scene().sceneRect().height() - self.height):
+        if self.pos().y() < self.scene().sceneRect().y() + padding:
             # top
-            self.setPos(self.pos().x(), self.scene().sceneRect().y() + self.scene().sceneRect().height() - self.height)
+            self.setPos(self.pos().x(), self.scene().sceneRect().y() + padding)
+
+        if self.pos().x() > (self.scene().sceneRect().x() + self.scene().sceneRect().width() - self.width - padding):
+            # right
+            self.setPos(self.scene().sceneRect().x() + self.scene().sceneRect().width() - self.width - padding, self.pos().y())
+
+        if self.pos().y() > (self.scene().sceneRect().y() + self.scene().sceneRect().height() - self.height - self.title_height - padding):
+            # bottom
+            self.setPos(self.pos().x(), self.scene().sceneRect().y() + self.scene().sceneRect().height() - self.height - self.title_height - padding)
 
         for block in self.block.scene.blocks:
             if block.grBlock.isSelected():
@@ -260,27 +262,27 @@ class GraphicsSocketBlock(QGraphicsItem):
         pos = QPointF(x, y)
         self.setPos(pos)
 
-        if self.pos().x() < self.scene().sceneRect().x():
+        # 20 is the width of the smaller grid squares
+        padding = 20
+        if self.pos().x() < self.scene().sceneRect().x() + padding:
             # left
-            self.setPos(self.scene().sceneRect().x(), self.pos().y())
+            self.setPos(self.scene().sceneRect().x() + padding, self.pos().y())
 
-        if self.pos().y() < self.scene().sceneRect().y():
-            # bottom
-            self.setPos(self.pos().x(), self.scene().sceneRect().y())
-
-        if self.pos().x() > (self.scene().sceneRect().x() + self.scene().sceneRect().width() - self.width):
-            # right
-            self.setPos(self.scene().sceneRect().x() + self.scene().sceneRect().width() - self.width, self.pos().y())
-
-        if self.pos().y() > (self.scene().sceneRect().y() + self.scene().sceneRect().height() - self.height):
+        if self.pos().y() < self.scene().sceneRect().y() + padding:
             # top
-            self.setPos(self.pos().x(), self.scene().sceneRect().y() + self.scene().sceneRect().height() - self.height)
+            self.setPos(self.pos().x(), self.scene().sceneRect().y() + padding)
+
+        if self.pos().x() > (self.scene().sceneRect().x() + self.scene().sceneRect().width() - self.width - padding):
+            # right
+            self.setPos(self.scene().sceneRect().x() + self.scene().sceneRect().width() - self.width - padding, self.pos().y())
+
+        if self.pos().y() > (self.scene().sceneRect().y() + self.scene().sceneRect().height() - self.height - self.title_height - padding):
+            # bottom
+            self.setPos(self.pos().x(), self.scene().sceneRect().y() + self.scene().sceneRect().height() - self.height - self.title_height - padding)
 
         for block in self.block.scene.blocks:
             if block.grBlock.isSelected():
                 block.updateConnectedEdges()
-
-        # self.block.updateConnectedEdges()
 
     def initUI(self):
         # print("initUI")

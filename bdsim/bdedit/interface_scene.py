@@ -19,15 +19,16 @@ class Scene(Serializable):
 
         self.blocks = []
         self.wires = []
+        self.intersection_list = []
 
-        self.scene_width = resolution.width() - 200
-        self.scene_height = resolution.height() - 200
+        self.scene_width = resolution.width()
+        self.scene_height = resolution.height()
 
         self.initUI()
 
     def initUI(self):
         self.grScene = GraphicsScene(self)
-        self.grScene.setGrScene(self.scene_width, self.scene_height)
+        self.updateSceneDimensions()
 
     def addBlock(self, block):
         self.blocks.append(block)
@@ -41,16 +42,26 @@ class Scene(Serializable):
     def removeWire(self, wire):
         self.wires.remove(wire)
 
-    def sceneWidth(self):
+    def getSceneWidth(self):
         return self.scene_width
 
-    def sceneHeight(self):
+    def getSceneHeight(self):
         return self.scene_height
+
+    def setSceneWidth(self, width):
+        self.scene_width = width
+
+    def setSceneHeight(self, height):
+        self.scene_height = height
+
+    def updateSceneDimensions(self):
+        self.grScene.setGrScene(self.scene_width, self.scene_height)
 
     # Removes the first block from the self.blocks array, until the array is empty
     def clear(self):
         while len(self.blocks) > 0:
             self.blocks[0].remove()
+
 
     def checkForDuplicates(self, name):
         duplicate = False

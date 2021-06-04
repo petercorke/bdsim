@@ -1,0 +1,597 @@
+{
+    "id": 2332586410048,
+    "scene_width": 7156.800000000001,
+    "scene_height": 7660.800000000001,
+    "blocks": [
+        {
+            "id": 1312113233680,
+            "block_type": "Clip",
+            "title": "Clip Block",
+            "pos_x": -920.0,
+            "pos_y": -280.0,
+            "icon": ":/Icons_Reference/Icons/clip.png",
+            "inputs": [
+                {
+                    "id": 1312113233632,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 1,
+                    "socket_type": 1
+                }
+            ],
+            "outputs": [
+                {
+                    "id": 1312113233872,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 3,
+                    "socket_type": 2
+                }
+            ],
+            "variables": [
+                [
+                    "Min",
+                    -Infinity
+                ],
+                [
+                    "Max",
+                    Infinity
+                ]
+            ]
+        },
+        {
+            "id": 1312113233440,
+            "block_type": "Function",
+            "title": "Function Block",
+            "pos_x": -840.0,
+            "pos_y": 200.0,
+            "icon": ":/Icons_Reference/Icons/function.png",
+            "inputs": [
+                {
+                    "id": 1312113233104,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 1,
+                    "socket_type": 1
+                }
+            ],
+            "outputs": [
+                {
+                    "id": 1312113232768,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 3,
+                    "socket_type": 2
+                }
+            ],
+            "variables": [
+                [
+                    "Function",
+                    "Provide Function?"
+                ],
+                [
+                    "No. of inputs",
+                    1
+                ],
+                [
+                    "No. of outputs",
+                    1
+                ],
+                [
+                    "Dict",
+                    false
+                ],
+                [
+                    "Args",
+                    {
+                        "__tuple__": true,
+                        "items": []
+                    }
+                ],
+                [
+                    "Kwargs",
+                    {}
+                ]
+            ]
+        },
+        {
+            "id": 1312113233008,
+            "block_type": "Function",
+            "title": "Function Block 1",
+            "pos_x": 376.0,
+            "pos_y": -258.0,
+            "icon": ":/Icons_Reference/Icons/function.png",
+            "inputs": [
+                {
+                    "id": 1314172453360,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 1,
+                    "socket_type": 1
+                }
+            ],
+            "outputs": [
+                {
+                    "id": 1314172453312,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 3,
+                    "socket_type": 2
+                }
+            ],
+            "variables": [
+                [
+                    "Function",
+                    "Provide Function?"
+                ],
+                [
+                    "No. of inputs",
+                    1
+                ],
+                [
+                    "No. of outputs",
+                    1
+                ],
+                [
+                    "Dict",
+                    false
+                ],
+                [
+                    "Args",
+                    {
+                        "__tuple__": true,
+                        "items": []
+                    }
+                ],
+                [
+                    "Kwargs",
+                    {}
+                ]
+            ]
+        },
+        {
+            "id": 1314172453168,
+            "block_type": "Clip",
+            "title": "Clip Block 1",
+            "pos_x": 280.0,
+            "pos_y": 220.0,
+            "icon": ":/Icons_Reference/Icons/clip.png",
+            "inputs": [
+                {
+                    "id": 1314172386512,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 1,
+                    "socket_type": 1
+                }
+            ],
+            "outputs": [
+                {
+                    "id": 1314172386848,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 3,
+                    "socket_type": 2
+                }
+            ],
+            "variables": [
+                [
+                    "Min",
+                    -Infinity
+                ],
+                [
+                    "Max",
+                    Infinity
+                ]
+            ]
+        },
+        {
+            "id": 1314172385360,
+            "block_type": "Gain",
+            "title": "Gain Block",
+            "pos_x": 320.0,
+            "pos_y": -60.0,
+            "icon": ":/Icons_Reference/Icons/gain.png",
+            "inputs": [
+                {
+                    "id": 1312113287472,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 1,
+                    "socket_type": 1
+                }
+            ],
+            "outputs": [
+                {
+                    "id": 1312113287616,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 3,
+                    "socket_type": 2
+                }
+            ],
+            "variables": [
+                [
+                    "Gain",
+                    0
+                ],
+                [
+                    "Premul",
+                    false
+                ]
+            ]
+        },
+        {
+            "id": 1312113287712,
+            "block_type": "Interpolate",
+            "title": "Interpolate Block",
+            "pos_x": -560.0,
+            "pos_y": 60.0,
+            "icon": ":/Icons_Reference/Icons/interpolate.png",
+            "inputs": [
+                {
+                    "id": 1312113288576,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 1,
+                    "socket_type": 1
+                }
+            ],
+            "outputs": [
+                {
+                    "id": 1312113342448,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 3,
+                    "socket_type": 2
+                }
+            ],
+            "variables": [
+                [
+                    "X",
+                    null
+                ],
+                [
+                    "Y",
+                    null
+                ],
+                [
+                    "XY",
+                    null
+                ],
+                [
+                    "Time",
+                    false
+                ],
+                [
+                    "Kind",
+                    "linear"
+                ]
+            ]
+        },
+        {
+            "id": 1312113343504,
+            "block_type": "Function",
+            "title": "Function Block 2",
+            "pos_x": 240.0,
+            "pos_y": 380.0,
+            "icon": ":/Icons_Reference/Icons/function.png",
+            "inputs": [
+                {
+                    "id": 1312113343600,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 1,
+                    "socket_type": 1
+                }
+            ],
+            "outputs": [
+                {
+                    "id": 1312113343648,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 3,
+                    "socket_type": 2
+                }
+            ],
+            "variables": [
+                [
+                    "Function",
+                    "Provide Function?"
+                ],
+                [
+                    "No. of inputs",
+                    1
+                ],
+                [
+                    "No. of outputs",
+                    1
+                ],
+                [
+                    "Dict",
+                    false
+                ],
+                [
+                    "Args",
+                    {
+                        "__tuple__": true,
+                        "items": []
+                    }
+                ],
+                [
+                    "Kwargs",
+                    {}
+                ]
+            ]
+        },
+        {
+            "id": 1312113288144,
+            "block_type": "Gain",
+            "title": "Gain Block 1",
+            "pos_x": -560.0,
+            "pos_y": -120.0,
+            "icon": ":/Icons_Reference/Icons/gain.png",
+            "inputs": [
+                {
+                    "id": 1312113288480,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 1,
+                    "socket_type": 1
+                }
+            ],
+            "outputs": [
+                {
+                    "id": 1312113288432,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 3,
+                    "socket_type": 2
+                }
+            ],
+            "variables": [
+                [
+                    "Gain",
+                    0
+                ],
+                [
+                    "Premul",
+                    false
+                ]
+            ]
+        },
+        {
+            "id": 2332590977712,
+            "block_type": "DLTI_SISO",
+            "title": "DLTI_SISO Block",
+            "pos_x": 140.0,
+            "pos_y": 600.0,
+            "icon": ":/Icons_Reference/Icons/dlti_siso_B.png",
+            "inputs": [
+                {
+                    "id": 2332590977760,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 1,
+                    "socket_type": 1
+                }
+            ],
+            "outputs": [
+                {
+                    "id": 2332590977808,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 3,
+                    "socket_type": 2
+                }
+            ],
+            "variables": [
+                [
+                    "N",
+                    [
+                        1
+                    ]
+                ],
+                [
+                    "D",
+                    [
+                        1,
+                        1
+                    ]
+                ],
+                [
+                    "X_0",
+                    null
+                ],
+                [
+                    "Verbose",
+                    false
+                ]
+            ]
+        },
+        {
+            "id": 2332590977952,
+            "block_type": "DLTI_SISO",
+            "title": "DLTI_SISO Block 1",
+            "pos_x": -240.0,
+            "pos_y": 760.0,
+            "icon": ":/Icons_Reference/Icons/dlti_siso_B.png",
+            "inputs": [
+                {
+                    "id": 2332590978192,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 1,
+                    "socket_type": 1
+                }
+            ],
+            "outputs": [
+                {
+                    "id": 2332590978240,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 3,
+                    "socket_type": 2
+                }
+            ],
+            "variables": [
+                [
+                    "N",
+                    [
+                        1
+                    ]
+                ],
+                [
+                    "D",
+                    [
+                        1,
+                        1
+                    ]
+                ],
+                [
+                    "X_0",
+                    null
+                ],
+                [
+                    "Verbose",
+                    false
+                ]
+            ]
+        },
+        {
+            "id": 2332590978624,
+            "block_type": "DLTI_SS",
+            "title": "DLTI_SS Block",
+            "pos_x": 220.0,
+            "pos_y": 540.0,
+            "icon": ":/Icons_Reference/Icons/dlti_ss.png",
+            "inputs": [
+                {
+                    "id": 2332590978720,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 1,
+                    "socket_type": 1
+                }
+            ],
+            "outputs": [
+                {
+                    "id": 2332590978768,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 3,
+                    "socket_type": 2
+                }
+            ],
+            "variables": [
+                [
+                    "A",
+                    null
+                ],
+                [
+                    "B",
+                    null
+                ],
+                [
+                    "C",
+                    null
+                ],
+                [
+                    "X_0",
+                    null
+                ],
+                [
+                    "Verbose",
+                    false
+                ]
+            ]
+        },
+        {
+            "id": 2332590978912,
+            "block_type": "DLTI_SISO",
+            "title": "DLTI_SISO Block 2",
+            "pos_x": -320.0,
+            "pos_y": 740.0,
+            "icon": ":/Icons_Reference/Icons/dlti_siso_B.png",
+            "inputs": [
+                {
+                    "id": 2332590979200,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 1,
+                    "socket_type": 1
+                }
+            ],
+            "outputs": [
+                {
+                    "id": 2332590979248,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 3,
+                    "socket_type": 2
+                }
+            ],
+            "variables": [
+                [
+                    "N",
+                    [
+                        1
+                    ]
+                ],
+                [
+                    "D",
+                    [
+                        1,
+                        1
+                    ]
+                ],
+                [
+                    "X_0",
+                    null
+                ],
+                [
+                    "Verbose",
+                    false
+                ]
+            ]
+        }
+    ],
+    "wires": [
+        {
+            "id": 1312113343120,
+            "start_socket": 1312113232768,
+            "end_socket": 1312113287472,
+            "wire_type": 3
+        },
+        {
+            "id": 1312113343408,
+            "start_socket": 1314172386512,
+            "end_socket": 1312113233872,
+            "wire_type": 3
+        },
+        {
+            "id": 1312113343456,
+            "start_socket": 1312113342448,
+            "end_socket": 1314172453360,
+            "wire_type": 3
+        },
+        {
+            "id": 2521512518560,
+            "start_socket": 1312113288432,
+            "end_socket": 1312113343600,
+            "wire_type": 3
+        },
+        {
+            "id": 2332590978384,
+            "start_socket": 2332590978240,
+            "end_socket": 2332590977760,
+            "wire_type": 3
+        },
+        {
+            "id": 2332590979392,
+            "start_socket": 2332590979248,
+            "end_socket": 2332590978720,
+            "wire_type": 3
+        }
+    ]
+}

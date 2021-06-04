@@ -367,7 +367,25 @@ class Interface(QWidget):
         painter.setRenderHint(QPainter.Antialiasing, True)
         self.canvasView.render(painter)
         painter.end()
-        #output_image.saveAsToFile()
+        #  .saveAsToFile()
         output_image.save(picture_name+".png")
         # output_image.save(picture_name+".svg")
         print("succeeded")
+
+    # Updates the dimensions of the scene based on current window size (will change as window is resized)
+    def updateSceneDimensions(self):
+        # The largest size the scene can be is:
+        # the difference between the max zoom out level (zoomRange[max_zoom_out, max_zoom_in]) and default zoom
+        # multiplied by the zoom out factor
+        multiplier = abs(self.canvasView.zoomRange[0] - self.canvasView._default_zoom_level) * 0.8
+
+        # Only update if canvas dimensions have changed to what they were previously set to
+        if self.width() * multiplier != self.scene.getSceneWidth() * multiplier or \
+           self.height() * multiplier != self.scene.getSceneHeight() * multiplier:
+            self.scene.setSceneWidth((self.width()) * multiplier)
+            self.scene.setSceneHeight((self.height()) * multiplier)
+            self.scene.updateSceneDimensions()
+
+    # Update the canvas's dimension if its size has changed (if window has been resized)
+    def resizeEvent(self, event):
+        self.updateSceneDimensions()
