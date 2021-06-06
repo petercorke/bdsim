@@ -312,6 +312,7 @@ class ScopeXY(GraphicsBlock):
         self.scale = scale
         self.aspect = aspect
         self.labels = labels
+        self.inport_names(('x', 'y'))
         
     def start(self, **kwargs):
         # create the plot
