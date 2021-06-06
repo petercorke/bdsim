@@ -2,6 +2,7 @@
 
 # run with command line -a switch to show animation
 
+from bdsim.blockdiagram import BlockDiagram
 import bdsim
 import math
 
@@ -100,9 +101,12 @@ bd.connect(Kbeta, gsum[1])
 bd.connect(gsum, aprod[0])
 
 bd.compile()
-bd.report()
-bd.dotfile('rvc4_11.dot')
 
-out = sim.run(bd)
+bd.plan_print()
+bd.plan_dotfile('plan.dot')
+bd.report()
+# bd.dotfile('rvc4_11.dot')
+
+out = sim.run(bd, debug='p')
 
 bd.done(block=True)
