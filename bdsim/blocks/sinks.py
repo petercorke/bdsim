@@ -42,31 +42,48 @@ class Print(SinkBlock):
     +--------+---------+---------+
     """
 
-    def __init__(self, fmt=None, *inputs, **kwargs):
+    def __init__(self, input=None, fmt=None, **kwargs):
         """
         :param fmt: Format string, defaults to None
         :type fmt: str, optional
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
+        :param ``input``: Optional incoming connection
+        :type ``input``: Block or Plug
         :param ``**kwargs``: common Block options
         :return: A PRINT block
         :rtype: Print instance
         
-        
+        Create a console print block which displays the value of a signal to the
+        console at each simulation time step. The format is like::
 
-        
-        Create a console print block which displays the value of a signal to the console
-        at each simulation time step.
+            PRINT(print.0 @ t=0.100) [-1.0 0.2]
+
+        and includes the block name, time, and the formatted value.
+
+        Examples::
+
+            pr = bd.PRINT()     # create PRINT block
+            bd.connect(x, pr)   # its input comes from x
+
+            bd.PRINT(x)         # create PRINT block with input from x
+
+            bd.PRINT(x, name='X')  # block name appears in the printed text
+
+            bd.PRINT(x, fmt="{:.1f}") # print with explicit format
         
         The numerical formatting of the signal is controlled by ``fmt``:
-            
+
         - if not provided, ``str()`` is used to format the signal
         - if provided:
             - a scalar is formatted by the ``fmt.format()``
-            - a numpy array is formatted by ``fmt.format()`` applied to every element
+            - a NumPy array is formatted by ``fmt.format()`` applied to every
+              element
+
+        .. note:: The output is cleaner if progress bar printing is disabled.
 
         """
-        super().__init__(nin=1, inputs=inputs, **kwargs)
+        if input is not None:
+            input = [input]
+        super().__init__(nin=1, inputs=input, **kwargs)
         self.format = fmt
         self.type = 'print'
         
@@ -74,13 +91,13 @@ class Print(SinkBlock):
 
     def step(self):
         prefix = '{:12s}'.format(
-            'PRINT({:s} (t={:.3f})'.format(self.name, self.bd.t)
+            'PRINT({:s} @ t={:.3f})'.format(self.name, self.bd.state.t)
             )
                 
         value = self.inputs[0]
         if self.format is None:
             # no format string
-            print()
+            print(prefix, str(value))
         else:
             # format string provided
             if isinstance(value, (int, float)):
