@@ -148,12 +148,10 @@ class Mux(FunctionBlock):
     +------------+---------+---------+
     """
 
-    def __init__(self, nin=1, *inputs, **kwargs):
+    def __init__(self, nin=1, **kwargs):
         """
         :param nin: Number of input ports, defaults to 1
         :type nin: int, optional
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
         :param ``**kwargs``: common Block options
         :return: A MUX block
         :rtype: Mux instance
@@ -171,7 +169,7 @@ class Mux(FunctionBlock):
         
         :seealso: :class:`Dict`
         """
-        super().__init__(nin=nin, nout=1, inputs=inputs, **kwargs)
+        super().__init__(nin=nin, nout=1, **kwargs)
         self.type = 'mux'
     
     def output(self, t=None):
