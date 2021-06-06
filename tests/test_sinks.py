@@ -42,18 +42,9 @@ import numpy.testing as nt
 from bdsim.blocks.displays import *
 
 class SinkBlockTest(unittest.TestCase):
+        pass
     
-    
-    def test_quadrotor(self):
-        
-        from quad_model import quadrotor as qm
-        
-        b = MultiRotorPlot(qm)
-        
-        b.start()
-        
-        b.setinputs(np.r_[0.5, 0, -1, 0, 0, 0, 0,0,0,0,0,0])
-        b.step()
+
 
 # --------------------------------------------------------------------------------------#
 if __name__ == '__main__':
