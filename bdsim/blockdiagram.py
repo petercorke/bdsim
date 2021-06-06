@@ -776,13 +776,18 @@ class BlockDiagram:
         
         Invokes the `start` method on all blocks.
         
-        """            
+        """
+        for c in self.clocklist:
+            try:
+                c.start(**kwargs)
+            except:
+                self._error_handler('start clock', b)
+
         for b in self.blocklist:
-            # print('starting block', b)
             try:
                 b.start(**kwargs)
             except:
-                self._error_handler('start', b)
+                self._error_handler('start block', b)
                 
     def initialstate(self):
         for b in self.blocklist:

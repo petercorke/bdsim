@@ -73,6 +73,45 @@ class Struct(UserDict):
 
         return self.name + ':\n' + s
 
+class PriorityQ:
+
+    def __init__(self):
+        self.q = []
+
+    def __len__(self):
+        return len(self.q)
+
+    def __str__(self):
+        return f"PriorityQ: len={len(self)}, first out {self.q[0]}"
+
+    def push(self, value):
+        self.q.append(value)
+
+    def pop(self, dt=0):
+        if len(self) == 0:
+            return None, []
+        self.q.sort(key=lambda x: x[0])
+
+        qfirst = self.q.pop(0)
+        t = qfirst[0]
+        blocks = [qfirst[1]]
+        while len(self.q) > 0 and self.q[0][0] < (t + dt):
+            blocks.append(self.q.pop(0)[1])
+        return t, blocks
+
+    def pop_until(self, t):
+        if len(self) == 0:
+            return []
+
+        self.q.sort(key=lambda x: x[0])
+        i = 0
+        while True:
+            if self.q[i][0] > t:
+                out = self.q[:i]
+                self.q = self.q[i:]
+                return out
+            i += 1
+
 class Wire:
     """
     Create a wire.
@@ -379,6 +418,7 @@ class Clock:
 
         self.x = []  # discrete state vector numpy.ndarray
         self.t = []
+        self.tick = 0
 
         self.name = "clock." + str(len(clocklist))
 
@@ -421,10 +461,18 @@ class Clock:
         for b in self.blocklist:
             x = b.setstate(x)  # send it to blocks        
 
-    def next(self, t):
+    def start():
+        self.bd.state.declare_event(self.time(self.i))
+        self.i += 1
+
+    def next_event():
+        self.bd.state.declare_event(self.time(self.i))
+        self.i += 1
+
+    def time(self, i):
         # return (math.floor((t - self.offset) / self.T) + 1) * self.T + self.offset
-        k = int((t - self.offset) / self.T + 0.5)
-        return (k + 1) * self.T + self.offset
+        # k = int((t - self.offset) / self.T + 0.5)
+        return i * self.T + self.offset
 
     def savestate(self, t):
         # save clock state at time t
@@ -956,6 +1004,7 @@ class TransferBlock(Block):
         # return self._x
 
     def setstate(self, x):
+        x = np.array(x)
         self._x = x[:self.nstates]  # take as much state vector as we need
         return x[self.nstates:]     # return the rest
 
@@ -1036,3 +1085,4 @@ class ClockedBlock(Block):
 
 # print(c, c1)
 # print(c.next(0), c1.next(0))
+

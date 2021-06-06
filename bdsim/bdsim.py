@@ -15,7 +15,6 @@ import subprocess
 import webbrowser
 
 import numpy as np
-import bdsim
 import scipy.integrate as integrate
 import re
 from colored import fg, attr
@@ -70,6 +69,10 @@ class BDSimState:
 
         self.debugger = True
         self.t_stop = None  # time-based breakpoint
+        self.eventq = PriorityQ()
+
+    def declare_event(self, block, t):
+        self.eventq.push((t, block))
 
 class BDSim:
 
@@ -261,53 +264,61 @@ class BDSim:
             ndstates += nds
             print(clock.name, 'initial dstate x0 = ', clock.getstate())
 
-        # tell all blocks we're starting a BlockDiagram
+        # tell all blocks and clocks we're starting a simulation
         bd.start()
         self.progress(0)
 
-        if ndstates == 0:
-            # no discrete time states
-            self._run_interval(bd, 0, T, state=state)
+        if len(self.simstate.eventq) == 0:
+            # no simulation events, solve it in one go
+            self._run_interval(bd, 0, T, x0, simstate=simstate)
+            nintervals = 1
         else:
-            # find the first clock time
-            next = []
+            # we have simulation events, solve it in chunks
+
+            self.simstate.declare_event(None, T)  # add an event at end of simulation
+
+            # ignore all the events at zero
             tprev = 0
-            for clock in bd.clocklist:
-                next.append(clock.next(tprev))  # append time of next sample
-                #clock.x = clock.getstate0()  # get state of all blocks on this clock
+            self.simstate.eventq.pop_until(tprev)
+
+            # get the state vector
+            x = x0
             
-            # choose the nearest sample time
-            tnext = min(next)
+            nintervals = 0
+            while True:
+                # get next event from the queue and the list of blocks or
+                # clocks at that time
+                tnext, sources = self.simstate.eventq.pop(dt=1e-6)
 
-            while tnext <= T:
+                # run system until next event time
+                x = self._run_interval(bd, tprev, tnext, x, simstate=simstate)
+                nintervals += 1
 
-                # run system until next clock time
-                self._run_interval(bd, tprev, tnext, state=state)
-
-                tprev = tnext
-                for i, t in enumerate(next):
-                    if t == tnext:
-                        # it was this clock that ticked
-                        clock = bd.clocklist[i]
-
+                # visit all the blocks and clocks that have an event now
+                for source in sources:
+                    if isinstance(source, Clock):
+                        # clock ticked, save its state
                         clock.savestate(t)
-
-                        # update the next time for this clock
-                        next[i] = clock.next(tprev)
+                        clock.next_event()
 
                         # get the new state
                         clock._x = clock.getstate()
+                tprev = tnext
 
-                    tnext = min(next)
+                # are we done?
+                if simstate.t is not None and simstate.t >= T:
+                    break
 
+        # finished integration
 
-        # self.progress_done()  # cleanup the progress bar
-        print()
+        self.progress_done()  # cleanup the progress bar
 
-        # pause until all graphics blocks close
-        bd.done(block=block)
-        print(bd.state.count,  ' integrator steps')
-        print(len(state.tlist), ' time steps')
+        # print some info about the integration
+        print(fg('yellow'))
+        print(f"integrator steps:      {bd.simstate.count}")
+        print(f"time steps:            {len(simstate.tlist)}")
+        print(f"integration intervals: {nintervals}")
+        print(attr(0))
 
         # save buffered data in a Struct
         out = Struct('results')
@@ -323,32 +334,48 @@ class BDSim:
             clockdata.x = np.array(c.x)
             out.add(name, clockdata)
 
+        # save the watchlist into variables named y0, y1 etc.
         for i, p in enumerate(watchlist):
-            out['y'+str(i)] = np.array(state.plist[i])
+            out['y'+str(i)] = np.array(simstate.plist[i])
         out.ynames = watchnamelist
+
+        # pause until all graphics blocks close
+        bd.done(block=block)
+
         return out
         
     def _run_interval(self, bd, t0, tf, x0, simstate):
+        """
+        Integrate system over interval
+
+        :param bd: the system blockdiagram 
+        :type bd: BlockDiagram
+        :param t0: initial time
+        :type t0: float
+        :param tf: final time
+        :type tf: float
+        :param x0: initial state vector
+        :type x0: ndarray(n)
+        :param simstate: simulation state object
+        :type simstate: SimState
+        :return: final state vector xf
+        :rtype: ndarray(n)
+
+        The system is integrated from from ``x0`` to ``xf`` over the interval ``t0`` to ``tf``.
+        """
         try:
-            # get initial state from the stateful blocks
-
-
-
-            # out = scipy.integrate.solve_ivp.BlockDiagram._deriv, args=(self,), t_span=(0,T), y0=x0, 
-            #             method=solver, t_eval=np.linspace(0, T, 100), events=None, **kwargs)
             if bd.nstates > 0:
-
-                x0 = bd.getstate0()
+                # system has continuous states, solve it using numerical integration
                 # print('initial state x0 = ', x0)
 
-                # block diagram contains states, solve it using numerical integration
+                # get the specified integrator
+                scipy_integrator = integrate.__dict__[simstate.solver]  # get user specified integrator
+                integrator = scipy_integrator(
+                        lambda t, y: bd.evaluate_plan(y, t),
+                        t0=t0, y0=x0, t_bound=tf, max_step=simstate.dt, 
+                        **simstate.intargs)
 
-                scipy_integrator = integrate.__dict__[state.solver]  # get user specified integrator
-
-                integrator = scipy_integrator(lambda t, y: bd.evaluate_plan(y, t),
-                                                t0=t0, y0=x0, t_bound=T, max_step=state.dt, **state.intargs)
-
-
+                # integrate
                 while integrator.status == 'running':
 
                     # step the integrator, calls _deriv multiple times
@@ -705,4 +732,5 @@ class BDSim:
         options = types.SimpleNamespace(**options)
 
         return options
-        
+
+
