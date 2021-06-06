@@ -59,6 +59,8 @@ class BlockDiagram:
 
 
         self.options = None
+        self.n_auto_sum = 0
+        self.n_auto_prod = 0
         
 
     @property

@@ -264,7 +264,7 @@ class Plug:
         """
         return len(self.portlist)
 
-    def __mul__(left, right):
+    def __rshift__(left, right):
         """
         Operator for implicit wiring.
 
@@ -277,19 +277,19 @@ class Plug:
 
         Implements implicit wiring, where the left-hand operator is a Plug, for example::
 
-            a = bike[2] * bd.GAIN(3)
+            a = bike[2] >> bd.GAIN(3)
 
         will connect port 2 of ``bike`` to the input of the GAIN block.
 
         Note that::
 
-           a = bike[2] * func[1]
+           a = bike[2] >> func[1]
 
         will connect port 2 of ``bike`` to port 1 of ``func``, and port 1 of ``func``
         will be assigned to ``a``.  To specify a different outport port on ``func``
         we need to use parentheses::
 
-            a = (bike[2] * func[1])[0]
+            a = (bike[2] >> func[1])[0]
 
         which will connect port 2 of ``bike`` to port 1 of ``func``, and port 0 of ``func``
         will be assigned to ``a``.
@@ -305,6 +305,21 @@ class Plug:
         w = s.connect(left, right)  # add a wire
         #print('plug * ' + str(w))
         return right
+
+    def __add__(self, other):
+        return self.block.bd.SUM('++', self, other)
+
+    def __sub__(self, other):
+        return self.block.bd.SUM('+-', self, other)
+
+    def __neg__(self):
+        return self.block.bd.GAIN(-1, self)
+
+    def __mul__(self, other):
+        return self.block.bd.PROD('**', self, other)
+
+    def __truediv__(self, other):
+        return self.block.bd.PROD('*/', self, other)
 
     def __setitem__(self, port, src):
         """
@@ -678,7 +693,7 @@ class Block:
             # regular case, add attribute to the instance's dictionary
             self.__dict__[name] = value
 
-    def __mul__(left, right):
+    def __rshift__(left, right):
         """
         Operator for implicit wiring.
 
@@ -691,7 +706,7 @@ class Block:
 
         Implements implicit wiring, for example::
 
-            a = bd.CONSTANT(1) * bd.GAIN(2)
+            a = bd.CONSTANT(1) >> bd.GAIN(2)
 
         will connect the output of the CONSTANT block to the input of the
         GAIN block.  The result will be GAIN block, whose output in this case
@@ -699,18 +714,18 @@ class Block:
 
         Note that::
 
-           a = bd.CONSTANT(1) * func[1]
+           a = bd.CONSTANT(1) >> func[1]
 
         will connect port 0 of CONSTANT to port 1 of ``func``, and port 1 of ``func``
         will be assigned to ``a``.  To specify a different outport port on ``func``
         we need to use parentheses::
 
-            a = (bd.CONSTANT(1) * func[1])[0]
+            a = (bd.CONSTANT(1) >> func[1])[0]
 
         which will connect port 0 of CONSTANT ` to port 1 of ``func``, and port 0 of ``func``
         will be assigned to ``a``.
 
-        :seealso: Plug.__mul__
+        :seealso: Plug.__rshift__
 
         """
         # called for the cases:
@@ -723,6 +738,32 @@ class Block:
         return right
 
         # make connection, return a plug
+
+    def __add__(self, other):
+        name = "autosum.{:d}".format(self.bd.n_auto_sum)
+        self.bd.n_auto_sum += 1
+        return self.bd.SUM('++', self, other, name=name)
+
+    def __sub__(self, other):
+        name = "autosum.{:d}".format(self.bd.n_auto_sum)
+        self.bd.n_auto_sum += 1
+        return self.bd.SUM('+-', self, other, name=name)
+
+    def __neg__(self):
+        return self >> self.bd.GAIN(-1)
+
+    def __mul__(self, other):
+        name = "autoprod.{:d}".format(self.bd.n_auto_prod)
+        self.bd.n_auto_prod += 1
+        return self.bd.PROD('**', self, other, name=name)
+
+
+    def __truediv__(self, other):
+        name = "autoprod.{:d}".format(self.bd.n_auto_prod)
+        self.bd.n_auto_prod += 1
+        return self.bd.PROD('*/', self, other, name=name)
+
+    # TODO arithmetic with a constant, add a gain block or a constant block
 
     def __str__(self):
         if hasattr(self, 'name') and self.name is not None:
