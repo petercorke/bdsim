@@ -148,7 +148,7 @@ class BlockDiagram:
         
     # ---------------------------------------------------------------------- #
 
-    def compile(self, subsystem=False, doimport=True, report=True):
+    def compile(self, subsystem=False, doimport=True, report=False, verbose=True):
         """
         Compile the block diagram
         
@@ -185,7 +185,7 @@ class BlockDiagram:
         self.dstatenames = []
         self.blocknames = {}
         
-        if not subsystem:
+        if not subsystem and verbose:
             print('\nCompiling:')
         
         # process all subsystem imports
