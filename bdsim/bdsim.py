@@ -365,6 +365,9 @@ class BDSim:
                     
                     self.progress()  # update the progress bar
 
+                    if integrator.status == 'finished':
+                        break
+
                     # has any block called a stop?
                     if bd.state.stop is not None:
                         print(fg('red') + f"\n--- stop requested at t={bd.state.t:.4f} by {bd.state.stop}" + attr(0))
