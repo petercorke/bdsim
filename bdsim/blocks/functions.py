@@ -12,6 +12,7 @@ Function blocks:
 import numpy as np
 import scipy.interpolate
 import math
+import inspect
 
 from bdsim.components import FunctionBlock, block
 
@@ -448,21 +449,31 @@ class Function(FunctionBlock):
                 if kwargs is None:
                     # we can check the number of arguments
                     n = len(inspect.signature(func).parameters)
-                    assert nin + len(args) == n, 'argument count mismatch'
+                    if nin + len(args) != n:
+                        raise ValueError('argument count mismatch')
             self.nout = len(func)
         elif callable(func):
-            if kwargs is None:
+            if len(kwargs) == 0:
                 # we can check the number of arguments
                 n = len(inspect.signature(func).parameters)
-                assert nin + len(args) == n, 'argument count mismatch'
+                if nin + len(args) != n:
+                    raise ValueError('argument count mismatch')
             self.nout = nout
             
         self.func  = func
         if dict:
             self.userdata = {}
             args += (self.userdata,)
+        else:
+            self.userdata = None
         self.args = args
         self.kwargs = kwargs
+
+    def start(self):
+        super().start()
+        if self.userdata is not None:
+            self.userdata.clear()
+            print('clearing user data')
 
     def output(self, t=None):
         if callable(self.func):
