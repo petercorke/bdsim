@@ -56,12 +56,16 @@ class BlockDiagram:
         self.nstates = 0
         self.ndstates = 0
         self._issubsystem = False
-
-
+        self._blockdict = {}
         self.options = None
         self.n_auto_sum = 0
         self.n_auto_prod = 0
         
+    def __getitem__(self, b):
+        return self._blockdict[b]
+
+    def __len__(self):
+        return len(self.blocklist)
 
     @property
     def issubsystem(self):
@@ -80,6 +84,9 @@ class BlockDiagram:
             block.name = "{:s}.{:d}".format(block.type, i)
         block.bd = self
         self.blocklist.append(block)  # add to the list of available blocks
+        if block in self._blockdict:
+            raise Warning(f"block name {block} is not unique")
+        self._blockdict[block.name] = block
         
     def add_wire(self, wire, name=None):
         wire.id = len(self.wirelist)
