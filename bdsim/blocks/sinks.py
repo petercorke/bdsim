@@ -155,6 +155,42 @@ class Stop(SinkBlock):
         if stop:
             self.bd.state.stop = self
 
+# ------------------------------------------------------------------------ #
+
+@block
+class Null(SinkBlock):
+    """    
+    :blockname:`NULL`
+    
+    .. table::
+       :align: left
+    
+    +--------+---------+---------+
+    | inputs | outputs |  states |
+    +--------+---------+---------+
+    | N      | 0       | 0       |
+    +--------+---------+---------+
+    | any    |         |         | 
+    +--------+---------+---------+
+    """
+
+    def __init__(self, nin=1, **kwargs):
+        """
+        :param nin: number of input ports
+        :type nin: int
+        :param ``**kwargs``: common Block options
+        :return: A NULL block
+        :rtype: Null instance
+        
+        Create a sink block with arbitrary number of input ports that discards
+        all data.  Used for testing.
+
+        """
+        super().__init__(nin=nin, **kwargs)
+        self.type = 'null'
+        
+        # TODO format can be a string or function
+
 if __name__ == "__main__":
 
     import pathlib
