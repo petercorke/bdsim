@@ -318,6 +318,59 @@ class Step(SourceBlock):
         #print(out)
         return [out]
 
+# ------------------------------------------------------------------------ #
+
+@block
+class Ramp(SourceBlock):
+    """
+    :blockname:`RAMP`
+    
+    .. table::
+       :align: left
+    
+    +--------+---------+---------+
+    | inputs | outputs |  states |
+    +--------+---------+---------+
+    | 0      | 1       | 0       |
+    +--------+---------+---------+
+    |        | float   |         | 
+    +--------+---------+---------+
+    """
+
+    def __init__(self, T=1,
+                 off=0, slope=1, 
+                 **kwargs):
+
+        """
+        :param T: time of ramp start, defaults to 1
+        :type T: float, optional
+        :param off: initial value, defaults to 0
+        :type off: float, optional
+        :param ``**kwargs``: common Block options
+        :return: a RAMP block
+        :rtype: Ramp
+        
+        Create a ramp signal block.
+
+        Output a ramp signal that starts increasing from the value ``off``
+        when time equals ``T`` linearly with time, with a gradient of ``slope``.
+        """
+        super().__init__(nout=1, **kwargs)
+        
+        self.T = T
+        self.off = off
+        self.slope = slope
+        self.type = "ramp"
+
+    def output(self, t=None):
+        if t >= self.T:
+            out = self.off + self.slope * (t - self.T)
+        else:
+            out = self.off
+
+        #print(out)
+        return [out]
+
 if __name__ == "__main__":
 
     import pathlib
