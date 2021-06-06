@@ -509,7 +509,7 @@ class Block:
         block._sequence = None
         return block
 
-    _latex_remove = str.maketrans({'$':'', '\\':'', '{':'', '}':'', '^':'', '_':''})
+    _latex_remove = str.maketrans({'$':'', '\\':'', '{':'', '}':'', '^':''})
 
     def __init__(self, name=None, inames=None, onames=None, snames=None, pos=None, nin=None, nout=None, inputs=None, bd=None, **kwargs):
 
@@ -747,7 +747,7 @@ class Block:
 
         The names can include LaTeX math markup.  The LaTeX version is used
         where appropriate, but the port names are a de-LaTeXd version of the
-        given string with backslash, underscore, caret, braces and dollar signs
+        given string with backslash, caret, braces and dollar signs
         removed.
         """
         self._inport_names = names
@@ -768,7 +768,7 @@ class Block:
 
         The names can include LaTeX math markup.  The LaTeX version is used
         where appropriate, but the port names are a de-LaTeXd version of the
-        given string with backslash, underscore, caret, braces and dollar signs
+        given string with backslash, caret, braces and dollar signs
         removed.
 
         """
