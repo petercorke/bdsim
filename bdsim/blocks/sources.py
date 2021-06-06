@@ -197,6 +197,22 @@ class WaveForm(SourceBlock):
         self.offset = offset
         self.type = 'waveform'
 
+    def start(self):
+        if self.waveform == 'square':
+            t1 = self.phase / self.freq
+            t2 = (self.duty + self.phase) / self.freq
+        elif self.waveform == 'triangle':
+            t1 = (0.25 + self.phase) / self.freq
+            t2 = (0.75 + self.phase) / self.freq
+
+        # t1 < t2
+        T = 1.0 / self.freq
+        while t1 < self.bd.simstate.T:
+            self.bd.simstate.declare_event(self, t1)
+            self.bd.simstate.declare_event(self, t2)
+            t1 += T
+            t2 += T
+
     def output(self, t=None):
         T = 1.0 / self.freq
         phase = (t * self.freq - self.phase ) % 1.0
