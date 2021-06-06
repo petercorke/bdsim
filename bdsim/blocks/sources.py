@@ -268,6 +268,10 @@ class Piecewise(SourceBlock):
         self.y = [ x[1] for x in seq]
         self.type = "piecewise"
 
+    def start(self):
+        for t in self.t:
+            self.bd.simstate.declare_event(self, t)
+
     def output(self, t):
         i = sum([ 1 if t >= _t else 0  for _t in self.t]) - 1
         out = self.y[i]
@@ -319,6 +323,9 @@ class Step(SourceBlock):
         self.off = off
         self.on = on
         self.type = "step"
+
+    def start(self):
+        self.bd.simstate.declare_event(self, self.T)
 
     def output(self, t=None):
         if t >= self.T:
@@ -372,6 +379,9 @@ class Ramp(SourceBlock):
         self.off = off
         self.slope = slope
         self.type = "ramp"
+
+    def start(self):
+        self.bd.simstate.declare_event(self, self.T)
 
     def output(self, t=None):
         if t >= self.T:

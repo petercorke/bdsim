@@ -129,8 +129,8 @@ class BDSim:
     def progress(self, t=None):
         if self.options.progress:
             if t is None:
-                t = self.state.t
-            printProgressBar(t / self.state.T, prefix='Progress:', suffix='complete', length=60)
+                t = self.simstate.t
+            printProgressBar(t / self.simstate.T, prefix='Progress:', suffix='complete', length=60)
 
     def progress_done(self):
         if self.options.progress:
@@ -195,27 +195,31 @@ class BDSim:
         
         assert bd.compiled, 'Network has not been compiled'
 
-        state = BDSimState()
-        self.state = state
-        state.T = T
-        state.dt = dt
-        state.count = 0
-        state.solver = solver
-        state.intargs = intargs
-        state.minstepsize = minstepsize
-        state.stop = None # allow any block to stop.BlockDiagram by setting this to the block's name
-        state.checkfinite = checkfinite
-        state.options = copy.copy(self.options)
-        bd.options = state.options
+        # initialize the simstate structure, holds all simulation stae
+        simstate = BDSimState()
+        self.simstate = simstate
+        simstate.T = T
+        simstate.dt = dt
+        simstate.count = 0
+        simstate.solver = solver
+        simstate.intargs = intargs
+        simstate.minstepsize = minstepsize
+        simstate.stop = None # allow any block to stop.BlockDiagram by setting this to the block's name
+        simstate.checkfinite = checkfinite
+        simstate.options = copy.copy(self.options)
+        bd.options = simstate.options
         if debug:
             # append debug flags
-            if debug not in state.options.debug:
-                state.options.debug += debug        
+            if debug not in simstate.options.debug:
+                simstate.options.debug += debug
         
-        if len(state.options.debug) > 0:
-            state.options.progress = False
+        if len(simstate.options.debug) > 0:
+            simstate.options.progress = False
 
-        # preproces the watchlist
+        # process the watchlist
+        #  elements can be:
+        #   - block or Plug reference
+        #   - str in the form BLOCKNAME[PORT]
         watchlist = []
         watchnamelist = []
         re_block = re.compile(r'(?P<name>[^[]+)(\[(?P<port>[0-9]+)\])')
@@ -235,18 +239,20 @@ class BDSim:
                 plug = n
             watchlist.append(plug)
             watchnamelist.append(str(plug))
-        state.watchlist = watchlist
+        simstate.watchlist = watchlist
 
         # initialize list of time and states
-        state.tlist = []
-        state.xlist = []
-        state.plist = [[] for p in state.watchlist]
+        simstate.tlist = []
+        simstate.xlist = []
+        simstate.plist = [[] for p in simstate.watchlist]
 
-        bd.state = state
+        bd.simstate = simstate  # block diagram has a reference to simstate
 
+        # get the system state vector
         x0 = bd.getstate0()
         print('initial state  x0 = ', x0)
 
+        # get the number of discrete states from all clocks
         ndstates = 0
         for clock in bd.clocklist:
             nds = 0
@@ -305,8 +311,8 @@ class BDSim:
 
         # save buffered data in a Struct
         out = Struct('results')
-        out.t = np.array(state.tlist)
-        out.x = np.array(state.xlist)
+        out.t = np.array(simstate.tlist)
+        out.x = np.array(simstate.xlist)
         out.xnames = bd.statenames
 
         # save clocked states
@@ -322,7 +328,7 @@ class BDSim:
         out.ynames = watchnamelist
         return out
         
-    def _run_interval(self, bd, t0, T, state):
+    def _run_interval(self, bd, t0, tf, x0, simstate):
         try:
             # get initial state from the stateful blocks
 
@@ -353,12 +359,12 @@ class BDSim:
                         break
 
                     # stash the results
-                    state.tlist.append(integrator.t)
-                    state.xlist.append(integrator.y)
+                    simstate.tlist.append(integrator.t)
+                    simstate.xlist.append(integrator.y)
                     
                     # record the ports on the watchlist
-                    for i, p in enumerate(state.watchlist):
-                        state.plist[i].append(p.block.output(integrator.t)[p.port])
+                    for i, p in enumerate(simstate.watchlist):
+                        simstate.plist[i].append(p.block.output(integrator.t)[p.port])
                     
                     # update all blocks that need to know
                     bd.step()
@@ -369,30 +375,32 @@ class BDSim:
                         break
 
                     # has any block called a stop?
-                    if bd.state.stop is not None:
-                        print(fg('red') + f"\n--- stop requested at t={bd.state.t:.4f} by {bd.state.stop}" + attr(0))
+                    if bd.simstate.stop is not None:
+                        print(fg('red') + f"\n--- stop requested at t={bd.simstate.t:.4f} by {bd.simstate.stop}" + attr(0))
                         break
 
-                    if state.minstepsize is not None and integrator.step_size < state.minstepsize:
-                        print(fg('red') + f"\n--- stopping on minimum step size at t={bd.state.t:.4f} with last stepsize {integrator.step_size:g}" + attr(0))
+                    if simstate.minstepsize is not None and integrator.step_size < simstate.minstepsize:
+                        print(fg('red') + f"\n--- stopping on minimum step size at t={bd.simstate.t:.4f} with last stepsize {integrator.step_size:g}" + attr(0))
                         break
 
-                    if 'i' in bd.state.options.debug:
+                    if 'i' in bd.simstate.options.debug:
                         bd._debugger(integrator)
 
+                return integrator.y  # return final state vector
+
             elif len(clocklist) == 0:
-                # block diagram has no continuous states
+                # block diagram has no continuous or discrete states
     
-                for t in np.arange(t0, T, state.dt):  # step through the time range
+                for t in np.arange(t0, tf, simstate.dt):  # step through the time range
                     # evaluate the block diagram
                     bd.evaluate_plan([], t)
 
                     # stash the results
-                    state.tlist.append(t)
+                    simstate.tlist.append(t)
                     
                     # record the ports on the watchlist
-                    for i, p in enumerate(state.watchlist):
-                        state.plist[i].append(p.block.output(t)[p.port])
+                    for i, p in enumerate(simstate.watchlist):
+                        simstate.plist[i].append(p.block.output(t)[p.port])
 
                     # update all blocks that need to know
                     bd.step()
@@ -401,11 +409,11 @@ class BDSim:
 
                         
                     # has any block called a stop?
-                    if bd.state.stop is not None:
-                        print(fg('red') + f"\n--- stop requested at t={bd.state.t:.4f} by {bd.state.stop}" + attr(0))
+                    if bd.simstate.stop is not None:
+                        print(fg('red') + f"\n--- stop requested at t={bd.simstate.t:.4f} by {bd.simstate.stop}" + attr(0))
                         break
 
-                    if 'i' in bd.state.options.debug:
+                    if 'i' in bd.simstate.options.debug:
                         bd._debugger(integrator)
 
             else:
@@ -416,11 +424,11 @@ class BDSim:
                 bd.evaluate_plan([], t)
 
                 # stash the results
-                state.tlist.append(t)
+                simstate.tlist.append(t)
                 
                 # record the ports on the watchlist
-                for i, p in enumerate(state.watchlist):
-                    state.plist[i].append(p.block.output(t)[p.port])
+                for i, p in enumerate(simstate.watchlist):
+                    simstate.plist[i].append(p.block.output(t)[p.port])
 
                 # update all blocks that need to know
                 bd.step()
@@ -429,10 +437,10 @@ class BDSim:
 
                     
                 # has any block called a stop?
-                if bd.state.stop is not None:
-                    print(fg('red') + f"\n--- stop requested at t={bd.state.t:.4f} by {bd.state.stop}" + attr(0))
+                if bd.simstate.stop is not None:
+                    print(fg('red') + f"\n--- stop requested at t={bd.simstate.t:.4f} by {bd.simstate.stop}" + attr(0))
 
-                if 'i' in bd.state.options.debug:
+                if 'i' in bd.simstate.options.debug:
                     bd._debugger(integrator)
 
                 
@@ -511,11 +519,11 @@ class BDSim:
         return bd
 
     def closefigs(self):
-        for i in range(self.state.fignum):
+        for i in range(self.simstate.fignum):
             print('close', i+1)
             plt.close(i+1)
             plt.pause(0.1)
-        self.state.fignum = 0  # reset figure counter
+        self.simstate.fignum = 0  # reset figure counter
             
     def savefig(self, block, filename=None, format='pdf', **kwargs):
         block.savefig(filename=filename, format=format, **kwargs)

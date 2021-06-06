@@ -81,7 +81,7 @@ class GraphicsBlock(SinkBlock):
                 # You can also use window.setGeometry
                 f.canvas.manager.window.move(x, y)
         
-        gstate = self.bd.state
+        gstate = self.bd.simstate
         options = self.bd.options
 
         if gstate.fignum == 0:
