@@ -206,6 +206,7 @@ class BDSim:
         state.stop = None # allow any block to stop.BlockDiagram by setting this to the block's name
         state.checkfinite = checkfinite
         state.options = copy.copy(self.options)
+        bd.options = state.options
         if debug:
             # append debug flags
             if debug not in state.options.debug:
