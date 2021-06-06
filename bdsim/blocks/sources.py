@@ -170,18 +170,29 @@ class WaveForm(SourceBlock):
 
         assert 0<duty<1, 'duty must be in range [0,1]'
         
-        self.wave = wave
+        if wave in ('square', 'triange', 'sine'):
+            self.wave = wave
+        else:
+            raise ValueError('bad waveform')
         if unit == 'Hz':
             self.freq = freq
         elif unit == 'rad/s':
             self.freq = freq / (2 * math.pi)
-        self.phase = phase
+        else:
+            raise ValueError('bad unit')
+        if 0 <= phase <= 1:
+            self.phase = phase
+        else:
+            raise ValueError('phase out of range')
         if max is not None and min is not None:
             amplitude = (max - min) / 2
             offset = (max + min) / 2 
             self.min = min
             self.mablock = max
-        self.duty = duty
+        if 0 <= duty <= 1:
+            self.duty = duty
+        else:
+            raise ValueError('duty out of range')
         self.amplitude = amplitude
         self.offset = offset
         self.type = 'waveform'
