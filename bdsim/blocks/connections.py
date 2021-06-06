@@ -174,7 +174,13 @@ class Mux(FunctionBlock):
     
     def output(self, t=None):
         # TODO, handle inputs that are vectors themselves
-        return [ np.array(self.inputs).flatten() ]
+        out = []
+        for input in self.inputs:
+            if isinstance(input, (int, float, bool)):
+                out.append(input)
+            elif isinstance(input, np.ndarray):
+                out.extend(input.flatten().tolist())
+        return [ np.array(out) ]
 
 
 # ------------------------------------------------------------------------ #

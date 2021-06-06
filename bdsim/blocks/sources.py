@@ -170,7 +170,7 @@ class WaveForm(SourceBlock):
 
         assert 0<duty<1, 'duty must be in range [0,1]'
         
-        if wave in ('square', 'triange', 'sine'):
+        if wave in ('square', 'triangle', 'sine'):
             self.wave = wave
         else:
             raise ValueError('bad waveform')

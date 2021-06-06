@@ -20,7 +20,7 @@ class ConnectionsTest(unittest.TestCase):
         nt.assert_array_equal(block._eval(1, 2, 3)[0], np.r_[1,2, 3])
         
         block = Mux(2)
-        nt.assert_array_equal(block._eval(1, np.r_[2, 3])[0], np.r_[1,2, 3])
+        nt.assert_array_equal(block._eval(1, np.r_[2, 3])[0], np.r_[1, 2, 3])
         
         
     def test_demux(self):
