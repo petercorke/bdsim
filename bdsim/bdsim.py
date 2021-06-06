@@ -73,6 +73,9 @@ class BDSimState:
 
 class BDSim:
 
+    options = None
+    blocklibrary = None
+
     def __init__(self, **kwargs):
         """
         :param sysargs: process options from sys.argv, defaults to True
@@ -110,10 +113,12 @@ class BDSim:
 
         """
         # process command line and overall options
-        self.options = self.get_options(**kwargs)
+        if BDSim.options is None:
+            BDSim.options = self.get_options(**kwargs)
 
         # load modules from the blocks folder
-        self.blocklibrary = self.load_blocks(self.options.verbose) #self.verbose)
+        if BDSim.blocklibrary is None:
+            BDSim.blocklibrary = self.load_blocks(self.options.verbose) #self.verbose)
 
     def __str__(self):
         s = f"BDSim: {len(self.blocklibrary)} blocks in library\n"
