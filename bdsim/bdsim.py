@@ -641,7 +641,7 @@ class BDSim:
             'backend': 'Qt5Agg',
             'tiles': '3x4',
             'graphics': True,
-            'animation': True,
+            'animation': False,
             'progress': True,
             'verbose': False,
             'debug': ''
