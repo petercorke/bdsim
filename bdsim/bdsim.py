@@ -140,7 +140,7 @@ class BDSim:
             print('\r' + ' '* 90 + '\r')
 
     def run(self, bd, T=10.0, dt=0.1, solver='RK45', debug='',
-            block=False, checkfinite=True, minstepsize=1e-6, watch=[],
+            block=False, checkfinite=True, minstepsize=1e-12, watch=[],
             intargs={}):
         """
         Run the block diagram
