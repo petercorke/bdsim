@@ -11,7 +11,7 @@ sphinx_rtd_theme
 matplotlib
 spatialmath-python
 # minor opencv versions after this appear to be incompatible with PyQt5 - at least in python3.5
-opencv-python==4.1.*
+opencv-python
 # PyQt5 # this has way too many dependencies it seems?
 msgpack
 bidict

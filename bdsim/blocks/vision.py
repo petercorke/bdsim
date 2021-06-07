@@ -1,5 +1,4 @@
 import logging
-import random
 from threading import Thread, Lock
 
 import numpy as np
@@ -386,7 +385,7 @@ try:
                 params.minThreshold,
                 params.maxThreshold,
                 params.thresholdStep,
-            ) = self.grayscale_threshold
+            ) = self.grayscale_threshold.tolist()
 
             if self.area:
                 params.minArea, params.maxArea = self.area
