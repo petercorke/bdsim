@@ -1,0 +1,16 @@
+Port object instead of tuple for slices
+implement * operator and __setitem__
+
+evaulate once in compile and record all wire signals
+
+implement second index for vector indexing
+
+win,wout, list out wire widths at each block
+
+cycles, trace them out (depth first search) and check for stateful blocks in each
+
+integrate symbolics, ideas from simupy
+
+setinput should raise NotImplemented for Source blocks
+rename Port subclass as Plug, returned by __set/getitem__
+

@@ -8,12 +8,12 @@ from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QMessageBox, QWidget, QVBoxLayout
 
 # BdEdit imports
-from .block import *
-from .Icons import *
-from .block_wire import Wire
-from .block_socket_block import Connector
-from .interface_serialize import Serializable
-from .interface_graphics_scene import GraphicsScene
+from bdsim.bdedit.block import *
+from bdsim.bdedit.Icons import *
+from bdsim.bdedit.block_wire import Wire
+from bdsim.bdedit.block_socket_block import Connector
+from bdsim.bdedit.interface_serialize import Serializable
+from bdsim.bdedit.interface_graphics_scene import GraphicsScene
 
 
 # =============================================================================

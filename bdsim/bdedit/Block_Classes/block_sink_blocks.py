@@ -1,5 +1,5 @@
-import bdsim.bdsim.bdedit
-from bdsim.bdsim.bdedit.block import SinkBlock, block, blockname
+import bdsim.bdedit
+from bdsim.bdedit.block import SinkBlock, block, blockname
 
 
 @block

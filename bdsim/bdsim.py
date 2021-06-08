@@ -510,7 +510,6 @@ class BDSim:
             
     def savefig(self, block, filename=None, format='pdf', **kwargs):
         block.savefig(filename=filename, format=format, **kwargs)
-
     def savefigs(self, bd, format='pdf', **kwargs):
         for b in bd.blocklist:
             b.savefig(filename=filename, format=format, **kwargs)

@@ -3,9 +3,9 @@ import json
 from collections import OrderedDict
 
 # BdEdit imports
-from .block_socket import *
-from .block_param_window import ParamWindow
-from .block_graphics_block import GraphicsBlock
+from bdsim.bdedit.block_socket import *
+from bdsim.bdedit.block_param_window import ParamWindow
+from bdsim.bdedit.block_graphics_block import GraphicsBlock
 
 # =============================================================================
 #

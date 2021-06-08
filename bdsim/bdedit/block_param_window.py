@@ -7,7 +7,7 @@ from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt, QRect
 
 # BdEdit imports
-from .Icons import *
+from bdsim.bdedit.Icons import *
 
 # =============================================================================
 #

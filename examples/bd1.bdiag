@@ -1,0 +1,17 @@
+blockdiag {
+
+    
+    "b0" 
+	"b1" [shape = "circle"]
+	"b2" 
+	"plant" [description = "LTI"]
+	"b4" [numbered = 4]
+	"b0" -> "b1" 
+	"b0" -> "b4" 
+	"plant" -> "b1" [label = "w0"]
+	"b1" -> "b2" 
+	"b2" -> "plant" 
+	"plant" -> "b4" 
+}
+
+# blockdiag -Tpdf bd1.bdiag

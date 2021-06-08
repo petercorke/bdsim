@@ -1,0 +1,9 @@
+print('__init__ start')
+from bdsim.blocks.sources import *
+from bdsim.blocks.sinks import *
+from bdsim.blocks.transfers import *
+from bdsim.blocks.functions import *
+from bdsim.blocks.subsystems import *
+from bdsim.blocks.io import *
+from bdsim.blocks.robot import *
+print('__init__ done')

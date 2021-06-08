@@ -3,8 +3,8 @@ import time
 from collections import OrderedDict
 
 # BdEdit imports
-from .block_graphics_wire import *
-from .interface_serialize import Serializable
+from bdsim.bdedit.block_graphics_wire import *
+from bdsim.bdedit.interface_serialize import Serializable
 
 # =============================================================================
 #

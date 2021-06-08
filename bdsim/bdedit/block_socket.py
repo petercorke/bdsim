@@ -2,8 +2,8 @@
 from collections import OrderedDict
 
 # BdEdit imports
-from .interface_serialize import Serializable
-from .block_graphics_socket import GraphicsSocket
+from bdsim.bdedit.interface_serialize import Serializable
+from bdsim.bdedit.block_graphics_socket import GraphicsSocket
 
 # =============================================================================
 #

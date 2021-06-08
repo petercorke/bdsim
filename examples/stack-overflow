@@ -1,0 +1,41 @@
+I'd like to simulate a dynamic system (set of ODEs) with continuous- and discrete-time dynamics. Looking at scipy.integrate I can see 2 possibilities, but each has pros and cons. I seek advice on the suitability of scipy.integrate to this problem, or suggestions about Python alternatives.
+
+Option 1: Use scipy.integrate.RK45 and integrate over the period until the next discrete sampling time (set using t_bound), update the discrete states, and then repeat. I could also periodically store the solution using the same mechanism.
+
+Pros:
+the function supports this
+Cons:
+computational overhead, particularly if there were multiple discrete-time rates, the integrator would be run a lot of times over very short intervals
+effects on error in the solution, numerically is this a sound thing to do?
+how to set the max_step with respect to the discrete-time sample interval, is there any rule of thumb, or simply no more than the sample interval?
+Option 2: Use script.integrate.solve_ivp which has an event detection mechanism. This is an elegant way to express the discrete-time aspect of the problem, but I need to take an action on an event (update the discrete states) but this integrator just notes the times of the events. I'd really need an extra attribute on the event detection function which was a callable. Is this an option or is there some subtlety here?
+
+Pros:
+events are elegant
+Cons:
+events don't quite have the capability required, I can't specify an action to be taken on an event.
+it seems inefficient to turn my known sampling times into an event function, a very high-order polynomial, and have the integrator then do root finding to reverse engineer those times. I could just pass them in.
+how to set the max_step with respect to the discrete-time sample interval, is there any rule of thumb, or simply no more than the sample interval? I would have a concern that the integrator might skip some events.6
+
+--
+
+I'd like to simulate a dynamic system (set of ODEs) with continuous- and discrete-time dynamics.  Looking at `scipy.integrate` I can see 2 possibilities, but each has pros and cons.  I seek advice on the suitability of `scipy.integrate` to this problem, or suggestions about Python alternatives. 
+
+**Option 1**: Use `scipy.integrate.RK45` and integrate over the period until the next discrete sampling time (set using `t_bound`), update the discrete states, and then repeat.  I could also periodically store the solution using the same mechanism. 
+
+- Pros: 
+ - the function supports this
+- Cons:
+ - computational overhead, particularly if there were multiple discrete-time rates, the integrator would be run a lot of times over very short intervals
+ - effects on error in the solution, numerically is this a sound thing to do?
+ - how to set the `max_step` with respect to the discrete-time sample interval, is there any rule of thumb, or simply no more than the sample interval?
+
+**Option 2**: Use `script.integrate.solve_ivp` which has an event detection mechanism.  This is an elegant way to express the discrete-time aspect of the problem, but I need to take an action on an event (update the discrete states) but this integrator just notes the times of the events.  I'd really need an extra attribute on the event detection function which was a callable. Is this an option or is there some subtlety here?
+
+- Pros: 
+ - events are elegant
+- Cons:
+ - events don't quite have the capability required, I can't specify an action to be taken on an event.
+ - it seems inefficient to turn my known sampling times into an event function, a very high-order polynomial, and have the integrator then do root finding to reverse engineer those times.  I could just pass them in.
+- how to set the `max_step` with respect to the discrete-time sample interval, is there any rule of thumb, or simply no more than the sample interval?  I would have a concern that the integrator might skip some events.
+6

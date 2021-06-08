@@ -1,5 +1,5 @@
-import bdsim.bdsim.bdedit
-from bdsim.bdsim.bdedit.block import INPORTBlock, OUTPORTBlock, SUBSYSTEMBlock, block, blockname
+# import bdsim.bdsim.bdedit
+from bdsim.bdedit.block import INPORTBlock, OUTPORTBlock, SUBSYSTEMBlock, block, blockname
 
 @block
 # Child class 1: INPORT Block

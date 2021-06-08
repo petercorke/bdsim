@@ -1,7 +1,7 @@
 # BdEdit imports
-from .block import *
-from .block_socket import *
-from .block_graphics_block import *
+from bdsim.bdedit.block import *
+from bdsim.bdedit.block_socket import *
+from bdsim.bdedit.block_graphics_block import *
 
 
 # =============================================================================

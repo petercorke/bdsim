@@ -4,11 +4,11 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import QGraphicsView
 
 # BdEdit imports
-from .block import Block
-from .block_graphics_wire import GraphicsWire
-from .block_graphics_socket import GraphicsSocket
-from .block_graphics_block import GraphicsBlock, GraphicsSocketBlock
-from .block_wire import Wire, WIRE_TYPE_STEP, WIRE_TYPE_DIRECT, WIRE_TYPE_BEZIER
+from bdsim.bdedit.block import Block
+from bdsim.bdedit.block_graphics_wire import GraphicsWire
+from bdsim.bdedit.block_graphics_socket import GraphicsSocket
+from bdsim.bdedit.block_graphics_block import GraphicsBlock, GraphicsSocketBlock
+from bdsim.bdedit.block_wire import Wire, WIRE_TYPE_STEP, WIRE_TYPE_DIRECT, WIRE_TYPE_BEZIER
 
 # =============================================================================
 #

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # Library imports
 import sys
 
@@ -6,7 +8,7 @@ from PyQt5.QtWidgets import *
 
 # BdEdit imports
 #from ..bdedit.interface import Interface
-from bdsim.bdsim.bdedit.interface import Interface
+from bdsim.bdedit.interface import Interface
 
 # Executable code to launch the BdEdit application window
 if __name__ == '__main__':

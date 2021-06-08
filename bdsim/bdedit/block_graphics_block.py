@@ -4,7 +4,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
 # BdEdit imports
-from .Icons import *
+from bdsim.bdedit.Icons import *
 
 
 # =============================================================================
