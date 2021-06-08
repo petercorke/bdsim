@@ -1,4 +1,5 @@
-from bdedit.block import SinkBlock, block, blockname
+import bdsim.bdsim.bdedit
+from bdsim.bdsim.bdedit.block import SinkBlock, block, blockname
 
 
 @block
@@ -14,7 +15,7 @@ class Print(SinkBlock):
     - inputsNum: 1, allowing this class to have any number of inputs
     - outputsNum: 0, not allowing this class to have any outputs
 
-    The title, type, variables and icon variables inherited from the grandparent class are
+    The title, type, parameters and icon variables inherited from the grandparent class are
     overwritten here to this Blocks' unique values.
     """
     def __init__(self, scene, window, fmt=None, name="Print Block", pos=(0, 0)):
@@ -25,12 +26,12 @@ class Print(SinkBlock):
         - width: 100
         - height: 100
 
-        This method also overwrites the title, type, variables and icon variables inherited from the ``Block`` Class.
+        This method also overwrites the title, type, parameters and icon variables inherited from the ``Block`` Class.
 
         - title: defaults to "Print Block"
         - type: defaults to "Print"
         - icon: set to local reference of a Print icon
-        - variables: set according to the list structure outlined in ``Block``.
+        - parameters: set according to the list structure outlined in ``Block``.
 
         .. table::
            :align: left
@@ -38,7 +39,7 @@ class Print(SinkBlock):
            +-----------+--------+----------+----------------------------------------------------+
            | name      | type   | value    |                    restrictions                    |
            +-----------+--------+----------+----------------------------------------------------+
-           | "Format"  | str    | fmt      |            [["type", [type(None), str]]]           |
+           | "fmt"     | str    | fmt      |            [["type", [type(None), str]]]           |
            +-----------+--------+----------+----------------------------------------------------+
 
         :param scene: a scene in which the Block is stored and shown. Provided by the ``Interface``.
@@ -46,7 +47,7 @@ class Print(SinkBlock):
         :param window: layout information of where all ``Widgets`` are located in the bdedit window.
                        Provided by the ``Interface``.
         :type window: ``QGridLayout``, required
-        :param fmt: format
+        :param fmt: format string
         :type fmt: str, optional, defaults to None
         :param name: name of the block
         :type name: str, optional, defaults to "Print Block"
@@ -59,8 +60,8 @@ class Print(SinkBlock):
 
         self.block_type = blockname(self.__class__)
 
-        self.variables = [
-            ["Format", str, fmt, [["type", [type(None), str]]]]
+        self.parameters = [
+            ["fmt", str, fmt, [["type", [type(None), str]]]]
         ]
 
         self.icon = ":/Icons_Reference/Icons/print.png"
@@ -83,7 +84,7 @@ class Stop(SinkBlock):
     - inputsNum: 1, allowing this class to have any number of inputs
     - outputsNum: 0, not allowing this class to have any outputs
 
-    The title, type, variables and icon variables inherited from the grandparent class are
+    The title, type, parameters and icon variables inherited from the grandparent class are
     overwritten here to this Blocks' unique values.
     """
     def __init__(self, scene, window, stop=None, name="Stop Block", pos=(0, 0)):
@@ -94,12 +95,12 @@ class Stop(SinkBlock):
         - width: 100
         - height: 100
 
-        This method also overwrites the title, type, variables and icon variables inherited from the ``Block`` Class.
+        This method also overwrites the title, type, parameters and icon variables inherited from the ``Block`` Class.
 
         - title: defaults to "Stop Block"
         - type: defaults to "Stop"
         - icon: set to local reference of a Stop icon
-        - variables: set according to the list structure outlined in ``Block``.
+        - parameters: set according to the list structure outlined in ``Block``.
 
         .. table::
            :align: left
@@ -107,7 +108,7 @@ class Stop(SinkBlock):
            +-----------+--------+----------+----------------------------------------------------+
            | name      | type   | value    |                    restrictions                    |
            +-----------+--------+----------+----------------------------------------------------+
-           | "Stop"    | str    | stop     |            [["type", [type(None), str]]]           |
+           | "stop"    | str    | stop     |            [["type", [type(None), str]]]           |
            +-----------+--------+----------+----------------------------------------------------+
 
         :param scene: a scene in which the Block is stored and shown. Provided by the ``Interface``.
@@ -115,7 +116,7 @@ class Stop(SinkBlock):
         :param window: layout information of where all ``Widgets`` are located in the bdedit window.
                        Provided by the ``Interface``.
         :type window: ``QGridLayout``, required
-        :param stop: stop
+        :param stop: function
         :type stop: str, optional, defaults to None
         :param name: name of the block
         :type name: str, optional, defaults to "Stop Block"
@@ -128,8 +129,8 @@ class Stop(SinkBlock):
 
         self.block_type = blockname(self.__class__)
 
-        self.variables = [
-            ["Stop", str, stop, [["type", [type(None), str]]]],
+        self.parameters = [
+            ["stop", str, stop, [["type", [type(None), str]]]],
         ]
 
         self.icon = ":/Icons_Reference/Icons/stop.png"
@@ -152,7 +153,7 @@ class Scope(SinkBlock):
     - inputsNum: 1, allowing this class to have any number of inputs
     - outputsNum: 0, not allowing this class to have any outputs
 
-    The title, type, variables and icon variables inherited from the grandparent class are
+    The title, type, parameters and icon variables inherited from the grandparent class are
     overwritten here to this Blocks' unique values.
     """
     def __init__(self, scene, window, nin=1, styles=None, scale='auto', labels=None, grid=[], name="Scope Block", pos=(0, 0)):
@@ -163,12 +164,12 @@ class Scope(SinkBlock):
         - width: 100
         - height: 100
 
-        This method also overwrites the title, type, variables and icon variables inherited from the ``Block`` Class.
+        This method also overwrites the title, type, parameters and icon variables inherited from the ``Block`` Class.
 
         - title: defaults to "Scope Block"
         - type: defaults to "Scope"
         - icon: set to local reference of a Scope icon
-        - variables: set according to the list structure outlined in ``Block``.
+        - parameters: set according to the list structure outlined in ``Block``.
 
         .. table::
            :align: left
@@ -176,15 +177,15 @@ class Scope(SinkBlock):
            +------------------+--------+------------------+-----------------------------------------------------+
            | name             | type   | value            |                    restrictions                     |
            +------------------+--------+------------------+-----------------------------------------------------+
-           | "No. of inputs"  | int    | nin              | [["range", [0, 1000]], ["type", [type(None), int]]] |
+           | "nin"            | int    | nin              | [["range", [0, 1000]], ["type", [type(None), int]]] |
            +------------------+--------+------------------+-----------------------------------------------------+
-           | "Styles"         | str    | styles           |          [["type", [type(None), str]]]              |
+           | "styles"         | str    | styles           |          [["type", [type(None), str]]]              |
            +------------------+--------+------------------+-----------------------------------------------------+
-           | "Scale"          | str    | scale            |                        []                           |
+           | "scale"          | str    | scale            |                        []                           |
            +------------------+--------+------------------+-----------------------------------------------------+
-           | "Labels"         | list   | labels           |          [["type", [type(None), list]]]             |
+           | "labels"         | list   | labels           |          [["type", [type(None), list]]]             |
            +------------------+--------+------------------+-----------------------------------------------------+
-           | "Grid"           | list   | grid             |          [["type", [type(None), list]]]             |
+           | "grid"           | list   | grid             |          [["type", [type(None), list]]]             |
            +------------------+--------+------------------+-----------------------------------------------------+
 
         :param scene: a scene in which the Block is stored and shown. Provided by the ``Interface``.
@@ -213,12 +214,12 @@ class Scope(SinkBlock):
 
         self.block_type = blockname(self.__class__)
 
-        self.variables = [
-            ["No. of inputs", int, nin, [["range", [0, 1000]], ["type", [type(None), int]]]],
-            ["Styles", str, styles, [["type", [type(None), str]]]],
-            ["Scale", str, scale, []],
-            ["Labels", list, labels, [["type", [type(None), list]]]],
-            ["Grid", list, grid, [["type", [type(None), list]]]]
+        self.parameters = [
+            ["nin", int, nin, [["range", [0, 1000]], ["type", [type(None), int]]]],
+            ["styles", str, styles, [["type", [type(None), str]]]],
+            ["scale", str, scale, []],
+            ["labels", list, labels, [["type", [type(None), list]]]],
+            ["grid", list, grid, [["type", [type(None), list]]]]
         ]
 
         self.icon = ":/Icons_Reference/Icons/scope.png"

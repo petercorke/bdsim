@@ -8,12 +8,12 @@ from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QMessageBox, QWidget, QVBoxLayout
 
 # BdEdit imports
-from bdedit.block import *
-from bdedit.Icons import *
-from bdedit.block_wire import Wire
-from bdedit.block_socket_block import Connector
-from bdedit.interface_serialize import Serializable
-from bdedit.interface_graphics_scene import GraphicsScene
+from .block import *
+from .Icons import *
+from .block_wire import Wire
+from .block_socket_block import Connector
+from .interface_serialize import Serializable
+from .interface_graphics_scene import GraphicsScene
 
 
 # =============================================================================
@@ -307,8 +307,10 @@ class Scene(Serializable):
                 for block_class in blocklist:
                     # Re-create an instance of a block class that matches a name of one of the blocks
                     # from the blocklist. There will always be a match, as the block_type is determined
-                    # by the __class__.__name__ in the first place, and this will never change.
-                    if block_type == block_class.__name__:
+                    # by the blockname(block_class) in the first place, and this will never change.
+                    # The block_class.__name__ supports older files which would of used self.__class__.__name__
+                    # to define the block type
+                    if block_type == blockname(block_class) or block_type == block_class.__name__:
                         block_class(self, self.window, name=block_data['title']).deserialize(block_data, hashmap)
                         break
 

@@ -1,5 +1,6 @@
-from bdedit.block import FunctionBlock, block, blockname
 import math
+import bdsim.bdsim.bdedit
+from bdsim.bdsim.bdedit.block import FunctionBlock, block, blockname
 
 
 @block
@@ -15,7 +16,7 @@ class Clip(FunctionBlock):
     - inputsNum: 1, allowing this class to have any number of inputs
     - outputsNum: 1, allowing this class to have any number of outputs
 
-    The title, type, variables and icon variables inherited from the grandparent class are
+    The title, type, parameters and icon variables inherited from the grandparent class are
     overwritten here to this Blocks' unique values.
     """
     def __init__(self, scene, window, minimum=-math.inf, maximum=math.inf, name="Clip Block", pos=(0, 0)):
@@ -26,12 +27,12 @@ class Clip(FunctionBlock):
         - width: 100
         - height: 100
 
-        This method also overwrites the title, type, variables and icon variables inherited from the ``Block`` Class.
+        This method also overwrites the title, type, parameters and icon variables inherited from the ``Block`` Class.
 
         - title: defaults to "Clip Block"
         - type: defaults to "Clip"
         - icon: set to local reference of a Clip icon
-        - variables: set according to the list structure outlined in ``Block``.
+        - parameters: set according to the list structure outlined in ``Block``.
 
         .. table::
            :align: left
@@ -39,9 +40,9 @@ class Clip(FunctionBlock):
            +--------+--------+----------+----------------------------------------------------+
            | name   | type   | value    |                    restrictions                    |
            +--------+--------+----------+----------------------------------------------------+
-           | "Min"  | float  | minimum  |         [["range", [-math.inf, math.inf]]]         |
+           | "min"  | float  | minimum  |         [["range", [-math.inf, math.inf]]]         |
            +--------+--------+----------+----------------------------------------------------+
-           | "Max"  | float  | maximum  |         [["range", [-math.inf, math.inf]]]         |
+           | "max"  | float  | maximum  |         [["range", [-math.inf, math.inf]]]         |
            +--------+--------+----------+----------------------------------------------------+
 
         :param scene: a scene in which the Block is stored and shown. Provided by the ``Interface``.
@@ -49,9 +50,9 @@ class Clip(FunctionBlock):
         :param window: layout information of where all ``Widgets`` are located in the bdedit window.
                        Provided by the ``Interface``.
         :type window: ``QGridLayout``, required
-        :param minimum: minimum
+        :param minimum: minimum value
         :type minimum: float, optional, defaults to -math.inf
-        :param maximum: maximum
+        :param maximum: maximum value
         :type maximum: float, optional, defaults to math.inf
         :param name: name of the block
         :type name: str, optional, defaults to "Clip Block"
@@ -64,9 +65,9 @@ class Clip(FunctionBlock):
 
         self.block_type = blockname(self.__class__)
 
-        self.variables = [
-            ["Min", float, minimum, [["range", [-math.inf, math.inf]]]],
-            ["Max", float, maximum, [["range", [-math.inf, math.inf]]]]
+        self.parameters = [
+            ["min", float, minimum, [["range", [-math.inf, math.inf]]]],
+            ["max", float, maximum, [["range", [-math.inf, math.inf]]]]
         ]
 
         self.icon = ":/Icons_Reference/Icons/clip.png"
@@ -89,10 +90,10 @@ class Function(FunctionBlock):
     - inputsNum: 1, allowing this class to have any number of inputs
     - outputsNum: 1, allowing this class to have any number of outputs
 
-    The title, type, variables and icon variables inherited from the grandparent class are
+    The title, type, parameters and icon variables inherited from the grandparent class are
     overwritten here to this Blocks' unique values.
     """
-    def __init__(self, scene, window, function="Provide Function", nin=1, nout=1, dictionary=False, args=(), kwargs={}, name="Function Block", pos=(0, 0)):
+    def __init__(self, scene, window, func="Provide Function", nin=1, nout=1, dictionary=False, args=(), kwargs={}, name="Function Block", pos=(0, 0)):
         """
         This method creates a ``Function`` Block, which is a subclassed as |rarr| ``FunctionBlock`` |rarr| ``Block``.
         This method sets the dimensions of this block to being:
@@ -100,12 +101,12 @@ class Function(FunctionBlock):
         - width: 100
         - height: 100
 
-        This method also overwrites the title, type, variables and icon variables inherited from the ``Block`` Class.
+        This method also overwrites the title, type, parameters and icon variables inherited from the ``Block`` Class.
 
         - title: defaults to "Function Block"
         - type: defaults to "Function"
         - icon: set to local reference of a Function icon
-        - variables: set according to the list structure outlined in ``Block``.
+        - parameters: set according to the list structure outlined in ``Block``.
 
         .. table::
            :align: left
@@ -113,17 +114,17 @@ class Function(FunctionBlock):
            +------------------+--------+------------+----------------------------------------------------+
            | name             | type   | value      |                    restrictions                    |
            +------------------+--------+------------+----------------------------------------------------+
-           | "Function"       | str    | function   |                         []                         |
+           | "func"           | str    | func       |                         []                         |
            +------------------+--------+------------+----------------------------------------------------+
-           | "No. of inputs"  | int    | nin        |             [["range", [0, 1000]]]                 |
+           | "nin"            | int    | nin        |               [["range", [0, 1000]]]               |
            +------------------+--------+------------+----------------------------------------------------+
-           | "No. of outputs" | int    | nout       |             [["range", [0, 1000]]]                 |
+           | "nout"           | int    | nout       |               [["range", [0, 1000]]]               |
            +------------------+--------+------------+----------------------------------------------------+
-           | "Dict"           | bool   | dictionary |                         []                         |
+           | "dict"           | bool   | dictionary |                         []                         |
            +------------------+--------+------------+----------------------------------------------------+
-           | "Args"           | tuple  | args       |                         []                         |
+           | "args"           | tuple  | args       |                         []                         |
            +------------------+--------+------------+----------------------------------------------------+
-           | "Kwargs"         | dict   | kwargs     |                         []                         |
+           | "kwargs"         | dict   | kwargs     |                         []                         |
            +------------------+--------+------------+----------------------------------------------------+
 
         :param scene: a scene in which the Block is stored and shown. Provided by the ``Interface``.
@@ -131,17 +132,17 @@ class Function(FunctionBlock):
         :param window: layout information of where all ``Widgets`` are located in the bdedit window.
                        Provided by the ``Interface``.
         :type window: ``QGridLayout``, required
-        :param function: function
-        :type function: str, optional, defaults to "Provide Function"
+        :param func: a function
+        :type func: str, optional, defaults to "Provide Function"
         :param nin: number of inputs
         :type nin: int, optional, defaults to 1
         :param nout: number of outputs
         :type nout: int, optional, defaults to 1
-        :param dictionary: dictionary
+        :param dictionary: pass in a reference to a dictionary instance
         :type dictionary: bool, optional, defaults to False
-        :param args: args
+        :param args: extra positional arguments passed to the function
         :type args: tuple, optional, defaults to ()
-        :param kwargs: kwargs
+        :param kwargs: extra keyword arguments passed to the function
         :type kwargs: dict, optional, defaults to {}
         :param name: name of the block
         :type name: str, optional, defaults to "Function Block"
@@ -154,18 +155,15 @@ class Function(FunctionBlock):
         
         self.block_type = blockname(self.__class__)
 
-        # How to sanity check function input?
-        self.variables = [
-            ["Function", str, function, []],
-            ["No. of inputs", int, nin, [["range", [0, 1000]]]],
-            ["No. of outputs", int, nout, [["range", [0, 1000]]]],
-            ["Dict", bool, dictionary, []],
-            ["Args", tuple, args, []],
-            ["Kwargs", dict, kwargs, []]
+        self.parameters = [
+            ["func", str, func, []],
+            ["nin", int, nin, [["range", [0, 1000]]]],
+            ["nout", int, nout, [["range", [0, 1000]]]],
+            ["dict", bool, dictionary, []],
+            ["args", tuple, args, []],
+            ["kwargs", dict, kwargs, []]
         ]
 
-        # Will need to be changed for param to update nin and nout
-        # this will only set nin and nout on button spawn
         self.inputsNum = nin
         self.outputsNum = nout
 
@@ -189,10 +187,10 @@ class Gain(FunctionBlock):
     - inputsNum: 1, allowing this class to have any number of inputs
     - outputsNum: 1, allowing this class to have any number of outputs
 
-    The title, type, variables and icon variables inherited from the grandparent class are
+    The title, type, parameters and icon variables inherited from the grandparent class are
     overwritten here to this Blocks' unique values.
     """
-    def __init__(self, scene, window, gain=0, premul=False, name="Gain Block", pos=(0, 0)):
+    def __init__(self, scene, window, K=0, premul=False, name="Gain Block", pos=(0, 0)):
         """
         This method creates a ``Gain`` Block, which is a subclassed as |rarr| ``FunctionBlock`` |rarr| ``Block``.
         This method sets the dimensions of this block to being:
@@ -200,12 +198,12 @@ class Gain(FunctionBlock):
         - width: 100
         - height: 100
 
-        This method also overwrites the title, type, variables and icon variables inherited from the ``Block`` Class.
+        This method also overwrites the title, type, parameters and icon variables inherited from the ``Block`` Class.
 
         - title: defaults to "Gain Block"
         - type: defaults to "Gain"
         - icon: set to local reference of a Gain icon
-        - variables: set according to the list structure outlined in ``Block``.
+        - parameters: set according to the list structure outlined in ``Block``.
 
         .. table::
            :align: left
@@ -213,9 +211,9 @@ class Gain(FunctionBlock):
            +----------+--------+----------+----------------------------------------------------+
            | name     | type   | value    |                    restrictions                    |
            +----------+--------+----------+----------------------------------------------------+
-           | "Gain"   | float  | gain     |                         []                         |
+           | "K"      | float  |   K      |                         []                         |
            +----------+--------+----------+----------------------------------------------------+
-           | "Premul" | bool   | premul   |                         []                         |
+           | "premul" | bool   | premul   |                         []                         |
            +----------+--------+----------+----------------------------------------------------+
 
         :param scene: a scene in which the Block is stored and shown. Provided by the ``Interface``.
@@ -223,9 +221,9 @@ class Gain(FunctionBlock):
         :param window: layout information of where all ``Widgets`` are located in the bdedit window.
                        Provided by the ``Interface``.
         :type window: ``QGridLayout``, required
-        :param gain: gain
-        :type gain: float, optional, defaults to 0
-        :param premul: premul
+        :param K: gain value
+        :type K: float, optional, defaults to 0
+        :param premul: premultiply by constant
         :type premul: bool, optional, defaults to False
         :param name: name of the block
         :type name: str, optional, defaults to "Gain Block"
@@ -238,9 +236,9 @@ class Gain(FunctionBlock):
         
         self.block_type = blockname(self.__class__)
 
-        self.variables = [
-            ["Gain", float, gain, []],
-            ["Premul", bool, premul, []]
+        self.parameters = [
+            ["K", float, K, []],
+            ["premul", bool, premul, []]
         ]
 
         self.icon = ":/Icons_Reference/Icons/gain.png"
@@ -263,7 +261,7 @@ class Interpolate(FunctionBlock):
     - inputsNum: 1, allowing this class to have any number of inputs
     - outputsNum: 1, allowing this class to have any number of outputs
 
-    The title, type, variables and icon variables inherited from the grandparent class are
+    The title, type, parameters and icon variables inherited from the grandparent class are
     overwritten here to this Blocks' unique values.
     """
     def __init__(self, scene, window, x_array=None, y_array=None, xy_array=None, time=False, kind='linear', name="Interpolate Block", pos=(0, 0)):
@@ -274,12 +272,12 @@ class Interpolate(FunctionBlock):
         - width: 100
         - height: 100
 
-        This method also overwrites the title, type, variables and icon variables inherited from the ``Block`` Class.
+        This method also overwrites the title, type, parameters and icon variables inherited from the ``Block`` Class.
 
         - title: defaults to "Interpolate Block"
         - type: defaults to "Interpolate"
         - icon: set to local reference of a Interpolate icon
-        - variables: set according to the list structure outlined in ``Block``.
+        - parameters: set according to the list structure outlined in ``Block``.
 
         .. table::
            :align: left
@@ -287,15 +285,15 @@ class Interpolate(FunctionBlock):
            +--------+--------+----------+-----------------------------------------------------------------------------------------------------------------------+
            | name   | type   | value    |                                                 restrictions                                                          |
            +--------+--------+----------+-----------------------------------------------------------------------------------------------------------------------+
-           | "X"    | tuple  | x_array  |                                       [["type", [type(None), tuple]]]                                                 |
+           | "x"    | tuple  | x_array  |                                       [["type", [type(None), tuple]]]                                                 |
            +--------+--------+----------+-----------------------------------------------------------------------------------------------------------------------+
-           | "Y"    | tuple  | y_array  |                                       [["type", [type(None), tuple]]]                                                 |
+           | "y"    | tuple  | y_array  |                                       [["type", [type(None), tuple]]]                                                 |
            +--------+--------+----------+-----------------------------------------------------------------------------------------------------------------------+
-           | "XY"   | list   | xy_array |                                       [["type", [type(None), list]]]                                                  |
+           | "xy"   | list   | xy_array |                                       [["type", [type(None), list]]]                                                  |
            +--------+--------+----------+-----------------------------------------------------------------------------------------------------------------------+
-           | "Time" | bool   | time     |                                                      []                                                               |
+           | "time" | bool   | time     |                                                      []                                                               |
            +--------+--------+----------+-----------------------------------------------------------------------------------------------------------------------+
-           | "Kind" | str    | kind     | [["keywords", ["linear", "nearest neighbor", "cubic spline", "shape-preserving", "biharmonic", "thin-plate spline"]]] |
+           | "kind" | str    | kind     | [["keywords", ["linear", "nearest neighbor", "cubic spline", "shape-preserving", "biharmonic", "thin-plate spline"]]] |
            +--------+--------+----------+-----------------------------------------------------------------------------------------------------------------------+
 
         :param scene: a scene in which the Block is stored and shown. Provided by the ``Interface``.
@@ -303,15 +301,15 @@ class Interpolate(FunctionBlock):
         :param window: layout information of where all ``Widgets`` are located in the bdedit window.
                        Provided by the ``Interface``.
         :type window: ``QGridLayout``, required
-        :param x_array: x_array
+        :param x_array: x values of function
         :type x_array: tuple, optional, defaults to None
-        :param y_array: y_array
+        :param y_array: y values of function
         :type y_array: tuple, optional, defaults to None
-        :param xy_array: xy_array
+        :param xy_array: combined x- and y-values of function
         :type xy_array: list, optional, defaults to None
-        :param time: time
+        :param time: x new is simulation time
         :type time: bool, optional, defaults to False
-        :param kind: kind
+        :param kind: interpolation method
         :type kind: str, optional, defaults to 'linear'
         :param name: name of the block
         :type name: str, optional, defaults to "Interpolate Block"
@@ -324,12 +322,12 @@ class Interpolate(FunctionBlock):
         
         self.block_type = blockname(self.__class__)
 
-        self.variables = [
-            ["X", tuple, x_array, [["type", [type(None), tuple]]]],
-            ["Y", tuple, y_array, [["type", [type(None), tuple]]]],
-            ["XY", list, xy_array, [["type", [type(None), list]]]],
-            ["Time", bool, time, []],
-            ["Kind", str, kind, [["keywords", ["linear", "nearest neighbor", "cubic spline", "shape-preserving", "biharmonic", "thin-plate spline"]]]]
+        self.parameters = [
+            ["x", tuple, x_array, [["type", [type(None), tuple]]]],
+            ["y", tuple, y_array, [["type", [type(None), tuple]]]],
+            ["xy", list, xy_array, [["type", [type(None), list]]]],
+            ["time", bool, time, []],
+            ["kind", str, kind, [["keywords", ["linear", "nearest neighbor", "cubic spline", "shape-preserving", "biharmonic", "thin-plate spline"]]]]
         ]
 
         self.icon = ":/Icons_Reference/Icons/interpolate.png"
@@ -352,7 +350,7 @@ class Prod(FunctionBlock):
     - inputsNum: 1, allowing this class to have any number of inputs
     - outputsNum: 1, allowing this class to have any number of outputs
 
-    The title, type, variables and icon variables inherited from the grandparent class are
+    The title, type, parameters and icon variables inherited from the grandparent class are
     overwritten here to this Blocks' unique values.
     """
     def __init__(self, scene, window, ops="**", matrix=False, name="Prod Block", pos=(0,0)):
@@ -363,12 +361,12 @@ class Prod(FunctionBlock):
         - width: 100
         - height: 100
 
-        This method also overwrites the title, type, variables and icon variables inherited from the ``Block`` Class.
+        This method also overwrites the title, type, parameters and icon variables inherited from the ``Block`` Class.
 
         - title: defaults to "Prod Block"
         - type: defaults to "Prod"
         - icon: set to local reference of a Prod icon
-        - variables: set according to the list structure outlined in ``Block``.
+        - parameters: set according to the list structure outlined in ``Block``.
 
         .. table::
            :align: left
@@ -376,9 +374,9 @@ class Prod(FunctionBlock):
            +--------------+--------+----------+----------------------------------------------------+
            | name         | type   | value    |                    restrictions                    |
            +--------------+--------+----------+----------------------------------------------------+
-           | "Operations" | str    | ops      |               [["signs", ["*", "/"]]]              |
+           | "ops"        | str    | ops      |               [["signs", ["*", "/"]]]              |
            +--------------+--------+----------+----------------------------------------------------+
-           | "Matrix"     | bool   | matrix   |                         []                         |
+           | "matrix"     | bool   | matrix   |                         []                         |
            +--------------+--------+----------+----------------------------------------------------+
 
         :param scene: a scene in which the Block is stored and shown. Provided by the ``Interface``.
@@ -386,8 +384,8 @@ class Prod(FunctionBlock):
         :param window: layout information of where all ``Widgets`` are located in the bdedit window.
                        Provided by the ``Interface``.
         :type window: ``QGridLayout``, required
-        :param ops: operations
-        :type ops: str, optional, defaults to "**
+        :param ops: operations associated with input ports * or /
+        :type ops: str, optional, defaults to "**"
         :param matrix: matrix
         :type matrix: bool, optional, defaults to False
         :param name: name of the block
@@ -401,9 +399,9 @@ class Prod(FunctionBlock):
         
         self.block_type = blockname(self.__class__)
 
-        self.variables = [
-            ["Operations", str, ops, [["signs", ["*", "/"]]]],
-            ["Matrix", bool, matrix, []]
+        self.parameters = [
+            ["ops", str, ops, [["signs", ["*", "/"]]]],
+            ["matrix", bool, matrix, []]
         ]
 
         # this will need to be updated from param window
@@ -430,7 +428,7 @@ class Sum(FunctionBlock):
     - inputsNum: 1, allowing this class to have any number of inputs
     - outputsNum: 1, allowing this class to have any number of outputs
 
-    The title, type, variables and icon variables inherited from the grandparent class are
+    The title, type, parameters and icon variables inherited from the grandparent class are
     overwritten here to this Blocks' unique values.
     """
     def __init__(self, scene, window, signs='++', angles=False, name="Sum Block", pos=(0, 0)):
@@ -441,12 +439,12 @@ class Sum(FunctionBlock):
         - width: 100
         - height: 100
 
-        This method also overwrites the title, type, variables and icon variables inherited from the ``Block`` Class.
+        This method also overwrites the title, type, parameters and icon variables inherited from the ``Block`` Class.
 
         - title: defaults to "Sum Block"
         - type: defaults to "Sum"
         - icon: set to local reference of a Sum icon
-        - variables: set according to the list structure outlined in ``Block``.
+        - parameters: set according to the list structure outlined in ``Block``.
 
         .. table::
            :align: left
@@ -454,9 +452,9 @@ class Sum(FunctionBlock):
            +-----------+--------+----------+----------------------------------------------------+
            | name      | type   | value    |                    restrictions                    |
            +-----------+--------+----------+----------------------------------------------------+
-           | "Signs"   | str    | signs    |               [["signs", ["+", "-"]]]              |
+           | "signs"   | str    | signs    |               [["signs", ["+", "-"]]]              |
            +-----------+--------+----------+----------------------------------------------------+
-           | "Angles"  | bool   | angles   |                         []                         |
+           | "angles"  | bool   | angles   |                         []                         |
            +-----------+--------+----------+----------------------------------------------------+
 
         :param scene: a scene in which the Block is stored and shown. Provided by the ``Interface``.
@@ -464,9 +462,9 @@ class Sum(FunctionBlock):
         :param window: layout information of where all ``Widgets`` are located in the bdedit window.
                        Provided by the ``Interface``.
         :type window: ``QGridLayout``, required
-        :param signs: signs
-        :type signs: str, optional, defaults to "++
-        :param angles: angles
+        :param signs: signs associated with input ports, + or -
+        :type signs: str, optional, defaults to "++"
+        :param angles: the signals are angles, wrap to [-pi, pi]
         :type angles: bool, optional, defaults to False
         :param name: name of the block
         :type name: str, optional, defaults to "Sum Block"
@@ -479,9 +477,9 @@ class Sum(FunctionBlock):
         
         self.block_type = blockname(self.__class__)
 
-        self.variables = [
-            ["Signs", str, signs, [["signs", ["+", "-"]]]],
-            ["Angles", bool, angles, []]
+        self.parameters = [
+            ["signs", str, signs, [["signs", ["+", "-"]]]],
+            ["angles", bool, angles, []]
         ]
 
         # this will need to be updated from param window

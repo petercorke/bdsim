@@ -3,9 +3,9 @@ import json
 from collections import OrderedDict
 
 # BdEdit imports
-from bdedit.block_socket import *
-from bdedit.block_param_window import ParamWindow
-from bdedit.block_graphics_block import GraphicsBlock
+from .block_socket import *
+from .block_param_window import ParamWindow
+from .block_graphics_block import GraphicsBlock
 
 # =============================================================================
 #
@@ -46,7 +46,7 @@ class Block(Serializable):
     - type;
     - appearance;
     - on-screen positioning;
-    - variables, and their values;
+    - parameters, and their values;
     - number of inputs and outputs.
     """
 
@@ -78,21 +78,21 @@ class Block(Serializable):
           The number of output sockets is restricted to 0 or n based on the outputsNum
           variable defined within the child class.
 
-        - variables: a list of editable variables relating to this ``Block``.
+        - parameters: a list of editable parameters relating to this ``Block``.
           This defaults to the list defined within the grandchild class, but follows
           the following structure of being a list of lists, where each 'lists' is a list
-          defining the variable as below:
+          defining the parameter as below:
 
-          - variable = ["name", type, value, [restrictions]]
-            e.g. variables = [["Gain", float, gain, []], ["Premul", bool, premul, []]]
+          - parameters = ["name", type, value, [restrictions]]
+            e.g. parameters = [["Gain", float, gain, []], ["Premul", bool, premul, []]]
 
           - name: is the name of the variable as a string
           - type: is the required type the variable should be (e.g. int, str, float)
           - value: is the default value the variable is set to should one not be provided
           - restrictions: is a list (can be list of lists) containing further restrictions
-            applied to the variable. These restrictions follow the following structure, of
+            applied to the parameter. These restrictions follow the following structure, of
             being a list with a string as the first list element, followed by a list of
-            conditions being applied to the variable as the second list element:
+            conditions being applied to the parameter as the second list element:
 
             - restriction = ["restriction name", [condition(s)]]
 
@@ -101,14 +101,14 @@ class Block(Serializable):
             - condition(s): differ based on the restriction name used, and will be of the
               following format:
 
-              - for keywords: a list of string words the variable must exactly match to,
+              - for keywords: a list of string words the parameter must exactly match to,
                 e.g. ["keywords", ["sine", "square", "triangle"]]
-              - for range: a list containing a min and max allowable value for this variable,
+              - for range: a list containing a min and max allowable value for this parameter,
                 e.g. ["range", [0, 1000]] or ["range", [-math.inf, math.inf]]
               - for type: a list containing alternative types, with the last value repeating
-                the initial type required for this variable,
+                the initial type required for this parameter,
                 e.g. ["type", [type(None), tuple]] (initial type = tuple) or ["type", [type(None), bool]] (initial type = bool)
-              - for signs: a list containing each allowable character this variable can match,
+              - for signs: a list containing each allowable character this parameter can match,
                 e.g. ["signs", ["*", "/"]] or ["signs", ["+", "-"]]
                 currently this is used for drawing signs along certain input sockets, so only these characters are supported,
 
@@ -135,7 +135,7 @@ class Block(Serializable):
         self.block_type = None
 
         # List will contain the user-editable parameters of the Block
-        self.variables = []
+        self.parameters = []
         # Local string file-path reference to the Blocks' icon
         self.icon = ''
 
@@ -159,8 +159,8 @@ class Block(Serializable):
         It populates the block's internal parameters; calls for the block to be
         drawn; creates the input and output sockets of the block; adds it to be
         stored and drawn in the ``Scene``; and if the block has user-editable
-        variables, initializes the private _createParamWindow method to create a
-        parameter window linked to editing this block instance's variables.
+        parameters, initializes the private _createParamWindow method to create a
+        parameter window linked to editing this block instance's parameters.
 
         :param inputs: number of input ``Sockets`` to create for this ``Block``
         :type inputs: int, required
@@ -185,7 +185,7 @@ class Block(Serializable):
         # * the input and output sockets are created and linked to the block,
         # * the block information is stored within the Scene class,
         # * the blocks' graphical information is stored within the graphical section of the Scene class
-        # * if the block has user-editable variables, then a parameter window is generated for this block
+        # * if the block has user-editable parameters, then a parameter window is generated for this block
         if allowed_to_generate:
             self.grBlock = GraphicsBlock(self)
 
@@ -195,7 +195,7 @@ class Block(Serializable):
             self.scene.addBlock(self)
             self.scene.grScene.addItem(self.grBlock)
 
-            if self.variables:
+            if self.parameters:
                 self._createParamWindow()
 
         # Otherwise if 'allowed_to_generate' is false:
@@ -320,26 +320,26 @@ class Block(Serializable):
         # Checks if the block type is a Prod or Sum block
         if self.block_type == "Prod" or self.block_type == "Sum":
 
-            # Iterates through user-editable variables stored within the block and checks
+            # Iterates through user-editable parameters stored within the block and checks
             # if one by the name of 'Operations' or 'Signs' exists (these block types should
-            # have them). These variables hold characters (+,-,*,/) representing what signs
+            # have them). These parameters hold characters (+,-,*,/) representing what signs
             # should be displayed and the order they should be displayed in (left to right
-            # in the variable, representing top to bottom when displayed on the block).
-            # Variable is represented as a list of 4 items:
-            # variable = [name, type, value, special_conditions]
-            for variable in self.variables:
+            # in the parameter, representing top to bottom when displayed on the block).
+            # Parameter is represented as a list of 4 items:
+            # parameter = [name, type, value, special_conditions]
+            for parameter in self.parameters:
 
-                # If variable name is equal to:
-                if variable[0] == "Operations" or variable[0] == "Signs":
+                # If parameter name is equal to:
+                if parameter[0] == "Operations" or parameter[0] == "Signs":
                     index = 0
 
                     # Sets the socket_sign of Socket within the block, equal to the respective
-                    # character (sign) stored within either the 'Operations' or 'Signs' variable.
+                    # character (sign) stored within either the 'Operations' or 'Signs' parameter.
                     # Note, since this method is only ever called after the number of input sockets
                     # has been created, or after this number has been updated (when the user edits
                     # the number of signs to display), the number of input sockets will always
-                    # exactly match the number of signs stored within the variable.
-                    for sign in variable[2]:
+                    # exactly match the number of signs stored within the parameter.
+                    for sign in parameter[2]:
                         self.inputs[index].socket_sign = sign
                         index += 1
 
@@ -655,26 +655,26 @@ class Block(Serializable):
         """
 
         # Special encoder is an instance of TupleEncoder, which is used to encode any
-        # variable within this Block, that needs to be stored as type tuple.
+        # parameter within this Block, that needs to be stored as type tuple.
         special_encoder = TupleEncoder()
 
         # The sockets associated with this block, have their own parameters that are
         # required for their reconstruction, so the serialize method within the
         # Socket class is called to package this information for each socket, also into
         # an OrderedDict. These ordered dictionaries are then stored in a temporary
-        # inputs/outputs variable and are returned as part of the OrderedDict of this Block.
+        # inputs/outputs parameter and are returned as part of the OrderedDict of this Block.
 
-        # Similarly, the user-editable variables associated with this Block must be
+        # Similarly, the user-editable parameters associated with this Block must be
         # remembered for the reconstruction of this block. However as some of them
         # need to be stored as tuples and JSON does not support this, hence the
         # TupleEncoder is used. Additionally, to reconstruct the Block's user-editable
-        # variables, only the name and value of these variables are needed, as their
+        # parameters, only the name and value of these parameters are needed, as their
         # type and special_conditions should never change from their definition within
-        # their Class. (As a reminder, variable = [name, type, value, special_conditions])
-        inputs, outputs, variables = [], [], []
+        # their Class. (As a reminder, parameter = [name, type, value, special_conditions])
+        inputs, outputs, parameters = [], [], []
         for socket in self.inputs: inputs.append(socket.serialize())
         for socket in self.outputs: outputs.append(socket.serialize())
-        for variable in self.variables: variables.append([variable[0], special_encoder.encode(variable[2])])
+        for parameter in self.parameters: parameters.append([parameter[0], special_encoder.encode(parameter[2])])
         return OrderedDict([
             ('id', self.id),
             ('block_type', self.block_type),
@@ -684,7 +684,7 @@ class Block(Serializable):
             ('icon', self.icon),
             ('inputs', inputs),
             ('outputs', outputs),
-            ('variables', variables)
+            ('parameters', parameters)
         ])
 
     # -----------------------------------------------------------------------------
@@ -696,8 +696,8 @@ class Block(Serializable):
 
         :param data: a Dictionary of essential information for reconstructing a ``Block``
         :type data: OrderedDict, required
-        :param hashmap: a Dictionary for directly mapping the essential block variables
-                        to this instance of ``Block``, without having to individually map each variable
+        :param hashmap: a Dictionary for directly mapping the essential block parameters
+                        to this instance of ``Block``, without having to individually map each parameter
         :type hashmap: Dict, required
         :return: True when completed successfully
         :rtype: Boolean
@@ -705,7 +705,7 @@ class Block(Serializable):
 
         # The id of this Block is set to whatever was stored as its id in the JSON file.
         self.id = data['id']
-        # The remaining variables associated to this Block are mapped to itself
+        # The remaining parameters associated to this Block are mapped to itself
         hashmap[data['id']] = self
         # The position of the Block within the Scene, are set accordingly.
         self.setPos(data['pos_x'], data['pos_y'])
@@ -737,19 +737,19 @@ class Block(Serializable):
             new_socket.deserialize(socket_data, hashmap)
             self.outputs.append(new_socket)
 
-        # The saved user-editable variables associated with the Block written over the default
+        # The saved user-editable parameters associated with the Block written over the default
         # ones this instance of the block was created with after reconstruction.
-        # Iterator for variables
+        # Iterator for parameters
         i = 0
-        for varName, varVal in data['variables']:
+        for paramName, paramVal in data['parameters']:
             # If debug mode is enabled, this code will print to console to validate that the
-            # variables are being overwritten into the same location they were previously stored in.
+            # parameters are being overwritten into the same location they were previously stored in.
             if DEBUG: print("----------------------")
             if DEBUG: print("Cautionary check")
-            if DEBUG: print("current value:", [self.variables[i][0], self.variables[i][1], self.variables[i][2]])
-            if DEBUG: print("setting to value:", [varName, self.variables[i][1], self.tuple_decoder(varVal)])
-            self.variables[i][0] = varName
-            self.variables[i][2] = self.tuple_decoder(varVal)
+            if DEBUG: print("current value:", [self.parameters[i][0], self.parameters[i][1], self.parameters[i][2]])
+            if DEBUG: print("setting to value:", [paramName, self.parameters[i][1], self.tuple_decoder(paramVal)])
+            self.parameters[i][0] = paramName
+            self.parameters[i][2] = self.tuple_decoder(paramVal)
             i += 1
 
         self._createParamWindow()
@@ -795,17 +795,17 @@ def blockname(cls):
 
 # =============================================================================
 #
-#   Defining the TupleEncoder Class, which is used to encode block variables
+#   Defining the TupleEncoder Class, which is used to encode block parameters
 #   that need to be stored in JSON as tuples
 #
 # =============================================================================
 class TupleEncoder(json.JSONEncoder):
     """
     This Class inherits JSONEncoder from the json library, and is used to encode
-    user-editable variables associated with a ``Block`` which need to be stored
+    user-editable parameters associated with a ``Block`` which need to be stored
     as a type tuple. This code is necessary as JSON does not support storing
     data as tuples. After the encoder has been used to serialize (save) the
-    Block variable data, when the Block is deserialized (loaded), this encoded
+    Block parameter data, when the Block is deserialized (loaded), this encoded
     representation of a tuple will be decoded and stored as a tuple.
 
     This code is adapted from: https://stackoverflow.com/a/15721641
@@ -813,13 +813,13 @@ class TupleEncoder(json.JSONEncoder):
 
     def encode(self, item):
         """
-        This method determines whether a given user-editable block variable
+        This method determines whether a given user-editable block parameter
         is of type tuple, and converts it to a dictionary with a "__tuple__"
-        key with value `True` (signifying this variable should be represented
+        key with value `True` (signifying this parameter should be represented
         as a tuple), and an "item's" key with value `item` (this being the
-        value of the user-editable variable).
+        value of the user-editable parameter).
 
-        :param item: the user-editable variable's value
+        :param item: the user-editable parameter's value
         :type item: any
         :return: - a Dictionary defined as above (if item is tuple);
                  - the item (otherwise)
@@ -856,7 +856,7 @@ class TupleEncoder(json.JSONEncoder):
 class SourceBlock(Block):
     """
     The ``SourceBlock`` Class is a subclass of ``Block``, and referred to as a
-    child class of ``Block``. It inherits all the methods and variables of its
+    child class of ``Block``. It inherits all the methods and parameters of its
     parent class and controls the number of input or output ``Sockets`` any
     subclass (referred to as a grandchild class of ``Block``) that inherits it has.
     """
@@ -906,7 +906,7 @@ class SourceBlock(Block):
 class SinkBlock(Block):
     """
     The ``SinkBlock`` Class is a subclass of ``Block``, and referred to as a
-    child class of ``Block``. It inherits all the methods and variables of its
+    child class of ``Block``. It inherits all the methods and parameters of its
     parent class and controls the number of input or output ``Sockets`` any
     subclass (referred to as a grandchild class of ``Block``) that inherits it has.
     """
@@ -955,7 +955,7 @@ class SinkBlock(Block):
 class FunctionBlock(Block):
     """
     The ``FunctionBlock`` Class is a subclass of ``Block``, and referred to as a
-    child class of ``Block``. It inherits all the methods and variables of its
+    child class of ``Block``. It inherits all the methods and parameters of its
     parent class and controls the number of input or output ``Sockets`` any
     subclass (referred to as a grandchild class of ``Block``) that inherits it has.
     """
@@ -1004,7 +1004,7 @@ class FunctionBlock(Block):
 class TransferBlock(Block):
     """
     The ``TransferBlock`` Class is a subclass of ``Block``, and referred to as a
-    child class of ``Block``. It inherits all the methods and variables of its
+    child class of ``Block``. It inherits all the methods and parameters of its
     parent class and controls the number of input or output ``Sockets`` any
     subclass (referred to as a grandchild class of ``Block``) that inherits it has.
     """
@@ -1053,7 +1053,7 @@ class TransferBlock(Block):
 class DiscreteBlock(Block):
     """
     The ``DiscreteBlock`` Class is a subclass of ``Block``, and referred to as a
-    child class of ``Block``. It inherits all the methods and variables of its
+    child class of ``Block``. It inherits all the methods and parameters of its
     parent class and controls the number of input or output ``Sockets`` any
     subclass (referred to as a grandchild class of ``Block``) that inherits it has.
     """
@@ -1102,7 +1102,7 @@ class DiscreteBlock(Block):
 class INPORTBlock(Block):
     """
     The ``INPORTBlock`` Class is a subclass of ``Block``, and referred to as a
-    child class of ``Block``. It inherits all the methods and variables of its
+    child class of ``Block``. It inherits all the methods and parameters of its
     parent class and controls the number of input or output ``Sockets`` any
     subclass (referred to as a grandchild class of ``Block``) that inherits it has.
     """
@@ -1151,7 +1151,7 @@ class INPORTBlock(Block):
 class OUTPORTBlock(Block):
     """
     The ``OUTPORTBlock`` Class is a subclass of ``Block``, and referred to as a
-    child class of ``Block``. It inherits all the methods and variables of its
+    child class of ``Block``. It inherits all the methods and parameters of its
     parent class and controls the number of input or output ``Sockets`` any
     subclass (referred to as a grandchild class of ``Block``) that inherits it has.
     """
@@ -1200,7 +1200,7 @@ class OUTPORTBlock(Block):
 class SUBSYSTEMBlock(Block):
     """
     The ``SUBSYSTEMBlock`` Class is a subclass of ``Block``, and referred to as a
-    child class of ``Block``. It inherits all the methods and variables of its
+    child class of ``Block``. It inherits all the methods and parameters of its
     parent class and controls the number of input or output ``Sockets`` any
     subclass (referred to as a grandchild class of ``Block``) that inherits it has.
     """

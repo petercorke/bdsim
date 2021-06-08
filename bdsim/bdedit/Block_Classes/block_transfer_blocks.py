@@ -1,4 +1,5 @@
-from bdedit.block import TransferBlock, block, blockname
+import bdsim.bdsim.bdedit
+from bdsim.bdsim.bdedit.block import TransferBlock, block, blockname
 
 @block
 # Child class 1: Integrator Block
@@ -13,10 +14,10 @@ class Integrator(TransferBlock):
     - inputsNum: 1, allowing this class to have any number of inputs
     - outputsNum: 1, allowing this class to have any number of outputs
 
-    The title, type, variables and icon variables inherited from the grandparent class are
+    The title, type, parameters and icon variables inherited from the grandparent class are
     overwritten here to this Blocks' unique values.
     """
-    def __init__(self, scene, window, x_initial=[0], minimum=None, maximum=None, name="Integrator Block", pos=(0, 0)):
+    def __init__(self, scene, window, x0=[0], minimum=None, maximum=None, name="Integrator Block", pos=(0, 0)):
         """
         This method creates a ``Integrator`` Block, which is a subclassed as |rarr| ``TransferBlock`` |rarr| ``Block``.
         This method sets the dimensions of this block to being:
@@ -24,12 +25,12 @@ class Integrator(TransferBlock):
         - width: 100
         - height: 100
 
-        This method also overwrites the title, type, variables and icon variables inherited from the ``Block`` Class.
+        This method also overwrites the title, type, parameters and icon variables inherited from the ``Block`` Class.
 
         - title: defaults to "Integrator Block"
         - type: defaults to "Integrator"
         - icon: set to local reference of a Integrator icon
-        - variables: set according to the list structure outlined in ``Block``.
+        - parameters: set according to the list structure outlined in ``Block``.
 
         .. table::
            :align: left
@@ -37,11 +38,11 @@ class Integrator(TransferBlock):
            +--------+--------+----------+----------------------------------------------------+
            | name   | type   | value    |                    restrictions                    |
            +--------+--------+----------+----------------------------------------------------+
-           | "X_0"  | list   | x_initial|                         []                         |
+           | "x0"   | list   | x0       |                         []                         |
            +--------+--------+----------+----------------------------------------------------+
-           | "Min"  | float  | minimum  |         [["type", [type(None), float]]]            |
+           | "min"  | float  | minimum  |         [["type", [type(None), float]]]            |
            +--------+--------+----------+----------------------------------------------------+
-           | "Max"  | float  | maximum  |         [["type", [type(None), float]]]            |
+           | "max"  | float  | maximum  |         [["type", [type(None), float]]]            |
            +--------+--------+----------+----------------------------------------------------+
 
         :param scene: a scene in which the Block is stored and shown. Provided by the ``Interface``.
@@ -49,11 +50,11 @@ class Integrator(TransferBlock):
         :param window: layout information of where all ``Widgets`` are located in the bdedit window.
                        Provided by the ``Interface``.
         :type window: ``QGridLayout``, required
-        :param x_initial: intial x value
-        :type x_initial: list, optional, defaults to [0]
-        :param minimum: minimum
+        :param x0: initial state
+        :type x0: list, optional, defaults to [0]
+        :param minimum: minimum value of state
         :type minimum: float, optional, defaults to None
-        :param maximum: maximum
+        :param maximum: maximum value of state
         :type maximum: float, optional, defaults to None
         :param name: name of the block
         :type name: str, optional, defaults to "Integrator Block"
@@ -66,14 +67,13 @@ class Integrator(TransferBlock):
 
         self.block_type = blockname(self.__class__)
 
-        self.variables = [
-            ["X_0", list, x_initial, []],
-            ["Min", float, minimum, [["type", [type(None), float]]]],
-            ["Max", float, maximum, [["type", [type(None), float]]]]
+        self.parameters = [
+            ["x0", list, x0, []],
+            ["min", float, minimum, [["type", [type(None), float]]]],
+            ["max", float, maximum, [["type", [type(None), float]]]]
         ]
 
         self.icon = ":/Icons_Reference/Icons/integrator_B.png"
-        # self.icon = ":/Icons_Reference/Icons/integrator_L.png"
         self.width = 100
         self.height = 100
 
@@ -93,10 +93,10 @@ class LTI_SISO(TransferBlock):
     - inputsNum: 1, allowing this class to have any number of inputs
     - outputsNum: 1, allowing this class to have any number of outputs
 
-    The title, type, variables and icon variables inherited from the grandparent class are
+    The title, type, parameters and icon variables inherited from the grandparent class are
     overwritten here to this Blocks' unique values.
     """
-    def __init__(self, scene, window, n=[1], d=[1, 1], x_initial=None, verbose=False, name="LTI_SISO Block", pos=(0, 0)):
+    def __init__(self, scene, window, N=[1], D=[1, 1], x0=None, verbose=False, name="LTI_SISO Block", pos=(0, 0)):
         """
         This method creates a ``LTI_SISO`` Block, which is a subclassed as |rarr| ``TransferBlock`` |rarr| ``Block``.
         This method sets the dimensions of this block to being:
@@ -104,12 +104,12 @@ class LTI_SISO(TransferBlock):
         - width: 100
         - height: 100
 
-        This method also overwrites the title, type, variables and icon variables inherited from the ``Block`` Class.
+        This method also overwrites the title, type, parameters and icon variables inherited from the ``Block`` Class.
 
         - title: defaults to "LTI_SISO Block"
         - type: defaults to "LTI_SISO"
         - icon: set to local reference of a LTI_SISO icon
-        - variables: set according to the list structure outlined in ``Block``.
+        - parameters: set according to the list structure outlined in ``Block``.
 
         .. table::
            :align: left
@@ -117,13 +117,13 @@ class LTI_SISO(TransferBlock):
            +-----------+--------+----------+----------------------------------------------------+
            | name      | type   | value    |                    restrictions                    |
            +-----------+--------+----------+----------------------------------------------------+
-           | "N"       | list   |    n     |                         []                         |
+           | "N"       | list   |    N     |                         []                         |
            +-----------+--------+----------+----------------------------------------------------+
-           | "D"       | list   |    d     |                         []                         |
+           | "D"       | list   |    D     |                         []                         |
            +-----------+--------+----------+----------------------------------------------------+
-           | "X_0"     | list   | x_initial|         [["type", [type(None), list]]]             |
+           | "xo"      | list   |    x0    |         [["type", [type(None), list]]]             |
            +-----------+--------+----------+----------------------------------------------------+
-           | "Verbose" | bool   | verbose  |         [["type", [type(None), bool]]]             |
+           | "verbose" | bool   | verbose  |         [["type", [type(None), bool]]]             |
            +-----------+--------+----------+----------------------------------------------------+
 
         :param scene: a scene in which the Block is stored and shown. Provided by the ``Interface``.
@@ -131,12 +131,12 @@ class LTI_SISO(TransferBlock):
         :param window: layout information of where all ``Widgets`` are located in the bdedit window.
                        Provided by the ``Interface``.
         :type window: ``QGridLayout``, required
-        :param n: N
-        :type n: list, optional, defaults to [1]
-        :param d: D
-        :type d: list, optional, defaults to [1,1]
-        :param x_initial: initial x value
-        :type x_initial: list, optional, defaults to None
+        :param N: numerator coefficients
+        :type N: list, optional, defaults to [1]
+        :param D: denominator coefficients
+        :type D: list, optional, defaults to [1,1]
+        :param x0: initial states
+        :type x0: list, optional, defaults to None
         :param verbose: verbose
         :type verbose: bool, optional, defaults to False
         :param name: name of the block
@@ -150,15 +150,14 @@ class LTI_SISO(TransferBlock):
 
         self.block_type = blockname(self.__class__)
 
-        self.variables = [
-            ["N", list, n, []],
-            ["D", list, d, []],
-            ["X_0", list, x_initial, [["type", [type(None), list]]]],
-            ["Verbose", bool, verbose, [["type", [type(None), bool]]]]
+        self.parameters = [
+            ["N", list, N, []],
+            ["D", list, D, []],
+            ["x0", list, x0, [["type", [type(None), list]]]],
+            ["verbose", bool, verbose, [["type", [type(None), bool]]]]
         ]
 
         self.icon = ":/Icons_Reference/Icons/lti_siso_B.png"
-        # self.icon = ":/Icons_Reference/Icons/lti_siso_L.png"
         self.width = 100
         self.height = 100
 
@@ -178,10 +177,10 @@ class LTI_SS(TransferBlock):
     - inputsNum: 1, allowing this class to have any number of inputs
     - outputsNum: 1, allowing this class to have any number of outputs
 
-    The title, type, variables and icon variables inherited from the grandparent class are
+    The title, type, parameters and icon variables inherited from the grandparent class are
     overwritten here to this Blocks' unique values.
     """
-    def __init__(self, scene, window, a=None, b=None, c=None, x_initial=None, verbose=False, name="LTI_SS Block", pos=(0, 0)):
+    def __init__(self, scene, window, A=None, B=None, C=None, x0=None, verbose=False, name="LTI_SS Block", pos=(0, 0)):
         """
         This method creates a ``LTI_SS`` Block, which is a subclassed as |rarr| ``TransferBlock`` |rarr| ``Block``.
         This method sets the dimensions of this block to being:
@@ -189,12 +188,12 @@ class LTI_SS(TransferBlock):
         - width: 100
         - height: 100
 
-        This method also overwrites the title, type, variables and icon variables inherited from the ``Block`` Class.
+        This method also overwrites the title, type, parameters and icon variables inherited from the ``Block`` Class.
 
         - title: defaults to "LTI_SS Block"
         - type: defaults to "LTI_SS"
         - icon: set to local reference of a LTI_SS icon
-        - variables: set according to the list structure outlined in ``Block``.
+        - parameters: set according to the list structure outlined in ``Block``.
 
         .. table::
            :align: left
@@ -202,15 +201,15 @@ class LTI_SS(TransferBlock):
            +-----------+--------+----------+----------------------------------------------------+
            | name      | type   | value    |                    restrictions                    |
            +-----------+--------+----------+----------------------------------------------------+
-           | "A"       | float  |    a     |         [["type", [type(None), float]]]            |
+           | "A"       | float  |    A     |         [["type", [type(None), float]]]            |
            +-----------+--------+----------+----------------------------------------------------+
-           | "B"       | float  |    b     |         [["type", [type(None), float]]]            |
+           | "B"       | float  |    B     |         [["type", [type(None), float]]]            |
            +-----------+--------+----------+----------------------------------------------------+
-           | "C"       | float  |    c     |         [["type", [type(None), float]]]            |
+           | "C"       | float  |    C     |         [["type", [type(None), float]]]            |
            +-----------+--------+----------+----------------------------------------------------+
-           | "X_0"     | list   | x_initial|         [["type", [type(None), list]]]             |
+           | "x0"      | list   |   x0     |         [["type", [type(None), list]]]             |
            +-----------+--------+----------+----------------------------------------------------+
-           | "Verbose" | bool   | verbose  |         [["type", [type(None), bool]]]             |
+           | "verbose" | bool   | verbose  |         [["type", [type(None), bool]]]             |
            +-----------+--------+----------+----------------------------------------------------+
 
         :param scene: a scene in which the Block is stored and shown. Provided by the ``Interface``.
@@ -218,14 +217,14 @@ class LTI_SS(TransferBlock):
         :param window: layout information of where all ``Widgets`` are located in the bdedit window.
                        Provided by the ``Interface``.
         :type window: ``QGridLayout``, required
-        :param a: A
-        :type a: float, optional, defaults to None
-        :param b: B
-        :type b: float, optional, defaults to None
-        :param c: C
-        :type c: float, optional, defaults to None
-        :param x_initial: initial x value
-        :type x_initial: list, optional, defaults to None
+        :param A: A
+        :type A: float, optional, defaults to None
+        :param B: B
+        :type B: float, optional, defaults to None
+        :param C: C
+        :type C: float, optional, defaults to None
+        :param x0: initial states
+        :type x0: list, optional, defaults to None
         :param verbose: verbose
         :type verbose: bool, optional, defaults to False
         :param name: name of the block
@@ -239,12 +238,12 @@ class LTI_SS(TransferBlock):
 
         self.block_type = blockname(self.__class__)
 
-        self.variables = [
-            ["A", float, a, [["type", [type(None), float]]]],
-            ["B", float, b, [["type", [type(None), float]]]],
-            ["C", float, c, [["type", [type(None), float]]]],
-            ["X_0", list, x_initial, [["type", [type(None), list]]]],
-            ["Verbose", bool, verbose, [["type", [type(None), bool]]]]
+        self.parameters = [
+            ["A", float, A, [["type", [type(None), float]]]],
+            ["B", float, B, [["type", [type(None), float]]]],
+            ["C", float, C, [["type", [type(None), float]]]],
+            ["x0", list, x0, [["type", [type(None), list]]]],
+            ["verbose", bool, verbose, [["type", [type(None), bool]]]]
         ]
 
         self.icon = ":/Icons_Reference/Icons/lti_ss.png"

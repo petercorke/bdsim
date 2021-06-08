@@ -10,12 +10,12 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
 # BdEdit imports
-from bdedit.block import *
-from bdedit.Icons import *
-from bdedit.block_wire import Wire
-from bdedit.block_socket_block import *
-from bdedit.interface_scene import Scene
-from bdedit.interface_graphics_view import GraphicsView
+from .block import *
+from .Icons import *
+from .block_wire import Wire
+from .block_socket_block import *
+from .interface_scene import Scene
+from .interface_graphics_view import GraphicsView
 
 # =============================================================================
 #

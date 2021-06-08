@@ -1,4 +1,5 @@
-from bdedit.block import INPORTBlock, OUTPORTBlock, SUBSYSTEMBlock, block, blockname
+import bdsim.bdsim.bdedit
+from bdsim.bdsim.bdedit.block import INPORTBlock, OUTPORTBlock, SUBSYSTEMBlock, block, blockname
 
 @block
 # Child class 1: INPORT Block
@@ -13,10 +14,10 @@ class INPORT(INPORTBlock):
     - inputsNum: 0, not allowing this class to have any inputs
     - outputsNum: 1, allowing this class to have any number of outputs
 
-    The title, type, variables and icon variables inherited from the grandparent class are
+    The title, type, parameters and icon variables inherited from the grandparent class are
     overwritten here to this Blocks' unique values.
     """
-    def __init__(self, scene, window, hierarchy_file=None, nout=1, name="INPORT Block", pos=(0, 0)):
+    def __init__(self, scene, window, nout=1, name="INPORT Block", pos=(0, 0)):
         """
         This method creates a ``INPORT`` Block, which is a subclassed as |rarr| ``INPORTBlock`` |rarr| ``Block``.
         This method sets the dimensions of this block to being:
@@ -24,12 +25,12 @@ class INPORT(INPORTBlock):
         - width: 100
         - height: 150
 
-        This method also overwrites the title, type, variables and icon variables inherited from the ``Block`` Class.
+        This method also overwrites the title, type, parameters and icon variables inherited from the ``Block`` Class.
 
         - title: defaults to "INPORT Block"
         - type: defaults to "INPORT"
         - icon: set to local reference of a INPORT icon
-        - variables: set according to the list structure outlined in ``Block``.
+        - parameters: set according to the list structure outlined in ``Block``.
 
         .. table::
            :align: left
@@ -37,9 +38,7 @@ class INPORT(INPORTBlock):
            +------------------+--------+------------------+----------------------------------------------------+
            | name             | type   | value            |                    restrictions                    |
            +------------------+--------+------------------+----------------------------------------------------+
-           | "hierarchy_file" | str    | hierarchy_file   |           [["type", [type(None), str]]]            |
-           +------------------+--------+------------------+----------------------------------------------------+
-           | "No. of outputs" | int    | nout             |             [["range", [0, 1000]]]                 |
+           | "nout"           | int    | nout             |             [["range", [0, 1000]]]                 |
            +------------------+--------+------------------+----------------------------------------------------+
 
         :param scene: a scene in which the Block is stored and shown. Provided by the ``Interface``.
@@ -47,8 +46,6 @@ class INPORT(INPORTBlock):
         :param window: layout information of where all ``Widgets`` are located in the bdedit window.
                        Provided by the ``Interface``.
         :type window: ``QGridLayout``, required
-        :param hierarchy_file: string filepath to block diagram representing an INPORT block
-        :type hierarchy_file: str, optional, defaults to None
         :param nout: number of outputs
         :type nout: int, optional, defaults to 1
         :param name: name of the block
@@ -62,9 +59,8 @@ class INPORT(INPORTBlock):
 
         self.block_type = blockname(self.__class__)
 
-        self.variables = [
-            ["hierarchy_file", str, hierarchy_file, [["type", [type(None), str]]]],
-            ["No. of outputs", int, nout, [["range", [0, 1000]]]]
+        self.parameters = [
+            ["nout", int, nout, [["range", [0, 1000]]]]
         ]
 
         self.icon = None
@@ -87,10 +83,10 @@ class OUTPORT(OUTPORTBlock):
     - inputsNum: 1, allowing this class to have any number of inputs
     - outputsNum: 0, not allowing this class to have any outputs
 
-    The title, type, variables and icon variables inherited from the grandparent class are
+    The title, type, parameters and icon variables inherited from the grandparent class are
     overwritten here to this Blocks' unique values.
     """
-    def __init__(self, scene, window, hierarchy_file=None, nin=1, name="OUTPORT Block", pos=(0, 0)):
+    def __init__(self, scene, window, nin=1, name="OUTPORT Block", pos=(0, 0)):
         """
         This method creates a ``OUTPORT`` Block, which is a subclassed as |rarr| ``OUTPORTBlock`` |rarr| ``Block``.
         This method sets the dimensions of this block to being:
@@ -98,12 +94,12 @@ class OUTPORT(OUTPORTBlock):
         - width: 100
         - height: 150
 
-        This method also overwrites the title, type, variables and icon variables inherited from the ``Block`` Class.
+        This method also overwrites the title, type, parameters and icon variables inherited from the ``Block`` Class.
 
         - title: defaults to "OUTPORT Block"
         - type: defaults to "OUTPORT"
         - icon: set to local reference of a OUTPORT icon
-        - variables: set according to the list structure outlined in ``Block``.
+        - parameters: set according to the list structure outlined in ``Block``.
 
         .. table::
            :align: left
@@ -111,9 +107,7 @@ class OUTPORT(OUTPORTBlock):
            +------------------+--------+------------------+----------------------------------------------------+
            | name             | type   | value            |                    restrictions                    |
            +------------------+--------+------------------+----------------------------------------------------+
-           | "hierarchy_file" | str    | hierarchy_file   |           [["type", [type(None), str]]]            |
-           +------------------+--------+------------------+----------------------------------------------------+
-           | "No. of inputs"  | int    | nin              |             [["range", [0, 1000]]]                 |
+           | "nin"            | int    | nin              |             [["range", [0, 1000]]]                 |
            +------------------+--------+------------------+----------------------------------------------------+
 
         :param scene: a scene in which the Block is stored and shown. Provided by the ``Interface``.
@@ -121,8 +115,6 @@ class OUTPORT(OUTPORTBlock):
         :param window: layout information of where all ``Widgets`` are located in the bdedit window.
                        Provided by the ``Interface``.
         :type window: ``QGridLayout``, required
-        :param hierarchy_file: string filepath to block diagram representing an OUTPORT block
-        :type hierarchy_file: str, optional, defaults to None
         :param nin: number of inputs
         :type nin: int, optional, defaults to 1
         :param name: name of the block
@@ -136,9 +128,8 @@ class OUTPORT(OUTPORTBlock):
 
         self.block_type = blockname(self.__class__)
 
-        self.variables = [
-            ["hierarchy_file", str, hierarchy_file, [["type", [type(None), str]]]],
-            ["No. of inputs", int, nin, [["range", [0, 1000]]]]
+        self.parameters = [
+            ["nin", int, nin, [["range", [0, 1000]]]]
         ]
 
         self.icon = None
@@ -161,7 +152,7 @@ class SUBSYSTEM(SUBSYSTEMBlock):
     - inputsNum: 1, allowing this class to have any number of inputs
     - outputsNum: 1, allowing this class to have any number of outputs
 
-    The title, type, variables and icon variables inherited from the grandparent class are
+    The title, type, parameters and icon variables inherited from the grandparent class are
     overwritten here to this Blocks' unique values.
     """
     def __init__(self, scene, window, hierarchy_file=None, name="SUBSYSTEM Block", pos=(0, 0)):
@@ -172,12 +163,12 @@ class SUBSYSTEM(SUBSYSTEMBlock):
         - width: 200
         - height: 150
 
-        This method also overwrites the title, type, variables and icon variables inherited from the ``Block`` Class.
+        This method also overwrites the title, type, parameters and icon variables inherited from the ``Block`` Class.
 
         - title: defaults to "SUBSYSTEM Block"
         - type: defaults to "SUBSYSTEM"
         - icon: set to local reference of a SUBSYSTEM icon
-        - variables: set according to the list structure outlined in ``Block``.
+        - parameters: set according to the list structure outlined in ``Block``.
 
         .. table::
            :align: left
@@ -206,7 +197,7 @@ class SUBSYSTEM(SUBSYSTEMBlock):
 
         self.block_type = blockname(self.__class__)
 
-        self.variables = [
+        self.parameters = [
             ["hierarchy_file", str, hierarchy_file, [["type", [type(None), str]]]]
         ]
 

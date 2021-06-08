@@ -7,7 +7,7 @@ from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt, QRect
 
 # BdEdit imports
-from bdedit.Icons import *
+from .Icons import *
 
 # =============================================================================
 #
@@ -33,9 +33,9 @@ DEBUG = False
 # =============================================================================
 #
 #   Defining the ParamWindow Class, which holds information of how the parameter
-#   window - that holds all the user-editable block variables - appears. It also
+#   window - that holds all the user-editable block parameters - appears. It also
 #   contains the logic for creating the ParamWindow and the logic for sanity
-#   checking the block variables once they have been edited by the user.
+#   checking the block parameters once they have been edited by the user.
 #
 # =============================================================================
 class ParamWindow(QWidget):
@@ -45,9 +45,9 @@ class ParamWindow(QWidget):
 
     - how the parameter window appears visually,
     - where it is located within the BdEdit application window,
-    - the displayed variables from the Block the parameter window is related to,
-    - sanity checking on user-edits to the Block variables,
-    - pop-up user feedback for successful or unsuccessful Block variable edits.
+    - the displayed parameters from the Block the parameter window is related to,
+    - sanity checking on user-edits to the Block parameters,
+    - pop-up user feedback for successful or unsuccessful Block parameter edits.
     """
 
     # -----------------------------------------------------------------------------
@@ -64,12 +64,12 @@ class ParamWindow(QWidget):
         super().__init__(parent)
 
         # The Block this parameter window relates to is stored internally,
-        # so are its variables
+        # so are its parameters
         self.block = block
-        self.variables = self.block.variables
+        self.parameters = self.block.parameters
 
         # Parameter_values is a list into which the text responses of the user
-        # will be appended to, when they make changes to a Block variable
+        # will be appended to, when they make changes to a Block parameter
         self.parameter_values = []
 
         # The parameter window will display vertically on the RHS of the BdEdit
@@ -77,7 +77,7 @@ class ParamWindow(QWidget):
         self.layout = QVBoxLayout()
 
         # Definition of with of the parameter window, and the lines holding
-        # the block variables inside it. The width is fixed to 300 pixels, scaled
+        # the block parameters inside it. The width is fixed to 300 pixels, scaled
         # to what 300 pixels should look like on 2560 screen width resolution
         self._parameter_line_width = 150
         self._width = 300 * self.block.window.scale
@@ -132,9 +132,9 @@ class ParamWindow(QWidget):
         """
         This method displays a pop-up user-feedback message within the parameter window,
         notifying them of either a successful or unsuccessful update to the Blocks'
-        variables. This method will also trigger the message to auto-close, after 1.5
+        parameters. This method will also trigger the message to auto-close, after 1.5
         seconds for a successful update, and after 5 seconds for an unsuccessful update.
-        If at any point the user updates the Block variables before this time is elapsed,
+        If at any point the user updates the Block parameters before this time is elapsed,
         the current (old) message will be removed and replaced by the most relevant message.
         An unsuccessful update attempt will also issue an error sound when the message is
         opened.
@@ -195,19 +195,19 @@ class ParamWindow(QWidget):
         """
         This method handles the building of the ParamWindow instance. These instances
         will always look exactly the same in terms of the information they contain,
-        however the Block variables and the block type will vary depending on the Block
+        however the Block parameters and the block type will vary depending on the Block
         this ParamWindow relates to.
 
         The ParamWindow is built by adding items into the QWidget that represents this
         parameter window. For each item added into the QWidget, a label is displayed on
         the left-hand-side, and either the non-editable value (label) is displayed on the
         right-hand-side, or an editable line is displayed and populated with the respective
-        variables' current value.
+        parameters' current value.
 
         The ParamWindow is populated by, first, adding a non-editable line displaying the
         selected Blocks' type. Next, the Blocks' current title is added with an editable
-        line. Following this, each Block variable looped through and added with an editable
-        line in which the current value of the Block variable is populated. Changing this
+        line. Following this, each Block parameter looped through and added with an editable
+        line in which the current value of the Block parameter is populated. Changing this
         value will prompt the sanity checking of the value entered, which is handled by
         the updateBlockParameters() method.
         """
@@ -216,7 +216,7 @@ class ParamWindow(QWidget):
         self.row1 = QWidget()
         self.row1.layout = QHBoxLayout()
         # Make a label of the block type
-        self.block_type_label = QLabel('<font size=4><b>Block Type: </font>')
+        self.block_type_label = QLabel('<font size=4><b>type: </font>')
         # Make an editable line for the type, and populate it with the current block type
         self.block_type = QLabel('<font size=4>' + str(self.block.block_type) + ' Block </font>')
         # Set the width of the editable line to the above-defined width (150 pixels)
@@ -234,7 +234,7 @@ class ParamWindow(QWidget):
         self.row2.layout = QHBoxLayout()
 
         # Make a label of the block title
-        self.title_label = QLabel('<font size=4><b>Title: </font>')
+        self.title_label = QLabel('<font size=4><b>title: </font>')
         # Make an editable line for the title, and populate it with the current block title
         self.title_line = QLineEdit(self.block.title)
         # Set the width of the editable line to the above-defined width (150 pixels)
@@ -247,19 +247,19 @@ class ParamWindow(QWidget):
         self.row2.setLayout(self.row2.layout)
         self.layout.addWidget(self.row2)
 
-        # For each block variable
-        for variable in self.variables:
-            # Create a QWidget that will represent the row that variable is displayed in
+        # For each block parameter
+        for parameter in self.parameters:
+            # Create a QWidget that will represent the row that parameter is displayed in
             self.row_x = QWidget()
             self.row_x.layout = QHBoxLayout()
 
-            # Make a label of that variables' name
-            self.label = QLabel('<font size=3><b>'+variable[0]+": "+'</font>')
-            # Make an editable line for that variable, and populate it with the variables' current value
-            self.line = QLineEdit(str(variable[2]))
+            # Make a label of that parameters' name
+            self.label = QLabel('<font size=3><b>'+parameter[0]+": "+'</font>')
+            # Make an editable line for that parameter, and populate it with the parameters' current value
+            self.line = QLineEdit(str(parameter[2]))
             # Set the width of the editable line to the above-defined width (150 pixels)
             self.line.setFixedWidth(self._parameter_line_width)
-            # Append the current value of the variable into the following list (for later comparison)
+            # Append the current value of the parameter into the following list (for later comparison)
             self.parameter_values.append(self.line)
             # Add the label and editable line into our row widget
             self.row_x.layout.addWidget(self.label, alignment=Qt.AlignCenter)
@@ -278,25 +278,25 @@ class ParamWindow(QWidget):
     # -----------------------------------------------------------------------------
     def updateBlockParameters(self):
         """
-        This method calls for each of the variables within the parameter window to be
+        This method calls for each of the parameters within the parameter window to be
         sanity checked by the getSafeValue() method, which determines whether or not
-        a provided value is compatible with the variable type (defined in the Block
+        a provided value is compatible with the parameter type (defined in the Block
         Class) and is safe to override the current value. If that check is returned
-        to be safe, this method will handle the updating of the Block variables, as
+        to be safe, this method will handle the updating of the Block parameters, as
         well as triggering a successful update attempt message.
 
         If the check is returned as not safe, meaning the given value is not compatible,
         an unsuccessful update attempt error message will be prompted, notifying the
-        user of the incompatible variable value they have set, and either what the
+        user of the incompatible parameter value they have set, and either what the
         compatible types or values are. This logic also applies when a user changes the
         blocks' title to one that already exists, which will cause a duplicate error
         message to display.
 
-        Some variables values directly affect the GraphicsBlock of the Block they relate
+        Some parameters values directly affect the GraphicsBlock of the Block they relate
         to. For example, blocks that can have multiple input or output sockets, will
-        have a variable that controls how many of these sockets the block has. And once
+        have a parameter that controls how many of these sockets the block has. And once
         edited, this method will trigger an appropriate number of sockets to be created
-        or deleted. This variable can also affect the GraphicsBlock when too many sockets
+        or deleted. This parameter can also affect the GraphicsBlock when too many sockets
         are created, requiring the block to be resized. The triggering of this resizing
         will also be issued from within this method.
         """
@@ -308,7 +308,7 @@ class ParamWindow(QWidget):
             of the pop-up user-feedback message. The text that is displayed here is extracted
             from the associated extra-options as defined in the relating Block.
 
-            :param options: the extra-options associated with this variable (defined in this Block)
+            :param options: the extra-options associated with this parameter (defined in this Block)
             :type options: list, of str, list
             :return: the formatted message to be displayed
             :rtype: str
@@ -318,25 +318,25 @@ class ParamWindow(QWidget):
             message = ""
             # Num_options is the number of lists (of accepted keywords, types, range, signs) inside the option list
             num_options = len(options)
-            # Check the options that have been assigned to this variable
+            # Check the options that have been assigned to this parameter
             for option in options:
-                # If the options consist keywords that this variable is restricted to
+                # If the options consist keywords that this parameter is restricted to
                 if option[0] == "keywords":
                     message += "one of <font><b>" + str(option[1]) + "</font>"
-                # If the options consist of a range this variables is restricted to
+                # If the options consist of a range this parameters is restricted to
                 elif option[0] == "range":
                     message += "a value between <font><b>" + str(option[1][0]) + "</font> and <font><b>" + str(option[1][1]) + "</font>"
-                # If the options consist of additional types this variable is restricted to
+                # If the options consist of additional types this parameter is restricted to
                 elif option[0] == "type":
                     typeString = []
                     for optionType in option[1]:
                         typeString.append(optionType.__name__)
                     message += "of type <font><b>" + str(typeString) + "</font>"
-                # If the options consist of certain sign characters this variable is restricted to
+                # If the options consist of certain sign characters this parameter is restricted to
                 elif option[0] == "signs":
                     message += "a combination of <font><b>" + str(option[1]) + "</font>"
 
-                # If a variable has multiple options (e.g. range and type restrictions)
+                # If a parameter has multiple options (e.g. range and type restrictions)
                 # separate the options with "or" until only 1 option remains
                 if num_options > 1:
                     message += " or "
@@ -357,49 +357,49 @@ class ParamWindow(QWidget):
         # Iterator for loop
         i = -1
 
-        # An error message can consist of an invalid_input (incorrect variable type)
+        # An error message can consist of an invalid_input (incorrect parameter type)
         # or a bad_input (incompatible with option restrictions), and initially these
-        # are set to being empty. If variables cannot be set due to errors, these will
+        # are set to being empty. If parameters cannot be set due to errors, these will
         # be appended into these empty lists
         invalid_input, bad_inputs = [], []
 
-        # For each definition of a variable, in the blocks' defined variables
-        for [varName, varType, varVal, varOptions] in self.variables:
+        # For each definition of a parameter, in the blocks' defined parameters
+        for [paramName, paramType, paramVal, paramOptions] in self.parameters:
             i += 1
-            # Extract the text from the editable line as the value to set the variable to
+            # Extract the text from the editable line as the value to set the parameter to
             inputValue = self.parameter_values[i].text()
 
-            # If a value has been provided for that variable, perform sanity checking on that input
+            # If a value has been provided for that parameter, perform sanity checking on that input
             if inputValue:
-                inputInCompatibleFormat = self.getSafeValue(inputValue, varType, varOptions)
+                inputInCompatibleFormat = self.getSafeValue(inputValue, paramType, paramOptions)
 
-                # If in DEBUG mode, this code will return the name, type, current value of the variable attempting to update
-                # and then for the value that will override the variable, the value, type(of the value), and whether it is or isn't compatible
-                if DEBUG: print("varName, varType, varVal - inputValue, type, compatible", [varName, varType, varVal, '-', inputValue, type(inputValue), inputInCompatibleFormat])
+                # If in DEBUG mode, this code will return the name, type, current value of the parameter attempting to update
+                # and then for the value that will override the parameter, the value, type(of the value), and whether it is or isn't compatible
+                if DEBUG: print("paramName, paramType, paramVal - inputValue, type, compatible", [paramName, paramType, paramVal, '-', inputValue, type(inputValue), inputInCompatibleFormat])
 
-                # Once the sanity check has been performed, if the type is valid, check for variable restrictions
+                # Once the sanity check has been performed, if the type is valid, check for parameter restrictions
                 if inputInCompatibleFormat != "@InvalidType@":
 
-                    # If the sanity check returns that the variable doesn't meet its restrictions
+                    # If the sanity check returns that the parameter doesn't meet its restrictions
                     if inputInCompatibleFormat == "@BadFormat@":
-                        # Append the variable edited, and the variable options, as a bad_input
-                        bad_inputs.append([varName, varOptions])
+                        # Append the parameter edited, and the parameter options, as a bad_input
+                        bad_inputs.append([paramName, paramOptions])
                     else:
                         # Otherwise if both sanity checks pass, value is safe to update, so
-                        # Set the current variable equal to edited variable value
-                        self.variables[i][2] = inputInCompatibleFormat
+                        # Set the current parameter equal to edited parameter value
+                        self.parameters[i][2] = inputInCompatibleFormat
 
-                        # If self.variable relates to controlling the number of inputs a block has
-                        if self.variables[i][0] in ["No. of inputs", "Operations", "Signs"]:
+                        # If self.parameter relates to controlling the number of inputs a block has
+                        if self.parameters[i][0] in ["nin", "ops", "signs"]:
                             # Grab the number of required input sockets
-                            if self.variables[i][0] == "No. of inputs":
-                                num_sockets = self.variables[i][2]
+                            if self.parameters[i][0] == "nin":
+                                num_sockets = self.parameters[i][2]
                             else:
                                 num_sockets = len(self.parameter_values[i].text())
 
-                            # Don't do anything, if the provided No. input sockets matches the number the block already has,
+                            # Don't do anything, if the provided number of input sockets matches the number the block already has,
                             # or if the signs (+,-,*,/) for the block haven't changed
-                            if len(self.block.inputs) == num_sockets and inputInCompatibleFormat == varVal:
+                            if len(self.block.inputs) == num_sockets and inputInCompatibleFormat == paramVal:
                                 pass
                             else:
                                 # If the block already has input sockets, grab their orientation (LEFT / RIGHT) then delete
@@ -415,10 +415,10 @@ class ParamWindow(QWidget):
                                 self.block.inputsNum = num_sockets
                                 self.block.makeInputSockets(self.block.inputsNum, orientation)
 
-                        # If self.variable relates to controlling the number of outputs a block has
-                        if self.variables[i][0] in ["No. of outputs"]:
+                        # If self.parameter relates to controlling the number of outputs a block has
+                        if self.parameters[i][0] in ["nout"]:
                             # Grab number of required output sockets
-                            num_sockets = self.variables[i][2]
+                            num_sockets = self.parameters[i][2]
                             # If provided number of output sockets matches the number the block already has, don't do anything
                             if len(self.block.outputs) == num_sockets:
                                 pass
@@ -437,15 +437,15 @@ class ParamWindow(QWidget):
 
                 # Else the edited value is of the wrong type, display an error message
                 else:
-                    # Append the variable edited, and the required type, as an invalid_input
-                    invalid_input.append([varName, varType])
+                    # Append the parameter edited, and the required type, as an invalid_input
+                    invalid_input.append([paramName, paramType])
 
             # Else no value was given for that input, display an error message
             else:
-                # Append the variable edited, and the required type, as an invalid_input
-                invalid_input.append([varName, varType])
+                # Append the parameter edited, and the required type, as an invalid_input
+                invalid_input.append([paramName, paramType])
 
-        # Once all the variables are sanity checked,
+        # Once all the parameters are sanity checked,
         # If the title has been set to a duplicate name, display a duplicate error message
         if duplicate_title:
             errorMessageText = ""
@@ -453,7 +453,7 @@ class ParamWindow(QWidget):
             errorMessageText += "A block named '<font><b>" + duplicate_title[0] + "</font>' already exists, please choose another."
             self.displayPopUpMessage(errorMessageTitle, errorMessageText, "Error")
 
-        # If any variables have been returned with invalid types, display an invalid type error message
+        # If any parameters have been returned with invalid types, display an invalid type error message
         elif invalid_input:
             errorMessageText = ""
             errorMessageTitle = "Input Types Not Compatible"
@@ -462,18 +462,18 @@ class ParamWindow(QWidget):
                 errorMessageText += "<br>"
             self.displayPopUpMessage(errorMessageTitle, errorMessageText, "Error")
 
-        # If any variables don't meet their option restrictions, display a bad input error message
+        # If any parameters don't meet their option restrictions, display a bad input error message
         elif bad_inputs:
             errorMessageText = ""
             errorMessageTitle = "Input Value Not Allowed"
             for badInput in bad_inputs:
                 # Different error message based on type of option
-                errorMessageText += "Variable '" + "<font><b>" + badInput[0] + "</font>' must be "
+                errorMessageText += "Parameter '" + "<font><b>" + badInput[0] + "</font>' must be "
                 errorMessageText += makeBadInputErrorMsg(badInput[1])
                 errorMessageText += "<br>"
             self.displayPopUpMessage(errorMessageTitle, errorMessageText, "Error")
 
-        # Otherwise if there were no issues with updating the block variables, display a success message, yay!
+        # Otherwise if there were no issues with updating the block parameters, display a success message, yay!
         else:
             successMessageText = "Successfully updated block parameter values!"
             successMessageTitle = "Success!"
@@ -487,21 +487,21 @@ class ParamWindow(QWidget):
     # -----------------------------------------------------------------------------
     def getSafeValue(inputValue, requiredType, requiredOptions):
         """
-        This method takes an input value (which is the value a variable is being checked
+        This method takes an input value (which is the value a parameter is being checked
         if it can be updated to), and checks whether it matches an allowable type that
-        has been defined for that variable within the grandchild Block Class. If the
+        has been defined for that parameter within the grandchild Block Class. If the
         input value doesn't match the required type, an invalid type str will be returned.
         If the input value does match the required type, it is further checked, whether
-        it matches any further restrictions placed onto that variable from within the
+        it matches any further restrictions placed onto that parameter from within the
         grandchild Block Class. If the value doesn't meet the criteria of the restrictions,
         a bad input str will be returned. If the input does match the criteria of the
         restriction, it will be converted to the type it must be in and returned.
 
-        :param inputValue: the value which the variable would be updated to
+        :param inputValue: the value which the parameter would be updated to
         :type inputValue: str
-        :param requiredType: the value type which is required for this variable
+        :param requiredType: the value type which is required for this parameter
         :type requiredType: type, determined by the grandchild Block Class
-        :param requiredOptions: a list of restrictions placed onto this variable
+        :param requiredOptions: a list of restrictions placed onto this parameter
         :type requiredOptions: list
         :return: - str (if incompatible type or restriction criteria not met),
                  - requiredType (if compatible type and restrictions are met)
@@ -511,28 +511,28 @@ class ParamWindow(QWidget):
         # -----------------------------------------------------------------------------
         def isValueInOption(value, options):
             """
-            This method checks whether the edited variable value meets the option
+            This method checks whether the edited parameter value meets the option
             restrictions placed on it by the Block it was defined in. The option
             restrictions consist of a list equivalent to:
 
             - [["restriction type1" [restrictions]], ["restriction type2" [restrictions]]].
 
-            The edited variable is checked whether it meets the conditions of 'restrictions'
+            The edited parameter is checked whether it meets the conditions of 'restrictions'
             for each 'restriction type'.
 
-            :param value: the edited variable value being checked
+            :param value: the edited parameter value being checked
             :type value: any
-            :param options: the list of restriction options placed on this variable
+            :param options: the list of restriction options placed on this parameter
             :type options: list
             :return: - value (if meets criteria of placed restriction),
                      - bad_format (if criteria is not met)
             :rtype: - any (if criteria met), - str (if criteria not met)
             """
 
-            # If the variable has restrictions placed on it
+            # If the parameter has restrictions placed on it
             if options:
                 returnValue = "@BadFormat@"
-                # For each restriction that is placed onto the variable
+                # For each restriction that is placed onto the parameter
                 for option in options:
                     # If the placed restriction is a set of keywords,
                     if option[0] == "keywords":
@@ -571,7 +571,7 @@ class ParamWindow(QWidget):
                             returnValue = value; break
                 # Return the value that has been set to be returned
                 return returnValue
-            # Else, no restrictions are placed on this variable, so return the variable value
+            # Else, no restrictions are placed on this parameter, so return the parameter value
             else:
                 return value
 
@@ -598,7 +598,7 @@ class ParamWindow(QWidget):
                 # Check if the string matches true/false, and return accordingly
                 if inputValue in ["True", "true"]: return True
                 elif inputValue in ["False", "false"]: return False
-                # Otherwise if string is None, check if this boolean variable allows that type
+                # Otherwise if string is None, check if this boolean parameter allows that type
                 elif inputValue.lower() in ["none"]: return isValueInOption(requiredType(inputValue), requiredOptions)
                 else: return "@InvalidType@"
             else: return "@InvalidType@"
