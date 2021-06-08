@@ -1,4 +1,4 @@
-from bdedit.block import SinkBlock, block
+from bdedit.block import SinkBlock, block, blockname
 
 
 @block
@@ -57,7 +57,7 @@ class Print(SinkBlock):
 
         self.setDefaultTitle(name)
 
-        self.block_type = self.__class__.__name__
+        self.block_type = blockname(self.__class__)
 
         self.variables = [
             ["Format", str, fmt, [["type", [type(None), str]]]]
@@ -126,7 +126,7 @@ class Stop(SinkBlock):
 
         self.setDefaultTitle(name)
 
-        self.block_type = self.__class__.__name__
+        self.block_type = blockname(self.__class__)
 
         self.variables = [
             ["Stop", str, stop, [["type", [type(None), str]]]],
@@ -211,7 +211,7 @@ class Scope(SinkBlock):
 
         self.setDefaultTitle(name)
 
-        self.block_type = self.__class__.__name__
+        self.block_type = blockname(self.__class__)
 
         self.variables = [
             ["No. of inputs", int, nin, [["range", [0, 1000]], ["type", [type(None), int]]]],

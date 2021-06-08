@@ -1,5 +1,5 @@
 # BdEdit imports
-from bdedit.block import DiscreteBlock, block
+from bdedit.block import DiscreteBlock, block, blockname
 
 @block
 # Child class 1: DIntegrator Block
@@ -67,7 +67,7 @@ class DIntegrator(DiscreteBlock):
 
         self.setDefaultTitle(name)
 
-        self.block_type = self.__class__.__name__
+        self.block_type = blockname(self.__class__)
 
         self.variables = [
             ["X_0", list, x_initial, []],
@@ -152,7 +152,7 @@ class DLTI_SISO(DiscreteBlock):
 
         self.setDefaultTitle(name)
 
-        self.block_type = self.__class__.__name__
+        self.block_type = blockname(self.__class__)
 
         self.variables = [
             ["N", list, n, []],
@@ -241,7 +241,7 @@ class DLTI_SS(DiscreteBlock):
 
         self.setDefaultTitle(name)
 
-        self.block_type = self.__class__.__name__
+        self.block_type = blockname(self.__class__)
 
         self.variables = [
             ["A", float, a, [["type", [type(None), float]]]],

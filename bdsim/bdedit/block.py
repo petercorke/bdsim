@@ -65,7 +65,7 @@ class Block(Serializable):
 
         - type: the type of ``Block``.
           This defaults to the type of the grandchild class, and is determined
-          through calling self.__class__.__name__ when the grandchild class is created.
+          through calling blockname(self.__class__) when a grandchild class is created.
 
         - icon: the icon for this ``Block``.
           This is a locally referenced string filepath, defined within the grandchild class.

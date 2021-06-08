@@ -1,4 +1,4 @@
-from bdedit.block import INPORTBlock, OUTPORTBlock, SUBSYSTEMBlock, block
+from bdedit.block import INPORTBlock, OUTPORTBlock, SUBSYSTEMBlock, block, blockname
 
 @block
 # Child class 1: INPORT Block
@@ -60,7 +60,7 @@ class INPORT(INPORTBlock):
 
         self.setDefaultTitle(name)
 
-        self.block_type = self.__class__.__name__
+        self.block_type = blockname(self.__class__)
 
         self.variables = [
             ["hierarchy_file", str, hierarchy_file, [["type", [type(None), str]]]],
@@ -134,7 +134,7 @@ class OUTPORT(OUTPORTBlock):
 
         self.setDefaultTitle(name)
 
-        self.block_type = self.__class__.__name__
+        self.block_type = blockname(self.__class__)
 
         self.variables = [
             ["hierarchy_file", str, hierarchy_file, [["type", [type(None), str]]]],
@@ -204,7 +204,7 @@ class SUBSYSTEM(SUBSYSTEMBlock):
 
         self.setDefaultTitle(name)
 
-        self.block_type = self.__class__.__name__
+        self.block_type = blockname(self.__class__)
 
         self.variables = [
             ["hierarchy_file", str, hierarchy_file, [["type", [type(None), str]]]]

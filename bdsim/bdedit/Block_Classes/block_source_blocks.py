@@ -1,4 +1,4 @@
-from bdedit.block import SourceBlock, block
+from bdedit.block import SourceBlock, block, blockname
 
 
 @block
@@ -57,7 +57,7 @@ class Constant(SourceBlock):
 
         self.setDefaultTitle(name)
 
-        self.block_type = self.__class__.__name__
+        self.block_type = blockname(self.__class__)
 
         self.variables = [
             ["Value", type(any), value, [["type", [type(None), type(any)]]]]
@@ -134,7 +134,7 @@ class Step(SourceBlock):
 
         self.setDefaultTitle(name)
 
-        self.block_type = self.__class__.__name__
+        self.block_type = blockname(self.__class__)
 
         self.variables = [
             ["Step_time", float, step_time, []],
@@ -237,7 +237,7 @@ class Waveform(SourceBlock):
 
         self.setDefaultTitle(name)
 
-        self.block_type = self.__class__.__name__
+        self.block_type = blockname(self.__class__)
 
         self.variables = [
             ["Wave", str, wave, [["keywords", ["sine", "square", "triangle"]]]],
@@ -314,7 +314,7 @@ class Piecewise(SourceBlock):
 
         self.setDefaultTitle(name)
 
-        self.block_type = self.__class__.__name__
+        self.block_type = blockname(self.__class__)
 
         self.variables = [
             ["Sequence", list, seq, []]

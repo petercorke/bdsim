@@ -1,4 +1,4 @@
-from bdedit.block import TransferBlock, block
+from bdedit.block import TransferBlock, block, blockname
 
 @block
 # Child class 1: Integrator Block
@@ -64,7 +64,7 @@ class Integrator(TransferBlock):
 
         self.setDefaultTitle(name)
 
-        self.block_type = self.__class__.__name__
+        self.block_type = blockname(self.__class__)
 
         self.variables = [
             ["X_0", list, x_initial, []],
@@ -148,7 +148,7 @@ class LTI_SISO(TransferBlock):
 
         self.setDefaultTitle(name)
 
-        self.block_type = self.__class__.__name__
+        self.block_type = blockname(self.__class__)
 
         self.variables = [
             ["N", list, n, []],
@@ -237,7 +237,7 @@ class LTI_SS(TransferBlock):
 
         self.setDefaultTitle(name)
 
-        self.block_type = self.__class__.__name__
+        self.block_type = blockname(self.__class__)
 
         self.variables = [
             ["A", float, a, [["type", [type(None), float]]]],

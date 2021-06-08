@@ -1,4 +1,4 @@
-from bdedit.block import FunctionBlock, block
+from bdedit.block import FunctionBlock, block, blockname
 import math
 
 
@@ -61,8 +61,8 @@ class Clip(FunctionBlock):
         super().__init__(scene, window, name, pos)
 
         self.setDefaultTitle(name)
-        
-        self.block_type = self.__class__.__name__
+
+        self.block_type = blockname(self.__class__)
 
         self.variables = [
             ["Min", float, minimum, [["range", [-math.inf, math.inf]]]],
@@ -152,7 +152,7 @@ class Function(FunctionBlock):
 
         self.setDefaultTitle(name)
         
-        self.block_type = self.__class__.__name__
+        self.block_type = blockname(self.__class__)
 
         # How to sanity check function input?
         self.variables = [
@@ -236,7 +236,7 @@ class Gain(FunctionBlock):
 
         self.setDefaultTitle(name)
         
-        self.block_type = self.__class__.__name__
+        self.block_type = blockname(self.__class__)
 
         self.variables = [
             ["Gain", float, gain, []],
@@ -322,7 +322,7 @@ class Interpolate(FunctionBlock):
 
         self.setDefaultTitle(name)
         
-        self.block_type = self.__class__.__name__
+        self.block_type = blockname(self.__class__)
 
         self.variables = [
             ["X", tuple, x_array, [["type", [type(None), tuple]]]],
@@ -399,7 +399,7 @@ class Prod(FunctionBlock):
 
         self.setDefaultTitle(name)
         
-        self.block_type = self.__class__.__name__
+        self.block_type = blockname(self.__class__)
 
         self.variables = [
             ["Operations", str, ops, [["signs", ["*", "/"]]]],
@@ -477,7 +477,7 @@ class Sum(FunctionBlock):
 
         self.setDefaultTitle(name)
         
-        self.block_type = self.__class__.__name__
+        self.block_type = blockname(self.__class__)
 
         self.variables = [
             ["Signs", str, signs, [["signs", ["+", "-"]]]],
