@@ -1,0 +1,7 @@
+bdedit
+======
+
+.. toctree::
+   :maxdepth: 4
+
+   bdedit
