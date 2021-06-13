@@ -386,10 +386,6 @@ class BlockDiagram:
         # TODO: don't copy outputs to inputs of next block, have inputs
         # pull the value from connected inputs
 
-        try:
-            self.state.t = t
-        except:
-            pass
 
         self.DEBUG('state', '>>>>>>>>> t=', t, ', x=', x, '>>>>>>>>>>>>>>>>')
         
@@ -728,17 +724,31 @@ class BlockDiagram:
             except:
                 self._error_handler('reset', b)
 
-    def step(self):
+    def step(self, state=None, graphics=False):
         """
-        Tell all blocks to take action on new inputs.  Relevant to Sink
-        blocks only since they have no output function to be called.
+        Step all blocks
+
+        :param state: simulation state, defaults to None
+        :type state: SimState, optional
+        :param graphics: graphics enabled, defaults to False
+        :type graphics: bool, optional
+
+        Tell all blocks to take action on new inputs by invoking their
+        ``step`` method and passing the ``state`` object.  Used to save
+        results to a figure or file
+
+        .. note:: 
+            - if ``graphics`` is False, Graphics blocks are not called
         """
+
         # TODO could be done by output method, even if no outputs
         
         for b in self.blocklist:
+            if b.isgraphics and not graphics:
+                continue
             try:
-                b.step()
-                self.state.count += 1
+                b.step(state=state)
+                state.count += 1
             except:
                 self._error_handler('step', b)
 
@@ -760,18 +770,30 @@ class BlockDiagram:
                     self._error_handler('deriv', b)                    
         return YD
 
-    def start(self, **kwargs):
+    def start(self, graphics=False, state=None, **kwargs):
         """
-        Inform all active blocks that.BlockDiagram is about to start.  Open files,
-        initialize graphics, etc.
+        Start all blocks
+
+        :param state: simulation state, defaults to None
+        :type state: SimState, optional
+        :param graphics: graphics enabled, defaults to False
+        :type graphics: bool, optional
+
+        Inform all blocks that BlockDiagram execution is about to start by
+        invoking their ``start`` method and passing the ``state`` object.  Used
+        to open files, create figures etc.
+
+        .. note:: if ``graphics`` is False, Graphics blocks are not called 
+
+        """
         
-        Invokes the `start` method on all blocks.
-        
-        """            
+        # safe wrapper for block starting, does error handling
         for b in self.blocklist:
+            if b.isgraphics and not graphics:
+                continue
             # print('starting block', b)
             try:
-                b.start(**kwargs)
+                b.start(state=state, **kwargs)
             except:
                 self._error_handler('start', b)
                 
@@ -780,15 +802,25 @@ class BlockDiagram:
             if b.blockclass in ('transfer', 'clocked'):
                 b._x = b._x0
 
-    def done(self, **kwargs):
+
+    def done(self, graphics=False, **kwargs):
         """
-        Inform all active blocks that.BlockDiagram is complete.  Close files,
-        graphics, etc.
-        
-        Invokes the `done` method on all blocks.
-        
+        Finishup all blocks
+
+        :param state: simulation state, defaults to None
+        :type state: SimState, optional
+        :param graphics: graphics enabled, defaults to False
+        :type graphics: bool, optional
+
+        Inform all blocks that BlockDiagram execution is complete by invoking their
+        ``done`` method and passing options.  Used
+        to close files, display figures etc.
+
+        .. note:: if ``graphics`` is False, Graphics blocks are not called 
         """
         for b in self.blocklist:
+            if b.isgraphics and not graphics:
+                continue
             try:
                 b.done(**kwargs)
             except:

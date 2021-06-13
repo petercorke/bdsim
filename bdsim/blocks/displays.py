@@ -158,94 +158,79 @@ class Scope(GraphicsBlock):
         # TODO, wire width
         # inherit names from wires, block needs to be able to introspect
         
-    def start(self, **kwargs):
-        # create the plot
-        if self.bd.options.graphics:
-            super().reset()   # TODO should this be here?
+    def start(self, state=None, **kwargs):        
+        # init the arrays that hold the data
+        self.tdata = np.array([])
+        self.ydata = [np.array([]),] * self.nplots
 
-            # init the arrays that hold the data
-            self.tdata = np.array([])
-            self.ydata = [np.array([]),] * self.nplots
-
-            # create the figures
-            self.fig = self.create_figure()
-            self.ax = self.fig.gca()
-            
-            # create empty lines with defined styles
-            for i in range(0, self.nplots):
-                args = []
-                kwargs = {}
-                style = self.styles[i]
-                if isinstance(style, dict):
-                    kwargs = style
-                elif isinstance(style, str):
-                    args = [style]
-                self.line[i], = self.ax.plot(self.tdata, self.ydata[i], *args, label=self.styles[i], **kwargs)
-
-            # label the axes
-            if self.labels is not None:
-                self.ax.set_ylabel(','.join(self.labels))
-            self.ax.set_xlabel(self.xlabel)
-            self.ax.set_title(self.name_tex)
-
-            # grid control
-            if self.grid is True:
-                self.ax.grid(self.grid)
-            elif isinstance(self.grid, (list, tuple)):
-                self.ax.grid(True, *self.grid)
-            
-            # set limits
-            self.ax.set_xlim(0, self.bd.state.T)
-
-            if self.scale != 'auto':
-                self.ax.set_ylim(*self.scale)
-            if self.labels is not None:
-                self.ax.legend(self.labels)
-
-            plt.draw()
-            plt.show(block=False)
-
-            super().start()
+        # create the figures
+        self.fig = self.create_figure(state)
+        self.ax = self.fig.gca()
         
-    def step(self):
+        # create empty lines with defined styles
+        for i in range(0, self.nplots):
+            args = []
+            kwargs = {}
+            style = self.styles[i]
+            if isinstance(style, dict):
+                kwargs = style
+            elif isinstance(style, str):
+                args = [style]
+            self.line[i], = self.ax.plot(self.tdata, self.ydata[i], *args, label=self.styles[i], **kwargs)
+
+        # label the axes
+        if self.labels is not None:
+            self.ax.set_ylabel(','.join(self.labels))
+        self.ax.set_xlabel(self.xlabel)
+        self.ax.set_title(self.name_tex)
+
+        # grid control
+        if self.grid is True:
+            self.ax.grid(self.grid)
+        elif isinstance(self.grid, (list, tuple)):
+            self.ax.grid(True, *self.grid)
+        
+        # set limits
+        self.ax.set_xlim(0, state.T)
+
+        if self.scale != 'auto':
+            self.ax.set_ylim(*self.scale)
+        if self.labels is not None:
+            self.ax.legend(self.labels)
+
+        super().start()
+        
+    def step(self, state=None):
         # inputs are set
-        if self.bd.options.graphics:
-            self.tdata = np.append(self.tdata, self.bd.state.t)
+        self.tdata = np.append(self.tdata, state.t)
 
-            if self.vector:
-                # vector input on the input
-                data = self.inputs[0]
-                assert len(data) == self.nplots, 'vector input wrong width'
-                for i,input in enumerate(data):
-                    self.ydata[i] = np.append(self.ydata[i], input)
-            else:
-                # stash data from the inputs
-                assert len(self.inputs) == self.nplots, 'insufficient inputs'
-                for i,input in enumerate(self.inputs):
-                    self.ydata[i] = np.append(self.ydata[i], input)
+        if self.vector:
+            # vector input on the input
+            data = self.inputs[0]
+            assert len(data) == self.nplots, 'vector input wrong width'
+            for i,input in enumerate(data):
+                self.ydata[i] = np.append(self.ydata[i], input)
+        else:
+            # stash data from the inputs
+            assert len(self.inputs) == self.nplots, 'insufficient inputs'
+            for i,input in enumerate(self.inputs):
+                self.ydata[i] = np.append(self.ydata[i], input)
 
-            plt.figure(self.fig.number)  # make current
-            if self.stairs:
-                for i in range(0, self.nplots):
-                    t = np.repeat(self.tdata, 2)
-                    y = np.repeat(self.ydata[i], 2)
-                    self.line[i].set_data(t[1:], y[:-1])
-            else:
-                for i in range(0, self.nplots):
-                    self.line[i].set_data(self.tdata, self.ydata[i])
+        plt.figure(self.fig.number)  # make current
+        if self.stairs:
+            for i in range(0, self.nplots):
+                t = np.repeat(self.tdata, 2)
+                y = np.repeat(self.ydata[i], 2)
+                self.line[i].set_data(t[1:], y[:-1])
+        else:
+            for i in range(0, self.nplots):
+                self.line[i].set_data(self.tdata, self.ydata[i])
+    
+        if self.scale == 'auto':
+            self.ax.relim()
+            self.ax.autoscale_view(scalex=False, scaley=True)
+        super().step(state=state)
         
-            if self.bd.options.animation:
-                self.fig.canvas.flush_events()
-        
-            if self.scale == 'auto':
-                self.ax.relim()
-                self.ax.autoscale_view(scalex=False, scaley=True)
-            super().step()
-        
-    def done(self, block=False, **kwargs):
-        if self.bd.options.graphics:
-            plt.show(block=block)
-        super().done()
 
 # ------------------------------------------------------------------------ #
 
@@ -257,13 +242,13 @@ class ScopeXY(GraphicsBlock):
     .. table::
        :align: left
     
-       +--------+---------+---------+
-       | inputs | outputs |  states |
-       +--------+---------+---------+
-       | 2      | 0       | 0       |
-       +--------+---------+---------+
-       | float  |         |         | 
-       +--------+---------+---------+
+    +--------+---------+---------+
+    | inputs | outputs |  states |
+    +--------+---------+---------+
+    | 2      | 0       | 0       |
+    +--------+---------+---------+
+    | float  |         |         | 
+    +--------+---------+---------+
     """
 
     def __init__(self, style=None, *inputs, scale='auto', aspect='equal', labels=['X', 'Y'], init=None, **kwargs):
@@ -312,41 +297,40 @@ class ScopeXY(GraphicsBlock):
         self.scale = scale
         self.aspect = aspect
         self.labels = labels
+        self.inport_names(('x', 'y'))
         
     def start(self, **kwargs):
         # create the plot
-        if self.bd.options.graphics:
-            super().reset()
+        super().reset()
 
-            self.fig = self.create_figure()
-            self.ax = self.fig.gca()
-            
-            args = []
-            kwargs = {}
-            style = self.styles
-            if isinstance(style, dict):
-                kwargs = style
-            elif isinstance(style, str):
-                args = [style]
-            self.line, = self.ax.plot(self.xdata, self.ydata, *args, **kwargs)
-                
-            self.ax.grid(True)
-            self.ax.set_xlabel(self.labels[0])
-            self.ax.set_ylabel(self.labels[1])
-            self.ax.set_title(self.name)
-            if self.scale != 'auto':
-                self.ax.set_xlim(*self.scale[0:2])
-                self.ax.set_ylim(*self.scale[2:4])
-            self.ax.set_aspect(self.aspect)
-            if self.init is not None:
-                self.init(self.ax)
-
-            plt.draw()
-            plt.show(block=False)
-
-            super().start()
-
+        self.fig = self.create_figure()
+        self.ax = self.fig.gca()
         
+        args = []
+        kwargs = {}
+        style = self.styles
+        if isinstance(style, dict):
+            kwargs = style
+        elif isinstance(style, str):
+            args = [style]
+        self.line, = self.ax.plot(self.xdata, self.ydata, *args, **kwargs)
+            
+        self.ax.grid(True)
+        self.ax.set_xlabel(self.labels[0])
+        self.ax.set_ylabel(self.labels[1])
+        self.ax.set_title(self.name)
+        if self.scale != 'auto':
+            self.ax.set_xlim(*self.scale[0:2])
+            self.ax.set_ylim(*self.scale[2:4])
+        self.ax.set_aspect(self.aspect)
+        if self.init is not None:
+            self.init(self.ax)
+
+        plt.draw()
+        plt.show(block=False)
+
+        super().start()
+
     def step(self):
         # inputs are set
         self.xdata.append(self.inputs[0])

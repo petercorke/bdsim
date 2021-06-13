@@ -1,7 +1,7 @@
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib import animation
-from bdsim import SinkBlock
+from bdsim.components import SinkBlock
 
 class GraphicsBlock(SinkBlock):
     """
@@ -20,10 +20,15 @@ class GraphicsBlock(SinkBlock):
     def __init__(self, movie=None, **kwargs):
 
         super().__init__(**kwargs)
+        self._graphics = True
 
         self.movie = movie
 
     def start(self):
+
+        plt.draw()
+        plt.show(block=False)
+
         if self.movie is not None and not self.bd.options.animation:
             print('enabling global animation option to allow movie option on block', self)
             self.bd.options.animation = True
@@ -32,17 +37,23 @@ class GraphicsBlock(SinkBlock):
             self.writer.setup(fig=self.fig, outfile=self.movie)
             print('movie block', self, ' --> ', self.movie)
 
-    def step(self):
+    def step(self, state=None):
         super().step()
+            
+        if state.options.animation:
+            self.fig.canvas.flush_events()
+
         if self.movie is not None:
             self.writer.grab_frame()
 
-    def done(self):
-        if self.bd.options.graphics:
+    def done(self, state=None, block=False, **kwargs):
+        if self.fig is not None:
             self.fig.canvas.start_event_loop(0.001)
-        if self.movie is not None:
-            self.writer.finish()
-            # self.cleanup()
+            if self.movie is not None:
+                self.writer.finish()
+                # self.cleanup()
+            plt.show(block=block)
+
 
     def savefig(self, filename=None, format='pdf', **kwargs):
         """
@@ -67,7 +78,7 @@ class GraphicsBlock(SinkBlock):
             pass
 
 
-    def create_figure(self):
+    def create_figure(self, state):
 
         def move_figure(f, x, y):
             """Move figure's upper left corner to pixel (x, y)"""
@@ -81,8 +92,8 @@ class GraphicsBlock(SinkBlock):
                 # You can also use window.setGeometry
                 f.canvas.manager.window.move(x, y)
         
-        gstate = self.bd.state
-        options = self.bd.options
+        gstate = state
+        options = state.options
 
         if gstate.fignum == 0:
             # no figures yet created, lazy initialization

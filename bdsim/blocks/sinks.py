@@ -52,9 +52,7 @@ class Print(SinkBlock):
         :return: A PRINT block
         :rtype: Print instance
         
-        
 
-        
         Create a console print block which displays the value of a signal to the console
         at each simulation time step.
         
@@ -72,9 +70,9 @@ class Print(SinkBlock):
         
         # TODO format can be a string or function
 
-    def step(self):
+    def step(self, state=None):
         prefix = '{:12s}'.format(
-            'PRINT({:s} (t={:.3f})'.format(self.name, self.bd.t)
+            'PRINT({:s} (t={:.3f})'.format(self.name, state.t)
             )
                 
         value = self.inputs[0]
@@ -128,7 +126,7 @@ class Stop(SinkBlock):
                     
         self.stop  = stop
 
-    def step(self):
+    def step(self, state=None):
         if isinstance(self.stop, bool):
             stop = self.inputs[0]
         elif callable(self.stop):
@@ -136,7 +134,7 @@ class Stop(SinkBlock):
         else:
             raise RuntimeError('input to stop must be boolean or callable')
         if stop:
-            self.bd.state.stop = self
+            state.stop = self
 
 if __name__ == "__main__":
 
