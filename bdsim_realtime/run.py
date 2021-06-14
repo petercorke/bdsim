@@ -5,26 +5,17 @@ from bdsim import Block, BlockDiagram, BDSimState
 from bdsim.components import Clock, SinkBlock, SourceBlock
 
 
-def run(bd: BlockDiagram, max_time: Optional[float]=None):
-    scheduler = sched.scheduler()
-    state = bd.state = BDSimState()
-    state.T = max_time
-    if not bd.compiled:
-        bd.compile()
-
-    # TODO: implement sim mode context manager
-    assert not any(b.blockclass == 'transfer' for b in bd.blocklist), \
-        "Tranfer blocks are not supported in realtime execution mode (yet). Sorry!"
-
-    bd.start()
+def _clocked_plans(bd: BlockDiagram):
+    plans: Dict[Clock, List[Block]] = {}
 
     prev_clock_period = 0
     # track to make sure we're actually executing all blocks on clock cycles properly.
     # otherwise the realtime blockdiagram is not fit for realtime execution
     in_clocked_plan: Dict[Block, bool] = {block: False for block in bd.blocklist}
-
-    before_planning_start = time.monotonic()
-    SETUP_WAIT_BUFFER = 1 # in seconds, to give time for the planning and scheduling
+    
+    # TODO: implement sim mode context manager
+    assert not any(b.blockclass == 'transfer' for b in bd.blocklist), \
+        "Tranfer blocks are not supported in realtime execution mode (yet). Sorry!"
 
     for clock in bd.clocklist:
 
@@ -69,8 +60,40 @@ def run(bd: BlockDiagram, max_time: Optional[float]=None):
                             block.inputs = [None] * len(block.inputs)
         
         assert len(plan) == len(to_exec_on_tick)
+        plans[clock] = plan
+    
+    not_planned = set(block for block, planned in in_clocked_plan.items() if not planned)
+    # TODO: implement sim mode context manager
+    assert not not_planned, """Blocks {} do not depend on or are a dependency of any ClockedBlocks.
+This is required for its real-time execution.
+Mark the blocks as sim_only=True if they are not required for realtime execution, or declare them within the `with bdsim.simulation_only: ...` context manager""" \
+    .format(not_planned)
 
-        scheduled_time = before_planning_start + clock.offset + SETUP_WAIT_BUFFER
+    return plans
+
+def run(bd: BlockDiagram, max_time: Optional[float]=None):
+    state = bd.state = BDSimState()
+    state.T = max_time
+
+    if not bd.compiled:
+        bd.compile()
+        print("Compiled!\n")
+
+    clock2plan = _clocked_plans(bd)
+
+    bd.start()
+
+    SETUP_WAIT_BUFFER = 1 # in seconds, to give time for the planning and scheduling
+    now = time.monotonic()
+
+    # use python's stdlib scheduler
+    scheduler = sched.scheduler()
+
+    print("Executing {}:".format(max_time or "forever"))
+
+    for clock, plan in clock2plan.items():
+        scheduled_time = now + clock.offset + SETUP_WAIT_BUFFER
+        print("{} <BEGINNING AT {}>:{}".format(clock, scheduled_time, ''.join('\n\t{}. {}'.format(idx, b) for idx, b in enumerate(plan))))
         scheduler.enterabs(
             scheduled_time,
             priority=1,
@@ -82,15 +105,10 @@ def run(bd: BlockDiagram, max_time: Optional[float]=None):
                 scheduler,
                 scheduled_time,
                 scheduled_time))
-    
-    not_planned = set(block for block, planned in in_clocked_plan.items() if not planned)
-    # TODO: implement sim mode context manager
-    assert not not_planned, """Blocks {} do not depend on or are a dependency of any ClockedBlocks.
-This is required for its real-time execution.
-Mark the blocks as sim_only=True if they are not required for realtime execution, or declare them within the `with bdsim.simulation_only: ...` context manager""" \
-    .format(not_planned)
 
+    print("System time (time.monotonic()) is now {}. Running scheduler.run()!".format(time.monotonic()))
     scheduler.run()
+    print("Realtime Execution Stopped AS EXPECTED")
 
 
 def exec_plan_scheduled(
