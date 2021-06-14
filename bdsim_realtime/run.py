@@ -44,20 +44,23 @@ def _clocked_plans(bd: BlockDiagram):
 
         # then propagate, updating plan as we go
         for idx in range(len(to_exec_on_tick)):
-            for port, outwires in enumerate(plan[idx].outports):
+            for outwires in plan[idx].outports:
                 for w in outwires:
                     block: Block = w.end.block
 
-                    if block in to_exec_on_tick: # make sure we actually need .output() this block on this clock tick
-                        if block in plan:
-                            continue
+                    # make sure we actually need to .output() this block on this clock tick.
+                    # Should always be true
+                    assert block in to_exec_on_tick
 
-                        block.inputs[w.end.port] = True
-                        if all(in_plan for in_plan in block.inputs):
-                            plan.append(block)
-                            in_clocked_plan[block] = True
-                            # reset the inputs
-                            block.inputs = [None] * len(block.inputs)
+                    if block in plan:
+                        continue
+
+                    block.inputs[w.end.port] = True
+                    if all(in_plan for in_plan in block.inputs):
+                        plan.append(block)
+                        in_clocked_plan[block] = True
+                        # reset the inputs
+                        block.inputs = [None] * len(block.inputs)
         
         assert len(plan) == len(to_exec_on_tick)
         plans[clock] = plan
@@ -93,7 +96,7 @@ def run(bd: BlockDiagram, max_time: Optional[float]=None):
 
     for clock, plan in clock2plan.items():
         scheduled_time = now + clock.offset + SETUP_WAIT_BUFFER
-        print("{} <BEGINNING AT {}>:{}".format(clock, scheduled_time, ''.join('\n\t{}. {}'.format(idx, b) for idx, b in enumerate(plan))))
+        print("{} <SCHEDULED for {}>:{}".format(clock, scheduled_time, ''.join('\n\t{}. {}'.format(idx, b) for idx, b in enumerate(plan))))
         scheduler.enterabs(
             scheduled_time,
             priority=1,
