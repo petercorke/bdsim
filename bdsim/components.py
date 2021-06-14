@@ -403,7 +403,7 @@ clocklist = []
 
 class Clock:
 
-    def __init__(self, arg, unit='s', offset=0, name=None):
+    def __init__(self, arg, unit, bd, offset=0, name=None):
         global clocklist
         if unit == 's':
             self.T = arg
@@ -423,6 +423,7 @@ class Clock:
         self.name = "clock." + str(len(clocklist))
 
         clocklist.append(self)
+        self.bd = bd
 
         # events happen at time t = kT + offset
 
@@ -461,13 +462,13 @@ class Clock:
         for b in self.blocklist:
             x = b.setstate(x)  # send it to blocks        
 
-    def start():
-        self.bd.state.declare_event(self.time(self.i))
-        self.i += 1
+    def start(self):
+        self.bd.state.declare_event(self, self.time(self.tick))
+        self.tick += 1
 
-    def next_event():
-        self.bd.state.declare_event(self.time(self.i))
-        self.i += 1
+    def next_event(self):
+        self.bd.state.declare_event(self, self.time(self.tick))
+        self.tick += 1
 
     def time(self, i):
         # return (math.floor((t - self.offset) / self.T) + 1) * self.T + self.offset

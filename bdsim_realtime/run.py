@@ -1,15 +1,16 @@
 import time
-from typing import Callable, Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set
 import sched
 from bdsim import Block, BlockDiagram, BDSimState
 from bdsim.components import Clock, SinkBlock, SourceBlock
-import gc
 
 
 def run(bd: BlockDiagram, max_time: Optional[float]=None):
     scheduler = sched.scheduler()
     state = bd.state = BDSimState()
     state.T = max_time
+    if not bd.compiled:
+        bd.compile()
 
     # TODO: implement sim mode context manager
     assert not any(b.blockclass == 'transfer' for b in bd.blocklist), \
@@ -21,6 +22,9 @@ def run(bd: BlockDiagram, max_time: Optional[float]=None):
     # track to make sure we're actually executing all blocks on clock cycles properly.
     # otherwise the realtime blockdiagram is not fit for realtime execution
     in_clocked_plan: Dict[Block, bool] = {block: False for block in bd.blocklist}
+
+    before_planning_start = time.monotonic()
+    SETUP_WAIT_BUFFER = 1 # in seconds, to give time for the planning and scheduling
 
     for clock in bd.clocklist:
 
@@ -38,8 +42,16 @@ def run(bd: BlockDiagram, max_time: Optional[float]=None):
             _collect_connected(block, to_exec_on_tick, forward=True) # Forwards
         
         # plan out an order of block .output() execution and propagation. From sources -> sinks
-        plan = [b for b in to_exec_on_tick if isinstance(b, SourceBlock)]
 
+        # collect sources
+        plan = []
+        for b in to_exec_on_tick:
+            if isinstance(b, SourceBlock):
+                plan.append(b)
+                in_clocked_plan[b] = True
+
+
+        # then propagate, updating plan as we go
         for idx in range(len(to_exec_on_tick)):
             for port, outwires in enumerate(plan[idx].outports):
                 for w in outwires:
@@ -49,19 +61,31 @@ def run(bd: BlockDiagram, max_time: Optional[float]=None):
                         if block in plan:
                             continue
 
-                        block.inputs[port] = True
+                        block.inputs[w.end.port] = True
                         if all(in_plan for in_plan in block.inputs):
                             plan.append(block)
                             in_clocked_plan[block] = True
+                            # reset the inputs
+                            block.inputs = [None] * len(block.inputs)
         
         assert len(plan) == len(to_exec_on_tick)
 
-        def reschedule():
-            scheduler.enter(clock.offset, 1, exec_plan_scheduled, argument=(clock, plan, state, reschedule))
+        scheduled_time = before_planning_start + clock.offset + SETUP_WAIT_BUFFER
+        scheduler.enterabs(
+            scheduled_time,
+            priority=1,
+            action=exec_plan_scheduled,
+            argument=(
+                clock,
+                plan,
+                state,
+                scheduler,
+                scheduled_time,
+                scheduled_time))
     
     not_planned = set(block for block, planned in in_clocked_plan.items() if not planned)
     # TODO: implement sim mode context manager
-    assert not not_planned, """Blocks {} do not depend or are a dependency of any ClockedBlocks.
+    assert not not_planned, """Blocks {} do not depend on or are a dependency of any ClockedBlocks.
 This is required for its real-time execution.
 Mark the blocks as sim_only=True if they are not required for realtime execution, or declare them within the `with bdsim.simulation_only: ...` context manager""" \
     .format(not_planned)
@@ -69,11 +93,22 @@ Mark the blocks as sim_only=True if they are not required for realtime execution
     scheduler.run()
 
 
-def exec_plan_scheduled(clock: Clock, plan: List[Block], state: BDSimState, reschedule_this: Callable[[], None]):
-    state.t = time.time()
+def exec_plan_scheduled(
+    clock: Clock,
+    plan: List[Block],
+    state: BDSimState,
+    scheduler: sched.scheduler,
+    scheduled_time: int,
+    start_time: int
+):
+    state.t = scheduled_time - start_time
     
     # execute the 'ontick' steps for each clock, ie read ADC's output PWM's, send/receive datas
     for b in clock.blocklist:
+        # if this block requires inputs, only run .next() the second time this was scheduled.
+        # this way, its data-dependencies are met before .next() executes
+        if scheduled_time == start_time and not isinstance(b, SourceBlock):
+            continue
         b._x = b.next()
     
     # now execute the given plan
@@ -88,10 +123,23 @@ def exec_plan_scheduled(clock: Clock, plan: List[Block], state: BDSimState, resc
                     w.end.block.inputs[w.end.port] = out[n]
 
     # forcibly collect garbage to assist in fps constancy
-    gc.collect()
+    # gc.collect()
+
+    # print('after collect()', time.monotonic() - scheduled_time)
 
     if not state.stop and (state.T is None or state.t < state.T):
-        reschedule_this()
+        next_scheduled_time = scheduled_time + clock.T
+        scheduler.enterabs(
+            next_scheduled_time,
+            priority=1,
+            action=exec_plan_scheduled,
+            argument=(
+                clock,
+                plan,
+                state,
+                scheduler,
+                next_scheduled_time,
+                start_time))
 
 
 
@@ -101,10 +149,13 @@ def _collect_connected(block: Block, collected: Set[Block], forward: bool):
     if inports=True, will recurse through inputs, otherwise will recurse through outputs
     """
     collected.add(block)
-
-    ports_attr, plug_attr = ('inports', 'start') if forward else ('outports', 'end')
-
-    for wires in getattr(block, ports_attr):
-        for wire in wires:
-            plug = getattr(wire, plug_attr)
-            _collect_connected(plug.block, collected, forward)
+    
+    sub_blocks = (
+        wire.end.block
+        for wires in block.outports
+        for wire in wires
+    ) if forward else (
+        wire.start.block for wire in block.inports
+    )
+    for block in sub_blocks:
+        _collect_connected(block, collected, forward)

@@ -72,7 +72,7 @@ class BlockDiagram:
         return self._issubsystem
     
     def clock(self, *args, **kwargs):
-        clock = Clock(*args, **kwargs)
+        clock = Clock(*args, bd=self, **kwargs)
         self.clocklist.append(clock)
         return clock
 
@@ -138,7 +138,7 @@ class BlockDiagram:
                     self.add_wire(wire)
             elif start.isslice and not end.isslice:
                 # bundle goint to a block
-                assert start.width == start.block.nin, "bundle width doesn't match number of input ports"
+                assert start.width == start.block.nout, "bundle width doesn't match number of input ports"
                 for inport,outport in enumerate(start.portlist):
                     wire = Wire( Plug(start.block, outport, 'start'), Plug(end.block, inport, 'end'), name)
                     self.add_wire(wire)
@@ -775,10 +775,7 @@ class BlockDiagram:
         
         """
         for c in self.clocklist:
-            try:
-                c.start(**kwargs)
-            except:
-                self._error_handler('start clock', b)
+            c.start(**kwargs)
 
         for b in self.blocklist:
             try:

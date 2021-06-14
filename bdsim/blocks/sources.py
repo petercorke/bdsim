@@ -198,12 +198,14 @@ class WaveForm(SourceBlock):
         self.type = 'waveform'
 
     def start(self):
-        if self.waveform == 'square':
+        if self.wave == 'square':
             t1 = self.phase / self.freq
             t2 = (self.duty + self.phase) / self.freq
-        elif self.waveform == 'triangle':
+        elif self.wave == 'triangle':
             t1 = (0.25 + self.phase) / self.freq
             t2 = (0.75 + self.phase) / self.freq
+        else:
+            return # I guess this is right ???
 
         # t1 < t2
         T = 1.0 / self.freq
