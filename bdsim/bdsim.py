@@ -201,6 +201,7 @@ class BDSim:
         state.stop = None # allow any block to stop.BlockDiagram by setting this to the block's name
         state.checkfinite = checkfinite
         state.options = copy.copy(self.options)
+        self.bd = bd
         if debug:
             # append debug flags
             if debug not in state.options.debug:
@@ -236,8 +237,6 @@ class BDSim:
         state.xlist = []
         state.plist = [[] for p in state.watchlist]
 
-        bd.state = state
-
         x0 = bd.getstate0()
         print('initial state  x0 = ', x0)
 
@@ -250,7 +249,7 @@ class BDSim:
             print(clock.name, 'initial dstate x0 = ', clock.getstate())
 
         # tell all blocks we're starting a BlockDiagram
-        bd.start()
+        self.bd.start(state=state, graphics=self.state.options.graphics)
         self.progress(0)
 
         if ndstates == 0:
@@ -294,7 +293,7 @@ class BDSim:
 
         # pause until all graphics blocks close
         bd.done(block=block)
-        print(bd.state.count,  ' integrator steps')
+        print(state.count,  ' integrator steps')
         print(len(state.tlist), ' time steps')
 
         # save buffered data in a Struct
@@ -315,12 +314,13 @@ class BDSim:
             out['y'+str(i)] = np.array(state.plist[i])
         out.ynames = watchnamelist
         return out
+
+    def done(self, **kwargs):
+        self.bd.done(graphics=self.options.graphics, **kwargs)
         
     def _run_interval(self, bd, t0, T, state):
         try:
             # get initial state from the stateful blocks
-
-
 
             # out = scipy.integrate.solve_ivp.BlockDiagram._deriv, args=(self,), t_span=(0,T), y0=x0, 
             #             method=solver, t_eval=np.linspace(0, T, 100), events=None, **kwargs)
@@ -333,9 +333,12 @@ class BDSim:
 
                 scipy_integrator = integrate.__dict__[state.solver]  # get user specified integrator
 
-                integrator = scipy_integrator(lambda t, y: bd.evaluate_plan(y, t),
-                                                t0=t0, y0=x0, t_bound=T, max_step=state.dt, **state.intargs)
+                def ydot(t, y):
+                    state.t = t
+                    return bd.evaluate_plan(y, t)
 
+                integrator = scipy_integrator(ydot,
+                    t0=t0, y0=x0, t_bound=T, max_step=state.dt, **state.intargs)
 
                 while integrator.status == 'running':
 
@@ -355,12 +358,12 @@ class BDSim:
                         state.plist[i].append(p.block.output(integrator.t)[p.port])
                     
                     # update all blocks that need to know
-                    bd.step()
-                    
+                    bd.step(state=self.state, graphics=self.state.options.graphics)
+
                     self.progress()  # update the progress bar
 
                     # has any block called a stop?
-                    if bd.state.stop is not None:
+                    if state.stop is not None:
                         print(fg('red') + f"\n--- stop requested at t={bd.state.t:.4f} by {bd.state.stop}" + attr(0))
                         break
 
@@ -368,7 +371,7 @@ class BDSim:
                         print(fg('red') + f"\n--- stopping on minimum step size at t={bd.state.t:.4f} with last stepsize {integrator.step_size:g}" + attr(0))
                         break
 
-                    if 'i' in bd.state.options.debug:
+                    if 'i' in state.options.debug:
                         bd._debugger(integrator)
 
             elif len(clocklist) == 0:
@@ -431,10 +434,6 @@ class BDSim:
             # bad things happens, print a message and return no result
             print('unrecoverable error in evaluation: ', err)
             raise
-
-    def done(self, bd, **kwargs):
-
-        bd.done(**kwargs)
 
     def blockdiagram(self, name='main'):
         """
@@ -614,7 +613,7 @@ class BDSim:
                                 # must have a step function
                                 valid = hasattr(cls, 'step') and \
                                         callable(cls.step) and \
-                                        len(inspect.signature(cls.step).parameters) == 1
+                                        len(inspect.signature(cls.step).parameters) >= 1
                                 if not valid:
                                     raise ImportError('class {:s} has missing/improper step method'.format(str(cls)))
                             
@@ -623,6 +622,49 @@ class BDSim:
                         nblocks = len(blocklist)
 
         return blocks
+
+    def set_options(self, **options):
+        """
+        Set simulation options at run time
+
+        The option names correspond to command line options
+
+        ===================  =========  ========  ===========================================
+        Command line switch  Option     Default   Behaviour
+        ===================  =========  ========  ===========================================
+        --nographics, -g     graphics   True      enable graphical display
+        --animation, -a      animation  True      update graphics at each time step
+        --noprogress, -p     progress   True      do not display simulation progress bar
+        --backend BE         backend    'Qt5Agg'  matplotlib backend
+        --tiles RxC, -t RxC  tiles      '3x4'     arrangement of figure tiles on the display
+        --verbose, -v        verbose    False     be verbose
+        --debug F, -d F      debug      ''        debug flag string
+        ===================  =========  ========  ===========================================
+
+        Example::
+
+                sim = bdsim.BDsim()
+                sim.set_options(graphics=False)
+
+        .. note:: ``animation`` and ``graphics`` options are coupled.  If 
+            ``graphics=False``, all graphics is suppressed.  If
+            ``graphics=True`` then graphics are shown and the behaviour depends
+            on ``animation``.  ``animation=False`` shows graphs at the end of
+            the simulation, while ``animation=True` will animate the graphs
+            during simulation.
+        """
+        for key, value in options.items():
+            self.options[key] = value
+
+        # animation and graphics options are coupled
+        #
+        #  graphics False, no graphics at all
+        #  graphics True, animation False, show graphs at end of run
+        #  graphics True, animation True, animate graphs during the run
+        if 'animation' in options and options['animation']:
+            self.options.graphics = True
+        if 'graphics' in options and not options['graphics']:
+            self.options.animation = False
 
     def get_options(sysargs=True, **kwargs):
         # option priority (high to low):
@@ -684,7 +726,7 @@ class BDSim:
                 print('{:10s}: {:}'.format(k, v))
         
         # stash these away
-        options = types.SimpleNamespace(**options)
+        options = Struct(**options, name='Options')
 
         return options
         

@@ -23,9 +23,10 @@ bd.connect(plant, scope[0])
 bd.compile()   # check the diagram
 bd.report()    # list all blocks and wires
 
+sim.set_options(animation=True, graphics=True)
 out = sim.run(bd, 5, watch=[plant,demand])  # simulate for 5s
 
 sim.savefig(scope, 'scope0')
-sim.done(bd, block=True)
+sim.done(block=False)
 
 print(out)
