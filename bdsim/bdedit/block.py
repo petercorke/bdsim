@@ -318,7 +318,7 @@ class Block(Serializable):
         """
 
         # Checks if the block type is a Prod or Sum block
-        if self.block_type == "Prod" or self.block_type == "Sum":
+        if self.block_type == "PROD" or self.block_type == "SUM" or self.block_type == "Prod" or self.block_type == "Sum":
 
             # Iterates through user-editable parameters stored within the block and checks
             # if one by the name of 'Operations' or 'Signs' exists (these block types should
@@ -330,7 +330,7 @@ class Block(Serializable):
             for parameter in self.parameters:
 
                 # If parameter name is equal to:
-                if parameter[0] == "Operations" or parameter[0] == "Signs":
+                if parameter[0] == "ops" or parameter[0] == "signs":
                     index = 0
 
                     # Sets the socket_sign of Socket within the block, equal to the respective

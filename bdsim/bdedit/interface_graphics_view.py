@@ -319,6 +319,7 @@ class GraphicsView(QGraphicsView):
 
         - DEL or BACKSPACE: removes selected item from the Scene
         - F: flips the sockets on a Block or Connector Block
+        - I: toggles intersection detection amongst wires (Off by default)
         - CTRL + S: previously connected to saving the Scene
         - CTRL + L: previously connected to loading a Scene file
 
@@ -336,6 +337,8 @@ class GraphicsView(QGraphicsView):
             self.intersectionTest()
         elif event.key() == Qt.Key_F:
             self.flipBlockSockets()
+        elif event.key() == Qt.Key_I:
+            self.grScene.enable_intersections = not self.grScene.enable_intersections
         elif event.key() == Qt.Key_S and event.modifiers() & Qt.ControlModifier:
             pass
             # self.grScene.scene.saveToFile("graph_testing.json.txt")
@@ -621,14 +624,17 @@ class GraphicsView(QGraphicsView):
         """
         super().mouseMoveEvent(event)
 
-        # If the wire is in dragging mode
-        if self.mode == MODE_WIRE_DRAG:
-            # Grab the on-screen position of the mouse cursor
-            pos = self.mapToScene(event.pos())
-            # Set the point that the wire draws to, as the current x,y position of the mouse cursor
-            self.drag_wire.grWire.setDestination(pos.x(), pos.y())
-            # Call for the wire to be redrawn/updated accordingly
-            self.drag_wire.grWire.update()
+        try:
+            # If the wire is in dragging mode
+            if self.mode == MODE_WIRE_DRAG:
+                    # Grab the on-screen position of the mouse cursor
+                    pos = self.mapToScene(event.pos())
+                    # Set the point that the wire draws to, as the current x,y position of the mouse cursor
+                    self.drag_wire.grWire.setDestination(pos.x(), pos.y())
+                    # Call for the wire to be redrawn/updated accordingly
+                    self.drag_wire.grWire.update()
+        except AttributeError:
+            self.mode = MODE_NONE
 
         # Call for the intersection code to be run
         self.intersectionTest()
