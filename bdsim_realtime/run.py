@@ -2,7 +2,7 @@ import time
 from typing import Dict, List, Optional, Set
 import sched
 from bdsim import Block, BlockDiagram, BDSimState
-from bdsim.components import Clock, SinkBlock, SourceBlock
+from bdsim.components import Clock, ClockedBlock, SinkBlock, SourceBlock
 
 
 def _clocked_plans(bd: BlockDiagram):
@@ -96,7 +96,9 @@ def run(bd: BlockDiagram, max_time: Optional[float]=None):
 
     for clock, plan in clock2plan.items():
         scheduled_time = now + clock.offset + SETUP_WAIT_BUFFER
-        print("{} <SCHEDULED for {}>:{}".format(clock, scheduled_time, ''.join('\n\t{}. {}'.format(idx, b) for idx, b in enumerate(plan))))
+        print("{} <SCHEDULED for {}>:{}".format(
+            clock, scheduled_time,
+            ''.join('\n\t{}. {}{}'.format(idx, b, ' (clocked)' if isinstance(b, ClockedBlock) else '') for idx, b in enumerate(plan))))
         scheduler.enterabs(
             scheduled_time,
             priority=1,
