@@ -205,10 +205,7 @@ class BlockDiagram:
 
         # run block specific checks
         for b in self.blocklist:
-            try:
-                b.check()
-            except:
-                raise RuntimeError('block failed check ' + str(b))
+            b.check()
 
         # build a dictionary of all block names
         for b in self.blocklist:

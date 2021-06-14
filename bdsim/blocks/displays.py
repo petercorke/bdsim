@@ -23,7 +23,6 @@ from bdsim.components import SinkBlock, block
 from bdsim.graphics import GraphicsBlock
 
 
-
 # ------------------------------------------------------------------------ #
 
 
@@ -31,10 +30,10 @@ from bdsim.graphics import GraphicsBlock
 class Scope(GraphicsBlock):
     """
     :blockname:`SCOPE`
-    
+
     .. table::
        :align: left
-    
+
        +--------+---------+---------+
        | inputs | outputs |  states |
        +--------+---------+---------+
@@ -44,11 +43,11 @@ class Scope(GraphicsBlock):
        | A(N,)  |         |         | 
        +--------+---------+---------+
     """
-    
-    def __init__(self, nin=1, vector=0, styles=None, stairs=False, scale='auto', labels=None, grid=True, *inputs, **kwargs):
+
+    def __init__(self, nin=1, vector=0, styles=None, stairs=None, scale='auto', labels=None, grid=True, *inputs, **kwargs):
         """
         Create a block that plots input ports against time.
-        
+
         :param nin: number of inputs, defaults to length of style vector if given,
                     otherwise 1
         :type nin: int, optional
@@ -70,22 +69,22 @@ class Scope(GraphicsBlock):
         Create a block that plots input ports against time.  
 
         Each line can have its own color or style which is specified by:
-        
+
             - a dict of options for `Line2D <https://matplotlib.org/3.2.2/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D>`_ or 
             - a  MATLAB-style linestyle like 'k--'
-        
+
         The number of inputs will be inferred from the length of the ``labels``
         list if not specified.
 
         If multiple lines are plotted then a heterogeneous list of styles, dicts or strings,
         one per line must be given.
-        
+
         The vertical scale factor defaults to auto-scaling but can be fixed by
         providing a 2-tuple [ymin, ymax]. All lines are plotted against the
         same vertical scale.
-        
+
         Examples::
-            
+
             SCOPE()
             SCOPE(nin=2)
             SCOPE(nin=2, scale=[-1,2])
@@ -93,7 +92,7 @@ class Scope(GraphicsBlock):
             SCOPE(styles=[{'color': 'blue'}, {'color': 'red', 'linestyle': '--'}])
             SCOPE(styles=['k', 'r--'])
 
-            
+
         .. figure:: ../../figs/Figure_1.png
            :width: 500px
            :alt: example of generated graphic
@@ -140,24 +139,24 @@ class Scope(GraphicsBlock):
 
         self.nplots = nplots
         self.vector = vector
-        
+
         super().__init__(nin=nin, inputs=inputs, **kwargs)
 
         if styles is None:
-            self.styles = [ None ] * nplots
-      
+            self.styles = [None] * nplots
+
         self.xlabel = 'Time (s)'
-        
+
         self.grid = grid
-        self.stairs = stairs
-        
-        self.line = [None] * nplots
+        self.stairs = stairs if isinstance(stairs, list) \
+            else [stairs is True] * nplots
+
+        self.plots = [None] * nplots
         self.scale = scale
-        
 
         # TODO, wire width
         # inherit names from wires, block needs to be able to introspect
-        
+
     def start(self, **kwargs):
         # create the plot
         if self.bd.options.graphics:
@@ -165,13 +164,13 @@ class Scope(GraphicsBlock):
 
             # init the arrays that hold the data
             self.tdata = np.array([])
-            self.ydata = [np.array([]),] * self.nplots
+            self.ydata = [np.array([]), ] * self.nplots
 
             # create the figures
             self.fig = self.create_figure()
             self.ax = self.fig.gca()
-            
-            # create empty lines with defined styles
+
+            # create empty plots with defined styles
             for i in range(0, self.nplots):
                 args = []
                 kwargs = {}
@@ -180,7 +179,11 @@ class Scope(GraphicsBlock):
                     kwargs = style
                 elif isinstance(style, str):
                     args = [style]
-                self.line[i], = self.ax.plot(self.tdata, self.ydata[i], *args, label=self.styles[i], **kwargs)
+
+                plot_fn = self.ax.step if self.stairs[i] else self.ax.plot
+
+                self.plots[i], = plot_fn(
+                    self.tdata, self.ydata[i], *args, label=self.styles[i], **kwargs)
 
             # label the axes
             if self.labels is not None:
@@ -193,7 +196,7 @@ class Scope(GraphicsBlock):
                 self.ax.grid(self.grid)
             elif isinstance(self.grid, (list, tuple)):
                 self.ax.grid(True, *self.grid)
-            
+
             # set limits
             self.ax.set_xlim(0, self.bd.simstate.T)
 
@@ -206,7 +209,7 @@ class Scope(GraphicsBlock):
             plt.show(block=False)
 
             super().start()
-        
+
     def step(self):
         # inputs are set
         if self.bd.options.graphics:
@@ -216,32 +219,26 @@ class Scope(GraphicsBlock):
                 # vector input on the input
                 data = self.inputs[0]
                 assert len(data) == self.nplots, 'vector input wrong width'
-                for i,input in enumerate(data):
+                for i, input in enumerate(data):
                     self.ydata[i] = np.append(self.ydata[i], input)
             else:
                 # stash data from the inputs
                 assert len(self.inputs) == self.nplots, 'insufficient inputs'
-                for i,input in enumerate(self.inputs):
+                for i, input in enumerate(self.inputs):
                     self.ydata[i] = np.append(self.ydata[i], input)
 
             plt.figure(self.fig.number)  # make current
-            if self.stairs:
-                for i in range(0, self.nplots):
-                    t = np.repeat(self.tdata, 2)
-                    y = np.repeat(self.ydata[i], 2)
-                    self.line[i].set_data(t[1:], y[:-1])
-            else:
-                for i in range(0, self.nplots):
-                    self.line[i].set_data(self.tdata, self.ydata[i])
-        
+            for i in range(0, self.nplots):
+                self.plots[i].set_data(self.tdata, self.ydata[i])
+
             if self.bd.options.animation:
                 self.fig.canvas.flush_events()
-        
+
             if self.scale == 'auto':
                 self.ax.relim()
                 self.ax.autoscale_view(scalex=False, scaley=True)
             super().step()
-        
+
     def done(self, block=False, **kwargs):
         if self.bd.options.graphics:
             plt.show(block=block)
@@ -249,11 +246,12 @@ class Scope(GraphicsBlock):
 
 # ------------------------------------------------------------------------ #
 
+
 @block
 class ScopeXY(GraphicsBlock):
     """
     :blockname:`SCOPEXY`
-    
+
     .. table::
        :align: left
     
@@ -284,15 +282,15 @@ class ScopeXY(GraphicsBlock):
 
         This block has two inputs which are plotted against each other. Port 0
         is the horizontal axis, and port 1 is the vertical axis.
-        
+
         The line style is given by either:
-            
+
             - a dict of options for ``plot``, or
             - as a simple MATLAB-style linestyle like ``'k--'``.
-        
+
         The scale factor defaults to auto-scaling but can be fixed by
         providing either:
-            
+
             - a 2-tuple [min, max] which is used for the x- and y-axes
             - a 4-tuple [xmin, xmax, ymin, ymax]
         """
@@ -321,7 +319,7 @@ class ScopeXY(GraphicsBlock):
 
             self.fig = self.create_figure()
             self.ax = self.fig.gca()
-            
+
             args = []
             kwargs = {}
             style = self.styles
@@ -330,7 +328,7 @@ class ScopeXY(GraphicsBlock):
             elif isinstance(style, str):
                 args = [style]
             self.line, = self.ax.plot(self.xdata, self.ydata, *args, **kwargs)
-                
+
             self.ax.grid(True)
             self.ax.set_xlabel(self.labels[0])
             self.ax.set_ylabel(self.labels[1])
@@ -347,7 +345,6 @@ class ScopeXY(GraphicsBlock):
 
             super().start()
 
-        
     def step(self):
         # inputs are set
         self.xdata.append(self.inputs[0])
@@ -355,21 +352,20 @@ class ScopeXY(GraphicsBlock):
         if self.bd.options.graphics:
             plt.figure(self.fig.number)
             self.line.set_data(self.xdata, self.ydata)
-        
+
             if self.bd.options.animation:
                 self.fig.canvas.flush_events()
 
-        
             if self.scale == 'auto':
                 self.ax.relim()
                 self.ax.autoscale_view()
             super().step()
-        
+
     def done(self, block=False, **kwargs):
         if self.bd.options.graphics:
             plt.show(block=block)
             super().done()
-            
+
 
 # ------------------------------------------------------------------------ #
 

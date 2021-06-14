@@ -24,18 +24,20 @@ block = namedtuple('block', 'name, cls, path')
 
 # convert class name to BLOCK name
 # strip underscores and capitalize
+
+
 def blockname(cls):
     return cls.__name__.strip('_').upper()
 
 
 # print a progress bar
 # https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console
-def printProgressBar (fraction, prefix='', suffix='', decimals=1, length=50, fill = '█', printEnd = "\r"):
+def printProgressBar(fraction, prefix='', suffix='', decimals=1, length=50, fill='█', printEnd="\r"):
 
     percent = ("{0:." + str(decimals) + "f}").format(fraction * 100)
     filledLength = int(length * fraction)
     bar = fill * filledLength + '-' * (length - filledLength)
-    print(f'\r{prefix} |{bar}| {percent}% {suffix}', end = printEnd)
+    print(f'\r{prefix} |{bar}| {percent}% {suffix}', end=printEnd)
 
 
 class BDSimState:
@@ -56,7 +58,6 @@ class BDSimState:
     :ivar graphics: enable graphics
     :vartype graphics: bool
     """
-    
 
     def __init__(self):
 
@@ -73,6 +74,7 @@ class BDSimState:
 
     def declare_event(self, block, t):
         self.eventq.push((t, block))
+
 
 class BDSim:
 
@@ -98,7 +100,7 @@ class BDSim:
         :raises ImportError: syntax error in block
         :return: parent object for blockdiagram simulation
         :rtype: BDSim
-        
+
         Graphics display in all blocks can be disabled using the `graphics`
         option to the ``BlockDiagram`` instance.
 
@@ -128,7 +130,7 @@ class BDSim:
         for k, v in self.options.__dict__.items():
             s += '  {:s}: {}\n'.format(k, v)
         return s
-        
+
     def progress(self, t=None):
         if self.options.progress:
             if t is None:
@@ -137,14 +139,14 @@ class BDSim:
 
     def progress_done(self):
         if self.options.progress:
-            print('\r' + ' '* 90 + '\r')
+            print('\r' + ' ' * 90 + '\r')
 
     def run(self, bd, T=10.0, dt=0.1, solver='RK45', debug='',
             block=False, checkfinite=True, minstepsize=1e-12, watch=[],
             intargs={}):
         """
         Run the block diagram
-        
+
         :param T: maximum integration time, defaults to 10.0
         :type T: float, optional
         :param dt: maximum time step, defaults to 0.1
@@ -163,21 +165,21 @@ class BDSim:
         :type intargs: dict
         :return: time history of signals and states
         :rtype: Sim class
-        
+
         Assumes that the network has been compiled.
-        
+
         Results are returned in a class with attributes:
-            
+
         - ``t`` the time vector: ndarray, shape=(M,)
         - ``x`` is the state vector: ndarray, shape=(M,N)
         - ``xnames`` is a list of the names of the states corresponding to columns of `x`, eg. "plant.x0",
             defined for the block using the ``snames`` argument
         - ``uN'` for a watched input where N is the index of the port mentioned in the ``watch`` argument
         - ``unames`` is a list of the names of the input ports being watched, same order as in ``watch`` argument
-        
+
         If there are no dynamic elements in the diagram, ie. no states, then ``x`` and ``xnames`` are not
         present.
-        
+
         The ``watch`` argument is a list of one or more input ports whose value during simulation
         will be recorded.  The elements of the list can be:
             - a ``Block`` reference, which is interpretted as input port 0
@@ -186,16 +188,16 @@ class BDSim:
 
 
         The debug string comprises single letter flags:
-                
+
                 - 'p' debug network value propagation
                 - 's' debug state vector
                 - 'd' debug state derivative 
-        
+
         .. note:: Simulation stops if the step time falls below ``minsteplength``
             which typically indicates that the solver is struggling with a very
             harsh non-linearity.
         """
-        
+
         assert bd.compiled, 'Network has not been compiled'
 
         # initialize the simstate structure, holds all simulation stae
@@ -251,9 +253,8 @@ class BDSim:
 
         bd.simstate = simstate  # block diagram has a reference to simstate
 
-        # get the system state vector
-        x0 = bd.getstate0()
-        print('initial state  x0 = ', x0)
+        state.x = bd.getstate0()
+        print('initial state  x0 = ', state.x)
 
         # get the number of discrete states from all clocks
         ndstates = 0
@@ -302,7 +303,7 @@ class BDSim:
                         clock.next_event()
 
                         # get the new state
-                        clock._x = clock.getstate()
+                        clock._x = clock.x[-1]
                 tprev = tnext
 
                 # are we done?
@@ -382,59 +383,25 @@ class BDSim:
                     message = integrator.step()
 
                     if integrator.status == 'failed':
-                        print(fg('red') + f"\nintegration completed with failed status: {message}" + attr(0))
+                        print(
+                            fg('red') + f"\nintegration completed with failed status: {message}" + attr(0))
                         break
 
                     # stash the results
-                    simstate.tlist.append(integrator.t)
-                    simstate.xlist.append(integrator.y)
-                    
+                    state.tlist.append(integrator.t)
+                    state.xlist.append(integrator.y)
+                    state.x = integrator.y
+
                     # record the ports on the watchlist
-                    for i, p in enumerate(simstate.watchlist):
-                        simstate.plist[i].append(p.block.output(integrator.t)[p.port])
-                    
-                    # update all blocks that need to know
-                    bd.step()
-                    
-                    self.progress()  # update the progress bar
-
-                    if integrator.status == 'finished':
-                        break
-
-                    # has any block called a stop?
-                    if bd.simstate.stop is not None:
-                        print(fg('red') + f"\n--- stop requested at t={bd.simstate.t:.4f} by {bd.simstate.stop}" + attr(0))
-                        break
-
-                    if simstate.minstepsize is not None and integrator.step_size < simstate.minstepsize:
-                        print(fg('red') + f"\n--- stopping on minimum step size at t={bd.simstate.t:.4f} with last stepsize {integrator.step_size:g}" + attr(0))
-                        break
-
-                    if 'i' in bd.simstate.options.debug:
-                        bd._debugger(integrator)
-
-                return integrator.y  # return final state vector
-
-            elif len(clocklist) == 0:
-                # block diagram has no continuous or discrete states
-    
-                for t in np.arange(t0, tf, simstate.dt):  # step through the time range
-                    # evaluate the block diagram
-                    bd.evaluate_plan([], t)
-
-                    # stash the results
-                    simstate.tlist.append(t)
-                    
-                    # record the ports on the watchlist
-                    for i, p in enumerate(simstate.watchlist):
-                        simstate.plist[i].append(p.block.output(t)[p.port])
+                    for i, p in enumerate(state.watchlist):
+                        state.plist[i].append(
+                            p.block.output(integrator.t)[p.port])
 
                     # update all blocks that need to know
                     bd.step()
 
                     self.progress()  # update the progress bar
 
-                        
                     # has any block called a stop?
                     if bd.simstate.stop is not None:
                         print(fg('red') + f"\n--- stop requested at t={bd.simstate.t:.4f} by {bd.simstate.stop}" + attr(0))
@@ -500,7 +467,7 @@ class BDSim:
 
         :seealso: :func:`BlockDiagram`
         """
-        
+
         # instantiate a new blockdiagram
         bd = BlockDiagram(name=name)
 
@@ -510,29 +477,30 @@ class BDSim:
             # add the block to the diagram's blocklist
             def block_init_wrapper(self, *args, **kwargs):
 
-                block = cls(*args, bd=bd, **kwargs)  # call __init__ on the block
+                # call __init__ on the block
+                block = cls(*args, bd=bd, **kwargs)
                 bd.add_block(block)
                 return block
-            
+
             # return a function that invokes the class constructor
             f = block_init_wrapper
 
             # move the __init__ docstring to the class to allow BLOCK.__doc__
-            f.__doc__ = cls.__init__.__doc__  
+            f.__doc__ = cls.__init__.__doc__
 
             return f
-        
+
         # bind the block constructors as new methods on this instance
         self.blockdict = {}
         for block in self.blocklibrary:
             # create a function to invoke the block's constructor
             f = new_method(block.cls, bd)
-            
+
             # set a bound version of this function as an attribute of the instance
             # method = types.MethodType(new_method, bd)
             # setattr(bd, block.name, method)
             setattr(bd, block.name, f.__get__(self))
-            
+
             # broken, should be by folder
             # blocktype = block.cls.__module__.split('.')[1]
             # if blocktype in self.blockdict:
@@ -631,38 +599,45 @@ class BDSim:
                         # valid python module, import it
                         try:
                             # module = importlib.import_module('.' + file.stem, package='bdsim.blocks')
-                            spec = importlib.util.spec_from_file_location(file.name, file)
+                            spec = importlib.util.spec_from_file_location(
+                                file.name, file)
                             module = importlib.util.module_from_spec(spec)
                             spec.loader.exec_module(module)
                             # module = importlib.import_module('.' + file.stem, package='bdsim.blocks')
                         except SyntaxError:
-                            print(f"-- syntax error in block definiton: {file}")
-        
+                            print(
+                                f"-- syntax error in block definiton: {file}")
+
                         # components.blocklist grows with every block import
                         if len(blocklist) > nblocks:
                             # we just loaded some more blocks
                             if verbose:
-                                print('  loading blocks from {:s}: {:s}'.format(str(file), ', '.join([blockname(cls) for cls in blocklist[nblocks:]])))
-                            
+                                print('  loading blocks from {:s}: {:s}'.format(
+                                    str(file), ', '.join([blockname(cls) for cls in blocklist[nblocks:]])))
+
                         # perform basic sanity checks on the blocks just read
                         for cls in blocklist[nblocks:]:
-                            
+
                             if cls.blockclass in ('source', 'transfer', 'function'):
                                 # must have an output function
                                 valid = hasattr(cls, 'output') and \
-                                        callable(cls.output) and \
-                                        len(inspect.signature(cls.output).parameters) == 2
+                                    callable(cls.output) and \
+                                    len(inspect.signature(
+                                        cls.output).parameters) == 2
                                 if not valid:
-                                    raise ImportError('class {:s} has missing/improper output method'.format(str(cls)))
-                                
+                                    raise ImportError(
+                                        'class {:s} has missing/improper output method'.format(str(cls)))
+
                             if cls.blockclass == 'sink':
                                 # must have a step function
                                 valid = hasattr(cls, 'step') and \
-                                        callable(cls.step) and \
-                                        len(inspect.signature(cls.step).parameters) == 1
+                                    callable(cls.step) and \
+                                    len(inspect.signature(
+                                        cls.step).parameters) == 1
                                 if not valid:
-                                    raise ImportError('class {:s} has missing/improper step method'.format(str(cls)))
-                            
+                                    raise ImportError(
+                                        'class {:s} has missing/improper step method'.format(str(cls)))
+
                             blocks.append(block(blockname(cls), cls, file))
 
                         nblocks = len(blocklist)
