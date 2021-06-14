@@ -608,10 +608,10 @@ class BDSim:
             except ImportError:
                 pass
 
-            # path = os.getenv('BDSIMPATH')
-            # if path is not None:
-            #     for p in path.split(':'):
-            #         blockpath.append(Path(p))            
+            path = os.getenv('BDSIMPATH')
+            if path is not None:
+                for p in path.split(':'):
+                    blockpath.append(Path(p))            
             
             if verbose:
                 print('Loading blocks:')
