@@ -198,7 +198,7 @@ class Scope(GraphicsBlock):
                 self.ax.grid(True, *self.grid)
 
             # set limits
-            self.ax.set_xlim(0, self.bd.simstate.T)
+            self.ax.set_xlim(0, self.bd.state.T)
 
             if self.scale != 'auto':
                 self.ax.set_ylim(*self.scale)
@@ -213,7 +213,7 @@ class Scope(GraphicsBlock):
     def step(self):
         # inputs are set
         if self.bd.options.graphics:
-            self.tdata = np.append(self.tdata, self.bd.simstate.t)
+            self.tdata = np.append(self.tdata, self.bd.state.t)
 
             if self.vector:
                 # vector input on the input

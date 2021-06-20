@@ -209,9 +209,9 @@ class WaveForm(SourceBlock):
 
         # t1 < t2
         T = 1.0 / self.freq
-        while t1 < self.bd.simstate.T:
-            self.bd.simstate.declare_event(self, t1)
-            self.bd.simstate.declare_event(self, t2)
+        while t1 < self.bd.state.T:
+            self.bd.statedeclare_event(self, t1)
+            self.bd.statedeclare_event(self, t2)
             t1 += T
             t2 += T
 
@@ -288,7 +288,7 @@ class Piecewise(SourceBlock):
 
     def start(self):
         for t in self.t:
-            self.bd.simstate.declare_event(self, t)
+            self.bd.statedeclare_event(self, t)
 
     def output(self, t):
         i = sum([ 1 if t >= _t else 0  for _t in self.t]) - 1
@@ -343,7 +343,7 @@ class Step(SourceBlock):
         self.type = "step"
 
     def start(self):
-        self.bd.simstate.declare_event(self, self.T)
+        self.bd.state.declare_event(self, self.T)
 
     def output(self, t=None):
         if t >= self.T:
@@ -399,7 +399,7 @@ class Ramp(SourceBlock):
         self.type = "ramp"
 
     def start(self):
-        self.bd.simstate.declare_event(self, self.T)
+        self.bd.statedeclare_event(self, self.T)
 
     def output(self, t=None):
         if t >= self.T:

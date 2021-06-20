@@ -12,9 +12,16 @@ ADC_PIN = 0
 PWM_PIN = 0
 GPIO_V = 3.3
 
-FREQ = 50
+FREQ = 20
+# offsets chosen after observing execution
+ADC_OFFSET          = 0.0
+CONTROLLER_OFFSET   = 0.015 # adc + gc.collect() execution takes <= 15ms
+PWM_OFFSET          = 0.027 # controller execution takes <= 12ms
+DATASENDER_OFFSET   = 0.039 # execution takes <= 12ms
+
+FREQ = 18
 R = 4.7e3
-L = 100e-3
+L = 47e-4 # +- 5%
 C = 100e-6
 
 
@@ -46,16 +53,14 @@ def discrete_pi_controller(clock: Clock, p: float, i: float, *, min: float = -fl
 
 
 def control_rlc(reference: Signal):
-    clock = bd.clock(FREQ, unit='Hz')
-
-    duty, register_err = discrete_pi_controller(clock, 20, 1, min=0, max=1)
+    duty, register_err = discrete_pi_controller(bd.clock(FREQ, unit='Hz', offset=CONTROLLER_OFFSET), 20, 1, min=0, max=1)
 
     # max frequency allowable by ESP32 for smoothest output
-    pwm_v = bd.PWM(clock, duty, freq=1000, v_range=(0, 3.3), pin=PWM_PIN)
+    pwm_v = bd.PWM(bd.clock(FREQ, unit='Hz', offset=PWM_OFFSET), duty, freq=1000, v_range=(0, 3.3), pin=PWM_PIN)
 
     V_c = vc_rlc(pwm_v, R, L, C)
 
-    adc = bd.ADC(clock, V_c, bit_width=12, v_range=(0, 3.6), pin=ADC_PIN)
+    adc = bd.ADC(bd.clock(FREQ, unit='Hz', offset=ADC_OFFSET), V_c, bit_width=12, v_range=(0, 3.6), pin=ADC_PIN)
 
     err = bd.SUM('+-', reference, adc)
     register_err(err)
@@ -78,7 +83,7 @@ def run_test():
     scope[3] = output
 
     bd.compile()
-    sim.run(bd, T=1, block=True)
+    sim.run(bd, T=6, block=True)
 
 
 if __name__ == "__main__":

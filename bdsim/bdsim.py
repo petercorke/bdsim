@@ -203,6 +203,7 @@ class BDSim:
         # initialize the simstate structure, holds all simulation stae
         simstate = BDSimState()
         self.simstate = simstate
+        bd.state = simstate  # block diagram has a reference to simstate
         simstate.T = T
         simstate.dt = dt
         simstate.count = 0
@@ -251,10 +252,8 @@ class BDSim:
         simstate.xlist = []
         simstate.plist = [[] for p in simstate.watchlist]
 
-        bd.simstate = simstate  # block diagram has a reference to simstate
-
-        state.x = bd.getstate0()
-        print('initial state  x0 = ', state.x)
+        simstate.x = bd.getstate0()
+        print('initial state  x0 = ', simstate.x)
 
         # get the number of discrete states from all clocks
         ndstates = 0
@@ -283,7 +282,7 @@ class BDSim:
             self.simstate.eventq.pop_until(tprev)
 
             # get the state vector
-            x = x0
+            x = simstate.x
             
             nintervals = 0
             while True:
@@ -299,7 +298,7 @@ class BDSim:
                 for source in sources:
                     if isinstance(source, Clock):
                         # clock ticked, save its state
-                        clock.savestate(t)
+                        clock.savestate(simstate.t)
                         clock.next_event()
 
                         # get the new state
@@ -316,7 +315,7 @@ class BDSim:
 
         # print some info about the integration
         print(fg('yellow'))
-        print(f"integrator steps:      {bd.simstate.count}")
+        print(f"integrator steps:      {bd.state.count}")
         print(f"time steps:            {len(simstate.tlist)}")
         print(f"integration intervals: {nintervals}")
         print(attr(0))
@@ -388,13 +387,13 @@ class BDSim:
                         break
 
                     # stash the results
-                    state.tlist.append(integrator.t)
-                    state.xlist.append(integrator.y)
-                    state.x = integrator.y
+                    simstate.tlist.append(integrator.t)
+                    simstate.xlist.append(integrator.y)
+                    simstate.x = integrator.y
 
                     # record the ports on the watchlist
-                    for i, p in enumerate(state.watchlist):
-                        state.plist[i].append(
+                    for i, p in enumerate(simstate.watchlist):
+                        simstate.plist[i].append(
                             p.block.output(integrator.t)[p.port])
 
                     # update all blocks that need to know
@@ -403,13 +402,14 @@ class BDSim:
                     self.progress()  # update the progress bar
 
                     # has any block called a stop?
-                    if bd.simstate.stop is not None:
-                        print(fg('red') + f"\n--- stop requested at t={bd.simstate.t:.4f} by {bd.simstate.stop}" + attr(0))
+                    if bd.state.stop is not None:
+                        print(fg('red') + f"\n--- stop requested at t={bd.state.t:.4f} by {bd.state.stop}" + attr(0))
                         break
 
-                    if 'i' in bd.simstate.options.debug:
+                    if 'i' in bd.state.options.debug:
                         bd._debugger(integrator)
 
+                return integrator.y
             else:
                 # block diagram has no continuous states
     
@@ -431,10 +431,10 @@ class BDSim:
 
                     
                 # has any block called a stop?
-                if bd.simstate.stop is not None:
-                    print(fg('red') + f"\n--- stop requested at t={bd.simstate.t:.4f} by {bd.simstate.stop}" + attr(0))
+                if bd.state.stop is not None:
+                    print(fg('red') + f"\n--- stop requested at t={bd.state.t:.4f} by {bd.state.stop}" + attr(0))
 
-                if 'i' in bd.simstate.options.debug:
+                if 'i' in bd.state.options.debug:
                     bd._debugger(integrator)
 
                 

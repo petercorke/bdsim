@@ -393,7 +393,7 @@ class BlockDiagram:
         # pull the value from connected inputs
 
         try:
-            self.simstate.t = t
+            self.state.t = t
         except:
             pass
 
@@ -744,7 +744,7 @@ class BlockDiagram:
         for b in self.blocklist:
             try:
                 b.step()
-                self.simstate.count += 1
+                self.state.count += 1
             except:
                 self._error_handler('step', b)
 
