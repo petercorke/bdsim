@@ -10,9 +10,9 @@ Sink blocks:
 
 # The constructor of each class ``MyClass`` with a ``@block`` decorator becomes a method ``MYCLASS()`` of the BlockDiagram instance.
 
-import numpy as np
-from math import pi, sqrt, sin, cos, atan2
+from math import pi, sin, cos
 
+import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import Polygon
 
@@ -29,7 +29,7 @@ from bdsim.components import SinkBlock, block
 class Print(SinkBlock):
     """    
     :blockname:`PRINT`
-    
+
     .. table::
        :align: left
     
@@ -69,7 +69,7 @@ class Print(SinkBlock):
             bd.PRINT(x, name='X')  # block name appears in the printed text
 
             bd.PRINT(x, fmt="{:.1f}") # print with explicit format
-        
+
         The numerical formatting of the signal is controlled by ``fmt``:
 
         - if not provided, ``str()`` is used to format the signal
@@ -86,7 +86,7 @@ class Print(SinkBlock):
         super().__init__(nin=1, inputs=input, **kwargs)
         self.format = fmt
         self.type = 'print'
-        
+
         # TODO format can be a string or function
 
     def step(self):
@@ -109,13 +109,13 @@ class Print(SinkBlock):
                 print(prefix, str(value))
 
 # ------------------------------------------------------------------------ #
-            
+
 
 @block
 class Stop(SinkBlock):
     """
     :blockname:`STOP`
-    
+
     .. table::
        :align: left
     
@@ -142,8 +142,7 @@ class Stop(SinkBlock):
         """
         super().__init__(nin=1, inputs=inputs, **kwargs)
         self.type = 'stop'
-                    
-        self.stop  = stop
+        self.stop = stop
 
     def step(self):
         if isinstance(self.stop, bool):
@@ -190,6 +189,7 @@ class Null(SinkBlock):
         self.type = 'null'
         
         # TODO format can be a string or function
+
 
 if __name__ == "__main__":
 

@@ -210,8 +210,8 @@ class WaveForm(SourceBlock):
         # t1 < t2
         T = 1.0 / self.freq
         while t1 < self.bd.state.T:
-            self.bd.statedeclare_event(self, t1)
-            self.bd.statedeclare_event(self, t2)
+            self.bd.state.declare_event(self, t1)
+            self.bd.state.declare_event(self, t2)
             t1 += T
             t2 += T
 

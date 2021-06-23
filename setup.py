@@ -13,53 +13,41 @@ with open(path.join(here, 'RELEASE'), encoding='utf-8') as f:
 
 
 setup(
-    name='bdsim', 
+    name='bdsim',
 
     version=release,
 
     # This is a one-line description or tagline of what your project does. This
     # corresponds to the "Summary" metadata field:
     description='Simulate dynamic systems expressed in block diagram form using Python.', #TODO
-    
     long_description=long_description,
     long_description_content_type='text/markdown',
-
     classifiers=[
-    #   3 - Alpha
-    #   4 - Beta
-    #   5 - Production/Stable
-    'Development Status :: 4 - Beta',
+        #   3 - Alpha
+        #   4 - Beta
+        #   5 - Production/Stable
+        'Development Status :: 4 - Beta',
 
-    # Indicate who your project is intended for
-    'Intended Audience :: Developers',
-    # Pick your license as you wish (should match "license" above)
-     'License :: OSI Approved :: MIT License',
+        # Indicate who your project is intended for
+        'Intended Audience :: Developers',
+        # Pick your license as you wish (should match "license" above)
+        'License :: OSI Approved :: MIT License',
 
-    # Specify the Python versions you support here. In particular, ensure
-    # that you indicate whether you support Python 2, Python 3 or both.
-    'Programming Language :: Python :: 3 :: Only'],
-
+        # Specify the Python versions you support here. In particular, ensure
+        # that you indicate whether you support Python 2, Python 3 or both.
+        'Programming Language :: Python :: 3 :: Only'],
     project_urls={
         #'Documentation': 'https://petercorke.github.io/bdsim',
         'Source': 'https://github.com/petercorke/bdsim',
         'Tracker': 'https://github.com/petercorke/bdsim/issues',
         #'Coverage': 'https://codecov.io/gh/petercorke/spatialmath-python',
     },
-
     url='https://github.com/petercorke/bdsim',
-
     author='Peter Corke',
-
     author_email='rvc@petercorke.com', #TODO
-
     keywords='python block-diagram dynamic simulation',
-
     license='MIT', #TODO
-
-    python_requires='>=3.6',
-
+    python_requires='>=3.5',
     packages=find_packages(exclude=["test_*", "TODO*"]),
-
     install_requires=['numpy', 'scipy', 'matplotlib', 'ansitable', 'colored', 'spatialmath-python']
-    
 )

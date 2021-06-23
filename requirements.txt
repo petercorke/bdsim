@@ -9,4 +9,4 @@ recommonmark
 sphinx_markdown_tables
 sphinx_rtd_theme
 matplotlib
-spatialmath
+spatialmath-python

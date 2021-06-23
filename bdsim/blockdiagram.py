@@ -10,24 +10,65 @@ from pathlib import Path
 import sys
 import importlib
 import inspect
+import re
+import argparse
+import time
 from collections import Counter, namedtuple
+from typing import List
 import numpy as np
 from colored import fg, attr
 
 
 from ansitable import ANSITable, Column
 
-from bdsim.components import *
+from .components import Block, Plug, blocklist, Wire, SourceBlock, TransferBlock, Struct, Clock
+
+debuglist = []  # ('propagate', 'state', 'deriv')
 
 
 
-# ------------------------------------------------------------------------- #    
+# print a progress bar
+# https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console
+def printProgressBar(fraction,
+                     prefix='',
+                     suffix='',
+                     decimals=1,
+                     length=50,
+                     fill='█',
+                     printEnd="\r"):
+
+    percent = ("{0:." + str(decimals) + "f}").format(fraction * 100)
+    filledLength = int(length * fraction)
+    bar = fill * filledLength + '-' * (length - filledLength)
+    print('\r{prefix} |{bar}| {percent}% {suffix}', end=printEnd)
+
+
+# convert class name to BLOCK name
+
+
+def blockname(cls):
+    return cls.__name__.strip('_').upper()
+
+
+def init_wrap(cls):
+    def block_init_wrapper(bd, *args, **kwargs):
+        block = cls(*args, bd=bd, **kwargs)
+        bd.add_block(block)
+        return block
+
+    # move the __init__ docstring to the class to allow BLOCK.__doc__
+    cls.__doc__ = cls.__init__.__doc__
+    # return a function that invokes the class constructor
+    return block_init_wrapper
+
+
+# ------------------------------------------------------------------------- #
 
 class BlockDiagram:
     """
-    Block diagram class.  This object is the parent of all blocks and wires in 
+    Block diagram class.  This object is the parent of all blocks and wires in
     the system.
-    
+
     :ivar wirelist: all wires in the diagram
     :vartype wirelist: list of Wire instances
     :ivar blocklist: all blocks in the diagram
@@ -43,10 +84,7 @@ class BlockDiagram:
     :ivar name: name of this diagram
     :vartype name: str
     """
-    
     def __init__(self, name='main', **kwargs):
-
-
         self.wirelist = []      # list of all wires
         self.blocklist = []     # list of all blocks
         self.clocklist = []     # list of all clock sources
@@ -87,37 +125,36 @@ class BlockDiagram:
         if block in self._blockdict:
             raise Warning(f"block name {block} is not unique")
         self._blockdict[block.name] = block
-        
     def add_wire(self, wire, name=None):
         wire.id = len(self.wirelist)
         wire.name = name
         return self.wirelist.append(wire)
-    
+
     def __str__(self):
         return 'BlockDiagram: {:s}'.format(self.name)
-    
+
     def __repr__(self):
-        return str(self) + " with {:d} blocks and {:d} wires".format(len(self.blocklist), len(self.wirelist))
+        return str(self) + " with {:d} blocks and {:d} wires".format(
+            len(self.blocklist), len(self.wirelist))
         # for block in self.blocklist:
         #     s += str(block) + "\n"
         # s += "\n"
         # for wire in self.wirelist:
         #     s += str(wire) + "\n"
         # return s.lstrip("\n")
-        
+
     def ls(self):
-        for k,v in self.blockdict.items():
+        for k, v in self.blockdict.items():
             print('{:12s}: '.format(k), ', '.join(v))
     
     def connect(self, start, *ends, name=None):
-        
+
         """
         TODO:
             s.connect(out[3], in1[2], in2[3])  # one to many
             block[1] = SigGen()  # use setitem
             block[1] = SumJunction(block2[3], block3[4]) * Gain(value=2)
         """
-                        
         # convert to default plug on port 0 if need be
         if isinstance(start, Block):
             start = Plug(start, 0)
@@ -127,31 +164,31 @@ class BlockDiagram:
             if isinstance(end, Block):
                 end = Plug(end, 0)
             end.type = 'end'
-                    
+
             if start.isslice and end.isslice:
                 # we have a bundle of signals
-                                
+
                 assert start.width == end.width, 'slice wires must have same width'
-                
-                for (s,e) in zip(start.portlist, end.portlist):
-                    wire = Wire( Plug(start.block, s, 'start'), Plug(end.block, e, 'end'), name)
+
+                for (s, e) in zip(start.portlist, end.portlist):
+                    wire = Wire(Plug(start.block, s, 'start'),
+                                Plug(end.block, e, 'end'), name)
                     self.add_wire(wire)
             elif start.isslice and not end.isslice:
                 # bundle goint to a block
-                assert start.width == start.block.nout, "bundle width doesn't match number of input ports"
+                assert start.width == start.block.nout, "bundle width doesn't match number of output ports"
                 for inport,outport in enumerate(start.portlist):
                     wire = Wire( Plug(start.block, outport, 'start'), Plug(end.block, inport, 'end'), name)
                     self.add_wire(wire)
             else:
                 wire = Wire(start, end, name)
                 self.add_wire(wire)
-        
-    # ---------------------------------------------------------------------- #
 
-    def compile(self, subsystem=False, doimport=True, report=False, verbose=True):
+
+    def compile(self, subsystem=False, doimport=True, verbose: bool = False, report: bool = False):
         """
         Compile the block diagram
-        
+
         :param subsystem: importing a subsystems, defaults to False
         :type subsystem: bool, optional
         :param doimport: import subsystems, defaults to True
@@ -159,9 +196,9 @@ class BlockDiagram:
         :raises RuntimeError: various block diagram errors
         :return: Compile status
         :rtype: bool
-        
+
         Performs a number of operations:
-            
+
             - Check sanity of block parameters
             - Recursively clone and import subsystems
             - Check for loops without dynamics
@@ -178,16 +215,15 @@ class BlockDiagram:
         self.nwires = len(self.wirelist)
 
         error = False
-        
+
         self.nstates = 0
         self.ndstates = 0
         self.statenames = []
         self.dstatenames = []
         self.blocknames = {}
-        
         if not subsystem and verbose:
             print('\nCompiling:')
-        
+
         # process all subsystem imports
         # ssblocks = [b for b in self.blocklist if b.type == 'subsystem']
         # for b in ssblocks:
@@ -210,13 +246,15 @@ class BlockDiagram:
         # build a dictionary of all block names
         for b in self.blocklist:
             self.blocknames[b.name] = b
-        
+
         # visit all stateful blocks
         for b in self.blocklist:
             if b.blockclass == 'transfer':
                 self.nstates += b.nstates
                 if b._state_names is not None:
-                    assert len(b._state_names) == b.nstates, 'number of state names not consistent with number of states'
+                    assert len(
+                        b._state_names
+                    ) == b.nstates, 'number of state names not consistent with number of states'
                     self.statenames.extend(b._state_names)
                 else:
                     # create default state names
@@ -235,7 +273,7 @@ class BlockDiagram:
             b.outports = [[] for i in range(0, b.nout)]
             b.inports = [None for i in range(0, b.nin)]
             b._parents = [None for i in range(0, b.nin)]
-        
+
         # connect the source and destination blocks to each wire
         for w in self.wirelist:
             try:
@@ -245,29 +283,39 @@ class BlockDiagram:
                 w.end.block._parents[w.end.port] = w.start.block
 
             except:
-                print('error connecting wire ', w.fullname + ': ', sys.exc_info()[1])
+                print('error connecting wire ', w.fullname + ': ',
+                      sys.exc_info()[1])
                 error = True
-            
-        # check connections every block 
+
+        # check connections every block
         for b in self.blocklist:
             # check all inputs are connected
             for port, connection in enumerate(b.inports):
                 if connection is None:
-                    print('  ERROR: block {:s} input {:d} is not connected'.format(str(b), port))
+                    print('  ERROR: block {:s} input {:d} is not connected'.
+                          format(str(b), port))
                     error = True
-                    
+
             # check all outputs are connected
-            for port,connections in enumerate(b.outports):
+            for port, connections in enumerate(b.outports):
                 if len(connections) == 0:
                     print('  INFORMATION: block {:s} output {:d} is not connected'.format(str(b), port))
                     
             if b._inport_names is not None:
-                assert len(b._inport_names) == b.nin, 'incorrect number of input names given: ' + str(b)
+                assert len(
+                    b._inport_names
+                ) == b.nin, 'incorrect number of input names given: ' + str(b)
             if b._outport_names is not None:
-                assert len(b._outport_names) == b.nout, 'incorrect number of output names given: ' + str(b)
+                assert len(
+                    b._outport_names
+                ) == b.nout, 'incorrect number of output names given: ' + str(
+                    b)
             if b._state_names is not None:
-                assert len(b._state_names) == b.nstates, 'incorrect number of state names given: ' + str(b)
-                    
+                assert len(
+                    b._state_names
+                ) == b.nstates, 'incorrect number of state names given: ' + str(
+                    b)
+
         # check for cycles of function blocks
         def _DFS(path):
             start = path[0]
@@ -277,10 +325,11 @@ class BlockDiagram:
                 for w in outgoing:
                     dest = w.end.block
                     if dest == start:
-                        print('  ERROR: cycle found: ', ' - '.join([str(x) for x in path + [dest]]))
+                        print('  ERROR: cycle found: ',
+                              ' - '.join([str(x) for x in path + [dest]]))
                         return True
                     if dest.blockclass == 'function':
-                        return _DFS(path + [dest]) # recurse
+                        return _DFS(path + [dest])  # recurse
             return False
 
         for b in self.blocklist:
@@ -719,20 +768,17 @@ class BlockDiagram:
             except:
                 self._error_handler('getstate0', b)
         return x0
-                        
+                       
     def reset(self):
         """
         Reset conditions within every active block.  Most importantly, all
         inputs are marked as unknown.
-        
+
         Invokes the `reset` method on all blocks.
 
         """
         for b in self.blocklist:
-            try:
-                b.reset()     
-            except:
-                self._error_handler('reset', b)
+            b.reset()
 
     def step(self):
         """
@@ -740,7 +786,7 @@ class BlockDiagram:
         blocks only since they have no output function to be called.
         """
         # TODO could be done by output method, even if no outputs
-        
+
         for b in self.blocklist:
             try:
                 b.step()
@@ -770,7 +816,7 @@ class BlockDiagram:
         """
         Inform all active blocks that.BlockDiagram is about to start.  Open files,
         initialize graphics, etc.
-        
+
         Invokes the `start` method on all blocks.
         
         """
@@ -778,10 +824,7 @@ class BlockDiagram:
             c.start(**kwargs)
 
         for b in self.blocklist:
-            try:
-                b.start(**kwargs)
-            except:
-                self._error_handler('start block', b)
+            b.start(**kwargs)
                 
     def initialstate(self):
         for b in self.blocklist:
@@ -792,72 +835,14 @@ class BlockDiagram:
         """
         Inform all active blocks that.BlockDiagram is complete.  Close files,
         graphics, etc.
-        
+
         Invokes the `done` method on all blocks.
-        
+
         """
         for b in self.blocklist:
-            try:
-                b.done(**kwargs)
-            except:
-                self._error_handler('done', b)
-        
-    def dotfile(self, filename):
-        """
-        Write a GraphViz dot file representing the network.
-        
-        :param file: Name of file to write to
-        :type file: str
+            b.done(**kwargs)
 
-        The file can be processed using neato or dot::
-            
-            % dot -Tpng -o out.png dotfile.dot
 
-        """
-
-        if isinstance(filename, str):
-            file = open(filename, 'w')
-        else:
-            file = filename
-            
-        header = r"""digraph G {
-
-    graph [splines=ortho, rankdir=LR]
-    node [shape=box]
-    
-    """
-        file.write(header)
-        # add the blocks
-        for b in self.blocklist:
-            options = []
-            if b.blockclass == "source":
-                options.append("shape=box3d")
-            elif b.blockclass == "sink":
-                options.append("shape=folder")
-            elif b.blockclass == "function":
-                if b.type == 'gain':
-                    options.append("shape=triangle")
-                    options.append("orientation=-90")
-                    options.append('label="{:g}"'.format(b.gain))
-                elif b.type == 'sum':
-                    options.append("shape=point")
-            elif b.blockclass == 'transfer':
-                options.append("shape=component")
-            if b.pos is not None:
-                options.append('pos="{:g},{:g}!"'.format(b.pos[0], b.pos[1]))
-            options.append('xlabel=<<BR/><FONT POINT-SIZE="8" COLOR="blue">{:s}</FONT>>'.format(b.type))
-            file.write('\t"{:s}" [{:s}]\n'.format(b.name, ', '.join(options)))
-        
-        # add the wires
-        for w in self.wirelist:
-            options = []
-            #options.append('xlabel="{:s}"'.format(w.name))
-            if w.end.block.type == 'sum':
-                options.append('headlabel="{:s} "'.format(w.end.block.signs[w.end.port]))
-            file.write('\t"{:s}" -> "{:s}" [{:s}]\n'.format(w.start.block.name, w.end.block.name, ', '.join(options)))
-
-        file.write('}\n')
-            
     def blockvalues(self):
         for b in self.blocklist:
             print('Block {:s}:'.format(b.name))
@@ -867,6 +852,7 @@ class BlockDiagram:
     def DEBUG(self, debug, *args):
         if debug[0] in self.options.debug:
             print('DEBUG.{:s}: '.format(debug), *args)
+
             
 if __name__ == "__main__":
 
