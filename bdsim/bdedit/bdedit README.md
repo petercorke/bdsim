@@ -85,29 +85,29 @@ Professor Peter Corke - GitHub: https://github.com/petercorke
 
 In engineering, complex systems are often represented with block diagrams (refer to Figure 1.1), where blocks represent functions with inputs and outputs, and wires represent the flow of values between the ports of these functions.
 
-<p align="center"><img width="500" alt="Example of System as a Block Diagram" src=""/></p>
+<p align="center"><img width="500" alt="Example of System as a Block Diagram" src="https://raw.githubusercontent.com/petercorke/bdsim/bdedit/bdsim/bdedit/figs/Figure_1.1-Example_of_System_as_a_Block_Diagram.png"/></p>
 
 These block diagrams can be modelled and simulated as code through the bdsim [1](#h5-sh3-item1) Python package developed by Professor Peter Corke, where the blocks and wires are represented in terms of Python class and method calls.
 
 To aid with the conceptualization of the developed block diagram model and its modelling process, the bdedit package was developed as an addition to bdsim, allowing for block diagrams to be created graphically with items that visually represent the blocks, in/out ports and the wires (refer to Figure 1.2). Bdedit supports the saving and loading of these diagrams to and from a JSON file, which stores all the necessary data for the diagram to later be simulated through bdsim.
 
-<p align="center"><img width="800" alt="Example of Block Diagram as represented in bdedit" src=""/></p>
+<p align="center"><img width="800" alt="Example of Block Diagram as represented in bdedit" src="https://raw.githubusercontent.com/petercorke/bdsim/bdedit/bdsim/bdedit/figs/Figure_1.2-Example_of_Block_Diagram_as_represented_in_bdedit.png"/></p>
 
 # 2. Feature Exploration of Bdedit<a id="h2"></a>
 ## Interface<a id="h2-sh1"></a>
 Installing the bdsim package and its necessary files, then running the bdedit&#46;py [2](#h5-sh3-item2) file, launches a new window containing a graphical user interface (refer to Figure 2.1). This interface contains three areas of focus, the canvas (grey grid space), the library browser panel, and the toolbar.
 
-<p align="center"><img width="500" alt="Bdedit Graphical User Interface" src=""/></p>
+<p align="center"><img width="500" alt="Bdedit Graphical User Interface" src="https://raw.githubusercontent.com/petercorke/bdsim/bdedit/bdsim/bdedit/figs/Figure_2.1-Bdedit_Graphical_User_Interface.png"/></p>
 
 ## Adding Blocks<a id="h2-sh2"></a>
 Through this interface, the user can create a block diagram by choosing from a list of available blocks found within the Library Browser panel. These will call on the classes related to those blocks, to create a block which both stores its values internally within the program and graphically represents that block within the diagram. The graphical information of these blocks and wires is then stored within the canvas area (refer to Figure 2.2).
 
-<p align="center"><img width="500" alt="Adding Blocks to Canvas and Connecting them" src=""/></p>
+<p align="center"><img width="500" alt="Adding Blocks to Canvas and Connecting them" src="https://raw.githubusercontent.com/petercorke/bdsim/bdedit/bdsim/bdedit/figs/Figure_2.2-Adding_Blocks_to_Canvas_and_Connecting_them.png"/></p>
 
 ## Sockets<a id="h2-sh3"></a>
 These blocks have sockets, representing its inputs and outputs. These are determined through the block type, with some blocks only having input sockets (sink blocks or INPORT blocks), some only having output sockets (source blocks or OUTPORT blocks), and others having both input and output sockets (function, transfer, discrete or SUBSYSTEM blocks) (refer to Figure 2.3).
 
-<p align="center"><img width="500" alt="Examples of Blocks" src=""/></p>
+<p align="center"><img width="400" alt="Examples of Blocks" src="https://raw.githubusercontent.com/petercorke/bdsim/bdedit/bdsim/bdedit/figs/Figure_2.3-Examples_of_Blocks.png"/></p>
 
 These sockets can be used to connect the output of one block to one or more other blocks, creating a flow of data. The following logic is applied to these sockets based on their types:
 
@@ -120,44 +120,44 @@ These sockets can be used to connect the output of one block to one or more othe
 ## Socket Flipping<a id="h2-sh4"></a>
 Blocks can also be flipped, reversing the sides on which the input and output sockets are located. This can be achieved through pressing the 'F' key (F for flip). These are only graphically updated and do not impact the flow of logic to those sockets (refer to Figure 2.4).
 
-<p align="center"><img width="500" alt="Example of Flipping Socket Orientation" src=""/></p>
+<p align="center"><img width="400" alt="Example of Flipping Socket Orientation" src="https://raw.githubusercontent.com/petercorke/bdsim/bdedit/bdsim/bdedit/figs/Figure_2.4-Example_of_Flipping_Socket_Orientation.png"/></p>
 
 ## Further Block Manipulation<a id="h2-sh5"></a>
 Blocks can also be selected/ moved and deleted as desired. All items are restriced to being moved around within the borders of the canvas. Wires can also be selected and deleted, but not moved. Sockets cannot be selected, moved or deleted through mouse interaction. Selecting, or rather clicking on, a socket creates a draggable wire. As the block is moved, so too are its sockets. The only instance where sockets move relative to the block, is when the number of input or output sockets changes (which is controlled through the [parameter window](#h2-sh9)).
 
 The selection of an item is indicated by a colour change. When a block, connector block or wire is selected, its outline changes from a thin black line, to a thicker bright orange outline (refer to Figure 2.5).
 
-<p align="center"><img width="500" alt="Block and Wire Selected" src=""/></p>
+<p align="center"><img width="300" alt="Block and Wire Selected" src="https://raw.githubusercontent.com/petercorke/bdsim/bdedit/bdsim/bdedit/figs/Figure_2.5-Block_and_Wire_Selected.png"/></p>
 
 As mentioned above, blocks and wires can be deleted when desired. This is done through first selecting the item, then pressing either the 'Backspace' or the 'Del' keys on the keyboard. If a wire is deleted, only the wire will be removed. If a block is deleted, any wires that were connected to it will also be deleted with the block.
 
 ## Wires<a id="h2-sh6"></a>
 Blocks can be connected to one another by either clicking on a socket of one block, then clicking on a socket of another block, or by click-and-dragging from one socket and releasing over the socket of another block (refer to Figure 2.6). When a wire is connected between two points, wire logic will be applied to it, in order to determine the path it should take to connect those two blocks. Moving the block around once the wire is connected, will update the position of the wire end points, and as such, will cycle through the wire logic to determine what path the wire should follow (refer to [APPENDIX B](#h5-sh2) for examples and a walkthrough of this logic).
 
-<p align="center"><img width="500" alt="Example of Dragging Wire" src=""/></p>
+<p align="center"><img width="600" alt="Example of Dragging Wire" src="https://raw.githubusercontent.com/petercorke/bdsim/bdedit/bdsim/bdedit/figs/Figure_2.6-Example_of_Dragging_Wire.png"/></p>
 
 ## Connector Block<a id="h2-sh7"></a>
 The sections of the wires cannot be pulled out and positioned to the user's liking, as their path is solely dependent on the position of the two points it connects. Hence, to assist with routing the wires when the diagrams become more complex with wires travelling in multiple directions, a connector block can be used as an intermediary point through which the wire must travel. These provide the user with more control over how the wire travels between any two points, by creating more points in between the start and end point, which the wire must first connect. The comparison between using a connector block and not, can be seen in Figure 2.7. The connect block appears as a single Input and Output socket joined together on one edge; and similarly to other blocks, it is also flip-able.
 
-<p align="center"><img width="500" alt="Usage of Connector Blocks" src=""/></p>
+<p align="center"><img width="600" alt="Usage of Connector Blocks" src="https://raw.githubusercontent.com/petercorke/bdsim/bdedit/bdsim/bdedit/figs/Figure_2.7-Usage_of_Connector_Blocks.png"/></p>
 
 ## Intersection Management<a id="h2-sh8"></a>
 As seen in the bottom part of Figure 2.7, wires can overlap at times, and although they are fairly easy to follow in this figure, it can become difficult to follow the flow of logic when the diagram becomes more complex. To address this problem area, parts of wires that cross over each other can be separated to indicate they do not cross, but instead pass over each other (refer to Figure 2.8). This feature might not always be desired, so it has been disabled by default, however can be toggled on or off by the user through pressing the 'I' key (I for intersection). The wire logic at these intersection points, keeps all vertical segments of wires solid, and erases parts of any horizontal segments that they pass through.
 
-<p align="center"><img width="500" alt="Toggling Wire Intersection Detection ON" src=""/></p>
+<p align="center"><img width="700" alt="Toggling Wire Intersection Detection ON" src="https://raw.githubusercontent.com/petercorke/bdsim/bdedit/bdsim/bdedit/figs/Figure_2.8-Toggling_Wire_Intersection_Detection_ON.png"/></p>
 
 ## Editing Block Parameters<a id="h2-sh9"></a>
 Integral to the creation and simulation of block diagrams, is the ability to edit the parameter values related to each block, as this dictates what output value a block produces and how blocks process any inputs that feed into it to produce an output. If supported for the given block, it is also possible to edit the number of input or output sockets a block has. All blocks (aside from connector blocks) can be named as desired by the user. As blocks are spawned they are given a default name which is auto incremented depending on the block type.
 
 These user-editable block parameters are editable through a Parameter Window panel that appears on the right hand side of the screen when triggered to do so (refer to Figure 2.9). It can be toggled to open by first selecting a block, then right clicking the mouse; subsequently, it can be closed at any moment by either right clicking again or left clicking anywhere in the screen. Closing the Parameter Window will retain any values that have been edited, but will only update the block parameters once the 'Updated Parameters' button has been clicked.
 
-<p align="center"><img width="500" alt="Parameter Window" src=""/></p>
+<p align="center"><img width="600" alt="Parameter Window" src="https://raw.githubusercontent.com/petercorke/bdsim/bdedit/bdsim/bdedit/figs/Figure_2.9-Parameter_Window.png"/></p>
 
 When parameters are edited and the user selects update, all editable values within the Parameter Window will be checked to ensure they adhere to the conditions placed on them. If the block title is changed, this will be checked against other existing block titles, to ensure the name of the current block would not be a duplicate. If the block parameters are changed, they will be compared against their required types to ensure they match (e.g. float, int, bool, list, str), and if any further restrictions are placed on these parameters (e.g. matching to certain strings, or being within a certain range), they will be checked against those too. This information is defined internally within the block class, and applied to the block when it is created.
 
 User feedback pop-up windows are also connected to this Parameter Window. If the user provides values that are incorrect - be they a duplicate block title, incorrect types or not adhering to further restrictions – the block parameters will not be updated, and an error message will be displayed notifying the user with useful information for where the issue occurred. If all values are correctly inputted, a success message will be displayed in the same area (refer to Figure 2.10).
 
-<p align="center"><img width="500" alt="User-Feedback Messages" src=""/></p>
+<p align="center"><img width="700" alt="User-Feedback Messages" src="https://raw.githubusercontent.com/petercorke/bdsim/bdedit/bdsim/bdedit/figs/Figure_2.10-User-Feedback_Messages.png"/></p>
 
 ## Screenshot<a id="h2-sh10"></a>
 Upon creating a block diagram, the user can take a screenshot of all items within the canvas by simply pressing the 'Screenshot' button located within the toolbar. This will save a 4k resolution image of the entire canvas and everything in it. This resolution is chosen due to canvas size potentially being 5x the desktop screen size due to the zooming feature. Due to limited time to further develop this feature, at present time, this image will be saved with the '.png' file extension, under the name 'Scene Picture' in the same folder the interface is run from. **If taking multiple screenshots this way, be aware that this will override any previous screenshot you may have taken.**
@@ -165,7 +165,7 @@ Upon creating a block diagram, the user can take a screenshot of all items withi
 ## Grid Mode<a id="h2-sh11"></a>
 To improve the viewing quality of the screenshots taken, and reduce the amount of visual noise/messiness created by having the background be a grid, an option is available from the toolbar to disable the background by navigating to the 'Grid Mode" button in the toolbar, and selecting 'Off' from the drop down menu. Alternatively, the grid can be displayed in two other modes, Light (the default mode) and Dark (refer to Figure 2.11).
 
-<p align="center"><img width="500" alt="Background Colour Modes" src=""/></p>
+<p align="center"><img width="1200" alt="Background Colour Modes" src="https://raw.githubusercontent.com/petercorke/bdsim/bdedit/bdsim/bdedit/figs/Figure_2.11-Background_Colour_Modes.png"/></p>
 
 ## Grid Snapping<a id="h2-sh12"></a>
 To improve the usability of the interface and the user experience when moving/aligning blocks within the canvas, a grid snapping feature has been implemented, where movement of the mouse will be restricted to moving the block in increments of 20 pixels (the width of the smaller grid squares). Additionally, all sockets are indexed in increments of the same value (20 pixels) in order to line up with these smaller grid lines. As such, since wires are automatically drawn between the socket positions, it is much easier to move blocks around in order to make them straight.
@@ -180,7 +180,7 @@ Due to a limitation of time to further develop this feature, whether this file i
 # 3. Class Architecture (High Level)<a id="h3"></a>
  The architecture of BDEdit can be summarize through the connectivity between 6 main classes as seen in Figure 3.1. Other classes are also essential, however it is through the interactions between these 6 main classes that the application is able to run. For a full size image of this architecture refer to [APPENDIX A](#h5-sh1). These classes break down into the following:
 
-<p align="center"><img width="500" alt="Bdedit Architecture Diagram" src=""/></p>
+<p align="center"><img width="300" alt="Bdedit Architecture Diagram" src="https://raw.githubusercontent.com/petercorke/bdsim/bdedit/bdsim/bdedit/figs/Figure_3.1-BdEdit_Architecture_Diagram.png"/></p>
 
 ### 1) <span style="color:#EA503B">**The Interface Class**</span><a id="h3-sh1"></a> – 
 This class is responsible for the dimensions of the BDEdit window that appears when the application is run, as well as managing the layout of where all the interact-able areas of the application are, these being:
@@ -239,9 +239,12 @@ Although other methods and classes are involved in the process of making this ap
 ## Adding more blocks types to application
 If the new block type falls under one of the following, already existing categories: Source, Sink, Function, Transfer, Discrete, INPORT, OUTPORT or SUBSYSTEM block (these last three are located within the hierarchy file), then that block simply needs to be added as a class of one of the Python files relating to those block types. These Python files are located in the "**_`bdsim/bdsim/bdedit/Block_Classes`_**" folder (refer to Figure 4.1), with the names seen in Figure 4.2.
 
-<p align="center"><img width="500" alt="Relevant bdsim File Structure" src=""/></p>
+<p align="center" float="middle">
+<img width="400" alt="Relevant bdsim File Structure" src="https://raw.githubusercontent.com/petercorke/bdsim/bdedit/bdsim/bdedit/figs/Figure_4.1-Relevant_bdsim_File_Structure.png"/>
 
-<p align="center"><img width="500" alt="Block Type Files" src=""/></p>
+
+<img width="200" alt="Block Type Files" src="https://raw.githubusercontent.com/petercorke/bdsim/bdedit/bdsim/bdedit/figs/Figure_4.2-Block_Type_Files.png"/>
+</p>
 
 Within each of those files, the first few lines import the block type they inherit, for example, the "**_`block_function_blocks.py`_**" file imports the FunctionBlock class from the "**_`block.py`_**" file (located in "**_`bdsim/bdsim/bdedit`_** ") inheriting its properties. An example of one of the blocks within these files (without the block comments) is given below:
 
@@ -301,7 +304,10 @@ class My_New_Block(Class_the_new_block_relates_to):
     def __init__(self, 
                  scene, 
                  window, 
-                 param1="parm1_default_value", param2="parm2_default_value", param3="parm3_default_value", name="My_New_Block Block", 
+                 param1="parm1_default_value", 
+                 param2="parm2_default_value", 
+                 param3="parm3_default_value", 
+                 name="My_New_Block Block", 
                  pos=(0, 0)): 
         super().__init__(scene, window, name, pos)
 
@@ -417,10 +423,12 @@ The JSON file structure contains all the necessary information of the reconstruc
 
 The following block diagram was made to aid with understanding this structure.
 
+<p align="center"><img width="250" alt="Block Diagram Example for JSON File Stucture" src="https://raw.githubusercontent.com/petercorke/bdsim/bdedit/bdsim/bdedit/figs/JSON_file_example_diagram.png"/></p>
+
 There are 3 blocks, created in the order:
 1. Function Block – has 1 input socket, 1 output socket
-2. Scope Block – has no input sockets, 1 output socket
-3. Constant Block – has 2 input sockets, no output sockets
+2. Scope Block – has 2 input sockets, no output sockets
+3. Constant Block – has no input sockets, 1 output socket
 
 There are also 2 wires, created in the order:
 
@@ -429,11 +437,10 @@ There are also 2 wires, created in the order:
 
 Below, is the resulting JSON file that was generated.
 
-<p align="center"><img width="500" alt="Block Diagram Example for JSON File Stucture" src=""/></p>
-
-<p align="center"><img width="500" alt="JSON File Structure 1" src=""/></p>
-
-<p align="center"><img width="500" alt="JSON File Structure 2" src=""/></p>
+<p align="center">
+<img width="1300" alt="JSON File Structure 1" src="https://raw.githubusercontent.com/petercorke/bdsim/bdedit/bdsim/bdedit/figs/JSON_file_example_code_1.PNG"/>
+<img width="1300" alt="JSON File Structure 2" src="https://raw.githubusercontent.com/petercorke/bdsim/bdedit/bdsim/bdedit/figs/JSON_file_example_code_2.PNG"/>
+</p>
 
 The important points to take away from this JSON structure, is that each block, socket and wire has unique ID's. Although the ID's of the blocks are less useful (can be helpful for differentiating between different blocks of the same time, although their name should be sufficient), the ID's of the sockets are very important. By definition each wire has a start socket and end socket that it is drawn between, and these are referred to by their unique ID. These unique ID's of the sockets, can then be traced back to the block they belong to, hence providing the crucial information of which block connects to which.
 
@@ -510,14 +517,14 @@ The following steps should be followed for adding in a new icon, that doesn't ex
 
 6. This should complete the process for adding in a new icon.
 
-<p align="center"><img width="500" alt="QResource File Structure" src=""/></p>
+<p align="center"><img width="800" alt="QResource File Structure" src="https://raw.githubusercontent.com/petercorke/bdsim/bdedit/bdsim/bdedit/figs/Figure_4.3-QResource_File_Structure.png"/></p>
 
 # 5. Appendices<a id="h5"></a>
 <a id="h5-sh1"></a>
 
 ## APPENDIX A – High Level Class Architecture Diagram
 
-<p align="center"><img width="500" alt="High Level Class Architecture Diagram" src=""/></p>
+<p align="center"><img width="1300" alt="High Level Class Architecture Diagram" src="https://raw.githubusercontent.com/petercorke/bdsim/bdedit/bdsim/bdedit/figs/APPENDIX_A-High_Level_Class_Architecture_Diagram.png"/></p>
 
 <a id="h5-sh2"></a>
 
@@ -530,13 +537,13 @@ In this step, the wire is simply drawn as a straight light from the starting soc
 
 The second step: Wire routing logic between two blocks where the input and output sockets are on same sides
 
-<p align="center"><img width="500" alt="Wire Logic Step 2.0" src=""/></p>
+<p align="center"><img width="1000" alt="Wire Logic Step 2.0" src="https://raw.githubusercontent.com/petercorke/bdsim/bdedit/bdsim/bdedit/figs/APPENDIX_B-Wire_logic_step_2.PNG"/></p>
 
 The third step: Wire routing logic between two blocks where the input and output sockets are on opposite sides
 
-<p align="center"><img width="500" alt="Wire Logic Step 3.0" src=""/></p>
+<p align="center"><img width="1000" alt="Wire Logic Step 3.0" src="https://raw.githubusercontent.com/petercorke/bdsim/bdedit/bdsim/bdedit/figs/APPENDIX_B-Wire_logic_step_3.1.PNG"/></p>
 
-<p align="center"><img width="500" alt="Wire Logic Step 3.1" src="h"/></p>
+<p align="center"><img width="1000" alt="Wire Logic Step 3.1" src="https://raw.githubusercontent.com/petercorke/bdsim/bdedit/bdsim/bdedit/figs/APPENDIX_B-Wire_logic_step_3.2.PNG"/></p>
 
 ## Embedded Links<a id="h5-sh3"></a>
 
