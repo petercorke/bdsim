@@ -59,7 +59,9 @@ class GraphicsWire(QGraphicsPathItem):
 
         # Setting the colour, pens, and pen thickness
         self._color = QColor("#000000")             # Black
-        self._color_selected = QColor("#00ff00")    # Lime Green
+        # self._color_selected = QColor("#00ff00")    # Lime Green
+        self._color_selected = QColor("#FFFFA637")  # Warm Orange
+
         self._pen = QPen(self._color)
         self._pen_selected = QPen(self._color_selected)
         self._pen.setWidth(5)
