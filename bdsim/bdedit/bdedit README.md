@@ -87,7 +87,7 @@ In engineering, complex systems are often represented with block diagrams (refer
 
 <p align="center"><img width="500" alt="Example of System as a Block Diagram" src="https://raw.githubusercontent.com/petercorke/bdsim/bdedit/bdsim/bdedit/figs/Figure_1.1-Example_of_System_as_a_Block_Diagram.png"/></p>
 
-These block diagrams can be modelled and simulated as code through the bdsim [1](#h5-sh3-item1) Python package developed by Professor Peter Corke, where the blocks and wires are represented in terms of Python class and method calls.
+These block diagrams can be modelled and simulated as code through the bdsim [[1]](#h5-sh3-item1) Python package developed by Professor Peter Corke, where the blocks and wires are represented in terms of Python class and method calls.
 
 To aid with the conceptualization of the developed block diagram model and its modelling process, the bdedit package was developed as an addition to bdsim, allowing for block diagrams to be created graphically with items that visually represent the blocks, in/out ports and the wires (refer to Figure 1.2). Bdedit supports the saving and loading of these diagrams to and from a JSON file, which stores all the necessary data for the diagram to later be simulated through bdsim.
 
@@ -95,7 +95,7 @@ To aid with the conceptualization of the developed block diagram model and its m
 
 # 2. Feature Exploration of Bdedit<a id="h2"></a>
 ## Interface<a id="h2-sh1"></a>
-Installing the bdsim package and its necessary files, then running the bdedit&#46;py [2](#h5-sh3-item2) file, launches a new window containing a graphical user interface (refer to Figure 2.1). This interface contains three areas of focus, the canvas (grey grid space), the library browser panel, and the toolbar.
+Installing the bdsim package and its necessary files, then running the bdedit&#46;py [[2]](#h5-sh3-item2) file, launches a new window containing a graphical user interface (refer to Figure 2.1). This interface contains three areas of focus, the canvas (grey grid space), the library browser panel, and the toolbar.
 
 <p align="center"><img width="500" alt="Bdedit Graphical User Interface" src="https://raw.githubusercontent.com/petercorke/bdsim/bdedit/bdsim/bdedit/figs/Figure_2.1-Bdedit_Graphical_User_Interface.png"/></p>
 
@@ -165,7 +165,7 @@ Upon creating a block diagram, the user can take a screenshot of all items withi
 ## Grid Mode<a id="h2-sh11"></a>
 To improve the viewing quality of the screenshots taken, and reduce the amount of visual noise/messiness created by having the background be a grid, an option is available from the toolbar to disable the background by navigating to the 'Grid Mode" button in the toolbar, and selecting 'Off' from the drop down menu. Alternatively, the grid can be displayed in two other modes, Light (the default mode) and Dark (refer to Figure 2.11).
 
-<p align="center"><img width="1200" alt="Background Colour Modes" src="https://raw.githubusercontent.com/petercorke/bdsim/bdedit/bdsim/bdedit/figs/Figure_2.11-Background_Colour_Modes.png"/></p>
+<p align="center"><img width="1400" alt="Background Colour Modes" src="https://raw.githubusercontent.com/petercorke/bdsim/bdedit/bdsim/bdedit/figs/Figure_2.11-Background_Colour_Modes.png"/></p>
 
 ## Grid Snapping<a id="h2-sh12"></a>
 To improve the usability of the interface and the user experience when moving/aligning blocks within the canvas, a grid snapping feature has been implemented, where movement of the mouse will be restricted to moving the block in increments of 20 pixels (the width of the smaller grid squares). Additionally, all sockets are indexed in increments of the same value (20 pixels) in order to line up with these smaller grid lines. As such, since wires are automatically drawn between the socket positions, it is much easier to move blocks around in order to make them straight.
@@ -287,7 +287,7 @@ class Function(FunctionBlock):
         self._createBlock(self.inputsNum, self.outputsNum)
 ```
 
-This block class type is constructed based on the definition of the corresponding bdsim block [3](#h5-sh3-item3). When adding in a new block, the following template can be copied and adjusted as needed.
+This block class type is constructed based on the definition of the corresponding bdsim block [[3]](#h5-sh3-item3). When adding in a new block, the following template can be copied and adjusted as needed.
 
 ``` python
 # The name of this new block class should be unique, and
@@ -447,7 +447,7 @@ The important points to take away from this JSON structure, is that each block, 
 As an example, in this block diagram that was made, wire #1 connects the **Function block** from its **output**, to the **1st input** of the **Scope block**. In the wire, these start/end sockets are stored as "start_socket": 2427529113712 and "end_socket": 2427529150816,and if we check the socket id's of the **output socket** of the **Function block**, it is stored as "id": 2427529113712, which we expect to match our "start_socket"(which it does), and doing the same for the **1st input socket** of the **Scope block**, it is stored as "id": 2427529150816, which also matches our ID of the "end_socket".
 
 ## How icons were created<a id="h4-sh3"></a>
-Icons for bdedit were creating using the free image editing application, paint&#46;net [4](#h5-sh3-item4). Paint&#46;net is only compatible with windows operating systems, however there are other options available for image editing applications on Mac or Linux systems.
+Icons for bdedit were creating using the free image editing application, paint&#46;net [[4]](#h5-sh3-item4). Paint&#46;net is only compatible with windows operating systems, however there are other options available for image editing applications on Mac or Linux systems.
 
 The sought after properties of image editing tools for creating/editing these icons were: for the ability to create layered images, moving layer position in the layer stack, hiding/showing the layer, selecting parts of images and separating them from the background (leaving only the outline/shape), and more importantly, support for transparent backgrounds.
 
@@ -517,14 +517,14 @@ The following steps should be followed for adding in a new icon, that doesn't ex
 
 6. This should complete the process for adding in a new icon.
 
-<p align="center"><img width="800" alt="QResource File Structure" src="https://raw.githubusercontent.com/petercorke/bdsim/bdedit/bdsim/bdedit/figs/Figure_4.3-QResource_File_Structure.png"/></p>
+<p align="center"><img width="700" alt="QResource File Structure" src="https://raw.githubusercontent.com/petercorke/bdsim/bdedit/bdsim/bdedit/figs/Figure_4.3-QResource_File_Structure.png"/></p>
 
 # 5. Appendices<a id="h5"></a>
 <a id="h5-sh1"></a>
 
 ## APPENDIX A – High Level Class Architecture Diagram
 
-<p align="center"><img width="1300" alt="High Level Class Architecture Diagram" src="https://raw.githubusercontent.com/petercorke/bdsim/bdedit/bdsim/bdedit/figs/APPENDIX_A-High_Level_Class_Architecture_Diagram.png"/></p>
+<p align="center"><img width="1600" alt="High Level Class Architecture Diagram" src="https://raw.githubusercontent.com/petercorke/bdsim/bdedit/bdsim/bdedit/figs/APPENDIX_A-High_Level_Class_Architecture_Diagram.png"/></p>
 
 <a id="h5-sh2"></a>
 
@@ -551,7 +551,7 @@ The third step: Wire routing logic between two blocks where the input and output
 1 - https://github.com/petercorke/bdsim
 
 <a id="h5-sh3-item2"></a>
-2 - File located at path: https://github.com/petercorke/bdsim/bdsim/bin/bdedit.py
+2 - File located at path: https://github.com/petercorke/bdsim/blob/bdedit/bdsim/bin/bdedit.py
 
 <a id="h5-sh3-item3"></a>
 3 - https://petercorke.github.io/bdsim/bdsim.blocks.html?highlight=Function#bdsim.blocks.functions.Function
