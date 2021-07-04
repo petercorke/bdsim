@@ -148,7 +148,7 @@ class BlockDiagram:
         
     # ---------------------------------------------------------------------- #
 
-    def compile(self, subsystem=False, doimport=True, report=False, verbose=True):
+    def compile(self, subsystem=False, doimport=True, evaluate=True, report=False, verbose=True):
         """
         Compile the block diagram
         
@@ -309,7 +309,7 @@ class BlockDiagram:
             self.report()
             self.plan_print()
 
-        if not subsystem:
+        if not subsystem and evaluate:
             try:
                 self.evaluate_plan(x, 0.0, sinks=False)
             except RuntimeError as err:
