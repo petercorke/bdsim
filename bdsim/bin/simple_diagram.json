@@ -1,0 +1,147 @@
+{
+    "id": 2427495495616,
+    "scene_width": 7168.000000000001,
+    "scene_height": 5712.000000000001,
+    "blocks": [
+        {
+            "id": 2427495575408,
+            "block_type": "FUNCTION",
+            "title": "Function Block",
+            "pos_x": -200.0,
+            "pos_y": -200.0,
+            "icon": ":/Icons_Reference/Icons/function.png",
+            "inputs": [
+                {
+                    "id": 2427529113664,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 1,
+                    "socket_type": 1
+                }
+            ],
+            "outputs": [
+                {
+                    "id": 2427529113712,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 3,
+                    "socket_type": 2
+                }
+            ],
+            "parameters": [
+                [
+                    "func",
+                    "Provide Function"
+                ],
+                [
+                    "nin",
+                    1
+                ],
+                [
+                    "nout",
+                    1
+                ],
+                [
+                    "dict",
+                    false
+                ],
+                [
+                    "args",
+                    {
+                        "__tuple__": true,
+                        "items": []
+                    }
+                ],
+                [
+                    "kwargs",
+                    {}
+                ]
+            ]
+        },
+        {
+            "id": 2427529150720,
+            "block_type": "SCOPE",
+            "title": "Scope Block",
+            "pos_x": 0.0,
+            "pos_y": -100.0,
+            "icon": ":/Icons_Reference/Icons/scope.png",
+            "inputs": [
+                {
+                    "id": 2427529150816,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 1,
+                    "socket_type": 1
+                },
+                {
+                    "id": 2427529151248,
+                    "index": 1,
+                    "multi_wire": true,
+                    "position": 1,
+                    "socket_type": 1
+                }
+            ],
+            "outputs": [],
+            "parameters": [
+                [
+                    "nin",
+                    2
+                ],
+                [
+                    "styles",
+                    null
+                ],
+                [
+                    "scale",
+                    "auto"
+                ],
+                [
+                    "labels",
+                    null
+                ],
+                [
+                    "grid",
+                    []
+                ]
+            ]
+        },
+        {
+            "id": 2427529196976,
+            "block_type": "CONSTANT",
+            "title": "Constant Block",
+            "pos_x": -200.0,
+            "pos_y": 0.0,
+            "icon": ":/Icons_Reference/Icons/constant.png",
+            "inputs": [],
+            "outputs": [
+                {
+                    "id": 2427529197024,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 3,
+                    "socket_type": 2
+                }
+            ],
+            "parameters": [
+                [
+                    "value",
+                    null
+                ]
+            ]
+        }
+    ],
+    "wires": [
+        {
+            "id": 2427529152256,
+            "start_socket": 2427529113712,
+            "end_socket": 2427529150816,
+            "wire_type": 3
+        },
+        {
+            "id": 2427529152352,
+            "start_socket": 2427529197024,
+            "end_socket": 2427529151248,
+            "wire_type": 3
+        }
+    ]
+}

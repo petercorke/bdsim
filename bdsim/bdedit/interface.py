@@ -509,7 +509,9 @@ class Interface(QWidget):
         self.scene.grScene.updateMode(self.grid_mode_options.currentText())
         # For each block within the Scene, the mode of their outline is also updated
         for eachBlock in self.scene.blocks:
-            eachBlock.grBlock.updateMode(self.grid_mode_options.currentText())
+            # If the block has a mode (Connector Blocks do not)
+            if not (eachBlock.block_type == "CONNECTOR" or eachBlock.block_type == "Connector"):
+                eachBlock.grBlock.updateMode(self.grid_mode_options.currentText())
 
     # -----------------------------------------------------------------------------
     def toggleCanvasItems(self):

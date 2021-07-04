@@ -43,6 +43,8 @@ class GraphicsScene(QGraphicsScene):
 
         # Set the default background mode of the Scene
         self.mode = "Light"
+        # Set the wire overlaps to not being detected by default
+        self.enable_intersections = False
 
         # Set the default background color for when no grid lines are drawn
         # Currently set to same color as the background for Light mode
@@ -147,31 +149,33 @@ class GraphicsScene(QGraphicsScene):
         # foreground drawing logic in other classes
         super().drawForeground(painter, rect)
 
-        # If there are intersection points to draw
-        if self.scene.intersection_list:
+        # If user has enabled intersections detection
+        if self.enable_intersections:
+            # If there are intersection points to draw
+            if self.scene.intersection_list:
 
-            # Check the current colour mode of the scene and set the pen to that colour
-            self.checkMode()
-            painter.setPen(QPen(self._color_background))
-            painter.setBrush(QBrush(self._color_background))
+                # Check the current colour mode of the scene and set the pen to that colour
+                self.checkMode()
+                painter.setPen(QPen(self._color_background))
+                painter.setBrush(QBrush(self._color_background))
 
-            # Paint each intersection point
-            for intersection_point in self.scene.intersection_list:
-                x = intersection_point[0]
-                y = intersection_point[1]
-                # Paint a 16x16 rectangle
-                painter.drawRect(x-8, y-8, 16, 16)
+                # Paint each intersection point
+                for intersection_point in self.scene.intersection_list:
+                    x = intersection_point[0]
+                    y = intersection_point[1]
+                    # Paint a 16x16 rectangle
+                    painter.drawRect(x-8, y-8, 16, 16)
 
-            # Set the paintbrush color and width for redrawing a portion of the wire
-            pen = QPen(QColor("#000000"))
-            pen.setWidth(5)
-            painter.setPen(pen)
+                # Set the paintbrush color and width for redrawing a portion of the wire
+                pen = QPen(QColor("#000000"))
+                pen.setWidth(5)
+                painter.setPen(pen)
 
-            # Go through each intersection point and paint back the vertical lines
-            for intersection_point in self.scene.intersection_list:
-                x = intersection_point[0]
-                y = intersection_point[1]
-                painter.drawLine(x, y-6, x, y+6)
+                # Go through each intersection point and paint back the vertical lines
+                for intersection_point in self.scene.intersection_list:
+                    x = intersection_point[0]
+                    y = intersection_point[1]
+                    painter.drawLine(x, y-6, x, y+6)
 
     # -----------------------------------------------------------------------------
     def drawBackground(self, painter, rect):

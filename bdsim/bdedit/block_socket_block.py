@@ -59,7 +59,7 @@ class Connector(Block):
         # * the grBlock (graphical representation of how this block looks)
         # * the number of spawned input and output sockets (1 of each)
         # * the paramWindow is disabled (this block doesn't have a paramWindow, as it is a tool)
-        self.block_type = self.__class__.__name__
+        self.block_type = blockname(self.__class__)
         self.width = 13
         self.height = 12
 

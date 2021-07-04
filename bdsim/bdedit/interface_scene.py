@@ -299,7 +299,7 @@ class Scene(Serializable):
             # If it is a Connector Block, then manually re-create this block (since the
             # Connector block is always available with this application, it was manually
             # imported in the Interface Class, hence must be manually re-created)
-            if block_type == "Connector":
+            if block_type == "CONNECTOR" or block_type == "Connector":
                 Connector(self, self.window, name=block_data['title']).deserialize(block_data, hashmap)
             # Otherwise if it is any other block (will be an auto-imported block)
             else:
