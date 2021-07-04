@@ -10,7 +10,7 @@ class GraphicsBlock(SinkBlock):
 
     :param movie: Save animation in this file, defaults to None
     :type movie: str, optional
-    :param ``**kwargs``: common Block options
+    :param kwargs: common Block options
     :return: A PRINT block
     :rtype: Print instance
 

@@ -42,13 +42,11 @@ class Item(FunctionBlock):
     +------------+---------+---------+
     """
 
-    def __init__(self, item, *inputs, **kwargs):
+    def __init__(self, item, **kwargs):
         """
         :param item: name of dictionary item
         :type item: str
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
-        :param ``**kwargs``: common Block options
+        :param kwargs: common Block options
         :return: An ITEM block
         :rtype: Item instance
         
@@ -92,13 +90,11 @@ class Dict(FunctionBlock):
     +------------+---------+---------+
     """
 
-    def __init__(self, item, *inputs, **kwargs):
+    def __init__(self, item, **kwargs):
         """
         :param keys: list of dictionary keys
         :type keys: list
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
-        :param ``**kwargs``: common Block options
+        :param kwargs: common Block options
         :return: A DICT block
         :rtype: Dict instance
         
@@ -152,7 +148,7 @@ class Mux(FunctionBlock):
         """
         :param nin: Number of input ports, defaults to 1
         :type nin: int, optional
-        :param ``**kwargs``: common Block options
+        :param kwargs: common Block options
         :return: A MUX block
         :rtype: Mux instance
 
@@ -202,13 +198,11 @@ class DeMux(FunctionBlock):
     +------------+---------+---------+
     """
 
-    def __init__(self, nout=1, *inputs, **kwargs):
+    def __init__(self, nout=1, **kwargs):
         """
         :param nout: DESCRIPTION, defaults to 1
         :type nout: TYPE, optional
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
-        :param ``**kwargs``: common Block options
+        :param kwargs: common Block options
         :return: A DEMUX block
         :rtype: DeMux instance
         
@@ -219,7 +213,7 @@ class DeMux(FunctionBlock):
         scalar output port.
 
         """
-        super().__init__(nin=1, nout=nout, inputs=inputs, **kwargs)
+        super().__init__(nin=1, nout=nout, **kwargs)
         self.type = 'demux'
     
     def output(self, t=None):
@@ -245,13 +239,11 @@ class SubSystem(SubsystemBlock):
     +------------+------------+---------+
     """
 
-    def __init__(self, subsys, *inputs, **kwargs):
+    def __init__(self, subsys, **kwargs):
         """
         :param subsys: Subsystem as either a filename or a ``BlockDiagram`` instance
         :type subsys: str or BlockDiagram
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
-        :param ``**kwargs``: common Block options
+        :param kwargs: common Block options
         :raises ImportError: DESCRIPTION
         :raises ValueError: DESCRIPTION
         :return: A SUBSYSTEM block
@@ -285,7 +277,7 @@ class SubSystem(SubsystemBlock):
           from the number of ports on the ``InPort`` and ``OutPort`` blocks within the
           subsystem.
         """
-        super().__init__(inputs=inputs, **kwargs)
+        super().__init__(**kwargs)
         self.type = 'subsystem'
         
         if isinstance(subsys, str):
@@ -362,7 +354,7 @@ class InPort(SubsystemBlock):
         """
         :param nout: Number of output ports, defaults to 1
         :type nout: int, optional
-        :param ``**kwargs``: common Block options
+        :param kwargs: common Block options
         :return: An INPORT block
         :rtype: InPort instance
 
@@ -397,13 +389,11 @@ class OutPort(SubsystemBlock):
     +------------+---------+---------+
     """
 
-    def __init__(self, nin=1, *inputs, **kwargs):
+    def __init__(self, nin=1, **kwargs):
         """
         :param nin: Number of input ports, defaults to 1
         :type nin: int, optional
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
-        :param ``**kwargs``: common Block options
+        :param kwargs: common Block options
         :return: A OUTPORT block
         :rtype: OutPort instance
         
@@ -412,7 +402,7 @@ class OutPort(SubsystemBlock):
         This block connects a subsystem to a parent block diagram.  Outputs of the
         parent-level ``SubSystem`` block are the inputs of this block.
         """
-        super().__init__(nin=nin, inputs=inputs, **kwargs)
+        super().__init__(nin=nin, **kwargs)
         self.type = 'outport'
 
     def output(self, t=None):

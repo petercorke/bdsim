@@ -14,7 +14,7 @@ import scipy.interpolate
 import math
 import inspect
 
-from bdsim.components import FunctionBlock, block
+from bdsim.components import FunctionBlock
 
 
 # PID
@@ -23,7 +23,6 @@ from bdsim.components import FunctionBlock, block
 # transform 3D points
 
         
-@block
 class Sum(FunctionBlock):
     """
     :blockname:`SUM`
@@ -46,13 +45,12 @@ class Sum(FunctionBlock):
         """
         :param signs: signs associated with input ports, + or -
         :type signs: str
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
         :param angles: the signals are angles, wrap to [-pi,pi)
         :type angles: bool
-        :param ``**kwargs``: common Block options
+        :param kwargs: common Block options
         :return: A SUM block
         :rtype: Sum instance
+
         
         Create a summing junction.
     
@@ -83,7 +81,7 @@ class Sum(FunctionBlock):
         """
         super().__init__(nin=len(signs), nout=1, inputs=inputs, **kwargs)
         assert isinstance(signs, str), 'first argument must be signs string'
-        self.type = 'sum'
+        # self.type = 'sum'
         assert all([x in '+-' for x in signs]), 'invalid sign'
         self.signs = signs
         self.angles = angles
@@ -104,7 +102,6 @@ class Sum(FunctionBlock):
         return [sum]
 
 # ------------------------------------------------------------------------ #
-@block
 class Prod(FunctionBlock):
     """
     :blockname:`PROD`
@@ -127,11 +124,11 @@ class Prod(FunctionBlock):
         """
         :param ops: operations associated with input ports * or /
         :type ops: str
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
+        :param inputs: Optional incoming connections
+        :type inputs: Block or Plug
         :param matrix: Arguments are matrices, use @ and np.linalg.inv, default False
         :type matrix: bool
-        :param ``**kwargs``: common Block options
+        :param kwargs: common Block options
         :return: A PROD block
         :rtype: Prod instance
         
@@ -162,7 +159,7 @@ class Prod(FunctionBlock):
         """
         super().__init__(nin=len(ops), nout=1, inputs=inputs, **kwargs)
         assert isinstance(ops, str), 'first argument must be signs string'
-        self.type = 'prod'
+        # self.type = 'prod'
         assert all([x in '*/' for x in ops]), 'invalid op'
         self.ops = ops
         self.matrix = matrix
@@ -192,7 +189,6 @@ class Prod(FunctionBlock):
 
 # ------------------------------------------------------------------------ #
 
-@block
 class Gain(FunctionBlock):
     """
     :blockname:`GAIN`
@@ -211,15 +207,15 @@ class Gain(FunctionBlock):
     +------------+---------+---------+
     """
 
-    def __init__(self, K, *inputs, premul=False, **kwargs):
+    def __init__(self, K=0, *inputs, premul=False, **kwargs):
         """
         :param K: The gain value
         :type K: float
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
+        :param inputs: Optional incoming connection
+        :type inputs: Block or Plug
         :param premul: premultiply by constant, default is postmultiply
         :type premul: bool, optional
-        :param ``**kwargs``: common Block options
+        :param kwargs: common Block options
         :return: A GAIN block
         :rtype: Gain instance
         
@@ -251,9 +247,9 @@ class Gain(FunctionBlock):
             bd.connect(block1, gain)
 
         """
-        super().__init__(nin=1, nout=1, inputs=inputs, **kwargs)
+        super().__init__(nin=1, nout=1, **kwargs)
         self.K  = K
-        self.type = 'gain'
+        # self.type = 'gain'
         self.premul = premul
         
     def output(self, t=None):
@@ -272,7 +268,6 @@ class Gain(FunctionBlock):
         
 # ------------------------------------------------------------------------ #
 
-@block
 class Clip(FunctionBlock):
     """
     :blockname:`CLIP`
@@ -290,18 +285,16 @@ class Clip(FunctionBlock):
     +------------+---------+---------+
 
     """
-    def __init__(self, *inputs, min=-math.inf, max=math.inf, **kwargs):
+    def __init__(self, min=-math.inf, max=math.inf, **kwargs):
         """
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
         :param min: Minimum value, defaults to -math.inf
         :type min: float or array_like, optional
         :param max: Maximum value, defaults to math.inf
         :type max: float or array_like, optional
-        :param ``**kwargs``: common Block options
+        :param kwargs: common Block options
         :return: A CLIP block
         :rtype: Clip instance
-        
+
         Create a value clipping block.
         
         Input signals are clipped to the range from ``minimum`` to ``maximum`` inclusive.
@@ -328,10 +321,10 @@ class Clip(FunctionBlock):
             bd.connect(block1, clip)
         
         """
-        super().__init__(nin=1, nout=1, inputs=inputs, **kwargs)
+        super().__init__(nin=1, nout=1, **kwargs)
         self.min = min
         self.max = max
-        self.type = 'clip'
+        # self.type = 'clip'
         
     def output(self, t=None):
         input = self.inputs[0]
@@ -344,7 +337,6 @@ class Clip(FunctionBlock):
 # ------------------------------------------------------------------------ #
 
 # TODO can have multiple outputs: pass in a tuple of functions, return a tuple
-@block
 class Function(FunctionBlock):
     """
     :blockname:`FUNCTION`
@@ -362,25 +354,23 @@ class Function(FunctionBlock):
  
     """
 
-    def __init__(self, func, *inputs, nin=1, nout=1, dict=False, args=(), kwargs={}, **kwargs_):
+    def __init__(self, func=None, nin=1, nout=1, dict=False, pargs=(), dargs={}, **kwargs):
         """
         :param func: A function or lambda, or list thereof
         :type func: callable or sequence of callables
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
         :param nin: number of inputs, defaults to 1
         :type nin: int, optional
         :param nout: number of outputs, defaults to 1
         :type nout: int, optional
         :param dict: pass in a reference to a dictionary instance
         :type dict: bool
-        :param args: extra positional arguments passed to the function, defaults to ()
-        :type args: tuple, optional
-        :param kwargs: extra keyword arguments passed to the function, defaults to {}
-        :type kwargs: dict, optional
-        :param ``**kwargs_``: common Block options
+        :param pargs: extra positional arguments passed to the function, defaults to ()
+        :type pargs: tuple, optional
+        :param dargs: extra keyword arguments passed to the function, defaults to {}
+        :type dargs: dict, optional
+        :param kwargs: common Block options
         :return: A FUNCTION block
-        :rtype: _Function
+        :rtype: A Function instance
     
         Create a Python function block.
     
@@ -409,7 +399,7 @@ class Function(FunctionBlock):
             def myfun(u1, u2, param1=1, param2=2, param3=3, param4=4):
                 pass
             
-            FUNCTION(myfun, nin=2, kwargs={'param2':7, 'param3':8})
+            FUNCTION(myfun, nin=2, args={'param2':7, 'param3':8})
                      
         A block with two inputs and two outputs, the outputs are defined by two lambda
         functions with the same inputs::
@@ -426,22 +416,21 @@ class Function(FunctionBlock):
 
         For example::
 
-            func = bd.FUNCTION(myfun, kwargs)
+            func = bd.FUNCTION(myfun, args)
 
         If inputs are specified then connections are automatically made and
         are assigned to sequential input ports::
 
-            func = bd.FUNCTION(myfun, block1, block2, kwargs)
+            func = bd.FUNCTION(myfun, block1, block2, args)
 
         is equivalent to::
 
-            func = bd.FUNCTION(myfun, kwargs)
+            func = bd.FUNCTION(myfun, args)
             bd.connect(block1, func[0])
             bd.connect(block2, func[1])
         """
-        super().__init__(nin=nin, nout=nout, inputs=inputs, **kwargs_)
-        self.nin = nin
-        self.type = 'function'
+        super().__init__(nin=nin, nout=nout, **kwargs)
+        # self.nin = nin
 
         if isinstance(func, (list, tuple)):
             for f in func:
@@ -449,16 +438,23 @@ class Function(FunctionBlock):
                 if kwargs is None:
                     # we can check the number of arguments
                     n = len(inspect.signature(func).parameters)
+                    if dict:
+                        n -= 1  # discount dict if used
                     if nin + len(args) != n:
-                        raise ValueError('argument count mismatch')
-            self.nout = len(func)
+                        raise ValueError(
+    f"argument count mismatch: function has {n} args, dict={dict}, nin={nin}"
+                                        )
         elif callable(func):
             if len(kwargs) == 0:
                 # we can check the number of arguments
                 n = len(inspect.signature(func).parameters)
+                if dict:
+                    n -= 1  # discount dict if used
                 if nin + len(args) != n:
-                    raise ValueError('argument count mismatch')
-            self.nout = nout
+                    raise ValueError(
+    f"argument count mismatch: function has {n} args, dict={dict}, nin={nin}"
+                                    )
+            # self.nout = nout
             
         self.func  = func
         if dict:
@@ -466,8 +462,8 @@ class Function(FunctionBlock):
             args += (self.userdata,)
         else:
             self.userdata = None
-        self.args = args
-        self.kwargs = kwargs
+        self.args = pargs
+        self.kwargs = dargs
 
     def start(self):
         super().start()
@@ -501,7 +497,6 @@ class Function(FunctionBlock):
                 out.append(val)
             return out
         
-@block
 class Interpolate(FunctionBlock):
     """
     :blockname:`INTERPOLATE`
@@ -518,10 +513,8 @@ class Interpolate(FunctionBlock):
     +------------+---------+---------+
     """
 
-    def __init__(self, *inputs, x=None, y=None, xy=None, time=False, kind='linear', **kwargs):
+    def __init__(self, x=None, y=None, xy=None, time=False, kind='linear', **kwargs):
         """
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
         :param x: x-values of function
         :type x: array_like, shape (N,) optional
         :param y: y-values of function
@@ -532,9 +525,9 @@ class Interpolate(FunctionBlock):
         :type time: bool
         :param kind: interpolation method, defaults to 'linear'
         :type kind: str
-        :param ``**kwargs``: common Block options
-        :return: INTERPOLATE block
-        :rtype: _Function
+        :param kwargs: common Block options
+        :return: An INTERPOLATE block
+        :rtype: An Interpolate instance
         
         Create an interpolation block.
     
@@ -566,8 +559,8 @@ class Interpolate(FunctionBlock):
             self.blockclass = 'source'
         else:
             nin = 1
-        super().__init__(nin=nin, nout=1, inputs=inputs, **kwargs)
-        self.type = 'function'
+        super().__init__(nin=nin, nout=1, **kwargs)
+        # self.type = 'function'
 
         if xy is None:
             # process separate x and y vectors

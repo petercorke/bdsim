@@ -38,7 +38,7 @@ class Constant(SourceBlock):
         """
         :param value: the constant, defaults to None
         :type value: any
-        :param ``**kwargs``: common Block options
+        :param kwargs: common Block options
         :return: a CONSTANT block
         :rtype: Constant instance
         
@@ -79,7 +79,7 @@ class Time(SourceBlock):
 
     def __init__(self, value=None, **kwargs):
         """
-        :param ``**kwargs``: common Block options
+        :param kwargs: common Block options
         :return: a TIME block
         :rtype: Time instance
         
@@ -119,7 +119,7 @@ class WaveForm(SourceBlock):
                  min=None, max=None, duty=0.5,
                  **kwargs):
         """
-        :param wave: type of waveform to generate: 'sine', 'square' [default], 'triangle'
+        :param wave: type of waveform to generate, one of: 'sine', 'square' [default], 'triangle'
         :type wave: str, optional
         :param freq: frequency, defaults to 1
         :type freq: float, optional
@@ -137,7 +137,7 @@ class WaveForm(SourceBlock):
         :type max: float, optional
         :param duty: duty cycle for square wave in range [0,1], defaults to 0.5
         :type duty: float, optional
-        :param ``**kwargs``: common Block options
+        :param kwargs: common Block options
         :return: a WAVEFORM block
         :rtype: WaveForm instance
         
@@ -261,9 +261,9 @@ class Piecewise(SourceBlock):
 
     def __init__(self, *seq, **kwargs):
         """
-        :param ``*seq``: Sequence of time, value pairs
-        :type ``*seq``: list of 2-tuples
-        :param ``**kwargs``: common Block options
+        :param seq: Sequence of time, value pairs
+        :type seq: list of 2-tuples
+        :param kwargs: common Block options
         :return: a PIECEWISE block
         :rtype: Piecewise instance
         
@@ -324,7 +324,7 @@ class Step(SourceBlock):
         :type off: float, optional
         :param on: final value, defaults to 1
         :type on: float, optional
-        :param ``**kwargs``: common Block options
+        :param kwargs: common Block options
         :return: a STEP block
         :rtype: Step
         
@@ -380,7 +380,7 @@ class Ramp(SourceBlock):
         :type T: float, optional
         :param off: initial value, defaults to 0
         :type off: float, optional
-        :param ``**kwargs``: common Block options
+        :param kwargs: common Block options
         :return: a RAMP block
         :rtype: Ramp
         

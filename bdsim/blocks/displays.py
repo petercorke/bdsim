@@ -45,7 +45,7 @@ class Scope(GraphicsBlock):
        +--------+---------+---------+
     """
     
-    def __init__(self, nin=1, vector=0, styles=None, stairs=False, scale='auto', labels=None, grid=True, *inputs, **kwargs):
+    def __init__(self, nin=1, vector=0, styles=None, stairs=False, scale='auto', labels=None, grid=True, **kwargs):
         """
         Create a block that plots input ports against time.
         
@@ -61,9 +61,7 @@ class Scope(GraphicsBlock):
         :param grid: draw a grid, default is on. Can be boolean or a tuple of 
                      options for grid()
         :type grid: bool or sequence
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
-        :param ``**kwargs``: common Block options
+        :param kwargs: common Block options
         :return: A SCOPE block
         :rtype: Scope instance
 
@@ -141,7 +139,7 @@ class Scope(GraphicsBlock):
         self.nplots = nplots
         self.vector = vector
         
-        super().__init__(nin=nin, inputs=inputs, **kwargs)
+        super().__init__(nin=nin, **kwargs)
 
         if styles is None:
             self.styles = [ None ] * nplots
@@ -160,6 +158,7 @@ class Scope(GraphicsBlock):
         
     def start(self, **kwargs):
         # create the plot
+        print('start SCOPE')
         if self.bd.options.graphics:
             super().reset()   # TODO should this be here?
 
@@ -266,17 +265,15 @@ class ScopeXY(GraphicsBlock):
     +--------+---------+---------+
     """
 
-    def __init__(self, style=None, *inputs, scale='auto', aspect='equal', labels=['X', 'Y'], init=None, **kwargs):
+    def __init__(self, style=None, scale='auto', aspect='equal', labels=['X', 'Y'], init=None, **kwargs):
         """
         :param style: line style
         :type style: optional str or dict
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
         :param scale: y-axis scale, defaults to 'auto'
         :type scale: 2- or 4-element sequence
         :param labels: axis labels (xlabel, ylabel)
         :type labels: 2-element tuple or list
-        :param ``**kwargs``: common Block options
+        :param kwargs: common Block options
         :return: A SCOPEXY block
         :rtype: ScopeXY instance
 
@@ -296,7 +293,7 @@ class ScopeXY(GraphicsBlock):
             - a 2-tuple [min, max] which is used for the x- and y-axes
             - a 4-tuple [xmin, xmax, ymin, ymax]
         """
-        super().__init__(nin=2, inputs=inputs, **kwargs)
+        super().__init__(nin=2, **kwargs)
         self.nin = 2
         self.xdata = []
         self.ydata = []
@@ -316,6 +313,8 @@ class ScopeXY(GraphicsBlock):
         
     def start(self, **kwargs):
         # create the plot
+        print('start XYSCOPE')
+
         if self.bd.options.graphics:
             super().reset()
 
@@ -347,7 +346,6 @@ class ScopeXY(GraphicsBlock):
 
             super().start()
 
-        
     def step(self):
         # inputs are set
         self.xdata.append(self.inputs[0])

@@ -42,13 +42,11 @@ class Print(SinkBlock):
     +--------+---------+---------+
     """
 
-    def __init__(self, input=None, fmt=None, **kwargs):
+    def __init__(self, fmt=None, **kwargs):
         """
         :param fmt: Format string, defaults to None
         :type fmt: str, optional
-        :param ``input``: Optional incoming connection
-        :type ``input``: Block or Plug
-        :param ``**kwargs``: common Block options
+        :param kwargs: common Block options
         :return: A PRINT block
         :rtype: Print instance
         
@@ -128,13 +126,11 @@ class Stop(SinkBlock):
     +--------+---------+---------+
     """
 
-    def __init__(self, stop, *inputs, **kwargs):
+    def __init__(self, stop, **kwargs):
         """
         :param stop: Function 
         :type stop: TYPE
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
-        :param ``**kwargs``: common Block options
+        :param kwargs: common Block options
         :return: A STOP block
         :rtype: Stop instance
 
@@ -145,7 +141,7 @@ class Stop(SinkBlock):
                     
         self.stop  = stop
 
-    def step(self):
+    def step(self, state=None):
         if isinstance(self.stop, bool):
             stop = self.inputs[0]
         elif callable(self.stop):
@@ -178,7 +174,7 @@ class Null(SinkBlock):
         """
         :param nin: number of input ports
         :type nin: int
-        :param ``**kwargs``: common Block options
+        :param kwargs: common Block options
         :return: A NULL block
         :rtype: Null instance
         

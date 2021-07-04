@@ -54,17 +54,15 @@ class Integrator(TransferBlock):
        +------------+---------+---------+
     """
 
-    def __init__(self, *inputs, x0=0, min=None, max=None, **kwargs):
+    def __init__(self, x0=0, min=None, max=None, **kwargs):
         """
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
         :param x0: Initial state, defaults to 0
         :type x0: array_like, optional
         :param min: Minimum value of state, defaults to None
         :type min: float or array_like, optional
         :param max: Maximum value of state, defaults to None
         :type max: float or array_like, optional
-        :param ``**kwargs``: common Block options
+        :param kwargs: common Block options
         :return: an INTEGRATOR block
         :rtype: Integrator instance
 
@@ -81,7 +79,7 @@ class Integrator(TransferBlock):
               the state.
         """
         self.type = 'integrator'
-        super().__init__(nin=1, nout=1, inputs=inputs, **kwargs)
+        super().__init__(nin=1, nout=1, **kwargs)
 
         if isinstance(x0, (int, float)):
             self.nstates = 1
@@ -144,17 +142,15 @@ class LTI_SS(TransferBlock):
        +------------+---------+---------+
     """
 
-    def __init__(self, *inputs, A=None, B=None, C=None, x0=None, verbose=False, **kwargs):
+    def __init__(self, A=None, B=None, C=None, x0=None, verbose=False, **kwargs):
         r"""
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
         :param N: numerator coefficients, defaults to 1
         :type N: array_like, optional
         :param D: denominator coefficients, defaults to [1, 1]
         :type D: array_like, optional
         :param x0: initial states, defaults to zero
         :type x0: array_like, optional
-        :param ``**kwargs``: common Block options
+        :param kwargs: common Block options
         :return: A SCOPE block
         :rtype: LTI_SISO instance
 
@@ -199,7 +195,7 @@ class LTI_SS(TransferBlock):
             nout = C.shape[0]
             assert C.shape[1] == n, 'C must have same number of columns as A'
 
-        super().__init__(nin=nin, nout=nout, inputs=inputs, **kwargs)
+        super().__init__(nin=nin, nout=nout, **kwargs)
 
         self.A = A
         self.B = B
@@ -238,17 +234,15 @@ class LTI_SISO(LTI_SS):
      
     """
 
-    def __init__(self, N=1, D=[1, 1], *inputs, x0=None, verbose=False, **kwargs):
+    def __init__(self, N=1, D=[1, 1], x0=None, verbose=False, **kwargs):
         r"""
         :param N: numerator coefficients, defaults to 1
         :type N: array_like, optional
         :param D: denominator coefficients, defaults to [1, 1]
         :type D: array_like, optional
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
         :param x0: initial states, defaults to zero
         :type x0: array_like, optional
-        :param ``**kwargs``: common Block options
+        :param kwargs: common Block options
         :return: A SCOPE block
         :rtype: LTI_SISO instance
 

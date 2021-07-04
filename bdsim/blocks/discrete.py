@@ -25,17 +25,15 @@ from bdsim.components import ClockedBlock, block
 @block
 class ZOH(ClockedBlock):
 
-    def __init__(self, clock, *inputs, x0=0, min=None, max=None, **kwargs):
+    def __init__(self, clock, x0=0, min=None, max=None, **kwargs):
         """
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
         :param x0: Initial state, defaults to 0
         :type x0: array_like, optional
         :param min: Minimum value of state, defaults to None
         :type min: float or array_like, optional
         :param max: Maximum value of state, defaults to None
         :type max: float or array_like, optional
-        :param ``**kwargs``: common Block options
+        :param kwargs: common Block options
         :return: a ZOH block
         :rtype: Integrator instance
 
@@ -55,7 +53,7 @@ class ZOH(ClockedBlock):
             input signal.
         """
         self.type = 'sampler'
-        super().__init__(nin=1, nout=1, inputs=inputs, clock=clock, **kwargs)
+        super().__init__(nin=1, nout=1, clock=clock, **kwargs)
 
         x0 = base.getvector(x0)
         self._x0 = x0
@@ -91,17 +89,15 @@ class DIntegrator(ClockedBlock):
     +------------+---------+---------+
     """
 
-    def __init__(self, clock, *inputs, x0=0, gain=1.0, min=None, max=None, **kwargs):
+    def __init__(self, clock, x0=0, gain=1.0, min=None, max=None, **kwargs):
         """
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
         :param x0: Initial state, defaults to 0
         :type x0: array_like, optional
         :param min: Minimum value of state, defaults to None
         :type min: float or array_like, optional
         :param max: Maximum value of state, defaults to None
         :type max: float or array_like, optional
-        :param ``**kwargs``: common Block options
+        :param kwargs: common Block options
         :return: an INTEGRATOR block
         :rtype: Integrator instance
 
