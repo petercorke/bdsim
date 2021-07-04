@@ -602,6 +602,12 @@ class Block:
         if nout is not None:
             self.nout = nout
 
+        if type is None:
+            self.type = self.__class__.__name__.lower()
+
+        if bd is not None:
+            bd.add_block(self)
+
         if inames is not None:
             self.inport_names(inames)
         if onames is not None:
