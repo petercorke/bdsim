@@ -583,6 +583,8 @@ class Block:
         else:
             self.name_tex = None
             self.name = None
+
+        self.bd = bd
         self.pos = pos
         self.id = None
         self.out = []

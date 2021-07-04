@@ -511,7 +511,6 @@ class BDSim:
             def block_init_wrapper(self, *args, **kwargs):
 
                 block = cls(*args, bd=bd, **kwargs)  # call __init__ on the block
-                bd.add_block(block)
                 return block
             
             # return a function that invokes the class constructor
