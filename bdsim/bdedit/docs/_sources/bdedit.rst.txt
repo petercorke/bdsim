@@ -1,0 +1,139 @@
+bdedit package
+==============
+
+Submodules
+----------
+
+bdedit.Icons module
+-------------------
+
+.. automodule:: bdedit.Icons
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+bdedit.block module
+-------------------
+
+.. automodule:: bdedit.block
+   :members:
+   :special-members: __init__
+   :undoc-members:
+   :show-inheritance:
+
+bdedit.block\_graphics\_block module
+------------------------------------
+
+.. automodule:: bdedit.block_graphics_block
+   :members:
+   :special-members: __init__
+   :undoc-members:
+   :show-inheritance:
+
+bdedit.block\_graphics\_socket module
+-------------------------------------
+
+.. automodule:: bdedit.block_graphics_socket
+   :members:
+   :special-members: __init__
+   :undoc-members:
+   :show-inheritance:
+
+bdedit.block\_graphics\_wire module
+-----------------------------------
+
+.. automodule:: bdedit.block_graphics_wire
+   :members:
+   :special-members: __init__
+   :undoc-members:
+   :show-inheritance:
+
+bdedit.block\_param\_window module
+----------------------------------
+
+.. automodule:: bdedit.block_param_window
+   :members:
+   :special-members: __init__
+   :undoc-members:
+   :show-inheritance:
+
+bdedit.block\_socket module
+---------------------------
+
+.. automodule:: bdedit.block_socket
+   :members:
+   :special-members: __init__
+   :undoc-members:
+   :show-inheritance:
+
+bdedit.block\_socket\_block module
+----------------------------------
+
+.. automodule:: bdedit.block_socket_block
+   :members:
+   :special-members: __init__
+   :undoc-members:
+   :show-inheritance:
+
+bdedit.block\_wire module
+-------------------------
+
+.. automodule:: bdedit.block_wire
+   :members:
+   :special-members: __init__
+   :undoc-members:
+   :show-inheritance:
+
+bdedit.interface module
+-----------------------
+
+.. automodule:: bdedit.interface
+   :members:
+   :special-members: __init__
+   :undoc-members:
+   :show-inheritance:
+
+bdedit.interface\_graphics\_scene module
+----------------------------------------
+
+.. automodule:: bdedit.interface_graphics_scene
+   :members:
+   :special-members: __init__
+   :undoc-members:
+   :show-inheritance:
+
+bdedit.interface\_graphics\_view module
+---------------------------------------
+
+.. automodule:: bdedit.interface_graphics_view
+   :members:
+   :special-members: __init__
+   :undoc-members:
+   :show-inheritance:
+
+bdedit.interface\_scene module
+------------------------------
+
+.. automodule:: bdedit.interface_scene
+   :members:
+   :special-members: __init__
+   :undoc-members:
+   :show-inheritance:
+
+bdedit.interface\_serialize module
+----------------------------------
+
+.. automodule:: bdedit.interface_serialize
+   :members:
+   :special-members: __init__
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: bdedit
+   :members:
+   :special-members: __init__
+   :undoc-members:
+   :show-inheritance:
