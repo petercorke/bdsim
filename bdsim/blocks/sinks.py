@@ -57,17 +57,6 @@ class Print(SinkBlock):
 
         and includes the block name, time, and the formatted value.
 
-        Examples::
-
-            pr = bd.PRINT()     # create PRINT block
-            bd.connect(x, pr)   # its input comes from x
-
-            bd.PRINT(x)         # create PRINT block with input from x
-
-            bd.PRINT(x, name='X')  # block name appears in the printed text
-
-            bd.PRINT(x, fmt="{:.1f}") # print with explicit format
-        
         The numerical formatting of the signal is controlled by ``fmt``:
 
         - if not provided, ``str()`` is used to format the signal
@@ -75,6 +64,19 @@ class Print(SinkBlock):
             - a scalar is formatted by the ``fmt.format()``
             - a NumPy array is formatted by ``fmt.format()`` applied to every
               element
+
+        Examples::
+
+            pr = bd.PRINT()     # create PRINT block
+            bd.connect(x, inputs=pr)   # its input comes from x
+
+            bd.PRINT(x)         # create PRINT block with input from x
+
+            bd.PRINT(x, name='X')  # block name appears in the printed text
+
+            bd.PRINT(x, fmt="{:.1f}") # print with explicit format
+        
+
 
         .. note:: The output is cleaner if progress bar printing is disabled.
 
@@ -87,9 +89,9 @@ class Print(SinkBlock):
         
         # TODO format can be a string or function
 
-    def step(self):
+    def step(self, state=None):
         prefix = '{:12s}'.format(
-            'PRINT({:s} @ t={:.3f})'.format(self.name, self.bd.state.t)
+            'PRINT({:s} (t={:.3f})'.format(self.name, state.t)
             )
                 
         value = self.inputs[0]
@@ -149,7 +151,7 @@ class Stop(SinkBlock):
         else:
             raise RuntimeError('input to stop must be boolean or callable')
         if stop:
-            self.bd.state.stop = self
+            state.stop = self
 
 # ------------------------------------------------------------------------ #
 

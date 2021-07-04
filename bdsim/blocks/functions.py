@@ -465,7 +465,7 @@ class Function(FunctionBlock):
         self.args = pargs
         self.kwargs = dargs
 
-    def start(self):
+    def start(self, state=None):
         super().start()
         if self.userdata is not None:
             self.userdata.clear()

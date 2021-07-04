@@ -32,9 +32,11 @@ class Struct(UserDict):
         "thing {'a': 1, 'b': 2}"
     """
     
-    def __init__(self, name='Struct'):
+    def __init__(self, name='Struct', **kwargs):
         super().__init__()
         self.name = name
+        for key, value in kwargs.items():
+            self[key] = value
 
     def __setattr__(self, name, value):
         # invoked by struct[name] = value
@@ -55,14 +57,14 @@ class Struct(UserDict):
     def __str__(self):
         def fmt(k, v, indent=0):
             if isinstance(v, Struct):
-                s = '{:12s}| {:12s}\n'.format(k, type(v).__name__)
+                s = '{:12s}: {:12s}\n'.format(k, type(v).__name__)
                 for k, v in v.items():
                     s += fmt(k, v, indent + 1)
                 return s
             elif isinstance(v, np.ndarray):
-                s = '            > ' * indent + '{:12s}| {:12s}\n'.format(k, type(v).__name__ + ' ' + str(v.shape))
+                s = '            > ' * indent + '{:12s}| {:s}\n'.format(k, type(v).__name__ + ' ' + str(v.shape))
             else:
-                s = '            > ' * indent + '{:12s}| {:12s}\n'.format(k, type(v).__name__)
+                s = '            > ' * indent + '{:12s}| {:s} = {}\n'.format(k, type(v).__name__, v)
             return s
 
         s = ''
@@ -598,6 +600,8 @@ class Block:
         self._state_names = None
         self.initd = True
         self._clocked = False
+        self._graphics = False
+
 
         if nin is not None:
             self.nin = nin
@@ -617,6 +621,8 @@ class Block:
         if snames is not None:
             self.state_names(snames)
 
+        if isinstance(inputs, Block):
+            inputs = (inputs,)
         if inputs is not None and len(inputs) > 0:
             #assert len(inputs) == self.nin, 'Number of input connections must match number of inputs'
             for i, input in enumerate(inputs):
@@ -641,6 +647,10 @@ class Block:
     @property
     def isclocked(self):
         return self._clocked
+
+    @property
+    def isgraphics(self):
+        return self._graphics
 
     # for use in unit testing
     def _eval(self, *inputs, t=None):
@@ -960,7 +970,7 @@ class Block:
     def done(self, **kwargs):  # end of simulation
         pass
 
-    def step(self):  # valid
+    def step(self, **kwargs):  # valid
         pass
 
     def savefig(self, *pos, **kwargs):

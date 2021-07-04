@@ -132,8 +132,8 @@ class BDSim:
     def progress(self, t=None):
         if self.options.progress:
             if t is None:
-                t = self.simstate.t
-            printProgressBar(t / self.simstate.T, prefix='Progress:', suffix='complete', length=60)
+                t = self.state.t
+            printProgressBar(t / self.state.T, prefix='Progress:', suffix='complete', length=60)
 
     def progress_done(self):
         if self.options.progress:
@@ -198,26 +198,25 @@ class BDSim:
         
         assert bd.compiled, 'Network has not been compiled'
 
-        # initialize the simstate structure, holds all simulation stae
-        simstate = BDSimState()
-        self.simstate = simstate
-        simstate.T = T
-        simstate.dt = dt
-        simstate.count = 0
-        simstate.solver = solver
-        simstate.intargs = intargs
-        simstate.minstepsize = minstepsize
-        simstate.stop = None # allow any block to stop.BlockDiagram by setting this to the block's name
-        simstate.checkfinite = checkfinite
-        simstate.options = copy.copy(self.options)
-        bd.options = simstate.options
+        state = BDSimState()
+        self.state = state
+        state.T = T
+        state.dt = dt
+        state.count = 0
+        state.solver = solver
+        state.intargs = intargs
+        state.minstepsize = minstepsize
+        state.stop = None # allow any block to stop.BlockDiagram by setting this to the block's name
+        state.checkfinite = checkfinite
+        state.options = copy.copy(self.options)
+        self.bd = bd
         if debug:
             # append debug flags
-            if debug not in simstate.options.debug:
-                simstate.options.debug += debug
+            if debug not in state.options.debug:
+                state.options.debug += debug
         
-        if len(simstate.options.debug) > 0:
-            simstate.options.progress = False
+        if len(state.options.debug) > 0:
+            state.options.progress = False
 
         # process the watchlist
         #  elements can be:
@@ -242,16 +241,13 @@ class BDSim:
                 plug = n
             watchlist.append(plug)
             watchnamelist.append(str(plug))
-        simstate.watchlist = watchlist
+        state.watchlist = watchlist
 
         # initialize list of time and states
-        simstate.tlist = []
-        simstate.xlist = []
-        simstate.plist = [[] for p in simstate.watchlist]
+        state.tlist = []
+        state.xlist = []
+        state.plist = [[] for p in state.watchlist]
 
-        bd.simstate = simstate  # block diagram has a reference to simstate
-
-        # get the system state vector
         x0 = bd.getstate0()
         print('initial state  x0 = ', x0)
 
@@ -264,22 +260,22 @@ class BDSim:
             ndstates += nds
             print(clock.name, 'initial dstate x0 = ', clock.getstate())
 
-        # tell all blocks and clocks we're starting a simulation
-        bd.start()
+        # tell all blocks we're starting a BlockDiagram
+        self.bd.start(state=state, graphics=self.state.options.graphics)
         self.progress(0)
 
-        if len(self.simstate.eventq) == 0:
+        if len(self.state.eventq) == 0:
             # no simulation events, solve it in one go
-            self._run_interval(bd, 0, T, x0, simstate=simstate)
+            self._run_interval(bd, 0, T, x0, state=state)
             nintervals = 1
         else:
             # we have simulation events, solve it in chunks
 
-            self.simstate.declare_event(None, T)  # add an event at end of simulation
+            self.state.declare_event(None, T)  # add an event at end of simulation
 
             # ignore all the events at zero
             tprev = 0
-            self.simstate.eventq.pop_until(tprev)
+            self.state.eventq.pop_until(tprev)
 
             # get the state vector
             x = x0
@@ -288,10 +284,10 @@ class BDSim:
             while True:
                 # get next event from the queue and the list of blocks or
                 # clocks at that time
-                tnext, sources = self.simstate.eventq.pop(dt=1e-6)
+                tnext, sources = self.state.eventq.pop(dt=1e-6)
 
                 # run system until next event time
-                x = self._run_interval(bd, tprev, tnext, x, simstate=simstate)
+                x = self._run_interval(bd, tprev, tnext, x, state=state)
                 nintervals += 1
 
                 # visit all the blocks and clocks that have an event now
@@ -306,7 +302,7 @@ class BDSim:
                 tprev = tnext
 
                 # are we done?
-                if simstate.t is not None and simstate.t >= T:
+                if state.t is not None and state.t >= T:
                     break
 
         # finished integration
@@ -315,15 +311,15 @@ class BDSim:
 
         # print some info about the integration
         print(fg('yellow'))
-        print(f"integrator steps:      {bd.simstate.count}")
-        print(f"time steps:            {len(simstate.tlist)}")
+        print(f"integrator steps:      {state.count}")
+        print(f"time steps:            {len(state.tlist)}")
         print(f"integration intervals: {nintervals}")
         print(attr(0))
 
         # save buffered data in a Struct
         out = Struct('results')
-        out.t = np.array(simstate.tlist)
-        out.x = np.array(simstate.xlist)
+        out.t = np.array(state.tlist)
+        out.x = np.array(state.xlist)
         out.xnames = bd.statenames
 
         # save clocked states
@@ -343,8 +339,11 @@ class BDSim:
         bd.done(block=block)
 
         return out
+
+    def done(self, **kwargs):
+        self.bd.done(graphics=self.options.graphics, **kwargs)
         
-    def _run_interval(self, bd, t0, tf, x0, simstate):
+    def _run_interval(self, bd, t0, T, x0, state):
         """
         Integrate system over interval
 
@@ -368,12 +367,16 @@ class BDSim:
                 # system has continuous states, solve it using numerical integration
                 # print('initial state x0 = ', x0)
 
-                # get the specified integrator
-                scipy_integrator = integrate.__dict__[simstate.solver]  # get user specified integrator
-                integrator = scipy_integrator(
-                        lambda t, y: bd.evaluate_plan(y, t),
-                        t0=t0, y0=x0, t_bound=tf, max_step=simstate.dt, 
-                        **simstate.intargs)
+                # block diagram contains states, solve it using numerical integration
+
+                scipy_integrator = integrate.__dict__[state.solver]  # get user specified integrator
+
+                def ydot(t, y):
+                    state.t = t
+                    return bd.evaluate_plan(y, t)
+
+                integrator = scipy_integrator(ydot,
+                    t0=t0, y0=x0, t_bound=T, max_step=state.dt, **state.intargs)
 
                 # integrate
                 while integrator.status == 'running':
@@ -386,31 +389,31 @@ class BDSim:
                         break
 
                     # stash the results
-                    simstate.tlist.append(integrator.t)
-                    simstate.xlist.append(integrator.y)
+                    state.tlist.append(integrator.t)
+                    state.xlist.append(integrator.y)
                     
                     # record the ports on the watchlist
-                    for i, p in enumerate(simstate.watchlist):
-                        simstate.plist[i].append(p.block.output(integrator.t)[p.port])
+                    for i, p in enumerate(state.watchlist):
+                        state.plist[i].append(p.block.output(integrator.t)[p.port])
                     
                     # update all blocks that need to know
-                    bd.step()
-                    
+                    bd.step(state=self.state, graphics=self.state.options.graphics)
+
                     self.progress()  # update the progress bar
 
                     if integrator.status == 'finished':
                         break
 
                     # has any block called a stop?
-                    if bd.simstate.stop is not None:
-                        print(fg('red') + f"\n--- stop requested at t={bd.simstate.t:.4f} by {bd.simstate.stop}" + attr(0))
+                    if state.stop is not None:
+                        print(fg('red') + f"\n--- stop requested at t={bd.state.t:.4f} by {bd.state.stop}" + attr(0))
                         break
 
-                    if simstate.minstepsize is not None and integrator.step_size < simstate.minstepsize:
+                    if state.minstepsize is not None and integrator.step_size < state.minstepsize:
                         print(fg('red') + f"\n--- stopping on minimum step size at t={bd.simstate.t:.4f} with last stepsize {integrator.step_size:g}" + attr(0))
                         break
 
-                    if 'i' in bd.simstate.options.debug:
+                    if 'i' in state.options.debug:
                         bd._debugger(integrator)
 
                 return integrator.y  # return final state vector
@@ -475,10 +478,6 @@ class BDSim:
             # bad things happens, print a message and return no result
             print('unrecoverable error in evaluation: ', err)
             raise
-
-    def done(self, bd, **kwargs):
-
-        bd.done(**kwargs)
 
     def blockdiagram(self, name='main'):
         """
@@ -553,7 +552,6 @@ class BDSim:
             
     def savefig(self, block, filename=None, format='pdf', **kwargs):
         block.savefig(filename=filename, format=format, **kwargs)
-
     def savefigs(self, bd, format='pdf', **kwargs):
         from bdsim.graphics import GraphicsBlock
 
@@ -710,6 +708,49 @@ class BDSim:
 
         return blocks
 
+    def set_options(self, **options):
+        """
+        Set simulation options at run time
+
+        The option names correspond to command line options
+
+        ===================  =========  ========  ===========================================
+        Command line switch  Option     Default   Behaviour
+        ===================  =========  ========  ===========================================
+        --nographics, -g     graphics   True      enable graphical display
+        --animation, -a      animation  True      update graphics at each time step
+        --noprogress, -p     progress   True      do not display simulation progress bar
+        --backend BE         backend    'Qt5Agg'  matplotlib backend
+        --tiles RxC, -t RxC  tiles      '3x4'     arrangement of figure tiles on the display
+        --verbose, -v        verbose    False     be verbose
+        --debug F, -d F      debug      ''        debug flag string
+        ===================  =========  ========  ===========================================
+
+        Example::
+
+                sim = bdsim.BDsim()
+                sim.set_options(graphics=False)
+
+        .. note:: ``animation`` and ``graphics`` options are coupled.  If 
+            ``graphics=False``, all graphics is suppressed.  If
+            ``graphics=True`` then graphics are shown and the behaviour depends
+            on ``animation``.  ``animation=False`` shows graphs at the end of
+            the simulation, while ``animation=True` will animate the graphs
+            during simulation.
+        """
+        for key, value in options.items():
+            self.options[key] = value
+
+        # animation and graphics options are coupled
+        #
+        #  graphics False, no graphics at all
+        #  graphics True, animation False, show graphs at end of run
+        #  graphics True, animation True, animate graphs during the run
+        if 'animation' in options and options['animation']:
+            self.options.graphics = True
+        if 'graphics' in options and not options['graphics']:
+            self.options.animation = False
+
     def get_options(sysargs=True, **kwargs):
         # option priority (high to low):
         #  - command line
@@ -770,7 +811,7 @@ class BDSim:
                 print('{:10s}: {:}'.format(k, v))
         
         # stash these away
-        options = types.SimpleNamespace(**options)
+        options = Struct(**options, name='Options')
 
         return options
 

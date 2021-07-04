@@ -284,9 +284,9 @@ class Piecewise(SourceBlock):
         self.y = [ x[1] for x in seq]
         self.type = "piecewise"
 
-    def start(self):
+    def start(self, state=None):
         for t in self.t:
-            self.bd.simstate.declare_event(self, t)
+            state.declare_event(self, t)
 
     def output(self, t):
         i = sum([ 1 if t >= _t else 0  for _t in self.t]) - 1
