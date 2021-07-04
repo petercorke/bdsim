@@ -555,8 +555,11 @@ class BDSim:
         block.savefig(filename=filename, format=format, **kwargs)
 
     def savefigs(self, bd, format='pdf', **kwargs):
+        from bdsim.graphics import GraphicsBlock
+
         for b in bd.blocklist:
-            b.savefig(filename=filename, format=format, **kwargs)
+            if isinstance(b, GraphicsBlock):
+                b.savefig(filename=b.name, format=format, **kwargs)
 
     def showgraph(self, bd, **kwargs):
         # create the temporary dotfile
