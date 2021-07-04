@@ -39,11 +39,53 @@ from matplotlib.pyplot import Polygon
 import unittest
 import numpy.testing as nt
 
-from bdsim.blocks.displays import *
+from bdsim.blocks.sinks import *
 
 class SinkBlockTest(unittest.TestCase):
         pass
     
+    
+    # def test_quadrotor(self):
+        
+    #     from quad_model import quadrotor as qm
+        
+    #     b = MultiRotorPlot(qm)
+        
+    #     b.start()
+        
+    #     b.setinputs(np.r_[0.5, 0, -1, 0, 0, 0, 0,0,0,0,0,0])
+    #     b.step()
+
+    def test_print(self):
+
+        class State:
+            pass
+
+        s = State()
+        s.t = 1
+
+        b = Print(name='print block')
+        b.start()
+        b.setinputs(1.23)
+        b.step(state=s)
+
+    def test_stop(self):
+
+        b = Stop(lambda x: x > 5)
+        b.start()
+        class State:
+            pass
+        s = State()
+        s.stop = None
+
+        b.setinputs(0)
+        b.step(state=s)
+        self.assertIsNone(s.stop)
+
+        b.setinputs(10)
+        b.step(state=s)
+        self.assertTrue(s.stop)
+        self.assertIs(s.stop, b)
 
 
 # --------------------------------------------------------------------------------------#
