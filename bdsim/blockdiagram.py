@@ -77,6 +77,8 @@ class BlockDiagram:
         return clock
 
     def add_block(self, block):
+        if block.name in self._blockdict:
+            raise ValueError('block {} already added'.format(block.name))
         block.id = len(self.blocklist)
         if block.name is None:
             i = self.blockcounter[block.type]
