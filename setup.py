@@ -62,4 +62,5 @@ setup(
 
     install_requires=['numpy', 'scipy', 'matplotlib']
     
+    scripts=['bdsim/bin/bdedit.py', 'bdsim/bin/bdrun.py'],
 )
