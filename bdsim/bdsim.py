@@ -591,7 +591,7 @@ class BDSim:
         :rtype: [type]
         """
         nblocks = len(blocklist)
-        blocks = []
+        # blocks = []
         if nblocks == 0:
             # add bdsim blocks folder
             blockpath = [Path(__file__).parent / 'blocks']
@@ -607,6 +607,7 @@ class BDSim:
                 blockpath.append(Path(pkg.__path__[0]))
             except ImportError:
                 pass
+            # blocklist = []
 
             # path = os.getenv('BDSIMPATH')
             # if path is not None:
@@ -616,11 +617,14 @@ class BDSim:
             if verbose:
                 print('Loading blocks:')
 
+            blocks = []
             for path in blockpath:  # for each folder on the path
                 if not path.exists():
                     print(f"WARNING: path does not exist: {path}")
                     continue
                 for file in path.iterdir():  # for each file in the folder
+                    blocks_this_file = []
+
                     # scan every file *.py to find block definitions
                     # a block is a class that subclasses Source, Sink, Function, Transfer and
                     # has an @block decorator.
@@ -636,17 +640,15 @@ class BDSim:
                             spec.loader.exec_module(module)
                             # module = importlib.import_module('.' + file.stem, package='bdsim.blocks')
                         except SyntaxError:
-                            print(f"-- syntax error in block definiton: {file}")
-        
-                        # components.blocklist grows with every block import
-                        if len(blocklist) > nblocks:
-                            # we just loaded some more blocks
-                            if verbose:
-                                print('  loading blocks from {:s}: {:s}'.format(str(file), ', '.join([blockname(cls) for cls in blocklist[nblocks:]])))
-                            
-                        # perform basic sanity checks on the blocks just read
-                        for cls in blocklist[nblocks:]:
-                            
+                            print(f"-- syntax error in block definition file: {file}")
+
+                        for cls in module.__dict__.values():
+                            if not inspect.isclass(cls) or \
+                               inspect.getmro(cls)[-2].__name__ != 'Block' or \
+                               not cls.__module__.startswith(file.name):
+                                    continue
+
+                            # we have a block class candidate
                             if cls.blockclass in ('source', 'transfer', 'function'):
                                 # must have an output function
                                 valid = hasattr(cls, 'output') and \
@@ -656,16 +658,53 @@ class BDSim:
                                     raise ImportError('class {:s} has missing/improper output method'.format(str(cls)))
                                 
                             if cls.blockclass == 'sink':
-                                # must have a step function
+                                # must have a step function with at least one
+                                # parameter: step(self [,state])
                                 valid = hasattr(cls, 'step') and \
                                         callable(cls.step) and \
-                                        len(inspect.signature(cls.step).parameters) == 1
+                                        len(inspect.signature(cls.step).parameters) >= 1
                                 if not valid:
                                     raise ImportError('class {:s} has missing/improper step method'.format(str(cls)))
-                            
+
+                            blocks_this_file.append(blockname(cls))
                             blocks.append(block(blockname(cls), cls, file))
 
-                        nblocks = len(blocklist)
+                        if verbose and len(blocks_this_file) > 0:
+                                print('  loaded {:d} blocks from {:s}: {:s}'.format(
+                                    len(blocks_this_file),
+                                    str(file),
+                                    ', '.join(b for b in blocks_this_file)))
+                
+
+                        # # components.blocklist grows with every block import
+                        # if len(blocklist) > nblocks:
+                        #     # we just loaded some more blocks
+                        #     if verbose:
+                        #         print('  loading blocks from {:s}: {:s}'.format(str(file), ', '.join([blockname(cls) for cls in blocklist[nblocks:]])))
+                            
+                        # # perform basic sanity checks on the blocks just read
+                        # for cls in blocklist[nblocks:]:
+                        #     print(cls)
+                        #     if cls.blockclass in ('source', 'transfer', 'function'):
+                        #         # must have an output function
+                        #         valid = hasattr(cls, 'output') and \
+                        #                 callable(cls.output) and \
+                        #                 len(inspect.signature(cls.output).parameters) == 2
+                        #         if not valid:
+                        #             raise ImportError('class {:s} has missing/improper output method'.format(str(cls)))
+                                
+                        #     if cls.blockclass == 'sink':
+                        #         # must have a step function with at least one
+                        #         # parameter: step(self [,state])
+                        #         valid = hasattr(cls, 'step') and \
+                        #                 callable(cls.step) and \
+                        #                 len(inspect.signature(cls.step).parameters) >= 1
+                        #         if not valid:
+                        #             raise ImportError('class {:s} has missing/improper step method'.format(str(cls)))
+                            
+                        #     blocks.append(block(blockname(cls), cls, file))
+
+                        # nblocks = len(blocklist)
 
         return blocks
 
