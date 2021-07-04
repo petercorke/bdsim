@@ -43,4 +43,4 @@ bd.report()
 
 out = sim.run(bd)
 
-sim.done(bd)
+sim.done()
