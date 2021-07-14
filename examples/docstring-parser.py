@@ -17,7 +17,7 @@ fieldnames = ('param', 'type', 'input', 'output', 'varinputs')
 excludevars = ('kwargs', 'inputs')
 
 # sim = bdsim.BDSim(verbose=True)
-for package in ('bdsim',): #, 'roboticstoolbox'):
+for package in ('bdsim', 'roboticstoolbox'):
     spec = importlib.util.find_spec('.blocks', package=package)
     m = spec.loader.load_module()
     path = m.__path__
@@ -39,7 +39,11 @@ for package in ('bdsim',): #, 'roboticstoolbox'):
         block_info = {}
         block_info['path'] = path  # path to folder holding block definition
         block_info['classname'] = name
-        block_info['url'] = url + "#" + block.__module__ + "." + name
+        if url is not None:
+            block_info['url'] = url + "#" + block.__module__ + "." + name
+        block_info['class'] = block
+        block_info['module'] = block.__module__
+        block_info['package'] = package
 
         # get the docstring
         ds = block.__init__.__doc__ #inspect.getdoc(block)
@@ -127,4 +131,18 @@ for package in ('bdsim',): #, 'roboticstoolbox'):
 
         blocks[name] = block_info
 
-print(blocks)
+for k, v in blocks['Gain'].items():
+    print(k, ':', v)
+## build all bdedit blocks
+
+# map = {
+#         'source': SourceBlock,
+#         'transfer': TransferBlock,
+# }
+
+# for block in blocks:
+
+#     class = map[block['blockclass']]
+#     # set its parameters, limits, types etc
+#     # set the url
+#     # set the icon path
