@@ -81,9 +81,7 @@ class Print(SinkBlock):
         .. note:: The output is cleaner if progress bar printing is disabled.
 
         """
-        if input is not None:
-            input = [input]
-        super().__init__(nin=1, inputs=input, **kwargs)
+        super().__init__(nin=1, **kwargs)
         self.format = fmt
         self.type = 'print'
         
@@ -128,28 +126,46 @@ class Stop(SinkBlock):
     +--------+---------+---------+
     """
 
-    def __init__(self, stop, **kwargs):
+    def __init__(self, func=None, **kwargs):
         """
-        :param stop: Function 
-        :type stop: TYPE
+        :param func: evaluate stop condition
+        :type func: callable, optional
         :param kwargs: common Block options
         :return: A STOP block
         :rtype: Stop instance
 
-        Conditionally stop the simulation.
+        Conditionally stop the simulation if the input is:
+
+        - bool type and True
+        - numeric type and > 0
+
+        If ``func`` is provided, then it is applied to the block input
+        and if it returns True the simulation is stopped.
         """
-        super().__init__(nin=1, inputs=inputs, **kwargs)
+        super().__init__(nin=1, **kwargs)
+
+        if not callable(func):
+            raise TypeError('argument must be a callable')
+        self.stopfunc  = func
+
         self.type = 'stop'
-                    
-        self.stop  = stop
 
     def step(self, state=None):
-        if isinstance(self.stop, bool):
-            stop = self.inputs[0]
-        elif callable(self.stop):
-            stop = self.stop(self.inputs[0])
+        value = self.inputs[0]
+        if self.stopfunc is not None:
+            value = self.stopfunc(value)
+
+        stop = False
+        if isinstance(value, bool):
+            stop = value
         else:
-            raise RuntimeError('input to stop must be boolean or callable')
+            try:
+                stop = value > 0
+            except:
+                raise RuntimeError('bad input type to stop block')
+
+        # we signal stop condition by setting state.stop to the block calling
+        # the stop
         if stop:
             state.stop = self
 
@@ -191,7 +207,7 @@ class Null(SinkBlock):
 
 if __name__ == "__main__":
 
-    import pathlib
+    from pathlib import Path
     import os.path
 
-    exec(open(os.path.join(pathlib.Path(__file__).parent.absolute(), "test_sinks.py")).read())
+    exec(open(Path(__file__).parent.parent.parent / "tests" / "test_sinks.py").read())

@@ -42,7 +42,6 @@ import numpy.testing as nt
 from bdsim.blocks.sinks import *
 
 class SinkBlockTest(unittest.TestCase):
-        pass
     
     
     # def test_quadrotor(self):
