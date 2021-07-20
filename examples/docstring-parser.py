@@ -4,9 +4,9 @@ from collections import OrderedDict
 import inspect
 import importlib.util
 
-re_isfield = re.compile(r'\s*:[a-zA-Z0-9_ ]+:')
-re_field = re.compile(r'^\s*:(?P<field>[a-zA-Z]+)(?: +(?P<var>[a-zA-Z0-9_]+))?:(?P<body>.+)$', re.MULTILINE)
-
+re_isfield = re.compile(r'\s*:[a-zA-Zα-ωΑ-Ω0-9_ ]+:')
+re_field = re.compile('^\s*:(?P<field>[a-zA-Z]+)(?: +(?P<var>[a-zA-Zα-ωΑ-Ω0-9_]+))?:(?P<body>.+)$')
+# a-zA-Zα-ωΑ-Ω0-9_
 def indent(s):
     return len(s) - len(s.lstrip())
 
@@ -89,6 +89,8 @@ for package in ('bdsim', 'roboticstoolbox'):
         for line in fieldlines:
             m = re_field.match(line)
             if m is not None:
+                if name == 'Bicycle':
+                    z= 3
                 field, var, body = m.groups()
                 if var in excludevars or field not in fieldnames:
                     continue
@@ -131,8 +133,12 @@ for package in ('bdsim', 'roboticstoolbox'):
 
         blocks[name] = block_info
 
-for k, v in blocks['Gain'].items():
-    print(k, ':', v)
+for k, v in blocks['Bicycle']['inputs'].items():
+    print(k, v)
+for k, v in blocks['Bicycle']['outputs'].items():
+    print(k, v)
+# for k, v in blocks['Gain'].items():
+#     print(k, ':', v)
 ## build all bdedit blocks
 
 # map = {
