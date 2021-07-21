@@ -37,7 +37,7 @@ class Constant(SourceBlock):
     def __init__(self, value=None, **kwargs):
         """
         :param value: the constant, defaults to None
-        :type value: any
+        :type value: any, optional
         :param kwargs: common Block options
         :return: a CONSTANT block
         :rtype: Constant instance
@@ -123,7 +123,7 @@ class WaveForm(SourceBlock):
         :type wave: str, optional
         :param freq: frequency, defaults to 1
         :type freq: float, optional
-        :param unit: frequency unit, can be 'rad/s', defaults to 'Hz'
+        :param unit: frequency unit, one of: 'rad/s', 'Hz' [default]
         :type unit: str, optional
         :param amplitude: amplitude, defaults to 1
         :type amplitude: float, optional

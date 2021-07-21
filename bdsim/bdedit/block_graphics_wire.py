@@ -171,6 +171,10 @@ class GraphicsWire(QGraphicsPathItem):
         raise NotImplemented("This method is to be over written by child class")
 
     # -----------------------------------------------------------------------------
+    # def boundingRect(self):
+    #     return self.shape().boundingRect()
+
+    # -----------------------------------------------------------------------------
     def updateLineSegments(self):
         """
         This method uses the coordinates of the points this wire goes through, to

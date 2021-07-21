@@ -49,16 +49,16 @@ class Scope(GraphicsBlock):
         """
         Create a block that plots input ports against time.
         
-        :param nin: number of inputs, defaults to length of style vector if given,
-                    otherwise 1
+        :param nin: number of inputs, defaults to 1 or if given, the length of
+                    style vector
         :type nin: int, optional
         :param styles: styles for each line to be plotted
-        :type styles: optional str or dict, list of strings or dicts; one per line
-        :param scale: y-axis scale, defaults to 'auto'
-        :type scale: 2-element sequence
+        :type styles: str or dict, list of strings or dicts; one per line, optional
+        :param scale: fixed y-axis scale or defaults to 'auto'
+        :type scale: str or array_like(2)
         :param labels: vertical axis labels
         :type labels: sequence of strings
-        :param grid: draw a grid, default is on. Can be boolean or a tuple of 
+        :param grid: draw a grid, defaults to True. Can be boolean or a tuple of
                      options for grid()
         :type grid: bool or sequence
         :param kwargs: common Block options
@@ -253,8 +253,8 @@ class ScopeXY(GraphicsBlock):
         """
         :param style: line style
         :type style: optional str or dict
-        :param scale: y-axis scale, defaults to 'auto'
-        :type scale: 2- or 4-element sequence
+        :param scale: fixed y-axis scale or defaults to 'auto'
+        :type scale: str or array_like(2) or array_like(4)
         :param labels: axis labels (xlabel, ylabel)
         :type labels: 2-element tuple or list
         :param kwargs: common Block options

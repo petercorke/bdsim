@@ -3,7 +3,7 @@ import ast
 
 # PyQt5 Imports
 from PyQt5.QtWidgets import *
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtGui import QPixmap, QDesktopServices
 from PyQt5.QtCore import Qt, QRect
 
 # BdEdit imports
@@ -19,7 +19,7 @@ from bdsim.bdedit.Icons import *
 LEFT = 1
 RIGHT = 3
 
-# Socket sign variables - used for logic associated with drawing signs for the
+# Socket sign variables - used for logic associated with drawing symbols for the
 # PROD and SUM blocks
 PLUS = "+"
 MINUS = "-"
@@ -104,6 +104,14 @@ class ParamWindow(QWidget):
         # Its background is filled
         self.setAutoFillBackground(True)
         self.setLayout(self.layout)
+
+    # -----------------------------------------------------------------------------
+    def displayDocumentationURL(self):
+        """
+        This method opens the url link associated with this blocks' documentation.
+        """
+
+        QDesktopServices.openUrl(QtCore.QUrl(self.block.getBlockURL()))
 
     # -----------------------------------------------------------------------------
     def closeQMessageBox(self):
@@ -275,6 +283,11 @@ class ParamWindow(QWidget):
         self.update_button.clicked.connect(self.updateBlockParameters)
         self.layout.addWidget(self.update_button)
 
+        # Add a button linked to the URL of this block's documentation
+        self.block_url_Button = QPushButton("View documentation")
+        self.block_url_Button.clicked.connect(self.displayDocumentationURL)
+        self.layout.addWidget(self.block_url_Button)
+
     # -----------------------------------------------------------------------------
     def updateBlockParameters(self):
         """
@@ -316,7 +329,7 @@ class ParamWindow(QWidget):
 
             # Start with an empty message
             message = ""
-            # Num_options is the number of lists (of accepted keywords, types, range, signs) inside the option list
+            # Num_options is the number of lists (of accepted keywords, types, range, symbol) inside the option list
             num_options = len(options)
             # Check the options that have been assigned to this parameter
             for option in options:
@@ -333,7 +346,7 @@ class ParamWindow(QWidget):
                         typeString.append(optionType.__name__)
                     message += "of type <font><b>" + str(typeString) + "</font>"
                 # If the options consist of certain sign characters this parameter is restricted to
-                elif option[0] == "signs":
+                elif option[0] == "symbol":
                     message += "a combination of <font><b>" + str(option[1]) + "</font>"
 
                 # If a parameter has multiple options (e.g. range and type restrictions)
@@ -391,6 +404,7 @@ class ParamWindow(QWidget):
 
                         # If self.parameter relates to controlling the number of inputs a block has
                         if self.parameters[i][0] in ["nin", "ops", "signs"]:
+
                             # Grab the number of required input sockets
                             if self.parameters[i][0] == "nin":
                                 num_sockets = self.parameters[i][2]
@@ -398,7 +412,7 @@ class ParamWindow(QWidget):
                                 num_sockets = len(self.parameter_values[i].text())
 
                             # Don't do anything, if the provided number of input sockets matches the number the block already has,
-                            # or if the signs (+,-,*,/) for the block haven't changed
+                            # or if the symbols (+,-,*,/) for the block haven't changed
                             if len(self.block.inputs) == num_sockets and inputInCompatibleFormat == paramVal:
                                 pass
                             else:
@@ -556,18 +570,18 @@ class ParamWindow(QWidget):
                         if type(value) in option[1]:
                             returnValue = value
                             break
-                    # If the placed restriction are a set of allowable character signs
-                    elif option[0] == "signs":
+                    # If the placed restriction are a set of allowable character symbol
+                    elif option[0] == "symbol":
                         # First get the max possible wrong characters in this string
-                        num_of_wrong_signs = len(value)
+                        num_of_wrong_symbols = len(value)
                         # Check each character within the given value against the set of allowable characters
                         for sign in value:
                             # For every character in the set of allowable characters, reduce the number
                             # of wrong characters by 1
                             if sign in option[1]:
-                                num_of_wrong_signs -= 1
+                                num_of_wrong_symbols -= 1
                         # If all characters within the string match a set of allowable characters
-                        if num_of_wrong_signs == 0:
+                        if num_of_wrong_symbols == 0:
                             returnValue = value; break
                 # Return the value that has been set to be returned
                 return returnValue

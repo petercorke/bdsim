@@ -200,8 +200,8 @@ class DeMux(FunctionBlock):
 
     def __init__(self, nout=1, **kwargs):
         """
-        :param nout: DESCRIPTION, defaults to 1
-        :type nout: TYPE, optional
+        :param nout: number of outputs, defaults to 1
+        :type nout: int, optional
         :param kwargs: common Block options
         :return: A DEMUX block
         :rtype: DeMux instance

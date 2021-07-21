@@ -6,6 +6,16 @@ from PyQt5.QtGui import *
 # BdEdit imports
 from bdsim.bdedit.Icons import *
 
+# =============================================================================
+#
+#   Defining and setting global variables
+#
+# =============================================================================
+# Socket positioning variables - used for determining what side of the block the
+# socket should be drawn
+LEFT = 1
+RIGHT = 3
+
 
 # =============================================================================
 #
@@ -76,9 +86,9 @@ class GraphicsBlock(QGraphicsItem):
         """
         This method sets flags to allow for this Block to be movable and selectable.
         """
-
         self.setFlag(QGraphicsItem.ItemIsSelectable)
         self.setFlag(QGraphicsItem.ItemIsMovable)
+        self.setAcceptHoverEvents(True)
 
     # -----------------------------------------------------------------------------
     def initTitle(self):
@@ -86,7 +96,6 @@ class GraphicsBlock(QGraphicsItem):
         This method initializes a QGraphicsTextItem which will graphically represent
         the title (name) of this Block.
         """
-
         self.title_item = QGraphicsTextItem(self)
         self.title_item.setDefaultTextColor(self._default_title_color)
         self.title_item.setFont(self._title_font)
@@ -226,6 +235,19 @@ class GraphicsBlock(QGraphicsItem):
         self.update()
 
     # -----------------------------------------------------------------------------
+    def hoverEnterEvent(self, event):
+        """
+        When a ``GraphicsBlock`` is hovered over with the cursor, this method will display
+        a tooltip with the type of block underneath the mouse.
+        :param event: mouse hover detected over block
+        :type event: QGraphicsSceneHoverEvent
+        """
+
+        #QToolTip.setFont(QFont("Ubuntu", 10))
+        self.setToolTip("<b>" + self.block.block_type + "</b> block")
+        #self.setToolTip("<b>" + self.block.block_type + "</b>")
+
+    # -----------------------------------------------------------------------------
     def boundingRect(self):
         """
         This is an inbuilt method of QGraphicsItem, that is overwritten by ``GraphicsBlock``
@@ -294,10 +316,11 @@ class GraphicsBlock(QGraphicsItem):
         painter.drawPath(path_outline.simplified())
 
         # Icon of the block is drawn overtop the blocks' background
-        icon_item = QPixmap(self.icon).scaledToWidth(50) if self.icon else QPixmap(self.icon)   # Icons are scaled down to 50 pixels
-        target = QRect((self.width-icon_item.width())/2, (self.height-icon_item.height())/2, self.width, self.height)
-        source = QRect(0, 0, self.width, self.height)
-        painter.drawPixmap(target, icon_item, source)
+        if QtCore.QFile.exists(self.icon):
+            icon_item = QPixmap(self.icon).scaledToWidth(50) if self.icon else QPixmap(self.icon)   # Icons are scaled down to 50 pixels
+            target = QRect((self.width - icon_item.width()) / 2, (self.height - icon_item.height()) / 2, self.width, self.height)
+            source = QRect(0, 0, self.width, self.height)
+            painter.drawPixmap(target, icon_item, source)
 
     # -----------------------------------------------------------------------------
     def mousePressEvent(self, event):
@@ -353,43 +376,47 @@ class GraphicsBlock(QGraphicsItem):
 
         super().mouseMoveEvent(event)
 
-        # The x,y position of the mouse cursor is grabbed, and is restricted to update
-        # every 20 pixels (the size of the smaller grid squares, as defined in GraphicsScene)
-        x = round(self.pos().x() / 20) * 20
-        y = round(self.pos().y() / 20) * 20
-        pos = QPointF(x, y)
-        # The position of this GraphicsBlock is set to the restricted position of the mouse cursor
-        self.setPos(pos)
-
-        # 20 is the width of the smaller grid squares
-        # This logic prevents the selected QGraphicsBlock from being dragged outside
-        # the border of the work area (GraphicsScene)
-        padding = 20
-        if self.pos().x() < self.scene().sceneRect().x() + padding:
-            # left
-            self.setPos(self.scene().sceneRect().x() + padding, self.pos().y())
-
-        if self.pos().y() < self.scene().sceneRect().y() + padding:
-            # top
-            self.setPos(self.pos().x(), self.scene().sceneRect().y() + padding)
-
-        if self.pos().x() > (self.scene().sceneRect().x() + self.scene().sceneRect().width() - self.width - padding):
-            # right
-            self.setPos(self.scene().sceneRect().x() + self.scene().sceneRect().width() - self.width - padding, self.pos().y())
-
-        if self.pos().y() > (self.scene().sceneRect().y() + self.scene().sceneRect().height() - self.height - self.title_height - padding):
-            # bottom
-            self.setPos(self.pos().x(), self.scene().sceneRect().y() + self.scene().sceneRect().height() - self.height - self.title_height - padding)
-
-        # Finally, update the connected wires of all Blocks that are affected by this Block being moved
+        # For all selected blocks
         for block in self.block.scene.blocks:
+            block.updateConnectedEdges()
+
             if block.grBlock.isSelected():
+
+                # The x,y position of the mouse cursor is grabbed, and is restricted to update
+                # every 20 pixels (the size of the smaller grid squares, as defined in GraphicsScene)
+                x = round(block.grBlock.pos().x() / 20) * 20
+                y = round(block.grBlock.pos().y() / 20) * 20
+                pos = QPointF(x, y)
+                # The position of this GraphicsBlock is set to the restricted position of the mouse cursor
+                block.grBlock.setPos(pos)
+
+                # 20 is the width of the smaller grid squares
+                # This logic prevents the selected QGraphicsBlock from being dragged outside
+                # the border of the work area (GraphicsScene)
+                padding = 20
+
+                # left
+                if block.grBlock.pos().x() < block.grBlock.scene().sceneRect().x() + padding:
+                    block.grBlock.setPos(block.grBlock.scene().sceneRect().x() + padding, block.grBlock.pos().y())
+
+                # top
+                if block.grBlock.pos().y() < block.grBlock.scene().sceneRect().y() + padding:
+                    block.grBlock.setPos(block.grBlock.pos().x(), block.grBlock.scene().sceneRect().y() + padding)
+
+                # right
+                if block.grBlock.pos().x() > (block.grBlock.scene().sceneRect().x() + block.grBlock.scene().sceneRect().width() - block.grBlock.width - padding):
+                    block.grBlock.setPos(block.grBlock.scene().sceneRect().x() + block.grBlock.scene().sceneRect().width() - block.grBlock.width - padding, block.grBlock.pos().y())
+
+                # bottom
+                if block.grBlock.pos().y() > (block.grBlock.scene().sceneRect().y() + block.grBlock.scene().sceneRect().height() - block.grBlock.height - block.grBlock.title_height - padding):
+                    block.grBlock.setPos(block.grBlock.pos().x(), block.grBlock.scene().sceneRect().y() + block.grBlock.scene().sceneRect().height() - block.grBlock.height - block.grBlock.title_height - padding)
+
+                # Update the connected wires of all Blocks that are affected by this Block being moved
                 block.updateConnectedEdges()
 
-
-class GraphicsSocketBlock(QGraphicsItem):
+class GraphicsConnectorBlock(QGraphicsItem):
     """
-    The ``GraphicsSocketBlock`` Class extends the ``QGraphicsItem`` Class from PyQt5.
+    The ``GraphicsConnectorBlock`` Class extends the ``QGraphicsItem`` Class from PyQt5.
     This class is responsible for graphically drawing Connector Blocks within the
     GraphicsScene.
     """
@@ -397,10 +424,10 @@ class GraphicsSocketBlock(QGraphicsItem):
     # -----------------------------------------------------------------------------
     def __init__(self, block, parent=None):
         """
-        This method initializes an instance of the ``GraphicsSocketBlock`` Class
+        This method initializes an instance of the ``GraphicsConnectorBlock`` Class
         (otherwise known as the Graphics Class of the Connector Block).
 
-        :param block: the Connector Block this GraphicsSocketBlock instance relates to
+        :param block: the Connector Block this GraphicsConnectorBlock instance relates to
         :type block: Connector Block
         :param parent: the parent widget this class instance belongs to (None)
         :type parent: NoneType, optional, defaults to None
@@ -432,6 +459,8 @@ class GraphicsSocketBlock(QGraphicsItem):
 
         # Color of the selected line is set
         self._pen_selected = QPen(QColor("#FFFFA637"), self._selected_line_thickness)   # Orange
+        # Color of wire to be drawn between sockets, when connector block is hidden (to make solid line)
+        self._color = QColor("#000000")
 
         # Further initialize necessary Connector Block settings
         self.initUI()
@@ -451,8 +480,8 @@ class GraphicsSocketBlock(QGraphicsItem):
     # -----------------------------------------------------------------------------
     def boundingRect(self):
         """
-        This is an inbuilt method of QGraphicsItem, that is overwritten by ``GraphicsSocketBlock``
-        which returns the area within which the GraphicsSocketBlock can be interacted with.
+        This is an inbuilt method of QGraphicsItem, that is overwritten by ``GraphicsConnectorBlock``
+        which returns the area within which the GraphicsConnectorBlock can be interacted with.
         When a mouse click event is detected within this area, this will trigger logic
         that relates to a Block (that being, selecting/deselecting, moving, deleting,
         flipping or opening a parameter window. Or if its Sockets are clicked on,
@@ -485,14 +514,14 @@ class GraphicsSocketBlock(QGraphicsItem):
     def paint(self, painter, style, widget=None):
         """
         This is an inbuilt method of QGraphicsItem, that is overwritten by
-        ``GraphicsSocketBlock`` (otherwise referred to as the Graphics Class of
+        ``GraphicsConnectorBlock`` (otherwise referred to as the Graphics Class of
         the Connector Block. This method is automatically called by the GraphicsView
         Class whenever even a slight user-interaction is detected within the Scene.
 
         When the Connector Block is selected, this method will draw an orange
         outline around the Connector Block, within which it can be interacted with.
 
-        :param painter:a painter (paint brush) that paints and fills the shape of this GraphicsSocketBlock
+        :param painter:a painter (paint brush) that paints and fills the shape of this GraphicsConnectorBlock
         :type painter: QPainter, automatically recognized and overwritten from this method
         :param style: style of the painter (isn't used but must be defined)
         :type style: QStyleOptionGraphicsItem, automatically recognized from this method
@@ -509,13 +538,35 @@ class GraphicsSocketBlock(QGraphicsItem):
             painter.setBrush(Qt.NoBrush)
             painter.drawPath(path_outline.simplified())
 
+        # If the user has chosen to hide the connector blocks, redraw the sockets to be hidden
+        if self.block.scene.hide_connector_blocks:
+            # Grab the [x,y] coordinates of both the input and output sockets of the
+            # connector block, and create a wire path to be drawn between them
+            input_pos = self.block.inputs[0].getSocketPosition()
+            output_pos = self.block.outputs[0].getSocketPosition()
+
+            multi = 1
+
+            # If connector block is flipped, draw the wire path in the opposite direction
+            if self.block.inputs[0].position == RIGHT:
+                multi = -1
+
+            wire_path = QPainterPath(QPointF(input_pos[0] + (multi * 4.5), input_pos[1]))
+            wire_path.lineTo(output_pos[0] - (multi * 4.5), output_pos[1])
+
+            # Set the paint brush width and colour
+            wire_pen = QPen(self._color)
+            wire_pen.setWidth(5)
+            painter.setPen(wire_pen)
+            painter.drawPath(wire_path)
+
     # -----------------------------------------------------------------------------
     def mousePressEvent(self, event):
         """
         This is an inbuilt method of QGraphicsItem, that is overwritten by
-        ``GraphicsSocketBlock`` to detect, and assign logic to a right mouse press event.
+        ``GraphicsConnectorBlock`` to detect, and assign logic to a right mouse press event.
 
-        Currently a detected mouse press event on the GraphicsSocketBlock will
+        Currently a detected mouse press event on the GraphicsConnectorBlock will
         select or deselect it.
 
         Additionally if selected, the GraphicsBlock will be sent to front and will
@@ -533,15 +584,15 @@ class GraphicsSocketBlock(QGraphicsItem):
     def mouseMoveEvent(self, event):
         """
         This is an inbuilt method of QGraphicsItem, that is overwritten by
-        ``GraphicsSocketBlock`` to detect, and assign logic to mouse movement.
+        ``GraphicsConnectorBlock`` to detect, and assign logic to mouse movement.
 
         Currently, the following logic is applied to the Connector Block on mouse movement:
 
-        - a detected mouse move event on this GraphicsSocketBlock will enforce
+        - a detected mouse move event on this GraphicsConnectorBlock will enforce
           grid-snapping on the selected GraphicsSocketBlock (making it move only
           in increments of the same size as the smaller grid squares of the background).
 
-        - the selected GraphicsSocketBlock will be prevented from moving outside the
+        - the selected GraphicsConnectorBlock will be prevented from moving outside the
           maximum zoomed out border of the work area (the GraphicsScene).
 
         - the connection points of any wires connected to the selected Connector Block AND any
@@ -553,34 +604,40 @@ class GraphicsSocketBlock(QGraphicsItem):
 
         super().mouseMoveEvent(event)
 
-        # The x,y position of the mouse cursor is grabbed, and is restricted to update
-        # every 20 pixels (the size of the smaller grid squares, as defined in GraphicsScene)
-        x = round(self.pos().x() / 20) * 20
-        y = round(self.pos().y() / 20) * 20
-        pos = QPointF(x, y)
-        self.setPos(pos)
-
-        # 20 is the width of the smaller grid squares
-        # This logic prevents the selected GraphicsSocketBlock from being dragged outside
-        # the border of the work area (GraphicsScene)
-        padding = 20
-        if self.pos().x() < self.scene().sceneRect().x() + padding:
-            # left
-            self.setPos(self.scene().sceneRect().x() + padding, self.pos().y())
-
-        if self.pos().y() < self.scene().sceneRect().y() + padding:
-            # top
-            self.setPos(self.pos().x(), self.scene().sceneRect().y() + padding)
-
-        if self.pos().x() > (self.scene().sceneRect().x() + self.scene().sceneRect().width() - self.width - padding):
-            # right
-            self.setPos(self.scene().sceneRect().x() + self.scene().sceneRect().width() - self.width - padding, self.pos().y())
-
-        if self.pos().y() > (self.scene().sceneRect().y() + self.scene().sceneRect().height() - self.height - self.title_height - padding):
-            # bottom
-            self.setPos(self.pos().x(), self.scene().sceneRect().y() + self.scene().sceneRect().height() - self.height - self.title_height - padding)
-
-        # Finally, update the connected wires of all Blocks that are affected by this Connector Block being moved
+        # For all selected connector blocks
         for block in self.block.scene.blocks:
+            block.updateConnectedEdges()
+
             if block.grBlock.isSelected():
+
+                # The x,y position of the mouse cursor is grabbed, and is restricted to update
+                # every 20 pixels (the size of the smaller grid squares, as defined in GraphicsScene)
+                x = round(block.grBlock.pos().x() / 20) * 20
+                y = round(block.grBlock.pos().y() / 20) * 20
+                pos = QPointF(x, y)
+                # The position of this GraphicsConnectorBlock is set to the restricted position of the mouse cursor
+                block.grBlock.setPos(pos)
+
+                # 20 is the width of the smaller grid squares
+                # This logic prevents the selected QGraphicsConnectorBlock from being dragged outside
+                # the border of the work area (GraphicsScene)
+                padding = 20
+
+                # left
+                if block.grBlock.pos().x() < block.grBlock.scene().sceneRect().x() + padding:
+                    block.grBlock.setPos(block.grBlock.scene().sceneRect().x() + padding, block.grBlock.pos().y())
+
+                # top
+                if block.grBlock.pos().y() < block.grBlock.scene().sceneRect().y() + padding:
+                    block.grBlock.setPos(block.grBlock.pos().x(), block.grBlock.scene().sceneRect().y() + padding)
+
+                # right
+                if block.grBlock.pos().x() > (block.grBlock.scene().sceneRect().x() + block.grBlock.scene().sceneRect().width() - block.grBlock.width - padding):
+                    block.grBlock.setPos( block.grBlock.scene().sceneRect().x() + block.grBlock.scene().sceneRect().width() - block.grBlock.width - padding, block.grBlock.pos().y())
+
+                # bottom
+                if block.grBlock.pos().y() > (block.grBlock.scene().sceneRect().y() + block.grBlock.scene().sceneRect().height() - block.grBlock.height - block.grBlock.title_height - padding):
+                    block.grBlock.setPos(block.grBlock.pos().x(), block.grBlock.scene().sceneRect().y() + block.grBlock.scene().sceneRect().height() - block.grBlock.height - block.grBlock.title_height - padding)
+
+                # Update the connected wires of all Blocks that are affected by this Connector Block being moved
                 block.updateConnectedEdges()

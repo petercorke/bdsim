@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QGraphicsView
 from bdsim.bdedit.block import Block
 from bdsim.bdedit.block_graphics_wire import GraphicsWire
 from bdsim.bdedit.block_graphics_socket import GraphicsSocket
-from bdsim.bdedit.block_graphics_block import GraphicsBlock, GraphicsSocketBlock
+from bdsim.bdedit.block_graphics_block import GraphicsBlock, GraphicsConnectorBlock
 from bdsim.bdedit.block_wire import Wire, WIRE_TYPE_STEP, WIRE_TYPE_DIRECT, WIRE_TYPE_BEZIER
 
 # =============================================================================
@@ -114,7 +114,7 @@ class GraphicsView(QGraphicsView):
             if isinstance(item, GraphicsWire):
                 item.wire.remove()
             # Or if the item is a Block or Connector Block, remove it
-            elif isinstance(item, GraphicsBlock) or isinstance(item, GraphicsSocketBlock):
+            elif isinstance(item, GraphicsBlock) or isinstance(item, GraphicsConnectorBlock):
                 item.block.remove()
 
     # -----------------------------------------------------------------------------
@@ -127,7 +127,7 @@ class GraphicsView(QGraphicsView):
         # For each selected item within the GraphicsScene
         for item in self.grScene.selectedItems():
             # If the item is a Block or Connector Block, flip its sockets
-            if isinstance(item, GraphicsBlock) or isinstance(item, GraphicsSocketBlock):
+            if isinstance(item, GraphicsBlock) or isinstance(item, GraphicsConnectorBlock):
                 item.block.updateSocketPositions()
 
     # -----------------------------------------------------------------------------
@@ -428,7 +428,7 @@ class GraphicsView(QGraphicsView):
 
         self.last_click_poss = self.mapToScene(event.pos())
 
-        if isinstance(item, GraphicsBlock) or isinstance(item, GraphicsWire) or isinstance(item, GraphicsSocketBlock) or item is None:
+        if isinstance(item, GraphicsBlock) or isinstance(item, GraphicsWire) or isinstance(item, GraphicsConnectorBlock) or item is None:
             if event.modifiers() & Qt.ShiftModifier:
                 event.ignore()
                 fakeEvent = QMouseEvent(QEvent.MouseButtonPress, event.localPos(), event.screenPos(),
@@ -486,7 +486,7 @@ class GraphicsView(QGraphicsView):
         # Get item which we clicked
         item = self.getItemAtClick(event)
 
-        if isinstance(item, GraphicsBlock) or isinstance(item, GraphicsWire) or isinstance(item, GraphicsSocketBlock) or item is None:
+        if isinstance(item, GraphicsBlock) or isinstance(item, GraphicsWire) or isinstance(item, GraphicsConnectorBlock) or item is None:
             if event.modifiers() & Qt.ShiftModifier:
                 event.ignore()
                 fakeEvent = QMouseEvent(event.type(), event.localPos(), event.screenPos(),

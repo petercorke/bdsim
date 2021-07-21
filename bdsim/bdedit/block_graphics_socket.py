@@ -71,7 +71,7 @@ class GraphicsSocket(QGraphicsItem):
         self._color_background_input = QColor("#3483eb")        # Blue
         self._color_background_output = QColor("#f54242")       # Red
         self._color_background_connector = QColor("#42f587")    # Lime Green (currently not used)
-        self._color_outline = QColor("#FF000000")               # Black
+        self._color_outline = QColor("#000000")                 # Black
 
         # Painter pens are assigned a colour and outline thickness
         self._pen = QPen(self._color_outline)
@@ -80,6 +80,8 @@ class GraphicsSocket(QGraphicsItem):
         self._sign_pen.setWidthF(self.sign_width)
         self._char_pen = QPen(QColor('#606060'))
         self._char_pen.setWidthF(self.sign_width)
+
+        self.setFlag(QGraphicsItem.ItemIsSelectable)
 
         # Depending on the socket type, the painter brush is set
         if self.socket.socket_type == INPUT:
@@ -113,38 +115,40 @@ class GraphicsSocket(QGraphicsItem):
         painter.setBrush(self._brush)
         painter.setPen(self._pen)
 
-        # Multi is an internal variable that dictates the direction the socket shapes
-        # should point (this comes into affect when the block sockets are flipped, and the
-        # output triangle socket shape should point either right (default), or left (flipped))
-        multi = 1
+        # If sockets don't need to be hidden, draw them normally, otherwise don't draw them at all
+        if not self.shouldSocketsBeHidden():
+            # Multi is an internal variable that dictates the direction the socket shapes
+            # should point (this comes into affect when the block sockets are flipped, and the
+            # output triangle socket shape should point either right (default), or left (flipped))
+            multi = 1
 
-        # If the socket is flipped, adjust the internal multi variable
-        if self.socket.position == RIGHT:
-            multi = -1
+            # If the socket is flipped, adjust the internal multi variable
+            if self.socket.position == RIGHT:
+                multi = -1
 
-        # This code paints a square for the input socket
-        if self.socket.socket_type == INPUT:
-            painter.drawRect(-self.square, -self.square, 2 * self.square, 2 * self.square)
-            # If the input socket has a sign (will be true for the PROD and SUM Blocks)
-            # paint the relevant sign (+,-,*,/) next to the input socket
-            if self.socket.socket_sign is not None:
-                painter.setPen(self._sign_pen)
-                # The painter path for the respective sign depends on the sign relating to this socket
-                path = self.getSignPath(self.socket.socket_sign, multi)
+            # This code paints a square for the input socket
+            if self.socket.socket_type == INPUT:
+                painter.drawRect(-self.square, -self.square, 2 * self.square, 2 * self.square)
+                # If the input socket has a sign (will be true for the PROD and SUM Blocks)
+                # paint the relevant sign (+,-,*,/) next to the input socket
+                if self.socket.socket_sign is not None:
+                    painter.setPen(self._sign_pen)
+                    # The painter path for the respective sign depends on the sign relating to this socket
+                    path = self.getSignPath(self.socket.socket_sign, multi)
+                    painter.drawPath(path)
+
+            # This code paints a triangle for the output socket
+            if self.socket.socket_type == OUTPUT:
+                path = QPainterPath()
+                path.moveTo(multi * self.triangle_left, multi * self.triangle_up)
+                path.lineTo(-multi * self.triangle_right, 0)
+                path.lineTo(multi * self.triangle_left, -multi * self.triangle_up)
+                path.lineTo(multi * self.triangle_left, multi * self.triangle_up)
                 painter.drawPath(path)
 
-        # This code paints a triangle for the output socket
-        if self.socket.socket_type == OUTPUT:
-            path = QPainterPath()
-            path.moveTo(multi * self.triangle_left, multi * self.triangle_up)
-            path.lineTo(-multi * self.triangle_right, 0)
-            path.lineTo(multi * self.triangle_left, -multi * self.triangle_up)
-            path.lineTo(multi * self.triangle_left, multi * self.triangle_up)
-            painter.drawPath(path)
-
-        # This code paints a circle for the connector socket (currently not in effect)
-        # if self.socket.socket_type == CONNECTOR:
-        #     painter.drawEllipse(-self.radius, -self.radius, 2 * self.radius, 2 * self.radius)
+            # This code paints a circle for the connector socket (currently not in effect)
+            # if self.socket.socket_type == CONNECTOR:
+            #     painter.drawEllipse(-self.radius, -self.radius, 2 * self.radius, 2 * self.radius)
 
     # -----------------------------------------------------------------------------
     def paintPlus(self, multi):
@@ -240,6 +244,19 @@ class GraphicsSocket(QGraphicsItem):
             return self.paintMultiply(multi)
         if sign == DIVIDE:
             return self.paintDivide(multi)
+
+    # -----------------------------------------------------------------------------
+    def shouldSocketsBeHidden(self):
+
+        # Check if the sockets belong to a connector type block
+        if self.socket.node.block_type == "CONNECTOR" or self.socket.node.block_type == "Connector":
+            # Check if the toolbar checkbox for hiding connector blocks has been selected
+            if self.socket.node.scene.hide_connector_blocks:
+                return True
+            else:
+                return False
+        else:
+            return False
 
     # -----------------------------------------------------------------------------
     def boundingRect(self):

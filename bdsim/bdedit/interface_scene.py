@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import QMessageBox, QWidget, QVBoxLayout
 from bdsim.bdedit.block import *
 from bdsim.bdedit.Icons import *
 from bdsim.bdedit.block_wire import Wire
-from bdsim.bdedit.block_socket_block import Connector
+from bdsim.bdedit.block_connector_block import Connector
 from bdsim.bdedit.interface_serialize import Serializable
 from bdsim.bdedit.interface_graphics_scene import GraphicsScene
 
@@ -53,6 +53,10 @@ class Scene(Serializable):
         self.blocks = []
         self.wires = []
         self.intersection_list = []
+
+        # Variable for toggling between connector blocks being visible or not
+        # False by default
+        self.hide_connector_blocks = False
 
         # The scened dimensions are initially set to the width/height of the desktop
         # screen, but later adjusted with self.updateSceneDimensions()
@@ -300,7 +304,7 @@ class Scene(Serializable):
             # Connector block is always available with this application, it was manually
             # imported in the Interface Class, hence must be manually re-created)
             if block_type == "CONNECTOR" or block_type == "Connector":
-                Connector(self, self.window, name=block_data['title']).deserialize(block_data, hashmap)
+                Connector(self, self.window).deserialize(block_data, hashmap)
             # Otherwise if it is any other block (will be an auto-imported block)
             else:
                 # For each block class within the blocklist
@@ -311,7 +315,12 @@ class Scene(Serializable):
                     # The block_class.__name__ supports older files which would of used self.__class__.__name__
                     # to define the block type
                     if block_type == blockname(block_class) or block_type == block_class.__name__:
-                        block_class(self, self.window, name=block_data['title']).deserialize(block_data, hashmap)
+                        #block_class(self, self.window, name=block_data['title']).deserialize(block_data, hashmap)
+                        block_class().deserialize(block_data, hashmap)
+                        # block_class(self, self.window, block_class.block_type, block_class.parameters, block_class.inputsNum,
+                        #            block_class.outputsNum, block_class.block_url, block_class.icon, width=block_class.width,
+                        #            height=block_class.height, title=block_class.title).deserialize(block_data, hashmap)
+
                         break
 
         # Finally recreate all the wires that were saved

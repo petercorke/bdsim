@@ -128,7 +128,7 @@ class Stop(SinkBlock):
 
     def __init__(self, func=None, **kwargs):
         """
-        :param func: evaluate stop condition
+        :param func: evaluate stop condition, defaults to None
         :type func: callable, optional
         :param kwargs: common Block options
         :return: A STOP block
@@ -190,8 +190,8 @@ class Null(SinkBlock):
 
     def __init__(self, nin=1, **kwargs):
         """
-        :param nin: number of input ports
-        :type nin: int
+        :param nin: number of input ports, defaults to 1
+        :type nin: int, optional
         :param kwargs: common Block options
         :return: A NULL block
         :rtype: Null instance

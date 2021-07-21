@@ -146,9 +146,9 @@ class LTI_SS(TransferBlock):
         r"""
         :param N: numerator coefficients, defaults to 1
         :type N: array_like, optional
-        :param D: denominator coefficients, defaults to [1, 1]
+        :param D: denominator coefficients, defaults to [1,1]
         :type D: array_like, optional
-        :param x0: initial states, defaults to zero
+        :param x0: initial states, defaults to None
         :type x0: array_like, optional
         :param kwargs: common Block options
         :return: A SCOPE block
@@ -238,9 +238,9 @@ class LTI_SISO(LTI_SS):
         r"""
         :param N: numerator coefficients, defaults to 1
         :type N: array_like, optional
-        :param D: denominator coefficients, defaults to [1, 1]
+        :param D: denominator coefficients, defaults to [1,1]
         :type D: array_like, optional
-        :param x0: initial states, defaults to zero
+        :param x0: initial states, defaults to None
         :type x0: array_like, optional
         :param kwargs: common Block options
         :return: A SCOPE block

@@ -51,7 +51,8 @@ class Socket(Serializable):
     """
 
     # -----------------------------------------------------------------------------
-    def __init__(self, node, index=0, position=LEFT, socket_type=INPUT, multi_wire=True):
+    #def __init__(self, node, index=0, position=LEFT, socket_type=INPUT, multi_wire=True):
+    def __init__(self, node, index=0, position=LEFT, socket_type=INPUT, multi_wire=True, socket_label=None):
         """
         This method initializes an instance of the ``Socket`` Class.
 
@@ -72,7 +73,8 @@ class Socket(Serializable):
         self.index = index
         self.position = position
         self.socket_type = socket_type
-        self.socket_sign = None
+        self.socket_sign = socket_label
+        #self.socket_sign = None
         self.is_multi_wire = multi_wire
         self.grSocket = GraphicsSocket(self)
         
@@ -240,6 +242,7 @@ class Socket(Serializable):
             ('multi_wire', self.is_multi_wire),
             ('position', self.position),
             ('socket_type', self.socket_type),
+            ('socket_sign', self.socket_sign),
         ])
 
     # -----------------------------------------------------------------------------

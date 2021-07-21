@@ -171,11 +171,15 @@ class GraphicsScene(QGraphicsScene):
                 pen.setWidth(5)
                 painter.setPen(pen)
 
-                # Go through each intersection point and paint back the vertical lines
+                # Go through each intersection point and paint back the horizontal lines
                 for intersection_point in self.scene.intersection_list:
                     x = intersection_point[0]
                     y = intersection_point[1]
-                    painter.drawLine(x, y-6, x, y+6)
+
+                    line_segement_path = QPainterPath(QPointF(x + 6.5, y))
+                    line_segement_path.lineTo(x - 6.5, y)
+
+                    painter.drawPath(line_segement_path)
 
     # -----------------------------------------------------------------------------
     def drawBackground(self, painter, rect):

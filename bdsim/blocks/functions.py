@@ -41,12 +41,12 @@ class Sum(FunctionBlock):
     +------------+---------+---------+
     """
 
-    def __init__(self, signs, *inputs, angles=False, **kwargs):
+    def __init__(self, signs='++', *inputs, angles=False, **kwargs):
         """
-        :param signs: signs associated with input ports, + or -
-        :type signs: str
-        :param angles: the signals are angles, wrap to [-pi,pi)
-        :type angles: bool
+        :param signs: signs associated with input ports, accepted characters: + or -, defaults to '++'
+        :type signs: str, optional
+        :param angles: the signals are angles, wraps to [-pi,pi], defaults to False
+        :type angles: bool, optional
         :param kwargs: common Block options
         :return: A SUM block
         :rtype: Sum instance
@@ -120,14 +120,14 @@ class Prod(FunctionBlock):
     +------------+---------+---------+
     """
 
-    def __init__(self, ops, *inputs, matrix=False, **kwargs):
+    def __init__(self, ops='**', *inputs, matrix=False, **kwargs):
         """
-        :param ops: operations associated with input ports * or /
-        :type ops: str
+        :param ops: operations associated with input ports, accepted characters: * or /, defaults to '**'
+        :type ops: str, optional
         :param inputs: Optional incoming connections
         :type inputs: Block or Plug
-        :param matrix: Arguments are matrices, use @ and np.linalg.inv, default False
-        :type matrix: bool
+        :param matrix: Arguments are matrices, defaults to False
+        :type matrix: bool, optional
         :param kwargs: common Block options
         :return: A PROD block
         :rtype: Prod instance
@@ -207,13 +207,13 @@ class Gain(FunctionBlock):
     +------------+---------+---------+
     """
 
-    def __init__(self, K=0, *inputs, premul=False, **kwargs):
+    def __init__(self, K=1, *inputs, premul=False, **kwargs):
         """
-        :param K: The gain value
-        :type K: float
+        :param K: The gain value, defaults to 1
+        :type K: array_like
         :param inputs: Optional incoming connection
         :type inputs: Block or Plug
-        :param premul: premultiply by constant, default is postmultiply
+        :param premul: premultiply by constant, default is postmultiply, defaults to False
         :type premul: bool, optional
         :param kwargs: common Block options
         :return: A GAIN block
@@ -354,18 +354,18 @@ class Function(FunctionBlock):
  
     """
 
-    def __init__(self, func=None, nin=1, nout=1, dict=False, pargs=(), dargs={}, **kwargs):
+    def __init__(self, func=None, nin=1, nout=1, dict=False, pargs=[], dargs={}, **kwargs):
         """
-        :param func: A function or lambda, or list thereof
-        :type func: callable or sequence of callables
+        :param func: A function or lambda, or list thereof, defaults to None
+        :type func: callable or sequence of callables, optional
         :param nin: number of inputs, defaults to 1
         :type nin: int, optional
         :param nout: number of outputs, defaults to 1
         :type nout: int, optional
-        :param dict: pass in a reference to a dictionary instance
-        :type dict: bool
-        :param pargs: extra positional arguments passed to the function, defaults to ()
-        :type pargs: tuple, optional
+        :param dict: pass in a reference to a dictionary instance, defaults to False
+        :type dict: bool, optional
+        :param pargs: extra positional arguments passed to the function, defaults to []
+        :type pargs: list, optional
         :param dargs: extra keyword arguments passed to the function, defaults to {}
         :type dargs: dict, optional
         :param kwargs: common Block options
@@ -515,16 +515,16 @@ class Interpolate(FunctionBlock):
 
     def __init__(self, x=None, y=None, xy=None, time=False, kind='linear', **kwargs):
         """
-        :param x: x-values of function
+        :param x: x-values of function, defaults to None
         :type x: array_like, shape (N,) optional
-        :param y: y-values of function
+        :param y: y-values of function, defaults to None
         :type y: array_like, optional
-        :param xy: combined x- and y-values of function
+        :param xy: combined x- and y-values of function, defaults to None
         :type xy: array_like, optional
         :param time: x new is simulation time, defaults to False
-        :type time: bool
+        :type time: bool, optional
         :param kind: interpolation method, defaults to 'linear'
-        :type kind: str
+        :type kind: str, optional
         :param kwargs: common Block options
         :return: An INTERPOLATE block
         :rtype: An Interpolate instance

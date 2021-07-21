@@ -29,7 +29,7 @@ class Connector(Block):
     - an output: can have n Wires connecting into it
     """
     # -----------------------------------------------------------------------------
-    def __init__(self, scene, window, name="Unnamed Connector Block", pos=(0, 0)):
+    def __init__(self, scene, window, title="Unnamed Connector Block"):
         """
         This method initializes an instance of the ``Connector`` Block Class.
 
@@ -37,13 +37,13 @@ class Connector(Block):
         :type scene: ``Scene``, required
         :param window: inherited through ``Block``
         :type window: ``QGridLayout``, required
-        :param name: defaults to "Unnamed Connector Block"
-        :type name: str, optional
+        :param title: defaults to "Unnamed Connector Block"
+        :type title: str, optional
         :param pos: inherited through ``Block``
         :type pos: tuple of 2-ints, optional
         """
 
-        super().__init__(scene, window, name, pos)
+        super().__init__(scene, window)
 
         # Same variables inherited from the Block class
         self.scene = scene
@@ -51,7 +51,7 @@ class Connector(Block):
 
         # No block title as the Connector Blocks have no name, as
         # this type of block is more of a tool than a Block
-        self.position = pos
+        #self.position = pos
         # The Connector Block doesn't have its own subclass like the other Block types,
         # hence some of the variables are defined in this class level, these being:
         # * the block type
@@ -63,7 +63,16 @@ class Connector(Block):
         self.width = 13
         self.height = 12
 
-        self.grBlock = GraphicsSocketBlock(self)
+        self.icon = ''
+        self.block_url = ''
+        # self.title = ''
+        # self.parameters = []
+        # self.block_url = ''
+        # self.inputsNum = None
+        # self.outputsNum = None
+
+
+        self.grBlock = GraphicsConnectorBlock(self)
 
         self.makeInputSockets(1, LEFT, socketType=INPUT)
         self.makeOutputSockets(1, RIGHT, socketType=OUTPUT)
