@@ -223,6 +223,50 @@ class DeMux(FunctionBlock):
 
 # ------------------------------------------------------------------------ #
 @block
+class Index(FunctionBlock):
+    """
+    :blockname:`INDEX`
+    
+    .. table::
+       :align: left
+    
+    +------------+---------+---------+
+    | inputs     | outputs |  states |
+    +------------+---------+---------+
+    | 1          | 1       | 0       |
+    +------------+---------+---------+
+    | ndarray    | ndarray |         |
+    +------------+---------+---------+
+    """
+
+    def __init__(self, index=[], **kwargs):
+        """
+        :param index: elements of input array, defaults to []
+        :type nout: list, slice or str, optional
+        :param kwargs: common Block options
+        :return: An INDEX block
+        :rtype: Index instance
+        
+        Create an index block.
+
+        This block has a single input port and output output port.  The specified
+        elements of the 1d-array on the input port are output as another
+        1d-array.  The selection can be a list of indices, a Python slice
+        object, or a string with Python slice notation, eg. "::-1"
+
+        """
+        super().__init__(nin=1, nout=1, **kwargs)
+        self.type = 'index'
+
+        if isinstance(index, str):
+            args = [None if a == '' else int(a) for a in index.split(':')]
+            self.index = slice(*args)
+        self.index = index
+    
+    def output(self, t=None):
+        return [self.inputs[self.index]]
+# ------------------------------------------------------------------------ #
+@block
 class SubSystem(SubsystemBlock):
     """
     :blockname:`SUBSYSTEM`

@@ -40,8 +40,10 @@ class Sum(FunctionBlock):
     | A(N,M)     | A(N,M)  |         | 
     +------------+---------+---------+
     """
+    varinputs = True
 
     def __init__(self, signs='++', *inputs, angles=False, **kwargs):
+
         """
         :param signs: signs associated with input ports, accepted characters: + or -, defaults to '++'
         :type signs: str, optional
@@ -119,6 +121,7 @@ class Prod(FunctionBlock):
     | A(N,M)     | A(N,M)  |         | 
     +------------+---------+---------+
     """
+    varinputs = True
 
     def __init__(self, ops='**', *inputs, matrix=False, **kwargs):
         """
@@ -353,8 +356,10 @@ class Function(FunctionBlock):
     +------------+---------+---------+
  
     """
-
+    varinputs = True
+    
     def __init__(self, func=None, nin=1, nout=1, dict=False, pargs=[], dargs={}, **kwargs):
+    
         """
         :param func: A function or lambda, or list thereof, defaults to None
         :type func: callable or sequence of callables, optional
@@ -372,7 +377,9 @@ class Function(FunctionBlock):
         :return: A FUNCTION block
         :rtype: A Function instance
     
-        Create a Python function block.
+        Create a Python function block.  Inputs to the block are passed
+        as separate arguments to the function.  Constant positional or 
+        keyword arguments can also be passed to the function.
     
         A block with one output port that sums its two input ports is::
             
@@ -383,14 +390,14 @@ class Function(FunctionBlock):
             def myfun(u1, u2, param1, param2):
                 pass
             
-            FUNCTION(myfun, nin=2, args=(p1,p2))
+            FUNCTION(myfun, nin=2, pargs=(p1,p2))
             
         If we need access to persistent (static) data, to keep some state::
         
             def myfun(u1, u2, param1, param2, dict):
                 pass
             
-            FUNCTION(myfun, nin=2, args=(p1,p2), dict=True)
+            FUNCTION(myfun, nin=2, pargs=(p1,p2), dict=True)
             
         where a dictionary is passed in as the last argument which is kept from call to call.
             
@@ -399,12 +406,12 @@ class Function(FunctionBlock):
             def myfun(u1, u2, param1=1, param2=2, param3=3, param4=4):
                 pass
             
-            FUNCTION(myfun, nin=2, args={'param2':7, 'param3':8})
+            FUNCTION(myfun, nin=2, dargs={'param2':7, 'param3':8})
                      
         A block with two inputs and two outputs, the outputs are defined by two lambda
         functions with the same inputs::
             
-            FUNCTION( [ lambda x, y: x_t, lanbda x, y: x* y])
+            FUNCTION( [ lambda x, y: x_t, lambda x, y: x* y])
         
         A block with two inputs and two outputs, the outputs are defined by a 
         single function::

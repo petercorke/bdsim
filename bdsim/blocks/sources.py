@@ -12,11 +12,10 @@ Source blocks:
 import numpy as np
 import math
 
-from bdsim.components import SourceBlock, block
+from bdsim.components import SourceBlock
 
 
 # ------------------------------------------------------------------------ #
-@block
 class Constant(SourceBlock):
     """
     :blockname:`CONSTANT`
@@ -60,7 +59,7 @@ class Constant(SourceBlock):
         return [self.value]               
 
 # ------------------------------------------------------------------------ #
-@block
+
 class Time(SourceBlock):
     """
     :blockname:`TIME`
@@ -97,7 +96,6 @@ class Time(SourceBlock):
         return [t]  
 # ------------------------------------------------------------------------ #
 
-@block
 class WaveForm(SourceBlock):
     """
     :blockname:`WAVEFORM`
@@ -197,7 +195,7 @@ class WaveForm(SourceBlock):
         self.offset = offset
         self.type = 'waveform'
 
-    def start(self):
+    def start(self, state=None):
         if self.waveform == 'square':
             t1 = self.phase / self.freq
             t2 = (self.duty + self.phase) / self.freq
@@ -242,7 +240,6 @@ class WaveForm(SourceBlock):
 
 # ------------------------------------------------------------------------ #
 
-@block
 class Piecewise(SourceBlock):
     """
     :blockname:`PIECEWISE`
@@ -296,7 +293,6 @@ class Piecewise(SourceBlock):
     
 # ------------------------------------------------------------------------ #
 
-@block
 class Step(SourceBlock):
     """
     :blockname:`STEP`
@@ -340,8 +336,8 @@ class Step(SourceBlock):
         self.on = on
         self.type = "step"
 
-    def start(self):
-        self.bd.simstate.declare_event(self, self.T)
+    def start(self, state=None):
+        state.declare_event(self, self.T)
 
     def output(self, t=None):
         if t >= self.T:
@@ -354,7 +350,6 @@ class Step(SourceBlock):
 
 # ------------------------------------------------------------------------ #
 
-@block
 class Ramp(SourceBlock):
     """
     :blockname:`RAMP`
@@ -396,8 +391,8 @@ class Ramp(SourceBlock):
         self.slope = slope
         self.type = "ramp"
 
-    def start(self):
-        self.bd.simstate.declare_event(self, self.T)
+    def start(self, state=None):
+        state.declare_event(self, self.T)
 
     def output(self, t=None):
         if t >= self.T:
