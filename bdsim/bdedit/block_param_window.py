@@ -98,7 +98,9 @@ class ParamWindow(QWidget):
 
         # The follow label is added to the parameter window, naming it
         # Items within the parameter window layout manager are set to align towards the top
-        self.layout.addWidget(QLabel('<font size=8><b>Parameter Window</font>'))
+        param_window_label = QLabel('<font size=8><b>Block settings</font>')
+        param_window_label.setAlignment(Qt.AlignCenter)
+        self.layout.addWidget(param_window_label)
         self.layout.setAlignment(Qt.AlignTop)
 
         # Its background is filled

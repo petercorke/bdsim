@@ -347,8 +347,7 @@ class GraphicsBlock(QGraphicsItem):
         # If the GraphicsBlock is currently selected when the right mouse button
         # is pressed, the parameter window will be toggled (On/Off)
         if event.button() == Qt.RightButton:
-            if self.isSelected():
-                self.block.toggleParamWindow()
+            self.block.toggleParamWindow()
 
         super().mousePressEvent(event)
 

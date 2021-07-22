@@ -242,7 +242,7 @@ class Index(FunctionBlock):
     def __init__(self, index=[], **kwargs):
         """
         :param index: elements of input array, defaults to []
-        :type nout: list, slice or str, optional
+        :type index: list, slice or str, optional
         :param kwargs: common Block options
         :return: An INDEX block
         :rtype: Index instance

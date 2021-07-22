@@ -251,11 +251,11 @@ class ScopeXY(GraphicsBlock):
 
     def __init__(self, style=None, scale='auto', aspect='equal', labels=['X', 'Y'], init=None, nin=2, **kwargs):
         """
-        :param style: line style
+        :param style: line style, defaults to None
         :type style: optional str or dict
         :param scale: fixed y-axis scale or defaults to 'auto'
         :type scale: str or array_like(2) or array_like(4)
-        :param labels: axis labels (xlabel, ylabel)
+        :param labels: axis labels (xlabel, ylabel), defaults to ["X","Y"]
         :type labels: 2-element tuple or list
         :param kwargs: common Block options
         :return: A SCOPEXY block
@@ -373,7 +373,7 @@ class ScopeXY1(ScopeXY):
 
     def __init__(self, indices=[0, 1], **kwargs):
         """
-        :param indices: indices of elements to select from block input vector
+        :param indices: indices of elements to select from block input vector, defaults to [0,1]
         :type indices: array_like(2)
         :param style: line style
         :type style: optional str or dict

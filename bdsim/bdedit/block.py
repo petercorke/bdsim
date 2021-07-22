@@ -344,8 +344,9 @@ class Block(Serializable):
         # Sets the visibility of the parameter window to opposite of what the
         # variable 'self._param_visible' is set to, and flips the boolean state of
         # that variable (True -> False, or False -> True)
-        self.parameterWindow.setVisible(not self._param_visible)
-        self._param_visible = not self._param_visible
+        if self.parameterWindow:
+            self.parameterWindow.setVisible(not self._param_visible)
+            self._param_visible = not self._param_visible
 
     # -----------------------------------------------------------------------------
     def closeParamWindow(self):
