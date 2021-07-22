@@ -306,9 +306,6 @@ class Wire(Serializable):
         :rtype: Boolean
         """
 
-        # print(data)
-        # [print(info) for info in data]
-
         # The id, and other variables of this Wire are set to whatever was stored
         # as its id and other variables in the JSON file.
         self.id = data['id']

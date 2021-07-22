@@ -63,14 +63,14 @@ class Connector(Block):
         self.width = 13
         self.height = 12
 
+        self.title = ''
+        self.parameters = []
+        self.block_url = ''
         self.icon = ''
         self.block_url = ''
-        # self.title = ''
-        # self.parameters = []
-        # self.block_url = ''
+
         # self.inputsNum = None
         # self.outputsNum = None
-
 
         self.grBlock = GraphicsConnectorBlock(self)
 

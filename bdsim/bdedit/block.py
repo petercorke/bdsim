@@ -182,6 +182,9 @@ class Block(Serializable):
         # displayed for this instance of a Block
         self._param_visible = False
 
+        # Initially, parameterWindow is set to None, later replaced by the ParamWindow class, if block should have one
+        self.parameterWindow = None
+
         # Minimum spacing distance between Sockets
         self.socket_spacing = 20
 
@@ -824,9 +827,10 @@ class Block(Serializable):
         self.id = data['id']
 
         # The remaining parameters associated to this Block are mapped to itself
-        hashmap[data['id']] = self
+        #hashmap[data['id']] = self
 
         if self.block_type not in ["Connector", "CONNECTOR"]:
+            self.title = data['title']
             self.inputsNum = data['inputsNum']
             self.outputsNum = data['outputsNum']
             self.width = data['width']
@@ -853,9 +857,9 @@ class Block(Serializable):
         # The saved user-editable parameters associated with the Block, are written over the default ones
         # this instance of the block was created with, after reconstruction.
         # Iterator for parameters
-
         if self.block_type not in ["Connector", "CONNECTOR"]:
             i = 0
+
             for paramName, paramVal in data['parameters']:
                 # If debug mode is enabled, this code will print to console to validate that the
                 # parameters are being overwritten into the same location they were previously stored in.
@@ -886,6 +890,18 @@ class Block(Serializable):
         if self.block_type not in ["Connector", "CONNECTOR"]:
             if self.parameters:
                 self._createParamWindow()
+
+        # print("block type, name: ", [self.block_type, self.title])
+        # print("input sockets:")
+        # for socket in self.inputs:
+        #     if socket:
+        #         print("socket, id:", [socket, id(socket)])
+        # print()
+        # print("output sockets:")
+        # for socket in self.outputs:
+        #     if socket:
+        #         print("socket, id:", [socket, id(socket)])
+        # print("----------------------")
 
         return True
 

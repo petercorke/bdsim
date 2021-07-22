@@ -3,6 +3,7 @@ import inspect
 import copy
 import numpy as np
 import importlib.util
+import inspect
 from pathlib import Path
 
 #import bdsim
@@ -20,7 +21,7 @@ def import_blocks(scene, window):
     imported_block_groups = []
 
     for i, block in enumerate(block_list.items()):
-        #if i == 0:
+        #if i == 4:
             # blocks is a dic of tuples
             # (block_type, {block_docstring_data})
 
@@ -98,9 +99,14 @@ def import_blocks(scene, window):
                             # 2.
                             param_type = eval(item)
 
-                            # Check first if evaluated item is an int (we expect to see a string, so throw error)
-                            if isinstance(param_type, int) or isinstance(param_type, float):
-                                unexpected_format.append(item)
+                            # # Check first if evaluated item is an int (we expect to see a string, so throw error)
+                            # if isinstance(param_type, int) or isinstance(param_type, float):
+                            #     unexpected_format.append(item)
+
+                            # Check to see if evaluated item is NOT a class type, e.g. NOT <class 'int'>.
+                            # In this case, wrap the evaluated item in type()
+                            if not inspect.isclass(param_type):
+                                found_types.append(type(param_type))
 
                             # Otherwise, if item is in the form of a string, append that value to list of found types
                             else:
@@ -297,7 +303,7 @@ def import_blocks(scene, window):
                     print("@@@@@@@ Fatal error: Unable to parse parameter info, param not constructed " + block_type + ": -> " +param_name + ". @@@@@@")
 
             if not block_ds["params"]:
-                print("\n\nThis block has no parameters: ", block_type, " param_docstring: ", block_ds["params"])
+                #print("\n\nThis block has no parameters: ", block_type, " param_docstring: ", block_ds["params"])
                 block_parameters = [["dummy_parameter", str, None, []]]
 
 
