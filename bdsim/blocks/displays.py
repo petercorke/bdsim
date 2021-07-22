@@ -249,7 +249,7 @@ class ScopeXY(GraphicsBlock):
     +--------+---------+---------+
     """
 
-    def __init__(self, style=None, scale='auto', aspect='equal', labels=['X', 'Y'], init=None, **kwargs):
+    def __init__(self, style=None, scale='auto', aspect='equal', labels=['X', 'Y'], init=None, nin=2, **kwargs):
         """
         :param style: line style
         :type style: optional str or dict
@@ -276,9 +276,11 @@ class ScopeXY(GraphicsBlock):
             
             - a 2-tuple [min, max] which is used for the x- and y-axes
             - a 4-tuple [xmin, xmax, ymin, ymax]
+
+        :input x: signal plotted on horizontal axis
+        :input y: signal plotted on vertical axis
         """
-        super().__init__(nin=2, **kwargs)
-        self.nin = 2
+        super().__init__(nin=nin, **kwargs)
         self.xdata = []
         self.ydata = []
         self.type = 'scopexy'
@@ -328,9 +330,12 @@ class ScopeXY(GraphicsBlock):
         super().start()
 
     def step(self, state=None):
-        # inputs are set
-        self.xdata.append(self.inputs[0])
-        self.ydata.append(self.inputs[1])
+        self._step(self.inputs[0], self.inputs[1], state)
+
+    def _step(self, x, y, state):
+        self.xdata.append(x)
+        self.ydata.append(y)
+
         if self.bd.options.graphics:
             plt.figure(self.fig.number)
             self.line.set_data(self.xdata, self.ydata)
@@ -349,6 +354,64 @@ class ScopeXY(GraphicsBlock):
             plt.show(block=block)
             super().done()
             
+@block
+class ScopeXY1(ScopeXY):
+    """
+    :blockname:`SCOPEXY1`
+    
+    .. table::
+       :align: left
+    
+    +-------------+---------+---------+
+    | inputs      | outputs |  states |
+    +-------------+---------+---------+
+    | 1           | 0       | 0       |
+    +-------------+---------+---------+
+    | ndarray(2)  |         |         | 
+    +-------------+---------+---------+
+    """
+
+    def __init__(self, indices=[0, 1], **kwargs):
+        """
+        :param indices: indices of elements to select from block input vector
+        :type indices: array_like(2)
+        :param style: line style
+        :type style: optional str or dict
+        :param scale: fixed y-axis scale or defaults to 'auto'
+        :type scale: str or array_like(2) or array_like(4)
+        :param labels: axis labels (xlabel, ylabel)
+        :type labels: 2-element tuple or list
+        :param kwargs: common Block options
+        :return: A SCOPEXY block
+        :rtype: ScopeXY instance
+
+        Create an XY scope with vector input
+
+        This block has one vector input and two elemetns are plotted against each other. The first
+        selected element is the horizontal axis, and second is the vertical axis.
+        
+        The line style is given by either:
+            
+            - a dict of options for ``plot``, or
+            - as a simple MATLAB-style linestyle like ``'k--'``.
+        
+        The scale factor defaults to auto-scaling but can be fixed by
+        providing either:
+            
+            - a 2-tuple [min, max] which is used for the x- and y-axes
+            - a 4-tuple [xmin, xmax, ymin, ymax]
+        """
+        super().__init__(nin=1, **kwargs)
+        if len(indices) != 2:
+            raise ValueError('indices must have 2 elements')
+        self.indices = [int(x) for x in indices]
+
+    def step(self, state=None):
+        # inputs are set
+        x = self.inputs[0][self.indices[0]]
+        y = self.inputs[0][self.indices[1]]
+
+        super()._step(x, y, state)
 
 # ------------------------------------------------------------------------ #
 
