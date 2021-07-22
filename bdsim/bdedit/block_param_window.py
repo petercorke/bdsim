@@ -242,7 +242,7 @@ class ParamWindow(QWidget):
         self.row2.layout = QHBoxLayout()
 
         # Make a label of the block title
-        self.title_label = QLabel('<font size=4><b>title: </font>')
+        self.title_label = QLabel('<font size=4><b>name: </font>')
         # Make an editable line for the title, and populate it with the current block title
         self.title_line = QLineEdit(self.block.title)
         # Set the width of the editable line to the above-defined width (150 pixels)
