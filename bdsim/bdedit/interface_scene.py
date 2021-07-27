@@ -1,5 +1,7 @@
 # Library imports
 import json
+import time
+import getpass
 from collections import OrderedDict
 
 # PyQt5 imports
@@ -77,6 +79,10 @@ class Scene(Serializable):
         # and the scene dimensions are updated
         self.grScene = GraphicsScene(self)
         self.updateSceneDimensions()
+
+        # Create variables to record when and by who this diagram was created
+        self.creation_time = int(time.time())
+        self.created_by = getpass.getuser()
 
     # -----------------------------------------------------------------------------
     def addBlock(self, block):
@@ -271,6 +277,8 @@ class Scene(Serializable):
         for wire in self.wires: wires.append(wire.serialize())
         return OrderedDict([
             ('id', self.id),
+            ('created_by', self.created_by),
+            ('creation_time', self.creation_time),
             ('scene_width', self.scene_width),
             ('scene_height', self.scene_height),
             ('blocks', blocks),
@@ -294,6 +302,16 @@ class Scene(Serializable):
 
         # The current scene is cleared if anything inside it exists
         self.clear()
+
+        # Extract data of who created this diagram and when
+        try:
+            self.creation_time = data["creation_time"]
+            self.created_by = data["created_by"]
+        # If that information isn't stored in the json file, set it to current user and time
+        except:
+            self.creation_time = int(time.time())
+            self.created_by = getpass.getuser()
+
         hashmap = {}
 
         # All the blocks which were saved, are re-created from the JSON file
@@ -315,11 +333,7 @@ class Scene(Serializable):
                     # The block_class.__name__ supports older files which would of used self.__class__.__name__
                     # to define the block type
                     if block_type == blockname(block_class) or block_type == block_class.__name__:
-                        #block_class(self, self.window, name=block_data['title']).deserialize(block_data, hashmap)
                         block_class().deserialize(block_data, hashmap)
-                        # block_class(self, self.window, block_class.block_type, block_class.parameters, block_class.inputsNum,
-                        #            block_class.outputsNum, block_class.block_url, block_class.icon, width=block_class.width,
-                        #            height=block_class.height, title=block_class.title).deserialize(block_data, hashmap)
 
                         break
 

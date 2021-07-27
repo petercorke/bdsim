@@ -188,14 +188,19 @@ class Interface(QWidget):
 
         self.blockLibrary = import_blocks(self.scene, self.layout)
 
-        # print("\nfrom self.blockLibrary")
-        # for group in self.blockLibrary:
-        #     for block_cls in group[1]:
-        #         for items in block_cls[1].__dict__.items():
-        #            print(items)
-        #         print()
-        #
-        # print("\n----------------------------------\n")
+        print("\nfrom self.blockLibrary")
+        for group in self.blockLibrary:
+            for block_cls in group[1]:
+                for variables in block_cls[1].__dict__.items():
+                    if variables[0] in ["parameters"]:
+                        print("('" + variables[0] + "',")
+                        for param in variables[1]:
+                            print("     ", param)
+                    else:
+                        print(variables)
+                print()
+
+        print("\n----------------------------------\n")
         #
         # print("\nfrom blocklist")
         # for block_cls in blocklist:
@@ -341,6 +346,8 @@ class Interface(QWidget):
         # imported (and stored into self.blockLibrary at the Interface's initialization).
         for sub_class_group in self.blockLibrary:
 
+            group_of_buttons = []
+
             # Grab the each group that blocks belong to, and create a library panel button for those groups
             cleaned_class_group = sub_class_group[0][:-1] if sub_class_group[0].endswith('s') else sub_class_group[0]
             #button_name = cleaned_class_group + "_button"
@@ -348,9 +355,14 @@ class Interface(QWidget):
             # self.button_name.setStyleSheet("QPushButton { text-align: left }")
             # self.libraryBrowserBox.layout.addWidget(self.button_name)
 
-            group_button_name = QPushButton(" + " + cleaned_class_group.capitalize() + " Blocks")
-            group_button_name.setStyleSheet("QPushButton { text-align: left }")
-            self.libraryBrowserBox.layout.addWidget(group_button_name)
+            group_button = QPushButton(" + " + cleaned_class_group.capitalize() + " Blocks")
+            group_button.setStyleSheet("QPushButton { text-align: left }")
+            group_button.clicked.connect(self.toggle_sub_buttons)
+            group_of_buttons.append((group_button, cleaned_class_group.capitalize()))
+
+            self.libraryBrowserBox.layout.addWidget(group_button)
+
+            list_of_sub_buttons = []
 
             # Go through each class block in the 2nd element of the group of blocks, and create buttons to spawn each
             # of those blocks into bdedit
@@ -361,42 +373,16 @@ class Interface(QWidget):
                 # Set the button to be invisible by default (for the list's to be hidden)
                 #button.setVisible(False)
                 # Connect button to calling a new instance of the block type class
-                #button.clicked.connect(lambda checked, blockClass=class_block[1], scene=self.scene, layout=self.layout: blockClass(scene, layout))
                 button.clicked.connect(lambda checked, blockClass=class_block[1]: blockClass())
                 # Add button to list of scrollbar buttons for reference of what buttons should be
                 # affected when expanding/hiding the list sections
-                self.list_of_scrollbar_buttons.append((button, class_block[1]))
+                list_of_sub_buttons.append((button, class_block[1]))
+                # self.list_of_scrollbar_buttons.append((button, class_block[1]))
                 # Add the button to the library browser box layout (the scrollable widget)
                 self.libraryBrowserBox.layout.addWidget(button)
 
-
-
-                #block_button_name = class_block[0] + "_button"
-                #self.block_button_name = QPushButton(class_block[0])
-                # block_button_name = QPushButton(class_block[0])
-                #self.block_button_name.setVisible(False)
-
-                #self.block_button_name.clicked.connect(lambda: self.load_button(class_block[1], self.scene, self.layout))
-                #self.block_button_name.clicked.connect(lambda checked: self.load_button(class_block[1], self.scene, self.layout))
-                #self.
-
-                #print(class_block[1])
-
-
-                # block_button_name.clicked.connect(lambda checked, btn_id=id(block_button_name): self.create_block_instance_button(btn_id))
-                #block_button_name.clicked.connect(lambda checked, blockClass=class_block[1]: blockClass())
-                #block_button_name.clicked.connect(lambda: print(id(block_button_name), class_block[1]))
-                #block_button_name.clicked.connect(lambda checked, blockClass=class_block[1]: blockClass())
-
-                #self.block_button_name.clicked.connect(lambda checked, blockClass=class_block[1], scene=self.scene, layout=self.layout: blockClass(scene, layout))
-                #self.block_button_name.clicked.connect(lambda checked, blockClass=class_block[1], scene=self.scene, layout=self.layout: blockClass(scene, layout, class_block[1].title, (0,0)))
-                #self.block_button_name.clicked.connect(lambda checked, blockClass=class_block[1], scene=self.scene, layout=self.layout: blockClass(scene, layout, blockClass.block_type, blockClass.parameters, blockClass.inputsNum, blockClass.outputsNum, blockClass.block_url, blockClass.icon, width=blockClass.width, height=blockClass.height, title=blockClass.title))
-                #self.list_of_scrollbar_buttons.append((self.block_button_name, class_block[1]))
-                #self.libraryBrowserBox.layout.addWidget(self.block_button_name)
-
-                # self.list_of_scrollbar_buttons.append((block_button_name, class_block[1]))
-                # self.libraryBrowserBox.layout.addWidget(block_button_name)
-
+            group_of_buttons.append(list_of_sub_buttons)
+            self.list_of_scrollbar_buttons.append(group_of_buttons)
 
             # # Variables set for identifying whether or not all the grandchild class blocks
             # # were added into the library browser layout, into their respective list section.
@@ -517,56 +503,6 @@ class Interface(QWidget):
         self.setWindowTitle("bdedit")
         self.setWindowIcon(QIcon(":/Icons_Reference/Icons/bdsim_icon.png"))
         self.show()
-
-    def create_block_instance_button(self, button_id):
-        for block_class_buttons in self.list_of_scrollbar_buttons:
-            btn = block_class_buttons[0]
-            btn_cls = block_class_buttons[1]
-            #print("cycling through:", id(btn), button_id, btn_cls)
-            if id(btn) == button_id:
-                print("this button id matches id of pressed btn:", id(btn), button_id, btn_cls)
-                block_class_buttons[1]()
-
-    def load_button(self, blockClass, scene, layout):
-
-        # print("\nload_button: blockLibrary:")
-        # print(self.blockLibrary)
-        # for block_group in self.blockLibrary:
-        #     for block_list in block_group[1]:
-        #         for block_list_element in block_list[1].__dict__.items():
-        #             print(block_list_element)
-        # print("_______________________________________\n")
-        #
-        # print("\nload_button: blockClass:")
-        # [print(item) for item in blockClass.__dict__.items()]
-        # print("_______________________________________\n")
-
-
-        # Create an instance of the given block class
-        #b = blockClass(scene, layout, blockClass.block_type, blockClass.parameters, blockClass.inputsNum, blockClass.outputsNum, blockClass.block_url, blockClass.icon, width=blockClass.width, height=blockClass.height, title=blockClass.title)
-        #blockClass(scene, layout, blockClass.block_type, blockClass.parameters, blockClass.inputsNum, blockClass.outputsNum, blockClass.block_url, blockClass.icon, width=blockClass.width, height=blockClass.height, title=blockClass.title)
-        blockClass(scene, layout)
-
-        # print("instance:")
-        # [print(item) for item in b.__dict__.items()]
-        # print("_______________________________________")
-
-        # # Reassign this class's variables, based on those that have been auto-imported
-        # b.setDefaultTitle(blockClass.title)
-        # b.block_type = blockClass.block_type
-        # b.parameters = blockClass.parameters
-        # b.inputsNum = blockClass.inputsNum
-        # b.outputsNum = blockClass.outputsNum
-        # b.width = blockClass.width
-        # b.height = blockClass.height
-        #
-        # # print("b, type: ", b, type(b))
-        #
-        # Create the block
-        #b._createBlock(b.inputsNum, b.outputsNum)
-
-        # for attribute in b.__dict__.items():
-        #     print(attribute)
 
     # -----------------------------------------------------------------------------
     @pyqtSlot()
@@ -696,6 +632,15 @@ class Interface(QWidget):
         # And the associated buttons are set to being visible/invisible depending
         # on that variable.
         self.connector_block_button.setVisible(not self.connector_block_button.isVisible())
+
+    # Todo - update doc string comments
+    # -----------------------------------------------------------------------------
+    def toggle_sub_buttons(self):
+        pass
+        # browser_button_map = {
+        #     ""
+        #
+        # }
 
     # -----------------------------------------------------------------------------
     def toggleSourceBlocks(self):

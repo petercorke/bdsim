@@ -159,6 +159,10 @@ class Block(Serializable):
         #self.inputsNum = 0
         #self.outputsNum = 0
 
+        # Create lists to hold the names for each known socket
+        # self.input_names = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+        # self.output_names = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+
         # Lists that will contain the input/output sockets of the Block
         self.inputs = []
         self.outputs = []
@@ -198,6 +202,7 @@ class Block(Serializable):
         # [print(item) for item in self.__dict__.items()]
         # print("_______________________________________")
 
+    # Todo - update docstring and inline comments
     # -----------------------------------------------------------------------------
     def _createBlock(self, inputs, outputs):
         """
@@ -216,20 +221,6 @@ class Block(Serializable):
         :type outputs: int, required
         """
 
-        # When a Block instance is created by the grandchild class, this variable determines if
-        # that grandchild class is a subclass of one of the supported Block child classes (source, sink, etc)
-        # allowed_to_generate = \
-        #     (isinstance(self, SourceBlock) and self.__class__ is not SourceBlock) or \
-        #     (isinstance(self, SinkBlock) and self.__class__ is not SinkBlock) or \
-        #     (isinstance(self, FunctionBlock) and self.__class__ is not FunctionBlock) or \
-        #     (isinstance(self, TransferBlock) and self.__class__ is not TransferBlock) or \
-        #     (isinstance(self, DiscreteBlock) and self.__class__ is not DiscreteBlock) or \
-        #     (isinstance(self, INPORTBlock) and self.__class__ is not INPORTBlock) or \
-        #     (isinstance(self, OUTPORTBlock) and self.__class__ is not OUTPORTBlock) or \
-        #     (isinstance(self, SUBSYSTEMBlock) and self.__class__ is not SUBSYSTEMBlock) or \
-        #     (isinstance(self, GraphicBlock) and self.__class__ is not GraphicBlock)
-
-        # If the variable 'allowed_to_generate' is true:
         # * the graphics of the blocks are generated,
         # * the input and output sockets are created and linked to the block,
         # * the block information is stored within the Scene class,
@@ -244,13 +235,7 @@ class Block(Serializable):
         self.scene.addBlock(self)
         self.scene.grScene.addItem(self.grBlock)
 
-        if self.parameters:
-            self._createParamWindow()
-
-        # Otherwise if 'allowed_to_generate' is false:
-        # A message signifying that this Block type is not supported, is printed to console.
-        # else:
-        #     print("This type of block cannot be spawned.")
+        self._createParamWindow()
 
     # -----------------------------------------------------------------------------
     def _createParamWindow(self):
@@ -297,7 +282,10 @@ class Block(Serializable):
         # * the instance is appended to this Block's list of inputs
         counter = 0
         while counter < inputs:
-            socket = Socket(node=self, index=counter, position=position, socket_type=socketType)
+            if self.input_names:
+                socket = Socket(node=self, index=counter, position=position, socket_type=socketType, socket_label=self.input_names[counter])
+            else:
+                socket = Socket(node=self, index=counter, position=position, socket_type=socketType)
             counter += 1
             self.inputs.append(socket)
 
@@ -331,7 +319,10 @@ class Block(Serializable):
         # * the instance is appended to this Block's list of outputs
         counter = 0
         while counter < outputs:
-            socket = Socket(node=self, index=counter, position=position, socket_type=socketType)
+            if self.output_names:
+                socket = Socket(node=self, index=counter, position=position, socket_type=socketType, socket_label=self.output_names[counter])
+            else:
+                socket = Socket(node=self, index=counter, position=position, socket_type=socketType)
             counter += 1
             self.outputs.append(socket)
 
@@ -790,16 +781,14 @@ class Block(Serializable):
             inputs, outputs, parameters = [], [], []
             for socket in self.inputs: inputs.append(socket.serialize())
             for socket in self.outputs: outputs.append(socket.serialize())
-            print("\nserializing block parametes: ", self.parameters, "\n")
             for parameter in self.parameters: parameters.append([parameter[0], special_encoder.encode(parameter[2])])
+
             return OrderedDict([
                 ('id', self.id),
                 ('block_type', self.block_type),
                 ('title', self.title),
                 ('pos_x', self.grBlock.scenePos().x()),
                 ('pos_y', self.grBlock.scenePos().y()),
-                # ('block_url', self.block_url),
-                # ('icon', self.icon),
                 ('width', self.width),
                 ('height', self.height),
                 ('inputsNum', self.inputsNum),
@@ -994,451 +983,3 @@ class TupleEncoder(json.JSONEncoder):
         # Otherwise, return the item 
         else:
             return item
-
-
-# =============================================================================
-#
-#   Defining the subclass's of the Block Class, referred to as child class of
-#   the Block Class. These are inherited by their child classes, which are
-#   referred to as grandchild classes of the Block Class.
-#
-# =============================================================================
-# class SourceBlock(Block):
-#     """
-#     The ``SourceBlock`` Class is a subclass of ``Block``, and referred to as a
-#     child class of ``Block``. It inherits all the methods and parameters of its
-#     parent class and controls the number of input or output ``Sockets`` any
-#     subclass (referred to as a grandchild class of ``Block``) that inherits it has.
-#     """
-#
-#     def __init__(self, scene, window, name="Unnamed Source Block", pos=(0, 0)):
-#         """
-#         This method initializes an instance of the ``SourceBlock`` Class.
-#
-#         :param scene: inherited through ``Block``
-#         :type scene: ``Scene``, required
-#         :param window: inherited through ``Block``
-#         :type window: ``QGridLayout``, required
-#         :param name: overwritten to the name of grandchild class's block name,
-#         defaults to "Unnamed Source Block"
-#         :type name: str, optional
-#         :param pos: inherited through ``Block``
-#         :type pos: tuple of 2-ints, optional
-#         """
-#         super().__init__(scene, window, name, pos)
-#
-#         # Sets the default number of input/output sockets to the values below
-#         # A value of 0 prevents this block from having the respective (input/output) sockets
-#         # A value of 1 allows this block to have 1 or more of the respective (input/output) sockets
-#         self.inputsNum = 0
-#         self.outputsNum = 1
-#
-#     def numInputs(self):
-#         """
-#         This method returns the number of input sockets this Block has.
-#
-#         :return: number of input sockets associated with this Block.
-#         :rtype: int
-#         """
-#         return self.inputsNum
-#
-#     def numOutputs(self):
-#         """
-#         This method returns the number of output sockets this Block has.
-#
-#         :return: number of input sockets associated with this Block.
-#         :rtype: int
-#         """
-#         return self.outputsNum
-#
-#
-# # =============================================================================
-# class SinkBlock(Block):
-#     """
-#     The ``SinkBlock`` Class is a subclass of ``Block``, and referred to as a
-#     child class of ``Block``. It inherits all the methods and parameters of its
-#     parent class and controls the number of input or output ``Sockets`` any
-#     subclass (referred to as a grandchild class of ``Block``) that inherits it has.
-#     """
-#     def __init__(self, scene, window, name="Unnamed Sink Block", pos=(0, 0)):
-#         """
-#         This method initializes an instance of the ``SinkBlock`` Class.
-#
-#         :param scene: inherited through ``Block``
-#         :type scene: ``Scene``, required
-#         :param window: inherited through ``Block``
-#         :type window: ``QGridLayout``, required
-#         :param name: overwritten to the name of grandchild class's block name,
-#         defaults to "Unnamed Sink Block"
-#         :type name: str, optional
-#         :param pos: inherited through ``Block``
-#         :type pos: tuple of 2-ints, optional
-#         """
-#         super().__init__(scene, window, name, pos)
-#
-#         # Sets the default number of input/output sockets to the values below
-#         # A value of 0 prevents this block from having the respective (input/output) sockets
-#         # A value of 1 allows this block to have 1 or more of the respective (input/output) sockets
-#         self.inputsNum = 1
-#         self.outputsNum = 0
-#
-#     def numInputs(self):
-#         """
-#         This method returns the number of input sockets this Block has.
-#
-#         :return: number of input sockets associated with this Block.
-#         :rtype: int
-#         """
-#         return self.inputsNum
-#
-#     def numOutputs(self):
-#         """
-#         This method returns the number of output sockets this Block has.
-#
-#         :return: number of input sockets associated with this Block.
-#         :rtype: int
-#         """
-#         return self.outputsNum
-#
-#
-# # =============================================================================
-# class FunctionBlock(Block):
-#     """
-#     The ``FunctionBlock`` Class is a subclass of ``Block``, and referred to as a
-#     child class of ``Block``. It inherits all the methods and parameters of its
-#     parent class and controls the number of input or output ``Sockets`` any
-#     subclass (referred to as a grandchild class of ``Block``) that inherits it has.
-#     """
-#     def __init__(self, scene, window, name="Unnamed Function Block", pos=(0, 0)):
-#         """
-#         This method initializes an instance of the ``FunctionBlock`` Class.
-#
-#         :param scene: inherited through ``Block``
-#         :type scene: ``Scene``, required
-#         :param window: inherited through ``Block``
-#         :type window: ``QGridLayout``, required
-#         :param name: overwritten to the name of grandchild class's block name,
-#         defaults to "Unnamed Function Block"
-#         :type name: str, optional
-#         :param pos: inherited through ``Block``
-#         :type pos: tuple of 2-ints, optional
-#         """
-#         super().__init__(scene, window, name, pos)
-#
-#         # Sets the default number of input/output sockets to the values below
-#         # A value of 0 prevents this block from having the respective (input/output) sockets
-#         # A value of 1 allows this block to have 1 or more of the respective (input/output) sockets
-#         self.inputsNum = 1
-#         self.outputsNum = 1
-#
-#     def numInputs(self):
-#         """
-#         This method returns the number of input sockets this Block has.
-#
-#         :return: number of input sockets associated with this Block.
-#         :rtype: int
-#         """
-#         return self.inputsNum
-#
-#     def numOutputs(self):
-#         """
-#         This method returns the number of output sockets this Block has.
-#
-#         :return: number of input sockets associated with this Block.
-#         :rtype: int
-#         """
-#         return self.outputsNum
-#
-#
-# # =============================================================================
-# class TransferBlock(Block):
-#     """
-#     The ``TransferBlock`` Class is a subclass of ``Block``, and referred to as a
-#     child class of ``Block``. It inherits all the methods and parameters of its
-#     parent class and controls the number of input or output ``Sockets`` any
-#     subclass (referred to as a grandchild class of ``Block``) that inherits it has.
-#     """
-#     def __init__(self, scene, window, name="Unnamed Transfer Block", pos=(0, 0)):
-#         """
-#         This method initializes an instance of the ``TransferBlock`` Class.
-#
-#         :param scene: inherited through ``Block``
-#         :type scene: ``Scene``, required
-#         :param window: inherited through ``Block``
-#         :type window: ``QGridLayout``, required
-#         :param name: overwritten to the name of grandchild class's block name,
-#         defaults to "Unnamed Transfer Block"
-#         :type name: str, optional
-#         :param pos: inherited through ``Block``
-#         :type pos: tuple of 2-ints, optional
-#         """
-#         super().__init__(scene, window, name, pos)
-#
-#         # Sets the default number of input/output sockets to the values below
-#         # A value of 0 prevents this block from having the respective (input/output) sockets
-#         # A value of 1 allows this block to have 1 or more of the respective (input/output) sockets
-#         self.inputsNum = 1
-#         self.outputsNum = 1
-#
-#     def numInputs(self):
-#         """
-#         This method returns the number of input sockets this Block has.
-#
-#         :return: number of input sockets associated with this Block.
-#         :rtype: int
-#         """
-#         return self.inputsNum
-#
-#     def numOutputs(self):
-#         """
-#         This method returns the number of output sockets this Block has.
-#
-#         :return: number of input sockets associated with this Block.
-#         :rtype: int
-#         """
-#         return self.outputsNum
-#
-#
-# # =============================================================================
-# class DiscreteBlock(Block):
-#     """
-#     The ``DiscreteBlock`` Class is a subclass of ``Block``, and referred to as a
-#     child class of ``Block``. It inherits all the methods and parameters of its
-#     parent class and controls the number of input or output ``Sockets`` any
-#     subclass (referred to as a grandchild class of ``Block``) that inherits it has.
-#     """
-#     def __init__(self, scene, window, name="Unnamed Discrete Block", pos=(0, 0)):
-#         """
-#         This method initializes an instance of the ``DiscreteBlock`` Class.
-#
-#         :param scene: inherited through ``Block``
-#         :type scene: ``Scene``, required
-#         :param window: inherited through ``Block``
-#         :type window: ``QGridLayout``, required
-#         :param name: overwritten to the name of grandchild class's block name,
-#         defaults to "Unnamed Discrete Block"
-#         :type name: str, optional
-#         :param pos: inherited through ``Block``
-#         :type pos: tuple of 2-ints, optional
-#         """
-#         super().__init__(scene, window, name, pos)
-#
-#         # Sets the default number of input/output sockets to the values below
-#         # A value of 0 prevents this block from having the respective (input/output) sockets
-#         # A value of 1 allows this block to have 1 or more of the respective (input/output) sockets
-#         self.inputsNum = 1
-#         self.outputsNum = 1
-#
-#     def numInputs(self):
-#         """
-#         This method returns the number of input sockets this Block has.
-#
-#         :return: number of input sockets associated with this Block.
-#         :rtype: int
-#         """
-#         return self.inputsNum
-#
-#     def numOutputs(self):
-#         """
-#         This method returns the number of output sockets this Block has.
-#
-#         :return: number of input sockets associated with this Block.
-#         :rtype: int
-#         """
-#         return self.outputsNum
-#
-#
-# # =============================================================================
-# class INPORTBlock(Block):
-#     """
-#     The ``INPORTBlock`` Class is a subclass of ``Block``, and referred to as a
-#     child class of ``Block``. It inherits all the methods and parameters of its
-#     parent class and controls the number of input or output ``Sockets`` any
-#     subclass (referred to as a grandchild class of ``Block``) that inherits it has.
-#     """
-#     def __init__(self, scene, window, name="Unnamed INPORT Block", pos=(0, 0)):
-#         """
-#         This method initializes an instance of the ``INPORTBlock`` Class.
-#
-#         :param scene: inherited through ``Block``
-#         :type scene: ``Scene``, required
-#         :param window: inherited through ``Block``
-#         :type window: ``QGridLayout``, required
-#         :param name: overwritten to the name of grandchild class's block name,
-#                      defaults to "Unnamed INPORT Block"
-#         :type name: str, optional
-#         :param pos: inherited through ``Block``
-#         :type pos: tuple of 2-ints, optional
-#         """
-#         super().__init__(scene, window, name, pos)
-#
-#         # Sets the default number of input/output sockets to the values below
-#         # A value of 0 prevents this block from having the respective (input/output) sockets
-#         # A value of 1 allows this block to have 1 or more of the respective (input/output) sockets
-#         self.inputsNum = 0
-#         self.outputsNum = 1
-#
-#     def numInputs(self):
-#         """
-#         This method returns the number of input sockets this Block has.
-#
-#         :return: number of input sockets associated with this Block.
-#         :rtype: int
-#         """
-#         return self.inputsNum
-#
-#     def numOutputs(self):
-#         """
-#         This method returns the number of output sockets this Block has.
-#
-#         :return: number of input sockets associated with this Block.
-#         :rtype: int
-#         """
-#         return self.outputsNum
-#
-#
-# # =============================================================================
-# class OUTPORTBlock(Block):
-#     """
-#     The ``OUTPORTBlock`` Class is a subclass of ``Block``, and referred to as a
-#     child class of ``Block``. It inherits all the methods and parameters of its
-#     parent class and controls the number of input or output ``Sockets`` any
-#     subclass (referred to as a grandchild class of ``Block``) that inherits it has.
-#     """
-#     def __init__(self, scene, window, name="Unnamed OUTPORT Block", pos=(0, 0)):
-#         """
-#         This method initializes an instance of the ``OUTPORTBlock`` Class.
-#
-#         :param scene: inherited through ``Block``
-#         :type scene: ``Scene``, required
-#         :param window: inherited through ``Block``
-#         :type window: ``QGridLayout``, required
-#         :param name: overwritten to the name of grandchild class's block name,
-#         defaults to "Unnamed OUTPORT Block"
-#         :type name: str, optional
-#         :param pos: inherited through ``Block``
-#         :type pos: tuple of 2-ints, optional
-#         """
-#         super().__init__(scene, window, name, pos)
-#
-#         # Sets the default number of input/output sockets to the values below
-#         # A value of 0 prevents this block from having the respective (input/output) sockets
-#         # A value of 1 allows this block to have 1 or more of the respective (input/output) sockets
-#         self.inputsNum = 1
-#         self.outputsNum = 0
-#
-#     def numInputs(self):
-#         """
-#         This method returns the number of input sockets this Block has.
-#
-#         :return: number of input sockets associated with this Block.
-#         :rtype: int
-#         """
-#         return self.inputsNum
-#
-#     def numOutputs(self):
-#         """
-#         This method returns the number of output sockets this Block has.
-#
-#         :return: number of input sockets associated with this Block.
-#         :rtype: int
-#         """
-#         return self.outputsNum
-#
-#
-# # =============================================================================
-# class SUBSYSTEMBlock(Block):
-#     """
-#     The ``SUBSYSTEMBlock`` Class is a subclass of ``Block``, and referred to as a
-#     child class of ``Block``. It inherits all the methods and parameters of its
-#     parent class and controls the number of input or output ``Sockets`` any
-#     subclass (referred to as a grandchild class of ``Block``) that inherits it has.
-#     """
-#     def __init__(self, scene, window, name="Unnamed SUBSYSTEM Block", pos=(0, 0)):
-#         """
-#         This method initializes an instance of the ``SUBSYSTEMBlock`` Class.
-#
-#         :param scene: inherited through ``Block``
-#         :type scene: ``Scene``, required
-#         :param window: inherited through ``Block``
-#         :type window: ``QGridLayout``, required
-#         :param name: overwritten to the name of grandchild class's block name,
-#         defaults to "Unnamed SUBSYSTEM Block"
-#         :type name: str, optional
-#         :param pos: inherited through ``Block``
-#         :type pos: tuple of 2-ints, optional
-#         """
-#         super().__init__(scene, window, name, pos)
-#
-#         # Sets the default number of input/output sockets to the values below
-#         # A value of 0 prevents this block from having the respective (input/output) sockets
-#         # A value of 1 allows this block to have 1 or more of the respective (input/output) sockets
-#         self.inputsNum = 1
-#         self.outputsNum = 1
-#
-#     def numInputs(self):
-#         """
-#         This method returns the number of input sockets this Block has.
-#
-#         :return: number of input sockets associated with this Block.
-#         :rtype: int
-#         """
-#         return self.inputsNum
-#
-#     def numOutputs(self):
-#         """
-#         This method returns the number of output sockets this Block has.
-#
-#         :return: number of input sockets associated with this Block.
-#         :rtype: int
-#         """
-#         return self.outputsNum
-#
-#
-# # =============================================================================
-# class GraphicBlock(Block):
-#     """
-#     The ``GraphicsBlock`` Class is a subclass of ``Block``, and referred to as a
-#     child class of ``Block``. It inherits all the methods and parameters of its
-#     parent class and controls the number of input or output ``Sockets`` any
-#     subclass (referred to as a grandchild class of ``Block``) that inherits it has.
-#     """
-#     def __init__(self, scene, window, name="Unnamed Graphics Block", pos=(0, 0)):
-#         """
-#         This method initializes an instance of the ``GraphicsBlock`` Class.
-#
-#         :param scene: inherited through ``Block``
-#         :type scene: ``Scene``, required
-#         :param window: inherited through ``Block``
-#         :type window: ``QGridLayout``, required
-#         :param name: overwritten to the name of grandchild class's block name,
-#         defaults to "Unnamed Graphics Block"
-#         :type name: str, optional
-#         :param pos: inherited through ``Block``
-#         :type pos: tuple of 2-ints, optional
-#         """
-#         super().__init__(scene, window, name, pos)
-#
-#         # Sets the default number of input/output sockets to the values below
-#         # A value of 0 prevents this block from having the respective (input/output) sockets
-#         # A value of 1 allows this block to have 1 or more of the respective (input/output) sockets
-#         self.inputsNum = 1
-#         self.outputsNum = 0
-#
-#     def numInputs(self):
-#         """
-#         This method returns the number of input sockets this Block has.
-#
-#         :return: number of input sockets associated with this Block.
-#         :rtype: int
-#         """
-#         return self.inputsNum
-#
-#     def numOutputs(self):
-#         """
-#         This method returns the number of output sockets this Block has.
-#
-#         :return: number of input sockets associated with this Block.
-#         :rtype: int
-#         """
-#         return self.outputsNum

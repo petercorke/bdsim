@@ -3,6 +3,8 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
+from PIL import ImageFont
+
 # =============================================================================
 #
 #   Defining and setting global variables
@@ -16,7 +18,6 @@ RIGHT = 3
 # Socket type classification variables
 INPUT = 1
 OUTPUT = 2
-CONNECTOR = 3
 
 # Input Socket sign classification variables
 PLUS = "+"
@@ -58,7 +59,7 @@ class GraphicsSocket(QGraphicsItem):
 
         # Sizes for the various socket shapes are defined
         self.radius = 6.0
-        self.triangle_left = 7
+        self.triangle_left = 6
         self.triangle_right = 8
         self.triangle_up = 6
         self.square = 6
@@ -78,8 +79,8 @@ class GraphicsSocket(QGraphicsItem):
         self._pen.setWidthF(self.outline_width)
         self._sign_pen = QPen(self._color_outline)
         self._sign_pen.setWidthF(self.sign_width)
-        self._char_pen = QPen(QColor('#606060'))
-        self._char_pen.setWidthF(self.sign_width)
+        self._char_font = QFont('Calibri', 14)
+        self._char_font_measure = ImageFont.truetype('calibri.ttf', 14)
 
         self.setFlag(QGraphicsItem.ItemIsSelectable)
 
@@ -88,9 +89,8 @@ class GraphicsSocket(QGraphicsItem):
             self._brush = QBrush(self._color_background_input)
         elif self.socket.socket_type == OUTPUT:
             self._brush = QBrush(self._color_background_output)
-        # elif self.socket.socket_type == CONNECTOR:
-        #     self._brush = QBrush(self._color_background_connector)
 
+    # Todo - update docs, and inline comments
     # -----------------------------------------------------------------------------
     def paint(self, painter, style, widget=None):
         """
@@ -121,10 +121,18 @@ class GraphicsSocket(QGraphicsItem):
             # should point (this comes into affect when the block sockets are flipped, and the
             # output triangle socket shape should point either right (default), or left (flipped))
             multi = 1
+            offset = 0
+
+            # If the socket has a name (character) to display, find the characters' dimensions
+            # Dimensions of the socket sign - contains [width, height] of character
+            if self.socket.socket_sign:
+                (char_width, char_height) = self.charDimensions()
 
             # If the socket is flipped, adjust the internal multi variable
             if self.socket.position == RIGHT:
                 multi = -1
+                if self.socket.socket_sign:
+                    offset = char_width
 
             # This code paints a square for the input socket
             if self.socket.socket_type == INPUT:
@@ -132,10 +140,15 @@ class GraphicsSocket(QGraphicsItem):
                 # If the input socket has a sign (will be true for the PROD and SUM Blocks)
                 # paint the relevant sign (+,-,*,/) next to the input socket
                 if self.socket.socket_sign is not None:
-                    painter.setPen(self._sign_pen)
-                    # The painter path for the respective sign depends on the sign relating to this socket
                     path = self.getSignPath(self.socket.socket_sign, multi)
-                    painter.drawPath(path)
+                    if path is None:
+                        painter.setPen(self._sign_pen)
+                        painter.setFont(self._char_font)
+                        painter.drawText((10 + offset) * multi, char_height, self.socket.socket_sign)
+                    else:
+                        # The painter path for the respective sign depends on the sign relating to this socket
+                        painter.setPen(self._sign_pen)
+                        painter.drawPath(path)
 
             # This code paints a triangle for the output socket
             if self.socket.socket_type == OUTPUT:
@@ -146,9 +159,10 @@ class GraphicsSocket(QGraphicsItem):
                 path.lineTo(multi * self.triangle_left, multi * self.triangle_up)
                 painter.drawPath(path)
 
-            # This code paints a circle for the connector socket (currently not in effect)
-            # if self.socket.socket_type == CONNECTOR:
-            #     painter.drawEllipse(-self.radius, -self.radius, 2 * self.radius, 2 * self.radius)
+                if self.socket.socket_sign is not None:
+                    painter.setPen(self._sign_pen)
+                    painter.setFont(self._char_font)
+                    painter.drawText((10 + offset) * multi, char_height, self.socket.socket_sign)
 
     # -----------------------------------------------------------------------------
     def paintPlus(self, multi):
@@ -222,6 +236,32 @@ class GraphicsSocket(QGraphicsItem):
         path.addEllipse(multi * 3.5 * self.square - 1, self.square - 2, 1, 1)
         return path
 
+    # Todo - doc comments
+    # -----------------------------------------------------------------------------
+    def charDimensions(self):
+
+        # Find how many pixels - height wise - this sockets' character is
+        (width, baseline), (offset_x, offset_y) = self._char_font_measure.font.getsize(self.socket.socket_sign)
+
+        char_width = QFontMetrics(self._char_font).width(self.socket.socket_sign)
+        height = 0
+
+        # For letters like: a,c,e,m,n,o,r,s,u,v,w,x,z
+        if baseline == 7 and offset_y == 4:
+            height = 4
+        # For letters like: b,d,f,h,i,k,l
+        elif baseline == 10 and offset_y == 1:
+            height = 6
+        # For letters like: g,p,q,y
+        elif baseline == 10 and offset_y == 4:
+            height = 3
+        else:
+            height = 5
+
+        dimension = [char_width, height]
+
+        return dimension
+
     # -----------------------------------------------------------------------------
     def getSignPath(self, sign, multi):
         """
@@ -245,6 +285,7 @@ class GraphicsSocket(QGraphicsItem):
         if sign == DIVIDE:
             return self.paintDivide(multi)
 
+    # Todo - doc comments
     # -----------------------------------------------------------------------------
     def shouldSocketsBeHidden(self):
 

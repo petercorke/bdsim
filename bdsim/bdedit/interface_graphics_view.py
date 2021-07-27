@@ -369,6 +369,7 @@ class GraphicsView(QGraphicsView):
             self.leftMouseButtonPress(event)
             self.closeParamWindows()
         elif event.button() == Qt.RightButton:
+            self.closeParamWindows()
             self.rightMouseButtonPress(event)
         else:
             super().mousePressEvent(event)

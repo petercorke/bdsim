@@ -6,15 +6,16 @@ import importlib.util
 import inspect
 from pathlib import Path
 
-#import bdsim
-#import roboticstoolbox
-
-#from bdsim.bdedit.block import blockname, blocklist, SinkBlock, SourceBlock, FunctionBlock, TransferBlock, DiscreteBlock, GraphicBlock
 from bdsim.bdedit.block import blockname, blocklist, Block
 from examples import docstring_parser as parser
 
 def import_blocks(scene, window):
-# def import_blocks():
+
+    size_map = {
+        'InPort' : [100, 150],
+        'OutPort' : [100, 150],
+        'SubSystem' : [200, 150],
+    }
 
     block_list = parser.docstring_parser()
     block_library = []
@@ -90,7 +91,6 @@ def import_blocks(scene, window):
                     found_range_restrictions = []
                     found_symbol_restrictions = []
                     found_keyword_restrictions = []
-                    unexpected_format = []
 
                     # 1.
                     for item in param_type_docstring:
@@ -99,14 +99,19 @@ def import_blocks(scene, window):
                             # 2.
                             param_type = eval(item)
 
-                            # # Check first if evaluated item is an int (we expect to see a string, so throw error)
-                            # if isinstance(param_type, int) or isinstance(param_type, float):
-                            #     unexpected_format.append(item)
-
                             # Check to see if evaluated item is NOT a class type, e.g. NOT <class 'int'>.
                             # In this case, wrap the evaluated item in type()
                             if not inspect.isclass(param_type):
                                 found_types.append(type(param_type))
+
+                                # This should only occur for the callable or any, type, but just to be safe we can check that it is one of those
+                                # and then append the 'str' type to pass through any user input from bdedit, as this will be validated in bdsim.
+                                if isinstance(param_type, type(callable)):
+                                    found_types.append(str)
+
+                            # If a tuple type has been found, convert this to list
+                            if issubclass(param_type, tuple):
+                                param_type = list
 
                             # Otherwise, if item is in the form of a string, append that value to list of found types
                             else:
@@ -131,26 +136,41 @@ def import_blocks(scene, window):
                                         if not restriction_to_insert in found_size_restrictions:
                                             found_size_restrictions.append(restriction_to_insert)
 
+                                    # Todo - add size 0 if no regex size found
+                                    else:
+                                        pass
+
                                 # If array_like has already been added, this will stop it from being entered multiple times
-                                type_to_insert = type(np.array([]))
-                                if not type_to_insert in found_types:
-                                    found_types.append(type_to_insert)
+                                # Lists can be interpreted easily and converted into a numpy array, so in JSON these will be stored as lists
+                                #type_to_insert = type(np.array([]))
+
+                                # If size restrictions were found, then this parameter is limited to being either a list of dict
+                                if found_size_restrictions:
+                                    types_to_insert = [list, dict]
+                                # If no size restriction was found, then parameter retains all of array_like properties
+                                else:
+                                    types_to_insert = [list, dict, int, float]
+
+                                for found_type in types_to_insert:
+                                    if found_type not in found_types:
+                                        found_types.append(found_type)
 
                             elif item in ['string']:
-                                found_types.append(str)
+                                if str not in found_types:
+                                    found_types.append(str)
 
                             elif item in ['sequence', 'string']:
                                 # 2.
-                                found_types.append(list)
-                                found_types.append(tuple)
+                                if list not in found_types:
+                                    found_types.append(list)
 
-                            elif item in ['optional', ' or ', ' of ', ' is ']:
-                                # item is for human readability, ignore
-                                # how should types where for eg. list of strings, list of x, be dealt with?
-                                pass
+                            # elif item in ['optional', ' or ', ' of ', ' is ']:
+                            #     # item is for human readability, ignore
+                            #     # how should types where for eg. list of strings, list of x, be dealt with?
+                            #     pass
 
                             else:
-                                unexpected_format.append(item)
+                                pass
 
                     # 4.
                     # If any known types have been found, set the parameter type
@@ -158,7 +178,11 @@ def import_blocks(scene, window):
                         # Extract first detected type as the default type
                         param_type = found_types[0]
                     else:
-                        param_type = "Unexpected format for: type definition"
+                        # If no param type was found from the docstrings, this parameter most likely has a bdsim defined class
+                        # These will be passed through as a str type, and evaluated on bdsim's end. If any issues occur, it is
+                        # the user's job to ensure a suitable and meaningful value is entered for the parameter
+                        param_type = str
+                        found_types.append(str)
 
                     # -----------------------------------------------------------------------------------------
                     # Section for extracting parameter value information (and restriction if relating to value)
@@ -188,12 +212,14 @@ def import_blocks(scene, window):
                                     # Add a,b of range to restriction items
                                     found_range_restrictions.append(next_item[0])
                                     found_range_restrictions.append(next_item[1])
-
+                                else:
                                     # Either not list or greater than 2, so unexpected format, return error
-                                    found_range_restrictions.append("Unexpected format for: range restriction")
+                                    #found_range_restrictions.append("Unexpected format for: range restriction")
+                                    print("Unexpected format for: range restriction. Occured in:", block_name, param_name)
                             except:
                                 # Word cannot be evaluated
-                                found_range_restrictions.append("Unexpected format for: range restriction")
+                                #found_range_restrictions.append("Unexpected format for: range restriction")
+                                print("Unexpected format for: range restriction. Occured in:", block_name, param_name)
 
                         if param_value_docstring[i] in ['accepted'] and param_value_docstring[i + 1] in ['characters:']:
                             # Value is restricted to being certain characters, these are seperated by the word 'or'
@@ -241,9 +267,10 @@ def import_blocks(scene, window):
 
                                     found_default_value = True
 
-                            # If no defualt value was found, return error
-                            if not found_default_value:
-                                param_value = "Unexpected format for: multiple values"
+                            # If no defualt value was found, param_value will stay as None for safety
+
+                            # if not found_default_value:
+                            #     param_value = None
 
                             # Important break!
                             # Once the inner loop has gone through the remainder of the words from the docstring, and
@@ -300,12 +327,28 @@ def import_blocks(scene, window):
                     block_parameters.append([param_name, param_type, param_value, param_restrictions])
 
                 except:
-                    print("@@@@@@@ Fatal error: Unable to parse parameter info, param not constructed " + block_type + ": -> " +param_name + ". @@@@@@")
+                    print("@@@@@@@ Fatal error: Unable to parse parameter info, param not constructed " + block_type + ": -> " + param_name + ". @@@@@@")
 
-            if not block_ds["params"]:
-                #print("\n\nThis block has no parameters: ", block_type, " param_docstring: ", block_ds["params"])
-                block_parameters = [["dummy_parameter", str, None, []]]
+            # if not block_ds["params"]:
+            #     #print("\n\nThis block has no parameters: ", block_type, " param_docstring: ", block_ds["params"])
+            #     block_parameters = [["dummy_parameter", str, None, []]]
 
+            # -----------------------------------------------------------------------------------------
+            # Section for extracting socket label information (for both input and output sockets)
+            # -----------------------------------------------------------------------------------------
+
+            # Grab the names of the input/output sockets
+            block_input_names = []
+            block_output_names = []
+
+            # Go through and extract all the names of the input and output sockets
+            if block_ds["inputs"] is not None:
+                for input_socket_name in block_ds["inputs"].items():
+                    block_input_names.append(input_socket_name[0])
+
+            if block_ds["outputs"] is not None:
+                for output_socket_name in block_ds["outputs"].items():
+                    block_output_names.append(output_socket_name[0])
 
             # -----------------------------------------------------------------------------------------------------
             # Section for importing block class from its module, and assigning to it the extracted information
@@ -318,18 +361,24 @@ def import_blocks(scene, window):
 
                     self.title = copy.copy(self.title)
                     self.block_type = copy.copy(self.block_type)
-                    # self.block_group = block_group
                     self.parameters = copy.deepcopy(self.parameters)
                     self.inputsNum = copy.copy(self.inputsNum)
                     self.outputsNum = copy.copy(self.outputsNum)
+                    self.input_names = copy.copy(self.input_names)
+                    self.output_names = copy.copy(self.output_names)
                     self.icon = copy.copy(self.icon)
                     self.block_url = copy.copy(self.block_url)
-                    # self.position = (0,0)
                     self.width = copy.copy(self.width)
                     self.height = copy.copy(self.height)
 
                     self._createBlock(self.inputsNum, self.outputsNum)
 
+                # Default size for all blocks
+                size = [100, 100]
+                try:
+                    size = size_map[block_classname]
+                except KeyError:
+                    pass
 
                 # Dynamically create class for this block
                 # Assign the extracted block variables to this block
@@ -339,14 +388,15 @@ def import_blocks(scene, window):
                     "numOutputs": lambda self: self.outputsNum,
                     "title": block_name,
                     "block_type": block_type,
-                    # "block_group": block_class,
                     "parameters": block_parameters,
                     "inputsNum": block_inputsNum,
                     "outputsNum": block_outputsNum,
+                    "input_names": block_input_names,
+                    "output_names": block_output_names,
                     "icon": block_icon,
                     "block_url": block_url,
-                    "width": 100,
-                    "height": 100
+                    "width": size[0],
+                    "height": size[1]
                 })
 
                 # Add this block to blocklist

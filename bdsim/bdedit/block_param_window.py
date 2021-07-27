@@ -113,7 +113,7 @@ class ParamWindow(QWidget):
         This method opens the url link associated with this blocks' documentation.
         """
 
-        QDesktopServices.openUrl(QtCore.QUrl(self.block.getBlockURL()))
+        QDesktopServices.openUrl(QtCore.QUrl(self.block.block_url))
 
     # -----------------------------------------------------------------------------
     def closeQMessageBox(self):
@@ -257,27 +257,29 @@ class ParamWindow(QWidget):
         self.row2.setLayout(self.row2.layout)
         self.layout.addWidget(self.row2)
 
-        # For each block parameter
-        for parameter in self.parameters:
-            # Create a QWidget that will represent the row that parameter is displayed in
-            self.row_x = QWidget()
-            self.row_x.layout = QHBoxLayout()
+        # If the block has parameters, build part of the paramWindow that displays those
+        if self.parameters:
+            # For each block parameter
+            for parameter in self.parameters:
+                # Create a QWidget that will represent the row that parameter is displayed in
+                self.row_x = QWidget()
+                self.row_x.layout = QHBoxLayout()
 
-            # Make a label of that parameters' name
-            self.label = QLabel('<font size=3><b>'+parameter[0]+": "+'</font>')
-            # Make an editable line for that parameter, and populate it with the parameters' current value
-            self.line = QLineEdit(str(parameter[2]))
-            # Set the width of the editable line to the above-defined width (150 pixels)
-            self.line.setFixedWidth(self._parameter_line_width)
-            # Append the current value of the parameter into the following list (for later comparison)
-            self.parameter_values.append(self.line)
-            # Add the label and editable line into our row widget
-            self.row_x.layout.addWidget(self.label, alignment=Qt.AlignCenter)
-            self.row_x.layout.addWidget(self.line)
+                # Make a label of that parameters' name
+                self.label = QLabel('<font size=3><b>'+parameter[0]+": "+'</font>')
+                # Make an editable line for that parameter, and populate it with the parameters' current value
+                self.line = QLineEdit(str(parameter[2]))
+                # Set the width of the editable line to the above-defined width (150 pixels)
+                self.line.setFixedWidth(self._parameter_line_width)
+                # Append the current value of the parameter into the following list (for later comparison)
+                self.parameter_values.append(self.line)
+                # Add the label and editable line into our row widget
+                self.row_x.layout.addWidget(self.label, alignment=Qt.AlignCenter)
+                self.row_x.layout.addWidget(self.line)
 
-            # Add out row widget to the layout of the parameter window
-            self.row_x.setLayout(self.row_x.layout)
-            self.layout.addWidget(self.row_x)
+                # Add out row widget to the layout of the parameter window
+                self.row_x.setLayout(self.row_x.layout)
+                self.layout.addWidget(self.row_x)
 
         # Finally add an update button, which will trigger the sanity checking of the
         # current values within the editable lines
@@ -350,6 +352,9 @@ class ParamWindow(QWidget):
                 # If the options consist of certain sign characters this parameter is restricted to
                 elif option[0] == "symbol":
                     message += "a combination of <font><b>" + str(option[1]) + "</font>"
+                # If the options consists of a size restriction on how many elements are allowed in the list
+                elif option[0] == "size":
+                    message += "limited to a size of <font><b>" + str(option[1]) + "</font>"
 
                 # If a parameter has multiple options (e.g. range and type restrictions)
                 # separate the options with "or" until only 1 option remains
@@ -378,88 +383,91 @@ class ParamWindow(QWidget):
         # be appended into these empty lists
         invalid_input, bad_inputs = [], []
 
-        # For each definition of a parameter, in the blocks' defined parameters
-        for [paramName, paramType, paramVal, paramOptions] in self.parameters:
-            i += 1
-            # Extract the text from the editable line as the value to set the parameter to
-            inputValue = self.parameter_values[i].text()
+        # Check if the block has parameters, if so, go through the sanity checking of each parameter value
+        if self.parameters:
 
-            # If a value has been provided for that parameter, perform sanity checking on that input
-            if inputValue:
-                inputInCompatibleFormat = self.getSafeValue(inputValue, paramType, paramOptions)
+            # For each definition of a parameter, in the blocks' defined parameters
+            for [paramName, paramType, paramVal, paramOptions] in self.parameters:
+                i += 1
+                # Extract the text from the editable line as the value to set the parameter to
+                inputValue = self.parameter_values[i].text()
 
-                # If in DEBUG mode, this code will return the name, type, current value of the parameter attempting to update
-                # and then for the value that will override the parameter, the value, type(of the value), and whether it is or isn't compatible
-                if DEBUG: print("paramName, paramType, paramVal - inputValue, type, compatible", [paramName, paramType, paramVal, '-', inputValue, type(inputValue), inputInCompatibleFormat])
+                # If a value has been provided for that parameter, perform sanity checking on that input
+                if inputValue:
+                    inputInCompatibleFormat = self.getSafeValue(inputValue, paramType, paramOptions)
 
-                # Once the sanity check has been performed, if the type is valid, check for parameter restrictions
-                if inputInCompatibleFormat != "@InvalidType@":
+                    # If in DEBUG mode, this code will return the name, type, current value of the parameter attempting to update
+                    # and then for the value that will override the parameter, the value, type(of the value), and whether it is or isn't compatible
+                    if DEBUG: print("paramName, paramType, paramVal - inputValue, type, compatible", [paramName, paramType, paramVal, '-', inputValue, type(inputValue), inputInCompatibleFormat])
 
-                    # If the sanity check returns that the parameter doesn't meet its restrictions
-                    if inputInCompatibleFormat == "@BadFormat@":
-                        # Append the parameter edited, and the parameter options, as a bad_input
-                        bad_inputs.append([paramName, paramOptions])
-                    else:
-                        # Otherwise if both sanity checks pass, value is safe to update, so
-                        # Set the current parameter equal to edited parameter value
-                        self.parameters[i][2] = inputInCompatibleFormat
+                    # Once the sanity check has been performed, if the type is valid, check for parameter restrictions
+                    if inputInCompatibleFormat != "@InvalidType@":
 
-                        # If self.parameter relates to controlling the number of inputs a block has
-                        if self.parameters[i][0] in ["nin", "ops", "signs"]:
+                        # If the sanity check returns that the parameter doesn't meet its restrictions
+                        if inputInCompatibleFormat == "@BadFormat@":
+                            # Append the parameter edited, and the parameter options, as a bad_input
+                            bad_inputs.append([paramName, paramOptions])
+                        else:
+                            # Otherwise if both sanity checks pass, value is safe to update, so
+                            # Set the current parameter equal to edited parameter value
+                            self.parameters[i][2] = inputInCompatibleFormat
 
-                            # Grab the number of required input sockets
-                            if self.parameters[i][0] == "nin":
+                            # If self.parameter relates to controlling the number of inputs a block has
+                            if self.parameters[i][0] in ["nin", "ops", "signs"]:
+
+                                # Grab the number of required input sockets
+                                if self.parameters[i][0] == "nin":
+                                    num_sockets = self.parameters[i][2]
+                                else:
+                                    num_sockets = len(self.parameter_values[i].text())
+
+                                # Don't do anything, if the provided number of input sockets matches the number the block already has,
+                                # or if the symbols (+,-,*,/) for the block haven't changed
+                                if len(self.block.inputs) == num_sockets and inputInCompatibleFormat == paramVal:
+                                    pass
+                                else:
+                                    # If the block already has input sockets, grab their orientation (LEFT / RIGHT) then delete
+                                    # Else, draw input socket with default orientation (LEFT) and no need to delete as block has no input sockets
+                                    if self.block.inputs:
+                                        orientation = self.block.inputs[0].position
+                                        # Remove all current input sockets
+                                        self.block.inputs[0].removeSockets("Input")
+                                    else:
+                                        orientation = LEFT
+                                    # Recreate input sockets to the number provided
+                                    # If self.block is a SUM or PROD block, this will also update the input sockets' sign (+,_,*,/)
+                                    self.block.inputsNum = num_sockets
+                                    self.block.makeInputSockets(self.block.inputsNum, orientation)
+
+                            # If self.parameter relates to controlling the number of outputs a block has
+                            if self.parameters[i][0] in ["nout"]:
+                                # Grab number of required output sockets
                                 num_sockets = self.parameters[i][2]
-                            else:
-                                num_sockets = len(self.parameter_values[i].text())
-
-                            # Don't do anything, if the provided number of input sockets matches the number the block already has,
-                            # or if the symbols (+,-,*,/) for the block haven't changed
-                            if len(self.block.inputs) == num_sockets and inputInCompatibleFormat == paramVal:
-                                pass
-                            else:
-                                # If the block already has input sockets, grab their orientation (LEFT / RIGHT) then delete
-                                # Else, draw input socket with default orientation (LEFT) and no need to delete as block has no input sockets
-                                if self.block.inputs:
-                                    orientation = self.block.inputs[0].position
-                                    # Remove all current input sockets
-                                    self.block.inputs[0].removeSockets("Input")
+                                # If provided number of output sockets matches the number the block already has, don't do anything
+                                if len(self.block.outputs) == num_sockets:
+                                    pass
                                 else:
-                                    orientation = LEFT
-                                # Recreate input sockets to the number provided
-                                # If self.block is a SUM or PROD block, this will also update the input sockets' sign (+,_,*,/)
-                                self.block.inputsNum = num_sockets
-                                self.block.makeInputSockets(self.block.inputsNum, orientation)
+                                    # If the block already has output sockets, grab their orientation (LEFT / RIGHT) then delete
+                                    # Else, draw output socket with default orientation (RIGHT) and no need to delete as block has no output sockets
+                                    if self.block.outputs:
+                                        orientation = self.block.outputs[0].position
+                                        # Remove all current output sockets
+                                        self.block.outputs[0].removeSockets("Output")
+                                    else:
+                                        orientation = RIGHT
+                                    # Recreate output sockets to the number provided
+                                    self.block.outputsNum = num_sockets
+                                    self.block.makeOutputSockets(self.block.outputsNum, orientation)
 
-                        # If self.parameter relates to controlling the number of outputs a block has
-                        if self.parameters[i][0] in ["nout"]:
-                            # Grab number of required output sockets
-                            num_sockets = self.parameters[i][2]
-                            # If provided number of output sockets matches the number the block already has, don't do anything
-                            if len(self.block.outputs) == num_sockets:
-                                pass
-                            else:
-                                # If the block already has output sockets, grab their orientation (LEFT / RIGHT) then delete
-                                # Else, draw output socket with default orientation (RIGHT) and no need to delete as block has no output sockets
-                                if self.block.outputs:
-                                    orientation = self.block.outputs[0].position
-                                    # Remove all current output sockets
-                                    self.block.outputs[0].removeSockets("Output")
-                                else:
-                                    orientation = RIGHT
-                                # Recreate output sockets to the number provided
-                                self.block.outputsNum = num_sockets
-                                self.block.makeOutputSockets(self.block.outputsNum, orientation)
+                    # Else the edited value is of the wrong type, display an error message
+                    else:
+                        # Append the parameter edited, and the required type, as an invalid_input
+                        invalid_input.append([paramName, paramType])
 
-                # Else the edited value is of the wrong type, display an error message
+                # Else no value was given for that input, display an error message
                 else:
                     # Append the parameter edited, and the required type, as an invalid_input
                     invalid_input.append([paramName, paramType])
-
-            # Else no value was given for that input, display an error message
-            else:
-                # Append the parameter edited, and the required type, as an invalid_input
-                invalid_input.append([paramName, paramType])
 
         # Once all the parameters are sanity checked,
         # If the title has been set to a duplicate name, display a duplicate error message
@@ -585,6 +593,27 @@ class ParamWindow(QWidget):
                         # If all characters within the string match a set of allowable characters
                         if num_of_wrong_symbols == 0:
                             returnValue = value; break
+                    # If the placed restriction are to the number of elements the parameter can have
+                    elif option[0] == "size":
+                        # First check if the size of parameter is measureable, if not then its an int or float
+                        try:
+                            # Try to evalute the param value, and catch if it is a string
+                            try:
+                                param_val = eval(value)
+                                param_length = len(param_val)
+                                # If the size of the parameter meets one of the allowable sizes (e.g. 0, 2 or 4) then return the value
+                                if param_length in option[1]:
+                                    returnValue = value
+                                else:
+                                    returnValue = "@BadFormat@"
+                                break
+                            # If it is a string, the size restriction shouldn't be checked
+                            except NameError:
+                                pass
+                        # If the length of the evaluated string is a singular int or float, escape the size restriction check
+                        except TypeError:
+                            returnValue = "@BadFormat@"
+                            break
                 # Return the value that has been set to be returned
                 return returnValue
             # Else, no restrictions are placed on this parameter, so return the parameter value
@@ -595,16 +624,41 @@ class ParamWindow(QWidget):
         if issubclass(requiredType, str):
             # If input can be converted to float (or int), cannot be accepted
             try:
-                float(inputValue); return "@InvalidType@"
+                float(inputValue);
+                # Check if this parameter has any further restrictions that may be useful
+                outcome = isValueInOption(inputValue, requiredOptions)
+
+                # If parameter doesn't meet its further restrictions, return useful message
+                if outcome == "@BadFormat@":
+                    return outcome
+                # Otherwise if it does meet further restrictions, return invalid type, as a float/int
+                # cannot be accepted since the type requirement is 'str'
+                else:
+                    return "@InvalidType@"
             except ValueError:
                 # If the input is not a number, but an acceptable string
                 if isinstance(inputValue, str):
-                    # If the length of the string is 0, this is not a valid string
-                    if len(inputValue) == 0: return "@InvalidType@"
-                    # If the string value is None, return None
-                    elif inputValue.lower() in ["none"]: return None
-                    # Otherwise check the input for restrictions
-                    else: return isValueInOption(inputValue.lower(), requiredOptions)
+
+                    # Check if input can be evaluated.
+                    # If SyntaxError is caught, input is in the form of "=function_name", this is not allowed for regular 'str', return error
+                    try:
+                        # If a NameError is caught, just ignore, as string here can be text or list/tuple/dict
+                        try:
+                            eval(inputValue)
+                        except NameError:
+                            pass
+
+                        # If the length of the string is 0, this is not a valid string
+                        if len(inputValue) == 0:
+                            return "@InvalidType@"
+                        # If the string value is None, return None
+                        elif inputValue.lower() in ["none"]:
+                            return None
+                        # Otherwise check the input for restrictions
+                        else:
+                            return isValueInOption(inputValue.lower(), requiredOptions)
+                    except SyntaxError:
+                        return "@InvalidType@"
                 else: return "@InvalidType@"
 
         # If input must be bool, only booleans can be accepted
@@ -648,12 +702,15 @@ class ParamWindow(QWidget):
                 else: return "@InvalidType@"
             except ValueError: return "@InvalidType@"
 
-        # If input can be of type any, allow any value to be saved
+        # If input can be of type 'any', allow any value to be saved. This will also process the 'callable' type, in the same way.
         elif issubclass(requiredType, type(any)):
             try:
-                # If the input can be evaluated, return the value
-                ast.literal_eval(inputValue); return ast.literal_eval(inputValue)
+                # If the input can be evaluated, check if the evaluated value matches this parameters restrictions
+                try:
+                    ast.literal_eval(inputValue); return isValueInOption(ast.literal_eval(inputValue), requiredOptions)
+                # If SyntaxError is caught, input is in the form of "=function_name", pass input through as string to be handled by bdsim
+                except SyntaxError:
+                    return inputValue
             except ValueError:
-                # If input cannot be evaluated, but the value is None, check if this is an allowable type
-                if inputValue.lower() in ["none"]: return isValueInOption(inputValue, requiredOptions)
-                else: return "@InvalidType@"
+                # If input cannot be evaluated, check if this is an allowable type
+                return isValueInOption(inputValue, requiredOptions)

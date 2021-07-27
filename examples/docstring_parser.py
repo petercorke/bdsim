@@ -157,7 +157,7 @@ def docstring_parser():
     return blocks
 
 # b_list = docstring_parser()
-#
+
 # for item in b_list.items():
 #     print("Block: ", item[0])
 #     for variables in item[1].items():
@@ -168,3 +168,34 @@ def docstring_parser():
 #         else:
 #             print(variables)
 #     print()
+
+# for i,item in enumerate(b_list.items()):
+#     #if i == 49:
+#         print(i)
+#         block_type = item[0]
+#         block_ds = item[1]
+#         print("Block: ", block_type)
+#         for variables in block_ds.items():
+#             if variables[0] in ["params"]:
+#                 print("('" + variables[0] + "',")
+#                 for param in variables[1].items():
+#                     print("     ", param)
+#             else:
+#                 print(variables)
+#         print("------------------------")
+#         if block_ds["inputs"]:
+#             for input_socket in block_ds["inputs"].items():
+#                 print(input_socket[0])
+#         else:
+#             print(block_ds["inputs"])
+#
+#         print("------------------------")
+#         if block_ds["outputs"]:
+#             for output_socket in block_ds["outputs"].items():
+#                 print(output_socket[0])
+#         else:
+#             print(block_ds["outputs"])
+#
+#         print()
+
+
