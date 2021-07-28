@@ -27,9 +27,9 @@ if __name__ == '__main__':
     args, unparsed_args = parser.parse_known_args()
     
     # args holds all the command line info:
-    #  args['file'] file name if given, else None
-    #  args['debug'] True if -d option given
-    #  args['print'] True if -p option given, load the file, save screenshot,
+    #  args.file file name if given, else None
+    #  args.debug True if -d option given
+    #  args.print True if -p option given, load the file, save screenshot,
     #                then exit
 
     # insert argv[0] into head of list of remaining args, and hand that to Qt
