@@ -10,9 +10,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import animation
 from collections import UserDict
-
-from collections import UserDict
-
 class Struct(UserDict):
     """
     A dict like object that allows items to be added by attribute or by key.
@@ -545,6 +542,8 @@ class Block:
     the superclass initializer for each block in the library.
 
     """
+    varinputs = False
+    varoutputs = False
 
     def __new__(cls, *args, bd=None, **kwargs):
         """
@@ -567,8 +566,6 @@ class Block:
         block.__dict__['portnames'] = []  # must be first, see __setattr__
 
         block.bd = bd
-        block.nin = 0
-        block.nout = 0
         block.nstates = 0
         block.ndstates = 0
         block._sequence = None
@@ -964,7 +961,10 @@ class Block:
         pass
 
     def check(self):  # check validity of block parameters at start
-        assert self.nin > 0 or self.nout > 0, 'no inputs or outputs specified'
+        assert hasattr(self, 'nin'), f"block {self.name} has no nin specified"
+        assert hasattr(self, 'nout'), f"block {self.name} has no nout specified"
+
+        assert self.nin > 0 or self.nout > 0, f"block {self.name} no inputs or outputs specified"
         assert hasattr(self, 'initd') and self.initd, 'Block superclass not initalized. was super().__init__ called?'
 
     def done(self, **kwargs):  # end of simulation

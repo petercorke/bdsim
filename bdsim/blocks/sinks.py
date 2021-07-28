@@ -19,13 +19,12 @@ from matplotlib.pyplot import Polygon
 
 import spatialmath.base as sm
 
-from bdsim.components import SinkBlock, block
+from bdsim.components import SinkBlock
 
 
 
 # ------------------------------------------------------------------------ #
 
-@block
 class Print(SinkBlock):
     """    
     :blockname:`PRINT`
@@ -41,6 +40,9 @@ class Print(SinkBlock):
     | any    |         |         | 
     +--------+---------+---------+
     """
+
+    nin = 1
+    nout = 0
 
     def __init__(self, fmt=None, **kwargs):
         """
@@ -81,9 +83,8 @@ class Print(SinkBlock):
         .. note:: The output is cleaner if progress bar printing is disabled.
 
         """
-        super().__init__(nin=1, **kwargs)
+        super().__init__(**kwargs)
         self.format = fmt
-        self.type = 'print'
         
         # TODO format can be a string or function
 
@@ -109,7 +110,6 @@ class Print(SinkBlock):
 # ------------------------------------------------------------------------ #
             
 
-@block
 class Stop(SinkBlock):
     """
     :blockname:`STOP`
@@ -125,6 +125,9 @@ class Stop(SinkBlock):
     | any    |         |         | 
     +--------+---------+---------+
     """
+
+    nin = 1
+    nout = 0
 
     def __init__(self, func=None, **kwargs):
         """
@@ -142,13 +145,11 @@ class Stop(SinkBlock):
         If ``func`` is provided, then it is applied to the block input
         and if it returns True the simulation is stopped.
         """
-        super().__init__(nin=1, **kwargs)
+        super().__init__(**kwargs)
 
         if not callable(func):
             raise TypeError('argument must be a callable')
         self.stopfunc  = func
-
-        self.type = 'stop'
 
     def step(self, state=None):
         value = self.inputs[0]
@@ -171,7 +172,6 @@ class Stop(SinkBlock):
 
 # ------------------------------------------------------------------------ #
 
-@block
 class Null(SinkBlock):
     """    
     :blockname:`NULL`
@@ -188,6 +188,9 @@ class Null(SinkBlock):
     +--------+---------+---------+
     """
 
+    nin = -1
+    nout = 0
+
     def __init__(self, nin=1, **kwargs):
         """
         :param nin: number of input ports, defaults to 1
@@ -201,7 +204,6 @@ class Null(SinkBlock):
 
         """
         super().__init__(nin=nin, **kwargs)
-        self.type = 'null'
         
         # TODO format can be a string or function
 

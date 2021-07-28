@@ -12,11 +12,8 @@ Function blocks:
 import numpy as np
 import math
 
-from bdsim.components import FunctionBlock, block
+from bdsim.components import FunctionBlock
 
-
-        
-@block
 class Inverse(FunctionBlock):
     """
     :blockname:`INVERSE`
@@ -33,6 +30,9 @@ class Inverse(FunctionBlock):
     +------------+---------+---------+
     """
 
+    nin = 1
+    nout = 1
+
     def __init__(self, *inputs, pinv=False, **kwargs):
         """
         :param pinv: force pseudo inverse
@@ -45,8 +45,7 @@ class Inverse(FunctionBlock):
         
         Create a matrix inverse.
         """
-        super().__init__(nin=1, nout=1, inputs=inputs, **kwargs)
-        self.type = 'inverse'
+        super().__init__(inputs=inputs, **kwargs)
 
         self.pinv = pinv
         
@@ -66,7 +65,6 @@ class Inverse(FunctionBlock):
         return [out]
 
 # ------------------------------------------------------------------------ #
-@block
 class Transpose(FunctionBlock):
     """
     :blockname:`TRANSPOSE`
@@ -83,6 +81,9 @@ class Transpose(FunctionBlock):
     +------------+---------+---------+
     """
 
+    nin = 1
+    nout = 1
+
     def __init__(self, *inputs, **kwargs):
         """
         :param ``*inputs``: Optional incoming connections
@@ -98,8 +99,7 @@ class Transpose(FunctionBlock):
             - A column vector becomes a 2D row vector
     
         """
-        super().__init__(nin=1,nout=1, inputs=inputs, **kwargs)
-        self.type = 'transpose'
+        super().__init__(inputs=inputs, **kwargs)
 
     def output(self, t=None):
         mat = self.inputs[0]
@@ -112,7 +112,7 @@ class Transpose(FunctionBlock):
         return [out]
 
 # ------------------------------------------------------------------------ #
-@block
+
 class Norm(FunctionBlock):
     """
     :blockname:`NORM`
@@ -129,6 +129,9 @@ class Norm(FunctionBlock):
     +------------+---------+---------+
     """
 
+    nin = 1
+    nout = 1
+
     def __init__(self, *inputs, **kwargs):
         """
         :param ``*inputs``: Optional incoming connections
@@ -139,8 +142,7 @@ class Norm(FunctionBlock):
         
         Create a vector norm block.
         """
-        super().__init__(nin=1,nout=1, inputs=inputs, **kwargs)
-        self.type = 'norm'
+        super().__init__(inputs=inputs, **kwargs)
 
     def output(self, t=None):
         vec = self.inputs[0]
@@ -148,7 +150,6 @@ class Norm(FunctionBlock):
         return [out]
 
 # ------------------------------------------------------------------------ #
-@block
 class Det(FunctionBlock):
     """
     :blockname:`DET`
@@ -165,6 +166,9 @@ class Det(FunctionBlock):
     +------------+---------+---------+
     """
 
+    nin = 1
+    nout = 1
+
     def __init__(self, *inputs, **kwargs):
         """
         :param ``*inputs``: Optional incoming connections
@@ -176,8 +180,7 @@ class Det(FunctionBlock):
         Create a matrix determinant block
 
         """
-        super().__init__(nin=1,nout=1, inputs=inputs, **kwargs)
-        self.type = 'det'
+        super().__init__(inputs=inputs, **kwargs)
 
     def output(self, t=None):
         mat = self.inputs[0]

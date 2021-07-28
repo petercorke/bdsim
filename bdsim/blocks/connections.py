@@ -19,12 +19,10 @@ import importlib.util
 import numpy as np
 import copy
 
-
 import bdsim
-from bdsim.components import SubsystemBlock, SourceBlock, SinkBlock, FunctionBlock, block
+from bdsim.components import SubsystemBlock, SourceBlock, SinkBlock, FunctionBlock
 
 # ------------------------------------------------------------------------ #
-@block
 class Item(FunctionBlock):
 
     """
@@ -41,6 +39,9 @@ class Item(FunctionBlock):
     | dict       | any     |         | 
     +------------+---------+---------+
     """
+
+    nin = 1
+    nout = 1
 
     def __init__(self, item, **kwargs):
         """
@@ -63,8 +64,7 @@ class Item(FunctionBlock):
         :seealso: :class:`Dict`
         """
 
-        super().__init__(nin=1, nout=1, **kwargs)
-        self.type = 'item'
+        super().__init__(**kwargs)
         self.item = item
     
     def output(self, t=None):
@@ -89,6 +89,8 @@ class Dict(FunctionBlock):
     | any        | dict    |         | 
     +------------+---------+---------+
     """
+    nin = 1
+    nout = 1
 
     def __init__(self, item, **kwargs):
         """
@@ -115,8 +117,7 @@ class Dict(FunctionBlock):
         :seealso: :class:`Item` :class:`Mux`
         """
 
-        super().__init__(nin=1, nout=1, **kwargs)
-        self.type = 'item'
+        super().__init__(**kwargs)
         self.item = item
     
     def output(self, t=None):
@@ -125,7 +126,6 @@ class Dict(FunctionBlock):
         assert self.item in self.inputs[0], 'Item is not in signal dict'
         return [self.inputs[0][self.item]]
 # ------------------------------------------------------------------------ #
-@block
 class Mux(FunctionBlock):
     """
     :blockname:`MUX`
@@ -143,6 +143,9 @@ class Mux(FunctionBlock):
     | A(N,)      | A(M,)   |         | 
     +------------+---------+---------+
     """
+
+    nin = -1
+    nout = 1
 
     def __init__(self, nin=1, **kwargs):
         """
@@ -165,8 +168,7 @@ class Mux(FunctionBlock):
         
         :seealso: :class:`Dict`
         """
-        super().__init__(nin=nin, nout=1, **kwargs)
-        self.type = 'mux'
+        super().__init__(nin=nin, **kwargs)
     
     def output(self, t=None):
         # TODO, handle inputs that are vectors themselves
@@ -180,7 +182,6 @@ class Mux(FunctionBlock):
 
 
 # ------------------------------------------------------------------------ #
-@block
 class DeMux(FunctionBlock):
     """
     :blockname:`DEMUX`
@@ -198,6 +199,9 @@ class DeMux(FunctionBlock):
     +------------+---------+---------+
     """
 
+    nin = 1
+    nout = -1
+
     def __init__(self, nout=1, **kwargs):
         """
         :param nout: number of outputs, defaults to 1
@@ -213,8 +217,7 @@ class DeMux(FunctionBlock):
         scalar output port.
 
         """
-        super().__init__(nin=1, nout=nout, **kwargs)
-        self.type = 'demux'
+        super().__init__(nout=nout, **kwargs)
     
     def output(self, t=None):
         # TODO, handle inputs that are vectors themselves
@@ -222,7 +225,7 @@ class DeMux(FunctionBlock):
         return list(self.inputs[0])
 
 # ------------------------------------------------------------------------ #
-@block
+
 class Index(FunctionBlock):
     """
     :blockname:`INDEX`
@@ -238,6 +241,9 @@ class Index(FunctionBlock):
     | ndarray    | ndarray |         |
     +------------+---------+---------+
     """
+
+    nin = 1
+    nout = 1
 
     def __init__(self, index=[], **kwargs):
         """
@@ -255,8 +261,7 @@ class Index(FunctionBlock):
         object, or a string with Python slice notation, eg. "::-1"
 
         """
-        super().__init__(nin=1, nout=1, **kwargs)
-        self.type = 'index'
+        super().__init__(**kwargs)
 
         if isinstance(index, str):
             args = [None if a == '' else int(a) for a in index.split(':')]
@@ -266,7 +271,7 @@ class Index(FunctionBlock):
     def output(self, t=None):
         return [self.inputs[self.index]]
 # ------------------------------------------------------------------------ #
-@block
+
 class SubSystem(SubsystemBlock):
     """
     :blockname:`SUBSYSTEM`
@@ -282,6 +287,9 @@ class SubSystem(SubsystemBlock):
     | any        | any        |         |
     +------------+------------+---------+
     """
+
+    nin = -1
+    nout = -1
 
     def __init__(self, subsys, **kwargs):
         """
@@ -322,7 +330,6 @@ class SubSystem(SubsystemBlock):
           subsystem.
         """
         super().__init__(**kwargs)
-        self.type = 'subsystem'
         
         if isinstance(subsys, str):
             # attempt to import the file
@@ -377,7 +384,7 @@ class SubSystem(SubsystemBlock):
         self.ssname = subsys.name
 
 # ------------------------------------------------------------------------ #
-@block
+
 class InPort(SubsystemBlock):
     """
     :blockname:`INPORT`
@@ -393,7 +400,10 @@ class InPort(SubsystemBlock):
     |            | any     |         |
     +------------+---------+---------+
     """
-    
+
+    nin = 0
+    nout = -1
+
     def __init__(self, nout=1, **kwargs):
         """
         :param nout: Number of output ports, defaults to 1
@@ -408,7 +418,6 @@ class InPort(SubsystemBlock):
         parent-level ``SubSystem`` block appear as outputs of this block.
         """
         super().__init__(nout=nout, **kwargs)
-        self.type = 'inport'
 
     def output(self, t=None):
         # signal feed through
@@ -416,7 +425,7 @@ class InPort(SubsystemBlock):
         return self.inputs
 
 # ------------------------------------------------------------------------ #
-@block
+
 class OutPort(SubsystemBlock):
     """
     :blockname:`OUTPORT`
@@ -433,6 +442,9 @@ class OutPort(SubsystemBlock):
     +------------+---------+---------+
     """
 
+    nin = -1
+    nout = 0
+
     def __init__(self, nin=1, **kwargs):
         """
         :param nin: Number of input ports, defaults to 1
@@ -447,7 +459,6 @@ class OutPort(SubsystemBlock):
         parent-level ``SubSystem`` block are the inputs of this block.
         """
         super().__init__(nin=nin, **kwargs)
-        self.type = 'outport'
 
     def output(self, t=None):
         # signal feed through

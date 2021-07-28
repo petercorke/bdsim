@@ -40,7 +40,9 @@ class Sum(FunctionBlock):
     | A(N,M)     | A(N,M)  |         | 
     +------------+---------+---------+
     """
-    varinputs = True
+    
+    nin = -1
+    nout = 1
 
     def __init__(self, signs='++', *inputs, angles=False, **kwargs):
 
@@ -81,9 +83,8 @@ class Sum(FunctionBlock):
         is a 3-input summing junction where ports 0 and 2 are added and
         port 1 is subtracted.
         """
-        super().__init__(nin=len(signs), nout=1, inputs=inputs, **kwargs)
+        super().__init__(nin=len(signs), inputs=inputs, **kwargs)
         assert isinstance(signs, str), 'first argument must be signs string'
-        # self.type = 'sum'
         assert all([x in '+-' for x in signs]), 'invalid sign'
         self.signs = signs
         self.angles = angles
@@ -121,7 +122,9 @@ class Prod(FunctionBlock):
     | A(N,M)     | A(N,M)  |         | 
     +------------+---------+---------+
     """
-    varinputs = True
+    
+    nin = -1
+    nout = 1
 
     def __init__(self, ops='**', *inputs, matrix=False, **kwargs):
         """
@@ -160,9 +163,8 @@ class Prod(FunctionBlock):
         ``@`` and ``@ np.linalg.inv()``.
     
         """
-        super().__init__(nin=len(ops), nout=1, inputs=inputs, **kwargs)
+        super().__init__(nin=len(ops), inputs=inputs, **kwargs)
         assert isinstance(ops, str), 'first argument must be signs string'
-        # self.type = 'prod'
         assert all([x in '*/' for x in ops]), 'invalid op'
         self.ops = ops
         self.matrix = matrix
@@ -210,6 +212,9 @@ class Gain(FunctionBlock):
     +------------+---------+---------+
     """
 
+    nin = 1
+    nout = 1
+
     def __init__(self, K=1, *inputs, premul=False, **kwargs):
         """
         :param K: The gain value, defaults to 1
@@ -250,9 +255,8 @@ class Gain(FunctionBlock):
             bd.connect(block1, gain)
 
         """
-        super().__init__(nin=1, nout=1, **kwargs)
+        super().__init__(**kwargs)
         self.K  = K
-        # self.type = 'gain'
         self.premul = premul
         
     def output(self, t=None):
@@ -288,6 +292,10 @@ class Clip(FunctionBlock):
     +------------+---------+---------+
 
     """
+
+    nin = 1
+    nout = 1
+
     def __init__(self, min=-math.inf, max=math.inf, **kwargs):
         """
         :param min: Minimum value, defaults to -math.inf
@@ -324,10 +332,9 @@ class Clip(FunctionBlock):
             bd.connect(block1, clip)
         
         """
-        super().__init__(nin=1, nout=1, **kwargs)
+        super().__init__(**kwargs)
         self.min = min
         self.max = max
-        # self.type = 'clip'
         
     def output(self, t=None):
         input = self.inputs[0]
@@ -356,8 +363,10 @@ class Function(FunctionBlock):
     +------------+---------+---------+
  
     """
-    varinputs = True
-    
+
+    nin = -1
+    nout = -1
+
     def __init__(self, func=None, nin=1, nout=1, dict=False, pargs=[], dargs={}, **kwargs):
     
         """
@@ -437,7 +446,6 @@ class Function(FunctionBlock):
             bd.connect(block2, func[1])
         """
         super().__init__(nin=nin, nout=nout, **kwargs)
-        # self.nin = nin
 
         if isinstance(func, (list, tuple)):
             for f in func:
@@ -520,6 +528,9 @@ class Interpolate(FunctionBlock):
     +------------+---------+---------+
     """
 
+    nin = -1
+    nout = 1
+
     def __init__(self, x=None, y=None, xy=None, time=False, kind='linear', **kwargs):
         """
         :param x: x-values of function, defaults to None
@@ -566,8 +577,7 @@ class Interpolate(FunctionBlock):
             self.blockclass = 'source'
         else:
             nin = 1
-        super().__init__(nin=nin, nout=1, **kwargs)
-        # self.type = 'function'
+        super().__init__(nin=nin, **kwargs)
 
         if xy is None:
             # process separate x and y vectors

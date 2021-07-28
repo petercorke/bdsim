@@ -33,6 +33,9 @@ class Constant(SourceBlock):
     +--------+---------+---------+
     """
 
+    nin = 0
+    nout = 1
+
     def __init__(self, value=None, **kwargs):
         """
         :param value: the constant, defaults to None
@@ -48,12 +51,11 @@ class Constant(SourceBlock):
         For example float, list or numpy ndarray.
 
         """
-        super().__init__(nout=1, **kwargs)
+        super().__init__(**kwargs)
         
         if isinstance(value, (tuple, list)):
             value = np.array(value)
         self.value = value
-        self.type = 'constant'
 
     def output(self, t=None):
         return [self.value]               
@@ -76,6 +78,9 @@ class Time(SourceBlock):
     +--------+---------+---------+
     """
 
+    nin = 0
+    nout = 1
+
     def __init__(self, value=None, **kwargs):
         """
         :param kwargs: common Block options
@@ -89,8 +94,7 @@ class Time(SourceBlock):
         For example float, list or numpy ndarray.
 
         """
-        super().__init__(nout=1, **kwargs)
-        self.type = 'time'
+        super().__init__(**kwargs)
 
     def output(self, t=None):
         return [t]  
@@ -111,6 +115,9 @@ class WaveForm(SourceBlock):
     |        | float   |         | 
     +--------+---------+---------+
     """
+
+    nin = 0
+    nout = 1
 
     def __init__(self, wave='square',
                  freq=1, unit='Hz', phase=0, amplitude=1, offset=0,
@@ -164,7 +171,7 @@ class WaveForm(SourceBlock):
         square wave has its first rise.  We can specify a phase shift with 
         a number in the range [0,1] where 1 corresponds to one cycle.
         """
-        super().__init__(nout=1, **kwargs)
+        super().__init__(**kwargs)
 
         assert 0<duty<1, 'duty must be in range [0,1]'
         
@@ -193,7 +200,6 @@ class WaveForm(SourceBlock):
             raise ValueError('duty out of range')
         self.amplitude = amplitude
         self.offset = offset
-        self.type = 'waveform'
 
     def start(self, state=None):
         if self.waveform == 'square':
@@ -256,6 +262,9 @@ class Piecewise(SourceBlock):
     +--------+---------+---------+
     """
 
+    nin = 0
+    nout = 1
+
     def __init__(self, *seq, **kwargs):
         """
         :param seq: Sequence of time, value pairs
@@ -275,11 +284,10 @@ class Piecewise(SourceBlock):
         a tuple with time zero otherwise the output will be undefined.
 
         """
-        super().__init__(nout=1, **kwargs)
+        super().__init__(**kwargs)
         
         self.t = [ x[0] for x in seq]
         self.y = [ x[1] for x in seq]
-        self.type = "piecewise"
 
     def start(self, state=None):
         for t in self.t:
@@ -309,6 +317,9 @@ class Step(SourceBlock):
     +--------+---------+---------+
     """
 
+    nin = 0
+    nout = 1
+
     def __init__(self, T=1,
                  off=0, on=1,
                  **kwargs):
@@ -329,12 +340,11 @@ class Step(SourceBlock):
         Output a step signal that transitions from the value ``off`` to ``on``
         when time equals ``T``.
         """
-        super().__init__(nout=1, **kwargs)
+        super().__init__(**kwargs)
         
         self.T = T
         self.off = off
         self.on = on
-        self.type = "step"
 
     def start(self, state=None):
         state.declare_event(self, self.T)
@@ -366,6 +376,9 @@ class Ramp(SourceBlock):
     +--------+---------+---------+
     """
 
+    nin = 0
+    nout = 1
+
     def __init__(self, T=1,
                  off=0, slope=1, 
                  **kwargs):
@@ -384,12 +397,11 @@ class Ramp(SourceBlock):
         Output a ramp signal that starts increasing from the value ``off``
         when time equals ``T`` linearly with time, with a gradient of ``slope``.
         """
-        super().__init__(nout=1, **kwargs)
+        super().__init__(**kwargs)
         
         self.T = T
         self.off = off
         self.slope = slope
-        self.type = "ramp"
 
     def start(self, state=None):
         state.declare_event(self, self.T)

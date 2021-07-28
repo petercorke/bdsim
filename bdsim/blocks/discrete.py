@@ -17,13 +17,30 @@ import matplotlib.pyplot as plt
 import inspect
 from spatialmath import base
 
-from bdsim.components import ClockedBlock, block
+from bdsim.components import ClockedBlock
 
 # ------------------------------------------------------------------------ 
 
 
-@block
 class ZOH(ClockedBlock):
+    """
+    :blockname:`ZOH`
+    
+    .. table::
+       :align: left
+    
+    +------------+---------+---------+
+    | inputs     | outputs |  states |
+    +------------+---------+---------+
+    | 1          | 1       | N       |
+    +------------+---------+---------+
+    | float,     | float,  |         | 
+    | A(N,)      | A(N,)   |         |
+    +------------+---------+---------+
+    """
+
+    nin = 1
+    nout = 1
 
     def __init__(self, clock, x0=0, min=None, max=None, **kwargs):
         """
@@ -70,11 +87,9 @@ class ZOH(ClockedBlock):
 
 # ------------------------------------------------------------------------ 
 
-
-@block
 class DIntegrator(ClockedBlock):
     """
-    :blockname:`INTEGRATOR`
+    :blockname:`DINTEGRATOR`
     
     .. table::
        :align: left
@@ -88,6 +103,9 @@ class DIntegrator(ClockedBlock):
     | A(N,)      | A(N,)   |         |
     +------------+---------+---------+
     """
+
+    nin = 1
+    nout = 1
 
     def __init__(self, clock, x0=0, gain=1.0, min=None, max=None, **kwargs):
         """
@@ -113,8 +131,7 @@ class DIntegrator(ClockedBlock):
             - a vector, of the same shape as ``x0`` that applies elementwise to
               the state.
         """
-        self.type = 'discrete-integrator'
-        super().__init__(nin=1, nout=1, inputs=inputs, clock=clock, **kwargs)
+        super().__init__(clock=clock, **kwargs)
 
         if isinstance(x0, (int, float)):
             self.ndstates = 1

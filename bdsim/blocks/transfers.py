@@ -17,7 +17,7 @@ from math import sin, cos, atan2, sqrt, pi
 import matplotlib.pyplot as plt
 from spatialmath import base
 
-from bdsim.components import TransferBlock, block
+from bdsim.components import TransferBlock
 
 # ------------------------------------------------------------------------ #
 
@@ -36,7 +36,7 @@ from bdsim.components import TransferBlock, block
 # ------------------------------------------------------------------------ #
 
 
-@block
+
 class Integrator(TransferBlock):
     """
     :blockname:`INTEGRATOR`
@@ -53,6 +53,9 @@ class Integrator(TransferBlock):
        | A(N,)      | A(N,)   |         |
        +------------+---------+---------+
     """
+
+    nin = 1
+    nout = 1
 
     def __init__(self, x0=0, min=None, max=None, **kwargs):
         """
@@ -78,8 +81,7 @@ class Integrator(TransferBlock):
             - a vector, of the same shape as ``x0`` that applies elementwise to
               the state.
         """
-        self.type = 'integrator'
-        super().__init__(nin=1, nout=1, **kwargs)
+        super().__init__(**kwargs)
 
         if isinstance(x0, (int, float)):
             self.nstates = 1
@@ -123,8 +125,6 @@ class Integrator(TransferBlock):
 
 # ------------------------------------------------------------------------ #
 
-
-@block
 class LTI_SS(TransferBlock):
     """
     :blockname:`LTI_SS`
@@ -135,12 +135,15 @@ class LTI_SS(TransferBlock):
        +------------+---------+---------+
        | inputs     | outputs |  states |
        +------------+---------+---------+
-       | 1          | 01      | nc      |
+       | 1          | 1       | nc      |
        +------------+---------+---------+
        | float,     | float,  |         | 
        | A(nb,)     | A(nc,)  |         |
        +------------+---------+---------+
     """
+
+    nin = 1
+    nout = 1
 
     def __init__(self, A=None, B=None, C=None, x0=None, verbose=False, **kwargs):
         r"""
@@ -176,8 +179,6 @@ class LTI_SS(TransferBlock):
         is the transfer function :math:`\frac{s+2}{2s^2+3s-4}`.
         """
         #print('in SS constructor')
-        self.type = 'LTI SS'
-
         assert A.shape[0] == A.shape[1], 'A must be square'
         n = A.shape[0]
         if len(B.shape) == 1:
@@ -195,7 +196,7 @@ class LTI_SS(TransferBlock):
             nout = C.shape[0]
             assert C.shape[1] == n, 'C must have same number of columns as A'
 
-        super().__init__(nin=nin, nout=nout, **kwargs)
+        super().__init__(**kwargs)
 
         self.A = A
         self.B = B
@@ -216,7 +217,6 @@ class LTI_SS(TransferBlock):
 # ------------------------------------------------------------------------ #
 
 
-@block
 class LTI_SISO(LTI_SS):
     """
     :blockname:`LTI_SISO`
@@ -233,6 +233,9 @@ class LTI_SISO(LTI_SS):
        +------------+---------+---------+
      
     """
+
+    nin = 1
+    nout = 1
 
     def __init__(self, N=1, D=[1, 1], x0=None, verbose=False, **kwargs):
         r"""
@@ -315,8 +318,6 @@ class LTI_SISO(LTI_SS):
             print('C=', C)
 
         super().__init__(A=A, B=B, C=C, x0=x0, **kwargs)
-        self.type = 'LTI'
-
 
 if __name__ == "__main__":
 

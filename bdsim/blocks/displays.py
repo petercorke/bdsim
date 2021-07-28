@@ -19,7 +19,7 @@ from matplotlib.pyplot import Polygon
 
 import spatialmath.base as sm
 
-from bdsim.components import SinkBlock, block
+from bdsim.components import SinkBlock
 from bdsim.graphics import GraphicsBlock
 
 
@@ -27,7 +27,6 @@ from bdsim.graphics import GraphicsBlock
 # ------------------------------------------------------------------------ #
 
 
-@block
 class Scope(GraphicsBlock):
     """
     :blockname:`SCOPE`
@@ -45,6 +44,9 @@ class Scope(GraphicsBlock):
        +--------+---------+---------+
     """
     
+    nin = -1
+    nout = 0
+
     def __init__(self, nin=1, vector=0, styles=None, stairs=False, scale='auto', labels=None, grid=True, **kwargs):
         """
         Create a block that plots input ports against time.
@@ -107,7 +109,6 @@ class Scope(GraphicsBlock):
                 raise ValueError('unknown argument to listify')
 
         nplots = None
-        self.type = 'scope'
 
         if styles is not None:
             self.styles = listify(styles)
@@ -232,7 +233,6 @@ class Scope(GraphicsBlock):
 
 # ------------------------------------------------------------------------ #
 
-@block
 class ScopeXY(GraphicsBlock):
     """
     :blockname:`SCOPEXY`
@@ -248,6 +248,9 @@ class ScopeXY(GraphicsBlock):
     | float  |         |         | 
     +--------+---------+---------+
     """
+
+    nin = 2
+    nout = 0
 
     def __init__(self, style=None, scale='auto', aspect='equal', labels=['X', 'Y'], init=None, nin=2, **kwargs):
         """
@@ -280,10 +283,9 @@ class ScopeXY(GraphicsBlock):
         :input x: signal plotted on horizontal axis
         :input y: signal plotted on vertical axis
         """
-        super().__init__(nin=nin, **kwargs)
+        super().__init__(**kwargs)
         self.xdata = []
         self.ydata = []
-        self.type = 'scopexy'
         if init is not None:
             assert callable(init), 'graphics init function must be callable'
         self.init = init
@@ -354,7 +356,6 @@ class ScopeXY(GraphicsBlock):
             plt.show(block=block)
             super().done()
             
-@block
 class ScopeXY1(ScopeXY):
     """
     :blockname:`SCOPEXY1`
@@ -370,6 +371,9 @@ class ScopeXY1(ScopeXY):
     | ndarray(2)  |         |         | 
     +-------------+---------+---------+
     """
+
+    nin = 1
+    nout = 0
 
     def __init__(self, indices=[0, 1], **kwargs):
         """
@@ -401,7 +405,7 @@ class ScopeXY1(ScopeXY):
             - a 2-tuple [min, max] which is used for the x- and y-axes
             - a 4-tuple [xmin, xmax, ymin, ymax]
         """
-        super().__init__(nin=1, **kwargs)
+        super().__init__(**kwargs)
         if len(indices) != 2:
             raise ValueError('indices must have 2 elements')
         self.indices = [int(x) for x in indices]

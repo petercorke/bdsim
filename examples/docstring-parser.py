@@ -13,7 +13,7 @@ def indent(s):
 
 blocks = {}
 
-fieldnames = ('param', 'type', 'input', 'output', 'varinputs')
+fieldnames = ('param', 'type', 'input', 'output')
 excludevars = ('kwargs', 'inputs')
 
 # sim = bdsim.BDSim(verbose=True)
@@ -116,23 +116,23 @@ for package in ('bdsim', 'roboticstoolbox'):
         block_info['params'] = params
         block_info['inputs'] = dict.get('input')
         block_info['outputs'] = dict.get('output')
-        block_info['varinputs'] = 'varinputs' in dict
-        try:
-            instance = block()
-            block_info['nin'] = instance.nin
-            block_info['nout'] = instance.nout
-            block_info['blockclass'] = instance.blockclass
-        except:
 
-            print('couldnt instantiate ', name)
-            block_info['nin'] = 1
-            block_info['nout'] = 1
-            blockclass = block.__base__.__name__.lower().replace('block', '')
-            block_info['blockclass'] = blockclass
+        # try:
+        #     instance = block()
+        #     block_info['nin'] = instance.nin
+        #     block_info['nout'] = instance.nout
+        #     block_info['blockclass'] = instance.blockclass
+        # except:
 
+        # print('couldnt instantiate ', name)
+        block_info['nin'] = block.nin
+        block_info['nout'] = block.nout
+        blockclass = block.__base__.__name__.lower().replace('block', '')
+        block_info['blockclass'] = blockclass
 
         blocks[name] = block_info
 
+print(blocks['Bicycle'])
 for k, v in blocks['Bicycle']['inputs'].items():
     print(k, v)
 for k, v in blocks['Bicycle']['outputs'].items():
