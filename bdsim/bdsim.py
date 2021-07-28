@@ -597,16 +597,12 @@ class BDSim:
                     # component module's namespace.
                     if not file.name.startswith('test_') and not file.name.startswith('__') and file.name.endswith('.py'):
                         # valid python module, import it
-                        try:
-                            # module = importlib.import_module('.' + file.stem, package='bdsim.blocks')
-                            spec = importlib.util.spec_from_file_location(
-                                file.name, file)
-                            module = importlib.util.module_from_spec(spec)
-                            spec.loader.exec_module(module)
-                            # module = importlib.import_module('.' + file.stem, package='bdsim.blocks')
-                        except SyntaxError:
-                            print(
-                                f"-- syntax error in block definiton: {file}")
+                        # module = importlib.import_module('.' + file.stem, package='bdsim.blocks')
+                        spec = importlib.util.spec_from_file_location(
+                            file.name, file)
+                        module = importlib.util.module_from_spec(spec)
+                        spec.loader.exec_module(module)
+                        # module = importlib.import_module('.' + file.stem, package='bdsim.blocks')
 
                         # components.blocklist grows with every block import
                         if len(blocklist) > nblocks:

@@ -468,17 +468,17 @@ class BlockDiagram:
 
             for b in group:
                 # ask the block for output, check for errors
-                try:
-                    out = b.output(t)
-                except Exception as err:
-                    # output method failed, report it
-                    print('--Error at t={:f} when computing output of block {:s}'.format(t, str(b)))
-                    print('  {}'.format(err))
-                    print('  inputs were: ', b.inputs)
-                    if b.nstates > 0:
-                        print('  state was: ', b._x)
+                # try:
+                out = b.output(t)
+                # except Exception as err:
+                #     # output method failed, report it
+                #     print('--Error at t={:f} when computing output of block {:s}'.format(t, str(b)))
+                #     print('  {}'.format(err))
+                #     print('  inputs were: ', b.inputs)
+                #     if b.nstates > 0:
+                #         print('  state was: ', b._x)
 
-                    raise RuntimeError from None
+                #     raise RuntimeError from None
 
                 self.DEBUG('propagate', 'block {:s}: output = '.format(str(b),t) + str(out))
 
