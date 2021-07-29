@@ -8,9 +8,9 @@
 ./tex2icon.py -r 150 -o ikine.png -t '\mat{T}\!\left(\vec{q}\right)'
 ./tex2icon.py -r 150 -o jacobian.png -t '\mat{J}\!\left(\vec{q}\right)'
 ./tex2icon.py -r 300 -o time.png -t 't'
-./tex2icon.py -r 150 -o point2tr.png -t '\mat{T}\!\left(\vec{p}\right)'
-./tex2icon.py -r 120 -o tr2delta.png -t '\vec{\Delta}\left(\mat{T}\right)'
-./tex2icon.py -r 120 -o delta2tr.png -t '\mat{T}\left(\vec{\Delta}\right)'
+./tex2icon.py -r 100 -o point2tr.png -t '\begin{array}{c|c} \mat{1} & \vec{t}\\ \hline 0 & 1 \end{array}'
+./tex2icon.py -r 120 -o tr2delta.png -t '\vec{\Delta}\!\left(\mat{T}\right)'
+./tex2icon.py -r 120 -o delta2tr.png -t '\mat{T}\!\left(\vec{\Delta}\right)'
 
 ./tex2icon.py -r 120 -o dict.png -t '\mathrm{\{\cdots\}}'
 ./tex2icon.py -r 120 -o index.png -t '\mathrm{[}k\mathrm{]}'

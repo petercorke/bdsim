@@ -80,7 +80,7 @@ class GraphicsSocket(QGraphicsItem):
         self._sign_pen = QPen(self._color_outline)
         self._sign_pen.setWidthF(self.sign_width)
         self._char_font = QFont('Calibri', 14)
-        self._char_font_measure = ImageFont.truetype('calibri.ttf', 14)
+        self._char_font_measure = ImageFont.truetype('Calibri.ttf', 14)
 
         self.setFlag(QGraphicsItem.ItemIsSelectable)
 

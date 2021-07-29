@@ -18,7 +18,7 @@ latex_template = """\\documentclass{{article}}
 ${tex}$
 \\end{{document}}"""
 
-IMSIZE = 50
+IMSIZE = 250
 
 def main():
     des = 'tex2icon, create bdedit icons from LaTeX source'
@@ -55,7 +55,7 @@ def main():
                 '/usr/local/bin/gs',
                 '-sDEVICE=pngalpha',
                 '-sOutputFile=%stdout',
-                '-r' + str(args.r),
+                '-r' + str(args.r * 5),
                 '-dBATCH',
                 '-dNOPAUSE',
                 '-q',
