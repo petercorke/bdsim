@@ -41,7 +41,7 @@ class Sum(FunctionBlock):
     +------------+---------+---------+
     """
     
-    nin = -1
+    nin = 2
     nout = 1
 
     def __init__(self, signs='++', *inputs, angles=False, **kwargs):
@@ -123,7 +123,7 @@ class Prod(FunctionBlock):
     +------------+---------+---------+
     """
     
-    nin = -1
+    nin = 2
     nout = 1
 
     def __init__(self, ops='**', *inputs, matrix=False, **kwargs):

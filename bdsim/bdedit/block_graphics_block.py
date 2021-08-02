@@ -71,7 +71,7 @@ class GraphicsBlock(QGraphicsItem):
         # Colours for pens are defined, and the text font is set
         self._default_title_color = Qt.black    # Title colour (set to Light mode by default)
         self._pen_selected = QPen(QColor("#FFFFA637"), self._selected_line_thickness)
-        self._title_font = QFont("Ubuntu", 10)
+        self._title_font = QFont("Arial", 10)
 
         # Methods called to:
         # * draw the title for the block
@@ -318,6 +318,8 @@ class GraphicsBlock(QGraphicsItem):
         # Icon of the block is drawn overtop the blocks' background
         if QtCore.QFile.exists(self.icon):
             icon_item = QPixmap(self.icon).scaledToWidth(50) if self.icon else QPixmap(self.icon)   # Icons are scaled down to 50 pixels
+            #icon_item = QPixmap(self.icon).scaledToWidth(100) if self.icon else QPixmap(self.icon)
+            # icon_item = QPixmap(self.icon)
             target = QRect((self.width - icon_item.width()) / 2, (self.height - icon_item.height()) / 2, self.width, self.height)
             source = QRect(0, 0, self.width, self.height)
             painter.drawPixmap(target, icon_item, source)

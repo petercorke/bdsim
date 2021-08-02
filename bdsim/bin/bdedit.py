@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 
 # Library imports
+import os
 import sys
 import argparse
 
 # PyQt5 imports
 from PyQt5.QtWidgets import *
+from PyQt5.QtCore import QTimer
 
 # BdEdit imports
-#from ..bdedit.interface import Interface
 from bdsim.bdedit.interface import Interface
 
 # Executable code to launch the BdEdit application window
@@ -37,7 +38,6 @@ if __name__ == '__main__':
 
     # A QApplication instance is made, which is the window that holds everything
     app = QApplication(unparsed_args)
-    # app = QApplication(sys.argv)
 
     # The resolution of the user's screen is extracted (used for determining
     # the size of the application window)
@@ -46,7 +46,41 @@ if __name__ == '__main__':
     # Finally the window is displayed by creating an instance of Interface,
     # which holds all the logic for how the application should appear and which
     # connects all the other Classes through the Interface.
-    window = Interface(screen_resolution)
+    window = Interface(screen_resolution, args.debug)
+
+    # Check what command line arguments have been passed, if any
+    if args.file or args.print or args.debug:
+        # Call bdedit functionality based on passed args
+        if args.file:
+
+            # Check if file at given file path exists
+            if os.path.isfile(args.file):
+                window.loadFromFilePath(args.file)
+
+            # If file not found at path, return error msg
+            else:
+                print("File at given path not found")
+                sys.exit(0)
+
+        if args.print:
+            # Check if a model has been given to load (should always be the case if trying to screenshot)
+            # If it has, the logic for validating that path will always be checked before trying to screenshot in the above code
+            if args.file:
+                def screenshot(filename):
+                    window.save_image(filename)
+                    sys.exit(0)
+
+                # Extract the name of given model
+                file_basename = os.path.basename(args.file)
+                filename = os.path.splitext(file_basename)[0]
+
+                # After 100ms non-blocking delay, screenshot the model
+                QTimer.singleShot(100, lambda: screenshot(filename + "-screenshot"))
+
+            # No file found, return error and exit
+            else:
+                print("No file given to load model")
+                sys.exit(0)
 
     # Finally when the application is closed, the application is exited out of
     sys.exit(app.exec_())

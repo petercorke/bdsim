@@ -558,16 +558,19 @@ class ParamWindow(QWidget):
                 returnValue = "@BadFormat@"
                 # For each restriction that is placed onto the parameter
                 for option in options:
+
                     # If the placed restriction is a set of keywords,
                     if option[0] == "keywords":
                         # Check if the given value matches one of those keywords
                         if value.lower() in option[1]:
                             returnValue = value; break
+
                     # If the placed restriction is a range of values
                     elif option[0] == "range":
                         # Check if given value is within that range
                         if option[1][0] <= value <= option[1][1]:
                             returnValue = value; break
+
                     # If the placed restriction are additional accepted types
                     elif option[0] == "type":
                         # Check if the None is one of the accepted types
@@ -576,30 +579,45 @@ class ParamWindow(QWidget):
                             if isinstance(value, str) and value.lower() in ['none']:
                                 returnValue = None
                                 break
+
                         # Check if given value matches any accepted types
                         if type(value) in option[1]:
                             returnValue = value
                             break
+
                     # If the placed restriction are a set of allowable character symbol
                     elif option[0] == "symbol":
-                        # First get the max possible wrong characters in this string
-                        num_of_wrong_symbols = len(value)
-                        # Check each character within the given value against the set of allowable characters
-                        for sign in value:
-                            # For every character in the set of allowable characters, reduce the number
-                            # of wrong characters by 1
-                            if sign in option[1]:
-                                num_of_wrong_symbols -= 1
-                        # If all characters within the string match a set of allowable characters
-                        if num_of_wrong_symbols == 0:
-                            returnValue = value; break
+                        # Check if value is a string
+                        if isinstance(value, str):
+                            # First get the max possible wrong characters in this string
+                            num_of_wrong_symbols = len(value)
+                            # Check each character within the given value against the set of allowable characters
+                            for sign in value:
+                                # For every character in the set of allowable characters, reduce the number
+                                # of wrong characters by 1
+                                if sign in option[1]:
+                                    num_of_wrong_symbols -= 1
+                            # If all characters within the string match a set of allowable characters
+                            if num_of_wrong_symbols == 0:
+                                returnValue = value; break
+
+                        # Otherwise return badformat
+                        else:
+                            returnValue = "@BadFormat@"; break
+
                     # If the placed restriction are to the number of elements the parameter can have
                     elif option[0] == "size":
-                        # First check if the size of parameter is measureable, if not then its an int or float
+                        # Try to evalute the param value, and catch if it is a string
                         try:
-                            # Try to evalute the param value, and catch if it is a string
+                            # If input isn't a word (is a tuple, list, dict, num) try to evaluate it
                             try:
                                 param_val = eval(value)
+                            # If a type error is thrown, then the input might already have been evaluated previously
+                            except TypeError:
+                                param_val = value
+
+                            # Check if the size of parameter is measureable, if not then its an int or float
+                            try:
                                 param_length = len(param_val)
                                 # If the size of the parameter meets one of the allowable sizes (e.g. 0, 2 or 4) then return the value
                                 if param_length in option[1]:
@@ -607,110 +625,126 @@ class ParamWindow(QWidget):
                                 else:
                                     returnValue = "@BadFormat@"
                                 break
-                            # If it is a string, the size restriction shouldn't be checked
-                            except NameError:
-                                pass
-                        # If the length of the evaluated string is a singular int or float, escape the size restriction check
-                        except TypeError:
-                            returnValue = "@BadFormat@"
-                            break
-                # Return the value that has been set to be returned
-                return returnValue
-            # Else, no restrictions are placed on this parameter, so return the parameter value
-            else:
-                return value
+                            # If parameter isn't measureable, return bad format as param is an int/float, and size of a singular number cannot be checked
+                            except TypeError:
+                                returnValue = "@BadFormat@"
+                                break
 
-        # If input must be string, only strings can be accepted
-        if issubclass(requiredType, str):
-            # If input can be converted to float (or int), cannot be accepted
-            try:
-                float(inputValue);
-                # Check if this parameter has any further restrictions that may be useful
-                outcome = isValueInOption(inputValue, requiredOptions)
-
-                # If parameter doesn't meet its further restrictions, return useful message
-                if outcome == "@BadFormat@":
-                    return outcome
-                # Otherwise if it does meet further restrictions, return invalid type, as a float/int
-                # cannot be accepted since the type requirement is 'str'
-                else:
-                    return "@InvalidType@"
-            except ValueError:
-                # If the input is not a number, but an acceptable string
-                if isinstance(inputValue, str):
-
-                    # Check if input can be evaluated.
-                    # If SyntaxError is caught, input is in the form of "=function_name", this is not allowed for regular 'str', return error
-                    try:
-                        # If a NameError is caught, just ignore, as string here can be text or list/tuple/dict
-                        try:
-                            eval(inputValue)
+                        # If input is a word, evaluating it will try to match it to a variable name, which doesn't exist,
+                        # so in this case, don't check the size restriction on this parameter value
                         except NameError:
                             pass
 
-                        # If the length of the string is 0, this is not a valid string
-                        if len(inputValue) == 0:
-                            return "@InvalidType@"
-                        # If the string value is None, return None
-                        elif inputValue.lower() in ["none"]:
-                            return None
-                        # Otherwise check the input for restrictions
-                        else:
-                            return isValueInOption(inputValue.lower(), requiredOptions)
-                    except SyntaxError:
+                # Return the value that has been set to be returned
+                return returnValue
+
+            # Else, if no restrictions are placed on this parameter, return the value
+            else:
+                return value
+
+        try:
+            # If input must be string, only strings can be accepted
+            if issubclass(requiredType, str):
+                # If the input is not a number, but an acceptable string
+                if isinstance(inputValue, str):
+
+                    # Check if no input has been given
+                    if len(inputValue) == 0:
                         return "@InvalidType@"
-                else: return "@InvalidType@"
+                    else:
+                        # Check if the input is made up of normal characters [a-zA-z0-9]
+                        if inputValue.isalnum():
+                            return isValueInOption(inputValue.lower(), requiredOptions)
 
-        # If input must be bool, only booleans can be accepted
-        elif issubclass(requiredType, bool):
-            # All input starts off as text, so True/False will be 'True'/'False'
-            if isinstance(inputValue, str):
-                # Check if the string matches true/false, and return accordingly
-                if inputValue in ["True", "true"]: return True
-                elif inputValue in ["False", "false"]: return False
-                # Otherwise if string is None, check if this boolean parameter allows that type
-                elif inputValue.lower() in ["none"]: return isValueInOption(requiredType(inputValue), requiredOptions)
-                else: return "@InvalidType@"
-            else: return "@InvalidType@"
+                        # Otherwise the input has special characters (=,-,+,*,/,:,etc)
+                        else:
+                            # Check if string contains '=', as this is restricted to variable name definitions, and is not allowed for regular strings
+                            if "=" in inputValue:
+                                outcome = isValueInOption(inputValue, requiredOptions)
+                                if outcome == "@BadFormat@":
+                                    return outcome
+                                else:
+                                    return "@InvalidType@"
+                            else:
+                                return isValueInOption(inputValue.lower(), requiredOptions)
+                else:
+                    return "@InvalidType@"
 
-        # If input must be int, floats can be converted to int
-        elif issubclass(requiredType, int):
-            # Try applying int() to the input value, if possible, check restrictions on value
-            try: requiredType(inputValue); return isValueInOption(requiredType(inputValue), requiredOptions)
-            except ValueError:
-                # If applying int() doesn't work but value is None, check if this is an allowable type
-                if inputValue.lower() in ["none"]: return isValueInOption(inputValue, requiredOptions)
-                else: return "@InvalidType@"
+            # If input must be bool, only booleans can be accepted
+            elif issubclass(requiredType, bool):
+                # All input starts off as text, so True/False will be 'True'/'False'
+                if isinstance(inputValue, str):
+                    # Check if the string matches true/false, and return accordingly
+                    if inputValue in ["True", "true"]:
+                        return True
+                    elif inputValue in ["False", "false"]:
+                        return False
+                    # Otherwise if string is None, check if this boolean parameter allows that type
+                    elif inputValue.lower() in ["none"]:
+                        return isValueInOption(inputValue.lower(), requiredOptions)
+                    else:
+                        return "@InvalidType@"
+                else:
+                    return "@InvalidType@"
 
-        # If input must be float, int can be converted to float
-        elif issubclass(requiredType, float):
-            # Try applying float() to the input value, if possible, check restrictions on value
-            try: requiredType(inputValue); return isValueInOption(requiredType(inputValue), requiredOptions)
-            except ValueError:
-                # If applying float() doesn't work but value is None, check if this is an allowable type
-                if inputValue.lower() in ["none"]: return isValueInOption(inputValue, requiredOptions)
-                else: return "@InvalidType@"
-
-        # If input must be a list, only list can be accepted
-        elif issubclass(requiredType, list) or issubclass(requiredType, tuple) or issubclass(requiredType, dict):
-            try:
-                ast.literal_eval(inputValue)
-                # If the input value can be evaluated as a list, tuple or dict, check restrictions on value
-                if isinstance(ast.literal_eval(inputValue), requiredType): return isValueInOption(ast.literal_eval(inputValue), requiredOptions)
-                # Otherwise if the list, tuple or dict value is None, check if this is an allowable type
-                elif inputValue.lower() in ["none"]: return isValueInOption(inputValue, requiredOptions)
-                else: return "@InvalidType@"
-            except ValueError: return "@InvalidType@"
-
-        # If input can be of type 'any', allow any value to be saved. This will also process the 'callable' type, in the same way.
-        elif issubclass(requiredType, type(any)):
-            try:
-                # If the input can be evaluated, check if the evaluated value matches this parameters restrictions
+            # If input must be int, floats can be converted to int
+            elif issubclass(requiredType, int):
+                # Try applying int() to the input value, if possible, check restrictions on value
                 try:
-                    ast.literal_eval(inputValue); return isValueInOption(ast.literal_eval(inputValue), requiredOptions)
-                # If SyntaxError is caught, input is in the form of "=function_name", pass input through as string to be handled by bdsim
-                except SyntaxError:
-                    return inputValue
-            except ValueError:
-                # If input cannot be evaluated, check if this is an allowable type
+                    requiredType(inputValue); return isValueInOption(requiredType(inputValue), requiredOptions)
+                except ValueError:
+                    # If applying int() doesn't work but value is None, check if this is an allowable type
+                    if inputValue.lower() in ["none"]:
+                        return isValueInOption(inputValue, requiredOptions)
+                    else:
+                        return "@InvalidType@"
+
+            # If input must be float, int can be converted to float
+            elif issubclass(requiredType, float):
+                # All inputValues come in as a string, so first check if this evaluated string is a float
+                try:
+                    evaluated_value = eval(inputValue)
+
+                    # If value can be evaluated safely, check if the value is an instance of float
+                    if isinstance(evaluated_value, float):
+                        # If so, check further restrictions on this parameter, return the outcome
+                        return isValueInOption(evaluated_value, requiredOptions)
+
+                    # If value is not a float, but is none, check if this is an allowable type
+                    elif inputValue.lower() in ["none"]:
+                        return isValueInOption(inputValue, requiredOptions)
+
+                    # If value is not a float, and None is not allowed, return invalid type
+                    else:
+                        try:
+                            float_value = float(evaluated_value)
+                            return isValueInOption(float_value, requiredOptions)
+                        except (ValueError, TypeError):
+                            return "@InvalidType@"
+
+                # If any exceptions arise while trying to evaluate, then the value is incorrect
+                except:
+                    return "@InvalidType@"
+
+            # If input must be a list, only list can be accepted
+            elif issubclass(requiredType, list) or issubclass(requiredType, tuple) or issubclass(requiredType, dict):
+                try:
+                    # If the input value can be evaluated as a list, tuple or dict, check restrictions on value
+                    ast.literal_eval(inputValue)
+                    if inputValue.lower() in ["none"]:
+                        return isValueInOption(inputValue, requiredOptions)
+                    else:
+                        return isValueInOption(ast.literal_eval(inputValue), requiredOptions)
+                except ValueError:
+                    return "@InvalidType@"
+
+            # If input can be of type 'any', allow any value to be saved. This will also process the 'callable' type, in the same way.
+            elif issubclass(requiredType, type(any)):
+                # Return the outcome of check this input against any restrictions for this parameter
+                # Type any or callable should be allowed to pass through a string
                 return isValueInOption(inputValue, requiredOptions)
+
+        except Exception as e:
+            print(e)
+            print("Fatal Error: Recent changes to a parameter have caused an unforseen error.\nKnown info about parameter causing the error: given value ->", inputValue, "expected type ->", requiredType, "parameter restrictions ->", requiredOptions)
+            return "@InvalidType@"

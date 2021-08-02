@@ -35,10 +35,9 @@ def import_blocks(scene, window):
             block_parentclass = block_ds["blockclass"]
             block_path = block_ds["path"]
 
-            # Grab number of input/output sockets for blocks, and whether those number of sockets are variable
-            block_inputsNum = block_ds["nin"]
-            block_outputsNum = block_ds["nout"]
-            block_varinputs = block_ds["varinputs"]
+            # Grab number of input/output sockets for blocks
+            block_inputsNum = abs(block_ds["nin"])
+            block_outputsNum = abs(block_ds["nout"])
 
             # Reconstruct URL from block type and path
             block_group = block_ds["module"].split('.')[-1]
@@ -46,8 +45,6 @@ def import_blocks(scene, window):
                 block_url = block_ds["url"]
             except KeyError:
                 block_url = None
-            #block_group = re.findall(r'blocks\\([a-z]*).py', str(block_path))[0]
-            #block_url = "https://petercorke.github.io/bdsim/bdsim.blocks.html?highlight=" + block_type.lower() + "#bdsim.blocks." + block_group[0] + "." + block_type.capitalize() + ""
 
             block_parameters = []  # Once name, type, value, restrictions are extracted, this will be populated
 
@@ -280,7 +277,7 @@ def import_blocks(scene, window):
 
                     # If any keyword restrictions were found
                     if found_keyword_restrictions:
-                        restriction = ["keyword"]
+                        restriction = ["keywords"]
                         # Append the found keyword restrictions into the restriction
                         restriction.append(found_keyword_restrictions)
                         param_restrictions.append(restriction)

@@ -8,6 +8,7 @@ from pathlib import Path
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
+from PyQt5 import QtPrintSupport
 
 # BdEdit imports
 from bdsim.bdedit.block import *
@@ -108,7 +109,7 @@ class Interface(QWidget):
     """
 
     # -----------------------------------------------------------------------------
-    def __init__(self, resolution, parent=None):
+    def __init__(self, resolution, debug=False, parent=None):
         """
         This method initializes an instance of the ``Interface``.
 
@@ -137,10 +138,10 @@ class Interface(QWidget):
         self.filename = None
 
         # The Scene interface is called to be initialized
-        self.initUI(resolution)
+        self.initUI(resolution, debug)
 
     # -----------------------------------------------------------------------------
-    def initUI(self, resolution):
+    def initUI(self, resolution, debug):
         """
         This method is responsible for controlling the size of the application window.
         It is also responsible for each application component, in terms of:
@@ -188,20 +189,21 @@ class Interface(QWidget):
 
         self.blockLibrary = import_blocks(self.scene, self.layout)
 
-        print("\nfrom self.blockLibrary")
-        for group in self.blockLibrary:
-            for block_cls in group[1]:
-                for variables in block_cls[1].__dict__.items():
-                    if variables[0] in ["parameters"]:
-                        print("('" + variables[0] + "',")
-                        for param in variables[1]:
-                            print("     ", param)
-                    else:
-                        print(variables)
-                print()
-
-        print("\n----------------------------------\n")
+        # if debug:
+        # print("\nfrom self.blockLibrary")
+        # for group in self.blockLibrary:
+        #     for block_cls in group[1]:
+        #         for variables in block_cls[1].__dict__.items():
+        #             if variables[0] in ["parameters"]:
+        #                 print("('" + variables[0] + "',")
+        #                 for param in variables[1]:
+        #                     print("     ", param)
+        #             else:
+        #                 print(variables)
+        #         print()
         #
+        # print("\n----------------------------------\n")
+
         # print("\nfrom blocklist")
         # for block_cls in blocklist:
         #     for items in block_cls.__dict__.items():
@@ -524,6 +526,17 @@ class Interface(QWidget):
         Wire(scene, scene.blocks[startBlock].outputs[startSocket], scene.blocks[endBlock].inputs[endSocket], wire_type=3)
 
     # -----------------------------------------------------------------------------
+    def loadFromFilePath(self, filepath):
+        """
+        This method is only used when loading a file from the command line. It will
+        check if the file at the given path exists, and if so, will load its contents.
+        """
+
+        # Check if file at given path exists, if so, run the deserializing method
+        if os.path.isfile(filepath):
+            self.scene.loadFromFile(filepath)
+
+    # -----------------------------------------------------------------------------
     def loadFromFile(self):
         """
         This method opens a QFileDialog window, prompting the user to select a file
@@ -809,17 +822,30 @@ class Interface(QWidget):
         :type picture_name: str, required
         """
 
+        # path = QtCore.QDir("/tmp")
+        #
+        # printer = QtPrintSupport.QPrinter()
+        # printer.setOutputFormat(QtPrintSupport.QPrinter.PdfFormat)
+        # printer.setOutputFileName(path.absoluteFilePath(picture_name+".pdf"))
+        # printer.setFullPage(True)
+
+        print("Rendering large image, this might take a minute")
+
         # Creates an image, of defined resolution quality
-        output_image = QImage(3840, 2160, QImage.Format_RGBA64_Premultiplied)
+        ratio = 3
+        output_image = QImage(self.scene.scene_width * ratio, self.scene.scene_height * ratio, QImage.Format_RGBA64)
+
         # Then a painter is initialized to that image
         painter = QPainter(output_image)
         painter.setRenderHint(QPainter.Antialiasing, True)
+
         # The canvas is rendered by the above-defined painter (into the image)
-        self.canvasView.render(painter)
+        self.scene.grScene.render(painter)
         painter.end()
+
         # And the image is saved under the given file name, as a png
         output_image.save(picture_name+".png")
-        print("succeeded")
+        print("Screenshot successfully rendered and saved")
 
     # -----------------------------------------------------------------------------
     def updateSceneDimensions(self):

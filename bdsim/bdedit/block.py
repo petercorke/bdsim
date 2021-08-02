@@ -282,9 +282,12 @@ class Block(Serializable):
         # * the instance is appended to this Block's list of inputs
         counter = 0
         while counter < inputs:
-            if self.input_names:
-                socket = Socket(node=self, index=counter, position=position, socket_type=socketType, socket_label=self.input_names[counter])
-            else:
+            try:
+                if self.input_names:
+                    socket = Socket(node=self, index=counter, position=position, socket_type=socketType, socket_label=self.input_names[counter])
+                else:
+                    socket = Socket(node=self, index=counter, position=position, socket_type=socketType)
+            except AttributeError:
                 socket = Socket(node=self, index=counter, position=position, socket_type=socketType)
             counter += 1
             self.inputs.append(socket)
@@ -319,9 +322,12 @@ class Block(Serializable):
         # * the instance is appended to this Block's list of outputs
         counter = 0
         while counter < outputs:
-            if self.output_names:
-                socket = Socket(node=self, index=counter, position=position, socket_type=socketType, socket_label=self.output_names[counter])
-            else:
+            try:
+                if self.output_names:
+                    socket = Socket(node=self, index=counter, position=position, socket_type=socketType, socket_label=self.output_names[counter])
+                else:
+                    socket = Socket(node=self, index=counter, position=position, socket_type=socketType)
+            except AttributeError:
                 socket = Socket(node=self, index=counter, position=position, socket_type=socketType)
             counter += 1
             self.outputs.append(socket)

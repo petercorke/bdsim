@@ -79,8 +79,11 @@ class GraphicsSocket(QGraphicsItem):
         self._pen.setWidthF(self.outline_width)
         self._sign_pen = QPen(self._color_outline)
         self._sign_pen.setWidthF(self.sign_width)
-        self._char_font = QFont('Calibri', 14)
-        self._char_font_measure = ImageFont.truetype('Calibri.ttf', 14)
+        self._char_font = QFont('Arial', 14)
+        try:
+            self._char_font_measure = ImageFont.truetype('arial.ttf', 14)
+        except OSError:
+            self._char_font_measure = ImageFont.truetype('Arial.ttf', 14)
 
         self.setFlag(QGraphicsItem.ItemIsSelectable)
 
@@ -244,19 +247,20 @@ class GraphicsSocket(QGraphicsItem):
         (width, baseline), (offset_x, offset_y) = self._char_font_measure.font.getsize(self.socket.socket_sign)
 
         char_width = QFontMetrics(self._char_font).width(self.socket.socket_sign)
-        height = 0
+        height = 5
 
         # For letters like: a,c,e,m,n,o,r,s,u,v,w,x,z
-        if baseline == 7 and offset_y == 4:
-            height = 4
-        # For letters like: b,d,f,h,i,k,l
-        elif baseline == 10 and offset_y == 1:
-            height = 6
-        # For letters like: g,p,q,y
-        elif baseline == 10 and offset_y == 4:
-            height = 3
-        else:
+        if baseline == 8 and offset_y == 5:
             height = 5
+        # For letters like: b,d,f,h,i,k,l
+        elif baseline == 10 and offset_y == 3:
+            height = 7
+        # For letters like: g,p,q,y
+        elif baseline == 11 and offset_y == 5:
+            height = 4
+        # For letter: t
+        elif baseline == 11 and offset_y == 2:
+            height = 7
 
         dimension = [char_width, height]
 
