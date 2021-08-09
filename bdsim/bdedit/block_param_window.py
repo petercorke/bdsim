@@ -177,9 +177,11 @@ class ParamWindow(QWidget):
         # If an error message - critical icon, if success message - green tick icon
         if messageType == "Error":
             self.message.setIcon(QMessageBox.Critical)
+            self.message.setIconPixmap(QPixmap(":/Icons_Reference/Icons/error.png"))
             message_duration = 5
         elif messageType == 'Success':
-            self.message.setIconPixmap(QPixmap(":/Icons_Reference/Icons/Success_Icon.png"))
+            # self.message.setIconPixmap(QPixmap(":/Icons_Reference/Icons/Success_Icon.png"))
+            self.message.setIconPixmap(QPixmap(":/Icons_Reference/Icons/success.png"))
             message_duration = 1.5
 
         # Set the title and text for the message

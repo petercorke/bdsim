@@ -248,6 +248,11 @@ class Wire(Serializable):
         This method will un-assign the start and end sockets of this Wire.
         """
 
+        if self.start_socket is not None:
+            self.start_socket.wire = None
+        if self.end_socket is not None:
+            self.end_socket.wire = None
+
         self.end_socket = None
         self.start_socket = None
 
@@ -361,7 +366,12 @@ class Wire(Serializable):
                         for j in range(0, number_of_wires):
 
                             # If j==i this means the same wire is being checked, ignore checking this wire (cannot overlap with itself)
-                            if j != i:
+                            if j == i:
+                                pass
+                            # Or if wire 'j' starts from the same socket as 'i', ignore this wire
+                            elif self.scene.wires[j].start_socket == self.scene.wires[i].start_socket:
+                                pass
+                            else:
 
                                 # Iterate through each horizontal segments of the wire being checked
                                 for horizontal_segment in self.scene.wires[j].horizontal_segments:

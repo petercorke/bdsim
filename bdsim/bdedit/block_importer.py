@@ -15,6 +15,7 @@ def import_blocks(scene, window):
         'InPort' : [100, 150],
         'OutPort' : [100, 150],
         'SubSystem' : [200, 150],
+        'DiffSteer' : [150, 100],
     }
 
     block_list = parser.docstring_parser()
@@ -31,13 +32,25 @@ def import_blocks(scene, window):
 
             block_name = block_type.lower().capitalize() + " Block"
             block_classname = block_ds["classname"]
-            block_icon = ":/Icons_Reference/Icons/" + block_type.lower() + ".png"
             block_parentclass = block_ds["blockclass"]
             block_path = block_ds["path"]
+            block_icon = block_path[0] + "\Icons\\" + block_type.lower() + ".png"
+
 
             # Grab number of input/output sockets for blocks
-            block_inputsNum = abs(block_ds["nin"])
-            block_outputsNum = abs(block_ds["nout"])
+            try:
+                if block_ds["nin"] < 0 or block_ds["nout"] < 0:
+                    block_instance = block_ds["class"]()
+                    block_inputsNum = block_instance.nin
+                    block_outputsNum = block_instance.nout
+                else:
+                    block_inputsNum = block_ds["nin"]
+                    block_outputsNum = block_ds["nout"]
+            except Exception as e:
+                #print("Some error occured for block:", block_name, ". Exception -> ", e)
+                block_inputsNum = block_instance.nin
+                block_outputsNum = block_instance.nout
+
 
             # Reconstruct URL from block type and path
             block_group = block_ds["module"].split('.')[-1]

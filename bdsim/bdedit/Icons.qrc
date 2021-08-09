@@ -1,53 +1,9 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource prefix="Icons_Reference">
-    <file>Icons/armplot.png</file>
 	<file>Icons/bdsim_icon.png</file>
 	<file>Icons/bdsim_icon2.png</file>
-	<file>Icons/bicycle.png</file>
-	<file>Icons/camera.png</file>
-	<file>Icons/clip.png</file>
-	<file>Icons/constant.png</file>
-	<file>Icons/coriolis.png</file>
-	<file>Icons/delta2tr.png</file>
-	<file>Icons/det.png</file>
-	<file>Icons/dict.png</file>
-	<file>Icons/dintegrator.png</file>
-	<file>Icons/dlti_siso.png</file>
-	<file>Icons/dlti_ss.png</file>
-	<file>Icons/fdyn.png</file>
-	<file>Icons/fdynx.png</file>
-	<file>Icons/fkine.png</file>
-	<file>Icons/function.png</file>
-	<file>Icons/gain.png</file>
-	<file>Icons/gravload.png</file>
-	<file>Icons/idyn.png</file>
-	<file>Icons/idynx.png</file>
-	<file>Icons/ikine.png</file>
-	<file>Icons/index.png</file>
-	<file>Icons/inertia.png</file>
-	<file>Icons/integrator.png</file>
-	<file>Icons/interpolate.png</file>
-	<file>Icons/inverse.png</file>
-	<file>Icons/item.png</file>
-	<file>Icons/jacobian.png</file>
-	<file>Icons/lti_siso.png</file>
-	<file>Icons/lti_ss.png</file>
-	<file>Icons/multirotor.png</file>
-	<file>Icons/norm.png</file>
-	<file>Icons/piecewise.png</file>
-	<file>Icons/point2tr.png</file>
-	<file>Icons/print.png</file>
-	<file>Icons/prod.png</file>
-	<file>Icons/scope.png</file>
-	<file>Icons/step.png</file>
-	<file>Icons/stop.png</file>
+	<file>Icons/error.png</file>
+	<file>Icons/success.png</file>
 	<file>Icons/Success_Icon.png</file>
-	<file>Icons/sum.png</file>
-	<file>Icons/time.png</file>
-	<file>Icons/tr2delta.png</file>
-	<file>Icons/tr2t.png</file>
-	<file>Icons/transpose.png</file>
-	<file>Icons/unicycle.png</file>
-	<file>Icons/waveform.png</file>
 </qresource>
 </RCC>

@@ -53,19 +53,18 @@ class GraphicsWire(QGraphicsPathItem):
         super().__init__()
 
         self.wire = wire
+        self.wire_points = []
         self.wire.wire_coordinates = []
         self.wire.horizontal_segments = []
         self.wire.vertical_segments = []
 
         # Setting the colour, pens, and pen thickness
         self._color = QColor("#000000")             # Black
-        # self._color_selected = QColor("#00ff00")    # Lime Green
         self._color_selected = QColor("#FFFFA637")  # Warm Orange
 
-        self._pen = QPen(self._color)
-        self._pen_selected = QPen(self._color_selected)
-        self._pen.setWidth(5)
-        self._pen_selected.setWidth(8)
+        # self._pen = QPen(self._color, 5, Qt.SolidLine, Qt.SquareCap, Qt.BevelJoin)
+        self._pen = QPen(self._color, 5, Qt.SolidLine, Qt.SquareCap, Qt.RoundJoin)
+        self._pen_selected = QPen(self._color_selected, 8, Qt.SolidLine, Qt.SquareCap, Qt.BevelJoin)
 
         # Setting the wire to be selectable and drawn behind all items
         self.setFlag(QGraphicsItem.ItemIsSelectable)
@@ -132,6 +131,12 @@ class GraphicsWire(QGraphicsPathItem):
 
         self.posDestination_Orientation = orientation
 
+    # Todo add doc to describe purpose of this method (overrides the shape this drawn path takes, with custom path)
+    # This method is used by PyQt to interpret the bounding box area within which this line can be interacted with
+    # -----------------------------------------------------------------------------
+    def shape(self):
+        return self.polyPath()
+
     # -----------------------------------------------------------------------------
     def paint(self, painter, style, widget=None):
         """
@@ -152,13 +157,44 @@ class GraphicsWire(QGraphicsPathItem):
         :type widget: NoneType, optional, Defaults to None
         """
 
-        self.setZValue(-1)
+        # Update the wire with the drawn intersection point(s)
+        self.setPath(self.updatePath())
         painter.setPen(self._pen if not self.isSelected() else self._pen_selected)
         painter.setBrush(Qt.NoBrush)
+        # painter.setRenderHint(QPainter.Antialiasing, True)
+        # painter.setRenderHint(QPainter.Antialiasing, False)
         painter.drawPath(self.path())
 
-        # Update the wire with the drawn intersection point(s)
-        self.updatePath()
+    # Todo - add docstring to this new method, add inline comments (makes custom polygon around drawn line)
+    # -----------------------------------------------------------------------------
+    def polyPath(self):
+        if self.wire.wire_coordinates:
+            newpolyPath = QPainterPath()
+
+            width = 8
+
+            self.wire_points = []
+            (p1x, p1y) = self.wire.wire_coordinates[0]
+            self.wire_points.append(QPointF(p1x, p1y))
+
+            for i, (x,y) in enumerate(self.wire.wire_coordinates):
+                if i == 0 or i == len(self.wire.wire_coordinates):
+                    self.wire_points.append(QPointF(x, y + width))
+                else:
+                    self.wire_points.append(QPointF(x + width, y + width))
+
+            for i, (x,y) in enumerate(reversed(self.wire.wire_coordinates)):
+                if i == 0 or i == len(self.wire.wire_coordinates):
+                    self.wire_points.append(QPointF(x, y - width))
+                else:
+                    self.wire_points.append(QPointF(x - width, y - width))
+
+            poly = QPolygonF(self.wire_points)
+            newpolyPath.addPolygon(poly)
+
+            return newpolyPath
+        else:
+            return self.updatePath()
 
     # -----------------------------------------------------------------------------
     def updatePath(self):
@@ -169,10 +205,6 @@ class GraphicsWire(QGraphicsPathItem):
         """
 
         raise NotImplemented("This method is to be over written by child class")
-
-    # -----------------------------------------------------------------------------
-    # def boundingRect(self):
-    #     return self.shape().boundingRect()
 
     # -----------------------------------------------------------------------------
     def updateLineSegments(self):
@@ -245,7 +277,7 @@ class GraphicsWireDirect(GraphicsWire):
         # A straight line is drawn between the two provided points
         path = QPainterPath(QPointF(self.posSource[0], self.posSource[1]))
         path.lineTo(self.posDestination[0], self.posDestination[1])
-        self.setPath(path)
+        return path
 
 
 class GraphicsWireBezier(GraphicsWire):
@@ -278,7 +310,7 @@ class GraphicsWireBezier(GraphicsWire):
         # Then a cubic line is drawn between the two provided points
         path = QPainterPath(QPointF(self.posSource[0], self.posSource[1]))
         path.cubicTo(s[0] + dist, s[1], d[0] - dist, d[1]-dist, self.posDestination[0], self.posDestination[1])
-        self.setPath(path)
+        return path
 
 
 class GraphicsWireStep(GraphicsWire):
@@ -359,8 +391,6 @@ class GraphicsWireStep(GraphicsWire):
             destination_block_height = 0
             d_Offset = [0, 0]
 
-        # A path is started from the source (start) socket
-        path = QPainterPath(QPointF(sx, sy))
         # The previous temporary coordinates of this wire are cleared, and the new start point coordinate is added
         temporary_wire_coordinates.clear()
         temporary_wire_coordinates.append((sx, sy))
@@ -409,8 +439,6 @@ class GraphicsWireStep(GraphicsWire):
                     source_block_height = 0
 
                 # Restart path from destination
-                # path.clear()
-                path = QPainterPath(QPointF(sx, sy))
                 temporary_wire_coordinates.clear()
                 temporary_wire_coordinates.append((sx, sy))
 
@@ -435,8 +463,6 @@ class GraphicsWireStep(GraphicsWire):
                         #                   |
                         #  (s-block)->------|
                         # ----------------------
-                        path.lineTo(dx + (d_index * block_padding), sy)
-                        path.lineTo(dx + (d_index * block_padding), dy)
 
                         temporary_wire_coordinates.append((dx + (d_index * block_padding), sy))
                         temporary_wire_coordinates.append((dx + (d_index * block_padding), dy))
@@ -452,10 +478,6 @@ class GraphicsWireStep(GraphicsWire):
                         #              |
                         #  (s-block)->-|
                         # --------------------------------
-                        path.lineTo(sx + xDist, sy)
-                        path.lineTo(sx + xDist, dy - d_Offset[1] - (d_index * block_padding))
-                        path.lineTo(dx + d_index * block_padding, dy - d_Offset[1] - (d_index * block_padding))
-                        path.lineTo(dx + d_index * block_padding, dy)
 
                         temporary_wire_coordinates.append((sx + xDist, sy))
                         temporary_wire_coordinates.append((sx + xDist, dy - d_Offset[1] - (d_index * block_padding)))
@@ -472,8 +494,6 @@ class GraphicsWireStep(GraphicsWire):
                     #                       |
                     #           (d-block)-<-|
                     # ------------------------
-                    path.lineTo(dx + d_index * block_padding, sy)
-                    path.lineTo(dx + d_index * block_padding, dy)
 
                     temporary_wire_coordinates.append((dx + d_index * block_padding, sy))
                     temporary_wire_coordinates.append((dx + d_index * block_padding, dy))
@@ -498,8 +518,6 @@ class GraphicsWireStep(GraphicsWire):
                         #  |
                         #  |----->-(d-block)
                         # ----------------------
-                        path.lineTo(sx - (s_index * block_padding), sy)
-                        path.lineTo(sx - (s_index * block_padding), dy)
 
                         temporary_wire_coordinates.append((sx - (s_index * block_padding), sy))
                         temporary_wire_coordinates.append((sx - (s_index * block_padding), dy))
@@ -515,10 +533,6 @@ class GraphicsWireStep(GraphicsWire):
                         #                  |
                         #                  |->-(d-block)
                         # --------------------------------
-                        path.lineTo(sx - s_index * block_padding, sy)
-                        path.lineTo(sx - s_index * block_padding, sy - s_Offset[1] - (s_index * block_padding))
-                        path.lineTo(sx + source_block_width + xDist, sy - s_Offset[1] - (s_index * block_padding))
-                        path.lineTo(sx + source_block_width + xDist, dy)
 
                         temporary_wire_coordinates.append((sx - s_index * block_padding, sy))
                         temporary_wire_coordinates.append(
@@ -536,8 +550,6 @@ class GraphicsWireStep(GraphicsWire):
                     # |
                     # |-<-(s-block)
                     # --------------------
-                    path.lineTo(sx - s_index * block_padding, sy)
-                    path.lineTo(sx - s_index * block_padding, dy)
 
                     temporary_wire_coordinates.append((sx - s_index * block_padding, sy))
                     temporary_wire_coordinates.append((sx - s_index * block_padding, dy))
@@ -582,9 +594,6 @@ class GraphicsWireStep(GraphicsWire):
                     s_Offset = [0, 0]
 
                 # Restart path from destination
-                # path.clear() 
-                path = QPainterPath(QPointF(sx, sy))
-
                 temporary_wire_coordinates.clear()
                 temporary_wire_coordinates.append((sx, sy))
 
@@ -600,8 +609,6 @@ class GraphicsWireStep(GraphicsWire):
                     #              |
                     #  (d-block)-<-|
                     # ---------------------------
-                    path.lineTo(sx - xDist, sy)
-                    path.lineTo(sx - xDist, dy)
 
                     temporary_wire_coordinates.append((sx - xDist, sy))
                     temporary_wire_coordinates.append((sx - xDist, dy))
@@ -625,10 +632,6 @@ class GraphicsWireStep(GraphicsWire):
                         #                 |
                         #    (d-block)-<--|
                         # ------------------
-                        path.lineTo(sx - (s_index * block_padding), sy)
-                        path.lineTo(sx - (s_index * block_padding), dy - d_Offset[1] - yDist)
-                        path.lineTo(dx + (d_index * block_padding), dy - d_Offset[1] - yDist)
-                        path.lineTo(dx + (d_index * block_padding), dy)
 
                         temporary_wire_coordinates.append((sx - (s_index * block_padding), sy))
                         temporary_wire_coordinates.append((sx - (s_index * block_padding), dy - d_Offset[1] - yDist))
@@ -648,11 +651,6 @@ class GraphicsWireStep(GraphicsWire):
                             #     |-<-(s-block)  |     or     |-<-(s-block)  |
                             #  (d-block)-<-------|               (d-block)-<-|
                             # --------------------------------------------------
-                            path.lineTo(sx - (s_index * block_padding), sy)
-                            path.lineTo(sx - (s_index * block_padding), sy - s_Offset[1] - (s_index * block_padding))
-                            path.lineTo(sx + source_block_width + (s_index * block_padding),
-                                        sy - s_Offset[1] - (s_index * block_padding))
-                            path.lineTo(sx + source_block_width + (s_index * block_padding), dy)
 
                             temporary_wire_coordinates.append((sx - (s_index * block_padding), sy))
                             temporary_wire_coordinates.append(
@@ -673,10 +671,6 @@ class GraphicsWireStep(GraphicsWire):
                             #  |-<-(s-block)                 |    or     |-<-(s-block)   (d-block)-<-|
                             #                    (d-block)-<-|
                             # -------------------------------------------------------------------------
-                            path.lineTo(sx - (s_index * block_padding), sy)
-                            path.lineTo(sx - (s_index * block_padding), sy - s_Offset[1] - (s_index * block_padding))
-                            path.lineTo(dx + (d_index * block_padding), sy - s_Offset[1] - (s_index * block_padding))
-                            path.lineTo(dx + (d_index * block_padding), dy)
 
                             temporary_wire_coordinates.append((sx - (s_index * block_padding), sy))
                             temporary_wire_coordinates.append(
@@ -702,10 +696,6 @@ class GraphicsWireStep(GraphicsWire):
                         #  |
                         #  |-<-(s-block)
                         # -----------------------
-                        path.lineTo(sx - (s_index * block_padding), sy)
-                        path.lineTo(sx - (s_index * block_padding), sy - yDist - s_Offset[1])
-                        path.lineTo(dx + (s_index * block_padding), sy - yDist - s_Offset[1])
-                        path.lineTo(dx + (s_index * block_padding), dy)
 
                         temporary_wire_coordinates.append((sx - (s_index * block_padding), sy))
                         temporary_wire_coordinates.append((sx - (s_index * block_padding), sy - yDist - s_Offset[1]))
@@ -726,10 +716,6 @@ class GraphicsWireStep(GraphicsWire):
                             #  |
                             #  |----------<-(s-block)
                             # ------------------------
-                            path.lineTo(dx - destination_block_width - (s_index * block_padding), sy)
-                            path.lineTo(dx - destination_block_width - (s_index * block_padding), dy - d_Offset[1] - (d_index * block_padding))
-                            path.lineTo(dx + d_index * block_padding, dy - d_Offset[1] - (d_index * block_padding))
-                            path.lineTo(dx + d_index * block_padding, dy)
 
                             temporary_wire_coordinates.append(
                                 (dx - destination_block_width - (s_index * block_padding), sy))
@@ -750,10 +736,6 @@ class GraphicsWireStep(GraphicsWire):
                             #  |
                             #  |-<-(s-block)
                             # ----------------------
-                            path.lineTo(sx - s_index * block_padding, sy)
-                            path.lineTo(sx - s_index * block_padding, dy - d_Offset[1] - (d_index * block_padding))
-                            path.lineTo(dx + d_index * block_padding, dy - d_Offset[1] - (d_index * block_padding))
-                            path.lineTo(dx + d_index * block_padding, dy)
 
                             temporary_wire_coordinates.append((sx - s_index * block_padding, sy))
                             temporary_wire_coordinates.append(
@@ -769,12 +751,19 @@ class GraphicsWireStep(GraphicsWire):
 
         # Finally the Wire is finished, by connecting the path to the destination (end) Socket coordinates
         # that coordinate is also added as the final coordinate point of the wire to the temporary coordinates list
-        path.lineTo(dx, dy)
         temporary_wire_coordinates.append((dx, dy))
 
         # The path of the wire is set to be drawn under the path logic that has just been calculated
-        self.setPath(path)
+        for i, (x,y) in enumerate(temporary_wire_coordinates):
+            if i == 0:
+                path = QPainterPath(QPointF(x,y))
+            elif i == len(temporary_wire_coordinates):
+                path.lineTo(x, y)
+                path.moveTo(x, y)
+            else:
+                path.lineTo(x,y)
 
         # If the wire has been dropped on a destination socket (and is not being dragged around), update its coordinates
         if wire_completed:
             self.updateWireCoordinates(temporary_wire_coordinates)
+        return path

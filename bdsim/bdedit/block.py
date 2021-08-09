@@ -869,17 +869,27 @@ class Block(Serializable):
 
         # And the saved (input and output) sockets are written into these lists respectively,
         # deserializing the socket-relevant information while doing so.
-        for socket_data in data['inputs']:
-            new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'], socket_label=socket_data['socket_sign'])
-            #new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'])
+        for i, socket_data in enumerate(data['inputs']):
+            try:
+                if self.input_names:
+                    new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'], socket_label=self.input_names[i])
+                else:
+                    new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'])
+            except AttributeError:
+                    new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'])
             new_socket.deserialize(socket_data, hashmap)
             self.inputs.append(new_socket)
 
         self.updateSocketSigns()
 
-        for socket_data in data['outputs']:
-            new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'], socket_label=socket_data['socket_sign'])
-            #new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'])
+        for i, socket_data in enumerate(data['outputs']):
+            try:
+                if self.output_names:
+                    new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'], socket_label=self.output_names[i])
+                else:
+                    new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'])
+            except AttributeError:
+                    new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'])
             new_socket.deserialize(socket_data, hashmap)
             self.outputs.append(new_socket)
 

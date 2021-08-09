@@ -48,9 +48,9 @@ class GraphicsScene(QGraphicsScene):
 
         # Set the default background color for when no grid lines are drawn
         # Currently set to same color as the background for Light mode
-        self._default_background_color = QColor("#E0E0E0")
+        # self._default_background_color = QColor("#E0E0E0")
         # Alternatively could be set to a plain white background
-        # self._default_background_color = QColor("#FFFFFF")
+        self._default_background_color = QColor("#FFFFFF")
 
     # -----------------------------------------------------------------------------
     def setGrScene(self, width, height):
@@ -158,6 +158,8 @@ class GraphicsScene(QGraphicsScene):
                 self.checkMode()
                 painter.setPen(QPen(self._color_background))
                 painter.setBrush(QBrush(self._color_background))
+                # painter.setRenderHint(QPainter.Antialiasing, False)
+                # painter.setRenderHint(QPainter.Antialiasing, True)
 
                 # Paint each intersection point
                 for intersection_point in self.scene.intersection_list:
@@ -175,6 +177,9 @@ class GraphicsScene(QGraphicsScene):
                 for intersection_point in self.scene.intersection_list:
                     x = intersection_point[0]
                     y = intersection_point[1]
+
+                    # line_segement_path = QPainterPath(QPointF(x + 6.5, y))
+                    # line_segement_path.lineTo(x - 6.5, y)
 
                     line_segement_path = QPainterPath(QPointF(x + 6.5, y))
                     line_segement_path.lineTo(x - 6.5, y)

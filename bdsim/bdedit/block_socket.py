@@ -240,7 +240,6 @@ class Socket(Serializable):
             ('multi_wire', self.is_multi_wire),
             ('position', self.position),
             ('socket_type', self.socket_type),
-            ('socket_sign', self.socket_sign),
         ])
 
     # -----------------------------------------------------------------------------
