@@ -69,13 +69,13 @@ class Connector(Block):
         self.icon = ''
         self.block_url = ''
 
-        # self.inputsNum = None
-        # self.outputsNum = None
+        self.inputsNum = 1
+        self.outputsNum = 1
 
         self.grBlock = GraphicsConnectorBlock(self)
 
-        self.makeInputSockets(1, LEFT, socketType=INPUT)
-        self.makeOutputSockets(1, RIGHT, socketType=OUTPUT)
+        self.makeInputSockets(self.inputsNum, LEFT, socketType=INPUT)
+        self.makeOutputSockets(self.outputsNum, RIGHT, socketType=OUTPUT)
 
         self.parameterWindow = None
 

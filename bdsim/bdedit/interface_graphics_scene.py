@@ -44,7 +44,7 @@ class GraphicsScene(QGraphicsScene):
         # Set the default background mode of the Scene
         self.mode = "Light"
         # Set the wire overlaps to not being detected by default
-        self.enable_intersections = False
+        self.enable_intersections = True
 
         # Set the default background color for when no grid lines are drawn
         # Currently set to same color as the background for Light mode

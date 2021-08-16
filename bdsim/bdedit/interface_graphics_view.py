@@ -42,6 +42,10 @@ class GraphicsView(QGraphicsView):
     Wire will follow the mouse until a end socket is set or mode == MODE_WIRE_DRAG
     is False and the Wire will be deleted.
     """
+
+    # # Todo add doc for this, signal for monitoring updates to interface. UNNEEDED CODE?
+    # scenePosChanged = pyqtSignal(int, int)
+
     # -----------------------------------------------------------------------------
     def __init__(self, grScene, parent=None):
         """
@@ -117,6 +121,8 @@ class GraphicsView(QGraphicsView):
             elif isinstance(item, GraphicsBlock) or isinstance(item, GraphicsConnectorBlock):
                 item.block.remove()
 
+        self.grScene.scene.has_been_modified = True
+
     # -----------------------------------------------------------------------------
     def flipBlockSockets(self):
         """
@@ -129,6 +135,8 @@ class GraphicsView(QGraphicsView):
             # If the item is a Block or Connector Block, flip its sockets
             if isinstance(item, GraphicsBlock) or isinstance(item, GraphicsConnectorBlock):
                 item.block.updateSocketPositions()
+
+        self.grScene.scene.has_been_modified = True
 
     # -----------------------------------------------------------------------------
     def dist_click_release(self, event):
@@ -306,10 +314,15 @@ class GraphicsView(QGraphicsView):
                     else:
                         new_wire = Wire(self.grScene.scene, self.drag_start_socket, item.socket, WIRE_TYPE_STEP)
 
+
+                self.grScene.scene.has_been_modified = True
+
                 if DEBUG: print("created wire")
                 if DEBUG: print('View::edgeDragEnd ~ everything done.')
 
-                return False
+                return True
+
+        return False
 
     # -----------------------------------------------------------------------------
     def keyPressEvent(self, event):

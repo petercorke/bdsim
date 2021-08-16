@@ -1,3 +1,7 @@
+# Library imports
+import sys
+import traceback
+
 # PyQt5 imports
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
@@ -76,6 +80,9 @@ class GraphicsWire(QGraphicsPathItem):
 
         self.posSource_Orientation = None
         self.posDestination_Orientation = None
+
+        # Internal variable for catching fatal errors, and allowing user to save work before crashing
+        self.FATAL_ERROR = False
 
     # -----------------------------------------------------------------------------
     def setSource(self, x, y):
@@ -158,12 +165,18 @@ class GraphicsWire(QGraphicsPathItem):
         """
 
         # Update the wire with the drawn intersection point(s)
-        self.setPath(self.updatePath())
-        painter.setPen(self._pen if not self.isSelected() else self._pen_selected)
-        painter.setBrush(Qt.NoBrush)
-        # painter.setRenderHint(QPainter.Antialiasing, True)
-        # painter.setRenderHint(QPainter.Antialiasing, False)
-        painter.drawPath(self.path())
+        try:
+            self.setPath(self.updatePath())
+            painter.setPen(self._pen if not self.isSelected() else self._pen_selected)
+            painter.setBrush(Qt.NoBrush)
+            painter.drawPath(self.path())
+        except Exception as e:
+            if self.FATAL_ERROR == False:
+                print("-------------------------------------------------------------------------")
+                print("Caught fatal exception while trying to draw wires. Please save your work.")
+                print("-------------------------------------------------------------------------")
+                traceback.print_exc(file=sys.stderr)
+                self.FATAL_ERROR = True
 
     # Todo - add docstring to this new method, add inline comments (makes custom polygon around drawn line)
     # -----------------------------------------------------------------------------

@@ -147,6 +147,7 @@ class Block(Serializable):
         try:
             self.setDefaultTitle(self.title)
         except AttributeError:
+            print("block.py -> Error occured while setting default title")
             pass
         #self.block_type = block_type
 
@@ -234,6 +235,7 @@ class Block(Serializable):
 
         self.scene.addBlock(self)
         self.scene.grScene.addItem(self.grBlock)
+        self.scene.has_been_modified = True
 
         self._createParamWindow()
 
@@ -687,7 +689,9 @@ class Block(Serializable):
         if DEBUG: print("> Removing Block", self)
         if DEBUG: print(" - removing all wires from sockets")
         for socket in (self.inputs + self.outputs):
-            for wire in socket.wires:
+            for wire in socket.wires.copy():
+            # for wire in socket.wires:
+                if DEBUG: print("    - removing from socket:", socket, "wire:", wire)
                 wire.remove()
 
         # Remove the graphical representation of this block from the scene

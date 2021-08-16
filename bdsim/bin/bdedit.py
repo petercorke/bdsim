@@ -10,7 +10,8 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QTimer
 
 # BdEdit imports
-from bdsim.bdedit.interface import Interface
+#from bdsim.bdedit.interface import Interface
+from bdsim.bdedit.interface_manager import InterfaceWindow
 
 # Executable code to launch the BdEdit application window
 if __name__ == '__main__':
@@ -38,6 +39,7 @@ if __name__ == '__main__':
 
     # A QApplication instance is made, which is the window that holds everything
     app = QApplication(unparsed_args)
+    app.setApplicationName("Bdedit")
 
     # The resolution of the user's screen is extracted (used for determining
     # the size of the application window)
@@ -46,7 +48,8 @@ if __name__ == '__main__':
     # Finally the window is displayed by creating an instance of Interface,
     # which holds all the logic for how the application should appear and which
     # connects all the other Classes through the Interface.
-    window = Interface(screen_resolution, args.debug)
+    # window = Interface(screen_resolution, args.debug)
+    window = InterfaceWindow(screen_resolution, args.debug)
 
     # Check what command line arguments have been passed, if any
     if args.file or args.print or args.debug:
@@ -67,7 +70,9 @@ if __name__ == '__main__':
             # If it has, the logic for validating that path will always be checked before trying to screenshot in the above code
             if args.file:
                 def screenshot(filename):
-                    window.save_image(filename)
+                    window.centralWidget().scene.grScene.updateMode("Off")
+                    window.centralWidget().scene.grScene.checkMode()
+                    window.centralWidget().save_image(filename)
                     sys.exit(0)
 
                 # Extract the name of given model

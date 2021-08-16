@@ -18,6 +18,7 @@ WIRE_TYPE_STEP = 3
 
 # Variable for enabling/disabling debug comments
 DEBUG = False
+DEBUG_OVERLAP = False
 
 
 # =============================================================================
@@ -248,11 +249,6 @@ class Wire(Serializable):
         This method will un-assign the start and end sockets of this Wire.
         """
 
-        if self.start_socket is not None:
-            self.start_socket.wire = None
-        if self.end_socket is not None:
-            self.end_socket.wire = None
-
         self.end_socket = None
         self.start_socket = None
 
@@ -263,18 +259,27 @@ class Wire(Serializable):
         the Sockets that related to it, and remove the Wire from these Sockets.
         """
 
-        if DEBUG: print("# Removing Wire", self)
-        if DEBUG: print(" - removing wire from all sockets", self)
-        self.remove_from_sockets()
-        if DEBUG: print(" - removing grWire")
-        self.scene.grScene.removeItem(self.grWire)
-        self.grWire = None
-        if DEBUG: print(" - removing wire from scene")
-        try:
-            self.scene.removeWire(self)
-        except ValueError:
-            pass
-        if DEBUG: print(" - everything is done.")
+        if self in self.scene.wires:
+            if DEBUG: print("# Removing Wire", self)
+            if DEBUG: print(" - hiding grWire")
+            self.grWire.hide()
+
+            if DEBUG: print(" - removing grWire")
+            self.scene.grScene.removeItem(self.grWire)
+
+            if DEBUG: print(" - removing wire from all sockets", self)
+            self.remove_from_sockets()
+
+            if DEBUG: print(" - removing wire from scene")
+            try:
+                self.scene.removeWire(self)
+            except ValueError as e:
+                print("Error removing wire:", e)
+                pass
+
+            if DEBUG: print(" - everything is done.")
+        else:
+            if DEBUG: print("# Wire already removed")
 
     # -----------------------------------------------------------------------------
     def serialize(self):
@@ -387,7 +392,7 @@ class Wire(Serializable):
                                     # Essentially checking if b1 <= y <= b2 (if y is between b1 and b2)
                                     if vertical_segment[0][1] <= horizontal_segment[0][1] <= vertical_segment[1][1] or \
                                        vertical_segment[0][1] >= horizontal_segment[0][1] >= vertical_segment[1][1]:
-                                        if DEBUG: print("y coords of vert segment within y coord of horizontal seg")
+                                        if DEBUG_OVERLAP: print("y coords of vert segment within y coord of horizontal seg")
 
                                         # There may be a possible intersection, so now
                                         # check if the horizontal points of wire with a vertical segment, intersects through
@@ -395,7 +400,7 @@ class Wire(Serializable):
                                         # Essentially checking if x1 <= a <= x2 (if a is between x1 and x2)
                                         if horizontal_segment[0][0] <= vertical_segment[0][0] <= horizontal_segment[1][0] or \
                                            horizontal_segment[0][0] >= vertical_segment[0][0] >= horizontal_segment[1][0]:
-                                            if DEBUG: print("x coord of vert segment within x coords of horizontal seg")
+                                            if DEBUG_OVERLAP: print("x coord of vert segment within x coords of horizontal seg")
 
                                             # The intersection point is (a, y)
                                             # (a -> x coord from vertical segment, y -> y coord from horizontal segment)

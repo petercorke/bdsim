@@ -4,6 +4,7 @@ import copy
 import numpy as np
 import importlib.util
 import inspect
+import os.path
 from pathlib import Path
 
 from bdsim.bdedit.block import blockname, blocklist, Block
@@ -34,8 +35,7 @@ def import_blocks(scene, window):
             block_classname = block_ds["classname"]
             block_parentclass = block_ds["blockclass"]
             block_path = block_ds["path"]
-            block_icon = block_path[0] + "\Icons\\" + block_type.lower() + ".png"
-
+            block_icon = os.path.join(block_path[0], "Icons", block_type.lower() + ".png")
 
             # Grab number of input/output sockets for blocks
             try:

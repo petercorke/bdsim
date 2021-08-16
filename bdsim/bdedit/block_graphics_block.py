@@ -73,6 +73,9 @@ class GraphicsBlock(QGraphicsItem):
         self._pen_selected = QPen(QColor("#FFFFA637"), self._selected_line_thickness)
         self._title_font = QFont("Arial", 10)
 
+        # Internal variable for catching fatal errors, and allowing user to save work before crashing
+        self.FATAL_ERROR = False
+
         # Methods called to:
         # * draw the title for the block
         # * check current colour mode the block should display in (Light/Dark)
@@ -80,6 +83,7 @@ class GraphicsBlock(QGraphicsItem):
         self.initTitle()
         self.checkMode()
         self.initUI()
+        self.wasMoved = False
 
     # -----------------------------------------------------------------------------
     def initUI(self):
@@ -290,39 +294,49 @@ class GraphicsBlock(QGraphicsItem):
         :type widget: NoneType, optional, defaults to None
         """
 
-        # Block dimensions are checked for to ensure there's enough space for all sockets
-        self.checkBlockHeight()
+        try:
 
-        # Title will be redrawn, if needed
-        if self._draw_title:
-            self.setTitle()
+            # Block dimensions are checked for to ensure there's enough space for all sockets
+            self.checkBlockHeight()
 
-        # Background (fill) of the block is drawn
-        path_content = QPainterPath()
-        path_content.setFillRule(Qt.WindingFill)
-        path_content.addRoundedRect(0, 0, self.width, self.height, self.edge_size,
-                                    self.edge_size)
-        path_content.addRect(0, self.title_height, self.edge_size, self.edge_size)
-        path_content.addRect(self.width - self.edge_size, self.title_height, self.edge_size, self.edge_size)
-        painter.setPen(Qt.NoPen)
-        painter.setBrush(self._brush_background)
-        painter.drawPath(path_content.simplified())
+            # Title will be redrawn, if needed
+            if self._draw_title:
+                self.setTitle()
 
-        # Outline of the block is drawn
-        path_outline = QPainterPath()
-        path_outline.addRoundedRect(0, 0, self.width, self.height, self.edge_size, self.edge_size)
-        painter.setPen(self._pen_default if not self.isSelected() else self._pen_selected)
-        painter.setBrush(Qt.NoBrush)
-        painter.drawPath(path_outline.simplified())
+            # Background (fill) of the block is drawn
+            path_content = QPainterPath()
+            path_content.setFillRule(Qt.WindingFill)
+            path_content.addRoundedRect(0, 0, self.width, self.height, self.edge_size,
+                                        self.edge_size)
+            path_content.addRect(0, self.title_height, self.edge_size, self.edge_size)
+            path_content.addRect(self.width - self.edge_size, self.title_height, self.edge_size, self.edge_size)
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(self._brush_background)
+            painter.drawPath(path_content.simplified())
 
-        # Icon of the block is drawn overtop the blocks' background
-        if QtCore.QFile.exists(self.icon):
-            icon_item = QPixmap(self.icon).scaledToWidth(50) if self.icon else QPixmap(self.icon)   # Icons are scaled down to 50 pixels
-            #icon_item = QPixmap(self.icon).scaledToWidth(100) if self.icon else QPixmap(self.icon)
-            # icon_item = QPixmap(self.icon)
-            target = QRect((self.width - icon_item.width()) / 2, (self.height - icon_item.height()) / 2, self.width, self.height)
-            source = QRect(0, 0, self.width, self.height)
-            painter.drawPixmap(target, icon_item, source)
+            # Outline of the block is drawn
+            path_outline = QPainterPath()
+            path_outline.addRoundedRect(0, 0, self.width, self.height, self.edge_size, self.edge_size)
+            painter.setPen(self._pen_default if not self.isSelected() else self._pen_selected)
+            painter.setBrush(Qt.NoBrush)
+            painter.drawPath(path_outline.simplified())
+
+            # Icon of the block is drawn overtop the blocks' background
+            if QtCore.QFile.exists(self.icon):
+                icon_item = QPixmap(self.icon).scaledToWidth(50) if self.icon else QPixmap(self.icon)   # Icons are scaled down to 50 pixels
+                #icon_item = QPixmap(self.icon).scaledToWidth(100) if self.icon else QPixmap(self.icon)
+                # icon_item = QPixmap(self.icon)
+                target = QRect((self.width - icon_item.width()) / 2, (self.height - icon_item.height()) / 2, self.width, self.height)
+                source = QRect(0, 0, self.width, self.height)
+                painter.drawPixmap(target, icon_item, source)
+
+        except Exception as e:
+            if self.FATAL_ERROR == False:
+                print("--------------------------------------------------------------------------")
+                print("Caught fatal exception while trying to draw blocks. Please save your work.")
+                print("--------------------------------------------------------------------------")
+                traceback.print_exc(file=sys.stderr)
+                self.FATAL_ERROR = True
 
     # -----------------------------------------------------------------------------
     def mousePressEvent(self, event):
@@ -415,6 +429,21 @@ class GraphicsBlock(QGraphicsItem):
                 # Update the connected wires of all Blocks that are affected by this Block being moved
                 block.updateConnectedEdges()
 
+        # If blocks were moved, change this variable to reflect that. Used in
+        self.wasMoved = True
+
+    # Todo - add documentation
+    # -----------------------------------------------------------------------------
+    def mouseReleaseEvent(self, event):
+
+        super().mouseReleaseEvent(event)
+
+        # If block has been moved, update the variable within the model, to then update the
+        # title of the model, to indicate that there is unsaved progress
+        if self.wasMoved:
+            self.wasMoved = False
+            self.block.scene.has_been_modified = True
+
 class GraphicsConnectorBlock(QGraphicsItem):
     """
     The ``GraphicsConnectorBlock`` Class extends the ``QGraphicsItem`` Class from PyQt5.
@@ -463,8 +492,12 @@ class GraphicsConnectorBlock(QGraphicsItem):
         # Color of wire to be drawn between sockets, when connector block is hidden (to make solid line)
         self._color = QColor("#000000")
 
+        # Internal variable for catching fatal errors, and allowing user to save work before crashing
+        self.FATAL_ERROR = False
+
         # Further initialize necessary Connector Block settings
         self.initUI()
+        self.wasMoved = False
 
     # -----------------------------------------------------------------------------
     def initUI(self):
@@ -529,37 +562,44 @@ class GraphicsConnectorBlock(QGraphicsItem):
         :param widget: the widget this class is being painted on (None)
         :type widget: NoneType, optional, defaults to None
         """
+        try:
+            if self.isSelected():
+                # Draws orange outline around the Connector Block when it is selected
+                path_outline = QPainterPath()
+                # The size of the rectangle drawn, is dictated by the boundingRect (interactive area)
+                path_outline.addRoundedRect(self.boundingRect(), self._corner_rounding, self._corner_rounding)
+                painter.setPen(self._pen_selected)
+                painter.setBrush(Qt.NoBrush)
+                painter.drawPath(path_outline.simplified())
 
-        if self.isSelected():
-            # Draws orange outline around the Connector Block when it is selected
-            path_outline = QPainterPath()
-            # The size of the rectangle drawn, is dictated by the boundingRect (interactive area)
-            path_outline.addRoundedRect(self.boundingRect(), self._corner_rounding, self._corner_rounding)
-            painter.setPen(self._pen_selected)
-            painter.setBrush(Qt.NoBrush)
-            painter.drawPath(path_outline.simplified())
+            # If the user has chosen to hide the connector blocks, redraw the sockets to be hidden
+            if self.block.scene.hide_connector_blocks:
+                # Grab the [x,y] coordinates of both the input and output sockets of the
+                # connector block, and create a wire path to be drawn between them
+                input_pos = self.block.inputs[0].getSocketPosition()
+                output_pos = self.block.outputs[0].getSocketPosition()
 
-        # If the user has chosen to hide the connector blocks, redraw the sockets to be hidden
-        if self.block.scene.hide_connector_blocks:
-            # Grab the [x,y] coordinates of both the input and output sockets of the
-            # connector block, and create a wire path to be drawn between them
-            input_pos = self.block.inputs[0].getSocketPosition()
-            output_pos = self.block.outputs[0].getSocketPosition()
+                multi = 1
 
-            multi = 1
+                # If connector block is flipped, draw the wire path in the opposite direction
+                if self.block.inputs[0].position == RIGHT:
+                    multi = -1
 
-            # If connector block is flipped, draw the wire path in the opposite direction
-            if self.block.inputs[0].position == RIGHT:
-                multi = -1
+                wire_path = QPainterPath(QPointF(input_pos[0] + (multi * 4.5), input_pos[1]))
+                wire_path.lineTo(output_pos[0] - (multi * 4.5), output_pos[1])
 
-            wire_path = QPainterPath(QPointF(input_pos[0] + (multi * 4.5), input_pos[1]))
-            wire_path.lineTo(output_pos[0] - (multi * 4.5), output_pos[1])
-
-            # Set the paint brush width and colour
-            wire_pen = QPen(self._color)
-            wire_pen.setWidth(5)
-            painter.setPen(wire_pen)
-            painter.drawPath(wire_path)
+                # Set the paint brush width and colour
+                wire_pen = QPen(self._color)
+                wire_pen.setWidth(5)
+                painter.setPen(wire_pen)
+                painter.drawPath(wire_path)
+        except Exception as e:
+            if self.FATAL_ERROR == False:
+                print("------------------------------------------------------------------------------------")
+                print("Caught fatal exception while trying to draw connector blocks. Please save your work.")
+                print("------------------------------------------------------------------------------------")
+                traceback.print_exc(file=sys.stderr)
+                self.FATAL_ERROR = True
 
     # -----------------------------------------------------------------------------
     def mousePressEvent(self, event):
@@ -642,3 +682,18 @@ class GraphicsConnectorBlock(QGraphicsItem):
 
                 # Update the connected wires of all Blocks that are affected by this Connector Block being moved
                 block.updateConnectedEdges()
+
+        # If blocks were moved, change this variable to reflect that. Used in
+        self.wasMoved = True
+
+    # Todo - add documentation
+    # -----------------------------------------------------------------------------
+    def mouseReleaseEvent(self, event):
+
+        super().mouseReleaseEvent(event)
+
+        # If block has been moved, update the variable within the model, to then update the
+        # title of the model, to indicate that there is unsaved progress
+        if self.wasMoved:
+            self.wasMoved = False
+            self.block.scene.has_been_modified = True

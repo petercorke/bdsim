@@ -56,6 +56,10 @@ class Scene(Serializable):
         self.wires = []
         self.intersection_list = []
 
+        # Variables to listen for modifications with in the scene
+        self._has_been_modified = False
+        self._has_been_modified_listeners = []
+
         # Variable for toggling between connector blocks being visible or not
         # False by default
         self.hide_connector_blocks = False
@@ -66,6 +70,33 @@ class Scene(Serializable):
         self.scene_height = resolution.height()
 
         self.initUI()
+
+    # Todo - add doc for this method
+    # -----------------------------------------------------------------------------
+    @property
+    def has_been_modified(self):
+        return self._has_been_modified
+
+
+    # Todo - add doc for this method
+    # -----------------------------------------------------------------------------
+    @has_been_modified.setter
+    def has_been_modified(self, value):
+        if not self._has_been_modified and value:
+            self._has_been_modified = value
+
+            # call all registered listeners
+            for callback in self._has_been_modified_listeners:
+                callback()
+
+        self._has_been_modified = value
+
+
+    # Todo - add doc for this method
+    # -----------------------------------------------------------------------------
+    def addHasBeenModifiedListener(self, callback):
+        self._has_been_modified_listeners.append(callback)
+
 
     # -----------------------------------------------------------------------------
     def initUI(self):
@@ -159,6 +190,8 @@ class Scene(Serializable):
         while len(self.blocks) > 0:
             self.blocks[0].remove()
 
+        self.has_been_modified = False
+
     # -----------------------------------------------------------------------------
     def checkForDuplicates(self, name):
         """
@@ -232,6 +265,8 @@ class Scene(Serializable):
         with open(filename, "w") as file:
             file.write(json.dumps(self.serialize(), indent=4))
 
+            self.has_been_modified = False
+
         # Displays the successfully saved message once finished
         self.displayMessage()
 
@@ -254,6 +289,8 @@ class Scene(Serializable):
             raw_data = file.read()
             data = json.loads(raw_data)
             self.deserialize(data, self.window)
+
+            self.has_been_modified = False
 
     # -----------------------------------------------------------------------------
     def serialize(self):
