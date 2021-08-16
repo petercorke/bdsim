@@ -261,7 +261,7 @@ def import_blocks(scene, window):
                             for j in range(i + 2, len(param_value_docstring)):
                                 # Append found value (if not '[default]', to list of keyword restrictions)
                                 if param_value_docstring[j] not in ['[default]']:
-                                    found_keyword_restrictions.append(param_value_docstring[j].strip("'"))
+                                    found_keyword_restrictions.append(param_value_docstring[j].strip("'").lower())
 
                                 # Check if this is the default value, (next value should say '[default]')
                                 if not found_default_value and param_value_docstring[j + 1] in ['[default]']:
