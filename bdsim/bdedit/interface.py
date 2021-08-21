@@ -895,8 +895,8 @@ class Interface(QWidget):
         output_image = output_image.copy(rect)
 
         # And the image is saved under the given file name, as a png
-        output_image.save(picture_name+".png")
-        print("Screenshot successfully rendered and saved")
+        output_image.save(picture_name + ".png")
+        print("Screenshot saved --> ", picture_name + ".png")
 
     # -----------------------------------------------------------------------------
     def updateSceneDimensions(self):
