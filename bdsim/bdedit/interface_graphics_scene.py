@@ -151,40 +151,48 @@ class GraphicsScene(QGraphicsScene):
 
         # If user has enabled intersections detection
         if self.enable_intersections:
-            # If there are intersection points to draw
-            if self.scene.intersection_list:
 
-                # Check the current colour mode of the scene and set the pen to that colour
-                self.checkMode()
-                painter.setPen(QPen(self._color_background))
-                painter.setBrush(QBrush(self._color_background))
-                # painter.setRenderHint(QPainter.Antialiasing, False)
-                # painter.setRenderHint(QPainter.Antialiasing, True)
+            # Check first if any wires are present in the scene
+            if self.scene.wires:
 
-                # Paint each intersection point
-                for intersection_point in self.scene.intersection_list:
-                    x = intersection_point[0]
-                    y = intersection_point[1]
-                    # Paint a 16x16 rectangle
-                    painter.drawRect(x-8, y-8, 16, 16)
+                # If there are intersection points to draw
+                if self.scene.intersection_list:
 
-                # Set the paintbrush color and width for redrawing a portion of the wire
-                pen = QPen(QColor("#000000"))
-                pen.setWidth(5)
-                painter.setPen(pen)
+                    # Check the current colour mode of the scene and set the pen to that colour
+                    self.checkMode()
+                    painter.setPen(QPen(self._color_background))
+                    painter.setBrush(QBrush(self._color_background))
+                    # painter.setRenderHint(QPainter.Antialiasing, False)
+                    # painter.setRenderHint(QPainter.Antialiasing, True)
 
-                # Go through each intersection point and paint back the horizontal lines
-                for intersection_point in self.scene.intersection_list:
-                    x = intersection_point[0]
-                    y = intersection_point[1]
+                    # Paint each intersection point
+                    for intersection_point in self.scene.intersection_list:
+                        x = intersection_point[0]
+                        y = intersection_point[1]
+                        # Paint a 16x16 rectangle
+                        painter.drawRect(x-8, y-8, 16, 16)
 
-                    # line_segement_path = QPainterPath(QPointF(x + 6.5, y))
-                    # line_segement_path.lineTo(x - 6.5, y)
+                    # Set the paintbrush color and width for redrawing a portion of the wire
+                    pen = QPen(QColor("#000000"))
+                    pen.setWidth(5)
+                    painter.setPen(pen)
 
-                    line_segement_path = QPainterPath(QPointF(x + 6.5, y))
-                    line_segement_path.lineTo(x - 6.5, y)
+                    # Go through each intersection point and paint back the horizontal lines
+                    for intersection_point in self.scene.intersection_list:
+                        x = intersection_point[0]
+                        y = intersection_point[1]
 
-                    painter.drawPath(line_segement_path)
+                        # line_segement_path = QPainterPath(QPointF(x + 6.5, y))
+                        # line_segement_path.lineTo(x - 6.5, y)
+
+                        line_segement_path = QPainterPath(QPointF(x + 6.5, y))
+                        line_segement_path.lineTo(x - 6.5, y)
+
+                        painter.drawPath(line_segement_path)
+
+            # Else, if no wires in scene, clear intersection_list
+            else:
+                self.scene.intersection_list.clear()
 
     # -----------------------------------------------------------------------------
     def drawBackground(self, painter, rect):

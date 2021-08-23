@@ -67,7 +67,6 @@ class Connector(Block):
         self.parameters = []
         self.block_url = ''
         self.icon = ''
-        self.block_url = ''
 
         self.inputsNum = 1
         self.outputsNum = 1
@@ -83,3 +82,4 @@ class Connector(Block):
         # and visually added into the GraphicsScene
         self.scene.addBlock(self)
         self.scene.grScene.addItem(self.grBlock)
+        self.scene.has_been_modified = True

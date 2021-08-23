@@ -13,6 +13,7 @@ from PyQt5.QtWidgets import QMessageBox, QWidget, QVBoxLayout
 from bdsim.bdedit.block import *
 from bdsim.bdedit.Icons import *
 from bdsim.bdedit.block_wire import Wire
+from bdsim.bdedit.block_main_block import Main
 from bdsim.bdedit.block_connector_block import Connector
 from bdsim.bdedit.interface_serialize import Serializable
 from bdsim.bdedit.interface_graphics_scene import GraphicsScene
@@ -220,36 +221,6 @@ class Scene(Serializable):
         return duplicate
 
     # -----------------------------------------------------------------------------
-    def displayMessage(self):
-        """
-        This method displays a 'File saved successfully!' pop-up message, providing
-        the user with feedback that their was saved. This pop-up message will
-        disappear on its own after 1 second.
-        """
-
-        # Method for closing the pop-up message
-        def closeMessage():
-            timer.stop()
-            message.close()
-
-        # Create a QMessageBox, in which the pop-up message is displayed
-        message = QMessageBox()
-        # Set the icon of the message to be a green tick
-        message.setIconPixmap(QPixmap(":/Icons_Reference/Icons/Success_Icon.png"))
-        # Set the title and text for the message
-        message.setText("<font><b> File saved successfully! </font>")
-        # Set message modality to be non-blocking (by default, QMessageBox blocks other actions until closed)
-        message.setWindowModality(Qt.NonModal)
-        # Add the pop-up message into the Scene
-        self.window.addWidget(message, 2, 5, 1, 1)
-
-        # Create timer to keep success message opened for 1 second
-        timer = QtCore.QTimer()
-        timer.setInterval(1000)
-        timer.timeout.connect(closeMessage)
-        timer.start()
-
-    # -----------------------------------------------------------------------------
     def saveToFile(self, filename):
         """
         This method saves the contents of the ``Scene`` instance into a JSON file
@@ -266,9 +237,6 @@ class Scene(Serializable):
             file.write(json.dumps(self.serialize(), indent=4))
 
             self.has_been_modified = False
-
-        # Displays the successfully saved message once finished
-        self.displayMessage()
 
     # -----------------------------------------------------------------------------
     def loadFromFile(self, filename):
@@ -355,11 +323,14 @@ class Scene(Serializable):
         # For each block from the saved blocks
         for block_data in data["blocks"]:
             block_type = block_data["block_type"]
-            # If it is a Connector Block, then manually re-create this block (since the
-            # Connector block is always available with this application, it was manually
-            # imported in the Interface Class, hence must be manually re-created)
+            # If a block is one that is manually defined by bdedit (such as the connector
+            # or main blocks, or the text item), they must manaully be re-created.
             if block_type == "CONNECTOR" or block_type == "Connector":
                 Connector(self, self.window).deserialize(block_data, hashmap)
+
+            elif block_type == "MAIN" or block_type == "Main":
+                Main(self, self.window).deserialize(block_data, hashmap)
+
             # Otherwise if it is any other block (will be an auto-imported block)
             else:
                 # For each block class within the blocklist

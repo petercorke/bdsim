@@ -147,7 +147,9 @@ class Block(Serializable):
         try:
             self.setDefaultTitle(self.title)
         except AttributeError:
-            print("block.py -> Error occured while setting default title")
+            # When trying to set title of connector block, it will throw an attribute error
+            # This is fine, as connector block isn't supposed to have a title
+            # print("block.py -> Error occured while setting default title")
             pass
         #self.block_type = block_type
 

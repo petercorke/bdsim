@@ -14,10 +14,11 @@ from PyQt5 import QtPrintSupport
 from bdsim.bdedit.block import *
 from bdsim.bdedit.Icons import *
 from bdsim.bdedit.block_wire import Wire
-from bdsim.bdedit.block_connector_block import *
-from bdsim.bdedit.interface_scene import Scene
-from bdsim.bdedit.interface_graphics_view import GraphicsView
 from bdsim.bdedit.block_importer import *
+from bdsim.bdedit.block_main_block import *
+from bdsim.bdedit.interface_scene import Scene
+from bdsim.bdedit.block_connector_block import *
+from bdsim.bdedit.interface_graphics_view import GraphicsView
 
 # =============================================================================
 #
@@ -26,63 +27,6 @@ from bdsim.bdedit.block_importer import *
 # =============================================================================
 # Variable for enabling/disabling debug comments
 DEBUG = False
-
-# def importBlocks():
-#     """
-#     This method is called at the beginning of an ``Interface`` instance, to auto
-#     import all grandchild Classes of the ``Block`` class from a locally referenced
-#     dictionary called `Block_Classes`.
-#
-#     This code is adapted from: https://github.com/petercorke/bdsim/blob/bdedit/bdsim/bdsim.py
-#
-#     :return: a list of imported blocks
-#     :rtype: list
-#     """
-#
-#     # The filepath is locally defined, by navigating from this file, up to the parent directory
-#     # and then to the 'Block_Classes' directory.
-#     block_path = [Path(__file__).parent / 'Block_Classes']
-#
-#     # A blocks list is initialized to being empty, and the number of currently imported blocks is stored
-#     blocks = []
-#     nblocks = len(blocklist)
-#
-#     # For each file located within the referenced directory
-#     for path in block_path:
-#         # If the given filepath exists, proceed with the code, otherwise skip that file and continue
-#         # to the next
-#         if not path.exists():
-#             print("Provided path does not exist")
-#             continue
-#
-#         # For each file in the referenced directory
-#         for file in path.iterdir():
-#             # Look only at python files
-#             if file.name.endswith('.py'):
-#                 # Create a temporary list that will store all the grandchild class blocks within this file
-#                 sub_class_blocks = []
-#
-#                 # Extract and import the given modules (Grandchild Classes)
-#                 # As these classes are imported, they each have an '@block' decorator which
-#                 # automatically adds that class into the 'blocklist' variable
-#                 spec = importlib.util.spec_from_file_location(file.name, file)
-#                 module = importlib.util.module_from_spec(spec)
-#                 spec.loader.exec_module(module)
-#
-#                 # For each class that was just added into the 'blocklist' variable
-#                 # (nblocks: -> From the previous number of blocks in blocklist, to the end of the current length
-#                 # of blocklist)
-#                 for cls in blocklist[nblocks:]:
-#                     # Append the name of the class, the class import itself, and the filepath to that module
-#                     sub_class_blocks.append([blockname(cls), cls, file])
-#
-#                 # Finally append the imported classes into the 'blocks' list, and update the number of blocks
-#                 # variable to the current length of blocklist
-#                 blocks.append(sub_class_blocks)
-#                 nblocks = len(blocklist)
-#
-#     return blocks
-
 
 # =============================================================================
 #
@@ -120,11 +64,6 @@ class Interface(QWidget):
         """
         super().__init__(parent)
 
-        # A copy of the imported block classes is stored within the Scene for later use
-        # when calling those classes to create Blocks into the Scene
-        #self.blockLibrary = importBlocks()
-        #self.blockLibrary = import_blocks()
-
         # The toolbar and library browser widgets are initialized
         self.toolBar = QWidget()
         self.libraryBrowser = QWidget()
@@ -132,10 +71,6 @@ class Interface(QWidget):
         # LibraryBrowserBox is wrapped by LibraryBrowser, as this allows the items within
         # the libraryBrowser to be scrollable
         self.libraryBrowserBox = QGroupBox()
-
-        # # The name of the current interface Scene is initially set to None, this is then
-        # # overwritten when the Scene is saved
-        # self.filename = "untitled.bd"
 
         # The Scene interface is called to be initialized
         self.initUI(resolution, debug, parent)
@@ -161,7 +96,7 @@ class Interface(QWidget):
         # _______________________________ Initial Setup _______________________________
         # Sets interface's (application window's) resolution. Several options available:
         #self.setGeometry(100, 100, resolution.width() - 200, resolution.height() - 200)  # Interface will be same size as desktop screen, minus 100 pixels from all sides
-        # self.setGeometry(resolution.width() / 4, resolution.height() / 4, resolution.width() / 2, resolution.height() / 2)  # Interface will be half the size of the desktop screen, and centered in the screen
+        #self.setGeometry(resolution.width() / 4, resolution.height() / 4, resolution.width() / 2, resolution.height() / 2)  # Interface will be half the size of the desktop screen, and centered in the screen
         #self.setGeometry(100, 100, resolution.width() / 2, resolution.height() / 2)  # Interface will be half the size of the desktop screen, and displayed 100 pixels down and right from top left corner of the screen
         main_window.setGeometry(100, 100, resolution.width() / 2, resolution.height() / 2)  # Interface will be half the size of the desktop screen, and displayed 100 pixels down and right from top left corner of the screen
 
@@ -188,7 +123,9 @@ class Interface(QWidget):
         # deleted, or when wires are moved around)
         self.canvasView = GraphicsView(self.scene.grScene, self)
 
+        # Import all the blocks that bdedit can see, and sort the list in alphabetical order
         self.blockLibrary = import_blocks(self.scene, self.layout)
+        self.sortBlockLibrary()
 
         # if debug:
         # print("\nfrom self.blockLibrary")
@@ -265,12 +202,8 @@ class Interface(QWidget):
         self.save_button.clicked.connect(lambda: main_window.saveToFile())  # self.saveToFile() initiates a prompt to save the current scene
         self.openFile_button.clicked.connect(lambda: main_window.loadFromFile())  # self.loadFromFile() initiates a prompt to choose a scene file to load
         self.saveAs_button.clicked.connect(lambda: main_window.saveAsToFile())
-        # self.newFile_button.clicked.connect(lambda: self.scene.clear())     # self.scene.clear() removes all items from the scene
-        # self.save_button.clicked.connect(lambda: self.saveToFile())         # self.saveToFile() initiates a prompt to save the current scene
-        # self.openFile_button.clicked.connect(lambda: self.loadFromFile())   # self.loadFromFile() initiates a prompt to choose a scene file to load
-        # self.saveAs_button.clicked.connect(lambda: self.saveAsToFile())     # self.saveAsToFile() initiates a prompt to save the current scene under a different name
+        self.run_button.clicked.connect(lambda: main_window.runButton())
         self.screenshot_button.clicked.connect(lambda: self.save_image('Scene Picture'))    # self.save_image creates an image of the current scene, saved as 'Scene Picture'
-        # self.screenshot_button.clicked.connect(lambda: self.grab_screenshot_dimensions())
         self.grid_mode_options.currentIndexChanged.connect(lambda: self.updateColorMode())  # self.updateColorMode() updates the background mode of the scene
         self.toggle_connector_block_visibility_checkbox.stateChanged.connect(self.clickBox)
 
@@ -282,75 +215,60 @@ class Interface(QWidget):
         # The library browser will be displayed along the left-hand side of the interface,
         # items should be displayed vertically within it, hence the vertical layout manager.
         self.libraryBrowser.layout = QVBoxLayout(self.libraryBrowser)
+
+        # Adding icon for the tool above the library browser
+        self.tool_logo = QLabel()
+        self.tool_logo.setPixmap(QPixmap(":/Icons_Reference/Icons/bdsim_logo2.png").scaledToWidth(230 * self.layout.scale))
+        # self.tool_logo.setPixmap(QPixmap(":/Icons_Reference/Icons/bdsim_logo2.png").scaledToHeight(40 * self.layout.scale))
+        self.libraryBrowser.layout.addWidget(self.tool_logo)
+        self.libraryBrowser.layout.setAlignment(self.tool_logo, Qt.AlignmentFlag.AlignHCenter)
+
         # The follow label is added to the library browser, naming it
-        self.libraryBrowser.layout.addWidget(QLabel('<font size=8><b>Library Browser</font>'))
+        # self.libraryBrowser.layout.addWidget(QLabel('<font size=8><b>Library Browser</font>'))
+
         # The library browser box makes the items inside of it scrollable, so all the relevant
         # buttons will be added into this widget. This widget will also have a vertical layout
         # manager. Then this widget will be wrapped by the library browser (will go inside it),
         # in order to position where it is displayed in the application window.
         self.libraryBrowserBox.layout = QVBoxLayout()
 
-        # The following variables control the '+,-' sign displayed alongside each
-        # hide-able/expandable list section within the library browser. If below they are
-        # defined as True, they will be '+' when hidden and '-' when expanded. Setting to
-        # False will reverse this logic. Setting these to False, WILL NOT make the list
-        # sections display in expanded mode by default. This is controlled further down.
-        self.canvas_items_hidden = True
-        self.source_blocks_hidden = True
-        self.sink_blocks_hidden = True
-        self.function_blocks_hidden = True
-        self.transfer_blocks_hidden = True
-        self.discrete_blocks_hidden = True
-        self.subsystem_blocks_hidden = True
+        # Remove whitespace between buttons within the library browser panel
+        self.libraryBrowserBox.layout.setSpacing(2)
 
-        # Buttons for hiding/expanding the list sections in the library browser,
-        # are created and named
+        # Make a button for canvas items. These items are like the auto-imported blocks,
+        # but are created from definitions in bdedit, rather than from external libraries
         self.canvasItems_button = QPushButton(' + Canvas Items')
-        self.sourceBlocks_button = QPushButton(' + Source Blocks')
-        self.sinkBlocks_button = QPushButton(' + Sink Blocks')
-        self.functionBlocks_button = QPushButton(' + Function Blocks')
-        self.transferBlocks_button = QPushButton(' + Transfer Blocks')
-        self.discreteBlocks_button = QPushButton(' + Discrete Blocks')
-        self.subsystemBlocks_button = QPushButton(' + Subsystem Blocks')
-
-        # The alignment of the above-button's text are set to be left-aligned
         self.canvasItems_button.setStyleSheet("QPushButton { text-align: left }")
-        self.sourceBlocks_button.setStyleSheet("QPushButton { text-align: left }")
-        self.sinkBlocks_button.setStyleSheet("QPushButton { text-align: left }")
-        self.functionBlocks_button.setStyleSheet("QPushButton { text-align: left }")
-        self.transferBlocks_button.setStyleSheet("QPushButton { text-align: left }")
-        self.discreteBlocks_button.setStyleSheet("QPushButton { text-align: left }")
-        self.subsystemBlocks_button.setStyleSheet("QPushButton { text-align: left }")
-
-        # The above-created buttons are connected to methods that handle hiding/expanding
-        # the buttons that appear within the respective list sections
         self.canvasItems_button.clicked.connect(self.toggleCanvasItems)
-        # self.sourceBlocks_button.clicked.connect(self.toggleSourceBlocks)
-        # self.sinkBlocks_button.clicked.connect(self.toggleSinkBlocks)
-        # self.functionBlocks_button.clicked.connect(self.toggleFunctionBlocks)
-        # self.transferBlocks_button.clicked.connect(self.toggleTransferBlocks)
-        # self.discreteBlocks_button.clicked.connect(self.toggleDiscreteBlocks)
-        # self.subsystemBlocks_button.clicked.connect(self.toggleSubSystemBlocks)
+        self.canvas_items_hidden = True
 
         # A list is created to hold all the buttons that will create Blocks within the Scene
         self.list_of_scrollbar_buttons = []
 
-        # The connector block is defined internally within the code, and will always be
-        # included as a usable block, so it is imported manually. The button that creates
-        # the connector block within the scene is created below. This button is set to
-        # initially be invisible (this is what controls whether the lists sections are
-        # expanded or hidden by default. Setting setVisible(False) will make the lists hidden,
-        # and setVisible(True) will make the lists expanded).
+        # This set of blocks are definited internally within bdedit. Currently they include:
+        # the connector block, the main block, and the text item. As they are definied by
+        # bdedit, rather than having their definitions come from an external library, the
+        # buttons for these items must also be manually created within bdedit.
         self.libraryBrowserBox.layout.addWidget(self.canvasItems_button)
         self.connector_block_button = QPushButton("Connector Block")
-        self.connector_block_button.setVisible(False)
-        # This button is then connected to creating an instance of the Connector class within
-        # the Scene
-        self.connector_block_button.clicked.connect(lambda checked: Connector(self.scene, self.layout, "Connector Block"))
-        # And the button is added to the library browser's layout manager
-        self.libraryBrowserBox.layout.addWidget(self.connector_block_button)
+        self.main_block_button = QPushButton("Main Block")
+        self.text_item_button = QPushButton("Text Item")
 
-        # This for loop goes through each block type (sink, source, function) that was
+        self.connector_block_button.setVisible(False)
+        self.main_block_button.setVisible(False)
+        self.text_item_button.setVisible(False)
+
+        # These buttons are then connected to creating their respective instances within the Scene
+        self.connector_block_button.clicked.connect(lambda checked: Connector(self.scene, self.layout, "Connector Block"))
+        self.main_block_button.clicked.connect(lambda checked: Main(self.scene, self.layout))
+        # self.connector_block_button.clicked.connect(lambda checked: Connector(self.scene, self.layout, "Text Item"))
+
+        # Adding the buttons to the library browser's layout manager
+        self.libraryBrowserBox.layout.addWidget(self.connector_block_button)
+        self.libraryBrowserBox.layout.addWidget(self.main_block_button)
+        self.libraryBrowserBox.layout.addWidget(self.text_item_button)
+
+        # This for loop goes through each block type (sink, source, function) that was auto
         # imported (and stored into self.blockLibrary at the Interface's initialization).
         for sub_class_group in self.blockLibrary:
 
@@ -358,13 +276,17 @@ class Interface(QWidget):
 
             # Grab the each group that blocks belong to, and create a library panel button for those groups
             cleaned_class_group = sub_class_group[0][:-1] if sub_class_group[0].endswith('s') else sub_class_group[0]
-            #button_name = cleaned_class_group + "_button"
-            # self.button_name = QPushButton(" + " + cleaned_class_group.capitalize() + " Blocks")
-            # self.button_name.setStyleSheet("QPushButton { text-align: left }")
-            # self.libraryBrowserBox.layout.addWidget(self.button_name)
-
             group_button = QPushButton(" + " + cleaned_class_group.capitalize() + " Blocks")
+
+            # Buttons' text alignment is set to be left-aligned
             group_button.setStyleSheet("QPushButton { text-align: left }")
+
+            # The following variables control the '+,-' sign displayed alongside each
+            # hide-able/expandable list section within the library browser. If below it is
+            # defined as True, the button will be '+' when hidden and '-' when expanded. Setting to
+            # False will reverse this logic. Setting it to False, WILL NOT make the list
+            # sections display in expanded mode by default. This is controlled further down with setVisible.
+            group_button.is_hidden = True
             group_button.clicked.connect(self.toggle_sub_buttons)
             group_of_buttons.append((group_button, cleaned_class_group.capitalize()))
 
@@ -379,7 +301,7 @@ class Interface(QWidget):
                 # Make a button with the name of the block type
                 button = QPushButton(class_block[0])
                 # Set the button to be invisible by default (for the list's to be hidden)
-                #button.setVisible(False)
+                button.setVisible(False)
                 # Connect button to calling a new instance of the block type class
                 button.clicked.connect(lambda checked, blockClass=class_block[1]: blockClass())
                 # Add button to list of scrollbar buttons for reference of what buttons should be
@@ -391,73 +313,6 @@ class Interface(QWidget):
 
             group_of_buttons.append(list_of_sub_buttons)
             self.list_of_scrollbar_buttons.append(group_of_buttons)
-
-            # # Variables set for identifying whether or not all the grandchild class blocks
-            # # were added into the library browser layout, into their respective list section.
-            # sourceBlocksAdded = False
-            # sinkBlocksAdded = False
-            # functionBlocksAdded = False
-            # transferBlocksAdded = False
-            # discreteBlocksAdded = False
-            # subsystemBlocksAdded = False
-            #
-            #
-            # # The above defined buttons for hiding/expanding the list sections, are added at
-            # # the start of each import of blocks from the same group. E.g. if sub_class_group
-            # # is of SourceBlock blocks, the hiding/expanding button for this list section will
-            # # be added first, followed by the buttons for each of the SourceBlock blocks. The
-            # # above variables are also set to True, signifying that all necessary buttons for
-            # # this sub_class_group of buttons have been added.
-            #
-            # # All blocks in each group of blocks are in the same class, so if the first is a
-            # # sink/source/function the rest will also belong to the same class
-            # if not sourceBlocksAdded:
-            #     if issubclass(sub_class_group[0][1], SourceBlock):
-            #         self.libraryBrowserBox.layout.addWidget(self.sourceBlocks_button)
-            #         sourceBlocksAdded = True
-            #
-            # if not sinkBlocksAdded:
-            #     if issubclass(sub_class_group[0][1], SinkBlock):
-            #         self.libraryBrowserBox.layout.addWidget(self.sinkBlocks_button)
-            #         sinkBlocksAdded = True
-            #
-            # if not functionBlocksAdded:
-            #     if issubclass(sub_class_group[0][1], FunctionBlock):
-            #         self.libraryBrowserBox.layout.addWidget(self.functionBlocks_button)
-            #         functionBlocksAdded = True
-            #
-            # if not transferBlocksAdded:
-            #     if issubclass(sub_class_group[0][1], TransferBlock):
-            #         self.libraryBrowserBox.layout.addWidget(self.transferBlocks_button)
-            #         transferBlocksAdded = True
-            #
-            # if not discreteBlocksAdded:
-            #     if issubclass(sub_class_group[0][1], DiscreteBlock):
-            #         self.libraryBrowserBox.layout.addWidget(self.discreteBlocks_button)
-            #         discreteBlocksAdded = True
-            #
-            # if not subsystemBlocksAdded:
-            #     if issubclass(sub_class_group[0][1], (INPORTBlock, OUTPORTBlock, SUBSYSTEMBlock)):
-            #         self.libraryBrowserBox.layout.addWidget(self.subsystemBlocks_button)
-            #         subsystemBlocksAdded = True
-            #
-            # # After the hiding/expanding button has been added according to the sub_class_group,
-            # # a button for each block within that group is added to the library browser layout.
-            # for sub_class_block in sub_class_group:
-            #     # Make a button with the name of the block type
-            #     button = QPushButton(sub_class_block[0])
-            #     # Set the button to be invisible by default (for the list's to be hidden)
-            #     button.setVisible(False)
-            #     # Connect button to calling a new instance of the block type class
-            #     button.clicked.connect(lambda checked, blockClass=sub_class_block[1], scene=self.scene, layout=self.layout: blockClass(scene, layout))
-            #     # Add button to list of scrollbar buttons for reference of what buttons should be
-            #     # affected when expanding/hiding the list sections
-            #     self.list_of_scrollbar_buttons.append((button, sub_class_block[1]))
-            #     # Add the button to the library browser box layout (the scrollable widget)
-            #     self.libraryBrowserBox.layout.addWidget(button)
-
-        # for block_buttons in self.list_of_scrollbar_buttons:
-        #     print(id(block_buttons[0]), block_buttons)
 
         # All the button items are set to align to the top of the libraryBrowserBox
         self.libraryBrowserBox.layout.addStretch()
@@ -479,7 +334,8 @@ class Interface(QWidget):
         self.libraryBrowser.layout.setAlignment(Qt.AlignTop)
         self.libraryBrowser.setLayout(self.libraryBrowser.layout)
 
-        # ________ Application components added to application layout manager _________
+
+        # _________ Application components added to application layout manager ___________
         # Refer to technical documentation for visualising how these components are
         # organised within the grid layout.
         # Each component is added to the grid layout,
@@ -495,22 +351,8 @@ class Interface(QWidget):
         self.layout.addWidget(self.libraryBrowser, 0, 0, 10, 1)
         self.layout.addWidget(self.canvasView, 1, 1, 9, 9)
 
-        # Sets the stylesheet for how tool tips should be displayed
-        # self.setStyleSheet("""QToolTip {
-        #                     background-color: #33393B;
-        #                     color: white;
-        #                     border: 1px solid black;
-        #                     }""")
-        # self.setStyleSheet("""QToolTip {
-        #                     background-color: #E0E0E0;
-        #                     color: black;
-        #                     border: 1px solid black;
-        #                     }""")
-
-        # Finally the application window is named, its icon is set, and it is shown.
-        # self.setWindowTitle("bdedit - " + self.filename)
-        # self.setWindowIcon(QIcon(":/Icons_Reference/Icons/bdsim_icon.png"))
-        # self.show()
+        # self.layout.addWidget(self.libraryBrowser, 0, 0, 10, 1)
+        # self.layout.addWidget(self.canvasView, 0, 1, 10, 9)
 
     # -----------------------------------------------------------------------------
     @pyqtSlot()
@@ -531,76 +373,15 @@ class Interface(QWidget):
         # as the location of the mouse pointer.
         Wire(scene, scene.blocks[startBlock].outputs[startSocket], scene.blocks[endBlock].inputs[endSocket], wire_type=3)
 
-    # Todo update documentation for this func
+    # Todo - add doc comment for this
     # -----------------------------------------------------------------------------
-    # def updateApplicationName(self, filepath):
-    #     self.filename = os.path.basename(filepath)
-    #     self.setWindowTitle("bdedit - " + self.filename)
+    def sortBlockLibrary(self):
+        for sub_list in self.blockLibrary:
+            # Sort the blocks within each sublist (functions, sources, sinks, etc) in alphabetical order
+            sub_list[1].sort(key=lambda x: x[0])
 
-    # # -----------------------------------------------------------------------------
-    # def loadFromFilePath(self, filepath):
-    #     """
-    #     This method is only used when loading a file from the command line. It will
-    #     check if the file at the given path exists, and if so, will load its contents.
-    #     """
-    #
-    #     # Check if file at given path exists, if so, run the deserializing method
-    #     if os.path.isfile(filepath):
-    #         self.scene.loadFromFile(filepath)
-    #
-    # # -----------------------------------------------------------------------------
-    # def loadFromFile(self):
-    #     """
-    #     This method opens a QFileDialog window, prompting the user to select a file
-    #     to load from.
-    #     """
-    #
-    #     # The filename of the selected file is grabbed
-    #     fname, filter = QFileDialog.getOpenFileName(self)
-    #     if fname == '':
-    #         return
-    #
-    #     # And the method for deserializing from a file is called, feeding in the
-    #     # extracted filename from above
-    #     if os.path.isfile(fname):
-    #         self.updateApplicationName(fname)
-    #         self.scene.loadFromFile(fname)
-    #
-    # # -----------------------------------------------------------------------------
-    # def saveToFile(self):
-    #     """
-    #     This method calls the method from within the ``Scene`` to save a copy of the
-    #     current Scene, with all its items under a file with the current filename. If
-    #     this is the first time a user is saving their file, they will be prompted to
-    #     name the file and to choose where it will be saved.
-    #     """
-    #
-    #     if "untitled" in self.filename: return self.saveAsToFile()
-    #     self.scene.saveToFile(self.filename)
-    #
-    # # -----------------------------------------------------------------------------
-    # def saveAsToFile(self):
-    #     """
-    #     This method opens a QFileDialog window, prompting the user to enter a name
-    #     under which the current file will be saved. This file will automatically be
-    #     given a .json file type.
-    #     """
-    #
-    #     # The allowable file types are defined below
-    #     # file_types = "JSON files (*.json);;all files(*.*)"
-    #     file_types = "JSON files (*.json);;bdedit files(*.bd)"
-    #     fname, _ = QFileDialog.getSaveFileName(self, 'untitled.bd', filter=file_types)
-    #
-    #     # The filename is extracted from the QFileDialog
-    #     if fname == '':
-    #         return
-    #
-    #     # The filename of the scene is stored as a variable inside the Interface, and
-    #     # the self.saveToFile method is called (which will call the self.scene.saveToFile
-    #     # method from within the Scene, which will serialize the contents of the Scene
-    #     # into a JSON file with the provided file name).
-    #     self.filename = fname
-    #     self.saveToFile()
+        # Then sort the groups in alphabetical order too
+        self.blockLibrary.sort(key=lambda x: x[0])
 
     # -----------------------------------------------------------------------------
     def updateColorMode(self):
@@ -661,171 +442,41 @@ class Interface(QWidget):
         # And the associated buttons are set to being visible/invisible depending
         # on that variable.
         self.connector_block_button.setVisible(not self.connector_block_button.isVisible())
+        self.main_block_button.setVisible(not self.main_block_button.isVisible())
+        self.text_item_button.setVisible(not self.text_item_button.isVisible())
 
     # Todo - update doc string comments
     # -----------------------------------------------------------------------------
     def toggle_sub_buttons(self):
-        pass
-        # browser_button_map = {
-        #     ""
-        #
-        # }
+        # Go through list of buttons in the scroll bar
+        for group in self.list_of_scrollbar_buttons:
+            # Find the button group button that was pressed (functions, sink, source, etc)
+            # group looks like - [[QPushButton_for_functions, "functions"], [all relevant buttons]]
+            group_button = group[0][0]
+            if group_button == self.sender():
+                # If the list section button is set to be hidden, the associated sign
+                # will be displayed as '-', otherwise it will be displayed as '+' if expanded
+                if group_button.is_hidden:
+                    group_button.setText(group_button.text().replace("+", "- "))
+                else:
+                    group_button.setText(group_button.text().replace("- ", "+"))
 
-    # # -----------------------------------------------------------------------------
-    # def toggleSourceBlocks(self):
-    #     """
-    #     This method toggles hiding/expanding all ``Source Blocks``.
-    #     These depend on the Blocks defined within the auto-imported files.
-    #     """
-    #
-    #     # If the list section button is set to be hidden, the associated sign
-    #     # will be displayed as '-', otherwise it will be displayed as '+' if expanded
-    #     if self.source_blocks_hidden:
-    #         self.sourceBlocks_button.setText(' -  Source Blocks')
-    #     else:
-    #         self.sourceBlocks_button.setText(' + Source Blocks')
-    #
-    #     # When toggling, the variable that represents the current hidden/expanded
-    #     # state of the list section, is flipped to the opposite boolean value of itself
-    #     # If True -> False, If False -> True
-    #     self.source_blocks_hidden = not self.source_blocks_hidden
-    #
-    #     # For each list section, its buttons will be contained within the list_of_scrollbar_buttons
-    #     # variable, so that list is parsed and all buttons which are a subclass of SourceBlock
-    #     # are set to being visible/invisible depending on the variable above.
-    #     for button_tuple in self.list_of_scrollbar_buttons:
-    #         if issubclass(button_tuple[1], SourceBlock):
-    #             button_tuple[0].setVisible(not button_tuple[0].isVisible())
-    #
-    # # -----------------------------------------------------------------------------
-    # def toggleSinkBlocks(self):
-    #     """
-    #     This method toggles hiding/expanding all ``Sink Blocks``.
-    #     These depend on the Blocks defined within the auto-imported files.
-    #     """
-    #
-    #     # If the list section button is set to be hidden, the associated sign
-    #     # will be displayed as '-', otherwise it will be displayed as '+' if expanded
-    #     if self.sink_blocks_hidden:
-    #         self.sinkBlocks_button.setText(' -  Sink Blocks')
-    #     else:
-    #         self.sinkBlocks_button.setText(' + Sink Blocks')
-    #
-    #     # When toggling, the variable that represents the current hidden/expanded
-    #     # state of the list section, is flipped to the opposite boolean value of itself
-    #     # If True -> False, If False -> True
-    #     self.sink_blocks_hidden = not self.sink_blocks_hidden
-    #
-    #     # For each list section, its buttons will be contained within the list_of_scrollbar_buttons
-    #     # variable, so that list is parsed and all buttons which are a subclass of SinkBlock
-    #     # are set to being visible/invisible depending on the variable above.
-    #     for button_tuple in self.list_of_scrollbar_buttons:
-    #         if issubclass(button_tuple[1], SinkBlock):
-    #             button_tuple[0].setVisible(not button_tuple[0].isVisible())
-    #
-    # # -----------------------------------------------------------------------------
-    # def toggleFunctionBlocks(self):
-    #     """
-    #     This method toggles hiding/expanding all ``Function Blocks``.
-    #     These depend on the Blocks defined within the auto-imported files.
-    #     """
-    #
-    #     # If the list section button is set to be hidden, the associated sign
-    #     # will be displayed as '-', otherwise it will be displayed as '+' if expanded
-    #     if self.function_blocks_hidden:
-    #         self.functionBlocks_button.setText(' -  Function Blocks')
-    #     else:
-    #         self.functionBlocks_button.setText(' + Function Blocks')
-    #
-    #     # When toggling, the variable that represents the current hidden/expanded
-    #     # state of the list section, is flipped to the opposite boolean value of itself
-    #     # If True -> False, If False -> True
-    #     self.function_blocks_hidden = not self.function_blocks_hidden
-    #
-    #     # For each list section, its buttons will be contained within the list_of_scrollbar_buttons
-    #     # variable, so that list is parsed and all buttons which are a subclass of FunctionBlock
-    #     # are set to being visible/invisible depending on the variable above.
-    #     for button_tuple in self.list_of_scrollbar_buttons:
-    #         if issubclass(button_tuple[1], FunctionBlock):
-    #             button_tuple[0].setVisible(not button_tuple[0].isVisible())
-    #
-    # # -----------------------------------------------------------------------------
-    # def toggleTransferBlocks(self):
-    #     """
-    #     This method toggles hiding/expanding all ``Transfer Blocks``.
-    #     These depend on the Blocks defined within the auto-imported files.
-    #     """
-    #
-    #     # If the list section button is set to be hidden, the associated sign
-    #     # will be displayed as '-', otherwise it will be displayed as '+' if expanded
-    #     if self.transfer_blocks_hidden:
-    #         self.transferBlocks_button.setText(' -  Transfer Blocks')
-    #     else:
-    #         self.transferBlocks_button.setText(' + Transfer Blocks')
-    #
-    #     # When toggling, the variable that represents the current hidden/expanded
-    #     # state of the list section, is flipped to the opposite boolean value of itself
-    #     # If True -> False, If False -> True
-    #     self.transfer_blocks_hidden = not self.transfer_blocks_hidden
-    #
-    #     # For each list section, its buttons will be contained within the list_of_scrollbar_buttons
-    #     # variable, so that list is parsed and all buttons which are a subclass of TransferBlock
-    #     # are set to being visible/invisible depending on the variable above.
-    #     for button_tuple in self.list_of_scrollbar_buttons:
-    #         if issubclass(button_tuple[1], TransferBlock):
-    #             button_tuple[0].setVisible(not button_tuple[0].isVisible())
-    #
-    # # -----------------------------------------------------------------------------
-    # def toggleDiscreteBlocks(self):
-    #     """
-    #     This method toggles hiding/expanding all ``Discrete Blocks``.
-    #     These depend on the Blocks defined within the auto-imported files.
-    #     """
-    #
-    #     # If the list section button is set to be hidden, the associated sign
-    #     # will be displayed as '-', otherwise it will be displayed as '+' if expanded
-    #     if self.discrete_blocks_hidden:
-    #         self.discreteBlocks_button.setText(' -  Discrete Blocks')
-    #     else:
-    #         self.discreteBlocks_button.setText(' + Discrete Blocks')
-    #
-    #     # When toggling, the variable that represents the current hidden/expanded
-    #     # state of the list section, is flipped to the opposite boolean value of itself
-    #     # If True -> False, If False -> True
-    #     self.discrete_blocks_hidden = not self.discrete_blocks_hidden
-    #
-    #     # For each list section, its buttons will be contained within the list_of_scrollbar_buttons
-    #     # variable, so that list is parsed and all buttons which are a subclass of DiscreteBlock
-    #     # are set to being visible/invisible depending on the variable above.
-    #     for button_tuple in self.list_of_scrollbar_buttons:
-    #         if issubclass(button_tuple[1], DiscreteBlock):
-    #             button_tuple[0].setVisible(not button_tuple[0].isVisible())
-    #
-    # # -----------------------------------------------------------------------------
-    # def toggleSubSystemBlocks(self):
-    #     """
-    #     This method toggles hiding/expanding all ``SubSystem Blocks``.
-    #     These depend on the Blocks defined within the auto-imported files.
-    #     """
-    #
-    #     # If the list section button is set to be hidden, the associated sign
-    #     # will be displayed as '-', otherwise it will be displayed as '+' if expanded
-    #     if self.subsystem_blocks_hidden:
-    #         self.subsystemBlocks_button.setText(' -  Subsystem Blocks')
-    #     else:
-    #         self.subsystemBlocks_button.setText(' + Subsystem Blocks')
-    #
-    #     # When toggling, the variable that represents the current hidden/expanded
-    #     # state of the list section, is flipped to the opposite boolean value of itself
-    #     # If True -> False, If False -> True
-    #     self.subsystem_blocks_hidden = not self.subsystem_blocks_hidden
-    #
-    #     # For each list section, its buttons will be contained within the list_of_scrollbar_buttons
-    #     # variable, so that list is parsed and all buttons which are a subclass of INPORTBlock,
-    #     # OUTPUTBlock or SUBSYSTEMBlock are set to being visible/invisible depending on the variable above.
-    #     for button_tuple in self.list_of_scrollbar_buttons:
-    #         if issubclass(button_tuple[1], (INPORTBlock, OUTPORTBlock, SUBSYSTEMBlock)):
-    #             button_tuple[0].setVisible(not button_tuple[0].isVisible())
+                # When toggling, the variable that represents the current hidden/expanded
+                # state of the list section, is flipped to the opposite boolean value of itself
+                # If True -> False, If False -> True
+                group_button.is_hidden = not group_button.is_hidden
+
+                # Go through all relevant buttons and hide/show them
+                # group[1] looks like - [[QPushButton_for_block1, "block1"],[QPushButton_for_block2, "block2"], ...]
+                for button_tuple in group[1]:
+                    button_tuple[0].setVisible(not button_tuple[0].isVisible())
+
+        # Code for debugging
+        # for group in self.list_of_scrollbar_buttons:
+        #     print("group:", group[0][1], "\t", group[0][0])
+        #     for item in group[1]:
+        #         print("\titem:", item[1], "\t", item[0])
+        #     print("___________________________")
     
     # Todo, update documentation of this function
     # -----------------------------------------------------------------------------
@@ -864,14 +515,6 @@ class Interface(QWidget):
         :type picture_name: str, required
         """
 
-        # path = QtCore.QDir("/tmp")
-        #
-        # printer = QtPrintSupport.QPrinter()
-        # printer.setOutputFormat(QtPrintSupport.QPrinter.PdfFormat)
-        # printer.setOutputFileName(path.absoluteFilePath(picture_name+".pdf"))
-        # printer.setFullPage(True)
-
-        #print("Rendering large image, this might take a minute")
         print("Rendering image")
 
         # Creates an image, of defined resolution quality
@@ -895,8 +538,8 @@ class Interface(QWidget):
         output_image = output_image.copy(rect)
 
         # And the image is saved under the given file name, as a png
-        output_image.save(picture_name+".png")
-        print("Screenshot successfully rendered and saved")
+        output_image.save(picture_name + ".png")
+        print("Screenshot saved --> ", picture_name + ".png")
 
     # -----------------------------------------------------------------------------
     def updateSceneDimensions(self):

@@ -527,22 +527,22 @@ class GraphicsConnectorBlock(QGraphicsItem):
 
         W = self.width
         P = self._internal_padding
-        return QRectF(
-            1 - W - P,
-            1 - W - P,
-            3 * W + P,
-            2 * W + P
-        ).normalized()
+        # return QRectF(
+        #     1 - W - P,
+        #     1 - W - P,
+        #     3 * W + P,
+        #     2 * W + P
+        # ).normalized()
 
         # Alternative selection area that is larger, but will overlap wires directly
         # one grid block step above the connector block, when the connector block is
         # selected.
-        # return QRectF(
-        #     1 - 1.5 * W - P,
-        #     1 - 1.5 * W - P,
-        #     4 * W + P,
-        #     3 * W + P
-        # ).normalized()
+        return QRectF(
+            1 - 1.5 * W - P,
+            1 - 1.5 * W - P,
+            4 * W + P,
+            3 * W + P
+        ).normalized()
 
     # -----------------------------------------------------------------------------
     def paint(self, painter, style, widget=None):

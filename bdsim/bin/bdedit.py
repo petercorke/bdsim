@@ -70,8 +70,21 @@ if __name__ == '__main__':
             # If it has, the logic for validating that path will always be checked before trying to screenshot in the above code
             if args.file:
                 def screenshot(filename):
+                    # Set the background mode to off (white background)
                     window.centralWidget().scene.grScene.updateMode("Off")
                     window.centralWidget().scene.grScene.checkMode()
+
+                    # Hide and then unselect all connector blocks present in the model
+                    window.centralWidget().scene.hide_connector_blocks = True
+
+                    for block in window.centralWidget().scene.blocks:
+                        if block.block_type in ["Connector", "CONNECTOR"]:
+                            block.grBlock.setSelected(False)
+
+                    # Update the points where wires overlap within the scene to draw the wire seperations
+                    if window.centralWidget().scene.wires:
+                        window.centralWidget().scene.wires[0].checkIntersections()
+
                     window.centralWidget().save_image(filename)
                     sys.exit(0)
 

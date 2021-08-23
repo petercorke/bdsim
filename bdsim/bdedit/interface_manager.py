@@ -1,15 +1,19 @@
 # Library imports
 import os
 import json
+import subprocess
 
 # PyQt5 imports
+from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
+from bdsim.bdedit.Icons import *
 
 # BdEdit imports
 from bdsim.bdedit.interface import Interface
 
 
-# Todo - update documentation for this new class, handles any edits/saves/undo/redo within interface
+# Todo - update documentation for this new class, handles any edits/saves/undo/redo within interface.
+#  Also handles the run related functionality now
 # =============================================================================
 #
 #   Defining the Interface Manager Class,
@@ -27,13 +31,14 @@ class InterfaceWindow(QMainWindow):
 
     def initUI(self, resolution, debug):
         # create node editor widget
-        interface = Interface(resolution, debug, self)
-        interface.scene.addHasBeenModifiedListener(self.updateApplicationName)
-        self.setCentralWidget(interface)
+        self.interface = Interface(resolution, debug, self)
+        self.interface.scene.addHasBeenModifiedListener(self.updateApplicationName)
+        self.setCentralWidget(self.interface)
 
-        # interface.canvasView.scenePosChanged.connect(self.onScenePosChanged)
+        # self.interface.canvasView.scenePosChanged.connect(self.onScenePosChanged)
 
         # set window properties
+        self.setWindowIcon(QIcon(":/Icons_Reference/Icons/bdsim_icon.png"))
         self.updateApplicationName()
         self.show()
 
@@ -74,8 +79,37 @@ class InterfaceWindow(QMainWindow):
 
         return True
 
-    # def onScenePosChanged(self, x, y):
-    #     self.status_mouse_pos.setText("Scene Pos: [%d, %d]" % (x, y))
+    # -----------------------------------------------------------------------------
+    def runButton(self):
+        self.saveToFile()
+
+        main_block_found = False
+
+        # Go through blocks within scene, if a main block exists, extract the file_name from the main block
+        for block in self.centralWidget().scene.blocks:
+            if block.block_type in ["Main", "MAIN"]:
+                main_block_found = True
+                main_file_name = block.parameters[0][2]
+
+                try:
+                    # Check if given file_name from the main block, contains a file extension
+                    file_name, extension = os.path.splitext(main_file_name)
+
+                    if not extension:
+                        main_file_name = os.path.join(main_file_name + ".py")
+
+                    model_name = os.path.basename(self.filename)
+                    print("Invoking subproces with, Python file as:", main_file_name, " | Model name as:", model_name)
+                    subprocess.run(['python', main_file_name, model_name], shell=True)
+
+                except Exception:
+                    print("Detected Main block in model, but no file name was given. Subprocess cancled.")
+                    return
+
+        if not main_block_found:
+            print("Model does not contain a main block. Starting bdrun as a subprocess.")
+            model_name = os.path.basename(self.filename)
+            subprocess.run(['python', 'bdrun.py', model_name], shell=True)
 
     # -----------------------------------------------------------------------------
     def newFile(self):

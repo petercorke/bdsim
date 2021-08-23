@@ -185,7 +185,7 @@ class GraphicsView(QGraphicsView):
         intersection points where they overlap.
         """
         # If there are wires within the Scene
-        if len(self.grScene.scene.wires) > 0:
+        if self.grScene.scene.wires:
             # Call the first wire in the Scene to check the intersections
             # Calling the first wire will still check intersection points
             # of all wires, however since that code is located within the
@@ -314,7 +314,6 @@ class GraphicsView(QGraphicsView):
                     else:
                         new_wire = Wire(self.grScene.scene, self.drag_start_socket, item.socket, WIRE_TYPE_STEP)
 
-
                 self.grScene.scene.has_been_modified = True
 
                 if DEBUG: print("created wire")
@@ -349,6 +348,7 @@ class GraphicsView(QGraphicsView):
             self.deleteSelected()
             self.intersectionTest()
         elif event.key() == Qt.Key_F:
+            self.intersectionTest()
             self.flipBlockSockets()
         elif event.key() == Qt.Key_I:
             self.grScene.enable_intersections = not self.grScene.enable_intersections
@@ -375,6 +375,8 @@ class GraphicsView(QGraphicsView):
         :param event: a mouse press event (Left, Middle or Right)
         :type event: QMousePressEvent, automatically recognized by the inbuilt function
         """
+
+        self.intersectionTest()
 
         if event.button() == Qt.MiddleButton:
             self.middleMouseButtonPress(event)
