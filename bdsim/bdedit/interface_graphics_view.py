@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import QGraphicsView
 from bdsim.bdedit.block import Block
 from bdsim.bdedit.block_graphics_wire import GraphicsWire
 from bdsim.bdedit.block_graphics_socket import GraphicsSocket
+from bdsim.bdedit.floating_label_graphics import GraphicsLabel
 from bdsim.bdedit.block_graphics_block import GraphicsBlock, GraphicsConnectorBlock
 from bdsim.bdedit.block_wire import Wire, WIRE_TYPE_STEP, WIRE_TYPE_DIRECT, WIRE_TYPE_BEZIER
 
@@ -120,6 +121,9 @@ class GraphicsView(QGraphicsView):
             # Or if the item is a Block or Connector Block, remove it
             elif isinstance(item, GraphicsBlock) or isinstance(item, GraphicsConnectorBlock):
                 item.block.remove()
+            # Or if the item is a Floating_Label, remove it
+            elif isinstance(item, GraphicsLabel):
+                item.floating_label.remove()
 
         self.grScene.scene.has_been_modified = True
 
@@ -344,22 +348,25 @@ class GraphicsView(QGraphicsView):
         :type event: QKeyPressEvent, automatically recognized by the inbuilt function
         """
 
-        if event.key() == Qt.Key_Delete or event.key() == Qt.Key_Backspace:
-            self.deleteSelected()
-            self.intersectionTest()
-        elif event.key() == Qt.Key_F:
-            self.intersectionTest()
-            self.flipBlockSockets()
-        elif event.key() == Qt.Key_I:
-            self.grScene.enable_intersections = not self.grScene.enable_intersections
-        elif event.key() == Qt.Key_S and event.modifiers() & Qt.ControlModifier:
-            pass
-            # self.grScene.scene.saveToFile("graph_testing.json.txt")
-        elif event.key() == Qt.Key_L and event.modifiers() & Qt.ControlModifier:
-            pass
-            # self.grScene.scene.loadFromFile("graph_testing.json.txt")
-        else:
-            super().keyPressEvent(event)
+        # if event.key() == Qt.Key_Delete or event.key() == Qt.Key_Backspace:
+        #     pass
+        #     # self.deleteSelected()
+        #     # self.intersectionTest()
+        # elif event.key() == Qt.Key_F:
+        #     self.intersectionTest()
+        #     self.flipBlockSockets()
+        # elif event.key() == Qt.Key_I:
+        #     self.grScene.enable_intersections = not self.grScene.enable_intersections
+        # elif event.key() == Qt.Key_M:
+        #     [print(label.content.text_edit.toHtml()) for label in self.grScene.scene.floating_labels]
+        # elif event.key() == Qt.Key_S and event.modifiers() & Qt.ControlModifier:
+        #     pass
+        #     # self.grScene.scene.saveToFile("graph_testing.json.txt")
+        # elif event.key() == Qt.Key_L and event.modifiers() & Qt.ControlModifier:
+        #     pass
+        #     # self.grScene.scene.loadFromFile("graph_testing.json.txt")
+        # else:
+        super().keyPressEvent(event)
 
     # -----------------------------------------------------------------------------
     def mousePressEvent(self, event):
@@ -452,6 +459,13 @@ class GraphicsView(QGraphicsView):
                                         event.modifiers() | Qt.ControlModifier)
                 super().mousePressEvent(fakeEvent)
                 return
+
+            if item is None:
+                if self.grScene.scene.floating_labels:
+                    for label in self.grScene.scene.floating_labels:
+                        cursor = label.content.text_edit.textCursor()
+                        cursor.clearSelection()
+                        label.content.text_edit.setTextCursor(cursor)
 
         if type(item) is GraphicsSocket:
 

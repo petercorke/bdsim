@@ -1,5 +1,6 @@
 # Library imports
 import ast
+import math
 
 # PyQt5 Imports
 from PyQt5.QtWidgets import *
@@ -425,8 +426,26 @@ class ParamWindow(QWidget):
 
                                 # Don't do anything, if the provided number of input sockets matches the number the block already has,
                                 # or if the symbols (+,-,*,/) for the block haven't changed
-                                if len(self.block.inputs) == num_sockets and inputInCompatibleFormat == paramVal:
-                                    pass
+                                # if len(self.block.inputs) == num_sockets and inputInCompatibleFormat == paramVal:
+                                #     pass
+                                # else:
+                                # If the given number of input sockets matches the number the block already has, or if the number of
+                                # symbols (+,-,*,/) for the block hasn't changed
+                                if len(self.block.inputs) == num_sockets:
+                                    # If the values of the signs hasn't changed, then don't do anything
+                                    if inputInCompatibleFormat == paramVal:
+                                        pass
+                                    # If the values of the signs has changed (but the number of signs is still the same), just
+                                    # update the signs without removing the wires
+                                    else:
+                                        # Split the socket signs by number of characters given
+                                        chars = [char for char in inputInCompatibleFormat]
+
+                                        # Go through each of the chars from the string of symbols for this block's signs
+                                        # and set the respective socket to that symbol
+                                        for j, char in enumerate(chars):
+                                            self.block.inputs[j].socket_sign = char
+
                                 else:
                                     # If the block already has input sockets, grab their orientation (LEFT / RIGHT) then delete
                                     # Else, draw input socket with default orientation (LEFT) and no need to delete as block has no input sockets

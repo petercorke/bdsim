@@ -5,6 +5,7 @@ import subprocess
 
 # PyQt5 imports
 from PyQt5.QtGui import *
+from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from bdsim.bdedit.Icons import *
 
@@ -35,12 +36,108 @@ class InterfaceWindow(QMainWindow):
         self.interface.scene.addHasBeenModifiedListener(self.updateApplicationName)
         self.setCentralWidget(self.interface)
 
-        # self.interface.canvasView.scenePosChanged.connect(self.onScenePosChanged)
+        self.toolbar = QToolBar()
+        self.fontSizeBox = QSpinBox()
+
+        # Create the toolbar action items and the toolbar itself
+        self.createActions()
+        self.createToolbar()
 
         # set window properties
         self.setWindowIcon(QIcon(":/Icons_Reference/Icons/bdsim_icon.png"))
         self.updateApplicationName()
         self.show()
+
+    def createActions(self):
+        # Creates basic actions related to saving/loading files
+        self.actNew = QAction('&New', self, shortcut='Ctrl+N', toolTip="Create new model", triggered=self.newFile)
+        self.actOpen = QAction('&Open', self, shortcut='Ctrl+O', toolTip="Open model", triggered=self.loadFromFile)
+        self.actSave = QAction('&Save', self, shortcut='Ctrl+S', toolTip="Save model", triggered=self.saveToFile)
+        self.actSaveAs = QAction('&Save As', self, shortcut='Ctrl+Shift+S', toolTip="Save model as", triggered=self.saveAsToFile)
+        self.actExit = QAction('&Exit', self, shortcut='Ctrl+Q', toolTip="Exit bdedit", triggered=self.close)
+
+        # Actions related to editing files (undo/redo)
+        self.actUndo = QAction('&Undo', self, shortcut='Ctrl+Z', toolTip="Undo last action", triggered=self.editUndo)
+        self.actRedo = QAction('&Redo', self, shortcut='Ctrl+Shift+Z', toolTip="Redo last action", triggered=self.editRedo)
+        self.actDelete = QAction('&Delete', self, shortcut='Del', toolTip="Delete selected items", triggered=self.editDelete)
+
+        # Miscelanious actions
+        self.actFlipBlocks = QAction('&Flip Blocks', self, shortcut='F', toolTip="Flip selected blocks", triggered=self.miscFlip)
+        self.actScreenshot = QAction('&Screenshot', self, shortcut='P', toolTip="Take and save a screenshot", triggered=self.miscScreenshot)
+        self.actWireOverlaps = QAction('&Toggle Wire Overlaps', self, shortcut='I', toolTip="Toggle wire overlap mode", triggered=self.miscEnableOverlaps, checkable=True)
+        self.actHideConnectors = QAction('&Toggle Connectors', self, shortcut='H', toolTip="Toggle connectors (hidden/visible)", triggered=self.miscHideConnectors, checkable=True)
+        self.actDisableBackground = QAction('&Disable Background', self, shortcut='T', toolTip="Toggle backgrounds (grey & grid / white & no grid)", triggered=self.miscToggleBackground, checkable=True)
+        self.actRunButton = QAction('&Run', self, shortcut='R', toolTip="Run model", triggered=self.runButton)
+
+        # Actions related to formatting floating text labels
+        self.actAlignLeft = QAction('&Left', self, toolTip="Left align floating text", triggered= lambda: self.textAlignment("AlignLeft"))
+        self.actAlignCenter = QAction('&Center', self, toolTip="Center align floating text", triggered= lambda: self.textAlignment("AlignCenter"))
+        self.actAlignRight = QAction('&Right', self,  toolTip="Right align floating text", triggered= lambda: self.textAlignment("AlignRight"))
+
+        self.actBoldText = QAction('&Bold', self, shortcut='Ctrl+B', toolTip="Bold floating text", triggered=self.textBold)
+        self.actUnderLineText = QAction('&Underline', self, shortcut='Ctrl+U', toolTip="Underline floating text", triggered=self.textUnderline)
+        self.actItalicText = QAction('&Italicize', self, shortcut='Ctrl+I', toolTip="Italicize floating text", triggered=self.textItalicize)
+
+        self.actFontType = QAction('&Font Type', self, toolTip="Choose font stype for floating text", triggered=self.textFontStyle)
+        self.fontSizeBox.setValue(14); self.fontSizeBox.valueChanged.connect(self.textFontSize)
+        self.actTextColor = QAction('&Text Color', self, toolTip="Choose text color", triggered=self.textColor)
+
+
+    def createToolbar(self):
+        self.createFileMenu()
+        self.createEditMenu()
+        self.createMiscMenu()
+        self.createToolbarItems()
+
+
+    def createFileMenu(self):
+        menubar = self.menuBar()
+        self.fileMenu = menubar.addMenu('&File')
+        self.fileMenu.setToolTipsVisible(True)
+        self.fileMenu.addAction(self.actNew)
+        self.fileMenu.addSeparator()
+        self.fileMenu.addAction(self.actOpen)
+        self.fileMenu.addAction(self.actSave)
+        self.fileMenu.addAction(self.actSaveAs)
+        self.fileMenu.addSeparator()
+        self.fileMenu.addAction(self.actExit)
+
+    def createEditMenu(self):
+        menubar = self.menuBar()
+        self.editMenu = menubar.addMenu('&Edit')
+        self.editMenu.setToolTipsVisible(True)
+        self.editMenu.addAction(self.actUndo)
+        self.editMenu.addAction(self.actRedo)
+        self.editMenu.addSeparator()
+        self.editMenu.addAction(self.actDelete)
+
+    def createMiscMenu(self):
+        menubar = self.menuBar()
+        self.miscMenu = menubar.addMenu('Tools')
+        self.miscMenu.setToolTipsVisible(True)
+        self.miscMenu.addAction(self.actFlipBlocks)
+        self.miscMenu.addAction(self.actScreenshot)
+        self.miscMenu.addSeparator()
+        self.miscMenu.addAction(self.actWireOverlaps)
+        self.miscMenu.addAction(self.actHideConnectors)
+        self.miscMenu.addAction(self.actDisableBackground)
+
+    def createToolbarItems(self):
+        toolbar = self.addToolBar('ToolbarItems')
+        toolbar.addAction(self.actRunButton)
+        toolbar.addSeparator()
+        toolbar.addAction(self.actAlignLeft)
+        toolbar.addAction(self.actAlignCenter)
+        toolbar.addAction(self.actAlignRight)
+        toolbar.addSeparator()
+        toolbar.addAction(self.actBoldText)
+        toolbar.addAction(self.actUnderLineText)
+        toolbar.addAction(self.actItalicText)
+        toolbar.addSeparator()
+        toolbar.addAction(self.actFontType)
+        toolbar.addWidget(self.fontSizeBox)
+        toolbar.addSeparator()
+        toolbar.addAction(self.actTextColor)
 
     def updateApplicationName(self):
         name = "bdedit - "
@@ -190,3 +287,128 @@ class InterfaceWindow(QMainWindow):
         self.filename = fname
         self.saveToFile()
         return True
+
+    # -----------------------------------------------------------------------------
+    def editUndo(self):
+        pass
+
+    def editRedo(self):
+        pass
+
+    def editDelete(self):
+        if self.interface:
+            self.interface.canvasView.deleteSelected()
+            self.interface.canvasView.intersectionTest()
+
+    # -----------------------------------------------------------------------------
+    def miscFlip(self):
+        if self.interface:
+            self.interface.canvasView.intersectionTest()
+            self.interface.canvasView.flipBlockSockets()
+
+    def miscEnableOverlaps(self):
+        if self.interface:
+            self.interface.scene.grScene.enable_intersections = not self.interface.scene.grScene.enable_intersections
+
+    def miscScreenshot(self):
+        if self.interface:
+            if self.filename is None:
+                print("Please save your model before taking a screenshot, then try again.")
+                self.saveToFile()
+            else:
+                self.interface.save_image(self.filename)
+
+
+    def miscHideConnectors(self):
+        if self.interface:
+            if self.actHideConnectors.isChecked():
+                # Set variable for hiding connector blocks to True
+                self.interface.scene.hide_connector_blocks = True
+            else:
+                # Set variable for hiding connector blocks to False
+                self.interface.scene.hide_connector_blocks = False
+
+    def miscToggleBackground(self):
+        """
+        This method is called to toggle the type of background drawn within
+        the ``Scene``. The options are:
+
+        - Enabled: light grey background with grid lines
+        - Disabled: white background with no grid lines
+        """
+
+        # The mode of the Scene is called to be updated to whatever value was
+        # selected from the grid_mode dropdown menu (Light, Dark, Off)
+        self.interface.scene.grScene.updateMode(self.actDisableBackground.isChecked())
+        # For each block within the Scene, the mode of their outline is also updated
+        for eachBlock in self.interface.scene.blocks:
+            # If the block has a mode (Connector Blocks do not)
+            if not (eachBlock.block_type == "CONNECTOR" or eachBlock.block_type == "Connector"):
+                eachBlock.grBlock.updateMode(self.actDisableBackground.isChecked())
+
+    # -----------------------------------------------------------------------------
+    def textAlignment(self, alignment):
+        if self.interface.scene.floating_labels:
+            # Make a map of alignment text to actual Qt alignments
+            map = {
+                "AlignLeft": Qt.AlignLeft,
+                "AlignCenter": Qt.AlignCenter,
+                "AlignRight": Qt.AlignRight,
+            }
+
+            # Iterate through each floating label item and if the label is selected,
+            # then set the alignment of its contents
+            for label in self.interface.scene.floating_labels:
+                self.checkSelection(label)
+                label.content.text_edit.setAlignment(map[alignment])
+
+    def textBold(self):
+        if self.interface.scene.floating_labels:
+            for label in self.interface.scene.floating_labels:
+                self.checkSelection(label)
+                if label.content.text_edit.fontWeight() != QFont.Bold:
+                    label.content.text_edit.setFontWeight(QFont.Bold)
+                else:
+                    label.content.text_edit.setFontWeight(QFont.Normal)
+
+    def textUnderline(self):
+        if self.interface.scene.floating_labels:
+            for label in self.interface.scene.floating_labels:
+                self.checkSelection(label)
+                current_state = label.content.text_edit.fontUnderline()
+                label.content.text_edit.setFontUnderline(not(current_state))
+
+    def textItalicize(self):
+        if self.interface.scene.floating_labels:
+            for label in self.interface.scene.floating_labels:
+                self.checkSelection(label)
+                current_state = label.content.text_edit.fontItalic()
+                label.content.text_edit.setFontItalic(not(current_state))
+
+    def textFontStyle(self):
+        font, ok = QFontDialog.getFont()
+        if ok:
+            if self.interface.scene.floating_labels:
+                for label in self.interface.scene.floating_labels:
+                    self.checkSelection(label)
+                    label.content.text_edit.setFont(font)
+
+    def textFontSize(self):
+        if self.interface.scene.floating_labels:
+            for label in self.interface.scene.floating_labels:
+                self.checkSelection(label)
+                value = self.fontSizeBox.value()
+                label.content.text_edit.setFontPointSize(value)
+
+    def textColor(self):
+        color = QColorDialog.getColor()
+
+        if color.isValid():
+            if self.interface.scene.floating_labels:
+                for label in self.interface.scene.floating_labels:
+                    self.checkSelection(label)
+                    label.content.text_edit.setTextColor(color)
+
+    def checkSelection(self, label):
+        if label.grContent.isSelected():
+            label.content.text_edit.selectAll()

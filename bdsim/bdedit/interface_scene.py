@@ -14,6 +14,7 @@ from bdsim.bdedit.block import *
 from bdsim.bdedit.Icons import *
 from bdsim.bdedit.block_wire import Wire
 from bdsim.bdedit.block_main_block import Main
+from bdsim.bdedit.floating_label import Floating_Label
 from bdsim.bdedit.block_connector_block import Connector
 from bdsim.bdedit.interface_serialize import Serializable
 from bdsim.bdedit.interface_graphics_scene import GraphicsScene
@@ -55,6 +56,7 @@ class Scene(Serializable):
         # Empty lists for the blocks, wires and intersection points are initialized
         self.blocks = []
         self.wires = []
+        self.floating_labels = []
         self.intersection_list = []
 
         # Variables to listen for modifications with in the scene
@@ -98,7 +100,6 @@ class Scene(Serializable):
     def addHasBeenModifiedListener(self, callback):
         self._has_been_modified_listeners.append(callback)
 
-
     # -----------------------------------------------------------------------------
     def initUI(self):
         """
@@ -131,6 +132,13 @@ class Scene(Serializable):
         self.wires.append(wire)
 
     # -----------------------------------------------------------------------------
+    def addLabel(self, label):
+        """
+        This method adds a ``Floating Label`` to the ``Scene's`` list of labels.
+        """
+        self.floating_labels.append(label)
+
+    # -----------------------------------------------------------------------------
     def removeBlock(self, block):
         """
         This method removes a ``Block`` to the ``Scene's`` list of blocks.
@@ -143,6 +151,13 @@ class Scene(Serializable):
         This method removes a ``Wire`` to the ``Scene's`` list of wires.
         """
         self.wires.remove(wire)
+
+    # -----------------------------------------------------------------------------
+    def removeLabel(self, label):
+        """
+        This method removes a ``Floating Label`` to the ``Scene's`` list of label.
+        """
+        self.floating_labels.remove(label)
 
     # -----------------------------------------------------------------------------
     def getSceneWidth(self):
@@ -181,15 +196,29 @@ class Scene(Serializable):
         self.grScene.setGrScene(self.scene_width, self.scene_height)
 
     # -----------------------------------------------------------------------------
+    def getView(self):
+        """
+        This method returns the associated ``GraphicsView`` for this ``Scene``.
+        :return: ``GraphicsView`` associated to this ``Scene``
+        :rtype: ``QGraphicsView``
+        """
+        self.grScene.views()[0]
+
+    # -----------------------------------------------------------------------------
     def clear(self):
         """
-        This method removes all blocks from the list of blocks within the ``Scene``.
+        This method removes all blocks and floating text labels from the list of
+        blocks and list of floating labels respectively, within the ``Scene``.
         This will subsequently remove any and all wires between these blocks.
         """
 
         # Removes the first block from the self.blocks array, until the array is empty
         while len(self.blocks) > 0:
             self.blocks[0].remove()
+
+        # Removes the first label from self.floating_labels array, until it is empty
+        while len(self.floating_labels) > 0:
+            self.floating_labels[0].remove()
 
         self.has_been_modified = False
 
@@ -277,9 +306,10 @@ class Scene(Serializable):
         # Block and Wire classes are called to package this information respectively,
         # also into an OrderedDict. These ordered dictionaries are then stored in a temporary
         # blocks/wires variable and are returned as part of the OrderedDict of this Scene.
-        blocks, wires = [], []
+        blocks, wires, labels = [], [], []
         for block in self.blocks: blocks.append(block.serialize())
         for wire in self.wires: wires.append(wire.serialize())
+        for label in self.floating_labels: labels.append(label.serialize())
         return OrderedDict([
             ('id', self.id),
             ('created_by', self.created_by),
@@ -288,6 +318,7 @@ class Scene(Serializable):
             ('scene_height', self.scene_height),
             ('blocks', blocks),
             ('wires', wires),
+            ('labels', labels),
         ])
 
     # -----------------------------------------------------------------------------
@@ -345,8 +376,18 @@ class Scene(Serializable):
 
                         break
 
-        # Finally recreate all the wires that were saved
+        # Next recreate all the wires that were saved
         for wire_data in data["wires"]:
             Wire(self).deserialize(wire_data, hashmap)
+
+        # Finally, if it exists, add the floating text labels that were saved
+        try:
+            if data["labels"]:
+                # If the data for the labels is not null, then create the labels
+                for label_data in data["labels"]:
+                    if label_data is not None:
+                        Floating_Label(self, self.window).deserialize(label_data, hashmap)
+        except KeyError:
+            pass
 
         return True

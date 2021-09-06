@@ -711,7 +711,7 @@ class Block(Serializable):
 
         # Finally, call the removeBlock method from within the Scene, which
         # removes this block from the list of blocks stored in the Scene.
-        if DEBUG: print(" - removing node from the scene")
+        if DEBUG: print(" - removing block from the scene")
         self.scene.removeBlock(self)
         if DEBUG: print(" - everything was done.")
 

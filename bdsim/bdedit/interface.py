@@ -15,6 +15,7 @@ from bdsim.bdedit.block import *
 from bdsim.bdedit.Icons import *
 from bdsim.bdedit.block_wire import Wire
 from bdsim.bdedit.block_importer import *
+from bdsim.bdedit.floating_label import *
 from bdsim.bdedit.block_main_block import *
 from bdsim.bdedit.interface_scene import Scene
 from bdsim.bdedit.block_connector_block import *
@@ -65,7 +66,7 @@ class Interface(QWidget):
         super().__init__(parent)
 
         # The toolbar and library browser widgets are initialized
-        self.toolBar = QWidget()
+        # self.toolBar = QWidget()
         self.libraryBrowser = QWidget()
 
         # LibraryBrowserBox is wrapped by LibraryBrowser, as this allows the items within
@@ -150,66 +151,76 @@ class Interface(QWidget):
 
         # _______________________________ Toolbar Setup _______________________________
         # A fixed height is set for the toolbar
-        self.toolBar.setFixedHeight(50)
-
-        # Buttons are created (and named) that will populate the toolbar
-        self.newFile_button = QPushButton('New File')
-        self.openFile_button = QPushButton('Open File')
-        self.save_button = QPushButton('Save')
-        self.saveAs_button = QPushButton('Save As')
-        self.simulate_button = QPushButton('Simulate')
-        self.run_button = QPushButton('Run')
-        self.screenshot_button = QPushButton('Screenshot')
-        self.grid_mode = QWidget()
-        self.toggle_connector_block_visibility_checkbox = QCheckBox("Hide Connector Blocks", self)
-
-        # Each widget must have a layout manager which controls how items are
-        # positioned within it. The grid_mode widget will consist of a label
-        # and a drop down menu, hence it's layout will be horizontal.
-        self.grid_mode.layout = QHBoxLayout()
-        self.grid_mode_label = QLabel('Grid Mode')
-        # Drop down menu is created for choosing grid mode (Light, Dark, Off)
-        self.grid_mode_options = QComboBox()
-        self.grid_mode_options.addItem("Light")
-        self.grid_mode_options.addItem("Dark")
-        self.grid_mode_options.addItem("Off")
-
-        # Both the label and the drop down menu are added to the grid_mode widget's
-        # layout manager, and its layout is set to this manager.
-        self.grid_mode.layout.addWidget(self.grid_mode_label)
-        self.grid_mode.layout.addWidget(self.grid_mode_options)
-        self.grid_mode.setLayout(self.grid_mode.layout)
-
-        # As mentioned above, each widget must have a layout manager. Since the
-        # toolbar will be displayed along the top of the interface, items should
-        # be displayed horizontally, hence the horizontal layout manager.
-        self.toolBar.layout = QHBoxLayout()
-        # The borders of the layout are removed.
-        self.toolBar.layout.setContentsMargins(0, 0, 0, 0)
-
-        # The above-created buttons are populated into the toolbar
-        self.toolBar.layout.addWidget(self.newFile_button)
-        self.toolBar.layout.addWidget(self.openFile_button)
-        self.toolBar.layout.addWidget(self.save_button)
-        self.toolBar.layout.addWidget(self.saveAs_button)
-        self.toolBar.layout.addWidget(self.run_button)
-        self.toolBar.layout.addWidget(self.screenshot_button)
-        self.toolBar.layout.addWidget(self.grid_mode)
-        self.toolBar.layout.addWidget(self.toggle_connector_block_visibility_checkbox)
-
-        # The above-created buttons are connected to desired actions
-        self.newFile_button.clicked.connect(lambda: main_window.newFile())  # self.scene.clear() removes all items from the scene
-        self.save_button.clicked.connect(lambda: main_window.saveToFile())  # self.saveToFile() initiates a prompt to save the current scene
-        self.openFile_button.clicked.connect(lambda: main_window.loadFromFile())  # self.loadFromFile() initiates a prompt to choose a scene file to load
-        self.saveAs_button.clicked.connect(lambda: main_window.saveAsToFile())
-        self.run_button.clicked.connect(lambda: main_window.runButton())
-        self.screenshot_button.clicked.connect(lambda: self.save_image('Scene Picture'))    # self.save_image creates an image of the current scene, saved as 'Scene Picture'
-        self.grid_mode_options.currentIndexChanged.connect(lambda: self.updateColorMode())  # self.updateColorMode() updates the background mode of the scene
-        self.toggle_connector_block_visibility_checkbox.stateChanged.connect(self.clickBox)
-
-        # Finally, the toolbar items are set to be aligned within the horizontal center of the toolbar
-        self.toolBar.layout.setAlignment(Qt.AlignHCenter)
-        self.toolBar.setLayout(self.toolBar.layout)
+        # self.toolBar.setFixedHeight(50)
+        #
+        # # Buttons are created (and named) that will populate the toolbar
+        # self.newFile_button = QPushButton('New File')
+        # self.openFile_button = QPushButton('Open File')
+        # self.save_button = QPushButton('Save')
+        # self.saveAs_button = QPushButton('Save As')
+        # self.simulate_button = QPushButton('Simulate')
+        # self.run_button = QPushButton('Run')
+        # self.screenshot_button = QPushButton('Screenshot')
+        # self.grid_mode = QWidget()
+        # self.toggle_connector_block_visibility_checkbox = QCheckBox("Hide Connector Blocks", self)
+        # self.alignLeft = QPushButton("Left")
+        # self.alignCenter = QPushButton("Center")
+        # self.alignRight = QPushButton("Right")
+        #
+        # # Each widget must have a layout manager which controls how items are
+        # # positioned within it. The grid_mode widget will consist of a label
+        # # and a drop down menu, hence it's layout will be horizontal.
+        # self.grid_mode.layout = QHBoxLayout()
+        # self.grid_mode_label = QLabel('Grid Mode')
+        # # Drop down menu is created for choosing grid mode (Light, Dark, Off)
+        # self.grid_mode_options = QComboBox()
+        # self.grid_mode_options.addItem("Light")
+        # self.grid_mode_options.addItem("Dark")
+        # self.grid_mode_options.addItem("Off")
+        #
+        # # Both the label and the drop down menu are added to the grid_mode widget's
+        # # layout manager, and its layout is set to this manager.
+        # self.grid_mode.layout.addWidget(self.grid_mode_label)
+        # self.grid_mode.layout.addWidget(self.grid_mode_options)
+        # self.grid_mode.setLayout(self.grid_mode.layout)
+        #
+        # # As mentioned above, each widget must have a layout manager. Since the
+        # # toolbar will be displayed along the top of the interface, items should
+        # # be displayed horizontally, hence the horizontal layout manager.
+        # self.toolBar.layout = QHBoxLayout()
+        # # The borders of the layout are removed.
+        # self.toolBar.layout.setContentsMargins(0, 0, 0, 0)
+        #
+        # # The above-created buttons are populated into the toolbar
+        # self.toolBar.layout.addWidget(self.newFile_button)
+        # self.toolBar.layout.addWidget(self.openFile_button)
+        # self.toolBar.layout.addWidget(self.save_button)
+        # self.toolBar.layout.addWidget(self.saveAs_button)
+        # self.toolBar.layout.addWidget(self.run_button)
+        # self.toolBar.layout.addWidget(self.screenshot_button)
+        # self.toolBar.layout.addWidget(self.grid_mode)
+        # self.toolBar.layout.addWidget(self.toggle_connector_block_visibility_checkbox)
+        # self.toolBar.layout.addWidget(self.alignLeft)
+        # self.toolBar.layout.addWidget(self.alignCenter)
+        # self.toolBar.layout.addWidget(self.alignRight)
+        #
+        # # The above-created buttons are connected to desired actions
+        # self.newFile_button.clicked.connect(lambda: main_window.newFile())  # self.scene.clear() removes all items from the scene
+        # self.save_button.clicked.connect(lambda: main_window.saveToFile())  # self.saveToFile() initiates a prompt to save the current scene
+        # self.openFile_button.clicked.connect(lambda: main_window.loadFromFile())  # self.loadFromFile() initiates a prompt to choose a scene file to load
+        # self.saveAs_button.clicked.connect(lambda: main_window.saveAsToFile())
+        # self.run_button.clicked.connect(lambda: main_window.runButton())
+        # self.screenshot_button.clicked.connect(lambda: self.save_image('Scene Picture'))    # self.save_image creates an image of the current scene, saved as 'Scene Picture'
+        # self.grid_mode_options.currentIndexChanged.connect(lambda: self.updateColorMode())  # self.updateColorMode() updates the background mode of the scene
+        # self.toggle_connector_block_visibility_checkbox.stateChanged.connect(self.clickBox)
+        #
+        # self.alignLeft.clicked.connect( lambda: self.setFloatingTextAlignment("AlignLeft") )
+        # self.alignCenter.clicked.connect( lambda: self.setFloatingTextAlignment("AlignCenter")  )
+        # self.alignRight.clicked.connect( lambda: self.setFloatingTextAlignment("AlignRight")  )
+        #
+        # # Finally, the toolbar items are set to be aligned within the horizontal center of the toolbar
+        # self.toolBar.layout.setAlignment(Qt.AlignHCenter)
+        # self.toolBar.setLayout(self.toolBar.layout)
 
         # ___________________________ Library Browser Setup ___________________________
         # The library browser will be displayed along the left-hand side of the interface,
@@ -261,7 +272,7 @@ class Interface(QWidget):
         # These buttons are then connected to creating their respective instances within the Scene
         self.connector_block_button.clicked.connect(lambda checked: Connector(self.scene, self.layout, "Connector Block"))
         self.main_block_button.clicked.connect(lambda checked: Main(self.scene, self.layout))
-        # self.connector_block_button.clicked.connect(lambda checked: Connector(self.scene, self.layout, "Text Item"))
+        self.text_item_button.clicked.connect(lambda checked: Floating_Label(self.scene, self.layout))
 
         # Adding the buttons to the library browser's layout manager
         self.libraryBrowserBox.layout.addWidget(self.connector_block_button)
@@ -347,12 +358,12 @@ class Interface(QWidget):
         # For example, the toolbar is added to cell in the 0th row, and 1st column,
         # then stretched vertically by 1 row (to row 2),
         # and stretched horizontally by 9 columns (to column 10)
-        self.layout.addWidget(self.toolBar, 0, 1, 1, 9)
-        self.layout.addWidget(self.libraryBrowser, 0, 0, 10, 1)
-        self.layout.addWidget(self.canvasView, 1, 1, 9, 9)
-
+        # self.layout.addWidget(self.toolBar, 0, 1, 1, 9)
         # self.layout.addWidget(self.libraryBrowser, 0, 0, 10, 1)
-        # self.layout.addWidget(self.canvasView, 0, 1, 10, 9)
+        # self.layout.addWidget(self.canvasView, 1, 1, 9, 9)
+
+        self.layout.addWidget(self.libraryBrowser, 0, 0, 10, 1)
+        self.layout.addWidget(self.canvasView, 0, 1, 10, 9)
 
     # -----------------------------------------------------------------------------
     @pyqtSlot()
@@ -571,3 +582,30 @@ class Interface(QWidget):
         :type event: QResizeEvent, automatically recognized by the inbuilt function
         """
         self.updateSceneDimensions()
+
+    # # Todo - make docstring for this method
+    # # -----------------------------------------------------------------------------
+    # def setFloatingTextAlignment(self, alignment):
+    #     if self.scene.floating_labels:
+    #         # Make a map of alignment text to actual Qt alignments
+    #         map = {
+    #             "AlignLeft": Qt.AlignLeft,
+    #             "AlignCenter": Qt.AlignCenter,
+    #             "AlignRight": Qt.AlignRight,
+    #         }
+    #
+    #         # Iterate through each floating label item and if the label is selected,
+    #         # then set the alignment of its contents
+    #         for label in self.scene.floating_labels:
+    #
+    #             if label.grContent.isSelected():
+    #
+    #                 text = label.content.text_edit.toPlainText()
+    #                 split_text = text.splitlines()
+    #                 label.content.text_edit.clear()
+    #
+    #                 for line in split_text:
+    #                     label.content.text_edit.append(line)
+    #                     label.content.text_edit.setAlignment(map[alignment])
+
+        # [label.content.text_edit.setAlignment(Qt.AlignRight) for label in self.scene.floating_labels]

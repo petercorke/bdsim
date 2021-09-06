@@ -42,7 +42,7 @@ class GraphicsScene(QGraphicsScene):
         self.gridSquares = 5
 
         # Set the default background mode of the Scene
-        self.mode = "Light"
+        self.mode = False
         # Set the wire overlaps to not being detected by default
         self.enable_intersections = True
 
@@ -70,22 +70,17 @@ class GraphicsScene(QGraphicsScene):
     # -----------------------------------------------------------------------------
     def updateMode(self, value):
         """
-        This method updates the background mode for the GraphicsScene, depending
-        on what option was chosen in the toolbar drop down menu next to grid mode.
+        This method toggles the background mode for the GraphicsScene.
+        When background is True [default] background is grey with grid lines.
+        When background is False, background is white without grid lines.
 
-        :param value: the color mode of the background ("Light", "Dark", "Off")
-        :type value: str, required
+        :param value: the boolean value to keep or disable background (True/False)
+        :type value: bool, required
         """
 
-        # If the given value matches one of the accepted modes
-        # set the mode of the background and update the GraphicsScene
-        if value in ["Light", "Dark", "Off"]:
-            self.mode = value
-            self.update()
-        # Otherwise if a non supported mode is entered (should never reach this code)
-        # print an error message to console
-        else:
-            print("Grid mode not supported.")
+        # Set the mode of the background and update the GraphicsScene
+        self.mode = value
+        self.update()
 
     # -----------------------------------------------------------------------------
     def checkMode(self):
@@ -93,15 +88,15 @@ class GraphicsScene(QGraphicsScene):
         This method updates the colors used for painting the background of the ``GraphicsScene``.
         """
 
-        if self.mode == 'Light':
+        if self.mode == False:
             self._color_background = QColor("#E0E0E0")      # Light gray
             self._color_light = QColor("#D1D1D1")           # Darker gray
             self._color_dark = QColor("#C0C0C0")            # Dark gray
-        elif self.mode == 'Dark':
-            self._color_background = QColor("#999999")      # Darker gray
-            self._color_light = QColor("#808080")           # Dark gray
-            self._color_dark = QColor("#606060")            # Very dark gray
-        elif self.mode == "Off":
+        # elif self.mode == 'Dark':
+        #     self._color_background = QColor("#999999")      # Darker gray
+        #     self._color_light = QColor("#808080")           # Dark gray
+        #     self._color_dark = QColor("#606060")            # Very dark gray
+        elif self.mode == True:
             self._color_background = self._default_background_color     # Light gray
 
         # Set the line thickness of the smaller, then larger grid squares
@@ -216,7 +211,7 @@ class GraphicsScene(QGraphicsScene):
 
         # If the grid_mode is not "Off", we want to draw grid lines,
         # so continue with the following logic
-        if self.mode != "Off":
+        if self.mode == False:
             # Here we create our grid
             left = int(math.floor(rect.left()))
             right = int(math.ceil(rect.right()))

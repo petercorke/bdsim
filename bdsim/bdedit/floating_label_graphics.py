@@ -8,90 +8,98 @@ class GraphicsLabel(QGraphicsItem):
     def __init__(self, label, parent=None):
         super().__init__(parent)
         self.floating_label = label
-        # self.content = self.floating_label.content
-
-        self._update_text = True
-
-        self.edge_size = 5.0
-        self.width = self.floating_label.width
-        self.height = self.floating_label.height
-
-        # Text related default settings
-        self._default_text_color = Qt.black
-        self._default_text_font = "Arial"
-        self._default_text_size = 10
-        self._text_font = QFont(self._default_text_font, self._default_text_size)
+        self.content = self.floating_label.content
 
         # Label related outline settings
+        self.edge_size = 6.0
         self._line_thickness = 3.0              # Thickness of the label outline by default
         self._selected_line_thickness = 5.0     # Thickness of the label outline on selection
         self._pen_default = QPen(QColor("#7F000000"), self._line_thickness)
         self._pen_selected = QPen(QColor("#FFFFA637"), self._selected_line_thickness)
-        self._brush_background = QBrush(QColor("#E3212121"))
-
-        self.initLabel()
 
         self.initUI()
+        self.wasMoved = False
 
     def initUI(self):
         self.setFlag(QGraphicsItem.ItemIsSelectable)
         self.setFlag(QGraphicsItem.ItemIsMovable)
 
-        # self.grText = QGraphicsProxyWidget(self)
-        # self.content.setGeometry(0, 0, self.width, self.height)
-        # self.grText.setWidget(self.content)
-        # self.grText.resize(self.width, self.height)
-
-    def initLabel(self):
-        self.label_item = QGraphicsTextItem(self)
-        self.label_item.setDefaultTextColor(self._default_text_color)
-        self.label_item.setFont(self._text_font)
-        self.label_item.setTextInteractionFlags(Qt.TextEditorInteraction | Qt.TextEditable)
-
-    def updateLabelText(self):
-        # Update the text to whatever the user has written in the label
-        self.label_item.setPlainText(self.floating_label.label_text)
-
-        # Update the dimensions of the border around the text label
-        self.width = self.textLength() + self.edge_size * 2
-
-        self.label_item.setPos((self.width - self.textLength()) / 2, self.edge_size)
-
-    def textLength(self):
-        # Using the known text (and its font and size), determine the length of the
-        # text in terms of pixels
-        text_pixel_len = QFontMetrics(self._text_font).width(self.floating_label.label_text)
-        return text_pixel_len
+        self.grText = QGraphicsProxyWidget(self)
+        self.content.setGeometry(0, 0, self.floating_label.width, self.floating_label.height)
+        self.grText.setWidget(self.content)
 
     def boundingRect(self):
         return QRectF(
-            0,
-            0,
-            2 * self.edge_size + self.width,
-            2 * self.edge_size + self.height
+            -self.edge_size,
+            -self.edge_size,
+            2 * self.edge_size + self.floating_label.width,
+            2 * self.edge_size + self.floating_label.height
         ).normalized()
 
     def paint(self, painter, style, widget=None):
-        # Label text will be redrawn, if needed
-        if self._update_text:
-            self.updateLabelText()
-
-        # Draw the outline of the box
-        path_outline = QPainterPath()
-        path_outline.addRoundedRect(self.boundingRect(), self.edge_size, self.edge_size)
+        # Draw the outline of the box and fill in the background whitespace
+        path = QPainterPath()
+        path.addRoundedRect(self.boundingRect(), self.edge_size, self.edge_size)
+        # painter.setPen(self._pen_default if not self.isSelected() else self._pen_selected)
         painter.setPen(Qt.NoPen if not self.isSelected() else self._pen_selected)
-        painter.setBrush(Qt.NoBrush)
-        painter.drawPath(path_outline.simplified())
+        painter.setBrush(QBrush(Qt.white))
+        # painter.setBrush(Qt.NoBrush)
+        painter.drawPath(path.simplified())
 
-    def focusOutEvent(self, event):
-        self.label_item.setTextInteractionFlags(Qt.NoTextInteraction)
-
-        super().focusOutEvent(event)
+    def mousePressEvent(self, event):
+        self.setSelected(True)
+        self.floating_label.content.text_edit.setTextInteractionFlags(Qt.NoTextInteraction)
 
     def mouseDoubleClickEvent(self, event):
-        self.label_item.setTextInteractionFlags(Qt.TextEditorInteraction)
-        self.label_item.setFocus()
-
         super().mouseDoubleClickEvent(event)
+        self.floating_label.content.text_edit.setTextInteractionFlags(Qt.TextEditorInteraction)
 
+    def mouseReleaseEvent(self, event):
+        super().mouseReleaseEvent(event)
 
+        # If floating label has been moved, update the variable within the model, to then update the
+        # title of the model, to indicate that there is unsaved progress
+        if self.wasMoved:
+            self.wasMoved = False
+            self.floating_label.scene.has_been_modified = True
+
+    def mouseMoveEvent(self, event):
+
+        super().mouseMoveEvent(event)
+
+        # For all selected floating labels
+        for label in self.floating_label.scene.floating_labels:
+
+            if label.grContent.isSelected():
+
+                # The x,y position of the mouse cursor is grabbed, and is restricted to update
+                # every 20 pixels (the size of the smaller grid squares, as defined in GraphicsScene)
+                x = round(label.grContent.pos().x() / 20) * 20
+                y = round(label.grContent.pos().y() / 20) * 20
+                pos = QPointF(x, y)
+                # The position of this GraphicsConnectorBlock is set to the restricted position of the mouse cursor
+                label.grContent.setPos(pos)
+
+                # 20 is the width of the smaller grid squares
+                # This logic prevents the selected QGraphicsConnectorBlock from being dragged outside
+                # the border of the work area (GraphicsScene)
+                padding = 20
+
+                # left
+                if label.grContent.pos().x() < label.grContent.scene().sceneRect().x() + padding:
+                    label.grContent.setPos(label.grContent.scene().sceneRect().x() + padding, label.grContent.pos().y())
+
+                # top
+                if label.grContent.pos().y() < label.grContent.scene().sceneRect().y() + padding:
+                    label.grContent.setPos(label.grContent.pos().x(), label.grContent.scene().sceneRect().y() + padding)
+
+                # right
+                if label.grContent.pos().x() > (label.grContent.scene().sceneRect().x() + label.grContent.scene().sceneRect().width() - label.grContent.floating_label.width - padding):
+                    label.grContent.setPos(label.grContent.scene().sceneRect().x() + label.grContent.scene().sceneRect().width() - label.grContent.floating_label.width - padding, label.grContent.pos().y())
+
+                # bottom
+                if label.grContent.pos().y() > (label.grContent.scene().sceneRect().y() + label.grContent.scene().sceneRect().height() - label.grContent.floating_label.height - padding):
+                    label.grContent.setPos(label.grContent.pos().x(), label.grContent.scene().sceneRect().y() + label.grContent.scene().sceneRect().height() - label.grContent.floating_label.height - padding)
+
+        # If floating labels were moved, change this variable to reflect that.
+        self.wasMoved = True

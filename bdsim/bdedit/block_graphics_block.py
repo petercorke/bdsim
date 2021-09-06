@@ -1,7 +1,7 @@
 # PyQt5 imports
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
 from PyQt5.QtGui import *
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
 
 # BdEdit imports
 from bdsim.bdedit.Icons import *
@@ -162,18 +162,19 @@ class GraphicsBlock(QGraphicsItem):
         """
 
         # If dark mode is selected, draw blocks tailored to dark mode
-        if self.mode == "Dark":
-            self._title_color = Qt.white
-            self._pen_default = QPen(Qt.white, self._line_thickness)
-            self._brush_background = QBrush(Qt.white)
-        # Else light or off mode is selected (No off mode for blocks), draw blocks tailored to light mode
-        else:
-            self._title_color = Qt.black
-            self._pen_default = QPen(QColor("#7F000000"), self._line_thickness)
-            self._brush_background = QBrush(QColor("#FFE1E0E8"))
+        # if self.mode == "Dark":
+        #     self._title_color = Qt.white
+        #     self._pen_default = QPen(Qt.white, self._line_thickness)
+        #     self._brush_background = QBrush(Qt.white)
+        # # Else light or off mode is selected (No off mode for blocks), draw blocks tailored to light mode
+        # else:
+        self._title_color = Qt.black
+        self._pen_default = QPen(QColor("#7F000000"), self._line_thickness)
+        self._brush_background = QBrush(QColor("#FFE1E0E8"))
 
         self.title_item.setDefaultTextColor(self._title_color)
 
+    # Todo - update code
     # -----------------------------------------------------------------------------
     def updateMode(self, value):
         """
@@ -184,12 +185,17 @@ class GraphicsBlock(QGraphicsItem):
         :type value: str, required
         """
 
-        if value in ["Light", "Dark", "Off"]:
-            self.mode = value
-            self.checkMode()
-            self.update()
-        else:
-            print("Block mode not supported.")
+        self.mode = value
+        self.checkMode()
+        self.update()
+
+
+        # if value in ["Light", "Dark", "Off"]:
+        #     self.mode = value
+        #     self.checkMode()
+        #     self.update()
+        # else:
+        #     print("Block mode not supported.")
 
     # -----------------------------------------------------------------------------
     def checkBlockHeight(self):
@@ -429,7 +435,7 @@ class GraphicsBlock(QGraphicsItem):
                 # Update the connected wires of all Blocks that are affected by this Block being moved
                 block.updateConnectedEdges()
 
-        # If blocks were moved, change this variable to reflect that. Used in
+        # If blocks were moved, change this variable to reflect that.
         self.wasMoved = True
 
     # Todo - add documentation
@@ -467,7 +473,7 @@ class GraphicsConnectorBlock(QGraphicsItem):
         self.block = block
         self.icon = self.block.icon
 
-        self._draw_title = True
+        self._draw_title = False
 
         self.width = self.block.width
         self.height = self.block.height
@@ -683,7 +689,7 @@ class GraphicsConnectorBlock(QGraphicsItem):
                 # Update the connected wires of all Blocks that are affected by this Connector Block being moved
                 block.updateConnectedEdges()
 
-        # If blocks were moved, change this variable to reflect that. Used in
+        # If blocks were moved, change this variable to reflect that.
         self.wasMoved = True
 
     # Todo - add documentation
