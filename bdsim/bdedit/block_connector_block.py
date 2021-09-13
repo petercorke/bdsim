@@ -66,7 +66,10 @@ class Connector(Block):
         self.title = ''
         self.parameters = []
         self.block_url = ''
+
         self.icon = ''
+        self.flipped = False
+        self.flipped_icon = ''
 
         self.inputsNum = 1
         self.outputsNum = 1

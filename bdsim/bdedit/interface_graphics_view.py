@@ -139,6 +139,7 @@ class GraphicsView(QGraphicsView):
             # If the item is a Block or Connector Block, flip its sockets
             if isinstance(item, GraphicsBlock) or isinstance(item, GraphicsConnectorBlock):
                 item.block.updateSocketPositions()
+                item.block.flipped = not (item.block.flipped)
 
         self.grScene.scene.has_been_modified = True
 

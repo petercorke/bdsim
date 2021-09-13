@@ -329,7 +329,10 @@ class GraphicsBlock(QGraphicsItem):
 
             # Icon of the block is drawn overtop the blocks' background
             if QtCore.QFile.exists(self.icon):
-                icon_item = QPixmap(self.icon).scaledToWidth(50) if self.icon else QPixmap(self.icon)   # Icons are scaled down to 50 pixels
+                if self.block.flipped and QtCore.QFile.exists(self.block.flipped_icon):
+                    icon_item = QPixmap(self.block.flipped_icon).scaledToWidth(50) if self.block.flipped_icon else QPixmap(self.block.flipped_icon)  # Icons are scaled down to 50 pixels
+                else:
+                    icon_item = QPixmap(self.icon).scaledToWidth(50) if self.icon else QPixmap(self.icon)
                 #icon_item = QPixmap(self.icon).scaledToWidth(100) if self.icon else QPixmap(self.icon)
                 # icon_item = QPixmap(self.icon)
                 target = QRect((self.width - icon_item.width()) / 2, (self.height - icon_item.height()) / 2, self.width, self.height)
@@ -599,6 +602,7 @@ class GraphicsConnectorBlock(QGraphicsItem):
                 wire_pen.setWidth(5)
                 painter.setPen(wire_pen)
                 painter.drawPath(wire_path)
+
         except Exception as e:
             if self.FATAL_ERROR == False:
                 print("------------------------------------------------------------------------------------")

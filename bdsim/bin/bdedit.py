@@ -71,7 +71,7 @@ if __name__ == '__main__':
             if args.file:
                 def screenshot(filename):
                     # Set the background mode to off (white background)
-                    window.centralWidget().scene.grScene.updateMode("Off")
+                    window.centralWidget().scene.grScene.updateMode(True)
                     window.centralWidget().scene.grScene.checkMode()
 
                     # Hide and then unselect all connector blocks present in the model

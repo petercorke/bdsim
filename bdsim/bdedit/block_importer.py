@@ -377,6 +377,7 @@ def import_blocks(scene, window):
                     self.input_names = copy.copy(self.input_names)
                     self.output_names = copy.copy(self.output_names)
                     self.icon = copy.copy(self.icon)
+                    self.flipped_icon = os.path.join(os.path.splitext(copy.copy(self.icon))[0] + "_flipped.png")
                     self.block_url = copy.copy(self.block_url)
                     self.width = copy.copy(self.width)
                     self.height = copy.copy(self.height)

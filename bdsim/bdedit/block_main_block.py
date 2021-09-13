@@ -36,7 +36,9 @@ class Main(Block):
         self.parameters = [["file name", str, file_name, []]]
 
         self.block_url = ''
-        self.icon = ''
+        self.icon = ":/Icons_Reference/Icons/main.png"
+        self.flipped = False
+        self.flipped_icon = os.path.join(os.path.splitext(self.icon)[0] + "_flipped.png")
 
         self.inputsNum = 0
         self.outputsNum = 0

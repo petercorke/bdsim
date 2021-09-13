@@ -59,7 +59,8 @@ class InterfaceWindow(QMainWindow):
         # Actions related to editing files (undo/redo)
         self.actUndo = QAction('&Undo', self, shortcut='Ctrl+Z', toolTip="Undo last action", triggered=self.editUndo)
         self.actRedo = QAction('&Redo', self, shortcut='Ctrl+Shift+Z', toolTip="Redo last action", triggered=self.editRedo)
-        self.actDelete = QAction('&Delete', self, shortcut='Del', toolTip="Delete selected items", triggered=self.editDelete)
+        self.actDelete = QAction('&Delete', self, toolTip="Delete selected items", triggered=self.editDelete)
+        self.actDelete.setShortcuts({ QKeySequence("Delete"), QKeySequence("Backspace") })
 
         # Miscelanious actions
         self.actFlipBlocks = QAction('&Flip Blocks', self, shortcut='F', toolTip="Flip selected blocks", triggered=self.miscFlip)
@@ -67,20 +68,21 @@ class InterfaceWindow(QMainWindow):
         self.actWireOverlaps = QAction('&Toggle Wire Overlaps', self, shortcut='I', toolTip="Toggle wire overlap mode", triggered=self.miscEnableOverlaps, checkable=True)
         self.actHideConnectors = QAction('&Toggle Connectors', self, shortcut='H', toolTip="Toggle connectors (hidden/visible)", triggered=self.miscHideConnectors, checkable=True)
         self.actDisableBackground = QAction('&Disable Background', self, shortcut='T', toolTip="Toggle backgrounds (grey & grid / white & no grid)", triggered=self.miscToggleBackground, checkable=True)
-        self.actRunButton = QAction('&Run', self, shortcut='R', toolTip="Run model", triggered=self.runButton)
+        self.actRunButton = QAction(QIcon(":/Icons_Reference/Icons/run.png"), '&Run', self, shortcut='R', toolTip="Run model", triggered=self.runButton)
 
         # Actions related to formatting floating text labels
-        self.actAlignLeft = QAction('&Left', self, toolTip="Left align floating text", triggered= lambda: self.textAlignment("AlignLeft"))
-        self.actAlignCenter = QAction('&Center', self, toolTip="Center align floating text", triggered= lambda: self.textAlignment("AlignCenter"))
-        self.actAlignRight = QAction('&Right', self,  toolTip="Right align floating text", triggered= lambda: self.textAlignment("AlignRight"))
+        self.actAlignLeft = QAction(QIcon(":/Icons_Reference/Icons/left_align.png"), '&Left', self, toolTip="Left align floating text", triggered= lambda: self.textAlignment("AlignLeft"))
+        self.actAlignCenter = QAction(QIcon(":/Icons_Reference/Icons/center_align.png"), '&Center', self, toolTip="Center align floating text", triggered= lambda: self.textAlignment("AlignCenter"))
+        self.actAlignRight = QAction(QIcon(":/Icons_Reference/Icons/right_align.png"), '&Right', self,  toolTip="Right align floating text", triggered= lambda: self.textAlignment("AlignRight"))
 
-        self.actBoldText = QAction('&Bold', self, shortcut='Ctrl+B', toolTip="Bold floating text", triggered=self.textBold)
-        self.actUnderLineText = QAction('&Underline', self, shortcut='Ctrl+U', toolTip="Underline floating text", triggered=self.textUnderline)
-        self.actItalicText = QAction('&Italicize', self, shortcut='Ctrl+I', toolTip="Italicize floating text", triggered=self.textItalicize)
+        self.actBoldText = QAction(QIcon(":/Icons_Reference/Icons/bold.png"), '&Bold', self, shortcut='Ctrl+B', toolTip="Bold floating text", triggered=self.textBold)
+        self.actUnderLineText = QAction(QIcon(":/Icons_Reference/Icons/underline.png"), '&Underline', self, shortcut='Ctrl+U', toolTip="Underline floating text", triggered=self.textUnderline)
+        self.actItalicText = QAction(QIcon(":/Icons_Reference/Icons/italics.png"), '&Italicize', self, shortcut='Ctrl+I', toolTip="Italicize floating text", triggered=self.textItalicize)
 
-        self.actFontType = QAction('&Font Type', self, toolTip="Choose font stype for floating text", triggered=self.textFontStyle)
+        self.actFontType = QAction('&Font', self, toolTip="Choose font stype for floating text", triggered=self.textFontStyle)
         self.fontSizeBox.setValue(14); self.fontSizeBox.valueChanged.connect(self.textFontSize)
-        self.actTextColor = QAction('&Text Color', self, toolTip="Choose text color", triggered=self.textColor)
+        self.actTextColor = QAction(QIcon(":/Icons_Reference/Icons/color_picker.png"), '&Text Color', self, toolTip="Choose text color", triggered=self.textColor)
+        self.actRemoveFormat = QAction(QIcon(":/Icons_Reference/Icons/clear_format.png"), '&Clear Format', self, toolTip="Reset text to default format", triggered=self.removeFormat)
 
 
     def createToolbar(self):
@@ -138,6 +140,7 @@ class InterfaceWindow(QMainWindow):
         toolbar.addWidget(self.fontSizeBox)
         toolbar.addSeparator()
         toolbar.addAction(self.actTextColor)
+        toolbar.addAction(self.actRemoveFormat)
 
     def updateApplicationName(self):
         name = "bdedit - "
@@ -196,17 +199,21 @@ class InterfaceWindow(QMainWindow):
                         main_file_name = os.path.join(main_file_name + ".py")
 
                     model_name = os.path.basename(self.filename)
-                    print("Invoking subproces with, Python file as:", main_file_name, " | Model name as:", model_name)
                     subprocess.run(['python', main_file_name, model_name], shell=True)
+                    print("Invoking subproces with, Python file as:", main_file_name, " | Model name as:", model_name)
 
                 except Exception:
                     print("Detected Main block in model, but no file name was given. Subprocess cancled.")
                     return
 
         if not main_block_found:
-            print("Model does not contain a main block. Starting bdrun as a subprocess.")
-            model_name = os.path.basename(self.filename)
-            subprocess.run(['python', 'bdrun.py', model_name], shell=True)
+            try:
+                model_name = os.path.basename(self.filename)
+                subprocess.run(['python', 'bdrun.py', model_name], shell=True)
+                print("Model does not contain a main block. Starting bdrun as a subprocess.")
+            except Exception:
+                print("Bdrun cannot start without model being saved. Subprocess cancled.")
+                return
 
     # -----------------------------------------------------------------------------
     def newFile(self):
@@ -408,6 +415,12 @@ class InterfaceWindow(QMainWindow):
                 for label in self.interface.scene.floating_labels:
                     self.checkSelection(label)
                     label.content.text_edit.setTextColor(color)
+
+    def removeFormat(self):
+        if self.interface.scene.floating_labels:
+            for label in self.interface.scene.floating_labels:
+                self.checkSelection(label)
+                label.content.setDefaultFormatting()
 
     def checkSelection(self, label):
         if label.grContent.isSelected():

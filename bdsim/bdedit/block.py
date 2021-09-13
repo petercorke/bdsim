@@ -1,4 +1,5 @@
 # Library imports
+import os
 import json
 from collections import OrderedDict
 
@@ -141,6 +142,9 @@ class Block(Serializable):
         self.scene = scene
         self.window = window
         self.position = pos
+
+        self.flipped = False
+        # self.flipped_icon = os.path.join(os.path.splitext(self.icon)[0] + "_flipped.png")
 
         # Title and type of the block will be determined by the grandchild class
         #self.block_type = None
@@ -803,6 +807,7 @@ class Block(Serializable):
                 ('pos_y', self.grBlock.scenePos().y()),
                 ('width', self.width),
                 ('height', self.height),
+                ('flipped', self.flipped),
                 ('inputsNum', self.inputsNum),
                 ('outputsNum', self.outputsNum),
                 ('inputs', inputs),
@@ -837,6 +842,14 @@ class Block(Serializable):
             self.outputsNum = data['outputsNum']
             self.width = data['width']
             self.height = data['height']
+
+            # If a model contains data on whether a block should be flipped, assign variable to that value
+            # If error occurs, model doesn't contain this variable, so ignore
+            try:
+                if data["flipped"]:
+                    self.flipped = data["flipped"]
+            except KeyError:
+                pass
 
         # The position of the Block within the Scene, are set accordingly.
         self.setPos(data['pos_x'], data['pos_y'])

@@ -582,30 +582,3 @@ class Interface(QWidget):
         :type event: QResizeEvent, automatically recognized by the inbuilt function
         """
         self.updateSceneDimensions()
-
-    # # Todo - make docstring for this method
-    # # -----------------------------------------------------------------------------
-    # def setFloatingTextAlignment(self, alignment):
-    #     if self.scene.floating_labels:
-    #         # Make a map of alignment text to actual Qt alignments
-    #         map = {
-    #             "AlignLeft": Qt.AlignLeft,
-    #             "AlignCenter": Qt.AlignCenter,
-    #             "AlignRight": Qt.AlignRight,
-    #         }
-    #
-    #         # Iterate through each floating label item and if the label is selected,
-    #         # then set the alignment of its contents
-    #         for label in self.scene.floating_labels:
-    #
-    #             if label.grContent.isSelected():
-    #
-    #                 text = label.content.text_edit.toPlainText()
-    #                 split_text = text.splitlines()
-    #                 label.content.text_edit.clear()
-    #
-    #                 for line in split_text:
-    #                     label.content.text_edit.append(line)
-    #                     label.content.text_edit.setAlignment(map[alignment])
-
-        # [label.content.text_edit.setAlignment(Qt.AlignRight) for label in self.scene.floating_labels]
