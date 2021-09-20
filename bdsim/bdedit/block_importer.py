@@ -1,3 +1,6 @@
+# !/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import re
 import inspect
 import copy
@@ -13,13 +16,24 @@ from examples import docstring_parser as parser
 def import_blocks(scene, window):
 
     size_map = {
-        'InPort' : [100, 150],
-        'OutPort' : [100, 150],
+        'InPort' : [50, 75],
+        'OutPort' : [50, 75],
         'SubSystem' : [200, 150],
         'DiffSteer' : [150, 100],
+        'VehiclePlot' : [125, 100],
+        'MultiRotor' : [125, 100],
+        'IDyn' : [125, 100],
+        'FDyn' : [125, 100],
+        'Tr2Delta' : [125, 100],
+        'MultiRotorMixer' : [125, 100],
     }
 
     block_list = parser.docstring_parser()
+
+    # for item in block_list.items():
+    #     print(item)
+    #     print()
+
     block_library = []
     imported_block_groups = []
 
@@ -37,20 +51,66 @@ def import_blocks(scene, window):
             block_path = block_ds["path"]
             block_icon = os.path.join(block_path[0], "Icons", block_type.lower() + ".png")
 
-            # Grab number of input/output sockets for blocks
+            # Make a block instance of the given class
             try:
-                if block_ds["nin"] < 0 or block_ds["nout"] < 0:
-                    block_instance = block_ds["class"]()
-                    block_inputsNum = block_instance.nin
-                    block_outputsNum = block_instance.nout
-                else:
-                    block_inputsNum = block_ds["nin"]
-                    block_outputsNum = block_ds["nout"]
+                # print('\n-- tried to instantiate --:', block_name)
+                block_instance = block_ds["class"]()
+                # print("-- ins inports: --", block_instance._inport_names)
+                # print("-- ins outports: --", block_instance._outport_names)
+
             except Exception as e:
-                #print("Some error occured for block:", block_name, ". Exception -> ", e)
+                # When exception occurs here it is related to an assertion being raised in bdsim
+                # This can be ignored as we only need the class variables
+                pass
+                # block_inputsNum = block_instance.nin
+                # block_outputsNum = block_instance.nout
+
+            # Grab number of input/output sockets for blocks
+            if block_ds["nin"] < 0 or block_ds["nout"] < 0:
                 block_inputsNum = block_instance.nin
                 block_outputsNum = block_instance.nout
+            else:
+                block_inputsNum = block_ds["nin"]
+                block_outputsNum = block_ds["nout"]
 
+            block_input_names, block_output_names = [], []
+
+            # Grab the names of the input/output sockets
+            if block_ds["inputs"] is not None:
+                for input_socket_name in block_ds["inputs"].items():
+                    block_input_names.append(input_socket_name[0])
+            elif block_instance._inport_names is not None:
+                for input_socket_name in block_instance._inport_names:
+                    block_input_names.append(input_socket_name)
+
+            if block_ds["outputs"] is not None:
+                for output_socket_name in block_ds["outputs"].items():
+                    block_output_names.append(output_socket_name[0])
+            elif block_instance._outport_names is not None:
+                for output_socket_name in block_instance._outport_names:
+                    block_output_names.append(output_socket_name)
+
+            # if block_instance._inport_names is not None:
+            #     for input_socket_name in block_instance._inport_names:
+            #         block_input_names.append(input_socket_name)
+            # elif block_ds["inputs"] is not None:
+            #     for input_socket_name in block_ds["inputs"].items():
+            #         block_input_names.append(input_socket_name[0])
+            #
+            # if block_instance._outport_names is not None:
+            #     for output_socket_name in block_instance._outport_names:
+            #         block_output_names.append(output_socket_name)
+            # elif block_ds["outputs"] is not None:
+            #     for output_socket_name in block_ds["outputs"].items():
+            #         block_output_names.append(output_socket_name[0])
+
+            # print(block_name)
+            # print("ins inports:", block_instance._inport_names)
+            # print("ins outports:", block_instance._outport_names)
+            # print("doc inports:", block_input_names)
+            # print("doc outports:", block_output_names)
+            # print("num inputs:", block_inputsNum)
+            # print("num outputs:", block_outputsNum)
 
             # Reconstruct URL from block type and path
             block_group = block_ds["module"].split('.')[-1]
@@ -165,19 +225,14 @@ def import_blocks(scene, window):
                                     if found_type not in found_types:
                                         found_types.append(found_type)
 
-                            elif item in ['string']:
+                            elif item.lower() in ['string']:
                                 if str not in found_types:
                                     found_types.append(str)
 
-                            elif item in ['sequence', 'string']:
+                            elif item.lower() in ['sequence', 'string']:
                                 # 2.
                                 if list not in found_types:
                                     found_types.append(list)
-
-                            # elif item in ['optional', ' or ', ' of ', ' is ']:
-                            #     # item is for human readability, ignore
-                            #     # how should types where for eg. list of strings, list of x, be dealt with?
-                            #     pass
 
                             else:
                                 pass
@@ -244,7 +299,7 @@ def import_blocks(scene, window):
                                     break
 
                         if param_value_docstring[i] in ['defaults'] and param_value_docstring[i + 1] in ['to']:
-                            # Value only has 1 default, which should follow after the word to
+                            # Value only has 1 default, which should follow after the word 'to'
                             # Try to evaluate value, if successful, this is some form of non string
                             try:
                                 param_value = eval(param_value_docstring[i + 2])
@@ -343,23 +398,6 @@ def import_blocks(scene, window):
             #     #print("\n\nThis block has no parameters: ", block_type, " param_docstring: ", block_ds["params"])
             #     block_parameters = [["dummy_parameter", str, None, []]]
 
-            # -----------------------------------------------------------------------------------------
-            # Section for extracting socket label information (for both input and output sockets)
-            # -----------------------------------------------------------------------------------------
-
-            # Grab the names of the input/output sockets
-            block_input_names = []
-            block_output_names = []
-
-            # Go through and extract all the names of the input and output sockets
-            if block_ds["inputs"] is not None:
-                for input_socket_name in block_ds["inputs"].items():
-                    block_input_names.append(input_socket_name[0])
-
-            if block_ds["outputs"] is not None:
-                for output_socket_name in block_ds["outputs"].items():
-                    block_output_names.append(output_socket_name[0])
-
             # -----------------------------------------------------------------------------------------------------
             # Section for importing block class from its module, and assigning to it the extracted information
             # -----------------------------------------------------------------------------------------------------
@@ -374,8 +412,8 @@ def import_blocks(scene, window):
                     self.parameters = copy.deepcopy(self.parameters)
                     self.inputsNum = copy.copy(self.inputsNum)
                     self.outputsNum = copy.copy(self.outputsNum)
-                    self.input_names = copy.copy(self.input_names)
-                    self.output_names = copy.copy(self.output_names)
+                    self.input_names = copy.deepcopy(self.input_names)
+                    self.output_names = copy.deepcopy(self.output_names)
                     self.icon = copy.copy(self.icon)
                     self.flipped_icon = os.path.join(os.path.splitext(copy.copy(self.icon))[0] + "_flipped.png")
                     self.block_url = copy.copy(self.block_url)
@@ -395,8 +433,8 @@ def import_blocks(scene, window):
                 # Assign the extracted block variables to this block
                 new_block_class = type(block_classname, (Block,), {
                     "__init__": __block_init__,
-                    "numInputs": lambda self: self.inputsNum,
-                    "numOutputs": lambda self: self.outputsNum,
+                    # "numInputs": lambda self: self.inputsNum,
+                    # "numOutputs": lambda self: self.outputsNum,
                     "title": block_name,
                     "block_type": block_type,
                     "parameters": block_parameters,

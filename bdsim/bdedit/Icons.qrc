@@ -15,5 +15,6 @@
 	<file>Icons/run.png</file>
 	<file>Icons/error.png</file>
 	<file>Icons/success.png</file>
+	<file>Icons/overlap.png</file>
 </qresource>
 </RCC>

@@ -267,7 +267,7 @@ class Piecewise(SourceBlock):
 
     def __init__(self, *seq, **kwargs):
         """
-        :param seq: Sequence of time, value pairs
+        :param seq: sequence of time, value pairs
         :type seq: list of 2-tuples
         :param kwargs: common Block options
         :return: a PIECEWISE block
@@ -388,6 +388,8 @@ class Ramp(SourceBlock):
         :type T: float, optional
         :param off: initial value, defaults to 0
         :type off: float, optional
+        :param slope: gradient of slope, defaults to 1
+        :type slope: float, optional
         :param kwargs: common Block options
         :return: a RAMP block
         :rtype: Ramp

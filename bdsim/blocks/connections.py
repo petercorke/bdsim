@@ -295,6 +295,12 @@ class SubSystem(SubsystemBlock):
         """
         :param subsys: Subsystem as either a filename or a ``BlockDiagram`` instance
         :type subsys: str or BlockDiagram
+
+        :param nin: Number of input ports, defaults to 1
+        :type nin: int, optional
+        :param nout: Number of output ports, defaults to 1
+        :type nout: int, optional
+        
         :param kwargs: common Block options
         :raises ImportError: DESCRIPTION
         :raises ValueError: DESCRIPTION

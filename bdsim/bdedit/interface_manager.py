@@ -7,9 +7,9 @@ import subprocess
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
-from bdsim.bdedit.Icons import *
 
 # BdEdit imports
+from bdsim.bdedit.Icons import *
 from bdsim.bdedit.interface import Interface
 
 
@@ -87,10 +87,9 @@ class InterfaceWindow(QMainWindow):
 
     def createToolbar(self):
         self.createFileMenu()
-        self.createEditMenu()
-        self.createMiscMenu()
+        # self.createEditMenu()
+        self.createToolsMenu()
         self.createToolbarItems()
-
 
     def createFileMenu(self):
         menubar = self.menuBar()
@@ -104,25 +103,27 @@ class InterfaceWindow(QMainWindow):
         self.fileMenu.addSeparator()
         self.fileMenu.addAction(self.actExit)
 
-    def createEditMenu(self):
-        menubar = self.menuBar()
-        self.editMenu = menubar.addMenu('&Edit')
-        self.editMenu.setToolTipsVisible(True)
-        self.editMenu.addAction(self.actUndo)
-        self.editMenu.addAction(self.actRedo)
-        self.editMenu.addSeparator()
-        self.editMenu.addAction(self.actDelete)
+    # def createEditMenu(self):
+    #     menubar = self.menuBar()
+    #     self.editMenu = menubar.addMenu('&Edit')
+    #     self.editMenu.setToolTipsVisible(True)
+    #     self.editMenu.addAction(self.actUndo)
+    #     self.editMenu.addAction(self.actRedo)
+    #     self.editMenu.addSeparator()
+    #     self.editMenu.addAction(self.actDelete)
 
-    def createMiscMenu(self):
+    def createToolsMenu(self):
         menubar = self.menuBar()
-        self.miscMenu = menubar.addMenu('Tools')
-        self.miscMenu.setToolTipsVisible(True)
-        self.miscMenu.addAction(self.actFlipBlocks)
-        self.miscMenu.addAction(self.actScreenshot)
-        self.miscMenu.addSeparator()
-        self.miscMenu.addAction(self.actWireOverlaps)
-        self.miscMenu.addAction(self.actHideConnectors)
-        self.miscMenu.addAction(self.actDisableBackground)
+        self.toolsMenu = menubar.addMenu('Tools')
+        self.toolsMenu.setToolTipsVisible(True)
+        self.toolsMenu.addAction(self.actFlipBlocks)
+        self.toolsMenu.addAction(self.actScreenshot)
+        self.toolsMenu.addSeparator()
+        self.toolsMenu.addAction(self.actWireOverlaps)
+        self.toolsMenu.addAction(self.actHideConnectors)
+        self.toolsMenu.addAction(self.actDisableBackground)
+        self.toolsMenu.addSeparator()
+        self.toolsMenu.addAction(self.actDelete)
 
     def createToolbarItems(self):
         toolbar = self.addToolBar('ToolbarItems')

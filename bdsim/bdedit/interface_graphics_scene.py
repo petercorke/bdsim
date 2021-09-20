@@ -6,6 +6,9 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
+# BdEdit imports
+from bdsim.bdedit.Icons import *
+
 
 # =============================================================================
 #
@@ -51,6 +54,9 @@ class GraphicsScene(QGraphicsScene):
         # self._default_background_color = QColor("#E0E0E0")
         # Alternatively could be set to a plain white background
         self._default_background_color = QColor("#FFFFFF")
+
+        # Set the image used for seperating wires at points of overlap
+        self.overlap_image = QImage(":/Icons_Reference/Icons/overlap.png")
 
     # -----------------------------------------------------------------------------
     def setGrScene(self, width, height):
@@ -157,33 +163,17 @@ class GraphicsScene(QGraphicsScene):
                     self.checkMode()
                     painter.setPen(QPen(self._color_background))
                     painter.setBrush(QBrush(self._color_background))
-                    # painter.setRenderHint(QPainter.Antialiasing, False)
-                    # painter.setRenderHint(QPainter.Antialiasing, True)
 
                     # Paint each intersection point
                     for intersection_point in self.scene.intersection_list:
                         x = intersection_point[0]
                         y = intersection_point[1]
+
                         # Paint a 16x16 rectangle
-                        painter.drawRect(x-8, y-8, 16, 16)
+                        painter.drawRect(x-7, y-7, 14, 14)
 
-                    # Set the paintbrush color and width for redrawing a portion of the wire
-                    pen = QPen(QColor("#000000"))
-                    pen.setWidth(5)
-                    painter.setPen(pen)
-
-                    # Go through each intersection point and paint back the horizontal lines
-                    for intersection_point in self.scene.intersection_list:
-                        x = intersection_point[0]
-                        y = intersection_point[1]
-
-                        # line_segement_path = QPainterPath(QPointF(x + 6.5, y))
-                        # line_segement_path.lineTo(x - 6.5, y)
-
-                        line_segement_path = QPainterPath(QPointF(x + 6.5, y))
-                        line_segement_path.lineTo(x - 6.5, y)
-
-                        painter.drawPath(line_segement_path)
+                        # Paint an image over the intersection point
+                        painter.drawImage(QRect(x-8, y-8, 14, 16), self.overlap_image)
 
             # Else, if no wires in scene, clear intersection_list
             else:

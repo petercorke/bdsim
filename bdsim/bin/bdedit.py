@@ -3,6 +3,7 @@
 # Library imports
 import os
 import sys
+import ctypes
 import argparse
 
 # PyQt5 imports
@@ -15,7 +16,6 @@ from bdsim.bdedit.interface_manager import InterfaceWindow
 
 # Executable code to launch the BdEdit application window
 if __name__ == '__main__':
-
     # handle command line options, bdedit -h for details
     parser = argparse.ArgumentParser(description='Interactive edit for bdsim models')
     parser.add_argument('file', type=str, nargs='?',
@@ -39,11 +39,14 @@ if __name__ == '__main__':
 
     # A QApplication instance is made, which is the window that holds everything
     app = QApplication(unparsed_args)
-    app.setApplicationName("Bdedit")
 
     # The resolution of the user's screen is extracted (used for determining
     # the size of the application window)
     screen_resolution = app.desktop().screenGeometry()
+
+    # Set the desktop toolbar icon for this application
+    myappid = u'bdsim.bdsim.bin.bdedit.application' # arbitrary string for application
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
     # Finally the window is displayed by creating an instance of Interface,
     # which holds all the logic for how the application should appear and which
@@ -93,7 +96,7 @@ if __name__ == '__main__':
                 filename = os.path.splitext(file_basename)[0]
 
                 # After 100ms non-blocking delay, screenshot the model
-                QTimer.singleShot(100, lambda: screenshot(filename + "-screenshot"))
+                QTimer.singleShot(100, lambda: screenshot(filename))
 
             # No file found, return error and exit
             else:

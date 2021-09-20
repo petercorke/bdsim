@@ -38,6 +38,21 @@ class Floating_Label(Serializable):
     def setPos(self, x, y):
         self.grContent.setPos(x, y)
 
+    def setFocusOfFloatingText(self):
+        """
+        This method sends all ``FloatingLabel`` instances within the ``Scene`` to back
+        and then sends the currently selected ``FloatingLabel`` instance to front.
+        """
+
+        # Iterates through each Block within block list stored in the Scene Class
+        # and sets the graphical component of each block to a zValue of 0.
+        for floatinglabel in self.scene.floating_labels:
+            floatinglabel.grContent.setZValue(-3)
+
+        # Then sets the graphical component of the currently selected block to a
+        # zValue of 1, which makes it display above all other blocks on screen.
+        self.grContent.setZValue(-2)
+
     # Todo - update comments to match floating label, not block
     def remove(self):
 
@@ -106,6 +121,8 @@ class ContentWidget(QWidget):
         self.defaultColor = QColor("#000000")
         self.defaultAlignment = Qt.AlignLeft
 
+        self.padding = 8
+
         self.setup()
         self.updateShape()
 
@@ -145,8 +162,8 @@ class ContentWidget(QWidget):
         fontmetrics = QFontMetrics(font)
         textSize = fontmetrics.size(0, self.text_edit.toPlainText())
 
-        w = textSize.width() + 10
-        h = textSize.height() + 10
+        w = textSize.width() + self.padding
+        h = textSize.height() + self.padding
 
         # Resize the interactable area where the text is displayed
         self.text_edit.setMinimumSize(w, h)

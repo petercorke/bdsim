@@ -631,6 +631,8 @@ class GraphicsConnectorBlock(QGraphicsItem):
         # of the work area (in the GraphicsScene)
         self.block.setFocusOfBlocks()
 
+        super().mousePressEvent(event)
+
     # -----------------------------------------------------------------------------
     def mouseMoveEvent(self, event):
         """

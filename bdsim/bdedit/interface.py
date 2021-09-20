@@ -1,5 +1,6 @@
 # Library imports
 import os
+import glob
 import inspect
 import importlib.util
 from pathlib import Path
@@ -395,26 +396,6 @@ class Interface(QWidget):
         self.blockLibrary.sort(key=lambda x: x[0])
 
     # -----------------------------------------------------------------------------
-    def updateColorMode(self):
-        """
-        This method is called to update the color mode with which the ``Scene``
-        background should be displayed. The options are:
-
-        - Light: light gray grid lines, with dark outlines for blocks
-        - Dark: dark gray grid lines, with light outlines for blocks
-        - Off: no grid lines, with dark outlines for blocks
-        """
-
-        # The mode of the Scene is called to be updated to whatever value was
-        # selected from the grid_mode dropdown menu (Light, Dark, Off)
-        self.scene.grScene.updateMode(self.grid_mode_options.currentText())
-        # For each block within the Scene, the mode of their outline is also updated
-        for eachBlock in self.scene.blocks:
-            # If the block has a mode (Connector Blocks do not)
-            if not (eachBlock.block_type == "CONNECTOR" or eachBlock.block_type == "Connector"):
-                eachBlock.grBlock.updateMode(self.grid_mode_options.currentText())
-
-    # -----------------------------------------------------------------------------
     def clickBox(self, state):
         """
         This method is called when the toolbar checkbox for toggling the visiblity
@@ -516,14 +497,14 @@ class Interface(QWidget):
         return [left - spacer, top - spacer, width, height]
 
     # -----------------------------------------------------------------------------
-    def save_image(self, picture_name):
+    def save_image(self, picture_path):
         """
         This method takes a filename and saves a snapshot of all the items within
         the ``Scene`` into it. Currently the resolution of this image is set to
         4K resolution (3840 x 2160).
 
-        :param picture_name: the name under which the image will be saved
-        :type picture_name: str, required
+        :param picture_path: path where the given model is saved, and where the image will be saved
+        :type picture_path: str, required
         """
 
         print("Rendering image")
@@ -548,9 +529,45 @@ class Interface(QWidget):
         # Crop the image to area of interest
         output_image = output_image.copy(rect)
 
+        screenshot_name = self.getScreenshotName(picture_path)
+
         # And the image is saved under the given file name, as a png
-        output_image.save(picture_name + ".png")
-        print("Screenshot saved --> ", picture_name + ".png")
+        output_image.save(screenshot_name)
+        print("Screenshot saved --> ", screenshot_name)
+
+    # -----------------------------------------------------------------------------
+    def getScreenshotName(self, picture_path, increment=None):
+        # This function takes a path of where the current model is saved, and searches
+        # if there are any screenshots in this path with the same name as the model.
+        # If a duplicate name is detected, the given picture_name is incremented
+        # with a -N, where N is a unique integer.
+
+        # Given the filepath where to save the picture, find the basename of the screenshot
+        if increment is None:
+            name_to_save = os.path.join(os.path.splitext(os.path.basename(picture_path))[0] + "-screenshot.png")
+        else:
+            name_to_save = os.path.join(os.path.splitext(os.path.basename(picture_path))[0] + "-screenshot-" + str(increment)) + ".png"
+            increment += 1
+
+        # Find all other images in the current directory (files ending with .png)
+        # as bdedit only saves images with .png extensions
+        images_in_dir = []
+        for img in glob.glob("*.png"):
+            images_in_dir.append(img)
+
+        # Check if saving current model under the model name would create a duplicate
+        no_duplicates = True
+        for image in images_in_dir:
+            if name_to_save == image:
+                no_duplicates = False
+                break
+
+        # If no duplicates are found, save screenshot under current model name
+        if no_duplicates:
+            return os.path.join(os.path.dirname(picture_path), name_to_save)
+        else:
+            if increment is None: return self.getScreenshotName(picture_path, 1)
+            else: return self.getScreenshotName(picture_path, increment)
 
     # -----------------------------------------------------------------------------
     def updateSceneDimensions(self):

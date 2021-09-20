@@ -453,6 +453,13 @@ class GraphicsView(QGraphicsView):
         self.last_click_poss = self.mapToScene(event.pos())
 
         if isinstance(item, GraphicsBlock) or isinstance(item, GraphicsWire) or isinstance(item, GraphicsConnectorBlock) or item is None:
+            if self.grScene.scene.floating_labels:
+                for label in self.grScene.scene.floating_labels:
+                    cursor = label.content.text_edit.textCursor()
+                    cursor.clearSelection()
+                    label.content.text_edit.setTextCursor(cursor)
+                    label.grContent.setLabelUnfocus()
+
             if event.modifiers() & Qt.ShiftModifier:
                 event.ignore()
                 fakeEvent = QMouseEvent(QEvent.MouseButtonPress, event.localPos(), event.screenPos(),
@@ -461,12 +468,6 @@ class GraphicsView(QGraphicsView):
                 super().mousePressEvent(fakeEvent)
                 return
 
-            if item is None:
-                if self.grScene.scene.floating_labels:
-                    for label in self.grScene.scene.floating_labels:
-                        cursor = label.content.text_edit.textCursor()
-                        cursor.clearSelection()
-                        label.content.text_edit.setTextCursor(cursor)
 
         if type(item) is GraphicsSocket:
 

@@ -46,13 +46,20 @@ class GraphicsLabel(QGraphicsItem):
         # painter.setBrush(Qt.NoBrush)
         painter.drawPath(path.simplified())
 
-    def mousePressEvent(self, event):
-        self.setSelected(True)
+    def setLabelUnfocus(self):
+        self.floating_label.setFocusOfFloatingText()
         self.floating_label.content.text_edit.setTextInteractionFlags(Qt.NoTextInteraction)
+
+    def setLabelFocus(self):
+        self.floating_label.content.text_edit.setTextInteractionFlags(Qt.TextEditorInteraction)
+
+    def mousePressEvent(self, event):
+        super().mousePressEvent(event)
+        self.setLabelUnfocus()
 
     def mouseDoubleClickEvent(self, event):
         super().mouseDoubleClickEvent(event)
-        self.floating_label.content.text_edit.setTextInteractionFlags(Qt.TextEditorInteraction)
+        self.setLabelFocus()
 
     def mouseReleaseEvent(self, event):
         super().mouseReleaseEvent(event)
@@ -72,18 +79,20 @@ class GraphicsLabel(QGraphicsItem):
 
             if label.grContent.isSelected():
 
+                spacing = 5
+
                 # The x,y position of the mouse cursor is grabbed, and is restricted to update
-                # every 20 pixels (the size of the smaller grid squares, as defined in GraphicsScene)
-                x = round(label.grContent.pos().x() / 20) * 20
-                y = round(label.grContent.pos().y() / 20) * 20
+                # every 5 pixels (the size of the smaller grid squares, as defined in GraphicsScene)
+                x = round(label.grContent.pos().x() / spacing) * spacing
+                y = round(label.grContent.pos().y() / spacing) * spacing
                 pos = QPointF(x, y)
                 # The position of this GraphicsConnectorBlock is set to the restricted position of the mouse cursor
                 label.grContent.setPos(pos)
 
-                # 20 is the width of the smaller grid squares
+                # 10 is the width of the smaller grid squares
                 # This logic prevents the selected QGraphicsConnectorBlock from being dragged outside
                 # the border of the work area (GraphicsScene)
-                padding = 20
+                padding = spacing
 
                 # left
                 if label.grContent.pos().x() < label.grContent.scene().sceneRect().x() + padding:
