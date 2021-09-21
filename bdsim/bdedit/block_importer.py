@@ -16,8 +16,8 @@ from examples import docstring_parser as parser
 def import_blocks(scene, window):
 
     size_map = {
-        'InPort' : [50, 75],
-        'OutPort' : [50, 75],
+        'InPort' : [50, 100],
+        'OutPort' : [50, 100],
         'SubSystem' : [200, 150],
         'DiffSteer' : [150, 100],
         'VehiclePlot' : [125, 100],
@@ -29,10 +29,6 @@ def import_blocks(scene, window):
     }
 
     block_list = parser.docstring_parser()
-
-    # for item in block_list.items():
-    #     print(item)
-    #     print()
 
     block_library = []
     imported_block_groups = []
@@ -53,64 +49,41 @@ def import_blocks(scene, window):
 
             # Make a block instance of the given class
             try:
-                # print('\n-- tried to instantiate --:', block_name)
-                block_instance = block_ds["class"]()
-                # print("-- ins inports: --", block_instance._inport_names)
-                # print("-- ins outports: --", block_instance._outport_names)
+                # Grab number of input/output sockets for block, once it has been instantiated
+                if block_ds["nin"] < 0 or block_ds["nout"] < 0:
+                    block_instance = block_ds["class"]()
+                    block_inputsNum = block_instance.nin
+                    block_outputsNum = block_instance.nout
+                else:
+                    block_inputsNum = block_ds["nin"]
+                    block_outputsNum = block_ds["nout"]
 
             except Exception as e:
                 # When exception occurs here it is related to an assertion being raised in bdsim
-                # This can be ignored as we only need the class variables
-                pass
-                # block_inputsNum = block_instance.nin
-                # block_outputsNum = block_instance.nout
-
-            # Grab number of input/output sockets for blocks
-            if block_ds["nin"] < 0 or block_ds["nout"] < 0:
+                # This can be ignored as we only need the nin/nout values once the block is instantiated
                 block_inputsNum = block_instance.nin
                 block_outputsNum = block_instance.nout
-            else:
-                block_inputsNum = block_ds["nin"]
-                block_outputsNum = block_ds["nout"]
-
-            block_input_names, block_output_names = [], []
 
             # Grab the names of the input/output sockets
-            if block_ds["inputs"] is not None:
-                for input_socket_name in block_ds["inputs"].items():
-                    block_input_names.append(input_socket_name[0])
-            elif block_instance._inport_names is not None:
-                for input_socket_name in block_instance._inport_names:
+            block_input_names, block_output_names = [], []
+
+            if hasattr(block_ds["class"], 'inlabels'):
+                for input_socket_name in block_ds["class"].inlabels:
                     block_input_names.append(input_socket_name)
 
-            if block_ds["outputs"] is not None:
-                for output_socket_name in block_ds["outputs"].items():
-                    block_output_names.append(output_socket_name[0])
-            elif block_instance._outport_names is not None:
-                for output_socket_name in block_instance._outport_names:
+            if hasattr(block_ds["class"], 'outlabels'):
+                for output_socket_name in block_ds["class"].outlabels:
                     block_output_names.append(output_socket_name)
 
-            # if block_instance._inport_names is not None:
-            #     for input_socket_name in block_instance._inport_names:
-            #         block_input_names.append(input_socket_name)
-            # elif block_ds["inputs"] is not None:
-            #     for input_socket_name in block_ds["inputs"].items():
-            #         block_input_names.append(input_socket_name[0])
-            #
-            # if block_instance._outport_names is not None:
-            #     for output_socket_name in block_instance._outport_names:
-            #         block_output_names.append(output_socket_name)
-            # elif block_ds["outputs"] is not None:
-            #     for output_socket_name in block_ds["outputs"].items():
-            #         block_output_names.append(output_socket_name[0])
-
+            # For debugging nin/nout and inlabels/outlabels that bdedit sees
             # print(block_name)
-            # print("ins inports:", block_instance._inport_names)
-            # print("ins outports:", block_instance._outport_names)
-            # print("doc inports:", block_input_names)
-            # print("doc outports:", block_output_names)
-            # print("num inputs:", block_inputsNum)
-            # print("num outputs:", block_outputsNum)
+            # print("class nin ", block_ds["class"].nin)
+            # print("class nout ", block_ds["class"].nout)
+            # print("inst nin ", block_inputsNum)
+            # print("inst nout ", block_outputsNum)
+            # print("inport ", block_input_names)
+            # print("outport ", block_output_names)
+            # print()
 
             # Reconstruct URL from block type and path
             block_group = block_ds["module"].split('.')[-1]
@@ -433,8 +406,6 @@ def import_blocks(scene, window):
                 # Assign the extracted block variables to this block
                 new_block_class = type(block_classname, (Block,), {
                     "__init__": __block_init__,
-                    # "numInputs": lambda self: self.inputsNum,
-                    # "numOutputs": lambda self: self.outputsNum,
                     "title": block_name,
                     "block_type": block_type,
                     "parameters": block_parameters,
