@@ -9,6 +9,8 @@ import argparse
 # PyQt5 imports
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QTimer
+from PyQt5.QtGui import QIcon
+from pathlib import Path
 
 # BdEdit imports
 #from bdsim.bdedit.interface import Interface
@@ -46,7 +48,9 @@ if __name__ == '__main__':
 
     # Set the desktop toolbar icon for this application
     myappid = u'bdsim.bdsim.bin.bdedit.application' # arbitrary string for application
-    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+    # ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+    icon = Path(__file__).parent.parent / 'bdedit' / 'Icons' / 'bdsim_logo.png'
+    app.setWindowIcon(QIcon(str(icon)))
 
     # Finally the window is displayed by creating an instance of Interface,
     # which holds all the logic for how the application should appear and which
