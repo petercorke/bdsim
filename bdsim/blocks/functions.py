@@ -91,13 +91,20 @@ class Sum(FunctionBlock):
         
         
     def output(self, t=None):
-        for i,input in enumerate(self.inputs):
+        for i, input in enumerate(self.inputs):
+            # code makes no assumption about types of inputs
+            # NOTE: use sum = sum =/- input rather than sum +/-= input since
+            #       these are references
             if self.signs[i] == '-':
-                input = -input
-            if i == 0:
-                sum = input
+                if i == 0:
+                    sum = -input
+                else:
+                    sum = sum - input
             else:
-                sum = sum + input
+                if i == 0:
+                    sum = input
+                else:
+                    sum = sum + input
         
         if self.angles:
             sum = np.mod(sum + math.pi, 2 * math.pi) - math.pi
@@ -183,12 +190,12 @@ class Prod(FunctionBlock):
                     if self.matrix:
                         prod = prod @ input
                     else:
-                        prod *= input
+                        prod = prod * input
                 else:
                     if self.matrix:
                         prod = prod @ numpy.linalg.inv(input)
                     else:
-                        prod /= input
+                        prod = prod / input
 
         return [prod]
 
