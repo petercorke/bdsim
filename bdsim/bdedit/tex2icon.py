@@ -78,35 +78,15 @@ def main():
             sys.exit(1)
         print('suggest change scale factor to ', int(args.r * IMSIZE / max(w, h)))
 
-        # A plane is 0 for backgroud, 255 for foreground, and antialias values
-        # in between
-        A = np.array(image)[:,:,3]
-
-        # use NumPy to centre the alpha plane into fixed size background & invert
+        # use NumPy to centre the image into a 50x50 background & invert it
+        img = np.array(image)[:,:,3]
         roff = (IMSIZE - h) // 2
         coff = (IMSIZE - w) // 2
         icon = np.full((IMSIZE, IMSIZE), 255, np.uint8)
-        icon[roff:roff+h, coff:coff+w] = 255 - A
+        icon[roff:roff+h, coff:coff+w] = 255 - img
 
-        # grey scale image now centred in icon
-        # 255 for background, 0 for foreground
-
-        # make background transparent
-        out = []
-        for pixel in icon.ravel():  # iterate over the A plane
-            if pixel == 255:
-                # make background transparent
-                out.append((255, 255, 255, 0))
-            else:
-                # foreground incl. antialiased values
-                out.append((pixel, pixel, pixel, 255))
-
-        # create new RGBA image
-        iconimage = Image.new('RGBA', size=(IMSIZE, IMSIZE))
-        iconimage.putdata(out)
-
-        # save it
-        iconimage.save(args.o)
+        # convert back to Image and save it
+        Image.fromarray(icon).save(args.o)
         print('icon saved --> ', args.o)
 
     except (OSError, ValueError):
