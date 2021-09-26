@@ -409,6 +409,7 @@ class ScopeXY1(ScopeXY):
             - a 4-tuple [xmin, xmax, ymin, ymax]
         """
         super().__init__(**kwargs)
+        self.inport_names(('xy',))
         if len(indices) != 2:
             raise ValueError('indices must have 2 elements')
         self.indices = [int(x) for x in indices]
