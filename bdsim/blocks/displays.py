@@ -15,6 +15,7 @@ from math import pi, sqrt, sin, cos, atan2
 
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import Polygon
+from numpy.lib.shape_base import expand_dims
 
 
 import spatialmath.base as sm
@@ -295,8 +296,7 @@ class ScopeXY(GraphicsBlock):
 
         self.styles = style
         if scale != 'auto':
-            if len(scale) == 2:
-                scale = scale * 2
+            scale = sm.expand_dims(scale, 2)
         self.scale = scale
         self.aspect = aspect
         self.labels = labels
@@ -348,8 +348,7 @@ class ScopeXY(GraphicsBlock):
             if self.bd.options.animation:
                 self.fig.canvas.flush_events()
 
-        
-            if self.scale == 'auto':
+            if isinstance(self.scale, str) and self.scale == 'auto':
                 self.ax.relim()
                 self.ax.autoscale_view()
             super().step(state=state)
