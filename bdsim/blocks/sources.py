@@ -57,6 +57,8 @@ class Constant(SourceBlock):
             value = np.array(value)
         self.value = value
 
+        self.add_param('value')
+
     def output(self, t=None):
         return [self.value]               
 
@@ -202,12 +204,14 @@ class WaveForm(SourceBlock):
         self.offset = offset
 
     def start(self, state=None):
-        if self.waveform == 'square':
+        if self.wave == 'square':
             t1 = self.phase / self.freq
             t2 = (self.duty + self.phase) / self.freq
-        elif self.waveform == 'triangle':
+        elif self.wave == 'triangle':
             t1 = (0.25 + self.phase) / self.freq
             t2 = (0.75 + self.phase) / self.freq
+        else:
+            return
 
         # t1 < t2
         T = 1.0 / self.freq
