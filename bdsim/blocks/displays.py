@@ -164,7 +164,10 @@ class Scope(GraphicsBlock):
 
         # create the figures
         self.fig = self.create_figure(state)
-        self.ax = self.fig.gca()
+        self.ax = self.fig.add_subplot(111)
+
+        if self.stairs:
+            kwargs = {**dict(drawstyle='steps'), **kwargs}
         
         # create empty lines with defined styles
         for i in range(0, self.nplots):
@@ -216,14 +219,14 @@ class Scope(GraphicsBlock):
                 self.ydata[i] = np.append(self.ydata[i], input)
 
         plt.figure(self.fig.number)  # make current
-        if self.stairs:
-            for i in range(0, self.nplots):
-                t = np.repeat(self.tdata, 2)
-                y = np.repeat(self.ydata[i], 2)
-                self.line[i].set_data(t[1:], y[:-1])
-        else:
-            for i in range(0, self.nplots):
-                self.line[i].set_data(self.tdata, self.ydata[i])
+        # if self.stairs:
+        #     for i in range(0, self.nplots):
+        #         t = np.repeat(self.tdata, 2)
+        #         y = np.repeat(self.ydata[i], 2)
+        #         self.line[i].set_data(t[1:], y[:-1])
+        # else:
+        for i in range(0, self.nplots):
+            self.line[i].set_data(self.tdata, self.ydata[i])
     
         if self.scale == 'auto':
             self.ax.relim()
