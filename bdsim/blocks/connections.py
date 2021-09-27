@@ -269,7 +269,10 @@ class Index(FunctionBlock):
         self.index = index
     
     def output(self, t=None):
-        return [self.inputs[self.index]]
+        if len(self.index) == 1:
+            return [self.inputs[0][self.index[0]]]
+        else:
+            return [np.r_[[self.inputs[0][i] for i in self.index]]]
 # ------------------------------------------------------------------------ #
 
 class SubSystem(SubsystemBlock):
