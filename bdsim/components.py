@@ -46,7 +46,14 @@ class Struct(UserDict):
         self.data[name] = value
 
     def __getattr__(self, name):
-        return self.data[name]
+        # return self.data[name]
+        # some tricks to make this deepcopy safe
+        # https://stackoverflow.com/questions/40583131/python-deepcopy-with-custom-getattr-and-setattr
+        # https://stackoverflow.com/questions/25977996/supporting-the-deep-copy-operation-on-a-custom-class
+        try:
+            return super().__getattribute__('data')[name]
+        except KeyError:
+            raise AttributeError('unknown attribute ' + name)
         
     def __repr__(self):
         return str(self)
