@@ -309,6 +309,9 @@ class LTI_SISO(LTI_SS):
 
         A, B, C, D = scipy.signal.tf2ss(N, D)
 
+        self.num = N
+        self.den = D
+
         if len(np.flatnonzero(D)) > 0:
             raise ValueError('D matrix is not zero')
 
@@ -318,6 +321,19 @@ class LTI_SISO(LTI_SS):
             print('C=', C)
 
         super().__init__(A=A, B=B, C=C, x0=x0, **kwargs)
+
+
+        def change_param(self, param, newvalue):
+            if param == 'num':
+                self.num = newvalue
+            elif param == 'den':
+                self.den = newvalue
+            self.A, self.B, self.C, self.D = scipy.signal.tf2ss(self.num, self.den)
+            
+        self.add_param('num', change_param)
+        self.add_param('den', change_param)
+
+
 
 if __name__ == "__main__":
 
