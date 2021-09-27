@@ -376,7 +376,7 @@ class Function(FunctionBlock):
     nin = -1
     nout = -1
 
-    def __init__(self, func=None, nin=1, nout=1, dict=False, pargs=[], dargs={}, **kwargs):
+    def __init__(self, func=None, nin=1, nout=1, persistent=False, args=None, kwargs=None, **blockargs):
     
         """
         :param func: A function or lambda, or list thereof, defaults to None
@@ -385,13 +385,14 @@ class Function(FunctionBlock):
         :type nin: int, optional
         :param nout: number of outputs, defaults to 1
         :type nout: int, optional
-        :param dict: pass in a reference to a dictionary instance, defaults to False
-        :type dict: bool, optional
-        :param pargs: extra positional arguments passed to the function, defaults to []
-        :type pargs: list, optional
-        :param dargs: extra keyword arguments passed to the function, defaults to {}
-        :type dargs: dict, optional
-        :param kwargs: common Block options
+        :param persistent: pass in a reference to a dictionary instance to hold persistent state, defaults to False
+        :type persistent: bool, optional
+        :param args: extra positional arguments passed to the function, defaults to []
+        :type args: list, optional
+        :param kwargs: extra keyword arguments passed to the function, defaults to {}
+        :type kwargs: dict, optional
+        :param blockargs: common Block options
+        :type blockargs: dict, optional
         :return: A FUNCTION block
         :rtype: A Function instance
     
@@ -408,14 +409,14 @@ class Function(FunctionBlock):
             def myfun(u1, u2, param1, param2):
                 pass
             
-            FUNCTION(myfun, nin=2, pargs=(p1,p2))
+            FUNCTION(myfun, nin=2, args=(p1,p2))
             
         If we need access to persistent (static) data, to keep some state::
         
-            def myfun(u1, u2, param1, param2, dict):
+            def myfun(u1, u2, param1, param2, state):
                 pass
             
-            FUNCTION(myfun, nin=2, pargs=(p1,p2), dict=True)
+            FUNCTION(myfun, nin=2, args=(p1,p2), persistent=True)
             
         where a dictionary is passed in as the last argument which is kept from call to call.
             
@@ -424,7 +425,7 @@ class Function(FunctionBlock):
             def myfun(u1, u2, param1=1, param2=2, param3=3, param4=4):
                 pass
             
-            FUNCTION(myfun, nin=2, dargs={'param2':7, 'param3':8})
+            FUNCTION(myfun, nin=2, kwargs={'param2':7, 'param3':8})
                      
         A block with two inputs and two outputs, the outputs are defined by two lambda
         functions with the same inputs::
@@ -454,7 +455,16 @@ class Function(FunctionBlock):
             bd.connect(block1, func[0])
             bd.connect(block2, func[1])
         """
-        super().__init__(nin=nin, nout=nout, **kwargs)
+        super().__init__(nin=nin, nout=nout, **blockargs)
+
+        if args is None:
+            args = list()
+        if kwargs is None:
+            kwargs = dict()
+            
+        # TODO, don't know why this happens
+        if len(args) > 0 and args[0] == {}:
+            args = []
 
         if isinstance(func, (list, tuple)):
             for f in func:
@@ -462,7 +472,7 @@ class Function(FunctionBlock):
                 if kwargs is None:
                     # we can check the number of arguments
                     n = len(inspect.signature(func).parameters)
-                    if dict:
+                    if persistent:
                         n -= 1  # discount dict if used
                     if nin + len(args) != n:
                         raise ValueError(
@@ -472,7 +482,7 @@ class Function(FunctionBlock):
             if len(kwargs) == 0:
                 # we can check the number of arguments
                 n = len(inspect.signature(func).parameters)
-                if dict:
+                if persistent:
                     n -= 1  # discount dict if used
                 if nin + len(args) != n:
                     raise ValueError(
@@ -481,13 +491,13 @@ class Function(FunctionBlock):
             # self.nout = nout
             
         self.func  = func
-        if dict:
-            self.userdata = {}
+        if persistent:
+            self.userdata = dict()
             args += (self.userdata,)
         else:
             self.userdata = None
-        self.args = pargs
-        self.kwargs = dargs
+        self.args = args
+        self.kwargs = kwargs
 
     def start(self, state=None):
         super().start()
