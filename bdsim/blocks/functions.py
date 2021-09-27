@@ -265,6 +265,8 @@ class Gain(FunctionBlock):
         super().__init__(**kwargs)
         self.K  = K
         self.premul = premul
+
+        self.add_param('K')
         
     def output(self, t=None):
         input = self.inputs[0]
