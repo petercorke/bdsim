@@ -16,4 +16,6 @@ from .interface_scene import *
 from .interface_graphics_scene import *
 from .interface_graphics_view import *
 from .interface_serialize import *
+
+from .bdedit import main
 # print("bdedit package __init__ end")

@@ -17,7 +17,7 @@ from pathlib import Path
 from bdsim.bdedit.interface_manager import InterfaceWindow
 
 # Executable code to launch the BdEdit application window
-if __name__ == '__main__':
+def main():
     # handle command line options, bdedit -h for details
     parser = argparse.ArgumentParser(description='Interactive edit for bdsim models')
     parser.add_argument('file', type=str, nargs='?',
@@ -109,3 +109,6 @@ if __name__ == '__main__':
 
     # Finally when the application is closed, the application is exited out of
     sys.exit(app.exec_())
+
+if __name__ == '__main__':
+    main()
