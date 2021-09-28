@@ -57,6 +57,7 @@ class GraphicsScene(QGraphicsScene):
 
         # Set the image used for seperating wires at points of overlap
         self.overlap_image = QImage(":/Icons_Reference/Icons/overlap.png")
+        # self.overlap_image = QImage(":/Icons_Reference/Icons/overlap3.png")
 
     # -----------------------------------------------------------------------------
     def setGrScene(self, width, height):
@@ -169,6 +170,21 @@ class GraphicsScene(QGraphicsScene):
                         x = intersection_point[0]
                         y = intersection_point[1]
 
+                        # # Overlap 3
+                        # # Paint a 16x16 rectangle
+                        # painter.drawRect(x - 7, y - 7, 19, 14)
+                        #
+                        # # Paint an image over the intersection point
+                        # painter.drawImage(QRect(x - 6, y - 8, 16, 16), self.overlap_image)
+
+                        # # Overlap 1/2
+                        # # Paint a 16x16 rectangle
+                        # painter.drawRect(x-6, y-7, 20, 14)
+                        #
+                        # # Paint an image over the intersection point
+                        # painter.drawImage(QRect(x-5, y-8, 17, 16), self.overlap_image)
+
+                        # Overlap
                         # Paint a 16x16 rectangle
                         painter.drawRect(x-7, y-7, 14, 14)
 

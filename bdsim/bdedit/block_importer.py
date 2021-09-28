@@ -26,6 +26,7 @@ def import_blocks(scene, window):
         'FDyn' : [125, 100],
         'Tr2Delta' : [125, 100],
         'MultiRotorMixer' : [125, 100],
+        'JTraj' : [125, 100],
     }
 
     block_list = parser.docstring_parser()
