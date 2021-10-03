@@ -355,428 +355,436 @@ class GraphicsWireStep(GraphicsWire):
         for how this logic is determined.
         """
 
-        # _____________________________________ Preparing Wire related variables ______________________________________
+        try:
+            # _____________________________________ Preparing Wire related variables ______________________________________
 
-        # List into which the coordinate points of the wire will be appended into when
-        # this wire is updated. This will be compared against the current list of this
-        # wires' coordinates, to check if it needs to be updated
-        temporary_wire_coordinates = []
-        # This variable prevents a stepped wire from being drawn until it is connected
-        # to the end socket. Until then a straight line will be drawn
-        wire_completed = False
+            # List into which the coordinate points of the wire will be appended into when
+            # this wire is updated. This will be compared against the current list of this
+            # wires' coordinates, to check if it needs to be updated
+            temporary_wire_coordinates = []
+            # This variable prevents a stepped wire from being drawn until it is connected
+            # to the end socket. Until then a straight line will be drawn
+            wire_completed = False
 
-        # Block padding is the space at which wires will be wrapped around blocks
-        block_padding = 20
+            # Block padding is the space at which wires will be wrapped around blocks
+            block_padding = 20
 
-        # The title height is extracted from the block this wire starts from
-        title_height = self.wire.start_socket.node.grBlock.title_height - 5
+            # The title height is extracted from the block this wire starts from
+            title_height = self.wire.start_socket.node.grBlock.title_height - 5
 
-        # __________________________________ Extracting Logic of Start/End Sockets ____________________________________
+            # __________________________________ Extracting Logic of Start/End Sockets ____________________________________
 
-        # The global (scene) x,y coordinates of the source (start) and destination (end) sockets are extracted
-        sx = self.posSource[0]
-        sy = self.posSource[1]
-        dx = self.posDestination[0]
-        dy = self.posDestination[1]
-        # The horizontal distance between these two sockets is found
-        xDist = (dx - sx) / 2
+            # The global (scene) x,y coordinates of the source (start) and destination (end) sockets are extracted
+            sx = self.posSource[0]
+            sy = self.posSource[1]
+            dx = self.posDestination[0]
+            dy = self.posDestination[1]
+            # The horizontal distance between these two sockets is found
+            xDist = (dx - sx) / 2
 
-        # The index at which the start socket is drawn on its block is extracted + 1
-        # (0th index will be our first index, as this variable is used as a multiplier)
-        s_index = self.wire.start_socket.index + 1
+            # The index at which the start socket is drawn on its block is extracted + 1
+            # (0th index will be our first index, as this variable is used as a multiplier)
+            s_index = self.wire.start_socket.index + 1
 
-        # Dimensions of the start sockets' block are extracted
-        source_block_width = self.wire.start_socket.node.width
-        source_block_height = self.wire.start_socket.node.height
+            # Dimensions of the start sockets' block are extracted
+            source_block_width = self.wire.start_socket.node.width
+            source_block_height = self.wire.start_socket.node.height
 
-        # The local (in reference to its block) x-y coordinates of the start socket
-        s_Offset = self.wire.start_socket.getSocketPosition()
+            # The local (in reference to its block) x-y coordinates of the start socket
+            s_Offset = self.wire.start_socket.getSocketPosition()
 
-        # Same logic (as above) is extracted for the destination (end) socket if it has been set
-        if self.wire.end_socket is not None:
-            d_index = self.wire.end_socket.index + 1
-            destination_block_width = self.wire.end_socket.node.width
-            destination_block_height = self.wire.end_socket.node.height
-            d_Offset = self.wire.end_socket.getSocketPosition()
-        else:
-            d_index = 0
-            destination_block_width = 0
-            destination_block_height = 0
-            d_Offset = [0, 0]
+            # Same logic (as above) is extracted for the destination (end) socket if it has been set
+            if self.wire.end_socket is not None:
+                d_index = self.wire.end_socket.index + 1
+                destination_block_width = self.wire.end_socket.node.width
+                destination_block_height = self.wire.end_socket.node.height
+                d_Offset = self.wire.end_socket.getSocketPosition()
+            else:
+                d_index = 0
+                destination_block_width = 0
+                destination_block_height = 0
+                d_Offset = [0, 0]
 
-        # The previous temporary coordinates of this wire are cleared, and the new start point coordinate is added
-        temporary_wire_coordinates.clear()
-        temporary_wire_coordinates.append((sx, sy))
+            # The previous temporary coordinates of this wire are cleared, and the new start point coordinate is added
+            temporary_wire_coordinates.clear()
+            temporary_wire_coordinates.append((sx, sy))
 
-        # ###########################################  Start of Wire Logic  ##########################################
+            # ###########################################  Start of Wire Logic  ##########################################
 
-        # ======================================  If Wire hasn't been completed  =====================================
-        if self.wire.end_socket is None:
-            # If two sockets haven't been connected yet
+            # ======================================  If Wire hasn't been completed  =====================================
+            if self.wire.end_socket is None:
+                # If two sockets haven't been connected yet
 
-            # Don't do anything, start and end points of the path have already been defined, so a straight line will be drawn
-            if DEBUG: print("Wire style: O")
-            pass
-
-        # =========================  Start & End Sockets are on the same side of two Blocks  =========================
-        elif self.posSource_Orientation == self.posDestination_Orientation:
-            # If sockets are both on the same side (both coming out of the left or right)
-
-            # -----------------------------------  Start Socket LEFT OF End Socket  ----------------------------------
-            if sx < dx:
-                # - - - - - - - - - - - - Continue with Extracted Logic of Start/End Sockets - - - - - - - - - - - - -
-                # Continue path from source
-                # Destination_block & Source_block are kept the same
+                # Don't do anything, start and end points of the path have already been defined, so a straight line will be drawn
+                if DEBUG: print("Wire style: O")
                 pass
 
-            # ------------------------------  Start Socket EQUAL or RIGHT OF End Socket  -----------------------------
-            else:
-                # - - - - - - - - - - - Re-Extract Logic of Start/End Sockets (Switching them) - - - - - - - - - - - -
-                # Use the same logic as for above, but swap positions of start socket with end socket
-                sx, sy = self.posDestination[0], self.posDestination[1]
-                dx, dy = self.posSource[0], self.posSource[1]
+            # =========================  Start & End Sockets are on the same side of two Blocks  =========================
+            elif self.posSource_Orientation == self.posDestination_Orientation:
+                # If sockets are both on the same side (both coming out of the left or right)
 
-                # Destination_block & Source_block = node of start_socket and end_socket respectively
-                d_index = self.wire.start_socket.index + 1
-                destination_block_width = self.wire.start_socket.node.width
-                destination_block_height = self.wire.start_socket.node.height
+                # -----------------------------------  Start Socket LEFT OF End Socket  ----------------------------------
+                if sx < dx:
+                    # - - - - - - - - - - - - Continue with Extracted Logic of Start/End Sockets - - - - - - - - - - - - -
+                    # Continue path from source
+                    # Destination_block & Source_block are kept the same
+                    pass
 
-                # Switch the indexes of the sockets
-                if self.wire.end_socket is not None:
-                    s_index = self.wire.end_socket.index + 1
-                    source_block_width = self.wire.end_socket.node.width
-                    source_block_height = self.wire.end_socket.node.height
+                # ------------------------------  Start Socket EQUAL or RIGHT OF End Socket  -----------------------------
                 else:
-                    s_index = 0
-                    source_block_width = 0
-                    source_block_height = 0
+                    # - - - - - - - - - - - Re-Extract Logic of Start/End Sockets (Switching them) - - - - - - - - - - - -
+                    # Use the same logic as for above, but swap positions of start socket with end socket
+                    sx, sy = self.posDestination[0], self.posDestination[1]
+                    dx, dy = self.posSource[0], self.posSource[1]
 
-                # Restart path from destination
-                temporary_wire_coordinates.clear()
-                temporary_wire_coordinates.append((sx, sy))
+                    # Destination_block & Source_block = node of start_socket and end_socket respectively
+                    d_index = self.wire.start_socket.index + 1
+                    destination_block_width = self.wire.start_socket.node.width
+                    destination_block_height = self.wire.start_socket.node.height
 
-            # -------------------------------  End Socket on RHS of Destination Block  -------------------------------
-            if self.posDestination_Orientation == RIGHT:
-                # xDist is from RHS of source block, to LHS of destination block
-                xDist = (dx - destination_block_width - sx) / 2
-
-                # Top of the destination block is above source block
-                # Should be dy > sy, but graphics view draws the y-axis inverted
-                if dy - d_Offset[1] - (d_index * block_padding) < sy:
-
-                    # Bottom of destination block is above top of source block OR
-                    # LHS of destination block is further left than RHS of source block
-
-                    # Wire from multiple sockets spaced from bottom of destination block at index (no overlap)
-                    if (dy - d_Offset[1] + destination_block_height + title_height + (d_index * block_padding) < sy) or (sx + xDist <= sx + (block_padding / 2)):
-                        if DEBUG: print("Wire style: A")
-                        # Draw C (inverted equivalent) line from S up to D, clipped to RHS of destination block
-                        # ----------------------
-                        #       (d-block)-<-|
-                        #                   |
-                        #  (s-block)->------|
-                        # ----------------------
-
-                        temporary_wire_coordinates.append((dx + (d_index * block_padding), sy))
-                        temporary_wire_coordinates.append((dx + (d_index * block_padding), dy))
-
-                    # Bottom of destination block is equal to or below top of source block
+                    # Switch the indexes of the sockets
+                    if self.wire.end_socket is not None:
+                        s_index = self.wire.end_socket.index + 1
+                        source_block_width = self.wire.end_socket.node.width
+                        source_block_height = self.wire.end_socket.node.height
                     else:
-                        if DEBUG: print("Wire style: B")
-                        # Draw wrapped line between source and destination block, then above and around destination block
-                        # --------------------------------
-                        #              |---------------|
-                        #              |               |
-                        #              |   (d-block)-<-|
-                        #              |
-                        #  (s-block)->-|
-                        # --------------------------------
+                        s_index = 0
+                        source_block_width = 0
+                        source_block_height = 0
 
-                        temporary_wire_coordinates.append((sx + xDist, sy))
-                        temporary_wire_coordinates.append((sx + xDist, dy - d_Offset[1] - (d_index * block_padding)))
-                        temporary_wire_coordinates.append(
-                            (dx + d_index * block_padding, dy - d_Offset[1] - (d_index * block_padding)))
-                        temporary_wire_coordinates.append((dx + d_index * block_padding, dy))
+                    # Restart path from destination
+                    temporary_wire_coordinates.clear()
+                    temporary_wire_coordinates.append((sx, sy))
 
-                # Top of destination block is equal to or below source block socket
-                else:
-                    if DEBUG: print("Wire style: C")
-                    # Draw C (inverted equivalent) line from S down to D, clipped to RHS of destination block
-                    # ------------------------
-                    #   (s-block)->---------|
-                    #                       |
-                    #           (d-block)-<-|
-                    # ------------------------
+                # -------------------------------  End Socket on RHS of Destination Block  -------------------------------
+                if self.posDestination_Orientation == RIGHT:
+                    # xDist is from RHS of source block, to LHS of destination block
+                    xDist = (dx - destination_block_width - sx) / 2
 
-                    temporary_wire_coordinates.append((dx + d_index * block_padding, sy))
-                    temporary_wire_coordinates.append((dx + d_index * block_padding, dy))
+                    # Top of the destination block is above source block
+                    # Should be dy > sy, but graphics view draws the y-axis inverted
+                    if dy - d_Offset[1] - (d_index * block_padding) < sy:
 
-            # -------------------------------  End Socket on LHS of Destination Block  -------------------------------
-            else:
-                # xDist is from RHS of source block, to LHS of destination block
-                xDist = (dx - (sx + source_block_width)) / 2
+                        # Bottom of destination block is above top of source block OR
+                        # LHS of destination block is further left than RHS of source block
 
-                # Should be sy > dy, but graphics view draws the y-axis inverted
-                # Top of source block is above destination block
-                if sy - s_Offset[1] - (s_index * block_padding) < dy:
-                    # Bottom of source block is above top of destination block OR
-                    # RHS of source block further left than LHS of destination block
+                        # Wire from multiple sockets spaced from bottom of destination block at index (no overlap)
+                        if (dy - d_Offset[1] + destination_block_height + title_height + (d_index * block_padding) < sy) or (sx + xDist <= sx + (block_padding / 2)):
+                            if DEBUG: print("Wire style: A")
+                            # Draw C (inverted equivalent) line from S up to D, clipped to RHS of destination block
+                            # ----------------------
+                            #       (d-block)-<-|
+                            #                   |
+                            #  (s-block)->------|
+                            # ----------------------
 
-                    # Wire from multiple sockets spaced from bottom of source block at index (no overlap)
-                    if (sy - s_Offset[1] + source_block_height + title_height + (s_index * block_padding) < dy) or (dx + xDist <= dx + (block_padding / 2)):
-                        if DEBUG: print("Wire style: D")
-                        # Draw C line from S down to D, clipped to LHS of source block
-                        # ----------------------
-                        #  |--<-(s-block)
-                        #  |
-                        #  |----->-(d-block)
-                        # ----------------------
-
-                        temporary_wire_coordinates.append((sx - (s_index * block_padding), sy))
-                        temporary_wire_coordinates.append((sx - (s_index * block_padding), dy))
-
-                    # Bottom of source block is equal to or below top of destination block
-                    else:
-                        if DEBUG: print("Wire style: E")
-                        # Draw wrapped line above and around the source block, then between the source and destination block
-                        # --------------------------------
-                        #  |---------------|
-                        #  |               |
-                        #  |-<-(s-block)   |
-                        #                  |
-                        #                  |->-(d-block)
-                        # --------------------------------
-
-                        temporary_wire_coordinates.append((sx - s_index * block_padding, sy))
-                        temporary_wire_coordinates.append(
-                            (sx - s_index * block_padding, sy - s_Offset[1] - (s_index * block_padding)))
-                        temporary_wire_coordinates.append(
-                            (sx + source_block_width + xDist, sy - s_Offset[1] - (s_index * block_padding)))
-                        temporary_wire_coordinates.append((sx + source_block_width + xDist, dy))
-
-                # Top of source block is equal to or below destination block
-                else:
-                    if DEBUG: print("Wire style: F")
-                    # Draw C line from S up to D, clipped to LHS of source block
-                    # --------------------
-                    # |------->-(d-block)
-                    # |
-                    # |-<-(s-block)
-                    # --------------------
-
-                    temporary_wire_coordinates.append((sx - s_index * block_padding, sy))
-                    temporary_wire_coordinates.append((sx - s_index * block_padding, dy))
-
-            # Update boolean that wire is completed, as to get here, the end point of the wire must be dropped
-            wire_completed = True
-
-        # ========================  Start & End Sockets are on opposite sides of two blocks  =========================
-        elif self.posSource_Orientation != self.posDestination_Orientation:
-            # Otherwise sockets are on different sides (out from left into right, or out of right into left)
-
-            # --------------------------------  Start Socket on LHS of Source Block  ---------------------------------
-            if self.posSource_Orientation == LEFT:
-                # - - - - - - - - - - - - Continue with Extracted Logic of Start/End Sockets - - - - - - - - - - - - -
-                # Continue path from source
-                # Destination_block & Source_block are kept the same
-                xDist = (sx - dx) / 2
-
-            # --------------------------------  Start Socket on RHS of Source Block  ---------------------------------
-            else:
-                # - - - - - - - - - - - Re-Extract Logic of Start/End Sockets (Switching them) - - - - - - - - - - - -
-                # Use the same logic as for above, but swap positions of start socket with end socket
-                sx, sy = self.posDestination[0], self.posDestination[1]
-                dx, dy = self.posSource[0], self.posSource[1]
-
-                # Destination_block & Source_block = node of start_socket and end_socket respectively
-                d_index = self.wire.start_socket.index + 1
-                destination_block_width = self.wire.start_socket.node.width
-                destination_block_height = self.wire.start_socket.node.height
-                d_Offset = self.wire.start_socket.getSocketPosition()
-
-                # Switch the indexes of the sockets
-                if self.wire.end_socket is not None:
-                    s_index = self.wire.end_socket.index + 1
-                    source_block_width = self.wire.end_socket.node.width
-                    source_block_height = self.wire.end_socket.node.height
-                    s_Offset = self.wire.end_socket.getSocketPosition()
-                else:
-                    s_index = 0
-                    source_block_width = 0
-                    source_block_height = 0
-                    s_Offset = [0, 0]
-
-                # Restart path from destination
-                temporary_wire_coordinates.clear()
-                temporary_wire_coordinates.append((sx, sy))
-
-            # ----------------------------------  Start Socket RIGHT OF End Socket  ----------------------------------
-            if sx > dx:
-                # If start socket is not on same height as end socket
-                # Otherwise a straight line will be drawn when this logic is passed through
-                if sy != dy:
-                    if DEBUG: print("Wire style: G")
-                    # Draw normal step line
-                    # ---------------------------
-                    #              |-<-(s-block)
-                    #              |
-                    #  (d-block)-<-|
-                    # ---------------------------
-
-                    temporary_wire_coordinates.append((sx - xDist, sy))
-                    temporary_wire_coordinates.append((sx - xDist, dy))
-
-            # ------------------------------  Start Socket EQUAL or LEFT OF End Socket  ------------------------------
-            else:
-
-                # Source block is above destination block
-                if sy - s_Offset[1] - (s_index * block_padding) < dy - d_Offset[1] - (d_index * block_padding):
-                    # Distance between bottom of source block and top of destination block
-                    yDist = ((dy - d_Offset[1]) - (sy - s_Offset[1] + source_block_height + title_height)) / 2
-
-                    # Bottom of source block is above top of destination block OR
-                    # --
-                    if (sy - s_Offset[1] + source_block_height + title_height) < (dy - d_Offset[1] - block_padding):
-                        if DEBUG: print("Wire style: H")
-                        # Draw S line
-                        #  |---<-(s-block)
-                        #  |
-                        #  |--------------|
-                        #                 |
-                        #    (d-block)-<--|
-                        # ------------------
-
-                        temporary_wire_coordinates.append((sx - (s_index * block_padding), sy))
-                        temporary_wire_coordinates.append((sx - (s_index * block_padding), dy - d_Offset[1] - yDist))
-                        temporary_wire_coordinates.append((dx + (d_index * block_padding), dy - d_Offset[1] - yDist))
-                        temporary_wire_coordinates.append((dx + (d_index * block_padding), dy))
-
-                    # Bottom of source block is at level with or below top of destination block
-                    else:
-
-                        # RHS of destination block is further left than RHS of source block
-                        if (dx + block_padding) < (sx + source_block_width + block_padding):
-                            if DEBUG: print("Wire style: I")
-                            # Draw line going around the top of the source block, clipped to RHS of source block + padding
-                            # --------------------------------------------------
-                            #     |--------------|            |--------------|
-                            #     |              |            |              |
-                            #     |-<-(s-block)  |     or     |-<-(s-block)  |
-                            #  (d-block)-<-------|               (d-block)-<-|
-                            # --------------------------------------------------
-
-                            temporary_wire_coordinates.append((sx - (s_index * block_padding), sy))
-                            temporary_wire_coordinates.append(
-                                (sx - (s_index * block_padding), sy - s_Offset[1] - (s_index * block_padding)))
-                            temporary_wire_coordinates.append((sx + source_block_width + (s_index * block_padding),
-                                                               sy - s_Offset[1] - (s_index * block_padding)))
-                            temporary_wire_coordinates.append((sx + source_block_width + (s_index * block_padding), dy))
-                            # path.lineTo(sx + source_block_width + block_padding, sy - s_Offset[1] - (s_index * block_padding))
-                            # path.lineTo(sx + source_block_width + block_padding, dy)
-
-                        # RHS of destination block is equal to or right of RHS of source block
-                        else:
-                            if DEBUG: print("Wire style: J")
-                            # Draw line going around the top of the source block, clipped to RHS of destination block + padding
-                            # -------------------------------------------------------------------------
-                            #  |-----------------------------|           |---------------------------|
-                            #  |                             |           |                           |
-                            #  |-<-(s-block)                 |    or     |-<-(s-block)   (d-block)-<-|
-                            #                    (d-block)-<-|
-                            # -------------------------------------------------------------------------
-
-                            temporary_wire_coordinates.append((sx - (s_index * block_padding), sy))
-                            temporary_wire_coordinates.append(
-                                (sx - (s_index * block_padding), sy - s_Offset[1] - (s_index * block_padding)))
-                            temporary_wire_coordinates.append(
-                                (dx + (d_index * block_padding), sy - s_Offset[1] - (s_index * block_padding)))
+                            temporary_wire_coordinates.append((dx + (d_index * block_padding), sy))
                             temporary_wire_coordinates.append((dx + (d_index * block_padding), dy))
 
-                # Source block is below destination block
-                else:
-                    # Distance between top of source block and bottom of destination block
-                    yDist = ((sy - s_Offset[1]) - (dy - d_Offset[1] + destination_block_height + title_height)) / 2
+                        # Bottom of destination block is equal to or below top of source block
+                        else:
+                            if DEBUG: print("Wire style: B")
+                            # Draw wrapped line between source and destination block, then above and around destination block
+                            # --------------------------------
+                            #              |---------------|
+                            #              |               |
+                            #              |   (d-block)-<-|
+                            #              |
+                            #  (s-block)->-|
+                            # --------------------------------
 
-                    # Top of source block is below bottom of destination block OR
-                    # --
-                    if (sy - s_Offset[1] - block_padding) > (dy - d_Offset[1] + destination_block_height + title_height):
-                        if DEBUG: print("Wire style: K")
-                        # Draw Z line
-                        # -----------------------
-                        #        (d-block)-<--|
-                        #                     |
-                        #  |------------------|
-                        #  |
-                        #  |-<-(s-block)
-                        # -----------------------
-
-                        temporary_wire_coordinates.append((sx - (s_index * block_padding), sy))
-                        temporary_wire_coordinates.append((sx - (s_index * block_padding), sy - yDist - s_Offset[1]))
-                        temporary_wire_coordinates.append((dx + (s_index * block_padding), sy - yDist - s_Offset[1]))
-                        temporary_wire_coordinates.append((dx + (s_index * block_padding), dy))
-
-                    # Top of source block is at level with or above bottom of destination block
-                    else:
-
-                        # LHS of destination is further left than LHS of source block
-                        if (dx - destination_block_width - block_padding) < (sx - block_padding):
-                            if DEBUG: print("Wire style: L")
-                            # Draw line going around the top of the destination block, clipped to the LHS of destination block minus padding
-                            # ------------------------
-                            #  |--------------|
-                            #  |              |
-                            #  |  (d-block)-<-|
-                            #  |
-                            #  |----------<-(s-block)
-                            # ------------------------
-
-                            temporary_wire_coordinates.append(
-                                (dx - destination_block_width - (s_index * block_padding), sy))
-                            temporary_wire_coordinates.append((dx - destination_block_width - (s_index * block_padding),
-                                                               dy - d_Offset[1] - (d_index * block_padding)))
+                            temporary_wire_coordinates.append((sx + xDist, sy))
+                            temporary_wire_coordinates.append((sx + xDist, dy - d_Offset[1] - (d_index * block_padding)))
                             temporary_wire_coordinates.append(
                                 (dx + d_index * block_padding, dy - d_Offset[1] - (d_index * block_padding)))
                             temporary_wire_coordinates.append((dx + d_index * block_padding, dy))
 
-                        # LHS of destination is equal to or right of LHS of source block
-                        else:
-                            if DEBUG: print("Wire style: M")
-                            # Draw line going around the top of the destination block, clipped to the LHS of source block minus padding
+                    # Top of destination block is equal to or below source block socket
+                    else:
+                        if DEBUG: print("Wire style: C")
+                        # Draw C (inverted equivalent) line from S down to D, clipped to RHS of destination block
+                        # ------------------------
+                        #   (s-block)->---------|
+                        #                       |
+                        #           (d-block)-<-|
+                        # ------------------------
+
+                        temporary_wire_coordinates.append((dx + d_index * block_padding, sy))
+                        temporary_wire_coordinates.append((dx + d_index * block_padding, dy))
+
+                # -------------------------------  End Socket on LHS of Destination Block  -------------------------------
+                else:
+                    # xDist is from RHS of source block, to LHS of destination block
+                    xDist = (dx - (sx + source_block_width)) / 2
+
+                    # Should be sy > dy, but graphics view draws the y-axis inverted
+                    # Top of source block is above destination block
+                    if sy - s_Offset[1] - (s_index * block_padding) < dy:
+                        # Bottom of source block is above top of destination block OR
+                        # RHS of source block further left than LHS of destination block
+
+                        # Wire from multiple sockets spaced from bottom of source block at index (no overlap)
+                        if (sy - s_Offset[1] + source_block_height + title_height + (s_index * block_padding) < dy) or (dx + xDist <= dx + (block_padding / 2)):
+                            if DEBUG: print("Wire style: D")
+                            # Draw C line from S down to D, clipped to LHS of source block
                             # ----------------------
-                            #  |----------------|
-                            #  |                |
-                            #  |    (d-block)-<-|
+                            #  |--<-(s-block)
                             #  |
-                            #  |-<-(s-block)
+                            #  |----->-(d-block)
                             # ----------------------
+
+                            temporary_wire_coordinates.append((sx - (s_index * block_padding), sy))
+                            temporary_wire_coordinates.append((sx - (s_index * block_padding), dy))
+
+                        # Bottom of source block is equal to or below top of destination block
+                        else:
+                            if DEBUG: print("Wire style: E")
+                            # Draw wrapped line above and around the source block, then between the source and destination block
+                            # --------------------------------
+                            #  |---------------|
+                            #  |               |
+                            #  |-<-(s-block)   |
+                            #                  |
+                            #                  |->-(d-block)
+                            # --------------------------------
 
                             temporary_wire_coordinates.append((sx - s_index * block_padding, sy))
                             temporary_wire_coordinates.append(
-                                (sx - s_index * block_padding, dy - d_Offset[1] - (d_index * block_padding)))
+                                (sx - s_index * block_padding, sy - s_Offset[1] - (s_index * block_padding)))
                             temporary_wire_coordinates.append(
-                                (dx + d_index * block_padding, dy - d_Offset[1] - (d_index * block_padding)))
-                            temporary_wire_coordinates.append((dx + d_index * block_padding, dy))
+                                (sx + source_block_width + xDist, sy - s_Offset[1] - (s_index * block_padding)))
+                            temporary_wire_coordinates.append((sx + source_block_width + xDist, dy))
 
-            # Update boolean that wire is completed, as to get here, the end point of the wire must be dropped
-            wire_completed = True
+                    # Top of source block is equal to or below destination block
+                    else:
+                        if DEBUG: print("Wire style: F")
+                        # Draw C line from S up to D, clipped to LHS of source block
+                        # --------------------
+                        # |------->-(d-block)
+                        # |
+                        # |-<-(s-block)
+                        # --------------------
 
-        # ############################################  End of Wire Logic  ###########################################
+                        temporary_wire_coordinates.append((sx - s_index * block_padding, sy))
+                        temporary_wire_coordinates.append((sx - s_index * block_padding, dy))
 
-        # Finally the Wire is finished, by connecting the path to the destination (end) Socket coordinates
-        # that coordinate is also added as the final coordinate point of the wire to the temporary coordinates list
-        temporary_wire_coordinates.append((dx, dy))
+                # Update boolean that wire is completed, as to get here, the end point of the wire must be dropped
+                wire_completed = True
 
-        # The path of the wire is set to be drawn under the path logic that has just been calculated
-        for i, (x,y) in enumerate(temporary_wire_coordinates):
-            if i == 0:
-                path = QPainterPath(QPointF(x,y))
-            elif i == len(temporary_wire_coordinates):
-                path.lineTo(x, y)
-                path.moveTo(x, y)
-            else:
-                path.lineTo(x,y)
+            # ========================  Start & End Sockets are on opposite sides of two blocks  =========================
+            elif self.posSource_Orientation != self.posDestination_Orientation:
+                # Otherwise sockets are on different sides (out from left into right, or out of right into left)
 
-        # If the wire has been dropped on a destination socket (and is not being dragged around), update its coordinates
-        if wire_completed:
-            self.updateWireCoordinates(temporary_wire_coordinates)
-        return path
+                # --------------------------------  Start Socket on LHS of Source Block  ---------------------------------
+                if self.posSource_Orientation == LEFT:
+                    # - - - - - - - - - - - - Continue with Extracted Logic of Start/End Sockets - - - - - - - - - - - - -
+                    # Continue path from source
+                    # Destination_block & Source_block are kept the same
+                    xDist = (sx - dx) / 2
+
+                # --------------------------------  Start Socket on RHS of Source Block  ---------------------------------
+                else:
+                    # - - - - - - - - - - - Re-Extract Logic of Start/End Sockets (Switching them) - - - - - - - - - - - -
+                    # Use the same logic as for above, but swap positions of start socket with end socket
+                    sx, sy = self.posDestination[0], self.posDestination[1]
+                    dx, dy = self.posSource[0], self.posSource[1]
+
+                    # Destination_block & Source_block = node of start_socket and end_socket respectively
+                    d_index = self.wire.start_socket.index + 1
+                    destination_block_width = self.wire.start_socket.node.width
+                    destination_block_height = self.wire.start_socket.node.height
+                    d_Offset = self.wire.start_socket.getSocketPosition()
+
+                    # Switch the indexes of the sockets
+                    if self.wire.end_socket is not None:
+                        s_index = self.wire.end_socket.index + 1
+                        source_block_width = self.wire.end_socket.node.width
+                        source_block_height = self.wire.end_socket.node.height
+                        s_Offset = self.wire.end_socket.getSocketPosition()
+                    else:
+                        s_index = 0
+                        source_block_width = 0
+                        source_block_height = 0
+                        s_Offset = [0, 0]
+
+                    # Restart path from destination
+                    temporary_wire_coordinates.clear()
+                    temporary_wire_coordinates.append((sx, sy))
+
+                # ----------------------------------  Start Socket RIGHT OF End Socket  ----------------------------------
+                if sx > dx:
+                    # If start socket is not on same height as end socket
+                    # Otherwise a straight line will be drawn when this logic is passed through
+                    if sy != dy:
+                        if DEBUG: print("Wire style: G")
+                        # Draw normal step line
+                        # ---------------------------
+                        #              |-<-(s-block)
+                        #              |
+                        #  (d-block)-<-|
+                        # ---------------------------
+
+                        temporary_wire_coordinates.append((sx - xDist, sy))
+                        temporary_wire_coordinates.append((sx - xDist, dy))
+
+                # ------------------------------  Start Socket EQUAL or LEFT OF End Socket  ------------------------------
+                else:
+
+                    # Source block is above destination block
+                    if sy - s_Offset[1] - (s_index * block_padding) < dy - d_Offset[1] - (d_index * block_padding):
+                        # Distance between bottom of source block and top of destination block
+                        yDist = ((dy - d_Offset[1]) - (sy - s_Offset[1] + source_block_height + title_height)) / 2
+
+                        # Bottom of source block is above top of destination block OR
+                        # --
+                        if (sy - s_Offset[1] + source_block_height + title_height) < (dy - d_Offset[1] - block_padding):
+                            if DEBUG: print("Wire style: H")
+                            # Draw S line
+                            #  |---<-(s-block)
+                            #  |
+                            #  |--------------|
+                            #                 |
+                            #    (d-block)-<--|
+                            # ------------------
+
+                            temporary_wire_coordinates.append((sx - (s_index * block_padding), sy))
+                            temporary_wire_coordinates.append((sx - (s_index * block_padding), dy - d_Offset[1] - yDist))
+                            temporary_wire_coordinates.append((dx + (d_index * block_padding), dy - d_Offset[1] - yDist))
+                            temporary_wire_coordinates.append((dx + (d_index * block_padding), dy))
+
+                        # Bottom of source block is at level with or below top of destination block
+                        else:
+
+                            # RHS of destination block is further left than RHS of source block
+                            if (dx + block_padding) < (sx + source_block_width + block_padding):
+                                if DEBUG: print("Wire style: I")
+                                # Draw line going around the top of the source block, clipped to RHS of source block + padding
+                                # --------------------------------------------------
+                                #     |--------------|            |--------------|
+                                #     |              |            |              |
+                                #     |-<-(s-block)  |     or     |-<-(s-block)  |
+                                #  (d-block)-<-------|               (d-block)-<-|
+                                # --------------------------------------------------
+
+                                temporary_wire_coordinates.append((sx - (s_index * block_padding), sy))
+                                temporary_wire_coordinates.append(
+                                    (sx - (s_index * block_padding), sy - s_Offset[1] - (s_index * block_padding)))
+                                temporary_wire_coordinates.append((sx + source_block_width + (s_index * block_padding),
+                                                                   sy - s_Offset[1] - (s_index * block_padding)))
+                                temporary_wire_coordinates.append((sx + source_block_width + (s_index * block_padding), dy))
+                                # path.lineTo(sx + source_block_width + block_padding, sy - s_Offset[1] - (s_index * block_padding))
+                                # path.lineTo(sx + source_block_width + block_padding, dy)
+
+                            # RHS of destination block is equal to or right of RHS of source block
+                            else:
+                                if DEBUG: print("Wire style: J")
+                                # Draw line going around the top of the source block, clipped to RHS of destination block + padding
+                                # -------------------------------------------------------------------------
+                                #  |-----------------------------|           |---------------------------|
+                                #  |                             |           |                           |
+                                #  |-<-(s-block)                 |    or     |-<-(s-block)   (d-block)-<-|
+                                #                    (d-block)-<-|
+                                # -------------------------------------------------------------------------
+
+                                temporary_wire_coordinates.append((sx - (s_index * block_padding), sy))
+                                temporary_wire_coordinates.append(
+                                    (sx - (s_index * block_padding), sy - s_Offset[1] - (s_index * block_padding)))
+                                temporary_wire_coordinates.append(
+                                    (dx + (d_index * block_padding), sy - s_Offset[1] - (s_index * block_padding)))
+                                temporary_wire_coordinates.append((dx + (d_index * block_padding), dy))
+
+                    # Source block is below destination block
+                    else:
+                        # Distance between top of source block and bottom of destination block
+                        yDist = ((sy - s_Offset[1]) - (dy - d_Offset[1] + destination_block_height + title_height)) / 2
+
+                        # Top of source block is below bottom of destination block OR
+                        # --
+                        if (sy - s_Offset[1] - block_padding) > (dy - d_Offset[1] + destination_block_height + title_height):
+                            if DEBUG: print("Wire style: K")
+                            # Draw Z line
+                            # -----------------------
+                            #        (d-block)-<--|
+                            #                     |
+                            #  |------------------|
+                            #  |
+                            #  |-<-(s-block)
+                            # -----------------------
+
+                            temporary_wire_coordinates.append((sx - (s_index * block_padding), sy))
+                            temporary_wire_coordinates.append((sx - (s_index * block_padding), sy - yDist - s_Offset[1]))
+                            temporary_wire_coordinates.append((dx + (s_index * block_padding), sy - yDist - s_Offset[1]))
+                            temporary_wire_coordinates.append((dx + (s_index * block_padding), dy))
+
+                        # Top of source block is at level with or above bottom of destination block
+                        else:
+
+                            # LHS of destination is further left than LHS of source block
+                            if (dx - destination_block_width - block_padding) < (sx - block_padding):
+                                if DEBUG: print("Wire style: L")
+                                # Draw line going around the top of the destination block, clipped to the LHS of destination block minus padding
+                                # ------------------------
+                                #  |--------------|
+                                #  |              |
+                                #  |  (d-block)-<-|
+                                #  |
+                                #  |----------<-(s-block)
+                                # ------------------------
+
+                                temporary_wire_coordinates.append(
+                                    (dx - destination_block_width - (s_index * block_padding), sy))
+                                temporary_wire_coordinates.append((dx - destination_block_width - (s_index * block_padding),
+                                                                   dy - d_Offset[1] - (d_index * block_padding)))
+                                temporary_wire_coordinates.append(
+                                    (dx + d_index * block_padding, dy - d_Offset[1] - (d_index * block_padding)))
+                                temporary_wire_coordinates.append((dx + d_index * block_padding, dy))
+
+                            # LHS of destination is equal to or right of LHS of source block
+                            else:
+                                if DEBUG: print("Wire style: M")
+                                # Draw line going around the top of the destination block, clipped to the LHS of source block minus padding
+                                # ----------------------
+                                #  |----------------|
+                                #  |                |
+                                #  |    (d-block)-<-|
+                                #  |
+                                #  |-<-(s-block)
+                                # ----------------------
+
+                                temporary_wire_coordinates.append((sx - s_index * block_padding, sy))
+                                temporary_wire_coordinates.append(
+                                    (sx - s_index * block_padding, dy - d_Offset[1] - (d_index * block_padding)))
+                                temporary_wire_coordinates.append(
+                                    (dx + d_index * block_padding, dy - d_Offset[1] - (d_index * block_padding)))
+                                temporary_wire_coordinates.append((dx + d_index * block_padding, dy))
+
+                # Update boolean that wire is completed, as to get here, the end point of the wire must be dropped
+                wire_completed = True
+
+            # ############################################  End of Wire Logic  ###########################################
+
+            # Finally the Wire is finished, by connecting the path to the destination (end) Socket coordinates
+            # that coordinate is also added as the final coordinate point of the wire to the temporary coordinates list
+            temporary_wire_coordinates.append((dx, dy))
+
+            # The path of the wire is set to be drawn under the path logic that has just been calculated
+            for i, (x,y) in enumerate(temporary_wire_coordinates):
+                if i == 0:
+                    path = QPainterPath(QPointF(x,y))
+                elif i == len(temporary_wire_coordinates):
+                    path.lineTo(x, y)
+                    path.moveTo(x, y)
+                else:
+                    path.lineTo(x,y)
+
+            # If the wire has been dropped on a destination socket (and is not being dragged around), update its coordinates
+            if wire_completed:
+                self.updateWireCoordinates(temporary_wire_coordinates)
+            return path
+        except Exception as e:
+            if self.FATAL_ERROR == False:
+                print("-------------------------------------------------------------------------")
+                print("Caught fatal exception while trying to calculate wire bends. Please save your work.")
+                print("-------------------------------------------------------------------------")
+                traceback.print_exc(file=sys.stderr)
+                self.FATAL_ERROR = True

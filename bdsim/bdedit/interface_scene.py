@@ -388,6 +388,7 @@ class Scene(Serializable):
                     if label_data is not None:
                         Floating_Label(self, self.window).deserialize(label_data, hashmap)
         except KeyError:
+            # If model data doesn't contain 'labels' then none were saved, so don't create any.
             pass
 
         return True

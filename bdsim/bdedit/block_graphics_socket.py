@@ -1,9 +1,13 @@
+# Library imports
+import sys
+import traceback
+from PIL import ImageFont
+
 # PyQt5 imports
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
-from PIL import ImageFont
 
 # =============================================================================
 #
@@ -93,6 +97,9 @@ class GraphicsSocket(QGraphicsItem):
         elif self.socket.socket_type == OUTPUT:
             self._brush = QBrush(self._color_background_output)
 
+        # Internal variable for catching fatal errors, and allowing user to save work before crashing
+        self.FATAL_ERROR = False
+
     # Todo - update docs, and inline comments
     # -----------------------------------------------------------------------------
     def paint(self, painter, style, widget=None):
@@ -130,6 +137,8 @@ class GraphicsSocket(QGraphicsItem):
             # Dimensions of the socket sign - contains [width, height] of character
             if self.socket.socket_sign:
                 (char_width, char_height) = self.charDimensions()
+            else:
+                (char_width, char_height) = [0, 0]
 
             # If the socket is flipped, adjust the internal multi variable
             if self.socket.position == RIGHT:
@@ -142,16 +151,24 @@ class GraphicsSocket(QGraphicsItem):
                 painter.drawRect(-self.square, -self.square, 2 * self.square, 2 * self.square)
                 # If the input socket has a sign (will be true for the PROD and SUM Blocks)
                 # paint the relevant sign (+,-,*,/) next to the input socket
-                if self.socket.socket_sign is not None:
-                    path = self.getSignPath(self.socket.socket_sign, multi)
-                    if path is None:
-                        painter.setPen(self._sign_pen)
-                        painter.setFont(self._char_font)
-                        painter.drawText((10 + offset) * multi, char_height, self.socket.socket_sign)
-                    else:
-                        # The painter path for the respective sign depends on the sign relating to this socket
-                        painter.setPen(self._sign_pen)
-                        painter.drawPath(path)
+                try:
+                    if self.socket.socket_sign is not None:
+                        path = self.getSignPath(self.socket.socket_sign, multi)
+                        if path is None:
+                            painter.setPen(self._sign_pen)
+                            painter.setFont(self._char_font)
+                            painter.drawText((10 + offset) * multi, char_height, self.socket.socket_sign)
+                        else:
+                            # The painter path for the respective sign depends on the sign relating to this socket
+                            painter.setPen(self._sign_pen)
+                            painter.drawPath(path)
+                except Exception as e:
+                    if self.FATAL_ERROR == False:
+                        print("---------------------------------------------------------------------------------------")
+                        print("Caught fatal exception while trying to draw input socket labels. Please save your work.")
+                        print("---------------------------------------------------------------------------------------")
+                        traceback.print_exc(file=sys.stderr)
+                        self.FATAL_ERROR = True
 
             # This code paints a triangle for the output socket
             if self.socket.socket_type == OUTPUT:
@@ -162,10 +179,18 @@ class GraphicsSocket(QGraphicsItem):
                 path.lineTo(multi * self.triangle_left, multi * self.triangle_up)
                 painter.drawPath(path)
 
-                if self.socket.socket_sign is not None:
-                    painter.setPen(self._sign_pen)
-                    painter.setFont(self._char_font)
-                    painter.drawText((10 + offset) * multi, char_height, self.socket.socket_sign)
+                try:
+                    if self.socket.socket_sign is not None:
+                        painter.setPen(self._sign_pen)
+                        painter.setFont(self._char_font)
+                        painter.drawText((10 + offset) * multi, char_height, self.socket.socket_sign)
+                except Exception as e:
+                    if self.FATAL_ERROR == False:
+                        print("----------------------------------------------------------------------------------------")
+                        print("Caught fatal exception while trying to draw output socket labels. Please save your work.")
+                        print("----------------------------------------------------------------------------------------")
+                        traceback.print_exc(file=sys.stderr)
+                        self.FATAL_ERROR = True
 
     # -----------------------------------------------------------------------------
     def paintPlus(self, multi):

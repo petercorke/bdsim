@@ -1,3 +1,7 @@
+# Library imports
+import sys
+import traceback
+
 # PyQt5 imports
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
@@ -330,14 +334,15 @@ class GraphicsBlock(QGraphicsItem):
             # Icon of the block is drawn overtop the blocks' background
             if QtCore.QFile.exists(self.icon):
                 if self.block.flipped and QtCore.QFile.exists(self.block.flipped_icon):
-                    icon_item = QPixmap(self.block.flipped_icon).scaledToWidth(50) if self.block.flipped_icon else QPixmap(self.block.flipped_icon)  # Icons are scaled down to 50 pixels
+                    icon_image = QImage(self.block.flipped_icon)
+                    # icon_item = QPixmap(self.block.flipped_icon).scaledToWidth(50) if self.block.flipped_icon else QPixmap(self.block.flipped_icon)  # Icons are scaled down to 50 pixels
                 else:
-                    icon_item = QPixmap(self.icon).scaledToWidth(50) if self.icon else QPixmap(self.icon)
-                #icon_item = QPixmap(self.icon).scaledToWidth(100) if self.icon else QPixmap(self.icon)
-                # icon_item = QPixmap(self.icon)
-                target = QRect((self.width - icon_item.width()) / 2, (self.height - icon_item.height()) / 2, self.width, self.height)
-                source = QRect(0, 0, self.width, self.height)
-                painter.drawPixmap(target, icon_item, source)
+                    icon_image = QImage(self.icon)
+                    # icon_item = QPixmap(self.icon).scaledToWidth(50) if self.icon else QPixmap(self.icon)
+                # target = QRect((self.width - icon_item.width()) / 2, (self.height - icon_item.height()) / 2, self.width, self.height)
+                # source = QRect(0, 0, self.width, self.height)
+                painter.drawImage(QRect((self.width - (icon_image.width())/5) / 2, (self.height - (icon_image.height())/5) / 2, 50, 50), icon_image)
+                # painter.drawPixmap(target, icon_item, source)
 
         except Exception as e:
             if self.FATAL_ERROR == False:

@@ -27,6 +27,7 @@ class GraphicsLabel(QGraphicsItem):
         self.grText = QGraphicsProxyWidget(self)
         self.content.setGeometry(0, 0, self.floating_label.width, self.floating_label.height)
         self.grText.setWidget(self.content)
+        self.setZValue(-3)
 
     def boundingRect(self):
         return QRectF(

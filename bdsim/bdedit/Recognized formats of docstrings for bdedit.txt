@@ -6,6 +6,7 @@ For assigning the default value for a parameter, expected format in param defini
 
 	text up until 'defaults to' is ignored
 	after 'to' bdedit expects to see either a value that can be evaluated or a string
+	* IMPORTANT * if the value that follows the 'to' is in the form of a list, there must be no spaces between values in the list, e.g. [0,0,0]
 	for safety, bdedit assigns None as the default type, and if any other type is found, None is replaced by that type
 	if defaults to None is found or no other type is found, bdedit will assign the NoneType as an acceptable type for the parameter
 
@@ -29,7 +30,7 @@ e.g.	type of waveform to generate, one of: 'sine', 'square' [default], 'triangle
 	frequency unit, one of: 'rad/s', 'Hz' [default]
 
 	text up until 'one of:' is ignored
-	after 'of:' every option is expected to be given as as string, with '' or ""
+	* Important * after 'of:' every option is expected to be given as as string, with '' NOT "" around the options
 	options are differentiated by the comma ,
 	whichever option should be the default value, it should have a [default] after the 'option' but before the comma
 	after last option, there should be no more text

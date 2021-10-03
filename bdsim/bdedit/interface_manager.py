@@ -44,7 +44,7 @@ class InterfaceWindow(QMainWindow):
         self.createToolbar()
 
         # set window properties
-        self.setWindowIcon(QIcon(":/Icons_Reference/Icons/bdsim_icon.png"))
+        # self.setWindowIcon(QIcon(":/Icons_Reference/Icons/bdsim_icon.png"))
         self.updateApplicationName()
         self.show()
 
@@ -400,6 +400,7 @@ class InterfaceWindow(QMainWindow):
                 for label in self.interface.scene.floating_labels:
                     self.checkSelection(label)
                     label.content.text_edit.setFont(font)
+                    label.content.updateText()
 
     def textFontSize(self):
         if self.interface.scene.floating_labels:

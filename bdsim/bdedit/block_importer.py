@@ -29,6 +29,10 @@ def import_blocks(scene, window):
         'JTraj' : [125, 100],
     }
 
+    # Make in/out labels parameter for subsystem blocks
+    inlabels_param = ["inport labels", list, None, [["type", [type(None), list]]]]
+    outlabels_param = ["outport labels", list, None, [["type", [type(None), list]]]]
+
     block_list = parser.docstring_parser()
 
     block_library = []
@@ -365,12 +369,18 @@ def import_blocks(scene, window):
                     # Using the extracted information, contstruct the parameter list
                     block_parameters.append([param_name, param_type, param_value, param_restrictions])
 
-                except:
-                    print("@@@@@@@ Fatal error: Unable to parse parameter info, param not constructed " + block_type + ": -> " + param_name + ". @@@@@@")
+                except Exception as e:
+                    print("@@@@@@@ Fatal error: Cannot parse parameter info to construct parameter for block: -> '" + block_type + "', parameter name: -> '" + param_name + "'.@@@@@@")
+                    print("@@@@@@@ Printing exception below: @@@@@@@")
+                    print(e)
 
-            # if not block_ds["params"]:
-            #     #print("\n\nThis block has no parameters: ", block_type, " param_docstring: ", block_ds["params"])
-            #     block_parameters = [["dummy_parameter", str, None, []]]
+
+            if block_classname in ['SubSystem','OutPort']:
+                block_parameters.append(inlabels_param)
+
+            if block_classname in ['SubSystem','InPort']:
+                block_parameters.append(outlabels_param)
+
 
             # -----------------------------------------------------------------------------------------------------
             # Section for importing block class from its module, and assigning to it the extracted information
@@ -423,60 +433,35 @@ def import_blocks(scene, window):
                 # Add this block to blocklist
                 blocklist.append(new_block_class)
 
-                # If this block belongs to a new group of blocks, for which a list hasn't been made yet
-                # then make a list in the block_library, to hold those blocks
-                if block_parentclass not in imported_block_groups:
-                    imported_block_groups.append(block_parentclass)
-                    block_library.append([block_parentclass, []])
-
-                # Add this block to the group of blocks it belongs to
-                for i, group in enumerate(block_library):
-                    # 1st element of group, will always be the group name (sinks, sources, functions, etc)
-                    if group[0] == block_parentclass:
-                        block_library[i][1].append([blockname(new_block_class), new_block_class])
-                        break
-
-                # -----------------------------------------------------------------------------------------------
-
                 # # If this block belongs to a new group of blocks, for which a list hasn't been made yet
                 # # then make a list in the block_library, to hold those blocks
-                # if block_group not in imported_block_groups:
-                #     imported_block_groups.append(block_group)
-                #     block_library.append([block_group, []])
+                # if block_parentclass not in imported_block_groups:
+                #     imported_block_groups.append(block_parentclass)
+                #     block_library.append([block_parentclass, []])
                 #
                 # # Add this block to the group of blocks it belongs to
                 # for i, group in enumerate(block_library):
                 #     # 1st element of group, will always be the group name (sinks, sources, functions, etc)
-                #     if group[0] == block_group:
-                #         #block_library[i][1].append([blockname(new_block_class), new_block_class, block_path])
+                #     if group[0] == block_parentclass:
                 #         block_library[i][1].append([blockname(new_block_class), new_block_class])
                 #         break
+
+                # -----------------------------------------------------------------------------------------------
+
+                # If this block belongs to a new group of blocks, for which a list hasn't been made yet
+                # then make a list in the block_library, to hold those blocks
+                if block_group not in imported_block_groups:
+                    imported_block_groups.append(block_group)
+                    block_library.append([block_group, []])
+
+                # Add this block to the group of blocks it belongs to
+                for i, group in enumerate(block_library):
+                    # 1st element of group, will always be the group name (sinks, sources, functions, etc)
+                    if group[0] == block_group:
+                        block_library[i][1].append([blockname(new_block_class), new_block_class])
+                        break
 
             except KeyError:
                 print("Error: attempted to create a block class that isn't supported. Attempted class type: ", block_classname)
 
     return block_library
-
-# # Print all sub-lists in block_library list
-# [print(item) for item in import_blocks()]
-
-# # Print all imported blocks
-# for item in import_blocks():
-#     print("block group:", item[0])
-#     for block in item[1]:
-#         print(block[0])
-#     print()
-
-# # Print certain class attributes from all imported blocks
-# for item in import_blocks():
-#     print("block group:", item[0])
-#     for block in item[1]:
-#         print("     block:", block[1].block_type)
-#         print("          title:", block[1].title)
-#         print("          icon path:", block[1].icon)
-#         print("          nin:", block[1].inputsNum)
-#         print("          nout:", block[1].outputsNum)
-#         print("          width:", block[1].width)
-#         print("          params:", block[1].parameters)
-#         print()
-#     print()

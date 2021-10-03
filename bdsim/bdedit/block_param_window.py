@@ -84,6 +84,10 @@ class ParamWindow(QWidget):
         self._width = 300 * self.block.window.scale
         self.setFixedWidth(self._width)
 
+        # Variable to update title of model when parameter values have been changed,
+        # to indicate that there is unsaved progress
+        self.paramsWereChanged = False
+
         # Further initializing necessary parameter window settings, and calling
         # the method that will build the it
         self.initUI()
@@ -181,7 +185,6 @@ class ParamWindow(QWidget):
             self.message.setIconPixmap(QPixmap(":/Icons_Reference/Icons/error.png"))
             message_duration = 5
         elif messageType == 'Success':
-            # self.message.setIconPixmap(QPixmap(":/Icons_Reference/Icons/Success_Icon.png"))
             self.message.setIconPixmap(QPixmap(":/Icons_Reference/Icons/success.png"))
             message_duration = 1.5
 
@@ -384,7 +387,7 @@ class ParamWindow(QWidget):
         # or a bad_input (incompatible with option restrictions), and initially these
         # are set to being empty. If parameters cannot be set due to errors, these will
         # be appended into these empty lists
-        invalid_input, bad_inputs = [], []
+        invalid_input, bad_inputs, bad_socket_labels = [], [], []
 
         # Check if the block has parameters, if so, go through the sanity checking of each parameter value
         if self.parameters:
@@ -411,74 +414,163 @@ class ParamWindow(QWidget):
                             # Append the parameter edited, and the parameter options, as a bad_input
                             bad_inputs.append([paramName, paramOptions])
                         else:
+
                             # Otherwise if both sanity checks pass, value is safe to update, so
-                            # Set the current parameter equal to edited parameter value
-                            self.parameters[i][2] = inputInCompatibleFormat
+                            # Check if the given value is different to what is already set as the param value
+                            # If it is the same, don't update the value
+                            if inputInCompatibleFormat == paramVal:
+                                pass
 
-                            # If self.parameter relates to controlling the number of inputs a block has
-                            if self.parameters[i][0] in ["nin", "ops", "signs"]:
+                            # Otherwise update the value
+                            else:
+                                # Set the current parameter equal to edited parameter value
+                                self.parameters[i][2] = inputInCompatibleFormat
+                                self.paramsWereChanged = True
 
-                                # Grab the number of required input sockets
-                                if self.parameters[i][0] == "nin":
+                                # If self.parameter relates to controlling the number of inputs a block has
+                                if self.parameters[i][0] in ["nin", "ops", "signs"]:
+
+                                    # Grab the number of required input sockets
+                                    if self.parameters[i][0] == "nin":
+                                        num_sockets = self.parameters[i][2]
+                                    else:
+                                        num_sockets = len(self.parameter_values[i].text())
+
+                                    # Don't do anything, if the provided number of input sockets matches the number the block already has,
+                                    # or if the symbols (+,-,*,/) for the block haven't changed
+                                    # if len(self.block.inputs) == num_sockets and inputInCompatibleFormat == paramVal:
+                                    #     pass
+                                    # else:
+                                    # If the given number of input sockets matches the number the block already has, or if the number of
+                                    # symbols (+,-,*,/) for the block hasn't changed
+                                    if len(self.block.inputs) == num_sockets:
+                                        # If the values of the signs hasn't changed, then don't do anything
+                                        if inputInCompatibleFormat == paramVal:
+                                            pass
+                                        # If the values of the signs has changed (but the number of signs is still the same), just
+                                        # update the signs without removing the wires
+                                        else:
+                                            # Split the socket signs by number of characters given
+                                            chars = [char for char in inputInCompatibleFormat]
+
+                                            # Go through each of the chars from the string of symbols for this block's signs
+                                            # and set the respective socket to that symbol
+                                            for j, char in enumerate(chars):
+                                                self.block.inputs[j].socket_sign = char
+
+                                    else:
+                                        # If the block already has input sockets, grab their orientation (LEFT / RIGHT) then delete
+                                        # Else, draw input socket with default orientation (LEFT) and no need to delete as block has no input sockets
+                                        if self.block.inputs:
+                                            orientation = self.block.inputs[0].position
+                                            # Remove all current input sockets
+                                            self.block.inputs[0].removeSockets("Input")
+                                        else:
+                                            orientation = LEFT
+                                        # Recreate input sockets to the number provided
+                                        # If self.block is a SUM or PROD block, this will also update the input sockets' sign (+,_,*,/)
+                                        self.block.inputsNum = num_sockets
+                                        self.block.makeInputSockets(self.block.inputsNum, orientation)
+
+                                # If self.parameter relates to controlling the number of outputs a block has
+                                if self.parameters[i][0] in ["nout"]:
+                                    # Grab number of required output sockets
                                     num_sockets = self.parameters[i][2]
-                                else:
-                                    num_sockets = len(self.parameter_values[i].text())
-
-                                # Don't do anything, if the provided number of input sockets matches the number the block already has,
-                                # or if the symbols (+,-,*,/) for the block haven't changed
-                                # if len(self.block.inputs) == num_sockets and inputInCompatibleFormat == paramVal:
-                                #     pass
-                                # else:
-                                # If the given number of input sockets matches the number the block already has, or if the number of
-                                # symbols (+,-,*,/) for the block hasn't changed
-                                if len(self.block.inputs) == num_sockets:
-                                    # If the values of the signs hasn't changed, then don't do anything
-                                    if inputInCompatibleFormat == paramVal:
+                                    # If provided number of output sockets matches the number the block already has, don't do anything
+                                    if len(self.block.outputs) == num_sockets:
                                         pass
-                                    # If the values of the signs has changed (but the number of signs is still the same), just
-                                    # update the signs without removing the wires
                                     else:
-                                        # Split the socket signs by number of characters given
-                                        chars = [char for char in inputInCompatibleFormat]
+                                        # If the block already has output sockets, grab their orientation (LEFT / RIGHT) then delete
+                                        # Else, draw output socket with default orientation (RIGHT) and no need to delete as block has no output sockets
+                                        if self.block.outputs:
+                                            orientation = self.block.outputs[0].position
+                                            # Remove all current output sockets
+                                            self.block.outputs[0].removeSockets("Output")
+                                        else:
+                                            orientation = RIGHT
+                                        # Recreate output sockets to the number provided
+                                        self.block.outputsNum = num_sockets
+                                        self.block.makeOutputSockets(self.block.outputsNum, orientation)
 
-                                        # Go through each of the chars from the string of symbols for this block's signs
-                                        # and set the respective socket to that symbol
-                                        for j, char in enumerate(chars):
-                                            self.block.inputs[j].socket_sign = char
+                                # If self.parameter relates to controlling the names of inport labels on subsystem blocks
+                                if self.parameters[i][0] == "inport labels":
+                                    # First check if labels are given for the sockets, if not, don't do anything special
+                                    if self.parameters[i][2] is not None:
+                                        input_length = len(self.parameters[i][2])
+                                        if input_length > 0:
+                                            # Find number of inputs controlled by nin
+                                            found_nin = False
+                                            for params in self.parameters:
+                                                if params[0] == "nin":
+                                                    num_nin_sockets = params[2]
+                                                    found_nin = True
+                                                    break
+                                            # Check if nin parameter was found, if not, return error as we need to know how many sockets to draw
+                                            if found_nin == False:
+                                                print("Error: Cannot draw InPort labels as no 'nin' parameter was found to know how many sockets to draw.")
+                                            else:
+                                                # If nin parameter was found, check if number of given InPort labels matches number of sockets
+                                                if input_length != num_nin_sockets:
+                                                    bad_socket_labels.append([paramName, paramOptions])
+                                                else:
+                                                    # If parameter value hasn't changed, don't do anything
+                                                    if inputInCompatibleFormat == paramVal:
+                                                        pass
+                                                    else:
+                                                        # If the block already has input sockets, grab their orientation (LEFT / RIGHT) then delete
+                                                        # Else, draw input socket with default orientation (LEFT) and no need to delete as block has no input sockets
+                                                        if self.block.inputs:
+                                                            orientation = self.block.inputs[0].position
+                                                            # Remove all current input sockets
+                                                            self.block.inputs[0].removeSockets("Input")
+                                                        else:
+                                                            orientation = LEFT
 
-                                else:
-                                    # If the block already has input sockets, grab their orientation (LEFT / RIGHT) then delete
-                                    # Else, draw input socket with default orientation (LEFT) and no need to delete as block has no input sockets
-                                    if self.block.inputs:
-                                        orientation = self.block.inputs[0].position
-                                        # Remove all current input sockets
-                                        self.block.inputs[0].removeSockets("Input")
-                                    else:
-                                        orientation = LEFT
-                                    # Recreate input sockets to the number provided
-                                    # If self.block is a SUM or PROD block, this will also update the input sockets' sign (+,_,*,/)
-                                    self.block.inputsNum = num_sockets
-                                    self.block.makeInputSockets(self.block.inputsNum, orientation)
+                                                        # Go through each label in given InPort labels, and make them strings
+                                                        self.block.input_names = [str(j) for j in self.parameters[i][2]]
+                                                        # Recreate input sockets to the number provided
+                                                        self.block.inputsNum = num_nin_sockets
+                                                        self.block.makeInputSockets(self.block.inputsNum, orientation)
 
-                            # If self.parameter relates to controlling the number of outputs a block has
-                            if self.parameters[i][0] in ["nout"]:
-                                # Grab number of required output sockets
-                                num_sockets = self.parameters[i][2]
-                                # If provided number of output sockets matches the number the block already has, don't do anything
-                                if len(self.block.outputs) == num_sockets:
-                                    pass
-                                else:
-                                    # If the block already has output sockets, grab their orientation (LEFT / RIGHT) then delete
-                                    # Else, draw output socket with default orientation (RIGHT) and no need to delete as block has no output sockets
-                                    if self.block.outputs:
-                                        orientation = self.block.outputs[0].position
-                                        # Remove all current output sockets
-                                        self.block.outputs[0].removeSockets("Output")
-                                    else:
-                                        orientation = RIGHT
-                                    # Recreate output sockets to the number provided
-                                    self.block.outputsNum = num_sockets
-                                    self.block.makeOutputSockets(self.block.outputsNum, orientation)
+                                # If self.parameter relates to controlling the names of outport labels on subsystem blocks
+                                if self.parameters[i][0] == "outport labels":
+                                    # First check if labels are given for the sockets, if not, don't do anything special
+                                    if self.parameters[i][2] is not None:
+                                        input_length = len(self.parameters[i][2])
+                                        if input_length > 0:
+                                            # Find number of outputs controlled by nout
+                                            found_nout = False
+                                            for params in self.parameters:
+                                                if params[0] == "nout":
+                                                    num_nout_sockets = params[2]
+                                                    found_nout = True
+                                                    break
+                                            # Check if nout parameter was found, if not, return error as we need to know how many sockets to draw
+                                            if found_nout == False:
+                                                print("Error: Cannot draw OutPort labels as no 'nout' parameter was found to know how many sockets to draw.")
+                                            else:
+                                                # If nout parameter was found, check if number of given OutPort labels matches number of sockets
+                                                if input_length != num_nout_sockets:
+                                                    bad_socket_labels.append([paramName, paramOptions])
+                                                else:
+                                                    # If parameter value hasn't changed, don't do anything
+                                                    if inputInCompatibleFormat == paramVal:
+                                                        pass
+                                                    else:
+                                                        # If the block already has output sockets, grab their orientation (LEFT / RIGHT) then delete
+                                                        # Else, draw output socket with default orientation (RIGHT) and no need to delete as block has no output sockets
+                                                        if self.block.outputs:
+                                                            orientation = self.block.outputs[0].position
+                                                            # Remove all current output sockets
+                                                            self.block.outputs[0].removeSockets("Output")
+                                                        else:
+                                                            orientation = RIGHT
+
+                                                        # Go through each label in given OutPort labels, and make them strings
+                                                        self.block.output_names = [str(j) for j in self.parameters[i][2]]
+                                                        # Recreate output sockets to the number provided
+                                                        self.block.outputsNum = num_nout_sockets
+                                                        self.block.makeOutputSockets(self.block.outputsNum, orientation)
 
                     # Else the edited value is of the wrong type, display an error message
                     else:
@@ -518,11 +610,26 @@ class ParamWindow(QWidget):
                 errorMessageText += "<br>"
             self.displayPopUpMessage(errorMessageTitle, errorMessageText, "Error")
 
+        # If labels are given for InPort, OutPort or SubSystem blocks which don't match the respective nin/nout value for number of sockets, display a bad socket label input error message
+        elif bad_socket_labels:
+            errorMessageText = ""
+            errorMessageTitle = "Inconsistent Number of Given Socket Labels"
+            for badSocketLabel in bad_socket_labels:
+                # Different error message based on type of option
+                errorMessageText += "Parameter '" + "<font><b>" + badSocketLabel[0] + "</font>' must correspond to number of nin/nout sockets."
+            self.displayPopUpMessage(errorMessageTitle, errorMessageText, "Error")
+
         # Otherwise if there were no issues with updating the block parameters, display a success message, yay!
         else:
             successMessageText = "Successfully updated block parameter values!"
             successMessageTitle = "Success!"
             self.displayPopUpMessage(successMessageTitle, successMessageText, "Success")
+
+        # If a parameter update has changed a value then update the title of the model,
+        # to indicate that there is unsaved progress
+        if self.paramsWereChanged:
+            self.paramsWereChanged = False
+            self.block.scene.has_been_modified = True
 
         # Finally notify the GraphicsBlock to update itself, should the number of sockets, or the block
         # height have been called to change
@@ -664,106 +771,112 @@ class ParamWindow(QWidget):
                 return value
 
         try:
-            # If input must be string, only strings can be accepted
-            if issubclass(requiredType, str):
-                # If the input is not a number, but an acceptable string
-                if isinstance(inputValue, str):
 
-                    # Check if no input has been given
-                    if len(inputValue) == 0:
-                        return "@InvalidType@"
-                    else:
-                        # Check if the input is made up of normal characters [a-zA-z0-9]
-                        if inputValue.isalnum():
+            if inputValue.startswith('='):
+                return inputValue
+            else:
+                # If input must be string, only strings can be accepted
+                if issubclass(requiredType, str):
+                    # If the input is not a number, but an acceptable string
+                    if isinstance(inputValue, str):
+
+                        # Check if no input has been given
+                        if len(inputValue) == 0:
+                            return "@InvalidType@"
+                        else:
                             return isValueInOption(inputValue.lower(), requiredOptions)
 
-                        # Otherwise the input has special characters (=,-,+,*,/,:,etc)
+                            # # Check if the input is made up of normal characters [a-zA-z0-9]
+                            # if inputValue.isalnum():
+                            #     return isValueInOption(inputValue.lower(), requiredOptions)
+                            #
+                            # # Otherwise the input has special characters (=,-,+,*,/,:,etc)
+                            # else:
+                            #     # Check if string contains '=', as this is restricted to variable name definitions, and is not allowed for regular strings
+                            #     if "=" in inputValue:
+                            #         outcome = isValueInOption(inputValue, requiredOptions)
+                            #         if outcome == "@BadFormat@":
+                            #             return outcome
+                            #         else:
+                            #             return "@InvalidType@"
+                            #     else:
+                            #         return isValueInOption(inputValue.lower(), requiredOptions)
+                    else:
+                        return "@InvalidType@"
+
+                # If input must be bool, only booleans can be accepted
+                elif issubclass(requiredType, bool):
+                    # All input starts off as text, so True/False will be 'True'/'False'
+                    if isinstance(inputValue, str):
+                        # Check if the string matches true/false, and return accordingly
+                        if inputValue in ["True", "true"]:
+                            return True
+                        elif inputValue in ["False", "false"]:
+                            return False
+                        # Otherwise if string is None, check if this boolean parameter allows that type
+                        elif inputValue.lower() in ["none"]:
+                            return isValueInOption(inputValue.lower(), requiredOptions)
                         else:
-                            # Check if string contains '=', as this is restricted to variable name definitions, and is not allowed for regular strings
-                            if "=" in inputValue:
-                                outcome = isValueInOption(inputValue, requiredOptions)
-                                if outcome == "@BadFormat@":
-                                    return outcome
-                                else:
-                                    return "@InvalidType@"
-                            else:
-                                return isValueInOption(inputValue.lower(), requiredOptions)
-                else:
-                    return "@InvalidType@"
-
-            # If input must be bool, only booleans can be accepted
-            elif issubclass(requiredType, bool):
-                # All input starts off as text, so True/False will be 'True'/'False'
-                if isinstance(inputValue, str):
-                    # Check if the string matches true/false, and return accordingly
-                    if inputValue in ["True", "true"]:
-                        return True
-                    elif inputValue in ["False", "false"]:
-                        return False
-                    # Otherwise if string is None, check if this boolean parameter allows that type
-                    elif inputValue.lower() in ["none"]:
-                        return isValueInOption(inputValue.lower(), requiredOptions)
-                    else:
-                        return "@InvalidType@"
-                else:
-                    return "@InvalidType@"
-
-            # If input must be int, floats can be converted to int
-            elif issubclass(requiredType, int):
-                # Try applying int() to the input value, if possible, check restrictions on value
-                try:
-                    requiredType(inputValue); return isValueInOption(requiredType(inputValue), requiredOptions)
-                except ValueError:
-                    # If applying int() doesn't work but value is None, check if this is an allowable type
-                    if inputValue.lower() in ["none"]:
-                        return isValueInOption(inputValue, requiredOptions)
+                            return "@InvalidType@"
                     else:
                         return "@InvalidType@"
 
-            # If input must be float, int can be converted to float
-            elif issubclass(requiredType, float):
-                # All inputValues come in as a string, so first check if this evaluated string is a float
-                try:
-                    evaluated_value = eval(inputValue)
-
-                    # If value can be evaluated safely, check if the value is an instance of float
-                    if isinstance(evaluated_value, float):
-                        # If so, check further restrictions on this parameter, return the outcome
-                        return isValueInOption(evaluated_value, requiredOptions)
-
-                    # If value is not a float, but is none, check if this is an allowable type
-                    elif inputValue.lower() in ["none"]:
-                        return isValueInOption(inputValue, requiredOptions)
-
-                    # If value is not a float, and None is not allowed, return invalid type
-                    else:
-                        try:
-                            float_value = float(evaluated_value)
-                            return isValueInOption(float_value, requiredOptions)
-                        except (ValueError, TypeError):
+                # If input must be int, floats can be converted to int
+                elif issubclass(requiredType, int):
+                    # Try applying int() to the input value, if possible, check restrictions on value
+                    try:
+                        requiredType(inputValue); return isValueInOption(requiredType(inputValue), requiredOptions)
+                    except ValueError:
+                        # If applying int() doesn't work but value is None, check if this is an allowable type
+                        if inputValue.lower() in ["none"]:
+                            return isValueInOption(inputValue, requiredOptions)
+                        else:
                             return "@InvalidType@"
 
-                # If any exceptions arise while trying to evaluate, then the value is incorrect
-                except:
-                    return "@InvalidType@"
+                # If input must be float, int can be converted to float
+                elif issubclass(requiredType, float):
+                    # All inputValues come in as a string, so first check if this evaluated string is a float
+                    try:
+                        evaluated_value = eval(inputValue)
 
-            # If input must be a list, only list can be accepted
-            elif issubclass(requiredType, list) or issubclass(requiredType, tuple) or issubclass(requiredType, dict):
-                try:
-                    # If the input value can be evaluated as a list, tuple or dict, check restrictions on value
-                    ast.literal_eval(inputValue)
-                    if inputValue.lower() in ["none"]:
-                        return isValueInOption(inputValue, requiredOptions)
-                    else:
-                        return isValueInOption(ast.literal_eval(inputValue), requiredOptions)
-                except ValueError:
-                    return "@InvalidType@"
+                        # If value can be evaluated safely, check if the value is an instance of float
+                        if isinstance(evaluated_value, float):
+                            # If so, check further restrictions on this parameter, return the outcome
+                            return isValueInOption(evaluated_value, requiredOptions)
 
-            # If input can be of type 'any', allow any value to be saved. This will also process the 'callable' type, in the same way.
-            elif issubclass(requiredType, type(any)):
-                # Return the outcome of check this input against any restrictions for this parameter
-                # Type any or callable should be allowed to pass through a string
-                return isValueInOption(inputValue, requiredOptions)
+                        # If value is not a float, but is none, check if this is an allowable type
+                        elif inputValue.lower() in ["none"]:
+                            return isValueInOption(inputValue, requiredOptions)
+
+                        # If value is not a float, and None is not allowed, return invalid type
+                        else:
+                            try:
+                                float_value = float(evaluated_value)
+                                return isValueInOption(float_value, requiredOptions)
+                            except (ValueError, TypeError):
+                                return "@InvalidType@"
+
+                    # If any exceptions arise while trying to evaluate, then the value is incorrect
+                    except:
+                        return "@InvalidType@"
+
+                # If input must be a list, only list can be accepted
+                elif issubclass(requiredType, list) or issubclass(requiredType, tuple) or issubclass(requiredType, dict):
+                    try:
+                        # If the input value can be evaluated as a list, tuple or dict, check restrictions on value
+                        ast.literal_eval(inputValue)
+                        if inputValue.lower() in ["none"]:
+                            return isValueInOption(inputValue, requiredOptions)
+                        else:
+                            return isValueInOption(ast.literal_eval(inputValue), requiredOptions)
+                    except ValueError:
+                        return "@InvalidType@"
+
+                # If input can be of type 'any', allow any value to be saved. This will also process the 'callable' type, in the same way.
+                elif issubclass(requiredType, type(any)):
+                    # Return the outcome of check this input against any restrictions for this parameter
+                    # Type any or callable should be allowed to pass through a string
+                    return isValueInOption(inputValue, requiredOptions)
 
         except Exception as e:
             print(e)

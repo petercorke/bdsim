@@ -6,14 +6,15 @@ import sys
 import ctypes
 import argparse
 
+from sys import platform
+from pathlib import Path
+
 # PyQt5 imports
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QIcon
-from pathlib import Path
 
 # BdEdit imports
-#from bdsim.bdedit.interface import Interface
 from bdsim.bdedit.interface_manager import InterfaceWindow
 
 # Executable code to launch the BdEdit application window
@@ -47,10 +48,18 @@ def main():
     screen_resolution = app.desktop().screenGeometry()
 
     # Set the desktop toolbar icon for this application
-    myappid = u'bdsim.bdsim.bin.bdedit.application' # arbitrary string for application
-    # ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     icon = Path(__file__).parent.parent / 'bdedit' / 'Icons' / 'bdsim_logo.png'
     app.setWindowIcon(QIcon(str(icon)))
+
+    myappid = u'bdsim.bdsim.bin.bdedit.application'  # arbitrary string for application
+    try:
+        if platform == 'win32':
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+        elif platform == 'darwin':
+            ctypes.cdll.kernel32.SetCurrentProcessExplicitAppUserModelID(myappid)
+    except Exception as e:
+        # Toolbar icon for application could not be set.
+        pass
 
     # Finally the window is displayed by creating an instance of Interface,
     # which holds all the logic for how the application should appear and which

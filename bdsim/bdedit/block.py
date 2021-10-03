@@ -52,8 +52,6 @@ class Block(Serializable):
     """
 
     # -----------------------------------------------------------------------------
-    #def __init__(self, scene, window, name="Unnamed Block", pos=(0, 0)):
-    #def __init__(self, scene, window, block_type, parameters, inputsNum, outputsNum, block_url, icon, width=100, height=100, title="Unnamed Block", pos=(0, 0)):
     def __init__(self, scene, window, pos=(0, 0)):
         """
         This method initializes an instance of the ``Block`` Class.
@@ -128,26 +126,14 @@ class Block(Serializable):
         :type pos: tuple of 2-ints, optional
         """
 
-
-        # print("\n blockist:")
-        # [print(block.__dict__ ) for block in blocklist]
-        # print("_______________________________________ \n")
-        #
-        # print("creating block instance - before:")
-        # [print(item) for item in self.__dict__.items()]
-        # print("_______________________________________")
-
         super().__init__()
-        #self.id = id(self)
         self.scene = scene
         self.window = window
         self.position = pos
 
+        # Set block's orientation to be facing towards the right by default. If flipped is True, this means block is facing left
         self.flipped = False
-        # self.flipped_icon = os.path.join(os.path.splitext(self.icon)[0] + "_flipped.png")
 
-        # Title and type of the block will be determined by the grandchild class
-        #self.block_type = None
         try:
             self.setDefaultTitle(self.title)
         except AttributeError:
@@ -155,39 +141,10 @@ class Block(Serializable):
             # This is fine, as connector block isn't supposed to have a title
             # print("block.py -> Error occured while setting default title")
             pass
-        #self.block_type = block_type
-
-        # List will contain the user-editable parameters of the Block
-        #self.parameters = []
-
-        # The number of input and output sockets this block should have by default
-        #self.inputsNum = inputsNum
-        #self.outputsNum = outputsNum
-        #self.inputsNum = 0
-        #self.outputsNum = 0
-
-        # Create lists to hold the names for each known socket
-        # self.input_names = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
-        # self.output_names = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 
         # Lists that will contain the input/output sockets of the Block
         self.inputs = []
         self.outputs = []
-
-        # Local string file-path reference to the Blocks' icon
-        #self.icon = ''
-        #self.icon = icon
-
-        # The url to this blocks' online documentation
-        #self.block_url = None
-        #self.block_url = block_url
-        #self.block_url = "https://petercorke.github.io/bdsim/bdsim.blocks.html?highlight=sum#bdsim.blocks.functions.Sum"
-
-        # The default height of this block
-        #self.width = width
-        #self.height = height
-        #self.width = 100
-        #self.height = 100
 
         # Variable for controlling whether or not a ParamWindow should be
         # displayed for this instance of a Block
@@ -295,7 +252,7 @@ class Block(Serializable):
                     socket = Socket(node=self, index=counter, position=position, socket_type=socketType, socket_label=self.input_names[counter])
                 else:
                     socket = Socket(node=self, index=counter, position=position, socket_type=socketType)
-            except AttributeError:
+            except (AttributeError, IndexError):
                 socket = Socket(node=self, index=counter, position=position, socket_type=socketType)
             counter += 1
             self.inputs.append(socket)
@@ -335,7 +292,7 @@ class Block(Serializable):
                     socket = Socket(node=self, index=counter, position=position, socket_type=socketType, socket_label=self.output_names[counter])
                 else:
                     socket = Socket(node=self, index=counter, position=position, socket_type=socketType)
-            except AttributeError:
+            except (AttributeError, IndexError):
                 socket = Socket(node=self, index=counter, position=position, socket_type=socketType)
             counter += 1
             self.outputs.append(socket)
@@ -363,49 +320,6 @@ class Block(Serializable):
         # and sets 'self._param_visible' False
         self.parameterWindow.setVisible(False)
         self._param_visible = False
-
-    # -----------------------------------------------------------------------------
-    def getBlockURL(self):
-        """
-        This method constructs the URL associated with this blocks' online
-        documentation, based on the blocks' type and the group of blocks it
-        belongs to.
-
-        :return: the URL to this blocks' online documentation
-        :rtype: str
-        """
-
-        # Extracts the group this block belongs to, and the block type
-        block_type = self.block_type
-        block_group = self.__class__.__base__.__name__
-
-        # Temporary
-        if str(block_group) == "SourceBlock":
-            temp_group = "sources"
-        elif str(block_group) == "SinkBlock":
-            temp_group = "sinks"
-        elif str(block_group) == "FunctionBlock":
-            temp_group = "functions"
-        elif str(block_group) == "TransferBlock":
-            temp_group = "transfers"
-        elif str(block_group) == "DiscreteBlock":
-            temp_group = "discrete"
-        elif str(block_group) == "INPORTBlock":
-            temp_group = "connections"
-        elif str(block_group) == "OUTPORTBlock":
-            temp_group = "connections"
-        elif str(block_group) == "SUBSYSTEMBlock":
-            temp_group = "connections"
-
-        #"https://petercorke.github.io/bdsim/bdsim.blocks.html?highlight=waveform#bdsim.blocks.sources.WaveForm"
-        #"https://petercorke.github.io/bdsim/bdsim.blocks.html?highlight=lti_siso#bdsim.blocks.transfers.LTI_SISO"
-        #"https://petercorke.github.io/bdsim/bdsim.blocks.html?highlight=lti_ss#bdsim.blocks.transfers.LTI_SS"
-        #"https://petercorke.github.io/bdsim/bdsim.blocks.html?highlight=inport#bdsim.blocks.connections.InPort"
-
-        # Reconstructs the URL to this blocks' online documentation
-        block_url = "https://petercorke.github.io/bdsim/bdsim.blocks.html?highlight=" + block_type.lower() + "#bdsim.blocks." + temp_group + "." + block_type.capitalize() + ""
-        #print(block_url)
-        return block_url
 
     # -----------------------------------------------------------------------------
     def updateSocketSigns(self):
@@ -577,13 +491,6 @@ class Block(Serializable):
                 # the increment would of already been set, and internally incremented.
                 else: self.setDefaultTitle(name, increment)
 
-
-    # def setDefaultParamValues(self):
-    #     # For each parameter in the list of parameters, set the current value to the default value
-    #     for i,parameter in enumerate(self.parameters):
-    #         if DEBUG: print("Setting param: '", parameter[0], "' from: '", parameter[2], "' to: '", self.default_param_values[i][1], "'")
-    #         parameter[2] = self.default_param_values[i][1]
-
     # -----------------------------------------------------------------------------
     def getSocketPosition(self, index, position):
         """
@@ -720,37 +627,37 @@ class Block(Serializable):
         if DEBUG: print(" - everything was done.")
 
     # -----------------------------------------------------------------------------
-    @staticmethod
-    def tuple_decoder(obj):
-        """
-        This method is called when deserializing a JSON file to generate a saved
-        copy of the ``Scene`` with all the Blocks, Sockets and Wires. It's purpose
-        is for decoding an encoded representation for a tuple (encoded with the
-        ``TupleEncoder`` Class) when the JSON file was written. This decoder/encoder
-        combination is required as JSON does not support saving under type tuple,
-        and instead saves that information as a type list.
-
-        This code has been adapted from: https://stackoverflow.com/a/15721641
-
-        :param obj: the string object being decoded
-        :type obj: Union [int, slice], required
-        :return: the string object wrapped as a tuple (if decoded to have a __tuple__ key)
-        the string object (otherwise)
-        :rtype: - tuple (if decoded to have a __tuple__ key);
-        - any (otherwise)
-        """
-        # If an object is iterable (is a str, list, dict, tuple)
-        try:
-            # Decoder checks if the object has a '__tuple__' key
-            if '__tuple__' in obj:
-                # If so, converts items of that object into a tuple
-                return tuple(obj['items'])
-            else:
-                # Otherwise returns the item
-                return obj
-        # Otherwise if object isn't iterable (is a int, float, boolean)
-        except TypeError:
-            return obj
+    # @staticmethod
+    # def tuple_decoder(obj):
+    #     """
+    #     This method is called when deserializing a JSON file to generate a saved
+    #     copy of the ``Scene`` with all the Blocks, Sockets and Wires. It's purpose
+    #     is for decoding an encoded representation for a tuple (encoded with the
+    #     ``TupleEncoder`` Class) when the JSON file was written. This decoder/encoder
+    #     combination is required as JSON does not support saving under type tuple,
+    #     and instead saves that information as a type list.
+    #
+    #     This code has been adapted from: https://stackoverflow.com/a/15721641
+    #
+    #     :param obj: the string object being decoded
+    #     :type obj: Union [int, slice], required
+    #     :return: the string object wrapped as a tuple (if decoded to have a __tuple__ key)
+    #     the string object (otherwise)
+    #     :rtype: - tuple (if decoded to have a __tuple__ key);
+    #     - any (otherwise)
+    #     """
+    #     # If an object is iterable (is a str, list, dict, tuple)
+    #     try:
+    #         # Decoder checks if the object has a '__tuple__' key
+    #         if '__tuple__' in obj:
+    #             # If so, converts items of that object into a tuple
+    #             return tuple(obj['items'])
+    #         else:
+    #             # Otherwise returns the item
+    #             return obj
+    #     # Otherwise if object isn't iterable (is a int, float, boolean)
+    #     except TypeError:
+    #         return obj
 
     # -----------------------------------------------------------------------------
     def serialize(self):
@@ -763,10 +670,6 @@ class Block(Serializable):
                  parameters.
         :rtype: ``OrderedDict`` ([keys, values]*)
         """
-
-        # Special encoder is an instance of TupleEncoder, which is used to encode any
-        # parameter within this Block, that needs to be stored as type tuple.
-        special_encoder = TupleEncoder()
 
         # The sockets associated with this block, have their own parameters that are
         # required for their reconstruction, so the serialize method within the
@@ -797,7 +700,7 @@ class Block(Serializable):
             inputs, outputs, parameters = [], [], []
             for socket in self.inputs: inputs.append(socket.serialize())
             for socket in self.outputs: outputs.append(socket.serialize())
-            for parameter in self.parameters: parameters.append([parameter[0], special_encoder.encode(parameter[2])])
+            for parameter in self.parameters: parameters.append([parameter[0], parameter[2]])
 
             return OrderedDict([
                 ('id', self.id),
@@ -881,9 +784,19 @@ class Block(Serializable):
                 if DEBUG: print("----------------------")
                 if DEBUG: print("Cautionary check")
                 if DEBUG: print("current value:", [self.parameters[i][0], self.parameters[i][1], self.parameters[i][2]])
-                if DEBUG: print("setting to value:", [paramName, self.parameters[i][1], self.tuple_decoder(paramVal)])
+                if DEBUG: print("setting to value:", [paramName, self.parameters[i][1], paramVal])
                 self.parameters[i][0] = paramName
-                self.parameters[i][2] = self.tuple_decoder(paramVal)
+                self.parameters[i][2] = paramVal
+
+                # If there are subsystem, outport or inport blocks with labels for their sockets, extract that information into self.input_names and self.output_names as needed
+                if self.block_type in ['SUBSYSTEM', 'OUTPORT', 'INPORT']:
+
+                    if paramName == "inport labels":
+                        self.input_names = [str(j) for j in paramVal]
+
+                    if paramName == "outport labels":
+                        self.output_names = [str(j) for j in paramVal]
+
                 i += 1
 
         # And the saved (input and output) sockets are written into these lists respectively,
@@ -894,7 +807,7 @@ class Block(Serializable):
                     new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'], socket_label=self.input_names[i])
                 else:
                     new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'])
-            except AttributeError:
+            except (AttributeError, IndexError):
                     new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'])
             new_socket.deserialize(socket_data, hashmap)
             self.inputs.append(new_socket)
@@ -907,7 +820,7 @@ class Block(Serializable):
                     new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'], socket_label=self.output_names[i])
                 else:
                     new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'])
-            except AttributeError:
+            except (AttributeError, IndexError):
                     new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'])
             new_socket.deserialize(socket_data, hashmap)
             self.outputs.append(new_socket)
@@ -967,54 +880,54 @@ def blockname(cls):
     return cls.__name__.strip('_').upper()
 
 
-# =============================================================================
+# # =============================================================================
+# #
+# #   Defining the TupleEncoder Class, which is used to encode block parameters
+# #   that need to be stored in JSON as tuples
+# #
+# # =============================================================================
+# class TupleEncoder(json.JSONEncoder):
+#     """
+#     This Class inherits JSONEncoder from the json library, and is used to encode
+#     user-editable parameters associated with a ``Block`` which need to be stored
+#     as a type tuple. This code is necessary as JSON does not support storing
+#     data as tuples. After the encoder has been used to serialize (save) the
+#     Block parameter data, when the Block is deserialized (loaded), this encoded
+#     representation of a tuple will be decoded and stored as a tuple.
 #
-#   Defining the TupleEncoder Class, which is used to encode block parameters
-#   that need to be stored in JSON as tuples
+#     This code is adapted from: https://stackoverflow.com/a/15721641
+#     """
 #
-# =============================================================================
-class TupleEncoder(json.JSONEncoder):
-    """
-    This Class inherits JSONEncoder from the json library, and is used to encode
-    user-editable parameters associated with a ``Block`` which need to be stored
-    as a type tuple. This code is necessary as JSON does not support storing
-    data as tuples. After the encoder has been used to serialize (save) the
-    Block parameter data, when the Block is deserialized (loaded), this encoded
-    representation of a tuple will be decoded and stored as a tuple.
-
-    This code is adapted from: https://stackoverflow.com/a/15721641
-    """
-
-    def encode(self, item):
-        """
-        This method determines whether a given user-editable block parameter
-        is of type tuple, and converts it to a dictionary with a "__tuple__"
-        key with value `True` (signifying this parameter should be represented
-        as a tuple), and an "item's" key with value `item` (this being the
-        value of the user-editable parameter).
-
-        :param item: the user-editable parameter's value
-        :type item: any
-        :return: - a Dictionary defined as above (if item is tuple);
-                 - the item (otherwise)
-        :rtype: - Dict (if item is tuple);
-                - any (otherwise)
-        """
-        
-        # If the item value is of type tuple, return the item value as a 
-        # dictionary (as mentioned above)
-        if isinstance(item, tuple):
-            return {'__tuple__': True, 'items': item}
-        # If the item is stored within a list, check if any items within
-        # the list need to be encoded as a tuple, and if so, recursively
-        # call this method to wrap those items in a dictionary (as above mentioned)
-        elif isinstance(item, list):
-            return [self.encode(e) for e in item]
-        # If the item is stored within a dict, check if any items within
-        # the dict need to be encoded as a tuple, and if so, recursively
-        # call this method to wrap those items in a dictionary (as above mentioned)
-        elif isinstance(item, dict):
-            return {key: self.encode(value) for key, value in item.items()}
-        # Otherwise, return the item 
-        else:
-            return item
+#     def encode(self, item):
+#         """
+#         This method determines whether a given user-editable block parameter
+#         is of type tuple, and converts it to a dictionary with a "__tuple__"
+#         key with value `True` (signifying this parameter should be represented
+#         as a tuple), and an "item's" key with value `item` (this being the
+#         value of the user-editable parameter).
+#
+#         :param item: the user-editable parameter's value
+#         :type item: any
+#         :return: - a Dictionary defined as above (if item is tuple);
+#                  - the item (otherwise)
+#         :rtype: - Dict (if item is tuple);
+#                 - any (otherwise)
+#         """
+#
+#         # If the item value is of type tuple, return the item value as a
+#         # dictionary (as mentioned above)
+#         if isinstance(item, tuple):
+#             return {'__tuple__': True, 'items': item}
+#         # If the item is stored within a list, check if any items within
+#         # the list need to be encoded as a tuple, and if so, recursively
+#         # call this method to wrap those items in a dictionary (as above mentioned)
+#         elif isinstance(item, list):
+#             return [self.encode(e) for e in item]
+#         # If the item is stored within a dict, check if any items within
+#         # the dict need to be encoded as a tuple, and if so, recursively
+#         # call this method to wrap those items in a dictionary (as above mentioned)
+#         elif isinstance(item, dict):
+#             return {key: self.encode(value) for key, value in item.items()}
+#         # Otherwise, return the item
+#         else:
+#             return item
