@@ -182,6 +182,22 @@ class Socket(Serializable):
         return isOutputSocket
 
     # -----------------------------------------------------------------------------
+    def updateSocketSign(self, value):
+        """
+        This method updates the value of the socket label assigned to this socket.
+        As none but a select few blocks (SubSystem, OutPort, InPort) support dynamic
+        updating of the socket labels, this method should not be used  unless it is
+        for one of the mentioned blocks.
+
+        :param value: new value to assign for socket label
+        :type value: str, int, None or []
+        """
+        try:
+            self.socket_sign = value
+        except Exception:
+            self.socket_sign = None
+
+    # -----------------------------------------------------------------------------
     def removeSockets(self, type):
         """
         This method removes all of the input or output Sockets, relating to this

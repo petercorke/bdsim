@@ -792,10 +792,14 @@ class Block(Serializable):
                 if self.block_type in ['SUBSYSTEM', 'OUTPORT', 'INPORT']:
 
                     if paramName == "inport labels":
-                        self.input_names = [str(j) for j in paramVal]
+                        print(paramName, ":", paramVal)
+                        if paramVal:
+                            self.input_names = [str(j) for j in paramVal]
 
                     if paramName == "outport labels":
-                        self.output_names = [str(j) for j in paramVal]
+                        print(paramName, ":", paramVal)
+                        if paramVal:
+                            self.output_names = [str(j) for j in paramVal]
 
                 i += 1
 

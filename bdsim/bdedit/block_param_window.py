@@ -519,18 +519,17 @@ class ParamWindow(QWidget):
                                                     else:
                                                         # If the block already has input sockets, grab their orientation (LEFT / RIGHT) then delete
                                                         # Else, draw input socket with default orientation (LEFT) and no need to delete as block has no input sockets
-                                                        if self.block.inputs:
-                                                            orientation = self.block.inputs[0].position
-                                                            # Remove all current input sockets
-                                                            self.block.inputs[0].removeSockets("Input")
-                                                        else:
-                                                            orientation = LEFT
-
-                                                        # Go through each label in given InPort labels, and make them strings
                                                         self.block.input_names = [str(j) for j in self.parameters[i][2]]
-                                                        # Recreate input sockets to the number provided
-                                                        self.block.inputsNum = num_nin_sockets
-                                                        self.block.makeInputSockets(self.block.inputsNum, orientation)
+                                                        if self.block.inputs:
+                                                            for k, socket in enumerate(self.block.inputs):
+                                                                socket.updateSocketSign(self.block.input_names[k])
+
+                                    # Otherwise if the parameter value is None or [], then remove all the socket labels for a block if there are any.
+                                    elif not self.parameters[i][2]:
+                                        if self.block.inputs:
+                                            if self.block.input_names:
+                                                for socket in self.block.inputs:
+                                                    socket.updateSocketSign(None)
 
                                 # If self.parameter relates to controlling the names of outport labels on subsystem blocks
                                 if self.parameters[i][0] == "outport labels":
@@ -559,18 +558,17 @@ class ParamWindow(QWidget):
                                                     else:
                                                         # If the block already has output sockets, grab their orientation (LEFT / RIGHT) then delete
                                                         # Else, draw output socket with default orientation (RIGHT) and no need to delete as block has no output sockets
-                                                        if self.block.outputs:
-                                                            orientation = self.block.outputs[0].position
-                                                            # Remove all current output sockets
-                                                            self.block.outputs[0].removeSockets("Output")
-                                                        else:
-                                                            orientation = RIGHT
-
-                                                        # Go through each label in given OutPort labels, and make them strings
                                                         self.block.output_names = [str(j) for j in self.parameters[i][2]]
-                                                        # Recreate output sockets to the number provided
-                                                        self.block.outputsNum = num_nout_sockets
-                                                        self.block.makeOutputSockets(self.block.outputsNum, orientation)
+                                                        if self.block.outputs:
+                                                            for k, socket in enumerate(self.block.outputs):
+                                                                socket.updateSocketSign(self.block.output_names[k])
+
+                                    # Otherwise if the parameter value is None or [], then remove all the socket labels for a block if there are any.
+                                    elif not self.parameters[i][2]:
+                                        if self.block.outputs:
+                                            if self.block.output_names:
+                                                for socket in self.block.outputs:
+                                                    socket.updateSocketSign(None)
 
                     # Else the edited value is of the wrong type, display an error message
                     else:
