@@ -44,11 +44,8 @@ class GraphicsView(QGraphicsView):
     is False and the Wire will be deleted.
     """
 
-    # # Todo add doc for this, signal for monitoring updates to interface. UNNEEDED CODE?
-    # scenePosChanged = pyqtSignal(int, int)
-
     # -----------------------------------------------------------------------------
-    def __init__(self, grScene, parent=None):
+    def __init__(self, grScene, mainwindow, parent=None):
         """
         This method creates an ``QGraphicsView`` instance and associates it to this
         ``GraphicsView`` instance.
@@ -62,6 +59,10 @@ class GraphicsView(QGraphicsView):
 
         # The GraphicsScene this GraphicsView belongs to, is assigned to an internal variable
         self.grScene = grScene
+
+        # The InterfaceManager class this application is running within. Only used to access
+        # spinbox widget in toolbar, for displaying correct font size of selected floating text
+        self.interfaceManager = mainwindow
 
         # The GraphicsScene is initialized with some settings to make things draw smoother
         self.initUI()
@@ -124,6 +125,7 @@ class GraphicsView(QGraphicsView):
             # Or if the item is a Floating_Label, remove it
             elif isinstance(item, GraphicsLabel):
                 item.floating_label.remove()
+                self.interfaceManager.updateToolbarValues()
 
         self.grScene.scene.has_been_modified = True
 
@@ -191,6 +193,12 @@ class GraphicsView(QGraphicsView):
         """
         # If there are wires within the Scene
         if self.grScene.scene.wires:
+
+            # print("Graphics view - intersection test")
+            # for i, wire in enumerate(self.grScene.scene.wires):
+            #     print("Wire " + str(i) + " Coordinates: ", wire.wire_coordinates)
+            #     print()
+
             # Call the first wire in the Scene to check the intersections
             # Calling the first wire will still check intersection points
             # of all wires, however since that code is located within the
@@ -324,6 +332,10 @@ class GraphicsView(QGraphicsView):
                 if DEBUG: print("created wire")
                 if DEBUG: print('View::edgeDragEnd ~ everything done.')
 
+                # Call for the intersection code to be run
+                # print("edge drag end - before true")
+                self.intersectionTest()
+
                 return True
 
         return False
@@ -384,7 +396,7 @@ class GraphicsView(QGraphicsView):
         :type event: QMousePressEvent, automatically recognized by the inbuilt function
         """
 
-        self.intersectionTest()
+        # self.intersectionTest()
 
         if event.button() == Qt.MiddleButton:
             self.middleMouseButtonPress(event)
@@ -452,8 +464,10 @@ class GraphicsView(QGraphicsView):
 
         self.last_click_poss = self.mapToScene(event.pos())
 
-        if isinstance(item, GraphicsBlock) or isinstance(item, GraphicsWire) or isinstance(item, GraphicsConnectorBlock) or item is None:
+        # if isinstance(item, GraphicsBlock) or isinstance(item, GraphicsWire) or isinstance(item, GraphicsConnectorBlock) or item is None:
+        if isinstance(item, (GraphicsBlock, GraphicsWire, GraphicsConnectorBlock)) or item is None:
             if self.grScene.scene.floating_labels:
+                # If floating labels are present and an open space is clicked, bring cursor out of focus from the labels
                 for label in self.grScene.scene.floating_labels:
                     cursor = label.content.text_edit.textCursor()
                     cursor.clearSelection()
@@ -478,12 +492,18 @@ class GraphicsView(QGraphicsView):
 
             if self.mode == MODE_WIRE_DRAG:
                 res = self.edgeDragEnd(item)
+                # Call for the intersection code to be run
+                # print("left mouse press - wire drag - socket")
+                self.intersectionTest()
                 if res:
                     return
 
         if issubclass(item.__class__, GraphicsWire):
             if self.mode == MODE_WIRE_DRAG:
                 res = self.edgeDragEnd(item)
+                # Call for the intersection code to be run
+                # print("left mouse press - wire drag - wire")
+                self.intersectionTest()
                 if res:
                     return
 
@@ -518,7 +538,12 @@ class GraphicsView(QGraphicsView):
         # Get item which we clicked
         item = self.getItemAtClick(event)
 
-        if isinstance(item, GraphicsBlock) or isinstance(item, GraphicsWire) or isinstance(item, GraphicsConnectorBlock) or item is None:
+        # if isinstance(item, GraphicsBlock) or isinstance(item, GraphicsWire) or isinstance(item, GraphicsConnectorBlock) or item is None:
+        if isinstance(item, (GraphicsBlock, GraphicsWire, GraphicsConnectorBlock)) or item is None:
+            if self.grScene.scene.floating_labels:
+                # Update font size box to display correct font size value of selected floating text
+                self.interfaceManager.updateToolbarValues()
+
             if event.modifiers() & Qt.ShiftModifier:
                 event.ignore()
                 fakeEvent = QMouseEvent(event.type(), event.localPos(), event.screenPos(),
@@ -530,8 +555,14 @@ class GraphicsView(QGraphicsView):
         if self.mode == MODE_WIRE_DRAG:
             if self.dist_click_release(event):
                 res = self.edgeDragEnd(item)
+                # print("left mouse release - wire drag")
+                self.intersectionTest()
                 if res:
                     return
+
+        # Call for the intersection code to be run
+        # print("left mouse release - outside")
+        # self.intersectionTest()
 
         super().mouseReleaseEvent(event)
 
@@ -668,5 +699,5 @@ class GraphicsView(QGraphicsView):
         except AttributeError:
             self.mode = MODE_NONE
 
-        # Call for the intersection code to be run
-        self.intersectionTest()
+        # # Call for the intersection code to be run
+        # self.intersectionTest()

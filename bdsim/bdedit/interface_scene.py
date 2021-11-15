@@ -59,6 +59,9 @@ class Scene(Serializable):
         self.floating_labels = []
         self.intersection_list = []
 
+        # Set default font size of block names, to be used when they are spawned
+        self.block_name_fontsize = 12
+
         # Variables to listen for modifications with in the scene
         self._has_been_modified = False
         self._has_been_modified_listeners = []

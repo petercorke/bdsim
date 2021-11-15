@@ -400,7 +400,13 @@ class ParamWindow(QWidget):
 
                 # If a value has been provided for that parameter, perform sanity checking on that input
                 if inputValue:
-                    inputInCompatibleFormat = self.getSafeValue(inputValue, paramType, paramOptions)
+                    if self.parameters[i][0] in ["nin", "ops", "signs", "nout"]:
+                        inputInCompatibleFormat = self.getSafeValue(inputValue, paramType, paramOptions)
+                    else:
+                        if inputValue.startswith('='):
+                            inputInCompatibleFormat = inputValue
+                        else:
+                            inputInCompatibleFormat = self.getSafeValue(inputValue, paramType, paramOptions)
 
                     # If in DEBUG mode, this code will return the name, type, current value of the parameter attempting to update
                     # and then for the value that will override the parameter, the value, type(of the value), and whether it is or isn't compatible
@@ -769,112 +775,108 @@ class ParamWindow(QWidget):
                 return value
 
         try:
+            # If input must be string, only strings can be accepted
+            if issubclass(requiredType, str):
+                # If the input is not a number, but an acceptable string
+                if isinstance(inputValue, str):
 
-            if inputValue.startswith('='):
-                return inputValue
-            else:
-                # If input must be string, only strings can be accepted
-                if issubclass(requiredType, str):
-                    # If the input is not a number, but an acceptable string
-                    if isinstance(inputValue, str):
+                    # Check if no input has been given
+                    if len(inputValue) == 0:
+                        return "@InvalidType@"
+                    else:
+                        return isValueInOption(inputValue.lower(), requiredOptions)
 
-                        # Check if no input has been given
-                        if len(inputValue) == 0:
-                            return "@InvalidType@"
-                        else:
-                            return isValueInOption(inputValue.lower(), requiredOptions)
+                        # # Check if the input is made up of normal characters [a-zA-z0-9]
+                        # if inputValue.isalnum():
+                        #     return isValueInOption(inputValue.lower(), requiredOptions)
+                        #
+                        # # Otherwise the input has special characters (=,-,+,*,/,:,etc)
+                        # else:
+                        #     # Check if string contains '=', as this is restricted to variable name definitions, and is not allowed for regular strings
+                        #     if "=" in inputValue:
+                        #         outcome = isValueInOption(inputValue, requiredOptions)
+                        #         if outcome == "@BadFormat@":
+                        #             return outcome
+                        #         else:
+                        #             return "@InvalidType@"
+                        #     else:
+                        #         return isValueInOption(inputValue.lower(), requiredOptions)
+                else:
+                    return "@InvalidType@"
 
-                            # # Check if the input is made up of normal characters [a-zA-z0-9]
-                            # if inputValue.isalnum():
-                            #     return isValueInOption(inputValue.lower(), requiredOptions)
-                            #
-                            # # Otherwise the input has special characters (=,-,+,*,/,:,etc)
-                            # else:
-                            #     # Check if string contains '=', as this is restricted to variable name definitions, and is not allowed for regular strings
-                            #     if "=" in inputValue:
-                            #         outcome = isValueInOption(inputValue, requiredOptions)
-                            #         if outcome == "@BadFormat@":
-                            #             return outcome
-                            #         else:
-                            #             return "@InvalidType@"
-                            #     else:
-                            #         return isValueInOption(inputValue.lower(), requiredOptions)
+            # If input must be bool, only booleans can be accepted
+            elif issubclass(requiredType, bool):
+                # All input starts off as text, so True/False will be 'True'/'False'
+                if isinstance(inputValue, str):
+                    # Check if the string matches true/false, and return accordingly
+                    if inputValue in ["True", "true"]:
+                        return True
+                    elif inputValue in ["False", "false"]:
+                        return False
+                    # Otherwise if string is None, check if this boolean parameter allows that type
+                    elif inputValue.lower() in ["none"]:
+                        return isValueInOption(inputValue.lower(), requiredOptions)
+                    else:
+                        return "@InvalidType@"
+                else:
+                    return "@InvalidType@"
+
+            # If input must be int, floats can be converted to int
+            elif issubclass(requiredType, int):
+                # Try applying int() to the input value, if possible, check restrictions on value
+                try:
+                    requiredType(inputValue); return isValueInOption(requiredType(inputValue), requiredOptions)
+                except ValueError:
+                    # If applying int() doesn't work but value is None, check if this is an allowable type
+                    if inputValue.lower() in ["none"]:
+                        return isValueInOption(inputValue, requiredOptions)
                     else:
                         return "@InvalidType@"
 
-                # If input must be bool, only booleans can be accepted
-                elif issubclass(requiredType, bool):
-                    # All input starts off as text, so True/False will be 'True'/'False'
-                    if isinstance(inputValue, str):
-                        # Check if the string matches true/false, and return accordingly
-                        if inputValue in ["True", "true"]:
-                            return True
-                        elif inputValue in ["False", "false"]:
-                            return False
-                        # Otherwise if string is None, check if this boolean parameter allows that type
-                        elif inputValue.lower() in ["none"]:
-                            return isValueInOption(inputValue.lower(), requiredOptions)
-                        else:
-                            return "@InvalidType@"
+            # If input must be float, int can be converted to float
+            elif issubclass(requiredType, float):
+                # All inputValues come in as a string, so first check if this evaluated string is a float
+                try:
+                    evaluated_value = eval(inputValue)
+
+                    # If value can be evaluated safely, check if the value is an instance of float
+                    if isinstance(evaluated_value, float):
+                        # If so, check further restrictions on this parameter, return the outcome
+                        return isValueInOption(evaluated_value, requiredOptions)
+
+                    # If value is not a float, but is none, check if this is an allowable type
+                    elif inputValue.lower() in ["none"]:
+                        return isValueInOption(inputValue, requiredOptions)
+
+                    # If value is not a float, and None is not allowed, return invalid type
                     else:
-                        return "@InvalidType@"
-
-                # If input must be int, floats can be converted to int
-                elif issubclass(requiredType, int):
-                    # Try applying int() to the input value, if possible, check restrictions on value
-                    try:
-                        requiredType(inputValue); return isValueInOption(requiredType(inputValue), requiredOptions)
-                    except ValueError:
-                        # If applying int() doesn't work but value is None, check if this is an allowable type
-                        if inputValue.lower() in ["none"]:
-                            return isValueInOption(inputValue, requiredOptions)
-                        else:
+                        try:
+                            float_value = float(evaluated_value)
+                            return isValueInOption(float_value, requiredOptions)
+                        except (ValueError, TypeError):
                             return "@InvalidType@"
 
-                # If input must be float, int can be converted to float
-                elif issubclass(requiredType, float):
-                    # All inputValues come in as a string, so first check if this evaluated string is a float
-                    try:
-                        evaluated_value = eval(inputValue)
+                # If any exceptions arise while trying to evaluate, then the value is incorrect
+                except:
+                    return "@InvalidType@"
 
-                        # If value can be evaluated safely, check if the value is an instance of float
-                        if isinstance(evaluated_value, float):
-                            # If so, check further restrictions on this parameter, return the outcome
-                            return isValueInOption(evaluated_value, requiredOptions)
+            # If input must be a list, only list can be accepted
+            elif issubclass(requiredType, list) or issubclass(requiredType, tuple) or issubclass(requiredType, dict):
+                try:
+                    # If the input value can be evaluated as a list, tuple or dict, check restrictions on value
+                    ast.literal_eval(inputValue)
+                    if inputValue.lower() in ["none"]:
+                        return isValueInOption(inputValue, requiredOptions)
+                    else:
+                        return isValueInOption(ast.literal_eval(inputValue), requiredOptions)
+                except ValueError:
+                    return "@InvalidType@"
 
-                        # If value is not a float, but is none, check if this is an allowable type
-                        elif inputValue.lower() in ["none"]:
-                            return isValueInOption(inputValue, requiredOptions)
-
-                        # If value is not a float, and None is not allowed, return invalid type
-                        else:
-                            try:
-                                float_value = float(evaluated_value)
-                                return isValueInOption(float_value, requiredOptions)
-                            except (ValueError, TypeError):
-                                return "@InvalidType@"
-
-                    # If any exceptions arise while trying to evaluate, then the value is incorrect
-                    except:
-                        return "@InvalidType@"
-
-                # If input must be a list, only list can be accepted
-                elif issubclass(requiredType, list) or issubclass(requiredType, tuple) or issubclass(requiredType, dict):
-                    try:
-                        # If the input value can be evaluated as a list, tuple or dict, check restrictions on value
-                        ast.literal_eval(inputValue)
-                        if inputValue.lower() in ["none"]:
-                            return isValueInOption(inputValue, requiredOptions)
-                        else:
-                            return isValueInOption(ast.literal_eval(inputValue), requiredOptions)
-                    except ValueError:
-                        return "@InvalidType@"
-
-                # If input can be of type 'any', allow any value to be saved. This will also process the 'callable' type, in the same way.
-                elif issubclass(requiredType, type(any)):
-                    # Return the outcome of check this input against any restrictions for this parameter
-                    # Type any or callable should be allowed to pass through a string
-                    return isValueInOption(inputValue, requiredOptions)
+            # If input can be of type 'any', allow any value to be saved. This will also process the 'callable' type, in the same way.
+            elif issubclass(requiredType, type(any)):
+                # Return the outcome of check this input against any restrictions for this parameter
+                # Type any or callable should be allowed to pass through a string
+                return isValueInOption(inputValue, requiredOptions)
 
         except Exception as e:
             print(e)

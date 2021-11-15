@@ -75,7 +75,7 @@ class GraphicsBlock(QGraphicsItem):
         # Colours for pens are defined, and the text font is set
         self._default_title_color = Qt.black    # Title colour (set to Light mode by default)
         self._pen_selected = QPen(QColor("#FFFFA637"), self._selected_line_thickness)
-        self._title_font = QFont("Arial", 10)
+        self._title_font = QFont("Arial", self.block.scene.block_name_fontsize)
 
         # Internal variable for catching fatal errors, and allowing user to save work before crashing
         self.FATAL_ERROR = False
@@ -446,6 +446,20 @@ class GraphicsBlock(QGraphicsItem):
         # If blocks were moved, change this variable to reflect that.
         self.wasMoved = True
 
+        # If there are wires within the Scene
+        if self.block.scene.wires:
+
+            # print("Graphics block - check intersections")
+            # for i, wire in enumerate(self.block.scene.wires):
+            #     print("Wire " + str(i) + " Coordinates: ", wire.wire_coordinates)
+            #     print()
+
+            # Call the first wire in the Scene to check the intersections
+            # Calling the first wire will still check intersection points
+            # of all wires, however since that code is located within the
+            # Wire class, this is how it's accessed.
+            self.block.scene.wires[0].checkIntersections()
+
     # Todo - add documentation
     # -----------------------------------------------------------------------------
     def mouseReleaseEvent(self, event):
@@ -702,6 +716,19 @@ class GraphicsConnectorBlock(QGraphicsItem):
 
         # If blocks were moved, change this variable to reflect that.
         self.wasMoved = True
+
+        # If there are wires within the Scene
+        if self.block.scene.wires:
+
+            # for i, wire in enumerate(self.block.scene.wires):
+            #     print("Wire " + str(i) + " Coordinates: ", wire.wire_coordinates)
+            #     print()
+
+            # Call the first wire in the Scene to check the intersections
+            # Calling the first wire will still check intersection points
+            # of all wires, however since that code is located within the
+            # Wire class, this is how it's accessed.
+            self.block.scene.wires[0].checkIntersections()
 
     # Todo - add documentation
     # -----------------------------------------------------------------------------

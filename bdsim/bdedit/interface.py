@@ -123,7 +123,7 @@ class Interface(QWidget):
         # graphical related. This 'grScene' is fed into an instance of a GraphicsView, which
         # handles visual updates to the 'grScene' (e.g. updating the Scene when Blocks are
         # deleted, or when wires are moved around)
-        self.canvasView = GraphicsView(self.scene.grScene, self)
+        self.canvasView = GraphicsView(self.scene.grScene, main_window, self)
 
         # Import all the blocks that bdedit can see, and sort the list in alphabetical order
         self.blockLibrary = import_blocks(self.scene, self.layout)
@@ -194,7 +194,7 @@ class Interface(QWidget):
         # These buttons are then connected to creating their respective instances within the Scene
         self.connector_block_button.clicked.connect(lambda checked: Connector(self.scene, self.layout, "Connector Block"))
         self.main_block_button.clicked.connect(lambda checked: Main(self.scene, self.layout))
-        self.text_item_button.clicked.connect(lambda checked: Floating_Label(self.scene, self.layout))
+        self.text_item_button.clicked.connect(lambda checked: Floating_Label(self.scene, self.layout, main_window))
 
         # Adding the buttons to the library browser's layout manager
         self.libraryBrowserBox.layout.addWidget(self.connector_block_button)

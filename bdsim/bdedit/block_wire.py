@@ -277,6 +277,10 @@ class Wire(Serializable):
                 print("Error removing wire:", e)
                 pass
 
+            if DEBUG: print(" - updating wire intersection points")
+            if self.scene.wires:
+                self.scene.wires[0].checkIntersections()
+
             if DEBUG: print(" - everything is done.")
         else:
             if DEBUG: print("# Wire already removed")

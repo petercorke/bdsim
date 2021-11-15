@@ -29,13 +29,15 @@ def main():
     parser.add_argument('--debug', '-d', 
         action='store_const', const=True, default=False,
         help='Enable debugging')
+    parser.add_argument('fontsize', type=int, nargs='?',
+        help='Set font size of block names')
     args, unparsed_args = parser.parse_known_args()
     
     # args holds all the command line info:
     #  args.file file name if given, else None
     #  args.debug True if -d option given
-    #  args.print True if -p option given, load the file, save screenshot,
-    #                then exit
+    #  args.print True if -p option given, load the file, save screenshot, then exit
+    #  args.fontsize intger fontsize if given, sets default size of block names
 
     # insert argv[0] into head of list of remaining args, and hand that to Qt
     unparsed_args.insert(0, sys.argv[0])
@@ -68,8 +70,18 @@ def main():
     window = InterfaceWindow(screen_resolution, args.debug)
 
     # Check what command line arguments have been passed, if any
-    if args.file or args.print or args.debug:
+    if args.file or args.print or args.debug or args.fontsize:
+
         # Call bdedit functionality based on passed args
+
+        if args.fontsize:
+            # If a fontsize argument is passed, it the fontsize of block names will be set to this value
+            # else a default fontsize of 12 will be used.
+            if args.fontsize > 0:
+                window.centralWidget().scene.block_name_fontsize = args.fontsize
+            else:
+                print("Provided a negative fontsize. Reverting to default fontsize of 12.")
+
         if args.file:
 
             # Check if file at given file path exists

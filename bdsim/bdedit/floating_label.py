@@ -17,10 +17,11 @@ DEBUG = False
 
 
 class Floating_Label(Serializable):
-    def __init__(self, scene, window, label_text="text", pos=(0,0)):
+    def __init__(self, scene, window, mainwindow, label_text="text", pos=(0,0)):
         super().__init__()
         self.scene = scene
         self.window = window
+        self.interfaceManager = mainwindow
         self.label_text = label_text
         self.position = pos
 
@@ -120,6 +121,8 @@ class ContentWidget(QWidget):
         self.defaultUnderline = False
         self.defaultColor = QColor("#000000")
         self.defaultAlignment = Qt.AlignLeft
+
+        self.currentFontSize = copy.copy(self.defaultFontSize)
 
         self.padding = 8
 

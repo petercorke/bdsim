@@ -54,9 +54,13 @@ class GraphicsLabel(QGraphicsItem):
     def setLabelFocus(self):
         self.floating_label.content.text_edit.setTextInteractionFlags(Qt.TextEditorInteraction)
 
+    def setLabelSizeBox(self):
+        self.floating_label.interfaceManager.updateToolbarValues()
+
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
         self.setLabelUnfocus()
+        self.setLabelSizeBox()
 
     def mouseDoubleClickEvent(self, event):
         super().mouseDoubleClickEvent(event)
