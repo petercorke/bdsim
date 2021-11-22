@@ -232,7 +232,7 @@ class InterfaceWindow(QMainWindow):
 
         elif value == 'SimTime':
             sim_time, done = QInputDialog.getText(
-                self, 'Input Dialog', 'Enter a simulation time (sec):')
+                self, 'Input Dialog', 'Enter simulation time (sec):')
             if done:
                 try:
                     # If simulation time is positive integer, update value
@@ -241,17 +241,17 @@ class InterfaceWindow(QMainWindow):
 
                     # Else return feedback
                     else:
-                        print("Incompatible simulation time given. Expected a non-zero integer.")
+                        print("Incompatible simulation time given. Expected a positive non-zero float or integer.")
                         self.setRunBtnOptions(value)
 
                 # If value is not an integer, return feedback
                 except ValueError as e:
-                    print("Incompatible simulation time given. Expected a non-zero integer.")
+                    print("Incompatible simulation time given. Expected a positive non-zero float or integer.")
                     self.setRunBtnOptions(value)
 
             else:
-                # Set
-                self.runButtonParameters[value] = sim_time
+                # Set default simulation time to 10 sec if no value provided
+                self.runButtonParameters[value] = 10
 
         print(self.runButtonParameters)
 
