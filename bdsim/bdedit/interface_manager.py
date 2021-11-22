@@ -39,11 +39,12 @@ class InterfaceWindow(QMainWindow):
         self.toolbar = QToolBar()
         self.fontSizeBox = QSpinBox()
         self.runButtonParameters = {
-            'Graphics': False,
-            'Animation': False,
-            'Verbose': False,
-            'Progress': False,
-            'Debug': ""
+            'SimTime' : 10,
+            'Graphics' : False,
+            'Animation' : False,
+            'Verbose' : False,
+            'Progress' : False,
+            'Debug' : ""
         }
 
         # Create the toolbar action items and the toolbar itself
@@ -56,27 +57,6 @@ class InterfaceWindow(QMainWindow):
         self.show()
 
     def createActions(self):
-        # # Creates basic actions related to saving/loading files
-        # self.actNew = QAction('&New', self, shortcut='Ctrl+N', toolTip="<b>New (Ctrl+N)</b><p>Create new model.</p>", triggered=self.newFile)
-        # self.actOpen = QAction('&Open', self, shortcut='Ctrl+O', toolTip="<b>Open (Ctrl+O)</b><p>Open model.</p>", triggered=self.loadFromFile)
-        # self.actSave = QAction('&Save', self, shortcut='Ctrl+S', toolTip="<b>Save (Ctrl+S)</b><p>Save model.</p>", triggered=self.saveToFile)
-        # self.actSaveAs = QAction('&Save As', self, shortcut='Ctrl+Shift+S', toolTip="<b>Save As (Ctrl+Shift+S)</b><p>Save model as.</p>", triggered=self.saveAsToFile)
-        # self.actExit = QAction('&Exit', self, shortcut='Ctrl+Q', toolTip="<b>Exit (Ctrl+Q)</b><p>Quit bdedit.</p>", triggered=self.close)
-        #
-        # # Actions related to editing files (undo/redo)
-        # self.actUndo = QAction('&Undo', self, shortcut='Ctrl+Z', toolTip="<b>Undo (Ctrl+Z)</b><p>Undo last action.</p>", triggered=self.editUndo)
-        # self.actRedo = QAction('&Redo', self, shortcut='Ctrl+Shift+Z', toolTip="<b>Redo (Ctrl+Shift+Z)</b><p>Redo last action.</p>", triggered=self.editRedo)
-        # self.actDelete = QAction('&Delete', self, toolTip="<b>Delete (Delete or Backspace)</b><p>Delete selected items.</p>", triggered=self.editDelete)
-        # self.actDelete.setShortcuts({ QKeySequence("Delete"), QKeySequence("Backspace") })
-        #
-        # # Miscelanious actions
-        # self.actFlipBlocks = QAction('&Flip Blocks', self, shortcut='F', toolTip="<b>Flip (F)</b><p>Flip selected blocks.</p>", triggered=self.miscFlip)
-        # self.actScreenshot = QAction('&Screenshot', self, shortcut='P', toolTip="<b>Screenshot (P)</b><p>Take and save a screenshot of your diagram.</p>", triggered=self.miscScreenshot)
-        # self.actWireOverlaps = QAction('&Toggle Wire Overlaps', self, shortcut='I', toolTip="<b>Toggle Wire Overlaps (I)</b><p>Toggle markers where wires overlap.</p>", triggered=self.miscEnableOverlaps, checkable=True)
-        # self.actHideConnectors = QAction('&Toggle Connectors', self, shortcut='H', toolTip="<b>Toggle Connectors (H)</b><p>Toggle connector blocks (hidden/visible).</p>", triggered=self.miscHideConnectors, checkable=True)
-        # self.actDisableBackground = QAction('&Disable Background', self, shortcut='T', toolTip="<b>Toggle Background (T)</b><p>Toggle background mode (grey with grid / white without grid).</p>", triggered=self.miscToggleBackground, checkable=True)
-        # self.actRunButton = QAction(QIcon(":/Icons_Reference/Icons/run.png"), '&Run', self, shortcut='R', toolTip="<b>Run Model (R)</b><p>Simulate your block diagram model.</p>", triggered=self.runButton)
-
         # Creates basic actions related to saving/loading files
         self.actNew = QAction('&New', self, shortcut='Ctrl+N', toolTip="Create new model.",triggered=self.newFile)
         self.actOpen = QAction('&Open', self, shortcut='Ctrl+O', toolTip="Open model.",triggered=self.loadFromFile)
@@ -117,6 +97,9 @@ class InterfaceWindow(QMainWindow):
         self.actRunBtnOp3 = QAction('&Verbose', self, toolTip='<b>Toggle Verbose</b><p>Description to be added</p>', triggered = lambda checked: self.setRunBtnOptions('Verbose'), checkable=True)
         self.actRunBtnOp4 = QAction('&Progress', self, toolTip='<b>Toggle Progress</b><p>Description to be added</p>', triggered = lambda checked: self.setRunBtnOptions('Progress'), checkable=True)
         self.actRunBtnOp5 = QAction('&Debug', self, toolTip='<b>Debug String</b><p>Description to be added</p>', triggered = lambda checked: self.setRunBtnOptions('Debug'))
+        self.actRunBtnOp6 = QAction('&Simulation Time', self, toolTip='<b>Simulation Time</b><p>Description to be added</p>', triggered = lambda checked: self.setRunBtnOptions('SimTime'))
+
+        self.helpButton = QAction('&Help', self, toolTip='<b>Help</b><p>Open BdEdit documentation.</p>', triggered = self.displayHelpURL)
 
     def createToolbar(self):
         self.createFileMenu()
@@ -124,6 +107,7 @@ class InterfaceWindow(QMainWindow):
         self.createToolsMenu()
         self.createRunButtonParameters()
         self.createToolbarItems()
+        self.createHelpItem()
 
     def createFileMenu(self):
         menubar = self.menuBar()
@@ -180,13 +164,23 @@ class InterfaceWindow(QMainWindow):
     def createRunButtonParameters(self):
         menubar = self.menuBar()
         self.runMenu = menubar.addMenu('Simulation')
-        self.toolsMenu.setToolTipsVisible(True)
+        self.runMenu.setToolTipsVisible(True)
+        self.runMenu.addAction(self.actRunBtnOp6)
+        self.runMenu.addSeparator()
         self.runMenu.addAction(self.actRunBtnOp1)
         self.runMenu.addAction(self.actRunBtnOp2)
         self.runMenu.addAction(self.actRunBtnOp3)
         self.runMenu.addAction(self.actRunBtnOp4)
-        self.toolsMenu.addSeparator()
+        self.runMenu.addSeparator()
         self.runMenu.addAction(self.actRunBtnOp5)
+
+    def createHelpItem(self):
+        menubar = self.menuBar()
+        self.helpBar = menubar.addMenu('Help')
+        self.helpBar.setToolTipsVisible(True)
+        self.helpBar.addAction(self.helpButton)
+
+    # -----------------------------------------------------------------------------
 
     def updateApplicationName(self):
         name = "bdedit - "
@@ -227,15 +221,42 @@ class InterfaceWindow(QMainWindow):
 
     # -----------------------------------------------------------------------------
     def setRunBtnOptions(self, value):
-        if value != ('Debug'):
+        if value not in ['Debug', 'SimTime']:
             self.runButtonParameters[value] = not(self.runButtonParameters[value])
-        else:
+
+        elif value == 'Debug':
             arbitrary_string, done = QInputDialog.getText(
                 self, 'Input Dialog', 'Enter a debug string:')
             if done:
                 self.runButtonParameters[value] = arbitrary_string
 
+        elif value == 'SimTime':
+            sim_time, done = QInputDialog.getText(
+                self, 'Input Dialog', 'Enter a simulation time (sec):')
+            if done:
+                try:
+                    # If simulation time is positive integer, update value
+                    if float(sim_time) > 0:
+                        self.runButtonParameters[value] = sim_time
+
+                    # Else return feedback
+                    else:
+                        print("Incompatible simulation time given. Expected a non-zero integer.")
+                        self.setRunBtnOptions(value)
+
+                # If value is not an integer, return feedback
+                except ValueError as e:
+                    print("Incompatible simulation time given. Expected a non-zero integer.")
+                    self.setRunBtnOptions(value)
+
+            else:
+                # Set
+                self.runButtonParameters[value] = sim_time
+
         print(self.runButtonParameters)
+
+    def displayHelpURL(self):
+        QDesktopServices.openUrl(QtCore.QUrl('https://github.com/petercorke/bdsim/blob/master/bdsim/bdedit/README.md'))
 
     # -----------------------------------------------------------------------------
     def runButton(self):
@@ -326,7 +347,6 @@ class InterfaceWindow(QMainWindow):
         if self.filename is None: return self.saveAsToFile()
         self.centralWidget().scene.saveToFile(self.filename)
         self.updateApplicationName()
-        #self.statusBar().showMessage("Successfully saved %s" % self.filename)
         return True
 
     # -----------------------------------------------------------------------------
@@ -382,7 +402,6 @@ class InterfaceWindow(QMainWindow):
                 self.saveToFile()
             else:
                 self.interface.save_image(self.filename)
-
 
     def miscHideConnectors(self):
         if self.interface:

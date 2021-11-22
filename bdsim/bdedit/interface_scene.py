@@ -14,6 +14,7 @@ from bdsim.bdedit.block import *
 from bdsim.bdedit.Icons import *
 from bdsim.bdedit.block_wire import Wire
 from bdsim.bdedit.block_main_block import Main
+from bdsim.bdedit.grouping_box import Grouping_Box
 from bdsim.bdedit.floating_label import Floating_Label
 from bdsim.bdedit.block_connector_block import Connector
 from bdsim.bdedit.interface_serialize import Serializable
@@ -36,6 +37,8 @@ class Scene(Serializable):
 
     - blocks, a list containing all ``Block`` instances
     - wires, a list containing all ``Wire`` instances
+    - floating labels, a list containing all the ``Floating Label`` instances
+    - grouping boxes, a list containing all the ``Grouping Box`` instances
     - intersection points, a list containing all intersection points between Wires
     """
 
@@ -57,6 +60,7 @@ class Scene(Serializable):
         self.blocks = []
         self.wires = []
         self.floating_labels = []
+        self.grouping_boxes = []
         self.intersection_list = []
 
         # Set default font size of block names, to be used when they are spawned
@@ -142,6 +146,13 @@ class Scene(Serializable):
         self.floating_labels.append(label)
 
     # -----------------------------------------------------------------------------
+    def addGBox(self, GBox):
+        """
+        This method adds a ``Grouping Box`` to the ``Scene's`` list of grouping boxes.
+        """
+        self.grouping_boxes.append(GBox)
+
+    # -----------------------------------------------------------------------------
     def removeBlock(self, block):
         """
         This method removes a ``Block`` to the ``Scene's`` list of blocks.
@@ -158,9 +169,16 @@ class Scene(Serializable):
     # -----------------------------------------------------------------------------
     def removeLabel(self, label):
         """
-        This method removes a ``Floating Label`` to the ``Scene's`` list of label.
+        This method removes a ``Floating Label`` to the ``Scene's`` list of labels.
         """
         self.floating_labels.remove(label)
+
+    # -----------------------------------------------------------------------------
+    def removeGBox(self, GBox):
+        """
+        This method removes a ``Grouping Box`` to the ``Scene's`` list of grouping boxes.
+        """
+        self.grouping_boxes.remove(GBox)
 
     # -----------------------------------------------------------------------------
     def getSceneWidth(self):
@@ -222,6 +240,10 @@ class Scene(Serializable):
         # Removes the first label from self.floating_labels array, until it is empty
         while len(self.floating_labels) > 0:
             self.floating_labels[0].remove()
+
+        # Removes the first GBox from self.grouping_boxes array, until it is empty
+        while len(self.grouping_boxes) > 0:
+            self.grouping_boxes[0].remove()
 
         self.has_been_modified = False
 
@@ -309,10 +331,11 @@ class Scene(Serializable):
         # Block and Wire classes are called to package this information respectively,
         # also into an OrderedDict. These ordered dictionaries are then stored in a temporary
         # blocks/wires variable and are returned as part of the OrderedDict of this Scene.
-        blocks, wires, labels = [], [], []
+        blocks, wires, labels, gboxes = [], [], [], []
         for block in self.blocks: blocks.append(block.serialize())
         for wire in self.wires: wires.append(wire.serialize())
         for label in self.floating_labels: labels.append(label.serialize())
+        for gbox in self.grouping_boxes: gboxes.append(gbox.serialize())
         return OrderedDict([
             ('id', self.id),
             ('created_by', self.created_by),
@@ -322,6 +345,7 @@ class Scene(Serializable):
             ('blocks', blocks),
             ('wires', wires),
             ('labels', labels),
+            ('grouping_boxes', gboxes),
         ])
 
     # -----------------------------------------------------------------------------
@@ -376,14 +400,13 @@ class Scene(Serializable):
                     # to define the block type
                     if block_type == blockname(block_class) or block_type == block_class.__name__:
                         block_class().deserialize(block_data, hashmap)
-
                         break
 
         # Next recreate all the wires that were saved
         for wire_data in data["wires"]:
             Wire(self).deserialize(wire_data, hashmap)
 
-        # Finally, if it exists, add the floating text labels that were saved
+        # Lastly, if it exists, add the floating text labels that were saved
         try:
             if data["labels"]:
                 # If the data for the labels is not null, then create the labels
@@ -392,6 +415,19 @@ class Scene(Serializable):
                         Floating_Label(self, self.window).deserialize(label_data, hashmap)
         except KeyError:
             # If model data doesn't contain 'labels' then none were saved, so don't create any.
+            pass
+
+        # Finally, if it exists, add the grouping boxes that were saved
+        try:
+            if data["grouping_boxes"]:
+                # If the data for the gboxes is not null, then create the grouping boxes
+                for gbox_data in data["grouping_boxes"]:
+                    if gbox_data is not None:
+                        # Ensure essnetial Grouping Box info exists; if it does not, we cannot fully reconstruct Grouping Box, so ignore
+                        if gbox_data['width'] and gbox_data['height'] and gbox_data['color']:
+                            Grouping_Box(self, self.window, gbox_data['width'], gbox_data['height'], gbox_data['color']).deserialize(gbox_data, hashmap)
+        except KeyError:
+            # If model data doesn't contain 'grouping_boxes' then none were saved, so don't create any.
             pass
 
         return True

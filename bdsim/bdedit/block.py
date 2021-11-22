@@ -627,39 +627,6 @@ class Block(Serializable):
         if DEBUG: print(" - everything was done.")
 
     # -----------------------------------------------------------------------------
-    # @staticmethod
-    # def tuple_decoder(obj):
-    #     """
-    #     This method is called when deserializing a JSON file to generate a saved
-    #     copy of the ``Scene`` with all the Blocks, Sockets and Wires. It's purpose
-    #     is for decoding an encoded representation for a tuple (encoded with the
-    #     ``TupleEncoder`` Class) when the JSON file was written. This decoder/encoder
-    #     combination is required as JSON does not support saving under type tuple,
-    #     and instead saves that information as a type list.
-    #
-    #     This code has been adapted from: https://stackoverflow.com/a/15721641
-    #
-    #     :param obj: the string object being decoded
-    #     :type obj: Union [int, slice], required
-    #     :return: the string object wrapped as a tuple (if decoded to have a __tuple__ key)
-    #     the string object (otherwise)
-    #     :rtype: - tuple (if decoded to have a __tuple__ key);
-    #     - any (otherwise)
-    #     """
-    #     # If an object is iterable (is a str, list, dict, tuple)
-    #     try:
-    #         # Decoder checks if the object has a '__tuple__' key
-    #         if '__tuple__' in obj:
-    #             # If so, converts items of that object into a tuple
-    #             return tuple(obj['items'])
-    #         else:
-    #             # Otherwise returns the item
-    #             return obj
-    #     # Otherwise if object isn't iterable (is a int, float, boolean)
-    #     except TypeError:
-    #         return obj
-
-    # -----------------------------------------------------------------------------
     def serialize(self):
         """
         This method is called to create an ordered dictionary of all of this Blocks'
@@ -880,56 +847,3 @@ def blockname(cls):
     :rtype: str
     """
     return cls.__name__.strip('_').upper()
-
-
-# # =============================================================================
-# #
-# #   Defining the TupleEncoder Class, which is used to encode block parameters
-# #   that need to be stored in JSON as tuples
-# #
-# # =============================================================================
-# class TupleEncoder(json.JSONEncoder):
-#     """
-#     This Class inherits JSONEncoder from the json library, and is used to encode
-#     user-editable parameters associated with a ``Block`` which need to be stored
-#     as a type tuple. This code is necessary as JSON does not support storing
-#     data as tuples. After the encoder has been used to serialize (save) the
-#     Block parameter data, when the Block is deserialized (loaded), this encoded
-#     representation of a tuple will be decoded and stored as a tuple.
-#
-#     This code is adapted from: https://stackoverflow.com/a/15721641
-#     """
-#
-#     def encode(self, item):
-#         """
-#         This method determines whether a given user-editable block parameter
-#         is of type tuple, and converts it to a dictionary with a "__tuple__"
-#         key with value `True` (signifying this parameter should be represented
-#         as a tuple), and an "item's" key with value `item` (this being the
-#         value of the user-editable parameter).
-#
-#         :param item: the user-editable parameter's value
-#         :type item: any
-#         :return: - a Dictionary defined as above (if item is tuple);
-#                  - the item (otherwise)
-#         :rtype: - Dict (if item is tuple);
-#                 - any (otherwise)
-#         """
-#
-#         # If the item value is of type tuple, return the item value as a
-#         # dictionary (as mentioned above)
-#         if isinstance(item, tuple):
-#             return {'__tuple__': True, 'items': item}
-#         # If the item is stored within a list, check if any items within
-#         # the list need to be encoded as a tuple, and if so, recursively
-#         # call this method to wrap those items in a dictionary (as above mentioned)
-#         elif isinstance(item, list):
-#             return [self.encode(e) for e in item]
-#         # If the item is stored within a dict, check if any items within
-#         # the dict need to be encoded as a tuple, and if so, recursively
-#         # call this method to wrap those items in a dictionary (as above mentioned)
-#         elif isinstance(item, dict):
-#             return {key: self.encode(value) for key, value in item.items()}
-#         # Otherwise, return the item
-#         else:
-#             return item

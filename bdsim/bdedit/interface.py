@@ -14,6 +14,7 @@ from PyQt5 import QtPrintSupport
 # BdEdit imports
 from bdsim.bdedit.block import *
 from bdsim.bdedit.Icons import *
+from bdsim.bdedit.grouping_box import *
 from bdsim.bdedit.block_wire import Wire
 from bdsim.bdedit.block_importer import *
 from bdsim.bdedit.floating_label import *
@@ -186,20 +187,24 @@ class Interface(QWidget):
         self.connector_block_button = QPushButton("Connector Block")
         self.main_block_button = QPushButton("Main Block")
         self.text_item_button = QPushButton("Text Item")
+        self.grouping_box_button = QPushButton("Grouping Box")
 
         self.connector_block_button.setVisible(False)
         self.main_block_button.setVisible(False)
         self.text_item_button.setVisible(False)
+        self.grouping_box_button.setVisible(False)
 
         # These buttons are then connected to creating their respective instances within the Scene
         self.connector_block_button.clicked.connect(lambda checked: Connector(self.scene, self.layout, "Connector Block"))
         self.main_block_button.clicked.connect(lambda checked: Main(self.scene, self.layout))
         self.text_item_button.clicked.connect(lambda checked: Floating_Label(self.scene, self.layout, main_window))
+        self.grouping_box_button.clicked.connect(lambda checked: Grouping_Box(self.scene, self.layout))
 
         # Adding the buttons to the library browser's layout manager
         self.libraryBrowserBox.layout.addWidget(self.connector_block_button)
         self.libraryBrowserBox.layout.addWidget(self.main_block_button)
         self.libraryBrowserBox.layout.addWidget(self.text_item_button)
+        self.libraryBrowserBox.layout.addWidget(self.grouping_box_button)
 
         # This for loop goes through each block type (sink, source, function) that was auto
         # imported (and stored into self.blockLibrary at the Interface's initialization).
@@ -353,6 +358,7 @@ class Interface(QWidget):
         self.connector_block_button.setVisible(not self.connector_block_button.isVisible())
         self.main_block_button.setVisible(not self.main_block_button.isVisible())
         self.text_item_button.setVisible(not self.text_item_button.isVisible())
+        self.grouping_box_button.setVisible(not self.grouping_box_button.isVisible())
 
     # Todo - update doc string comments
     # -----------------------------------------------------------------------------

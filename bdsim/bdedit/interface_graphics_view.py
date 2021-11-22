@@ -6,11 +6,11 @@ from PyQt5.QtWidgets import QGraphicsView
 # BdEdit imports
 from bdsim.bdedit.block import Block
 from bdsim.bdedit.block_graphics_wire import GraphicsWire
+from bdsim.bdedit.grouping_box_graphics import GraphicsGBox
 from bdsim.bdedit.block_graphics_socket import GraphicsSocket
 from bdsim.bdedit.floating_label_graphics import GraphicsLabel
 from bdsim.bdedit.block_graphics_block import GraphicsBlock, GraphicsConnectorBlock
 from bdsim.bdedit.block_wire import Wire, WIRE_TYPE_STEP, WIRE_TYPE_DIRECT, WIRE_TYPE_BEZIER
-
 # =============================================================================
 #
 #   Defining and setting global variables
@@ -126,6 +126,9 @@ class GraphicsView(QGraphicsView):
             elif isinstance(item, GraphicsLabel):
                 item.floating_label.remove()
                 self.interfaceManager.updateToolbarValues()
+            # Or if item is a Grouping Box, remove it
+            elif isinstance(item, GraphicsGBox):
+                item.grouping_box.remove()
 
         self.grScene.scene.has_been_modified = True
 
