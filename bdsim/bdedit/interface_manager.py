@@ -1,6 +1,7 @@
 # Library imports
 import os
 import json
+import platform
 import subprocess
 
 # PyQt5 imports
@@ -110,7 +111,8 @@ class InterfaceWindow(QMainWindow):
         self.createHelpItem()
 
     def createFileMenu(self):
-        menubar = self.menuBar()
+        menubar = QMenuBar() if platform.uname().system.startswith('Darw') else self.menuBar()
+        # menubar.setNativeMenuBar(False)
         self.fileMenu = menubar.addMenu('&File')
         self.fileMenu.setToolTipsVisible(True)
         self.fileMenu.addAction(self.actNew)
@@ -122,7 +124,8 @@ class InterfaceWindow(QMainWindow):
         self.fileMenu.addAction(self.actExit)
 
     # def createEditMenu(self):
-    #     menubar = self.menuBar()
+    #     menubar = QMenuBar() if platform.uname().system.startswith('Darw') else self.menuBar()
+    #     menubar.setNativeMenuBar(False)
     #     self.editMenu = menubar.addMenu('&Edit')
     #     self.editMenu.setToolTipsVisible(True)
     #     self.editMenu.addAction(self.actUndo)
@@ -131,7 +134,8 @@ class InterfaceWindow(QMainWindow):
     #     self.editMenu.addAction(self.actDelete)
 
     def createToolsMenu(self):
-        menubar = self.menuBar()
+        menubar = QMenuBar() if platform.uname().system.startswith('Darw') else self.menuBar()
+        # menubar.setNativeMenuBar(False)
         self.toolsMenu = menubar.addMenu('Tools')
         self.toolsMenu.setToolTipsVisible(True)
         self.toolsMenu.addAction(self.actFlipBlocks)
@@ -142,6 +146,27 @@ class InterfaceWindow(QMainWindow):
         self.toolsMenu.addAction(self.actDisableBackground)
         self.toolsMenu.addSeparator()
         self.toolsMenu.addAction(self.actDelete)
+
+    def createRunButtonParameters(self):
+        menubar = QMenuBar() if platform.uname().system.startswith('Darw') else self.menuBar()
+        # menubar.setNativeMenuBar(False)
+        self.runMenu = menubar.addMenu('Simulation')
+        self.runMenu.setToolTipsVisible(True)
+        self.runMenu.addAction(self.actRunBtnOp6)
+        self.runMenu.addSeparator()
+        self.runMenu.addAction(self.actRunBtnOp1)
+        self.runMenu.addAction(self.actRunBtnOp2)
+        self.runMenu.addAction(self.actRunBtnOp3)
+        self.runMenu.addAction(self.actRunBtnOp4)
+        self.runMenu.addSeparator()
+        self.runMenu.addAction(self.actRunBtnOp5)
+
+    def createHelpItem(self):
+        menubar = QMenuBar() if platform.uname().system.startswith('Darw') else self.menuBar()
+        # menubar.setNativeMenuBar(False)
+        self.helpBar = menubar.addMenu('Help')
+        self.helpBar.setToolTipsVisible(True)
+        self.helpBar.addAction(self.helpButton)
 
     def createToolbarItems(self):
         toolbar = self.addToolBar('ToolbarItems')
@@ -160,25 +185,6 @@ class InterfaceWindow(QMainWindow):
         toolbar.addSeparator()
         toolbar.addAction(self.actTextColor)
         toolbar.addAction(self.actRemoveFormat)
-
-    def createRunButtonParameters(self):
-        menubar = self.menuBar()
-        self.runMenu = menubar.addMenu('Simulation')
-        self.runMenu.setToolTipsVisible(True)
-        self.runMenu.addAction(self.actRunBtnOp6)
-        self.runMenu.addSeparator()
-        self.runMenu.addAction(self.actRunBtnOp1)
-        self.runMenu.addAction(self.actRunBtnOp2)
-        self.runMenu.addAction(self.actRunBtnOp3)
-        self.runMenu.addAction(self.actRunBtnOp4)
-        self.runMenu.addSeparator()
-        self.runMenu.addAction(self.actRunBtnOp5)
-
-    def createHelpItem(self):
-        menubar = self.menuBar()
-        self.helpBar = menubar.addMenu('Help')
-        self.helpBar.setToolTipsVisible(True)
-        self.helpBar.addAction(self.helpButton)
 
     # -----------------------------------------------------------------------------
 
