@@ -1,15 +1,18 @@
 import json
-import sys
 from bdsim import *
+import sys
 
-def bdrun():
-    sim = BDSim()
+def bdrun(filename = None, globals={}, **kwargs):
 
+    print('in bdrun', sys.argv)
+
+    if filename is None:
+        filename = sys.argv[-1]
+
+    sim = BDSim(**kwargs)
     bd = sim.blockdiagram()
 
     # load the JSON file
-    # filename = sys.argv[1]
-    filename = 'examples/eg1.json'
 
     # TODO should have argparser, need to be careful how it interacts with bdsim
     #  argparser
@@ -32,15 +35,23 @@ def bdrun():
     # create a dictionary of all blocks
     for block in model['blocks']:
         # Connector block
-        if block['block_type'] == "Connector":
+        if block['block_type'] == "CONNECTOR":
             start = block['inputs'][0]['id']
             end = block['outputs'][0]['id']
             connector_dict[start] = end
+        elif block['block_type'] == "MAIN":
+            continue
         
         else:
             # regular bdsim Block
             block_init = bd.__dict__[block['block_type']]  # block class
-            params = dict(block['variables'])  # block params as a dict
+            params = dict(block['parameters'])  # block params as a dict
+            for key, value in params.items():
+                if isinstance(value, str) and value[0] == '=':
+                    value = eval(value[1:], globals)
+                    print(f"Resolving: block [{block['title']}].{key} := {value}")
+                    params[key] = value
+
             newblock = block_init(**params)    # instantiate the block
             block_dict[block['id']] = newblock # add to mapping
             for input in block['inputs']:
@@ -67,7 +78,7 @@ def bdrun():
     # print('connectors', connector_dict)
 
     for block in model['blocks']:
-        if block['block_type'] == "Connector":
+        if block['block_type'] == "CONNECTOR":
             continue
 
         # only process real blocks
@@ -97,7 +108,8 @@ def bdrun():
     bd.report()
 
     sim.run(bd)
-    bd.done(block=True)
+    sim.done(bd, block=True)
 
 if __name__ == "__main__":
-    main()
+
+    bdrun()
