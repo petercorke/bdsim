@@ -31,6 +31,24 @@ DEBUG_COORDINATES = False
 #
 # =============================================================================
 class GraphicsWire(QGraphicsPathItem):
+
+    # # Handles for displaying cursors when trying to move wire segments
+    # handleVSeg1 = 1
+    # handleHSeg1 = 2
+    # handleVSeg2 = 3
+    # handleHSeg2 = 4
+    # handleVSeg3 = 5
+    #
+    # handleSize = +8.0
+    #
+    # handleCursors = {
+    #     handleVSeg1: Qt.SizeVerCursor,
+    #     handleHSeg1: Qt.SizeHorCursor,
+    #     handleVSeg2: Qt.SizeVerCursor,
+    #     handleHSeg2: Qt.SizeHorCursor,
+    #     handleVSeg3: Qt.SizeVerCursor,
+    # }
+
     """
     The ``GraphicsWire`` Class extends the ``QGraphicsPathItem`` Class from PyQt5.
     This class is responsible for graphically drawing Wires between Sockets.
@@ -55,6 +73,12 @@ class GraphicsWire(QGraphicsPathItem):
         """
 
         super().__init__()
+        #
+        # # Dictionary for storing which mouse cursor to display when mouse hovering over
+        # # vertical or horizontal wire segment
+        # self.segment_handles = {}
+        # self.handleSelected = None
+        # self.mousePressPos = None
 
         self.wire = wire
         self.wire_points = []
@@ -70,10 +94,6 @@ class GraphicsWire(QGraphicsPathItem):
         self._pen = QPen(self._color, 5, Qt.SolidLine, Qt.SquareCap, Qt.RoundJoin)
         self._pen_selected = QPen(self._color_selected, 8, Qt.SolidLine, Qt.SquareCap, Qt.BevelJoin)
 
-        # Setting the wire to be selectable and drawn behind all items
-        self.setFlag(QGraphicsItem.ItemIsSelectable)
-        self.setZValue(-1)
-
         # Initializing the start and end sockets
         self.posSource = [0, 0]
         self.posDestination = [100, 100]
@@ -81,8 +101,25 @@ class GraphicsWire(QGraphicsPathItem):
         self.posSource_Orientation = None
         self.posDestination_Orientation = None
 
+        # Method called to further intialize necessary block settings
+        self.initUI()
+
         # Internal variable for catching fatal errors, and allowing user to save work before crashing
         self.FATAL_ERROR = False
+
+    # -----------------------------------------------------------------------------
+    def initUI(self):
+        """
+        This method sets flags to allow for this Wire to be selectable and be
+        displayed at the correct z-level.
+        """
+
+        # Setting the wire to be selectable and drawn behind all items
+        self.setFlag(QGraphicsItem.ItemIsSelectable)
+        # self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        # self.setFlag(QGraphicsItem.ItemIsFocusable)
+        # self.setAcceptHoverEvents(True)
+        self.setZValue(-1)
 
     # -----------------------------------------------------------------------------
     def setSource(self, x, y):
@@ -143,6 +180,54 @@ class GraphicsWire(QGraphicsPathItem):
     # -----------------------------------------------------------------------------
     def shape(self):
         return self.polyPath()
+    #
+    # # -----------------------------------------------------------------------------
+    # def handleAt(self, point):
+    #     """
+    #     Returns the resize handle below the given point.
+    #     """
+    #     for k, v, in self.segment_handles.items():
+    #         if v.contains(point):
+    #             return k
+    #     return None
+    #
+    # # -----------------------------------------------------------------------------
+    # def hoverMoveEvent(self, moveEvent):
+    #     """
+    #     Executed when the mouse moves over the shape (NOT PRESSED).
+    #     """
+    #     if self.isSelected():
+    #         handle = self.handleAt(moveEvent.pos())
+    #         cursor = Qt.ArrowCursor if handle is None else self.handleCursors[handle]
+    #         self.setCursor(cursor)
+    #     super().hoverMoveEvent(moveEvent)
+    #
+    # # -----------------------------------------------------------------------------
+    # # def boundingRect(self):
+    # #     """
+    # #     Returns the bounding rect of the shape (including the resize handles).
+    # #     """
+    # #     o = self.handleSize
+    # #     return self.rect().adjusted(-o, -o, o, o)
+    #
+    # # -----------------------------------------------------------------------------
+    # def updateHandlesPos(self):
+    #     """
+    #     Update current resize handles according to the shape size and position.
+    #     """
+    #     print("updateHandlePos is being called")
+    #     print("wire points:", self.wire_points)
+    #     print("segments - hor, vert:", self.wire.horizontal_segments, self.wire.vertical_segments)
+    #     # s = self.handleSize
+    #     # b = self.boundingRect()
+    #     # self.handles[self.handleVertical] = QRectF(b.left(), b.top(), s, s)
+    #     # self.handles[self.handleHorizontal] = QRectF(b.center().x() - s / 2, b.top(), s, s)
+    #     # self.handles[self.handleTopRight] = QRectF(b.right() - s, b.top(), s, s)
+    #     # self.handles[self.handleMiddleLeft] = QRectF(b.left(), b.center().y() - s / 2, s, s)
+    #     # self.handles[self.handleMiddleRight] = QRectF(b.right() - s, b.center().y() - s / 2, s, s)
+    #     # self.handles[self.handleBottomLeft] = QRectF(b.left(), b.bottom() - s, s, s)
+    #     # self.handles[self.handleBottomMiddle] = QRectF(b.center().x() - s / 2, b.bottom() - s, s, s)
+    #     # self.handles[self.handleBottomRight] = QRectF(b.right() - s, b.bottom() - s, s, s)
 
     # -----------------------------------------------------------------------------
     def paint(self, painter, style, widget=None):
@@ -170,6 +255,15 @@ class GraphicsWire(QGraphicsPathItem):
             painter.setPen(self._pen if not self.isSelected() else self._pen_selected)
             painter.setBrush(Qt.NoBrush)
             painter.drawPath(self.path())
+
+            # if self.isSelected():
+            #     painter.setRenderHint(QPainter.Antialiasing)
+            #     painter.setBrush(QBrush(QColor("#FFFFA637")))
+            #     painter.setPen(QPen(QColor(0, 0, 0, 255), 1.0, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+            #     for handle, rect in self.segment_handles.items():
+            #         painter.drawEllipse(rect)
+
+
         except Exception as e:
             if self.FATAL_ERROR == False:
                 print("-------------------------------------------------------------------------")

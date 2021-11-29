@@ -4,7 +4,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
 
-# Majority of this code has been adapted from: https://stackoverflow.com/a/34442054
+# Majority of this code has been adapted with heavy inspiration from: https://stackoverflow.com/a/34442054
 
 class GraphicsGBox(QGraphicsRectItem):
 

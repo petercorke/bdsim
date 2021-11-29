@@ -1,8 +1,8 @@
 # Library imports
 import os
 import json
-import platform
 import subprocess
+from sys import platform
 
 # PyQt5 imports
 from PyQt5.QtGui import *
@@ -63,44 +63,44 @@ class InterfaceWindow(QMainWindow):
         self.actOpen = QAction('&Open', self, shortcut='Ctrl+O', toolTip="Open model.",triggered=self.loadFromFile)
         self.actSave = QAction('&Save', self, shortcut='Ctrl+S', toolTip="Save model.",triggered=self.saveToFile)
         self.actSaveAs = QAction('&Save As', self, shortcut='Ctrl+Shift+S',toolTip="Save model as.",triggered=self.saveAsToFile)
-        self.actExit = QAction('&Exit', self, shortcut='Ctrl+Q', toolTip="Quit bdedit.",triggered=self.close)
+        self.actExit = QAction('&Quit', self, shortcut='Ctrl+Q', toolTip="Quit bdedit.",triggered=self.close)
 
         # Actions related to editing files (undo/redo)
         self.actUndo = QAction('&Undo', self, shortcut='Ctrl+Z',toolTip="Undo last action.", triggered=self.editUndo)
         self.actRedo = QAction('&Redo', self, shortcut='Ctrl+Shift+Z',toolTip="Redo last action.",triggered=self.editRedo)
-        self.actDelete = QAction('&Delete', self,toolTip="Delete selected items.",triggered=self.editDelete)
+        self.actDelete = QAction('&Delete', self, toolTip="Delete selected items.",triggered=self.editDelete)
         self.actDelete.setShortcuts({QKeySequence("Delete"), QKeySequence("Backspace")})
 
         # Miscelanious actions
-        self.actFlipBlocks = QAction('&Flip Blocks', self, shortcut='F',toolTip="Flip selected blocks.", triggered=self.miscFlip)
-        self.actScreenshot = QAction('&Screenshot', self, shortcut='P',toolTip="Take and save a screenshot of your diagram.",triggered=self.miscScreenshot)
-        self.actWireOverlaps = QAction('&Toggle Wire Overlaps', self, shortcut='I',toolTip="Toggle markers where wires overlap.",triggered=self.miscEnableOverlaps, checkable=True)
-        self.actHideConnectors = QAction('&Toggle Connectors', self, shortcut='H',toolTip="Toggle visibilitiy of connector blocks (hidden/visible).",triggered=self.miscHideConnectors, checkable=True)
-        self.actDisableBackground = QAction('&Disable Background', self, shortcut='T',toolTip="Toggle background mode (grey with grid / white without grid).",triggered=self.miscToggleBackground, checkable=True)
-        self.actRunButton = QAction(QIcon(":/Icons_Reference/Icons/run.png"), '&Run', self, shortcut='R',toolTip="Simulate your block diagram model.",triggered=self.runButton)
+        self.actFlipBlocks = QAction('Flip Blocks', self, shortcut='F',toolTip="Flip selected blocks.", triggered=self.miscFlip)
+        self.actScreenshot = QAction('Screenshot', self, shortcut='P',toolTip="Take and save a screenshot of your diagram.",triggered=self.miscScreenshot)
+        self.actWireOverlaps = QAction('Toggle Wire Overlaps', self, shortcut='I',toolTip="Toggle markers where wires overlap.",triggered=self.miscEnableOverlaps, checkable=True)
+        self.actHideConnectors = QAction('Toggle Connectors', self, shortcut='H',toolTip="Toggle visibilitiy of connector blocks (hidden/visible).",triggered=self.miscHideConnectors, checkable=True)
+        self.actDisableBackground = QAction('Disable Background', self, shortcut='T',toolTip="Toggle background mode (grey with grid / white without grid).",triggered=self.miscToggleBackground, checkable=True)
+        self.actRunButton = QAction(QIcon(":/Icons_Reference/Icons/run.png"), 'Run', self, shortcut='R',toolTip="<b>Run Button (R)</b><p>Simulate your block diagram model.</p>",triggered=self.runButton)
 
         # Actions related to formatting floating text labels
-        self.actAlignLeft = QAction(QIcon(":/Icons_Reference/Icons/left_align.png"), '&Left', self, shortcut='Ctrl+Shift+L', toolTip="<b>Left Align (Ctrl+Shift+L)</b><p>Left align your selected floating text.</p>", triggered= lambda: self.textAlignment("AlignLeft"), checkable=True)
-        self.actAlignCenter = QAction(QIcon(":/Icons_Reference/Icons/center_align.png"), '&Center', self, shortcut='Ctrl+Shift+C', toolTip="<b>Center (Ctrl+Shift+C)</b><p>Center your selected floating text.</p>", triggered= lambda: self.textAlignment("AlignCenter"), checkable=True)
-        self.actAlignRight = QAction(QIcon(":/Icons_Reference/Icons/right_align.png"), '&Right', self,  shortcut='Ctrl+Shift+R', toolTip="<b>Right Align (Ctrl+Shift+R)</b><p>Right align your selected floating text.</p>", triggered= lambda: self.textAlignment("AlignRight"), checkable=True)
+        self.actAlignLeft = QAction(QIcon(":/Icons_Reference/Icons/left_align.png"), 'Left', self, shortcut='Ctrl+Shift+L', toolTip="<b>Left Align (Ctrl+Shift+L)</b><p>Left align your selected floating text.</p>", triggered= lambda: self.textAlignment("AlignLeft"), checkable=True)
+        self.actAlignCenter = QAction(QIcon(":/Icons_Reference/Icons/center_align.png"), 'Center', self, shortcut='Ctrl+Shift+C', toolTip="<b>Center (Ctrl+Shift+C)</b><p>Center your selected floating text.</p>", triggered= lambda: self.textAlignment("AlignCenter"), checkable=True)
+        self.actAlignRight = QAction(QIcon(":/Icons_Reference/Icons/right_align.png"), 'Right', self,  shortcut='Ctrl+Shift+R', toolTip="<b>Right Align (Ctrl+Shift+R)</b><p>Right align your selected floating text.</p>", triggered= lambda: self.textAlignment("AlignRight"), checkable=True)
 
         self.actBoldText = QAction(QIcon(":/Icons_Reference/Icons/bold.png"), '&Bold', self, shortcut='Ctrl+B', toolTip="<b>Bold (Ctrl+B)</b><p>Toggle bold on selected floating text.</p>", triggered=self.textBold, checkable=True)
         self.actUnderLineText = QAction(QIcon(":/Icons_Reference/Icons/underline.png"), '&Underline', self, shortcut='Ctrl+U', toolTip="<b>Underline (Ctrl+U)</b><p>Toggle underline on selected floating text.</p>", triggered=self.textUnderline, checkable=True)
         self.actItalicText = QAction(QIcon(":/Icons_Reference/Icons/italics.png"), '&Italicize', self, shortcut='Ctrl+I', toolTip="<b>Italic (Ctrl+I)</b><p>Toggle italics on selected floating text.</p>", triggered=self.textItalicize, checkable=True)
 
-        self.actFontType = QAction('&Font', self, shortcut='Ctrl+Shift+F', toolTip="<b>Font (Ctrl+Shift+F)</b><p>Choose a font style for floating text.</p>", triggered=self.textFontStyle)
+        self.actFontType = QAction('Font', self, shortcut='Ctrl+Shift+F', toolTip="<b>Font (Ctrl+Shift+F)</b><p>Choose a font style for floating text.</p>", triggered=self.textFontStyle)
         self.fontSizeBox.setValue(14); self.fontSizeBox.valueChanged.connect(self.textFontSize)
-        self.actTextColor = QAction(QIcon(":/Icons_Reference/Icons/color_picker.png"), '&Text Color', self, toolTip="<b>Font Color</b><p>Change the color of your text.</p>", triggered=self.textColor)
-        self.actRemoveFormat = QAction(QIcon(":/Icons_Reference/Icons/clear_format.png"), '&Clear Format', self, toolTip="<b>Clear Text Formatting</b><p>Removes all formatting from selected floating text.</p>", triggered=self.removeFormat)
+        self.actTextColor = QAction(QIcon(":/Icons_Reference/Icons/color_picker.png"), 'Text Color', self, toolTip="<b>Font Color</b><p>Change the color of your text.</p>", triggered=self.textColor)
+        self.actRemoveFormat = QAction(QIcon(":/Icons_Reference/Icons/clear_format.png"), 'Clear Format', self, toolTip="<b>Clear Text Formatting</b><p>Removes all formatting from selected floating text.</p>", triggered=self.removeFormat)
 
-        self.actRunBtnOp1 = QAction("&Graphics", self, toolTip="<b>Toggle Graphics</b><p>Description to be added</p>", triggered = lambda checked: self.setRunBtnOptions('Graphics'), checkable=True)
-        self.actRunBtnOp2 = QAction('&Animation', self, toolTip='<b>Toggle Animation</b><p>Description to be added</p>', triggered = lambda checked: self.setRunBtnOptions('Animation'), checkable=True)
-        self.actRunBtnOp3 = QAction('&Verbose', self, toolTip='<b>Toggle Verbose</b><p>Description to be added</p>', triggered = lambda checked: self.setRunBtnOptions('Verbose'), checkable=True)
-        self.actRunBtnOp4 = QAction('&Progress', self, toolTip='<b>Toggle Progress</b><p>Description to be added</p>', triggered = lambda checked: self.setRunBtnOptions('Progress'), checkable=True)
-        self.actRunBtnOp5 = QAction('&Debug', self, toolTip='<b>Debug String</b><p>Description to be added</p>', triggered = lambda checked: self.setRunBtnOptions('Debug'))
-        self.actRunBtnOp6 = QAction('&Simulation Time', self, toolTip='<b>Simulation Time</b><p>Description to be added</p>', triggered = lambda checked: self.setRunBtnOptions('SimTime'))
+        self.actRunBtnOp1 = QAction("Graphics", self, toolTip="<b>Toggle Graphics</b><p>Description to be added</p>", triggered = lambda checked: self.setRunBtnOptions('Graphics'), checkable=True)
+        self.actRunBtnOp2 = QAction('Animation', self, toolTip='<b>Toggle Animation</b><p>Description to be added</p>', triggered = lambda checked: self.setRunBtnOptions('Animation'), checkable=True)
+        self.actRunBtnOp3 = QAction('Verbose', self, toolTip='<b>Toggle Verbose</b><p>Description to be added</p>', triggered = lambda checked: self.setRunBtnOptions('Verbose'), checkable=True)
+        self.actRunBtnOp4 = QAction('Progress', self, toolTip='<b>Toggle Progress</b><p>Description to be added</p>', triggered = lambda checked: self.setRunBtnOptions('Progress'), checkable=True)
+        self.actRunBtnOp5 = QAction('Debug', self, toolTip='<b>Debug String</b><p>Description to be added</p>', triggered = lambda checked: self.setRunBtnOptions('Debug'))
+        self.actRunBtnOp6 = QAction('Simulation Time', self, toolTip='<b>Simulation Time</b><p>Description to be added</p>', triggered = lambda checked: self.setRunBtnOptions('SimTime'))
 
-        self.helpButton = QAction('&Help', self, toolTip='<b>Help</b><p>Open BdEdit documentation.</p>', triggered = self.displayHelpURL)
+        self.helpButton = QAction('Help', self, toolTip='<b>Help</b><p>Open BdEdit documentation.</p>', triggered = self.displayHelpURL)
 
     def createToolbar(self):
         self.createFileMenu()
@@ -111,9 +111,8 @@ class InterfaceWindow(QMainWindow):
         self.createHelpItem()
 
     def createFileMenu(self):
-        menubar = QMenuBar() if platform.uname().system.startswith('Darw') else self.menuBar()
-        # menubar.setNativeMenuBar(False)
-        self.fileMenu = menubar.addMenu('&File')
+        self._file_menubar = QMenuBar() if platform == 'darwin' else self.menuBar()
+        self.fileMenu = QMenu('File')
         self.fileMenu.setToolTipsVisible(True)
         self.fileMenu.addAction(self.actNew)
         self.fileMenu.addSeparator()
@@ -122,21 +121,23 @@ class InterfaceWindow(QMainWindow):
         self.fileMenu.addAction(self.actSaveAs)
         self.fileMenu.addSeparator()
         self.fileMenu.addAction(self.actExit)
+        self._file_menubar.addMenu(self.fileMenu)
+        # self._file_menubar.setNativeMenuBar(False)
 
     # def createEditMenu(self):
-    #     menubar = QMenuBar() if platform.uname().system.startswith('Darw') else self.menuBar()
-    #     menubar.setNativeMenuBar(False)
-    #     self.editMenu = menubar.addMenu('&Edit')
+    #     self._edit_menubar = QMenuBar() if platform == 'darwin' else self.menuBar()
+    #     self.editMenu = QMenu('Edit')
     #     self.editMenu.setToolTipsVisible(True)
     #     self.editMenu.addAction(self.actUndo)
     #     self.editMenu.addAction(self.actRedo)
     #     self.editMenu.addSeparator()
     #     self.editMenu.addAction(self.actDelete)
+    #     self._edit_menubar.addMenu(self.editMenu)
+    #     # self._edit_menubar.setNativeMenuBar(False)
 
     def createToolsMenu(self):
-        menubar = QMenuBar() if platform.uname().system.startswith('Darw') else self.menuBar()
-        # menubar.setNativeMenuBar(False)
-        self.toolsMenu = menubar.addMenu('Tools')
+        self._tools_menubar = QMenuBar() if platform == 'darwin' else self.menuBar()
+        self.toolsMenu = QMenu('Tools')
         self.toolsMenu.setToolTipsVisible(True)
         self.toolsMenu.addAction(self.actFlipBlocks)
         self.toolsMenu.addAction(self.actScreenshot)
@@ -146,11 +147,12 @@ class InterfaceWindow(QMainWindow):
         self.toolsMenu.addAction(self.actDisableBackground)
         self.toolsMenu.addSeparator()
         self.toolsMenu.addAction(self.actDelete)
+        self._tools_menubar.addMenu(self.toolsMenu)
+        # self._tools_menubar.setNativeMenuBar(False)
 
     def createRunButtonParameters(self):
-        menubar = QMenuBar() if platform.uname().system.startswith('Darw') else self.menuBar()
-        # menubar.setNativeMenuBar(False)
-        self.runMenu = menubar.addMenu('Simulation')
+        self._params_menubar = QMenuBar() if platform == 'darwin' else self.menuBar()
+        self.runMenu = QMenu('Simulation')
         self.runMenu.setToolTipsVisible(True)
         self.runMenu.addAction(self.actRunBtnOp6)
         self.runMenu.addSeparator()
@@ -160,31 +162,33 @@ class InterfaceWindow(QMainWindow):
         self.runMenu.addAction(self.actRunBtnOp4)
         self.runMenu.addSeparator()
         self.runMenu.addAction(self.actRunBtnOp5)
+        self._params_menubar.addMenu(self.runMenu)
 
     def createHelpItem(self):
-        menubar = QMenuBar() if platform.uname().system.startswith('Darw') else self.menuBar()
-        # menubar.setNativeMenuBar(False)
-        self.helpBar = menubar.addMenu('Help')
+        self._help_menubar = QMenuBar() if platform == 'darwin' else self.menuBar()
+        self.helpBar = QMenu('Help')
         self.helpBar.setToolTipsVisible(True)
         self.helpBar.addAction(self.helpButton)
+        self._help_menubar.addMenu(self.helpBar)
+        # self._help_menubar.setNativeMenuBar(False)
 
     def createToolbarItems(self):
-        toolbar = self.addToolBar('ToolbarItems')
-        toolbar.addAction(self.actRunButton)
-        toolbar.addSeparator()
-        toolbar.addAction(self.actAlignLeft)
-        toolbar.addAction(self.actAlignCenter)
-        toolbar.addAction(self.actAlignRight)
-        toolbar.addSeparator()
-        toolbar.addAction(self.actBoldText)
-        toolbar.addAction(self.actUnderLineText)
-        toolbar.addAction(self.actItalicText)
-        toolbar.addSeparator()
-        toolbar.addAction(self.actFontType)
-        toolbar.addWidget(self.fontSizeBox)
-        toolbar.addSeparator()
-        toolbar.addAction(self.actTextColor)
-        toolbar.addAction(self.actRemoveFormat)
+        self.toolbar = self.addToolBar('ToolbarItems')
+        self.toolbar.addAction(self.actRunButton)
+        self.toolbar.addSeparator()
+        self.toolbar.addAction(self.actAlignLeft)
+        self.toolbar.addAction(self.actAlignCenter)
+        self.toolbar.addAction(self.actAlignRight)
+        self.toolbar.addSeparator()
+        self.toolbar.addAction(self.actBoldText)
+        self.toolbar.addAction(self.actUnderLineText)
+        self.toolbar.addAction(self.actItalicText)
+        self.toolbar.addSeparator()
+        self.toolbar.addAction(self.actFontType)
+        self.toolbar.addWidget(self.fontSizeBox)
+        self.toolbar.addSeparator()
+        self.toolbar.addAction(self.actTextColor)
+        self.toolbar.addAction(self.actRemoveFormat)
 
     # -----------------------------------------------------------------------------
 
