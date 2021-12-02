@@ -571,6 +571,39 @@ class Block(Serializable):
                 wire.updatePositions()
 
     # -----------------------------------------------------------------------------
+    def updateWireRoutingLogic(self):
+        """
+        Wire routing logic is automatically determined by bdedit when moving blocks,
+        however users can adjust certain segments of these wires. When the user
+        interacts with these segments, the wire routing logic follows the custom
+        routing path. When blocks are moved again after wires segments are adjusted
+        by the user, the wiring logic will revert to following the automatic routing
+        logic. This method updates which wires should be drawn following the automatic
+        routing logic.
+        """
+        for socket in (self.inputs + self.outputs):
+            for wire in socket.wires:
+                if wire:
+                    # If both blocks connected by these wires are selected, don't do
+                    # anything, as both are being moved in respects to each other,
+                    # so no need to update wiring logic.
+
+                    start_block = wire.start_socket.node
+                    end_block = wire.end_socket.node
+
+                    if start_block.grBlock.isSelected() and end_block.grBlock.isSelected():
+                        pass
+                        # wire.grWire.customlogicOverride = True
+                        # start_block.updateSocketPositions()
+                        # end_block.updateSocketPositions()
+
+                    # Otherwise if only one block is selected, update the wiring logic
+                    # to be displayed based on the automatic wire routing logic.
+                    else:
+                        wire.grWire.customlogicOverride = False
+
+
+    # -----------------------------------------------------------------------------
     def removeSockets(self, type):
         """
         This method removes all sockets of given type, associated with this ``Block``.

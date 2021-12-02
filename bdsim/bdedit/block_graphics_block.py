@@ -446,6 +446,10 @@ class GraphicsBlock(QGraphicsItem):
         # If blocks were moved, change this variable to reflect that.
         self.wasMoved = True
 
+        # Since block was moved, update the wires connected to its input & output
+        # sockets to route the wires using the inbuilt hardcoded logic
+        self.block.updateWireRoutingLogic()
+
         # If there are wires within the Scene
         if self.block.scene.wires:
 

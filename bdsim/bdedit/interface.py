@@ -201,10 +201,10 @@ class Interface(QWidget):
         self.grouping_box_button.clicked.connect(lambda checked: Grouping_Box(self.scene, self.layout))
 
         # Adding the buttons to the library browser's layout manager
-        self.libraryBrowserBox.layout.addWidget(self.connector_block_button)
-        self.libraryBrowserBox.layout.addWidget(self.main_block_button)
         self.libraryBrowserBox.layout.addWidget(self.text_item_button)
+        self.libraryBrowserBox.layout.addWidget(self.main_block_button)
         self.libraryBrowserBox.layout.addWidget(self.grouping_box_button)
+        self.libraryBrowserBox.layout.addWidget(self.connector_block_button)
 
         # This for loop goes through each block type (sink, source, function) that was auto
         # imported (and stored into self.blockLibrary at the Interface's initialization).

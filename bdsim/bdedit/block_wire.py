@@ -297,11 +297,18 @@ class Wire(Serializable):
         :rtype: OrderedDict, ([keys, values]*)
         """
 
+        if self.grWire.customlogicOverride:
+            wire_coords = self.wire_coordinates
+        else:
+            wire_coords = []
+
         return OrderedDict([
             ('id', self.id),
             ('start_socket', self.start_socket.id),
             ('end_socket', self.end_socket.id),
             ('wire_type', self.wire_type),
+            ('custom_routing', self.grWire.customlogicOverride),
+            ('wire_coordinates', wire_coords),
         ])
 
     # -----------------------------------------------------------------------------
@@ -328,6 +335,26 @@ class Wire(Serializable):
         self.start_socket = hashmap[data['start_socket']]
         self.end_socket = hashmap[data['end_socket']]
         self.wire_type = data['wire_type']
+
+        # For newer custom routing logic. If custom_routing exists within the saved JSON
+        # data, and that variable is true, override the current wire_coordiantes of the wire
+        # to the ones saved in the file.
+        try:
+            if data["custom_routing"]:
+                self.grWire.customlogicOverride = data["custom_routing"]
+                try:
+                    if data["wire_coordinates"]:
+                        # Wire coordinates is supposed to be a list of tuples, but in JSON they
+                        # are stored as a list of lists. So convert the points to tuples
+                        new_wire_coordinates = []
+                        for point in data["wire_coordinates"]:
+                            new_wire_coordinates.append(tuple(point))
+                        self.grWire.updateWireCoordinates(new_wire_coordinates)
+                except KeyError:
+                    pass
+        except KeyError:
+            pass
+
         return True
 
     # -----------------------------------------------------------------------------
