@@ -117,7 +117,7 @@ class Interface(QWidget):
 
         # An instance of the Scene class is created, providing it the resolution of the
         # desktop screen and the application layout manager.
-        self.scene = Scene(resolution, self.layout)
+        self.scene = Scene(resolution, self.layout, main_window)
 
         # Since the Scene itself is only a class and doesn't have a 'visual' representation,
         # it will create a 'grScene' variable, that will be responsible for handling everything

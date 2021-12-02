@@ -43,7 +43,7 @@ class Scene(Serializable):
     """
 
     # -----------------------------------------------------------------------------
-    def __init__(self, resolution, window):
+    def __init__(self, resolution, window, main_window):
         """
         This method initializes an instance of the ``Scene`` Class.
 
@@ -53,8 +53,9 @@ class Scene(Serializable):
         :type window: QGridLayout, required
         """
         super().__init__()
-        # The application's layer manager is assigned to an internal variable
+        # The application's layer manager and interface manager are assigned to internal variables
         self.window = window
+        self.main_window = main_window
 
         # Empty lists for the blocks, wires and intersection points are initialized
         self.blocks = []
@@ -412,7 +413,7 @@ class Scene(Serializable):
                 # If the data for the labels is not null, then create the labels
                 for label_data in data["labels"]:
                     if label_data is not None:
-                        Floating_Label(self, self.window).deserialize(label_data, hashmap)
+                        Floating_Label(self, self.window, self.main_window).deserialize(label_data, hashmap)
         except KeyError:
             # If model data doesn't contain 'labels' then none were saved, so don't create any.
             pass
