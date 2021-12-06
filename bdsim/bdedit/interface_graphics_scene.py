@@ -161,20 +161,38 @@ class GraphicsScene(QGraphicsScene):
 
                     # Check the current colour mode of the scene and set the pen to that colour
                     self.checkMode()
-                    painter.setPen(QPen(self._color_background))
-                    painter.setBrush(QBrush(self._color_background))
+                    painter.setPen(Qt.NoPen)
+                    # painter.setBrush(QBrush(self._color_background))
 
                     # Paint each intersection point
                     for intersection_point in self.scene.intersection_list:
+                        painter.setBrush(QBrush(self._color_background))
                         x = intersection_point[0]
                         y = intersection_point[1]
 
-                        # Overlap
-                        # Paint a 16x16 rectangle
-                        painter.drawRect(x-7, y-7, 21, 14)
+                        # Prepare an overlap rectangle to "white-out" the wires underneath
+                        rect = QRectF(x - 7, y - 6, 21, 12)
+                        painter.drawRect(rect)
+                        # painter.drawRect(x-7, y-6, 21, 12)
+
+                        # If there are grouping boxes present in the scene
+                        if self.scene.grouping_boxes:
+
+                            # Find which grouping boxes, if any, this rectangle overlaps
+                            for box in self.scene.grouping_boxes:
+                                # Grab QPath of the current location of this grouping box within the scene
+                                gbox_location = box.grGBox.mapToScene(box.grGBox.rect())
+
+                                # Find the intersecting area between the overlaping rect and this grouping box, if there is one
+                                intersecting = self.findIntersectingAreaPoints(gbox_location.boundingRect(), rect)
+
+                                # If an overlap was found, an intersecting rect will be provided, else False
+                                if intersecting:
+                                    painter.setBrush(QBrush(box.grGBox.bg_color))
+                                    painter.drawRect(intersecting)
 
                         # Paint an image over the intersection point
-                        painter.drawImage(QRect(x-7, y-8, 17, 16), self.overlap_image)
+                        painter.drawImage(QRect(x - 7, y - 8, 17, 16), self.overlap_image)
 
             # Else, if no wires in scene, clear intersection_list
             else:
@@ -235,3 +253,29 @@ class GraphicsScene(QGraphicsScene):
             painter.setPen(self._pen_dark)
             try: painter.drawLines(*lines_dark)
             except TypeError: painter.drawLines(lines_dark)
+
+    # -----------------------------------------------------------------------------
+    def findIntersectingAreaPoints(self, rectA, rectB):
+        """
+        This method takes in two QRectF's and finds the union area of overlap between
+        these two rects, as well as the points which make up the overlapping rectangle.
+        :param rectA: rectangle one (representing the grouping box)
+        :type rectA: QRectF
+        :param rectB: rectangle two (representing the wire overlap box)
+        :type rectB: QRectF
+        :return: a rectangle representing the intersection between the two given rectangles
+        :rtype: QRectF
+        """
+        x1 = max(rectA.left(),   rectB.left())
+        y1 = max(rectA.top(),    rectB.top())
+        x2 = min(rectA.right(),  rectB.right())
+        y2 = min(rectA.bottom(), rectB.bottom())
+
+        # If the area of the intersecting rectangle is greater than 0
+        if (max(0, x2 - x1) * max(0, y2 - y1)) > 0:
+            # Make a new QRectF representing the intersection
+            return QRectF(x1, y1, (max(0, x2 - x1)), (max(0, y2 - y1)))
+        else:
+            # Otherwise return False
+            return False
+        # return [max(0, x2 - x1) * max(0, y2 - y1), [x1, y1, x2, y2]]
