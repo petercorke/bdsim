@@ -34,6 +34,7 @@ class Grouping_Box(Serializable):
         self.scene.grScene.addItem(self.grGBox)
 
         self.scene.has_been_modified = True
+        # self.scene.history.storeHistory("Grouping box added")
 
     def setPos(self, x, y):
         self.grGBox.setPos(x, y)

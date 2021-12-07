@@ -2,6 +2,7 @@
 import json
 import time
 import getpass
+from PIL import ImageFont
 from collections import OrderedDict
 
 # PyQt5 imports
@@ -18,6 +19,7 @@ from bdsim.bdedit.grouping_box import Grouping_Box
 from bdsim.bdedit.floating_label import Floating_Label
 from bdsim.bdedit.block_connector_block import Connector
 from bdsim.bdedit.interface_serialize import Serializable
+from bdsim.bdedit.interface_scene_history import SceneHistory
 from bdsim.bdedit.interface_graphics_scene import GraphicsScene
 
 
@@ -69,6 +71,8 @@ class Scene(Serializable):
 
         # Variables to listen for modifications with in the scene
         self._has_been_modified = False
+
+        # Initialize listener
         self._has_been_modified_listeners = []
 
         # Variable for toggling between connector blocks being visible or not
@@ -81,6 +85,9 @@ class Scene(Serializable):
         self.scene_height = resolution.height()
 
         self.initUI()
+        self.determineFont()
+        self.history = SceneHistory(self)
+        self.history.storeHistory("Blank canvas loaded")
 
     # Todo - add doc for this method
     # -----------------------------------------------------------------------------
@@ -102,12 +109,6 @@ class Scene(Serializable):
 
         self._has_been_modified = value
 
-
-    # Todo - add doc for this method
-    # -----------------------------------------------------------------------------
-    def addHasBeenModifiedListener(self, callback):
-        self._has_been_modified_listeners.append(callback)
-
     # -----------------------------------------------------------------------------
     def initUI(self):
         """
@@ -124,6 +125,25 @@ class Scene(Serializable):
         # Create variables to record when and by who this diagram was created
         self.creation_time = int(time.time())
         self.created_by = getpass.getuser()
+
+    # -----------------------------------------------------------------------------
+    def determineFont(self):
+        """
+        This method sets the truetype font with which socket labels should be drawn.
+        Originally, this property was set within the sockets themselves, but when
+        they are constantly drawn/redrawn (i.e. when undo/redo is spammed) and as a
+        result, multiple attemps are made to access the truetype font, Windows issues
+        an OSError crashing the program... So since this font only needs to be defined
+        on startup, the font is accessed whenever the scene is created.
+        """
+        try:
+            self._system_font = ImageFont.truetype('arial.ttf', 14)
+        except OSError:
+            self._system_font = ImageFont.truetype('Arial.ttf', 14)
+
+    # -----------------------------------------------------------------------------
+    def addHasBeenModifiedListener(self, callback: 'function'):
+        self._has_been_modified_listeners.append(callback)
 
     # -----------------------------------------------------------------------------
     def addBlock(self, block):
@@ -312,7 +332,6 @@ class Scene(Serializable):
             raw_data = file.read()
             data = json.loads(raw_data)
             self.deserialize(data, self.window)
-
             self.has_been_modified = False
 
     # -----------------------------------------------------------------------------

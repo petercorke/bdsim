@@ -19,6 +19,7 @@ class GraphicsLabel(QGraphicsItem):
 
         self.initUI()
         self.wasMoved = False
+        self.lastPos = self.pos()
 
     def initUI(self):
         self.setFlag(QGraphicsItem.ItemIsSelectable)
@@ -51,6 +52,13 @@ class GraphicsLabel(QGraphicsItem):
         self.floating_label.setFocusOfFloatingText()
         self.floating_label.content.text_edit.setTextInteractionFlags(Qt.NoTextInteraction)
 
+        # If floating label has been edited, update the variable within the model, to then update the
+        # title of the model, to indicate that there is unsaved progress
+        if self.content.wasEdited:
+            self.content.wasEdited = False
+            self.floating_label.scene.has_been_modified = True
+            self.floating_label.scene.history.storeHistory("Floating label edited")
+
     def setLabelFocus(self):
         self.floating_label.content.text_edit.setTextInteractionFlags(Qt.TextEditorInteraction)
 
@@ -74,46 +82,4 @@ class GraphicsLabel(QGraphicsItem):
         if self.wasMoved:
             self.wasMoved = False
             self.floating_label.scene.has_been_modified = True
-
-    def mouseMoveEvent(self, event):
-
-        super().mouseMoveEvent(event)
-
-        # For all selected floating labels
-        for label in self.floating_label.scene.floating_labels:
-
-            if label.grContent.isSelected():
-
-                spacing = 5
-
-                # The x,y position of the mouse cursor is grabbed, and is restricted to update
-                # every 5 pixels (the size of the smaller grid squares, as defined in GraphicsScene)
-                x = round(label.grContent.pos().x() / spacing) * spacing
-                y = round(label.grContent.pos().y() / spacing) * spacing
-                pos = QPointF(x, y)
-                # The position of this GraphicsConnectorBlock is set to the restricted position of the mouse cursor
-                label.grContent.setPos(pos)
-
-                # 10 is the width of the smaller grid squares
-                # This logic prevents the selected QGraphicsConnectorBlock from being dragged outside
-                # the border of the work area (GraphicsScene)
-                padding = spacing
-
-                # left
-                if label.grContent.pos().x() < label.grContent.scene().sceneRect().x() + padding:
-                    label.grContent.setPos(label.grContent.scene().sceneRect().x() + padding, label.grContent.pos().y())
-
-                # top
-                if label.grContent.pos().y() < label.grContent.scene().sceneRect().y() + padding:
-                    label.grContent.setPos(label.grContent.pos().x(), label.grContent.scene().sceneRect().y() + padding)
-
-                # right
-                if label.grContent.pos().x() > (label.grContent.scene().sceneRect().x() + label.grContent.scene().sceneRect().width() - label.grContent.floating_label.width - padding):
-                    label.grContent.setPos(label.grContent.scene().sceneRect().x() + label.grContent.scene().sceneRect().width() - label.grContent.floating_label.width - padding, label.grContent.pos().y())
-
-                # bottom
-                if label.grContent.pos().y() > (label.grContent.scene().sceneRect().y() + label.grContent.scene().sceneRect().height() - label.grContent.floating_label.height - padding):
-                    label.grContent.setPos(label.grContent.pos().x(), label.grContent.scene().sceneRect().y() + label.grContent.scene().sceneRect().height() - label.grContent.floating_label.height - padding)
-
-        # If floating labels were moved, change this variable to reflect that.
-        self.wasMoved = True
+            self.floating_label.scene.history.storeHistory("Floating label moved")

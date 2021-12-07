@@ -51,6 +51,5 @@ class Main(Block):
         # and visually added into the GraphicsScene
         self.scene.addBlock(self)
         self.scene.grScene.addItem(self.grBlock)
-        self.scene.has_been_modified = True
 
         self._createParamWindow()

@@ -87,7 +87,10 @@ class GraphicsBlock(QGraphicsItem):
         self.initTitle()
         self.checkMode()
         self.initUI()
+
+        # Variable for storing whether block was moved or not
         self.wasMoved = False
+        self.lastPos = self.pos()
 
     # -----------------------------------------------------------------------------
     def initUI(self):
@@ -192,14 +195,6 @@ class GraphicsBlock(QGraphicsItem):
         self.mode = value
         self.checkMode()
         self.update()
-
-
-        # if value in ["Light", "Dark", "Off"]:
-        #     self.mode = value
-        #     self.checkMode()
-        #     self.update()
-        # else:
-        #     print("Block mode not supported.")
 
     # -----------------------------------------------------------------------------
     def checkBlockHeight(self):
@@ -381,89 +376,6 @@ class GraphicsBlock(QGraphicsItem):
 
         super().mousePressEvent(event)
 
-    # -----------------------------------------------------------------------------
-    def mouseMoveEvent(self, event):
-        """
-        This is an inbuilt method of QGraphicsItem, that is overwritten by
-        ``GraphicsBlock`` to detect, and assign logic to mouse movement.
-
-        Currently, the following logic is applied to the Block on mouse movement:
-
-        - a detected mouse move event on this GraphicsBlock will enforce grid-snapping
-          on the selected GraphicsBlock (making it move only in increments of the same
-          size as the smaller grid squares of the background).
-
-        - the selected GraphicsBlock will be prevented from moving outside the maximum
-          zoomed out border of the work area (the GraphicsScene).
-
-        - the connection points of any wires connected to the selected block AND any
-          other block it is connected to, will be updated, as the block is moved around.
-
-        :param event: a mouse movement event
-        :type event: QMouseMoveEvent, automatically recognized by the inbuilt function
-        """
-
-        super().mouseMoveEvent(event)
-
-        # For all selected blocks
-        for block in self.block.scene.blocks:
-            block.updateConnectedEdges()
-
-            if block.grBlock.isSelected():
-
-                # The x,y position of the mouse cursor is grabbed, and is restricted to update
-                # every 20 pixels (the size of the smaller grid squares, as defined in GraphicsScene)
-                x = round(block.grBlock.pos().x() / 20) * 20
-                y = round(block.grBlock.pos().y() / 20) * 20
-                pos = QPointF(x, y)
-                # The position of this GraphicsBlock is set to the restricted position of the mouse cursor
-                block.grBlock.setPos(pos)
-
-                # 20 is the width of the smaller grid squares
-                # This logic prevents the selected QGraphicsBlock from being dragged outside
-                # the border of the work area (GraphicsScene)
-                padding = 20
-
-                # left
-                if block.grBlock.pos().x() < block.grBlock.scene().sceneRect().x() + padding:
-                    block.grBlock.setPos(block.grBlock.scene().sceneRect().x() + padding, block.grBlock.pos().y())
-
-                # top
-                if block.grBlock.pos().y() < block.grBlock.scene().sceneRect().y() + padding:
-                    block.grBlock.setPos(block.grBlock.pos().x(), block.grBlock.scene().sceneRect().y() + padding)
-
-                # right
-                if block.grBlock.pos().x() > (block.grBlock.scene().sceneRect().x() + block.grBlock.scene().sceneRect().width() - block.grBlock.width - padding):
-                    block.grBlock.setPos(block.grBlock.scene().sceneRect().x() + block.grBlock.scene().sceneRect().width() - block.grBlock.width - padding, block.grBlock.pos().y())
-
-                # bottom
-                if block.grBlock.pos().y() > (block.grBlock.scene().sceneRect().y() + block.grBlock.scene().sceneRect().height() - block.grBlock.height - block.grBlock.title_height - padding):
-                    block.grBlock.setPos(block.grBlock.pos().x(), block.grBlock.scene().sceneRect().y() + block.grBlock.scene().sceneRect().height() - block.grBlock.height - block.grBlock.title_height - padding)
-
-                # Update the connected wires of all Blocks that are affected by this Block being moved
-                block.updateConnectedEdges()
-
-        # If blocks were moved, change this variable to reflect that.
-        self.wasMoved = True
-
-        # Since block was moved, update the wires connected to its input & output
-        # sockets to route the wires using the inbuilt hardcoded logic
-        self.block.updateWireRoutingLogic()
-
-        # If there are wires within the Scene
-        if self.block.scene.wires:
-
-            # print("Graphics block - check intersections")
-            # for i, wire in enumerate(self.block.scene.wires):
-            #     print("Wire " + str(i) + " Coordinates: ", wire.wire_coordinates)
-            #     print()
-
-            # Call the first wire in the Scene to check the intersections
-            # Calling the first wire will still check intersection points
-            # of all wires, however since that code is located within the
-            # Wire class, this is how it's accessed.
-            self.block.scene.wires[0].checkIntersections()
-
     # Todo - add documentation
     # -----------------------------------------------------------------------------
     def mouseReleaseEvent(self, event):
@@ -475,6 +387,7 @@ class GraphicsBlock(QGraphicsItem):
         if self.wasMoved:
             self.wasMoved = False
             self.block.scene.has_been_modified = True
+            self.block.scene.history.storeHistory("Block moved")
 
 class GraphicsConnectorBlock(QGraphicsItem):
     """
@@ -530,6 +443,7 @@ class GraphicsConnectorBlock(QGraphicsItem):
         # Further initialize necessary Connector Block settings
         self.initUI()
         self.wasMoved = False
+        self.lastPos = self.pos()
 
     # -----------------------------------------------------------------------------
     def initUI(self):
@@ -656,92 +570,15 @@ class GraphicsConnectorBlock(QGraphicsItem):
 
         super().mousePressEvent(event)
 
-    # -----------------------------------------------------------------------------
-    def mouseMoveEvent(self, event):
-        """
-        This is an inbuilt method of QGraphicsItem, that is overwritten by
-        ``GraphicsConnectorBlock`` to detect, and assign logic to mouse movement.
-
-        Currently, the following logic is applied to the Connector Block on mouse movement:
-
-        - a detected mouse move event on this GraphicsConnectorBlock will enforce
-          grid-snapping on the selected GraphicsSocketBlock (making it move only
-          in increments of the same size as the smaller grid squares of the background).
-
-        - the selected GraphicsConnectorBlock will be prevented from moving outside the
-          maximum zoomed out border of the work area (the GraphicsScene).
-
-        - the connection points of any wires connected to the selected Connector Block AND any
-          other block it is connected to, will be updated, as the block is moved around.
-
-        :param event: a mouse movement event
-        :type event: QMouseMoveEvent, automatically recognized by the inbuilt function
-        """
-
-        super().mouseMoveEvent(event)
-
-        # For all selected connector blocks
-        for block in self.block.scene.blocks:
-            block.updateConnectedEdges()
-
-            if block.grBlock.isSelected():
-
-                # The x,y position of the mouse cursor is grabbed, and is restricted to update
-                # every 20 pixels (the size of the smaller grid squares, as defined in GraphicsScene)
-                x = round(block.grBlock.pos().x() / 20) * 20
-                y = round(block.grBlock.pos().y() / 20) * 20
-                pos = QPointF(x, y)
-                # The position of this GraphicsConnectorBlock is set to the restricted position of the mouse cursor
-                block.grBlock.setPos(pos)
-
-                # 20 is the width of the smaller grid squares
-                # This logic prevents the selected QGraphicsConnectorBlock from being dragged outside
-                # the border of the work area (GraphicsScene)
-                padding = 20
-
-                # left
-                if block.grBlock.pos().x() < block.grBlock.scene().sceneRect().x() + padding:
-                    block.grBlock.setPos(block.grBlock.scene().sceneRect().x() + padding, block.grBlock.pos().y())
-
-                # top
-                if block.grBlock.pos().y() < block.grBlock.scene().sceneRect().y() + padding:
-                    block.grBlock.setPos(block.grBlock.pos().x(), block.grBlock.scene().sceneRect().y() + padding)
-
-                # right
-                if block.grBlock.pos().x() > (block.grBlock.scene().sceneRect().x() + block.grBlock.scene().sceneRect().width() - block.grBlock.width - padding):
-                    block.grBlock.setPos( block.grBlock.scene().sceneRect().x() + block.grBlock.scene().sceneRect().width() - block.grBlock.width - padding, block.grBlock.pos().y())
-
-                # bottom
-                if block.grBlock.pos().y() > (block.grBlock.scene().sceneRect().y() + block.grBlock.scene().sceneRect().height() - block.grBlock.height - block.grBlock.title_height - padding):
-                    block.grBlock.setPos(block.grBlock.pos().x(), block.grBlock.scene().sceneRect().y() + block.grBlock.scene().sceneRect().height() - block.grBlock.height - block.grBlock.title_height - padding)
-
-                # Update the connected wires of all Blocks that are affected by this Connector Block being moved
-                block.updateConnectedEdges()
-
-        # If blocks were moved, change this variable to reflect that.
-        self.wasMoved = True
-
-        # If there are wires within the Scene
-        if self.block.scene.wires:
-
-            # for i, wire in enumerate(self.block.scene.wires):
-            #     print("Wire " + str(i) + " Coordinates: ", wire.wire_coordinates)
-            #     print()
-
-            # Call the first wire in the Scene to check the intersections
-            # Calling the first wire will still check intersection points
-            # of all wires, however since that code is located within the
-            # Wire class, this is how it's accessed.
-            self.block.scene.wires[0].checkIntersections()
-
     # Todo - add documentation
     # -----------------------------------------------------------------------------
     def mouseReleaseEvent(self, event):
-
         super().mouseReleaseEvent(event)
 
         # If block has been moved, update the variable within the model, to then update the
         # title of the model, to indicate that there is unsaved progress
         if self.wasMoved:
+            print("connector block was moved")
             self.wasMoved = False
             self.block.scene.has_been_modified = True
+            self.block.scene.history.storeHistory("Block moved")

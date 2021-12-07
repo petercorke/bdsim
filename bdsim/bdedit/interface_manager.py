@@ -104,7 +104,7 @@ class InterfaceWindow(QMainWindow):
 
     def createToolbar(self):
         self.createFileMenu()
-        # self.createEditMenu()
+        self.createEditMenu()
         self.createToolsMenu()
         self.createRunButtonParameters()
         self.createToolbarItems()
@@ -124,7 +124,7 @@ class InterfaceWindow(QMainWindow):
         # self._file_menubar.addMenu(self.fileMenu)
         # # self._file_menubar.setNativeMenuBar(False)
         menubar = self.menuBar()
-        self.fileMenu = menubar.addMenu('&File')
+        self.fileMenu = menubar.addMenu('File')
         self.fileMenu.setToolTipsVisible(True)
         self.fileMenu.addAction(self.actNew)
         self.fileMenu.addSeparator()
@@ -134,7 +134,8 @@ class InterfaceWindow(QMainWindow):
         self.fileMenu.addSeparator()
         self.fileMenu.addAction(self.actExit)
 
-    # def createEditMenu(self):
+    def createEditMenu(self):
+        # self._edit_menubar.setNativeMenuBar(False)
     #     self._edit_menubar = QMenuBar() if platform == 'darwin' else self.menuBar()
     #     self.editMenu = QMenu('Edit')
     #     self.editMenu.setToolTipsVisible(True)
@@ -144,6 +145,13 @@ class InterfaceWindow(QMainWindow):
     #     self.editMenu.addAction(self.actDelete)
     #     self._edit_menubar.addMenu(self.editMenu)
     #     # self._edit_menubar.setNativeMenuBar(False)
+        menubar = self.menuBar()
+        self.editMenu = menubar.addMenu('Edit')
+        self.editMenu.setToolTipsVisible(True)
+        self.editMenu.addAction(self.actUndo)
+        self.editMenu.addAction(self.actRedo)
+        self.editMenu.addSeparator()
+        self.editMenu.addAction(self.actDelete)
 
     def createToolsMenu(self):
         # self._tools_menubar = QMenuBar() if platform == 'darwin' else self.menuBar()
@@ -168,8 +176,8 @@ class InterfaceWindow(QMainWindow):
         self.toolsMenu.addAction(self.actWireOverlaps)
         self.toolsMenu.addAction(self.actHideConnectors)
         self.toolsMenu.addAction(self.actDisableBackground)
-        self.toolsMenu.addSeparator()
-        self.toolsMenu.addAction(self.actDelete)
+        # self.toolsMenu.addSeparator()
+        # self.toolsMenu.addAction(self.actDelete)
 
     def createRunButtonParameters(self):
         # self._params_menubar = QMenuBar() if platform == 'darwin' else self.menuBar()
@@ -348,6 +356,8 @@ class InterfaceWindow(QMainWindow):
             self.centralWidget().scene.clear()
             self.filename = None
             self.updateApplicationName()
+            self.centralWidget().scene.history.clear()
+            self.centralWidget().scene.history.storeInitialHistoryStamp()
 
     # -----------------------------------------------------------------------------
     def loadFromFilePath(self, filepath):
@@ -362,6 +372,8 @@ class InterfaceWindow(QMainWindow):
                 self.centralWidget().scene.loadFromFile(filepath)
                 self.filename = filepath
                 self.updateApplicationName()
+                self.centralWidget().scene.history.clear()
+                self.centralWidget().scene.history.storeInitialHistoryStamp()
 
     # -----------------------------------------------------------------------------
     def loadFromFile(self):
@@ -423,10 +435,10 @@ class InterfaceWindow(QMainWindow):
 
     # -----------------------------------------------------------------------------
     def editUndo(self):
-        pass
+        self.interface.scene.history.undo()
 
     def editRedo(self):
-        pass
+        self.interface.scene.history.redo()
 
     def editDelete(self):
         if self.interface:
@@ -493,6 +505,8 @@ class InterfaceWindow(QMainWindow):
             for label in self.interface.scene.floating_labels:
                 if self.checkSelection(label):
                     label.content.text_edit.setAlignment(map[alignment])
+                    self.interface.scene.has_been_modified = True
+                    self.interface.scene.history.storeHistory("Floating label changed alignment")
 
             self.updateToolbarValues()
 
@@ -505,10 +519,8 @@ class InterfaceWindow(QMainWindow):
                     else:
                         label.content.text_edit.setFontWeight(QFont.Normal)
 
-                    # if label.content.text_edit.fontWeight() != QFont.Bold:
-                    #     label.content.text_edit.setFontWeight(QFont.Bold)
-                    # else:
-                    #     label.content.text_edit.setFontWeight(QFont.Normal)
+                    self.interface.scene.has_been_modified = True
+                    self.interface.scene.history.storeHistory("Floating label changed boldness")
 
     def textUnderline(self):
         if self.interface.scene.floating_labels:
@@ -519,8 +531,8 @@ class InterfaceWindow(QMainWindow):
                     else:
                         label.content.text_edit.setFontUnderline(False)
 
-                    # current_state = label.content.text_edit.fontUnderline()
-                    # label.content.text_edit.setFontUnderline(not(current_state))
+                    self.interface.scene.has_been_modified = True
+                    self.interface.scene.history.storeHistory("Floating label changed underline")
 
     def textItalicize(self):
         if self.interface.scene.floating_labels:
@@ -531,8 +543,8 @@ class InterfaceWindow(QMainWindow):
                     else:
                         label.content.text_edit.setFontItalic(False)
 
-                    # current_state = label.content.text_edit.fontItalic()
-                    # label.content.text_edit.setFontItalic(not(current_state))
+                    self.interface.scene.has_been_modified = True
+                    self.interface.scene.history.storeHistory("Floating label changed italics")
 
     def textFontStyle(self):
         (font, ok) = QFontDialog.getFont()
@@ -547,6 +559,9 @@ class InterfaceWindow(QMainWindow):
                         label.content.updateText()
                         label.grContent.setLabelSizeBox()
 
+                        self.interface.scene.has_been_modified = True
+                        self.interface.scene.history.storeHistory("Floating label changed font style")
+
     def textFontSize(self):
         if self.interface.scene.floating_labels:
             for label in self.interface.scene.floating_labels:
@@ -554,6 +569,9 @@ class InterfaceWindow(QMainWindow):
                     value = self.fontSizeBox.value()
                     label.content.text_edit.setFontPointSize(value)
                     label.content.currentFontSize = value
+
+                    self.interface.scene.has_been_modified = True
+                    self.interface.scene.history.storeHistory("Floating label changed font size")
 
     def textColor(self):
         color = QColorDialog.getColor()
@@ -564,6 +582,9 @@ class InterfaceWindow(QMainWindow):
                     if self.checkSelection(label):
                         label.content.text_edit.setTextColor(color)
 
+                        self.interface.scene.has_been_modified = True
+                        self.interface.scene.history.storeHistory("Floating label changed font color")
+
         #self.updateToolbarValues()     # Enable this if you ever make the font color icon update
 
     # Clears all format on selected floating labels, reverting to default format
@@ -572,6 +593,9 @@ class InterfaceWindow(QMainWindow):
             for label in self.interface.scene.floating_labels:
                 if self.checkSelection(label):
                     label.content.setDefaultFormatting()
+
+                    self.interface.scene.has_been_modified = True
+                    self.interface.scene.history.storeHistory("Floating label cleared formatting")
         self.updateToolbarValues()
 
     # This function checks if the current label is selected

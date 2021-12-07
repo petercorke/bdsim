@@ -34,8 +34,6 @@ class Floating_Label(Serializable):
         self.scene.addLabel(self)
         self.scene.grScene.addItem(self.grContent)
 
-        self.scene.has_been_modified = True
-
     def setPos(self, x, y):
         self.grContent.setPos(x, y)
 
@@ -129,6 +127,8 @@ class ContentWidget(QWidget):
         self.setup()
         self.updateShape()
 
+        self.wasEdited = False
+
         self.initUI()
 
     def setup(self):
@@ -155,8 +155,11 @@ class ContentWidget(QWidget):
     def updateText(self):
         if self.text_edit.document().isModified():
             current_text = self.text_edit.toPlainText()
-            self.floating_label.label_text = current_text
-            self.updateShape()
+            # If changes have been made to the labels current text, update it internally
+            if current_text != self.floating_label.label_text:
+                self.floating_label.label_text = current_text
+                self.updateShape()
+                self.wasEdited = True
 
     def updateShape(self):
 

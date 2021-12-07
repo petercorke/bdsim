@@ -84,21 +84,19 @@ class GraphicsSocket(QGraphicsItem):
         self._sign_pen = QPen(self._color_outline)
         self._sign_pen.setWidthF(self.sign_width)
         self._char_font = QFont('Arial', 14)
-        try:
-            self._char_font_measure = ImageFont.truetype('arial.ttf', 14)
-        except OSError:
-            self._char_font_measure = ImageFont.truetype('Arial.ttf', 14)
 
         self.setFlag(QGraphicsItem.ItemIsSelectable)
+        self.setBrush()
 
+        # Internal variable for catching fatal errors, and allowing user to save work before crashing
+        self.FATAL_ERROR = False
+
+    def setBrush(self):
         # Depending on the socket type, the painter brush is set
         if self.socket.socket_type == INPUT:
             self._brush = QBrush(self._color_background_input)
         elif self.socket.socket_type == OUTPUT:
             self._brush = QBrush(self._color_background_output)
-
-        # Internal variable for catching fatal errors, and allowing user to save work before crashing
-        self.FATAL_ERROR = False
 
     # Todo - update docs, and inline comments
     # -----------------------------------------------------------------------------
@@ -122,8 +120,12 @@ class GraphicsSocket(QGraphicsItem):
         """
 
         # Painter pen(outline) and brush(fill) are set
-        painter.setBrush(self._brush)
         painter.setPen(self._pen)
+        try:
+            painter.setBrush(self._brush)
+        except AttributeError as e:
+            # For some reason, brush was not set, set it again based on socket type
+            self.setBrush()
 
         # If sockets don't need to be hidden, draw them normally, otherwise don't draw them at all
         if not self.shouldSocketsBeHidden():
@@ -269,7 +271,7 @@ class GraphicsSocket(QGraphicsItem):
     def charDimensions(self):
 
         # Find how many pixels - height wise - this sockets' character is
-        (width, baseline), (offset_x, offset_y) = self._char_font_measure.font.getsize(self.socket.socket_sign)
+        (width, baseline), (offset_x, offset_y) = self.socket.node.scene._system_font.font.getsize(self.socket.socket_sign)
 
         char_width = QFontMetrics(self._char_font).width(self.socket.socket_sign)
         height = 5

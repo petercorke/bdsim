@@ -379,6 +379,8 @@ class ParamWindow(QWidget):
         if updateName:
             if updateName[0] == "@DuplicateName@":
                 duplicate_title.append(updateName[1])
+        else:
+            self.paramsWereChanged = True
 
         # Iterator for loop
         i = -1
@@ -634,6 +636,7 @@ class ParamWindow(QWidget):
         if self.paramsWereChanged:
             self.paramsWereChanged = False
             self.block.scene.has_been_modified = True
+            self.block.scene.history.storeHistory("Block parameters updated")
 
         # Finally notify the GraphicsBlock to update itself, should the number of sockets, or the block
         # height have been called to change

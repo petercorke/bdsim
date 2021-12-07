@@ -84,10 +84,6 @@ class GraphicsWire(QGraphicsPathItem):
         self.mousePressPos = None
 
         self.wire = wire
-        self.wire_points = []
-        self.wire.wire_coordinates = []
-        self.wire.horizontal_segments = []
-        self.wire.vertical_segments = []
 
         # Setting the colour, pens, and pen thickness
         self._color = QColor("#000000")             # Black
@@ -430,7 +426,7 @@ class GraphicsWire(QGraphicsPathItem):
                 self.customlogicOverride = True
 
             self.interactiveResize(mouseEvent.pos())
-
+            self.wasMoved = True
             self.wire.checkIntersections()
         else:
             super().mouseMoveEvent(mouseEvent)
@@ -451,6 +447,7 @@ class GraphicsWire(QGraphicsPathItem):
         if self.wasMoved:
             self.wasMoved = False
             self.wire.scene.has_been_modified = True
+            self.wire.scene.history.storeHistory("Wire segment moved")
 
     # -----------------------------------------------------------------------------
     def interactiveResize(self, mousePos):

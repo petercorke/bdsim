@@ -48,6 +48,7 @@ class GraphicsScene(QGraphicsScene):
         self.mode = False
         # Set the wire overlaps to not being detected by default
         self.enable_intersections = True
+        self.mousePressed = False
 
         # Set the default background color for when no grid lines are drawn
         # Currently set to same color as the background for Light mode
@@ -113,24 +114,144 @@ class GraphicsScene(QGraphicsScene):
         # Set the background fill color
         self.setBackgroundBrush(self._color_background)
 
+    def mousePressEvent(self, event):
+        # If the mouse is pressed, an internal variable is set to True
+        super().mousePressEvent(event)
+        self.mousePressed = True
+
+    def mouseReleaseEvent(self, event):
+        # If mouse is released, the internal variable is set to False
+        super().mouseReleaseEvent(event)
+        self.mousePressed = False
+
     # -----------------------------------------------------------------------------
     def mouseMoveEvent(self, event):
         """
-        This is an inbuilt method of QGraphicsScene, that is overwritten by ``GraphicsScene``
-        to update the start-end points of where the wires are drawn to, as items
-        are moved around within the GraphicsScene.
+            This is an inbuilt method of QGraphicsScene, that is overwritten by ``GraphicsScene``.
+            It handles the movement related logic for items selected within the ``GraphicsScene``.
 
-        :param event: a mouse movement event that has occurred with this GraphicsScene
-        :type event: QMouseEvent, automatically recognized by the inbuilt function
+            Currently, generic movement logic is applied to instances of the following classes:
+            blocks, floating labels, and grouping boxes
+
+            This genermic movement logic consists of the following being applied on mouse movement:
+
+            - a detected mouse move event on selected item will enforce grid-snapping (making it
+              move only in increments matching the size of the smaller grid squares in the background).
+
+            - the selected item will be prevented from moving outside the maximum zoomed out border
+              of the work area (the GraphicsScene).
+
+            - additioanlly only applies if the selected item is a block:
+              * the locations of its sockets, and that of other connected blocks,
+                are updated as the block moves around.
+              * Additionally, block movements can be relevant to wire routing when they are
+                in custom routing mode, so this logic is checked as blocks are moved.
+              * Finally, moving a block will affect where wires may overlap,
+                so this logic is updated as the blocks are moved.
+
+            - additionally only applies if the selected item is a floating text label:
+              * floating labels have the ability of being moved closer to wires and blocks,
+                so their grid-snapping is enforced to 5 pixels instead of the typical 20 pixels
+                like for all other items.
+
+            - finally, if an item's position within the ``GraphicsScene`` has visually been updated,
+              an internal will reflect that the item has moved, to then indicate unsaved changes and
+              record a new snapshop of the scene's history.
+
+            :param event: a mouse movement event that has occurred with this GraphicsScene
+            :type event: QMouseEvent, automatically recognized by the inbuilt function
         """
-        # Passes on the mouseMoveEvent so that this method wouldn't block any
-        # mouse movement logic in other classes
+        def borderRestriction(item, padding):
+            if hasattr(item, 'block'):
+                item_width = item.width
+                item_height = item.height
+                item_title = item.title_height
+            elif hasattr(item, 'floating_label'):
+                item_width = item.floating_label.width
+                item_height = item.floating_label.height
+                item_title = 0
+            elif hasattr(item, 'grouping_box'):
+                item_width = item.grouping_box.width
+                item_height = item.grouping_box.height
+                item_title = 0
+
+            # left
+            if item.pos().x() < item.scene().sceneRect().x() + padding:
+                item.setPos(item.scene().sceneRect().x() + padding, item.pos().y())
+
+            # top
+            if item.pos().y() < item.scene().sceneRect().y() + padding:
+                item.setPos(item.pos().x(), item.scene().sceneRect().y() + padding)
+
+            # right
+            if item.pos().x() > (item.scene().sceneRect().x() + item.scene().sceneRect().width() - item_width - padding):
+                item.setPos(item.scene().sceneRect().x() + item.scene().sceneRect().width() - item_width - padding, item.pos().y())
+
+            # bottom
+            if item.pos().y() > (item.scene().sceneRect().y() + item.scene().sceneRect().height() - item_height - item_title - padding):
+                item.setPos(item.pos().x(),item.scene().sceneRect().y() + item.scene().sceneRect().height() - item_height - item_title - padding)
+
         super().mouseMoveEvent(event)
 
-        # Updates the start-end points of each Wire that is connected to any Block
-        for block in self.scene.blocks:
-            if block.grBlock.isSelected():
-                block.updateConnectedEdges()
+        if self.mousePressed:
+
+            # For all moveable items which are selected, update their mouseMove related methods
+            for item in self.selectedItems():
+
+                # Padding of 20 pixelsis used for how close the item can come up to the border of the scene
+                padding = 20
+
+                # The x,y position of the mouse cursor is grabbed, and is restricted to update
+                # every 20 pixels (the size of the smaller grid squares, as defined in GraphicsScene)
+                x = round(item.pos().x() / padding) * padding
+                y = round(item.pos().y() / padding) * padding
+                pos = QPointF(x, y)
+
+                # For blocks:
+                if hasattr(item, 'block'):
+                    # The position of this GraphicsBlock is set to the restricted position of the mouse cursor
+                    item.setPos(pos)
+
+                    borderRestriction(item, padding)
+
+                    # Update the connected wires of all Blocks that are affected by this Block being moved
+                    item.block.updateConnectedEdges()
+
+                    # Since block was moved, update the wires connected to its input & output
+                    # sockets to route the wires using the inbuilt hardcoded logic
+                    item.block.updateWireRoutingLogic()
+
+                    # If there are wires within the Scene
+                    if self.scene.wires:
+                        # Call the first wire in the Scene to check the intersections
+                        # Calling the first wire will still check intersection points
+                        # of all wires, however since that code is located within the
+                        # Wire class, this is how it's accessed.
+                        self.scene.wires[0].checkIntersections()
+
+                # For floating text labels:
+                elif hasattr(item, 'floating_label'):
+                    padding = 5
+                    x = round(item.pos().x() / padding) * padding
+                    y = round(item.pos().y() / padding) * padding
+                    pos = QPointF(x, y)
+
+                    # The position of this GraphicsFloatingLabel is set to the restricted position of the mouse cursor
+                    item.setPos(pos)
+                    borderRestriction(item, padding)
+
+                # For grouping boxes:
+                elif hasattr(item, 'grouping_box'):
+                    # The position of this GraphicsGroupingBox is set to the restricted position of the mouse cursor
+                    item.setPos(pos)
+                    borderRestriction(item, padding)
+
+                # If selected item is of any block type, floating text label or grouping box, and
+                if hasattr(item, 'block') or hasattr(item, 'floating_label') or hasattr(item, 'grouping_box'):
+                    # If the above rounding has rounded to a new value, and the block has actually "moved" in the scene, updated variable to reflect that
+                    if pos != item.lastPos:
+                        item.lastPos = item.pos()
+                        item.wasMoved = True
 
     # -----------------------------------------------------------------------------
     def drawForeground(self, painter, rect):

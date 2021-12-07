@@ -61,6 +61,7 @@ class GraphicsGBox(QGraphicsRectItem):
         # Method called to further initialize necessary block settings
         self.initUI()
         self.wasMoved = False
+        self.lastPos = self.pos()
 
     # -----------------------------------------------------------------------------
     def initUI(self):
@@ -121,6 +122,8 @@ class GraphicsGBox(QGraphicsRectItem):
                 color.setAlpha(127)
 
                 self.bg_color = color
+                self.grouping_box.scene.has_been_modified = True
+                self.grouping_box.scene.history.storeHistory("Grouping box color changed")
 
         super().mousePressEvent(mouseEvent)
 
@@ -128,13 +131,11 @@ class GraphicsGBox(QGraphicsRectItem):
         """
         Executed when the mouse is being moved over the item while being pressed.
         """
-
         if self.handleSelected is not None:
             self.interactiveResize(mouseEvent.pos())
+            self.wasMoved = True
         else:
             super().mouseMoveEvent(mouseEvent)
-
-        self.quantizeMovement()
 
     def mouseReleaseEvent(self, mouseEvent):
         """
@@ -151,6 +152,7 @@ class GraphicsGBox(QGraphicsRectItem):
         if self.wasMoved:
             self.wasMoved = False
             self.grouping_box.scene.has_been_modified = True
+            self.grouping_box.scene.history.storeHistory("Grouping box moved or resized")
 
     def boundingRect(self):
         """
@@ -291,46 +293,6 @@ class GraphicsGBox(QGraphicsRectItem):
 
         self.setRect(rect)
         self.updateHandlesPos()
-
-    def quantizeMovement(self):
-        # For all selected grouping boxes
-        for gbox in self.grouping_box.scene.grouping_boxes:
-
-            if gbox.grGBox.isSelected():
-
-                spacing = 20
-
-                # The x,y position of the mouse cursor is grabbed, and is restricted to update
-                # every 20 pixels (the size of the smaller grid squares, as defined in GraphicsScene)
-                x = round(gbox.grGBox.pos().x() / spacing) * spacing
-                y = round(gbox.grGBox.pos().y() / spacing) * spacing
-                pos = QPointF(x, y)
-                # The position of this GraphicsGroupingBox is set to the restricted position of the mouse cursor
-                gbox.grGBox.setPos(pos)
-
-                # 10 is the width of the smaller grid squares
-                # This logic prevents the selected GraphicsGroupingBox from being dragged outside
-                # the border of the work area (GraphicsScene)
-                padding = spacing
-
-                # left
-                if gbox.grGBox.pos().x() < gbox.grGBox.scene().sceneRect().x() + padding:
-                    gbox.grGBox.setPos(gbox.grGBox.scene().sceneRect().x() + padding, gbox.grGBox.pos().y())
-
-                # top
-                if gbox.grGBox.pos().y() < gbox.grGBox.scene().sceneRect().y() + padding:
-                    gbox.grGBox.setPos(gbox.grGBox.pos().x(), gbox.grGBox.scene().sceneRect().y() + padding)
-
-                # right
-                if gbox.grGBox.pos().x() > (gbox.grGBox.scene().sceneRect().x() + gbox.grGBox.scene().sceneRect().width() - gbox.grGBox.grouping_box.width - padding):
-                    gbox.grGBox.setPos(gbox.grGBox.scene().sceneRect().x() + gbox.grGBox.scene().sceneRect().width() - gbox.grGBox.grouping_box.width - padding, gbox.grGBox.pos().y())
-
-                # bottom
-                if gbox.grGBox.pos().y() > (gbox.grGBox.scene().sceneRect().y() + gbox.grGBox.scene().sceneRect().height() - gbox.grGBox.grouping_box.height - padding):
-                    gbox.grGBox.setPos(gbox.grGBox.pos().x(), gbox.grGBox.scene().sceneRect().y() + gbox.grGBox.scene().sceneRect().height() - gbox.grGBox.grouping_box.height - padding)
-
-        # If grouping boxes were moved, change this variable to reflect that.
-        self.wasMoved = True
 
     def hoverEnterEvent(self, event):
         """

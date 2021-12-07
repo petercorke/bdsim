@@ -200,6 +200,12 @@ class Interface(QWidget):
         self.text_item_button.clicked.connect(lambda checked: Floating_Label(self.scene, self.layout, main_window))
         self.grouping_box_button.clicked.connect(lambda checked: Grouping_Box(self.scene, self.layout))
 
+        # Set up secondary connection to these buttons, to update scene history when they are added to the scene
+        self.connector_block_button.clicked.connect(lambda checked, desc='Added connector block to scene': self.scene.history.storeHistory(desc))
+        self.main_block_button.clicked.connect(lambda checked, desc='Added main block to scene': self.scene.history.storeHistory(desc))
+        self.text_item_button.clicked.connect(lambda checked, desc='Added text label to scene': self.scene.history.storeHistory(desc))
+        self.grouping_box_button.clicked.connect(lambda checked, desc='Added grouping box to scene': self.scene.history.storeHistory(desc))
+
         # Adding the buttons to the library browser's layout manager
         self.libraryBrowserBox.layout.addWidget(self.text_item_button)
         self.libraryBrowserBox.layout.addWidget(self.main_block_button)
@@ -242,6 +248,7 @@ class Interface(QWidget):
                 button.setVisible(False)
                 # Connect button to calling a new instance of the block type class
                 button.clicked.connect(lambda checked, blockClass=class_block[1]: blockClass())
+                button.clicked.connect(lambda checked, desc = 'Added imported block to scene': self.scene.history.storeHistory(desc))
                 # Add button to list of scrollbar buttons for reference of what buttons should be
                 # affected when expanding/hiding the list sections
                 list_of_sub_buttons.append((button, class_block[1]))

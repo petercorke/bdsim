@@ -114,23 +114,31 @@ class GraphicsView(QGraphicsView):
         This method removes the selected Block or Wire from the scene.
         """
 
-        # For each selected item within the GraphicsScene
-        for item in self.grScene.selectedItems():
-            # If the item is a Wire, remove it
-            if isinstance(item, GraphicsWire):
-                item.wire.remove()
-            # Or if the item is a Block or Connector Block, remove it
-            elif isinstance(item, GraphicsBlock) or isinstance(item, GraphicsConnectorBlock):
-                item.block.remove()
-            # Or if the item is a Floating_Label, remove it
-            elif isinstance(item, GraphicsLabel):
-                item.floating_label.remove()
-                self.interfaceManager.updateToolbarValues()
-            # Or if item is a Grouping Box, remove it
-            elif isinstance(item, GraphicsGBox):
-                item.grouping_box.remove()
-
-        self.grScene.scene.has_been_modified = True
+        # If any items are selected within the scene
+        if self.grScene.selectedItems():
+            # For each selected item within the GraphicsScene
+            for item in self.grScene.selectedItems():
+                # If the item is a Wire, remove it
+                if isinstance(item, GraphicsWire):
+                    item.wire.remove()
+                    self.grScene.scene.has_been_modified = True
+                    self.grScene.scene.history.storeHistory("Deleted selected wire")
+                # Or if the item is a Block or Connector Block, remove it
+                elif isinstance(item, GraphicsBlock) or isinstance(item, GraphicsConnectorBlock):
+                    item.block.remove()
+                    self.grScene.scene.has_been_modified = True
+                    self.grScene.scene.history.storeHistory("Deleted selected block")
+                # Or if the item is a Floating_Label, remove it
+                elif isinstance(item, GraphicsLabel):
+                    item.floating_label.remove()
+                    self.interfaceManager.updateToolbarValues()
+                    self.grScene.scene.has_been_modified = True
+                    self.grScene.scene.history.storeHistory("Deleted selected floating label")
+                # Or if item is a Grouping Box, remove it
+                elif isinstance(item, GraphicsGBox):
+                    item.grouping_box.remove()
+                    self.grScene.scene.has_been_modified = True
+                    self.grScene.scene.history.storeHistory("Deleted selected grouping box")
 
     # -----------------------------------------------------------------------------
     def flipBlockSockets(self):
@@ -148,6 +156,7 @@ class GraphicsView(QGraphicsView):
                 item.block.flipped = not (item.block.flipped)
 
         self.grScene.scene.has_been_modified = True
+        self.grScene.scene.history.storeHistory("Block Flipped")
 
     # -----------------------------------------------------------------------------
     def dist_click_release(self, event):
@@ -285,14 +294,13 @@ class GraphicsView(QGraphicsView):
                 if not self.drag_start_socket.is_multi_wire:
                     self.drag_start_socket.removeAllWires()
 
-                # If the block is a socket block check the start socket of the
+                # If the block is a socket block, check the start socket of the
                 # wire that ends in the socket block before connecting an end block,
                 # so that 2 outputs or 2 inputs are not connected through the
                 # Socket block
                 
                 if self.drag_start_socket.socket_type == 3:
                     if len(self.drag_start_socket.wires) > 0:
-                        test = self.drag_start_socket.wires[0].start_socket.socket_type
                         if self.drag_start_socket.wires[0].start_socket.socket_type != item.socket.socket_type:
                             if item.socket.socket_type == 1:
                                 if len(item.socket.wires) == 0:
@@ -332,6 +340,7 @@ class GraphicsView(QGraphicsView):
                         new_wire = Wire(self.grScene.scene, self.drag_start_socket, item.socket, WIRE_TYPE_STEP)
 
                 self.grScene.scene.has_been_modified = True
+                self.grScene.scene.history.storeHistory("Created new wire by dragging")
 
                 if DEBUG: print("created wire")
                 if DEBUG: print('View::edgeDragEnd ~ everything done.')
@@ -365,24 +374,44 @@ class GraphicsView(QGraphicsView):
         :type event: QKeyPressEvent, automatically recognized by the inbuilt function
         """
 
-        # if event.key() == Qt.Key_Delete or event.key() == Qt.Key_Backspace:
-        #     pass
-        #     # self.deleteSelected()
-        #     # self.intersectionTest()
-        # elif event.key() == Qt.Key_F:
-        #     self.intersectionTest()
-        #     self.flipBlockSockets()
-        # elif event.key() == Qt.Key_I:
-        #     self.grScene.enable_intersections = not self.grScene.enable_intersections
-        # elif event.key() == Qt.Key_M:
-        #     [print(label.content.text_edit.toHtml()) for label in self.grScene.scene.floating_labels]
-        # elif event.key() == Qt.Key_S and event.modifiers() & Qt.ControlModifier:
-        #     pass
-        #     # self.grScene.scene.saveToFile("graph_testing.json.txt")
-        # elif event.key() == Qt.Key_L and event.modifiers() & Qt.ControlModifier:
-        #     pass
-        #     # self.grScene.scene.loadFromFile("graph_testing.json.txt")
+        # if event.key() == Qt.Key_1:
+        #     print("HISTORY:     len(%d)" % len(self.grScene.scene.history.history_stack),
+        #           " -- current_step", self.grScene.scene.history.history_current_step)
+        #     ix = 0
+        #     for item in self.grScene.scene.history.history_stack:
+        #         print("#", ix, "--", item['desc'])
+        #         ix += 1
+        # elif event.key() == Qt.Key_2:
+        #     for item in self.grScene.selectedItems():
+        #         if hasattr(item, 'wire'):
+        #             print("Wire coordinates:", item.wire.wire_coordinates)
+        # elif event.key() == Qt.Key_3:
+        #     hist_stack_item = self.grScene.scene.history.history_stack[self.grScene.scene.history.history_current_step]
+        #     print("history stack current step:", self.grScene.scene.history.history_current_step)
+        #     for item in hist_stack_item['snapshot'].items():
+        #         if item[0] == 'blocks':
+        #             print(item[0])
+        #             for i, block in enumerate(item[1]):
+        #                 print("\n\tnew block %d" % i)
+        #                 for block_items in block.items():
+        #                     if block_items[0] in ['inputs', 'outputs']:
+        #                         for k, socket in enumerate(block_items[1]):
+        #                             print("\n\t\tnew socket %d" % k)
+        #                             for socket_items in socket.items():
+        #                                 print("\t\t", socket_items)
+        #                     else:
+        #                         print("\t", block_items)
+        #         elif item[0] == 'wires':
+        #             print(item[0])
+        #             for j, wire in enumerate(item[1]):
+        #                 print("\n\tnew wire %d" % j)
+        #                 for wire_items in wire.items():
+        #                     print("\t", wire_items)
+        #         else:
+        #             print(item)
         # else:
+        #     super().keyPressEvent(event)
+
         super().keyPressEvent(event)
 
     # -----------------------------------------------------------------------------
@@ -399,8 +428,6 @@ class GraphicsView(QGraphicsView):
         :param event: a mouse press event (Left, Middle or Right)
         :type event: QMousePressEvent, automatically recognized by the inbuilt function
         """
-
-        # self.intersectionTest()
 
         if event.button() == Qt.MiddleButton:
             self.middleMouseButtonPress(event)
@@ -564,10 +591,6 @@ class GraphicsView(QGraphicsView):
                 if res:
                     return
 
-        # Call for the intersection code to be run
-        # print("left mouse release - outside")
-        # self.intersectionTest()
-
         super().mouseReleaseEvent(event)
 
     # -----------------------------------------------------------------------------
@@ -610,12 +633,10 @@ class GraphicsView(QGraphicsView):
         :type event: QMousePressEvent, required
         """
 
-        releaseEvent = QMouseEvent(QEvent.MouseButtonRelease, event.localPos(), event.screenPos(),
-                                   Qt.LeftButton, Qt.NoButton, event.modifiers())
+        releaseEvent = QMouseEvent(QEvent.MouseButtonRelease, event.localPos(), event.screenPos(), Qt.LeftButton, Qt.NoButton, event.modifiers())
         super().mouseReleaseEvent(releaseEvent)
         self.setDragMode(QGraphicsView.ScrollHandDrag)
-        fakeEvent = QMouseEvent(event.type(), event.localPos(), event.screenPos(),
-                                Qt.LeftButton, event.buttons() | Qt.LeftButton, event.modifiers())
+        fakeEvent = QMouseEvent(event.type(), event.localPos(), event.screenPos(), Qt.LeftButton, event.buttons() | Qt.LeftButton, event.modifiers())
         super().mousePressEvent(fakeEvent)
 
     # -----------------------------------------------------------------------------
@@ -629,8 +650,7 @@ class GraphicsView(QGraphicsView):
         :param event: the detected middle mouse release event
         :type event: QMouseReleaseEvent, required
         """
-        fakeEvent = QMouseEvent(event.type(), event.localPos(), event.screenPos(),
-                                Qt.LeftButton, event.buttons() & ~Qt.LeftButton, event.modifiers())
+        fakeEvent = QMouseEvent(event.type(), event.localPos(), event.screenPos(), Qt.LeftButton, event.buttons() & ~Qt.LeftButton, event.modifiers())
         super().mouseReleaseEvent(fakeEvent)
         self.setDragMode(QGraphicsView.NoDrag)
 
@@ -702,6 +722,3 @@ class GraphicsView(QGraphicsView):
                     self.drag_wire.grWire.update()
         except AttributeError:
             self.mode = MODE_NONE
-
-        # # Call for the intersection code to be run
-        # self.intersectionTest()

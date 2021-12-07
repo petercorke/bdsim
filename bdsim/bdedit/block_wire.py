@@ -1,5 +1,6 @@
 # Library imports
 import time
+import copy
 from collections import OrderedDict
 
 # BdEdit imports
@@ -298,7 +299,7 @@ class Wire(Serializable):
         """
 
         if self.grWire.customlogicOverride:
-            wire_coords = self.wire_coordinates
+            wire_coords = copy.copy(self.wire_coordinates)
         else:
             wire_coords = []
 
