@@ -74,7 +74,8 @@ class GraphicsBlock(QGraphicsItem):
 
         # Colours for pens are defined, and the text font is set
         self._default_title_color = Qt.black    # Title colour (set to Light mode by default)
-        self._pen_selected = QPen(QColor("#FFFFA637"), self._selected_line_thickness)
+        # self._pen_selected = QPen(QColor("#FFFFA637"), self._selected_line_thickness)
+        self._pen_selected = QPen(QColorConstants.Svg.orange, self._selected_line_thickness)   # Orange
         self._title_font = QFont("Arial", self.block.scene.block_name_fontsize)
 
         # Internal variable for catching fatal errors, and allowing user to save work before crashing
@@ -176,7 +177,8 @@ class GraphicsBlock(QGraphicsItem):
         # # Else light or off mode is selected (No off mode for blocks), draw blocks tailored to light mode
         # else:
         self._title_color = Qt.black
-        self._pen_default = QPen(QColor("#7F000000"), self._line_thickness)
+        # self._pen_default = QPen(QColor("#7F000000"), self._line_thickness)
+        self._pen_default = QPen(QColorConstants.Svg.dimgrey, self._line_thickness)
         self._brush_background = QBrush(QColor("#FFE1E0E8"))
 
         self.title_item.setDefaultTextColor(self._title_color)
@@ -336,7 +338,7 @@ class GraphicsBlock(QGraphicsItem):
                     # icon_item = QPixmap(self.icon).scaledToWidth(50) if self.icon else QPixmap(self.icon)
                 # target = QRect((self.width - icon_item.width()) / 2, (self.height - icon_item.height()) / 2, self.width, self.height)
                 # source = QRect(0, 0, self.width, self.height)
-                painter.drawImage(QRect((self.width - (icon_image.width())/5) / 2, (self.height - (icon_image.height())/5) / 2, 50, 50), icon_image)
+                painter.drawImage(QRectF((self.width - (icon_image.width())/5) / 2, (self.height - (icon_image.height())/5) / 2, 50, 50), icon_image)
                 # painter.drawPixmap(target, icon_item, source)
 
         except Exception as e:
@@ -433,7 +435,8 @@ class GraphicsConnectorBlock(QGraphicsItem):
         self._corner_rounding = 10
 
         # Color of the selected line is set
-        self._pen_selected = QPen(QColor("#FFFFA637"), self._selected_line_thickness)   # Orange
+        # self._pen_selected = QPen(QColor("#FFFFA637"), self._selected_line_thickness)   # Orange
+        self._pen_selected = QPen(QColorConstants.Svg.orange, self._selected_line_thickness)   # Orange
         # Color of wire to be drawn between sockets, when connector block is hidden (to make solid line)
         self._color = QColor("#000000")
 

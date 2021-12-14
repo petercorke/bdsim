@@ -1,15 +1,11 @@
 # Library imports
 import os
-import glob
-import inspect
-import importlib.util
-from pathlib import Path
+import fnmatch
 
 # PyQt5 imports
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
-from PyQt5 import QtPrintSupport
 
 # BdEdit imports
 from bdsim.bdedit.block import *
@@ -101,7 +97,7 @@ class Interface(QWidget):
         #self.setGeometry(100, 100, resolution.width() - 200, resolution.height() - 200)  # Interface will be same size as desktop screen, minus 100 pixels from all sides
         #self.setGeometry(resolution.width() / 4, resolution.height() / 4, resolution.width() / 2, resolution.height() / 2)  # Interface will be half the size of the desktop screen, and centered in the screen
         #self.setGeometry(100, 100, resolution.width() / 2, resolution.height() / 2)  # Interface will be half the size of the desktop screen, and displayed 100 pixels down and right from top left corner of the screen
-        main_window.setGeometry(100, 100, resolution.width() / 2, resolution.height() / 2)  # Interface will be half the size of the desktop screen, and displayed 100 pixels down and right from top left corner of the screen
+        main_window.setGeometry(100, 100, int(resolution.width() / 2), int(resolution.height() / 2))  # Interface will be half the size of the desktop screen, and displayed 100 pixels down and right from top left corner of the screen
 
         # Layout manager is defined and set for the application layout. This will handle
         # the positioning of each application component.
@@ -113,7 +109,7 @@ class Interface(QWidget):
         # and parameter window panels. To compensate for this, the preferred dimensions
         # of these panels as seen on the screen while being developed (2560 resolution
         # width) have been scaled to other screen sizes.
-        self.layout.scale = 2560 / resolution.width()
+        self.layout.scale = int(2560 / resolution.width())
 
         # An instance of the Scene class is created, providing it the resolution of the
         # desktop screen and the application layout manager.
@@ -248,7 +244,7 @@ class Interface(QWidget):
                 button.setVisible(False)
                 # Connect button to calling a new instance of the block type class
                 button.clicked.connect(lambda checked, blockClass=class_block[1]: blockClass())
-                button.clicked.connect(lambda checked, desc = 'Added imported block to scene': self.scene.history.storeHistory(desc))
+                button.clicked.connect(lambda checked, desc='Added imported block to scene': self.scene.history.storeHistory(desc))
                 # Add button to list of scrollbar buttons for reference of what buttons should be
                 # affected when expanding/hiding the list sections
                 list_of_sub_buttons.append((button, class_block[1]))
@@ -441,7 +437,7 @@ class Interface(QWidget):
 
         # Creates an image, of defined resolution quality
         ratio = 3
-        output_image = QImage(self.scene.scene_width * ratio, self.scene.scene_height * ratio, QImage.Format_RGBA64)
+        output_image = QImage(int(self.scene.scene_width * ratio), int(self.scene.scene_height * ratio), QImage.Format_RGBA64)
 
         # Then a painter is initialized to that image
         painter = QPainter(output_image)
@@ -454,7 +450,7 @@ class Interface(QWidget):
         # Grab the dimensions of the space all blocks within the sceen occupy
         [x, y, width, height] = self.grab_screenshot_dimensions()
         # Scale the dimensions from above, to the image
-        rect = QRect(output_image.width()/2 + (x * ratio), output_image.height()/2 + (y * ratio), width * ratio, height * ratio)
+        rect = QRect(int(output_image.width()/2 + (x * ratio)), int(output_image.height()/2 + (y * ratio)), int(width * ratio), int(height * ratio))
 
         # Crop the image to area of interest
         output_image = output_image.copy(rect)
@@ -489,7 +485,8 @@ class Interface(QWidget):
         # Find all other images in the current directory (files ending with .png)
         # as bdedit only saves images with .png extensions
         images_in_dir = []
-        for img in glob.glob("*.png"):
+        dir_list = os.listdir(os.path.dirname(picture_path))
+        for img in fnmatch.filter(dir_list, "*.png"):
             images_in_dir.append(img)
 
         # Check if saving current model under the model name would create a duplicate

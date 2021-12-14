@@ -53,3 +53,5 @@ class Main(Block):
         self.scene.grScene.addItem(self.grBlock)
 
         self._createParamWindow()
+
+        self.scene.has_been_modified = True

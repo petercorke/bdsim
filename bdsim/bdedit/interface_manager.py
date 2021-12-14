@@ -59,19 +59,19 @@ class InterfaceWindow(QMainWindow):
 
     def createActions(self):
         # Creates basic actions related to saving/loading files
-        self.actNew = QAction('&New', self, shortcut='Ctrl+N', toolTip="Create new model.",triggered=self.newFile)
-        self.actOpen = QAction('&Open', self, shortcut='Ctrl+O', toolTip="Open model.",triggered=self.loadFromFile)
-        self.actSave = QAction('&Save', self, shortcut='Ctrl+S', toolTip="Save model.",triggered=self.saveToFile)
-        self.actSaveAs = QAction('&Save As', self, shortcut='Ctrl+Shift+S',toolTip="Save model as.",triggered=self.saveAsToFile)
-        self.actExit = QAction('&Quit', self, shortcut='Ctrl+Q', toolTip="Quit bdedit.",triggered=self.close)
+        self.actNew = QAction(QIcon(":/Icons_Reference/Icons/new_file.png"), '&New', self, shortcut='Ctrl+N', toolTip="Create new model.",triggered=self.newFile)
+        self.actOpen = QAction(QIcon(":/Icons_Reference/Icons/open_folder.png"), '&Open', self, shortcut='Ctrl+O', toolTip="Open model.",triggered=self.loadFromFile)
+        self.actSave = QAction(QIcon(":/Icons_Reference/Icons/save.png"), '&Save', self, shortcut='Ctrl+S', toolTip="Save model.",triggered=self.saveToFile)
+        self.actSaveAs = QAction(QIcon(":/Icons_Reference/Icons/save_as.png"), '&Save As', self, shortcut='Ctrl+Shift+S',toolTip="Save model as.",triggered=self.saveAsToFile)
+        self.actExit = QAction(QIcon(":/Icons_Reference/Icons/quit.png"), '&Quit', self, shortcut='Ctrl+Q', toolTip="Quit bdedit.",triggered=self.close)
 
         # Actions related to editing files (undo/redo)
-        self.actUndo = QAction('&Undo', self, shortcut='Ctrl+Z',toolTip="Undo last action.", triggered=self.editUndo)
-        self.actRedo = QAction('&Redo', self, shortcut='Ctrl+Shift+Z',toolTip="Redo last action.",triggered=self.editRedo)
-        self.actDelete = QAction('&Delete', self, toolTip="Delete selected items.",triggered=self.editDelete)
+        self.actUndo = QAction(QIcon(":/Icons_Reference/Icons/undo.png"), '&Undo', self, shortcut='Ctrl+Z',toolTip="Undo last action.", triggered=self.editUndo)
+        self.actRedo = QAction(QIcon(":/Icons_Reference/Icons/redo.png"), '&Redo', self, shortcut='Ctrl+Shift+Z',toolTip="Redo last action.",triggered=self.editRedo)
+        self.actDelete = QAction(QIcon(":/Icons_Reference/Icons/remove.png"), '&Delete', self, toolTip="Delete selected items.",triggered=self.editDelete)
         self.actDelete.setShortcuts({QKeySequence("Delete"), QKeySequence("Backspace")})
 
-        # Miscelanious actions
+        # Miscellaneous actions
         self.actFlipBlocks = QAction('Flip Blocks', self, shortcut='F',toolTip="Flip selected blocks.", triggered=self.miscFlip)
         self.actScreenshot = QAction('Screenshot', self, shortcut='P',toolTip="Take and save a screenshot of your diagram.",triggered=self.miscScreenshot)
         self.actWireOverlaps = QAction('Toggle Wire Overlaps', self, shortcut='I',toolTip="Toggle markers where wires overlap.",triggered=self.miscEnableOverlaps, checkable=True)
@@ -86,7 +86,7 @@ class InterfaceWindow(QMainWindow):
 
         self.actBoldText = QAction(QIcon(":/Icons_Reference/Icons/bold.png"), '&Bold', self, shortcut='Ctrl+B', toolTip="<b>Bold (Ctrl+B)</b><p>Toggle bold on selected floating text.</p>", triggered=self.textBold, checkable=True)
         self.actUnderLineText = QAction(QIcon(":/Icons_Reference/Icons/underline.png"), '&Underline', self, shortcut='Ctrl+U', toolTip="<b>Underline (Ctrl+U)</b><p>Toggle underline on selected floating text.</p>", triggered=self.textUnderline, checkable=True)
-        self.actItalicText = QAction(QIcon(":/Icons_Reference/Icons/italics.png"), '&Italicize', self, shortcut='Ctrl+I', toolTip="<b>Italic (Ctrl+I)</b><p>Toggle italics on selected floating text.</p>", triggered=self.textItalicize, checkable=True)
+        self.actItalicText = QAction(QIcon(":/Icons_Reference/Icons/italic.png"), '&Italicize', self, shortcut='Ctrl+I', toolTip="<b>Italic (Ctrl+I)</b><p>Toggle italics on selected floating text.</p>", triggered=self.textItalicize, checkable=True)
 
         self.actFontType = QAction('Font', self, shortcut='Ctrl+Shift+F', toolTip="<b>Font (Ctrl+Shift+F)</b><p>Choose a font style for floating text.</p>", triggered=self.textFontStyle)
         self.fontSizeBox.setValue(14); self.fontSizeBox.valueChanged.connect(self.textFontSize)
@@ -100,7 +100,7 @@ class InterfaceWindow(QMainWindow):
         self.actRunBtnOp5 = QAction('Debug', self, toolTip='<b>Debug String</b><p>Description to be added</p>', triggered = lambda checked: self.setRunBtnOptions('Debug'))
         self.actRunBtnOp6 = QAction('Simulation Time', self, toolTip='<b>Simulation Time</b><p>Description to be added</p>', triggered = lambda checked: self.setRunBtnOptions('SimTime'))
 
-        self.helpButton = QAction('Help', self, toolTip='<b>Help</b><p>Open BdEdit documentation.</p>', triggered = self.displayHelpURL)
+        self.helpButton = QAction(QIcon(":/Icons_Reference/Icons/help.png"), 'Help', self, toolTip='<b>Help</b><p>Open BdEdit documentation.</p>', triggered = self.displayHelpURL)
 
     def createToolbar(self):
         self.createFileMenu()
@@ -127,8 +127,8 @@ class InterfaceWindow(QMainWindow):
         self.fileMenu = menubar.addMenu('File')
         self.fileMenu.setToolTipsVisible(True)
         self.fileMenu.addAction(self.actNew)
-        self.fileMenu.addSeparator()
         self.fileMenu.addAction(self.actOpen)
+        self.fileMenu.addSeparator()
         self.fileMenu.addAction(self.actSave)
         self.fileMenu.addAction(self.actSaveAs)
         self.fileMenu.addSeparator()
@@ -231,9 +231,9 @@ class InterfaceWindow(QMainWindow):
         self.toolbar.addSeparator()
         self.toolbar.addAction(self.actFontType)
         self.toolbar.addWidget(self.fontSizeBox)
-        self.toolbar.addSeparator()
         self.toolbar.addAction(self.actTextColor)
         self.toolbar.addAction(self.actRemoveFormat)
+        self.toolbar.addSeparator()
 
     # -----------------------------------------------------------------------------
 
@@ -341,7 +341,6 @@ class InterfaceWindow(QMainWindow):
                 except Exception:
                     print("Detected Main block in model, but no file name was given. Subprocess canceled.")
                 return
-
 
         if not main_block_found:
             model_name = os.path.basename(self.filename)
@@ -519,6 +518,8 @@ class InterfaceWindow(QMainWindow):
                     else:
                         label.content.text_edit.setFontWeight(QFont.Normal)
 
+                    label.content.updateShape()
+
                     self.interface.scene.has_been_modified = True
                     self.interface.scene.history.storeHistory("Floating label changed boldness")
 
@@ -531,6 +532,8 @@ class InterfaceWindow(QMainWindow):
                     else:
                         label.content.text_edit.setFontUnderline(False)
 
+                    label.content.updateShape()
+
                     self.interface.scene.has_been_modified = True
                     self.interface.scene.history.storeHistory("Floating label changed underline")
 
@@ -542,6 +545,8 @@ class InterfaceWindow(QMainWindow):
                         label.content.text_edit.setFontItalic(True)
                     else:
                         label.content.text_edit.setFontItalic(False)
+
+                    label.content.updateShape()
 
                     self.interface.scene.has_been_modified = True
                     self.interface.scene.history.storeHistory("Floating label changed italics")
@@ -558,6 +563,7 @@ class InterfaceWindow(QMainWindow):
                         label.content.currentFontSize = font.pointSize()
                         label.content.updateText()
                         label.grContent.setLabelSizeBox()
+                        label.content.updateShape()
 
                         self.interface.scene.has_been_modified = True
                         self.interface.scene.history.storeHistory("Floating label changed font style")
@@ -569,12 +575,13 @@ class InterfaceWindow(QMainWindow):
                     value = self.fontSizeBox.value()
                     label.content.text_edit.setFontPointSize(value)
                     label.content.currentFontSize = value
+                    label.content.updateShape()
 
                     self.interface.scene.has_been_modified = True
                     self.interface.scene.history.storeHistory("Floating label changed font size")
 
     def textColor(self):
-        color = QColorDialog.getColor()
+        color = QColorDialog.getColor(options=QColorDialog.ShowAlphaChannel)
 
         if color.isValid():
             if self.interface.scene.floating_labels:
@@ -593,6 +600,7 @@ class InterfaceWindow(QMainWindow):
             for label in self.interface.scene.floating_labels:
                 if self.checkSelection(label):
                     label.content.setDefaultFormatting()
+                    label.content.updateText()
 
                     self.interface.scene.has_been_modified = True
                     self.interface.scene.history.storeHistory("Floating label cleared formatting")

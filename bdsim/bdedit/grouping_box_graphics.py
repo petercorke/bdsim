@@ -1,4 +1,6 @@
 # PyQt5 imports
+import copy
+
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
@@ -51,9 +53,9 @@ class GraphicsGBox(QGraphicsRectItem):
         self._selected_line_thickness = 5.0  # Thickness of the block outline on selection
 
         # Colours for pens are defined
-        self._pen_selected = QPen(QColor("#FFFFA637"), self._selected_line_thickness, Qt.SolidLine)
+        self._pen_selected = QPen(QColorConstants.Svg.orange, self._selected_line_thickness, Qt.SolidLine)
         self.bg_color = self.grouping_box.background_color
-        self.br_color = self.grouping_box.border_coler
+        self.br_color = self.grouping_box.border_color
 
         # Internal variable for catching fatal errors, and allowing user to save work before crashing
         self.FATAL_ERROR = False
@@ -106,8 +108,19 @@ class GraphicsGBox(QGraphicsRectItem):
         """
         Executed when the mouse is pressed on the item.
         """
+        def updateColor(chosen_color):
+            if chosen_color.isValid():
+                # Set alpha value of chosen color, to half transparency
+                chosen_color.setAlpha(127)
+
+                self.bg_color = chosen_color
+                self.grouping_box.scene.has_been_modified = True
+                self.grouping_box.scene.history.storeHistory("Grouping box color changed")
+
+        # Selected grouping box will be brought into focus, by sending others 1 layer back
         self.grouping_box.setFocusOfGroupingBox()
 
+        # If a grouping box edge/corner is selected to increase its size, handle the logic for this
         self.handleSelected = self.handleAt(mouseEvent.pos())
         if self.handleSelected:
             self.mousePressPos = mouseEvent.pos()
@@ -115,15 +128,20 @@ class GraphicsGBox(QGraphicsRectItem):
 
         # If the right mouse button is pressed, bring up a QColorDialog
         if mouseEvent.button() == Qt.RightButton:
-            color = QColorDialog.getColor()
+            # Make a backup of the original background color incase user cancel's color selection
+            current_bg_color = copy.copy(self.bg_color)
 
-            if color.isValid():
-                # Set alpha value of chosen color, to half transparency
-                color.setAlpha(127)
+            # Open a color dialog window, and when the chosen color changes, call func updateColor
+            # to update the background color of the grouping box
+            colorDialog = QColorDialog()
+            colorDialog.currentColorChanged.connect(lambda checked: updateColor(colorDialog.currentColor()))
 
-                self.bg_color = color
-                self.grouping_box.scene.has_been_modified = True
-                self.grouping_box.scene.history.storeHistory("Grouping box color changed")
+            # If user selects okay, this finalizes the color selection
+            if colorDialog.exec_() == QDialog.Accepted:
+                updateColor(colorDialog.selectedColor())
+            # Otherwise, if they exit out of the color picker, the original color will be reverted to.
+            else:
+                updateColor(current_bg_color)
 
         super().mousePressEvent(mouseEvent)
 
@@ -302,7 +320,7 @@ class GraphicsGBox(QGraphicsRectItem):
         :type event: QGraphicsSceneHoverEvent
         """
 
-        self.setToolTip("Right click to change color.")
+        self.setToolTip("Right click to change background color.")
 
     def shape(self):
         """
@@ -325,7 +343,8 @@ class GraphicsGBox(QGraphicsRectItem):
 
         if self.isSelected():
             painter.setRenderHint(QPainter.Antialiasing)
-            painter.setBrush(QBrush(QColor("#FFFFA637")))
-            painter.setPen(QPen(QColor(0, 0, 0, 255), 1.0, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+            # painter.setBrush(QBrush(QColor("#FFFFA637")))
+            painter.setBrush(QBrush(QColorConstants.Svg.orange))
+            painter.setPen(QPen(QColorConstants.Svg.black, 1.0, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
             for handle, rect in self.handles.items():
                 painter.drawEllipse(rect)

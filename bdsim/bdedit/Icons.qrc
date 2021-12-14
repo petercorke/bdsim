@@ -3,18 +3,35 @@
 	<file>Icons/bdsim_icon.png</file>
 	<file>Icons/bdsim_icon2.png</file>
 	<file>Icons/bdsim_logo2.png</file>
-	<file>Icons/bold.png</file>
-	<file>Icons/italics.png</file>
-	<file>Icons/underline.png</file>
-	<file>Icons/left_align.png</file>
-	<file>Icons/center_align.png</file>
-	<file>Icons/right_align.png</file>
-	<file>Icons/color_picker.png</file>
-	<file>Icons/clear_format.png</file>
-	<file>Icons/main.png</file>
+
 	<file>Icons/run.png</file>
 	<file>Icons/error.png</file>
 	<file>Icons/success.png</file>
-	<file>Icons/overlap.png</file>
+
+	<file>Icons/main.png</file>
+	<file>Icons/overlap.svg</file>
+
+	<file>Icons/bold.png</file>
+	<file>Icons/italic.png</file>
+	<file>Icons/underline.png</file>
+
+	<file>Icons/left_align.png</file>
+	<file>Icons/center_align.png</file>
+	<file>Icons/right_align.png</file>
+
+	<file>Icons/color_picker.png</file>
+	<file>Icons/clear_format.png</file>
+
+	<file>Icons/new_file.png</file>
+	<file>Icons/open_folder.png</file>
+	<file>Icons/save.png</file>
+	<file>Icons/save_as.png</file>
+	<file>Icons/quit.png</file>
+
+	<file>Icons/undo.png</file>
+	<file>Icons/redo.png</file>
+	<file>Icons/remove.png</file>
+
+	<file>Icons/help.png</file>
 </qresource>
 </RCC>

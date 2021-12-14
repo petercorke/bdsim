@@ -201,6 +201,8 @@ class Block(Serializable):
 
         self._createParamWindow()
 
+        self.scene.has_been_modified = True
+
     # -----------------------------------------------------------------------------
     def _createParamWindow(self):
         """
@@ -213,8 +215,8 @@ class Block(Serializable):
         """
 
         # Creates a parameter window variable associated to this Block instance, and sets its
-        # visibility based on the private 'self._param_visible' variable (True - allowed to display
-        # False - cannot be displayed).
+        # visibility based on the private 'self._param_visible' variable
+        # (True - allowed to display, False - cannot be displayed).
         self.parameterWindow = ParamWindow(self)
         self.parameterWindow.setVisible(self._param_visible)
         # ParamWindow instance is added to the application window

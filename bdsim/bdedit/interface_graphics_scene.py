@@ -5,6 +5,7 @@ import math
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
+from PyQt5.QtSvg import *
 
 # BdEdit imports
 from bdsim.bdedit.Icons import *
@@ -56,8 +57,8 @@ class GraphicsScene(QGraphicsScene):
         # Alternatively could be set to a plain white background
         self._default_background_color = QColor("#FFFFFF")
 
-        # Set the image used for seperating wires at points of overlap
-        self.overlap_image = QImage(":/Icons_Reference/Icons/overlap.png")
+        # Set the image used for separating wires at points of overlap
+        self.overlap_image_renderer = QSvgRenderer(":/Icons_Reference/Icons/overlap.svg")
 
     # -----------------------------------------------------------------------------
     def setGrScene(self, width, height):
@@ -96,13 +97,9 @@ class GraphicsScene(QGraphicsScene):
         """
 
         if self.mode == False:
-            self._color_background = QColor("#E0E0E0")      # Light gray
-            self._color_light = QColor("#D1D1D1")           # Darker gray
-            self._color_dark = QColor("#C0C0C0")            # Dark gray
-        # elif self.mode == 'Dark':
-        #     self._color_background = QColor("#999999")      # Darker gray
-        #     self._color_light = QColor("#808080")           # Dark gray
-        #     self._color_dark = QColor("#606060")            # Very dark gray
+            self._color_background = QColor("#E0E0E0")          # Light gray
+            self._color_light = QColorConstants.Svg.lightgray
+            self._color_dark = QColorConstants.Svg.silver
         elif self.mode == True:
             self._color_background = self._default_background_color     # Light gray
 
@@ -292,7 +289,7 @@ class GraphicsScene(QGraphicsScene):
                         y = intersection_point[1]
 
                         # Prepare an overlap rectangle to "white-out" the wires underneath
-                        rect = QRectF(x - 7, y - 6, 21, 12)
+                        rect = QRectF(x - 7, y - 7.6, 21, 15.2)
                         painter.drawRect(rect)
                         # painter.drawRect(x-7, y-6, 21, 12)
 
@@ -304,7 +301,7 @@ class GraphicsScene(QGraphicsScene):
                                 # Grab QPath of the current location of this grouping box within the scene
                                 gbox_location = box.grGBox.mapToScene(box.grGBox.rect())
 
-                                # Find the intersecting area between the overlaping rect and this grouping box, if there is one
+                                # Find the intersecting area between the overlapping rect and this grouping box, if there is one
                                 intersecting = self.findIntersectingAreaPoints(gbox_location.boundingRect(), rect)
 
                                 # If an overlap was found, an intersecting rect will be provided, else False
@@ -313,7 +310,7 @@ class GraphicsScene(QGraphicsScene):
                                     painter.drawRect(intersecting)
 
                         # Paint an image over the intersection point
-                        painter.drawImage(QRect(x - 7, y - 8, 17, 16), self.overlap_image)
+                        self.overlap_image_renderer.render(painter, QRectF(x - 7.2, y - 8, 17, 16))
 
             # Else, if no wires in scene, clear intersection_list
             else:
@@ -399,4 +396,3 @@ class GraphicsScene(QGraphicsScene):
         else:
             # Otherwise return False
             return False
-        # return [max(0, x2 - x1) * max(0, y2 - y1), [x1, y1, x2, y2]]

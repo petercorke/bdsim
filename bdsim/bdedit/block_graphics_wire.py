@@ -86,8 +86,8 @@ class GraphicsWire(QGraphicsPathItem):
         self.wire = wire
 
         # Setting the colour, pens, and pen thickness
-        self._color = QColor("#000000")             # Black
-        self._color_selected = QColor("#FFFFA637")  # Warm Orange
+        self._color = QColorConstants.Svg.black
+        self._color_selected = QColorConstants.Svg.orange
 
         # self._pen = QPen(self._color, 5, Qt.SolidLine, Qt.SquareCap, Qt.BevelJoin)
         self._pen = QPen(self._color, 5, Qt.SolidLine, Qt.SquareCap, Qt.RoundJoin)
@@ -406,7 +406,7 @@ class GraphicsWire(QGraphicsPathItem):
         """
         Executed when the mouse is pressed on the item.
         """
-        # self.grouping_box.setFocusOfGroupingBox()
+        self.wire.setFocusOfWire()
 
         self.handleSelected = self.handleAt(mouseEvent.pos())
         if self.handleSelected is not None:

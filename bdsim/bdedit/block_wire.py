@@ -205,6 +205,21 @@ class Wire(Serializable):
         if self.start_socket is not None:
             self.updatePositions()
 
+    def setFocusOfWire(self):
+        """
+        This method sends all ``Wire`` instances within the ``Scene`` to back
+        and then sends the currently selected ``Wire`` instance to front.
+        """
+
+        # Iterates through each wire within wire list stored in the Scene Class
+        # and sets the graphical component of each wire to a zValue of -2.
+        for wire in self.scene.wires:
+            wire.grWire.setZValue(-2)
+
+        # Then sets the graphical component of the currently selected wire to a
+        # zValue of -1, which makes it display above all other wires on screen.
+        self.grWire.setZValue(-1)
+
     # -----------------------------------------------------------------------------
     def updatePositions(self):
         """

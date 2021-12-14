@@ -34,6 +34,8 @@ class Floating_Label(Serializable):
         self.scene.addLabel(self)
         self.scene.grScene.addItem(self.grContent)
 
+        self.scene.has_been_modified = True
+
     def setPos(self, x, y):
         self.grContent.setPos(x, y)
 
@@ -43,14 +45,14 @@ class Floating_Label(Serializable):
         and then sends the currently selected ``FloatingLabel`` instance to front.
         """
 
-        # Iterates through each Block within block list stored in the Scene Class
-        # and sets the graphical component of each block to a zValue of 0.
+        # Iterates through each floating label within the relevant list stored in
+        # the Scene Class and sets the graphical component of each label to a zValue of -4.
         for floatinglabel in self.scene.floating_labels:
-            floatinglabel.grContent.setZValue(-3)
+            floatinglabel.grContent.setZValue(-4)
 
-        # Then sets the graphical component of the currently selected block to a
-        # zValue of 1, which makes it display above all other blocks on screen.
-        self.grContent.setZValue(-2)
+        # Then sets the graphical component of the currently selected label to a
+        # zValue of -3, which makes it display above all other labels on screen.
+        self.grContent.setZValue(-3)
 
     # Todo - update comments to match floating label, not block
     def remove(self):
@@ -71,10 +73,10 @@ class Floating_Label(Serializable):
         self.scene.removeLabel(self)
         if DEBUG: print(" - everything was done.")
 
-
     # -----------------------------------------------------------------------------
     def serialize(self):
         font_info = self.content.text_edit.toHtml()
+        fill_color = self.content.backgroundColor.getRgb()
 
         return OrderedDict([
             ('id', self.id),
@@ -83,6 +85,7 @@ class Floating_Label(Serializable):
             ('pos_y', self.grContent.scenePos().y()),
             ('width', self.width),
             ('height', self.height),
+            ('fill_color', fill_color),
             ("styling", font_info),
         ])
 
@@ -97,7 +100,32 @@ class Floating_Label(Serializable):
         # The position of the Floating Labels within the Scene, are set accordingly.
         self.setPos(data['pos_x'], data['pos_y'])
 
-        self.content.text_edit.setHtml(data['styling'])
+        self.content.text_edit.document().setHtml(data['styling'])
+
+        try:
+            if data['fill_color']:
+                # If fill color exists in json, convert rgba to QColor
+                color = QColor(data['fill_color'][0], data['fill_color'][1], data['fill_color'][2], data['fill_color'][3])
+
+                # Grab copy of text edit's color palette, to change its background
+                palette = self.content.text_edit.viewport().palette()
+
+                # Update the copy of background color
+                self.content.backgroundColor = color
+                palette.setColor(self.content.text_edit.viewport().backgroundRole(), color)
+                self.content.text_edit.viewport().setPalette(palette)
+
+                # Update the text highlighting color
+                color_for_highlighting = copy.copy(self.content.backgroundColor)
+                color_for_highlighting.setAlpha(0)
+                self.content.setTextHighlighting(color_for_highlighting)
+
+                # Update color of rounded border drawn around text edit
+                self.grContent.outline_brush = QBrush(self.content.backgroundColor)
+        except KeyError:
+            # Fill color is a new feature, so some models might not have fill color saved in the json
+            # if this is the case, draw the labels with the default white color
+            pass
 
         self.content.updateShape()
 
@@ -110,7 +138,6 @@ class ContentWidget(QWidget):
 
         self.floating_label = label
         self.text_edit = QTextEdit(self)
-        self.first_time = True
 
         self.defaultFont = 'Arial'
         self.defaultFontSize = 14
@@ -119,8 +146,10 @@ class ContentWidget(QWidget):
         self.defaultUnderline = False
         self.defaultColor = QColor("#000000")
         self.defaultAlignment = Qt.AlignLeft
+        self.defaultBackgroundColor = QColor(255, 255, 255)
 
         self.currentFontSize = copy.copy(self.defaultFontSize)
+        self.backgroundColor = copy.copy(self.defaultBackgroundColor)
 
         self.padding = 8
 
@@ -136,21 +165,24 @@ class ContentWidget(QWidget):
         self.text_edit.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.text_edit.setFrameStyle(QFrame.NoFrame)
         self.text_edit.setTextInteractionFlags(Qt.NoTextInteraction)
+        self.text_edit.setAutoFillBackground(True)
 
         self.setDefaultFormatting()
 
         self.text_edit.document().setPlainText(self.floating_label.label_text)
         self.text_edit.textChanged.connect(self.updateText)
 
-        # self.text_edit.setStyleSheet("QTextEdit { background-color: rgb(255, 255, 255); }")
-        # self.text_edit.setTextBackgroundColor(QColor("#FFFFFF"))
-
     def initUI(self):
         self.layout = QVBoxLayout()
-        self.layout.setContentsMargins(0,0,0,0)
+        self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.setLayout(self.layout)
         self.layout.addWidget(self.text_edit)
+
+    def setTextHighlighting(self, highlight):
+        p = self.text_edit.palette()
+        p.setColor(QPalette.Highlight, highlight)
+        self.text_edit.setPalette(p)
 
     def updateText(self):
         if self.text_edit.document().isModified():
@@ -162,7 +194,6 @@ class ContentWidget(QWidget):
                 self.wasEdited = True
 
     def updateShape(self):
-
         # Find the space occupied by text within the floating label
         font = self.text_edit.currentFont()
         fontmetrics = QFontMetrics(font)
@@ -179,8 +210,7 @@ class ContentWidget(QWidget):
         # Resize max width of widget container for the text area
         self.setMaximumSize(w, h)
 
-        # Update the dimensions of the floating label widget, so that
-        # the outline around it could be properly drawn
+        # Update the dimensions of the floating label widget, so that the outline around it could be properly drawn
         self.floating_label.width = w
         self.floating_label.height = h
 

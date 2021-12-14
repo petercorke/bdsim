@@ -352,7 +352,13 @@ class Scene(Serializable):
         # also into an OrderedDict. These ordered dictionaries are then stored in a temporary
         # blocks/wires variable and are returned as part of the OrderedDict of this Scene.
         blocks, wires, labels, gboxes = [], [], [], []
-        for block in self.blocks: blocks.append(block.serialize())
+        for block in self.blocks:
+            blocks.append(block.serialize())
+            # If parameter window still opened for any block, close it
+            if block.parameterWindow:
+                if block.parameterWindow.isVisible():
+                    block.closeParamWindow()
+
         for wire in self.wires: wires.append(wire.serialize())
         for label in self.floating_labels: labels.append(label.serialize())
         for gbox in self.grouping_boxes: gboxes.append(gbox.serialize())
@@ -445,7 +451,11 @@ class Scene(Serializable):
                     if gbox_data is not None:
                         # Ensure essnetial Grouping Box info exists; if it does not, we cannot fully reconstruct Grouping Box, so ignore
                         if gbox_data['width'] and gbox_data['height'] and gbox_data['color']:
-                            Grouping_Box(self, self.window, gbox_data['width'], gbox_data['height'], gbox_data['color']).deserialize(gbox_data, hashmap)
+                            if (gbox_data['pos_x'] is not None) and (gbox_data['pos_y'] is not None):
+                                pos = (gbox_data['pos_x'], gbox_data['pos_y'])
+                                Grouping_Box(self, self.window, gbox_data['width'], gbox_data['height'], gbox_data['color'], pos).deserialize(gbox_data, hashmap)
+                            else:
+                                Grouping_Box(self, self.window, gbox_data['width'], gbox_data['height'], gbox_data['color']).deserialize(gbox_data, hashmap)
         except KeyError:
             # If model data doesn't contain 'grouping_boxes' then none were saved, so don't create any.
             pass

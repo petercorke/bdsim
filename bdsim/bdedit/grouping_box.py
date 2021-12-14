@@ -17,7 +17,7 @@ DEBUG = False
 
 
 class Grouping_Box(Serializable):
-    def __init__(self, scene, window, width = 500, height = 300, bg_color = (146, 187, 255), pos=(0,0)):
+    def __init__(self, scene, window, width=500, height=300, bg_color=(146, 187, 255), pos=(-200, -100)):
         super().__init__()
         self.scene = scene
         self.window = window
@@ -26,15 +26,15 @@ class Grouping_Box(Serializable):
         self.width = width
         self.height = height
         self.background_color = QColor(bg_color[0], bg_color[1], bg_color[2], 127)
-        self.border_coler = QColor(0, 0, 0, 255)
+        self.border_color = QColor(0, 0, 0, 255)
 
-        self.grGBox = GraphicsGBox(self, -self.width*(2/5), -self.height/3, self.width, self.height)
+        self.grGBox = GraphicsGBox(self, 0, 0, self.width, self.height)
+        self.grGBox.setPos(self.position[0], self.position[1])
 
         self.scene.addGBox(self)
         self.scene.grScene.addItem(self.grGBox)
 
         self.scene.has_been_modified = True
-        # self.scene.history.storeHistory("Grouping box added")
 
     def setPos(self, x, y):
         self.grGBox.setPos(x, y)
@@ -73,10 +73,11 @@ class Grouping_Box(Serializable):
 
     # -----------------------------------------------------------------------------
     def serialize(self):
+        actual_pos = self.grGBox.mapToScene(self.grGBox.rect())
         return OrderedDict([
             ('id', self.id),
-            ('pos_x', self.grGBox.scenePos().x()),
-            ('pos_y', self.grGBox.scenePos().y()),
+            ('pos_x', actual_pos.boundingRect().x()),
+            ('pos_y', actual_pos.boundingRect().y()),
             ('width', self.grGBox.rect().width()),
             ('height', self.grGBox.rect().height()),
             ("color", self.grGBox.bg_color.getRgb()[0:3]),
@@ -86,9 +87,6 @@ class Grouping_Box(Serializable):
     def deserialize(self, data, hashmap={}):
         # The id of this Grouping Box is set to whatever was stored as its id in the JSON file.
         self.id = data['id']
-
-        # The position of the Grouping Boxes within the Scene, are set accordingly.
-        self.setPos(data['pos_x'], data['pos_y'])
 
         return True
         pass
