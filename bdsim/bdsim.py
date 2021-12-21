@@ -225,28 +225,28 @@ class BDSim:
         watchlist = []
         watchnamelist = []
         re_block = re.compile(r'(?P<name>[^[]+)(\[(?P<port>[0-9]+)\])')
-        for n in watch:
-            if isinstance(n, str):
+        for w in watch:
+            if isinstance(w, str):
                 # a name was given, with optional port number
-                m = re_block.match(n)
+                m = re_block.match(w)
+                if m is None:
+                    raise ValueError('watch block[port] not found: ' + w)
                 name = m.group('name')
-                port = m.group('port')
+                port = int(m.group('port'))
                 b = bd.blocknames[name]
                 plug = b[port]
-            elif isinstance(n, Block):
+            elif isinstance(w, Block):
                 # a block was given, defaults to port 0
-                plug = n[0]
-            elif isinstance(n, Plug):
+                plug = w[0]
+            elif isinstance(w, Plug):
                 # a plug was given
-                plug = n
+                plug = w
             watchlist.append(plug)
             watchnamelist.append(str(plug))
         state.watchlist = watchlist
+        state.watchnamelist = watchnamelist
 
-        # initialize list of time and states
-        state.tlist = []
-        state.xlist = []
-        state.plist = [[] for p in state.watchlist]
+
 
         x0 = bd.getstate0()
         print('initial state  x0 = ', x0)
@@ -262,6 +262,12 @@ class BDSim:
 
         # tell all blocks we're starting a BlockDiagram
         self.bd.start(state=state, graphics=self.state.options.graphics)
+
+        # initialize list of time and states
+        state.tlist = []
+        state.xlist = []
+        state.plist = [[] for p in state.watchlist]
+
         self.progress(0)
 
         if len(self.state.eventq) == 0:
@@ -332,7 +338,7 @@ class BDSim:
 
         # save the watchlist into variables named y0, y1 etc.
         for i, p in enumerate(watchlist):
-            out['y'+str(i)] = np.array(simstate.plist[i])
+            out['y'+str(i)] = np.array(state.plist[i])
         out.ynames = watchnamelist
 
         # pause until all graphics blocks close
