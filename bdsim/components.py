@@ -576,13 +576,14 @@ class Block:
         block.nstates = 0
         block.ndstates = 0
         block._sequence = None
+
         return block
 
     _latex_remove = str.maketrans({'$':'', '\\':'', '{':'', '}':'', '^':''})
 
     def __init__(self, nin=None, nout=None, type=None, name=None, 
         inames=None, onames=None, snames=None, 
-        pos=None, inputs=None, bd=None, **kwargs):
+        pos=None, inputs=None, bd=None, blockclass=None, **kwargs):
 
         # print('Block constructor, bd = ', bd)
         if name is not None:
@@ -611,6 +612,8 @@ class Block:
             self.nin = nin
         if nout is not None:
             self.nout = nout
+        if blockclass is not None:
+            self.blockclass = blockclass
 
         if type is None:
             self.type = self.__class__.__name__.lower()
