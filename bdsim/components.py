@@ -651,6 +651,7 @@ class Block:
         self.initd = True
         self._clocked = False
         self._graphics = False
+        self._parameters = {}
 
 
         if nin is not None:
@@ -682,6 +683,17 @@ class Block:
 
         if len(kwargs) > 0:
             print('WARNING: unused arguments', kwargs.keys())
+
+    def add_param(self, param, handler=None):
+        if handler == None:
+            def handler(self, name, newvalue):
+                setattr(self, name, newvalue)
+
+        self.__dict__['_parameters'][param] = handler
+
+    def set_param(self, name, newvalue):
+        print(f"setting parameter {name} of block {self.name} to {newvalue}")
+        self._parameters[name](self, name, newvalue)
 
     @property
     def info(self):
