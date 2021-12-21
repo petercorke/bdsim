@@ -35,19 +35,17 @@ class Inverse(FunctionBlock):
 
     onames = ('inv', 'cond')
 
-    def __init__(self, *inputs, pinv=False, **kwargs):
+    def __init__(self, pinv=False, **kwargs):
         """
         :param pinv: force pseudo inverse
         :type pinv: bool
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
-        :param ``**kwargs``: common Block options
+        :param ``kwargs``: common Block options
         :return: A SUM block
         :rtype: Inverse instance
         
         Create a matrix inverse.
         """
-        super().__init__(inputs=inputs, **kwargs)
+        super().__init__(**kwargs)
         self.type = 'inverse'
 
         self.pinv = pinv
@@ -96,11 +94,9 @@ class Transpose(FunctionBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, *inputs, **kwargs):
+    def __init__(self, **kwargs):
         """
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
-        :param ``**kwargs``: common Block options
+        :param ``kwargs``: common Block options
         :return: A TRANSPOSE block
         :rtype: Transpose instance
         
@@ -111,7 +107,8 @@ class Transpose(FunctionBlock):
             - A column vector becomes a 2D row vector
     
         """
-        super().__init__(inputs=inputs, **kwargs)
+        super().__init__(**kwargs)
+        self.type = 'transpose'
 
     def output(self, t=None):
         mat = self.inputs[0]
@@ -146,9 +143,7 @@ class Norm(FunctionBlock):
 
     def __init__(self, ord=None, axis=None, **kwargs):
         """
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
-        :param ``**kwargs``: common Block options
+        :param ``kwargs``: common Block options
         :return: A NORM block
         :rtype: Norm instance
         
@@ -186,7 +181,7 @@ class Flatten(FunctionBlock):
 
     def __init__(self, order='C', **kwargs):
         """
-        :param ``**kwargs``: common Block options
+        :param ``kwargs``: common Block options
         :return: A FLATTEN block
         :rtype: Flatten instance
 
@@ -230,7 +225,7 @@ class Slice2(FunctionBlock):
         :type rows: tuple(3) or list
         :param cols: column selection, defaults to None
         :type cols: tuple(3) or list
-        :param ``**kwargs``: common Block options
+        :param ``kwargs``: common Block options
         :return: A SLICE2 block
         :rtype: Slice2 instance
         
@@ -320,7 +315,7 @@ class Slice1(FunctionBlock):
         """
         :param index: slice, defaults to None
         :type index: tuple(3)
-        :param ``**kwargs``: common Block options
+        :param ``kwargs``: common Block options
         :return: A SLICE1 block
         :rtype: Slice1 instance
         
@@ -390,18 +385,17 @@ class Det(FunctionBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, *inputs, **kwargs):
+    def __init__(self, **kwargs):
         """
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
-        :param ``**kwargs``: common Block options
+        :param ``kwargs``: common Block options
         :return: A DET block
         :rtype: Det instance
         
         Create a matrix determinant block
 
         """
-        super().__init__(inputs=inputs, **kwargs)
+        super().__init__(**kwargs)
+        self.type = 'det'
 
     def output(self, t=None):
         mat = self.inputs[0]
@@ -437,6 +431,7 @@ class Cond(FunctionBlock):
 
         """
         super().__init__(**kwargs)
+        self.type = 'cond'
 
     def output(self, t=None):
         mat = self.inputs[0]
