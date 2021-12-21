@@ -136,7 +136,8 @@ class Scope(GraphicsBlock):
             else:
                 nplots = nin
         else:
-            nin = nplots
+            if vector == 0:
+                nin = nplots
 
         self.nplots = nplots
         self.vector = vector
