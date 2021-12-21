@@ -144,7 +144,7 @@ class Norm(FunctionBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, *inputs, **kwargs):
+    def __init__(self, ord=None, axis=None, **kwargs):
         """
         :param ``*inputs``: Optional incoming connections
         :type ``*inputs``: Block or Plug
@@ -154,11 +154,13 @@ class Norm(FunctionBlock):
         
         Create a vector norm block.
         """
-        super().__init__(inputs=inputs, **kwargs)
+        super().__init__(**kwargs)
+        self.type = 'norm'
+        self.args = dict(ord=ord, axis=axis)
 
     def output(self, t=None):
         vec = self.inputs[0]
-        out = np.linalg.norm(vec)
+        out = np.linalg.norm(vec, **self.args)
         return [out]
 
 # ------------------------------------------------------------------------ #
