@@ -31,7 +31,9 @@ class Inverse(FunctionBlock):
     """
 
     nin = 1
-    nout = 1
+    nout = 2
+
+    onames = ('inv', 'cond')
 
     def __init__(self, *inputs, pinv=False, **kwargs):
         """
@@ -46,23 +48,33 @@ class Inverse(FunctionBlock):
         Create a matrix inverse.
         """
         super().__init__(inputs=inputs, **kwargs)
+        self.type = 'inverse'
 
         self.pinv = pinv
         
     def output(self, t=None):
 
         mat = self.inputs[0]
-        if mat.shape[0] != mat.shape[1]:
-            pinv = True
-        else:
-            pinv = self.pinv
+        if isinstance(mat, np.ndarray):
+            if mat.shape[0] != mat.shape[1]:
+                pinv = True
+            else:
+                pinv = self.pinv
 
-        if pinv:
-            out = np.linalg.pinv()
-        else:
-            out = np.linalg.inv(mat)
+            if pinv:
+                out = np.linalg.pinv(mat)
+            else:
+                try:
+                    out = np.linalg.inv(mat)
+                except LinAlgError:
+                    raise RuntimeError('matrix is singular')
 
-        return [out]
+            return [out, np.cond(mat)]
+        elif hasattr(mat, 'inv'):
+            # ask the object to invert itself
+            return [mat.inv(), None]
+        else:
+            raise RuntimeError('object cannot be inverted')
 
 # ------------------------------------------------------------------------ #
 class Transpose(FunctionBlock):
