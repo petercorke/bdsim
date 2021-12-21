@@ -72,21 +72,28 @@ def main():
         # display image size
         w, h = image.size
         print(f'icon is {h} x {w} pixels')
+        print('suggest change scale factor to ', int(args.r * IMSIZE / max(w, h)))
 
         # check if it's too big for bdedit
         if max(w, h) >= IMSIZE:
             sys.exit(1)
-        print('suggest change scale factor to ', int(args.r * IMSIZE / max(w, h)))
 
         # use NumPy to centre the image into a 50x50 background & invert it
+        # use the alpha plane as greyscale since it has the antialiasing
         img = np.array(image)[:,:,3]
         roff = (IMSIZE - h) // 2
         coff = (IMSIZE - w) // 2
-        icon = np.full((IMSIZE, IMSIZE), 255, np.uint8)
-        icon[roff:roff+h, coff:coff+w] = 255 - img
+        icon = np.full((IMSIZE, IMSIZE), 255, np.uint8) # white background
+        icon[roff:roff+h, coff:coff+w] = 255 - img # black text
+
+        # now convert to RGBA image
+        icon_rgba = np.empty((IMSIZE, IMSIZE, 4), np.uint8)
+        for i in range(3):
+            icon_rgba[:, :, i] = icon
+        icon_rgba[:, :, 3] = np.where(icon == 255, 0, 255)
 
         # convert back to Image and save it
-        Image.fromarray(icon).save(args.o)
+        Image.fromarray(icon_rgba).save(args.o)
         print('icon saved --> ', args.o)
 
     except (OSError, ValueError):
