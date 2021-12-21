@@ -44,6 +44,8 @@ class ZOH(ClockedBlock):
 
     def __init__(self, clock, x0=0, min=None, max=None, **kwargs):
         """
+        :param clock: clock source
+        :type clock: Clock
         :param x0: Initial state, defaults to 0
         :type x0: array_like, optional
         :param min: Minimum value of state, defaults to None
@@ -109,6 +111,8 @@ class DIntegrator(ClockedBlock):
 
     def __init__(self, clock, x0=0, gain=1.0, min=None, max=None, **kwargs):
         """
+        :param clock: clock source
+        :type clock: Clock
         :param x0: Initial state, defaults to 0
         :type x0: array_like, optional
         :param min: Minimum value of state, defaults to None
@@ -170,6 +174,61 @@ class DIntegrator(ClockedBlock):
     def next(self):
         xnext = self._x + self.gain * self.clock.T * np.array(self.inputs[0])
         return xnext
+
+class DPoseIntegrator(ClockedBlock):
+    """
+    :blockname:`DPOSEINTEGRATOR`
+    
+    .. table::
+       :align: left
+    
+       +------------+---------+---------+
+       | inputs     | outputs |  states |
+       +------------+---------+---------+
+       | 1          | 1       | N       |
+       +------------+---------+---------+
+       | A(N,)      | A(N,)   |         |
+       +------------+---------+---------+
+    """
+
+    nin = 1
+    nout = 1
+    inlabels = ('ν',)
+    outlabels = ('ξ',)
+
+    def __init__(self, clock, x0=None, **kwargs):
+        """
+        :param clock: clock source
+        :type clock: Clock
+        :param x0: Initial pose, defaults to null
+        :type x0: SE3, optional
+        :param kwargs: common Block options
+        :return: an INTEGRATOR block
+        :rtype: Integrator instance
+
+        Create an spatial velocity integrator block.
+
+        Output is pose based on integrating the input spatial velocity over
+        time.
+        """
+        super().__init__(clock=clock, **kwargs)
+
+        if x0 is None:
+            x0 = SE3()
+
+        self.nstates = 6
+
+        self._x0 = Twist3(x0).A
+
+        print('nstates', self.nstates)
+
+    def output(self, t=None):
+        return [Twist3(self._x).SE3()]
+
+    def next(self):
+        T_delta = SE3.Delta(self.inputs[0] * self.clock.T)
+        pose = Twist3(self._x).SE3() * T_delta
+        return Twist3(pose).A
 
 # ------------------------------------------------------------------------ #
 
