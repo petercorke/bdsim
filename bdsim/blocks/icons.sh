@@ -4,6 +4,7 @@
 ./tex2icon.py -r 450 -o prod.png -t '\Pi'
 ./tex2icon.py -r 200 -o norm.png -t '\| \cdot \|'
 ./tex2icon.py -r 250 -o det.png -t '| \cdot |'
+./tex2icon.py -r 110 -o cond.png -t '\mathrm{cond}(\cdot)'
 ./tex2icon.py -r 150 -o fkine.png -t '\vec{T}\!\left(\mat{q}\right)'
 ./tex2icon.py -r 150 -o ikine.png -t '\mat{q}\!\left(\vec{T}\right)'
 ./tex2icon.py -r 150 -o jacobian.png -t '\mat{J}\!\left(\vec{q}\right)'
@@ -11,6 +12,8 @@
 ./tex2icon.py -r 100 -o point2tr.png -t '\begin{array}{c|c} \mat{1} & \vec{t}\\ \hline 0 & 1 \end{array}'
 ./tex2icon.py -r 120 -o tr2delta.png -t '\vec{\Delta}\!\left(\mat{T}\right)'
 ./tex2icon.py -r 120 -o delta2tr.png -t '\mat{T}\!\left(\vec{\Delta}\right)'
+
+./tex2icon.py -r 140 -o dposeintegrator.png -t '\sum_0^T \vec{\nu}'
 
 ./tex2icon.py -r 120 -o dict.png -t '\mathrm{\{\cdots\}}'
 ./tex2icon.py -r 120 -o index.png -t '\mathrm{[}k\mathrm{]}'
