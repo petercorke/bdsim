@@ -24,8 +24,8 @@ block = namedtuple('block', 'name, cls, path')
 
 # convert class name to BLOCK name
 # strip underscores and capitalize
-def blockname(cls):
-    return cls.__name__.strip('_').upper()
+def blockname(name):
+    return name.upper()
 
 
 # print a progress bar
