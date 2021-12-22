@@ -16,7 +16,8 @@ class GraphicsBlock(SinkBlock):
 
     The animation is saved as an MP4 video in the specified file.
     """
-
+    blockclass='graphics'
+    
     def __init__(self, movie=None, **kwargs):
 
         super().__init__(**kwargs)
@@ -71,7 +72,7 @@ class GraphicsBlock(SinkBlock):
             if filename is None:
                 filename = self.name
             filename += "." + format
-            print('saving {} -> {}'.format(str(self), filename))
+            print('saved {} -> {}'.format(str(self), filename))
             plt.savefig(filename, **kwargs)  # save the current figure
 
         except:
@@ -83,6 +84,8 @@ class GraphicsBlock(SinkBlock):
         def move_figure(f, x, y):
             """Move figure's upper left corner to pixel (x, y)"""
             backend = matplotlib.get_backend()
+            x = int(x) + gstate.xoffset
+            y = int(y)
             if backend == 'TkAgg':
                 f.canvas.manager.window.wm_geometry("+%d+%d" % (x, y))
             elif backend == 'WXAgg':
@@ -95,6 +98,8 @@ class GraphicsBlock(SinkBlock):
         gstate = state
         options = state.options
 
+        print('#figs', plt.get_fignums())
+
         if gstate.fignum == 0:
             # no figures yet created, lazy initialization
             
@@ -103,59 +108,86 @@ class GraphicsBlock(SinkBlock):
 
             # split the string            
             ntiles = [int(x) for x in options.tiles.split('x')]
-            
-            dpiscale = 1
+
             print("Graphics:")
             print('  backend:', mpl_backend)
+            xoffset = 0
+            if options.shape is None:
+                if mpl_backend == 'Qt5Agg':
+                    # next line actually creates a figure if none already exist
+                    screen = plt.get_current_fig_manager().canvas.screen()
+                    # this is a QScreenClass object, see https://doc.qt.io/qt-5/qscreen.html#availableGeometry-prop
+                    # next line creates a figure
+                    sz = screen.availableSize()
+                    dpiscale = screen.devicePixelRatio() # is 2.0 for Mac laptop screen
+                    print(sz.width(), sz.height(), dpiscale)
 
-            if mpl_backend == 'Qt5Agg':
-                from PyQt5 import QtWidgets
-                app = QtWidgets.QApplication([])
-                screen = app.primaryScreen()
-                if screen.name is not None:
-                    print('  Screen: %s' % screen.name())
-                size = screen.size()
-                print('  Size: %d x %d' % (size.width(), size.height()))
-                rect = screen.availableGeometry()
-                print('  Available: %d x %d' % (rect.width(), rect.height()))
-                sw = rect.width()
-                sh = rect.height()
-                #dpi = screen.physicalDotsPerInch()
-                dpiscale = screen.devicePixelRatio() # is 2.0 for Mac laptop screen
-            elif mpl_backend == 'TkAgg':
-                window = plt.get_current_fig_manager().window
-                sw =  window.winfo_screenwidth()
-                sh =  window.winfo_screenheight()
-                print('  Size: %d x %d' % (sw, sh))
+                    # check for a second screen
+                    if options.altscreen:
+                        vsize = screen.availableVirtualGeometry().getCoords()
+                        if vsize[0] < 0:
+                            # extra monitor to the left
+                            xoffset = vsize[0]
+                        elif vsize[0] >= sz[0]:
+                            # extra monitor to the right
+                            xoffset = vsize[0]
 
-            # create a figure at default size to get dpi (TODO better way?)
-            f = plt.figure(figsize=(1,1))
-            dpi = f.dpi / dpiscale
-            print('  dpi', dpi)
-            
-            # compute fig size in inches (width, height)
-            figsize = [ sw / ntiles[1] / dpi , sh / ntiles[0] / dpi ]
+                    screen_width, screen_height = sz.width(), sz.height()
+                    dpi = screen.physicalDotsPerInch()
+                    f = plt.gcf()
+
+                elif mpl_backend == 'TkAgg':
+                    print('  #figs', plt.get_fignums())
+                    window = plt.get_current_fig_manager().window
+                    screen_width, screen_height = window.winfo_screenwidth(), window.winfo_screenheight()
+                    dpiscale = 1
+                    print('  Size: %d x %d' % (screen_width, screen_height))
+                    f = plt.gcf()
+                    dpi = f.dpi
+
+                else:
+                    # all other backends
+                    f = plt.figure()
+                    dpi = f.dpi
+                    screen_width, screen_height = f.get_size_inches() * f.dpi
+
+                # compute fig size in inches (width, height)
+                figsize = [ screen_width / ntiles[1] / dpi, 
+                screen_height / ntiles[0] / dpi ]
+
+            else:
+                # shape is given explictly
+                screen_width, screen_height = [int(x) for x in options.shape.split(':')]
+
+                f = plt.gcf()
+
+            f.canvas.manager.set_window_title(f"bdsim: Figure {f.number:d}")
 
             # save graphics info away in state
             gstate.figsize = figsize
             gstate.dpi = dpi
-            gstate.screensize_pix = (sw, sh)
+            gstate.screensize_pix = (screen_width, screen_height)
             gstate.ntiles = ntiles
+            gstate.xoffset = xoffset
 
             # resize the figure
-            #plt.figure(num=f.number, figsize=self.figsize)
             f.set_size_inches(figsize, forward=True)
             plt.ion()
+
         else:
+            # subsequent figures
             f = plt.figure(figsize=gstate.figsize)
-            
+
+        print('  #figs', plt.get_fignums())
         # move the figure to right place on screen
         row = gstate.fignum // gstate.ntiles[0]
         col = gstate.fignum % gstate.ntiles[0]
         move_figure(f, col * gstate.figsize[0] * gstate.dpi, row * gstate.figsize[1] * gstate.dpi)
-        
         gstate.fignum += 1
+        
         #print('create figure', self.fignum, row, col)
+        print(f)
         return f
+
 
             

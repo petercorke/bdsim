@@ -24,8 +24,8 @@ block = namedtuple('block', 'name, cls, path')
 
 # convert class name to BLOCK name
 # strip underscores and capitalize
-def blockname(cls):
-    return cls.__name__.strip('_').upper()
+def blockname(name):
+    return name.upper()
 
 
 # print a progress bar
@@ -105,8 +105,10 @@ class BDSim:
         ===================  =========  ========  ===========================================
         Command line switch  Argument   Default   Behaviour
         ===================  =========  ========  ===========================================
-        --nographics, -g     graphics   True      enable graphical display
-        --animation, -a      animation  True      update graphics at each time step
+        ++nographics, +g     graphics   True      enable graphical display
+        ++animation, +a      animation  True      update graphics at each time step
+        --nographics, -g     graphics   True      disable graphical display
+        --animation, -a      animation  True      don't update graphics at each time step
         --noprogress, -p     progress   True      do not display simulation progress bar
         --backend BE         backend    'Qt5Agg'  matplotlib backend
         --tiles RxC, -t RxC  tiles      '3x4'     arrangement of figure tiles on the display
@@ -225,28 +227,28 @@ class BDSim:
         watchlist = []
         watchnamelist = []
         re_block = re.compile(r'(?P<name>[^[]+)(\[(?P<port>[0-9]+)\])')
-        for n in watch:
-            if isinstance(n, str):
+        for w in watch:
+            if isinstance(w, str):
                 # a name was given, with optional port number
-                m = re_block.match(n)
+                m = re_block.match(w)
+                if m is None:
+                    raise ValueError('watch block[port] not found: ' + w)
                 name = m.group('name')
-                port = m.group('port')
+                port = int(m.group('port'))
                 b = bd.blocknames[name]
                 plug = b[port]
-            elif isinstance(n, Block):
+            elif isinstance(w, Block):
                 # a block was given, defaults to port 0
-                plug = n[0]
-            elif isinstance(n, Plug):
+                plug = w[0]
+            elif isinstance(w, Plug):
                 # a plug was given
-                plug = n
+                plug = w
             watchlist.append(plug)
             watchnamelist.append(str(plug))
         state.watchlist = watchlist
+        state.watchnamelist = watchnamelist
 
-        # initialize list of time and states
-        state.tlist = []
-        state.xlist = []
-        state.plist = [[] for p in state.watchlist]
+
 
         x0 = bd.getstate0()
         print('initial state  x0 = ', x0)
@@ -262,6 +264,12 @@ class BDSim:
 
         # tell all blocks we're starting a BlockDiagram
         self.bd.start(state=state, graphics=self.state.options.graphics)
+
+        # initialize list of time and states
+        state.tlist = []
+        state.xlist = []
+        state.plist = [[] for p in state.watchlist]
+
         self.progress(0)
 
         if len(self.state.eventq) == 0:
@@ -332,7 +340,7 @@ class BDSim:
 
         # save the watchlist into variables named y0, y1 etc.
         for i, p in enumerate(watchlist):
-            out['y'+str(i)] = np.array(simstate.plist[i])
+            out['y'+str(i)] = np.array(state.plist[i])
         out.ynames = watchnamelist
 
         # pause until all graphics blocks close
@@ -722,6 +730,8 @@ class BDSim:
         --noprogress, -p     progress   True      do not display simulation progress bar
         --backend BE         backend    'Qt5Agg'  matplotlib backend
         --tiles RxC, -t RxC  tiles      '3x4'     arrangement of figure tiles on the display
+        --shape WxH          shape      None      window size, default matplotlib size
+        --altscreen          altscreen  True      use secondary monitor if it exists
         --verbose, -v        verbose    False     be verbose
         --debug F, -d F      debug      ''        debug flag string
         ===================  =========  ========  ===========================================
@@ -738,6 +748,12 @@ class BDSim:
             the simulation, while ``animation=True` will animate the graphs
             during simulation.
         """
+
+        # TODO:
+        # --no-animation -a
+        # --animation +a
+        # --no-altscreen -A
+        # --altscreen  +A
         for key, value in options.items():
             self.options[key] = value
 
@@ -751,17 +767,19 @@ class BDSim:
         if 'graphics' in options and not options['graphics']:
             self.options.animation = False
 
-    def get_options(sysargs=True, **kwargs):
+    def get_options(self, sysargs=True, **kwargs):
         # option priority (high to low):
         #  - command line
         #  - argument to BDSim()
         #  - defaults
         # all switches and their default values
         defaults = {
-            'backend': 'Qt5Agg',
+            'backend': 'Qt5Agg',  # 'TkAgg',
             'tiles': '3x4',
             'graphics': True,
             'animation': False,
+            'shape': None,
+            'altscreen': True,
             'progress': True,
             'verbose': False,
             'debug': ''
@@ -773,6 +791,7 @@ class BDSim:
         if sysargs:
             # command line arguments and graphics
             parser = argparse.ArgumentParser(
+                prefix_chars='-+',
                     formatter_class=argparse.ArgumentDefaultsHelpFormatter
                     )
             parser.add_argument('--backend', '-b', type=str, metavar='BACKEND',
@@ -781,14 +800,37 @@ class BDSim:
             parser.add_argument('--tiles', '-t', type=str, metavar='ROWSxCOLS',
                 default=options['tiles'],
                 help='window tiling as NxM')
-            parser.add_argument('--nographics', '-g', 
+            parser.add_argument('--shape', type=str, metavar='WIDTHxHEIGHT',
+                default=options['shape'],
+                help='window size as WxH, defaults to matplotlib default')
+
+            parser.add_argument('-g', '--no-graphics',
                 default=options['graphics'], 
                 action='store_const', const=False, dest='graphics',
-                help='disable graphic display')
-            parser.add_argument('--animation', '-a', 
+                help='disable graphic display, also does --no-animation')
+            parser.add_argument('+g', '--graphics',
+                default=options['graphics'], 
+                action='store_const', const=True, dest='graphics',
+                help='enable graphic display')
+
+            parser.add_argument('-a', '--no-animation',
                 default=options['animation'], 
-                action='store_const', const=True,
-                help='animate graphics')
+                action='store_const', const=False, dest='animation',
+                help='do not animate graphics')
+            parser.add_argument('+a', '--animation',
+                default=options['animation'], 
+                action='store_const', const=True, dest='animation',
+                help='animate graphics, also does ++graphics')
+
+            parser.add_argument('+A', '--altscreen',
+                default=options['altscreen'], 
+                action='store_const', const=True, dest='altscreen',
+                help='display plots on second monitor')
+            parser.add_argument('-A', '--no-altscreen',
+                default=options['altscreen'], 
+                action='store_const', const=False, dest='altscreen',
+                help='do not display plots on second monitor')
+
             parser.add_argument('--noprogress', '-p', 
                 default=options['progress'],
                 action='store_const', const=False, dest='progress',
@@ -800,8 +842,11 @@ class BDSim:
             parser.add_argument('--debug', '-d', type=str, metavar='[psd]',
                 default=options['debug'],
                 help='debug flags: p/ropagate, s/tate, d/eriv, i/nteractive')
-            options = vars(parser.parse_args())  # get args as a dictionary
 
+            args, unknown = parser.parse_known_args()
+            options = vars(args)  # get args as a dictionary
+
+        print(options)
         # ensure graphics is enabled if animation is requested
         if options['animation']:
             options['graphics'] = True

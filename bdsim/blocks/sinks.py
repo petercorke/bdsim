@@ -92,7 +92,6 @@ class Print(SinkBlock):
         prefix = '{:12s}'.format(
             'PRINT({:s} (t={:.3f})'.format(self.name, state.t)
             )
-                
         value = self.inputs[0]
         if self.format is None:
             # no format string
@@ -205,7 +204,48 @@ class Null(SinkBlock):
         """
         super().__init__(nin=nin, **kwargs)
         
-        # TODO format can be a string or function
+# ------------------------------------------------------------------------ #
+
+class Watch(SinkBlock):
+    """    
+    :blockname:`WATCH`
+    
+    .. table::
+       :align: left
+    
+    +--------+---------+---------+
+    | inputs | outputs |  states |
+    +--------+---------+---------+
+    | N      | 0       | 0       |
+    +--------+---------+---------+
+    | 1      |         |         | 
+    +--------+---------+---------+
+    """
+
+    nin = 1
+    nout = 0
+
+    def __init__(self, **kwargs):
+        """
+        :param kwargs: common Block options
+        :return: A NULL block
+        :rtype: Null instance
+        
+        Create a watch block that causes the input to be logged during the
+        simulation run.  Equivalent to adding it as the ``watch=`` argument
+        to ``bdsim.run``.
+
+        """
+        super().__init__(**kwargs)
+
+    def start(self, state=None):
+        # called at start of simulation, add this block to the watchlist
+        plug = self.inports[0].start  # start plug for input wire
+
+        # append to the watchlist, bdsim.run() will do the rest
+        state.watchlist.append(plug)
+        state.watchnamelist.append(str(plug))
+        
 
 if __name__ == "__main__":
 
