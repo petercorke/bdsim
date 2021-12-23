@@ -2,15 +2,12 @@ import json
 from bdsim import *
 import sys
 
-def bdrun(filename = None, globals={}, **kwargs):
+def bdload(bd, filename = None, globals={}, **kwargs):
 
     print('in bdrun', sys.argv)
 
     if filename is None:
         filename = sys.argv[-1]
-
-    sim = BDSim(**kwargs)
-    bd = sim.blockdiagram()
 
     # load the JSON file
 
@@ -52,7 +49,8 @@ def bdrun(filename = None, globals={}, **kwargs):
                     print(f"Resolving: block [{block['title']}].{key} := {value}")
                     params[key] = value
 
-            newblock = block_init(**params)    # instantiate the block
+            newblock = block_init(name=block['title'], **params)    # instantiate the block
+            print(f"{block['title']} --> {newblock.name}")
             block_dict[block['id']] = newblock # add to mapping
             for input in block['inputs']:
                 # each input id is mapped to the input Plug
@@ -104,11 +102,21 @@ def bdrun(filename = None, globals={}, **kwargs):
                 print(start, ' --> ', end)
                 bd.connect(start, end)
 
+    return bd
+
+def bdrun(T, filename = None, globals={}, **kwargs):
+    sim = BDSim(**kwargs)
+
+    bd = sim.blockdiagram()
+
+    bd = bdload(bd, filename=filename, globals=globals, **kwargs)
     bd.compile()
     bd.report()
 
-    sim.run(bd)
+    print('** sim for ', T)
+    sim.run(bd, T)
     sim.done(bd, block=True)
+    print('** DONE')
 
 if __name__ == "__main__":
 
