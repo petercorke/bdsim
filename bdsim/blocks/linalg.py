@@ -67,7 +67,7 @@ class Inverse(FunctionBlock):
                 except LinAlgError:
                     raise RuntimeError('matrix is singular')
 
-            return [out, np.cond(mat)]
+            return [out, np.linalg.cond(mat)]
         elif hasattr(mat, 'inv'):
             # ask the object to invert itself
             return [mat.inv(), None]
