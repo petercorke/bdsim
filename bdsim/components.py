@@ -88,7 +88,13 @@ class PriorityQ:
         return len(self.q)
 
     def __str__(self):
-        return f"PriorityQ: len={len(self)}, first out {self.q[0]}"
+        if len(self) == 0:
+            return f"PriorityQ: len={len(self)}"
+        else:
+            return f"PriorityQ: len={len(self)}, first out {self.q[0]}"
+
+    def __repr__(self):
+        return str(self)
 
     def push(self, value):
         self.q.append(value)
@@ -459,6 +465,8 @@ class Clock:
             self.T = arg / 1000
         elif unit == 'Hz':
             self.T = 1 / arg
+        else:
+            raise ValueError('unknown clock unit', unit)
 
         self.offset = offset
 
@@ -509,12 +517,13 @@ class Clock:
         for b in self.blocklist:
             x = b.setstate(x)  # send it to blocks        
 
-    def start():
-        self.bd.state.declare_event(self.time(self.i))
+    def start(self, state=None):
+        self.i = 1
+        state.declare_event(self, self.time(self.i))
         self.i += 1
 
-    def next_event():
-        self.bd.state.declare_event(self.time(self.i))
+    def next_event(self, state=None):
+        state.declare_event(self, self.time(self.i))
         self.i += 1
 
     def time(self, i):
@@ -1150,8 +1159,9 @@ class TransferBlock(Block):
     """
     blockclass = 'transfer'
 
-    def __init__(self, **kwargs):
+    def __init__(self, nstates=1, **kwargs):
         # print('Transfer constructor')
+        self.nstates = nstates
         super().__init__(**kwargs)
 
     def reset(self):
