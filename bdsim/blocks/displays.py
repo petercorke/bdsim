@@ -48,7 +48,7 @@ class Scope(GraphicsBlock):
     nin = -1
     nout = 0
 
-    def __init__(self, nin=1, vector=0, styles=None, stairs=False, scale='auto', labels=None, grid=True, **kwargs):
+    def __init__(self, nin=1, vector=0, styles=None, stairs=False, scale='auto', labels=None, grid=True, watch=False, **kwargs):
         """
         Create a block that plots input ports against time.
         
@@ -68,6 +68,8 @@ class Scope(GraphicsBlock):
         :param grid: draw a grid, defaults to True. Can be boolean or a tuple of
                      options for grid()
         :type grid: bool or sequence
+        :param watch: add these signals to the watchlist, defaults to False
+        :type watch: bool, optional
         :param kwargs: common Block options
         :return: A SCOPE block
         :rtype: Scope instance
@@ -158,7 +160,8 @@ class Scope(GraphicsBlock):
         
         self.line = [None] * nplots
         self.scale = scale
-        
+
+        self.watch = watch
 
         # TODO, wire width
         # inherit names from wires, block needs to be able to introspect
@@ -205,6 +208,14 @@ class Scope(GraphicsBlock):
             self.ax.set_ylim(*self.scale)
         if self.labels is not None:
             self.ax.legend(self.labels)
+
+        if self.watch:
+            for wire in self.inports:
+                plug = wire.start  # start plug for input wire
+
+                # append to the watchlist, bdsim.run() will do the rest
+                state.watchlist.append(plug)
+                state.watchnamelist.append(str(plug))
 
         super().start()
         
