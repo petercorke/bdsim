@@ -55,8 +55,12 @@ class Scope(GraphicsBlock):
         :param nin: number of inputs, defaults to 1 or if given, the length of
                     style vector
         :type nin: int, optional
+        :param vector: vector input of this width, defaults to 0
+        :type vector: int, optional
         :param styles: styles for each line to be plotted
         :type styles: str or dict, list of strings or dicts; one per line, optional
+        :param stairs: force staircase style plot, defaults to False
+        :type stairs: bool, optional
         :param scale: fixed y-axis scale or defaults to 'auto'
         :type scale: str or array_like(2)
         :param labels: vertical axis labels

@@ -181,6 +181,8 @@ class Flatten(FunctionBlock):
 
     def __init__(self, order='C', **kwargs):
         """
+        :param order: flattening order, either "C" or "F", default "C"
+        :type order: str
         :param ``kwargs``: common Block options
         :return: A FLATTEN block
         :rtype: Flatten instance
