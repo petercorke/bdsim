@@ -71,6 +71,7 @@ def main():
     # connects all the other Classes through the Interface.
     # window = Interface(screen_resolution, args.debug)
     window = InterfaceWindow(screen_resolution, args.debug)
+    window.args = args
 
     # Check what command line arguments have been passed, if any
     if args.file or args.print or args.debug or args.fontsize:

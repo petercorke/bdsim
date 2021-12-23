@@ -320,32 +320,39 @@ class InterfaceWindow(QMainWindow):
 
         main_block_found = False
 
+
         # Go through blocks within scene, if a main block exists, extract the file_name from the main block
         for block in self.centralWidget().scene.blocks:
             if block.block_type in ["Main", "MAIN"]:
                 main_block_found = True
                 main_file_name = block.parameters[0][2]
 
+                # Check if given file_name from the main block, contains a file extension
+                file_name, extension = os.path.splitext(main_file_name)
+
+                if not extension:
+                    main_file_name = os.path.join(main_file_name + ".py")
+
+                model_name = os.path.basename(self.filename)
+                if not os.path.isfile(model_name):
+                    print(f"Main block detected: file {main_file_name} could not be opened")
+                    return
+
+                print("\n" + "#" * 100)
+
+                command = ['python']
+                if self.args.pdb:
+                    command.extend(['-m', 'pdb'])
+                command.extend([main_file_name, model_name])
+                print(f"{datetime.datetime.now()}:: spawning {' '.join(command)}")
+
                 try:
-                    # Check if given file_name from the main block, contains a file extension
-                    file_name, extension = os.path.splitext(main_file_name)
-
-                    if not extension:
-                        main_file_name = os.path.join(main_file_name + ".py")
-
-                    model_name = os.path.basename(self.filename)
-                    print("\n" + "#" * 100)
-                    command = ['python']
-                    if args.pdb:
-                        command.extend(['-m', 'pdb'])
-                    command.extend([main_file_name, model_name])
-                    print(f"{datetime.datetime.now()}:: spawning {' '.join(command)}")
-
                     subprocess.Popen(command, executable='python', shell=False)
 
-                except Exception:
-                    print(f"Main block detected: file {main_file_name} could not be opened")
-                return
+                except (ValueError, OSError):
+                    print(f"failed to spawn subprocess")
+                    return
+                    
 
         if not main_block_found:
             model_name = os.path.basename(self.filename)
