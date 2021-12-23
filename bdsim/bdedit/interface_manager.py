@@ -2,6 +2,7 @@
 import os
 import json
 import subprocess
+import datetime
 from sys import platform
 
 # PyQt5 imports
@@ -333,21 +334,28 @@ class InterfaceWindow(QMainWindow):
                         main_file_name = os.path.join(main_file_name + ".py")
 
                     model_name = os.path.basename(self.filename)
-                    print("Invoking subproces with, Python file as:", main_file_name, " | Model name as:", model_name)
+                    print("\n" + "#" * 100)
+                    command = ['python']
+                    if args.pdb:
+                        command.extend(['-m', 'pdb'])
+                    command.extend([main_file_name, model_name])
+                    print(f"{datetime.datetime.now()}:: spawning {' '.join(command)}")
 
-                    # subprocess.run(['python', main_file_name, model_name], shell=False)
-                    subprocess.Popen(['python', main_file_name, model_name], executable='python', shell=False)
+                    subprocess.Popen(command, executable='python', shell=False)
 
                 except Exception:
-                    print("Detected Main block in model, but no file name was given. Subprocess canceled.")
+                    print(f"Main block detected: file {main_file_name} could not be opened")
                 return
 
         if not main_block_found:
             model_name = os.path.basename(self.filename)
-            print("Model does not contain a main block. Starting bdrun as a subprocess.")
+            print("#" * 100)
+
+            command = ['bdrun', model_name]
+            print(f"{datetime.datetime.now()}:: spawning {' '.join(command)}")
 
             # spawn with Popen which is non-blocking
-            subprocess.Popen(['bdrun', model_name], executable='bdrun', shell=False)
+            subprocess.Popen(command, executable='bdrun', shell=False)
 
     # -----------------------------------------------------------------------------
     def newFile(self):

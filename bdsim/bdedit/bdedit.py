@@ -29,6 +29,9 @@ def main():
     parser.add_argument('--debug', '-d', 
         action='store_const', const=True, default=False,
         help='Enable debugging')
+    parser.add_argument('--pdb', 
+        action='store_const', const=True, default=False,
+        help='Enable pdb for spawned python subprocess')
     parser.add_argument('--fontsize', '-s', type=int, default=12,
         help='Set font size of block names')
     args, unparsed_args = parser.parse_known_args()
