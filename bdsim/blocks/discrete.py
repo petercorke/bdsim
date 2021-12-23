@@ -15,7 +15,7 @@ from math import sin, cos, atan2, sqrt, pi
 
 import matplotlib.pyplot as plt
 import inspect
-from spatialmath import base
+from spatialmath import base, Twist3, SE3
 
 from bdsim.components import ClockedBlock
 
@@ -166,7 +166,7 @@ class DIntegrator(ClockedBlock):
         self.min = np.r_[min]
         self.max = np.r_[max]
         self.gain = gain
-        print('nstates', self.nstates)
+        self.ndstates = len(x0)
 
     def output(self, t=None):
         return [self._x]
@@ -214,13 +214,19 @@ class DPoseIntegrator(ClockedBlock):
         super().__init__(clock=clock, **kwargs)
 
         if x0 is None:
-            x0 = SE3()
+            x0 = Twist3()
+        elif isinstance(x0, SE3):
+            x0 = Twist3(x0).A
+        elif isinstance(x0, Twist3):
+            x0 = x0.A
+        elif isvector(x0, 6):
+            x0 = getvector(x0, 6)
 
-        self.nstates = 6
+        self.ndstates = 6
 
-        self._x0 = Twist3(x0).A
+        self._x0 = x0
 
-        print('nstates', self.nstates)
+        print('nstates', self.nstates, x0)
 
     def output(self, t=None):
         return [Twist3(self._x).SE3()]
