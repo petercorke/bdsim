@@ -29,7 +29,7 @@ def main():
     parser.add_argument('--debug', '-d', 
         action='store_const', const=True, default=False,
         help='Enable debugging')
-    parser.add_argument('fontsize', type=int, nargs='?',
+    parser.add_argument('--fontsize', '-s', type=int, default=12,
         help='Set font size of block names')
     args, unparsed_args = parser.parse_known_args()
     
@@ -74,13 +74,7 @@ def main():
 
         # Call bdedit functionality based on passed args
 
-        if args.fontsize:
-            # If a fontsize argument is passed, it the fontsize of block names will be set to this value
-            # else a default fontsize of 12 will be used.
-            if args.fontsize > 0:
-                window.centralWidget().scene.block_name_fontsize = args.fontsize
-            else:
-                print("Provided a negative fontsize. Reverting to default fontsize of 12.")
+        window.centralWidget().scene.block_name_fontsize = args.fontsize
 
         if args.file:
 
