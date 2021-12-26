@@ -19,10 +19,9 @@ If you're using bdsim and encounter errors with the latest version from GitHub t
   *  events associated with strong non-linearities or discontinuous inputs,
   *  allow the state vector to be updated (ie. as would be required to renormalize a unit-quaternion state).
 * Extend to support bond graphs, or a hybrid of bond graphs and block diagrams.
-* There is no graphical layout tool or graphical editor
 * There are many more blocks that could be created but of immediate interest are:
- * real-time blocks that interface to ADCs, DACs and PWM channels
- * vision blocks that interface to cameras, displays and OpenCV operators
+  * real-time blocks that interface to ADCs, DACs and PWM channels for use on a RaspberryPi
+  * vision blocks that interface to cameras, displays and OpenCV operators
 
 ## Other contributions
 
