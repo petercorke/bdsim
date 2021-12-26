@@ -17,70 +17,92 @@ A Python block diagram simulation package</a>
 <li><a href="https://petercorke.github.io/bdsim">Documentation</a></li>
 <li><a href="https://github.com/petercorke/bdsim/wiki">Wiki (examples and details)</a></li>
 <li><a href="installation#">Installation</a></li>
-<li>Dependencies: `numpy`, `scipy`, `matplotlib`, `spatialmath`, `ansitable`, `colored`, `ffmpeg` (if rendering animations as a movie)</li>
+<li>Dependencies: numpy, scipy, matplotlibb, <a href="https://github.com/petercorke/ansitable">ansitable</a>, ffmpeg (if rendering animations as a movie)</li>
 </ul>
 </td>
 </tr>
 </table>
 
+`bdsim` is Python 3 package that enables modelling and simulation of continuous-time, discrete-time or hybrid dynamic systems.  Systems are conceptualized in block diagram form, but represented in terms of Python objects.  
 
-# Block diagram simulation
+Key features include:
 
-This Python package enables modelling and simulation of dynamic systems conceptualized in block diagram form, but represented in terms of Python class and method calls.  Unlike Simulink or LabView we write Python code rather than drawing boxes and wires.  Wires can communicate any Python type such as scalars, lists, numpy arrays, other objects, and even functions.
+* The block diagram can be created easily using Python code, rather than drawing boxes and wires. This enables use of your favourite IDE, standard version control tools and development workflows.
+* Wires can communicate *any* Python type such as scalars, lists, dicts, NumPy arrays, objects, and functions. For robotics and vision applications using the [Spatial Maths Toolbox for Python](https://github.com/petercorke/spatialmath-python) wires could send values such as `SE3`, `UnitQuaternion` or `Twist3` objects.
+* Over 70 blocks for linear, nonlinear functions, display blocks, as well as continuous- and discrete-time dynamics
+  * Easy to add your own block, it's simply a class
+  * Subsystems are supported, and a subsystem can be independently instantiated multiple times in a system.  Subsystems can also be nested.
+  * Blocks from other toolboxes are automatically discovered and included. There are blocks for some functions in the  [Robotics Toolbox for Python](https://github.com/petercorke/robotics-toolbox-python) (such as arm, ground and aerial robots) and [Machine Vision Toolbox for Python](https://github.com/petercorke/machinevision-toolbox-python) (such as cameras). These are defined in the `blocks` folder of those toolboxes.
+* The diagram can be executed in a headless configuration, particularly useful on an embedded computer like a RaspberryPi.
+* A [python-based graphical editor](bdedit-the-graphical-editing-tool)
+  * allows graphical creation of block diagrams
+  * the diagram is stored in a human readable/editable JSON file with extension `.bd`
+  * creates good-quality graphics for inclusion in publications
+  * can launch `bdsim` to import and execute the model
+  * automatically discovers all bsdim and toolbbox blocks and adds them to the block library menu
+  * icons can be easily created using any image creation tool or a LaTeX expression 
+
+# Getting started
 
 We first sketch the dynamic system we want to simulate as a block diagram, for example this simple first-order system
 
 ![block diagram](https://github.com/petercorke/bdsim/raw/master/figs/bd1-sketch.png)
 
-which we can express concisely with `bdsim` as (see [`bdsim/examples/eg1.py`](https://github.com/petercorke/bdsim/blob/master/examples/eg1.py)
+which we can express concisely with `bdsim` as (see [`bdsim/examples/eg1.py`](https://github.com/petercorke/bdsim/blob/master/examples/eg1.py))
 
 ```python
      1  #!/usr/bin/env python3
-     2
-     3  import bdsim
-     4
-     5
-     6  sim = bdsim.BDSim(animation=True)  # create simulator
-     7  print(sim)
-     8  bd = sim.blockdiagram()  # create an empty block diagram
-     9
-    10  # define the blocks
-    11  demand = bd.STEP(T=1, pos=(0,0), name='demand')
-    12  sum = bd.SUM('+-', pos=(1,0))
-    13  gain = bd.GAIN(10, pos=(1.5,0))
-    14  plant = bd.LTI_SISO(0.5, [2, 1], name='plant', pos=(3,0))
-    15  scope = bd.SCOPE(styles=['k', 'r--'], pos=(4,0))
-    16
-    17  # connect the blocks
-    18  bd.connect(demand, sum[0], scope[1])
-    19  bd.connect(plant, sum[1])
-    20  bd.connect(sum, gain)
-    21  bd.connect(gain, plant)
-    22  bd.connect(plant, scope[0])
+     2  import bdsim	
+     4  sim = bdsim.BDSim()  # create simulator
+     5  bd = sim.blockdiagram()  # create an empty block diagram
+     6	
+     7	# define the blocks
+     8	demand = bd.STEP(T=1, name='demand')
+     9	sum = bd.SUM('+-')
+    10	gain = bd.GAIN(10)
+    11	plant = bd.LTI_SISO(0.5, [2, 1], name='plant')
+    12	scope = bd.SCOPE(styles=['k', 'r--'])
+    13	
+    14	# connect the blocks
+    15	bd.connect(demand, sum[0], scope[1])
+    16	bd.connect(plant, sum[1])
+    17	bd.connect(sum, gain)
+    18	bd.connect(gain, plant)
+    19	bd.connect(plant, scope[0])
+    20	
+    21	bd.compile()   # check the diagram
+    22	bd.report()    # list all blocks and wires
     23
-    24  bd.compile()   # check the diagram
-    25  bd.report()    # list all blocks and wires
-    26
-    27  out = sim.run(bd, 5, watch=[plant, demand])  # simulate for 5s
-    28
-    29  sim.savefig(scope, 'scope0')
-    30  sim.done(bd, block=True)
+    24  out = sim.run(bd, 5)   # simulate for 5s
+    25  sim.savefig(scope, 'scope0')
+    26  sim.done(bd, block=True)
 ```
-which is just 20 lines actual of code.
+which is just 16 lines of executable code.
 
-The red block annotations in the diagram are the names of blocks, and have become names of instances of object that represent those blocks.  The blocks can also have names which are used in diagnostics and as labels in plots.
+The red block annotations on the hand-drawn diagram are used as the names of the variables holding references to the block instance. The blocks can also have user-assigned names, see lines 8 and 11, which are used in diagnostics and as labels in plots.
 
-In `bdsim` all wires are point to point, a *one-to-many* connection is implemented by *many* wires.
+After the blocks are created their input and output ports need to be connected. In `bdsim` all wires are point to point, a *one-to-many* connection is implemented by *many* wires,
+for example
+```
+bd.connect(source, dest1, dest2, ...)
+```
+creates individual wires from `source` -> `dest1`, `source` -> `dest2` and so on.
+Ports are designated using Python indexing notation, for example `block[2]` is port 2 (the third port) of `block`.  Whether it is an input or output port depends on context.
+In the example above an index on the first argument refers to an output port, while on the second (or subsequent) arguments it refers to an input port.  If a block has only a single input or output port then no index is required, 0 is assumed.
 
-Ports are designated using Python indexing and slicing notation, for example `sum[0]`.  Whether it is an input or output port depends on context.  Blocks are connected by `connect(from, to_1, to_2, ...)` so an index on the first argument refers to an output port, while on the second (or subsequent) arguments refers to an input port.  If a port has only a single port then no index is required.
+A group of ports can be denoted using slice notation, for example 
+```
+bd.connect(source[2:5], dest[3:6)
+```
+will connect `source[2]` -> `dest[3]`, `source[3]` -> `dest[4]`, `source[4]` -> `dest[5]`.
+The number of wires in each slice must be consistent.  You could even do a cross over by connecting `source[2:5]` to `dest[6:3:-1]`.
 
-A bundle of wires can be denoted using slice notation, for example `block[2:4]` refers to ports 2 and 3.  When connecting slices of ports the number of wires in each slice must be consistent.  You could even do a cross over by connecting `block1[2:4]` to `block2[5:2:-1]`.
+Line 21 assembles all the blocks and wires, instantiates subsystems, checks connectivity to create a flat wire list, and then builds the dataflow execution plan.
 
-Line 25 generates a report, in tabular form, showing all the blocks and wires in the diagram.
+Line 22 generates a report, in tabular form, showing a summary of the block diagram:
 
 ```
 Blocks::
-
 
 ┌───┬─────────┬─────┬──────┬────────┬─────────┬───────┐
 │id │    name │ nin │ nout │ nstate │ ndstate │ type  │
@@ -91,7 +113,6 @@ Blocks::
 │ 3 │   plant │   1 │    1 │      1 │       0 │ LTI   │
 │ 4 │ scope.0 │   2 │    0 │      0 │       0 │ scope │
 └───┴─────────┴─────┴──────┴────────┴─────────┴───────┘
-
 
 Wires::
 
@@ -105,19 +126,38 @@ Wires::
 │ 4 │ 2[0] │ 3[0] │ gain.0[0] --> plant[0]   │ float64 │
 │ 5 │ 3[0] │ 4[0] │ plant[0] --> scope.0[0]  │ float64 │
 └───┴──────┴──────┴──────────────────────────┴─────────┘
+
+Continuous state variables:   1
+Discrete state variables:     0
+initial state  x0 =  [0.]
 ```
+In the first table we can see key information about each block, its `id` (used internally), name, the number of input and output ports, the number of
+continuous- and discrete-time states, and the type which is the block class.  Note that the name is auto-generated based on the type, except if it has
+been set explicitly as for the blocks `demand` and `plant`.
 
-where `nstate` is the number of continuous states and `ndstate` is the number
-of discrete states.
+The second table shows all wires in point-to-point form, showing the start and end block and port (the block is represented here by its `id`) and the type of the object sent along the wire.
 
-Line 27 runs the simulation for 5 seconds 
+Finally, there is a summary of the number of states for the complete system: the number of continuous states, the number
+of discrete states, and the initial value of the continuous state vector.
+
+Line 24 runs the simulation for 5 seconds 
 using the default variable-step RK45 solver and saves output values at least every 0.1s.  The scope block pops up a graph
 
 ![bdsim output](https://github.com/petercorke/bdsim/raw/master/figs/Figure_1.png)
 
-Line 29 saves the content causes the graphs in all displayed figures to be saved in the specified format, in this case the file would be called `scope.b4.pdf`.
+The simulation results are in a container object
+```
+>>> out
+results:
+t           | ndarray (67,)
+x           | ndarray (67, 1)
+xnames      | list              
+```
+which contains an array of time values, an array of state values, and a list of the names of the state variables.
 
-Line 28 blocks the script until all figure windows are closed, or the script is killed with SIGINT.
+Line 25 saves the content of the scope to be saved in the file called `scope0.pdf`.
+
+Line 26 blocks the script until all figure windows are closed, or the script is killed with SIGINT.
 
 The result `out` is effectively a structure with elements
 
@@ -145,36 +185,14 @@ Line 29 saves the scope graphics as a PDF file.
 
 Line 30 blocks until the last figure is dismissed.
 
-A [Graphviz](https://www.graphviz.org) .dot file can be generated by
+More details on this Wiki about:
 
-```python
-bd.dotfile('demo.dot')
-```
+- [Adding blocks](Adding-blocks)
+- [Connecting blocks](Connecting-blocks)
+- [Running the simulation](Running)
 
-which you can compile and display
 
-```shell
-% dot -Tpng -o demo.png demo.dot 
-```
-or `neato`
-
-```shell
-% neato -Tpng -o demo.png demo.dot
-```
-
-![output of neato](https://github.com/petercorke/bdsim/raw/master/figs/bd1.png)
-
-While this is topologically correct, it's not quite the way we would expect the diagram to be drawn.  `dot` ignores the `pos` options on the blocks while `neato` respects them, but is prone to drawing all the lines on top of each other.
-
-Sources are shown as 3D boxes, sinks as folders, functions as boxes (apart from gains which are triangles and summing junctions which are points), and transfer functions as connectors (look's like a gate).  To create a decent looking plot you need to manually place the blocks using the `pos` argument to place them. Unit spacing in the x- and y-directions is generally sufficient. 
-
-The `sim` object can do these operations in a convenient shorthand
-```python
-sim.showgraph(bd)
-```
-and display the result via your webbrowser.
-
-# Other examples
+## Other examples
 
 In the folder `bdsim/examples` you can find a few other runnable examples:
 
@@ -201,6 +219,58 @@ Examples from Chapter four of _Robotics, Vision & Control (2017)_:
 ![RVC Figure 4.11](https://github.com/petercorke/bdsim/raw/master/figs/rvc4_11.gif)
 
 Figs 4.8 (pure pursuit) and Fig 4.21 (quadrotor control) are yet to be done.
+
+# A more concise way
+
+Wiring, and some simple arithmetic blocks like `GAIN`, `SUM` and `PROD` can be implicitly generated by overloaded Python operators.  This strikes a nice balance between block diagram coding and Pythonic programming.
+
+```
+     1  #!/usr/bin/env python3
+     2
+     3  import bdsim
+     4
+     5  sim = bdsim.BDSim()  # create simulator
+     6  bd = sim.blockdiagram()  # create an empty block diagram
+     7
+     8  # define the blocks
+     9  demand = bd.STEP(T=1, name='demand')
+    10  plant = bd.LTI_SISO(0.5, [2, 1], name='plant')
+    11  scope = bd.SCOPE(styles=['k', 'r--'], movie='eg1.mp4')
+    12
+    13  # connect the blocks using Python syntax
+    14  scope[0] = plant
+    15  scope[1] = demand
+    16  plant[0] = 10 * (demand - plant)
+    17
+    18  bd.compile()   # check the diagram
+    19  bd.report()    # list all blocks and wires
+    20
+    21  sim.set_options(animation=True)
+    22  out = sim.run(bd, 5, watch=[plant,])  # simulate for 5s
+```
+This requires fewer lines of code and the code is more readable. Importantly, it results in in *exactly the same* block diagram in terms of blocks and wires
+```
+Wires::
+
+┌───┬──────┬──────┬──────────────────────────────┬─────────┐
+│id │ from │  to  │         description          │  type   │
+├───┼──────┼──────┼──────────────────────────────┼─────────┤
+│ 0 │ 1[0] │ 2[0] │ plant[0] --> scope.0[0]      │ float64 │
+│ 1 │ 0[0] │ 2[1] │ demand[0] --> scope.0[1]     │ int     │
+│ 2 │ 0[0] │ 3[0] │ demand[0] --> _sum.0[0]      │ int     │
+│ 3 │ 1[0] │ 3[1] │ plant[0] --> _sum.0[1]       │ float64 │
+│ 4 │ 3[0] │ 4[0] │ _sum.0[0] --> _gain.0(10)[0] │ float64 │
+│ 5 │ 4[0] │ 1[0] │ _gain.0(10)[0] --> plant[0]  │ float64 │
+└───┴──────┴──────┴──────────────────────────────┴─────────┘
+```
+The implicitly created blocks have names prefixed with an underscore.
+
+# bdedit: the graphical editing tool
+
+![block diagram](https://github.com/petercorke/bdsim/raw/master/figs/eg1-bdedit.png)
+
+`bdedit` is a PyQt5-based graphical tool to create, edit, render and execute block diagram models.
+
 
 # Limitations
 
