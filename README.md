@@ -271,6 +271,16 @@ The implicitly created blocks have names prefixed with an underscore.
 
 `bdedit` is a PyQt5-based graphical tool to create, edit, render and execute block diagram models.
 
+From the examples folder
+```
+% bdedit eg1.bd
+```
+will create a display like that shown above.  Pushing the run button, top left (triangle in circle) will spawn `bdrun` as a subprocess which will:
+
+* parse the JSON file
+* instantiate all blocks and wires
+* compile and run the diagram
+
 
 # Limitations
 
