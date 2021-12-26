@@ -1,3 +1,6 @@
+bdedit was developed by a QUT computer science student project team.  The following is the final report of that student project.  Significant
+subsequent work has been on this tool since the project completed.
+
 # BdEdit Technical Report
 
 Contact Details
