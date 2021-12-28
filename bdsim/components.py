@@ -332,7 +332,7 @@ class Plug:
 
     def __rshift__(left, right):
         """
-        Operator for implicit wiring.
+        Overloaded >> operator for implicit wiring.
 
         :param left: A plug to be wired from
         :type left: Plug
@@ -373,33 +373,186 @@ class Plug:
         return right
 
     def __add__(self, other):
+        """
+        Overloaded + operator for implicit block creation.
+
+        :param self: A signal (plug) to be added 
+        :type self: Plug 
+        :param other: A signal (block or plug) to be added
+        :type other: Block or Plug 
+        :return: SUM block
+        :rtype: Block subclass
+
+        This method is implicitly invoked by the + operator when the left operand is a ``Plug``
+        and the right operand is a ``Plug``, ``Block`` or constant::
+        
+            result = X[i] + Y
+            result = X[i] + Y[j]
+            result = X[i] + C
+
+        where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.
+
+        Create a ``SUM("++")`` block named ``_sum.N`` whose inputs are the 
+        left and right operands.  For the third case, a new ``CONSTANT(C)`` block
+        named ``_const.N`` is also created.
+
+        :seealso: :meth:`Plug.__radd__` :meth:`Block.__add__`
+        """
         if isinstance(other, (int, float, np.ndarray)):
             # plug + constant, create a CONSTANT block
             other = self.block.bd.CONSTANT(other)
         return self.block.bd.SUM('++', inputs=(self, other))
 
     def __radd__(self, other):
+        """
+        Overloaded + operator for implicit block creation.
+
+        :param self: A signal (plug) to be added 
+        :type self: Plug 
+        :param other: A signal (block or plug) to be added
+        :type other: Block or Plug 
+        :return: SUM block
+        :rtype: Block subclass
+
+        This method is implicitly invoked by the + operator when the right operand is a ``Plug``
+        and the left operand is a ``Plug``, ``Block`` or constant::
+        
+            result = X + Y[j]
+            result = X[i] + Y[j]
+            result = C + Y[j]
+
+        where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.
+
+        Create a ``SUM("++") block named ``_sum.N`` whose inputs are the 
+        left and right operands.  For the third case, a new ``CONSTANT(C)`` block
+        named ``_const.N`` is also created.
+
+        .. note:: The inputs to the summing junction are reversed: right then left operand.
+
+        :seealso: :meth:`Plug.__add__` :meth:`Block.__radd__`
+        """
         if isinstance(other, (int, float, np.ndarray)):
             # constant + plug, create a CONSTANT block
             other = self.block.bd.CONSTANT(other)
-        return self.block.bd.SUM('++', inputs=(self, other))
+        return self.block.bd.SUM('++', inputs=(other, self))
 
     def __sub__(self, other):
+        """
+        Overloaded - operator for implicit block creation.
+
+        :param self: A signal (plug) to be added (minuend)
+        :type self: Plug 
+        :param other: A signal (block or plug) to be subtracted (subtrahend)
+        :type other: Block or Plug 
+        :return: SUM block
+        :rtype: Block subclass
+
+        This method is implicitly invoked by the - operator when the left operand is a ``Plug``
+        and the right operand is a ``Plug``, ``Block`` or constant::
+        
+            result = X[i] - Y
+            result = X[i] - Y[j]
+            result = X[i] - C
+
+        where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.
+
+        Create a ``SUM("+-")`` block named ``_sum.N`` whose inputs are the 
+        left and right operands.  For the third case, a new ``CONSTANT(C)`` block
+        named ``_const.N`` is also created.
+
+        :seealso: :meth:`Plug.__rsub__` :meth:`Block.__sub__`
+        """
         if isinstance(other, (int, float, np.ndarray)):
             # plug - constant, create a CONSTANT block
             other = self.block.bd.CONSTANT(other)
         return self.block.bd.SUM('+-', inputs=(self, other))
 
     def __rsub__(self, other):
+        """
+        Overloaded - operator for implicit block creation.
+
+        :param self: A signal (plug) to be added (minuend)
+        :type self: Plug 
+        :param other: A signal (block or plug) to be subtracted (subtrahend)
+        :type other: Block or Plug 
+        :return: SUM block
+        :rtype: Block subclass
+
+        This method is implicitly invoked by the - operator when the left operand is a ``Plug``
+        and the right operand is a ``Plug``, ``Block`` or constant::
+        
+            result = X - Y[j]
+            result = X[i] - Y[j]
+            result = C - Y[j]
+
+        where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.
+
+        Create a ``SUM("+-")`` block named ``_sum.N`` whose inputs are the 
+        left and right operands.  For the third case, a new ``CONSTANT(C)`` block
+        named ``_const.N`` is also created.
+
+        .. note:: The inputs to the summing junction are reversed: right then left operand.
+
+        :seealso: :meth:`Plug.__sub__` :meth:`Block.__rsub__`
+        """
+        # TODO deal with other cases as per above
         if isinstance(other, (int, float, np.ndarray)):
             # constant - plug, create a CONSTANT block
             other = self.block.bd.CONSTANT(other)
-        return self.block.bd.SUM('-+', inputs=(self, other))
+        return self.block.bd.SUM('+-', inputs=(other, self))
 
     def __neg__(self):
+        """
+        Overloaded unary minus operator for implicit block creation.
+
+        :param self: A signal (plug) to be negated
+        :type self: Plug 
+        :return: GAIN block
+        :rtype: Block subclass
+
+        This method is implicitly invoked by the - operator for unary minus when the operand is a ``Plug``::
+        
+            result = -X[i]
+
+        where ``X`` is a block.
+
+        Create a ``GAIN(-1)`` block named ``_gain.N`` whose input is the 
+        operand.
+
+        :seealso: :meth:`Block.__neg__`
+        """
         return self.block.bd.GAIN(-1, inputs=[self])
 
     def __mul__(self, other):
+        """
+        Overloaded * operator for implicit block creation.
+
+        :param self: A signal (plug) to be multiplied 
+        :type self: Plug 
+        :param other: A signal (block or plug) to be multiplied
+        :type other: Block or Plug 
+        :return: PROD or GAIN block
+        :rtype: Block subclass
+
+        This method is implicitly invoked by the * operator when the left operand is a ``Plug``
+        and the right operand is a ``Plug``, ``Block`` or constant::
+        
+            result = X[i] * Y
+            result = X[i] * Y[j]
+            result = X[i] * C
+
+        where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.
+
+        Create a ``PROD("**")`` block named ``_prod.N`` whose inputs are the 
+        left and right operands.
+
+        For the third case, create a ``GAIN(C)`` block named ``_gain.N``.
+
+        .. note:: Signals are assumed to be scalars, but if ``C`` is a NumPy
+            array then the option ``matrix`` is set to True.
+
+        :seealso: :meth:`Plug.__rmul__` :meth:`Block.__mul__`
+        """
         if isinstance(other, (int, float, np.ndarray)):
             # plug * constant, create a GAIN block
             return self.block._autogain(other, premul=matrix, inputs=[self])
@@ -410,45 +563,109 @@ class Plug:
             return self.block.bd.PROD('**', matrix=True, name=name, inputs=[self, other])
 
     def __rmul__(self, other):
+        """
+        Overloaded * operator for implicit block creation.
+
+        :param self: A signal (plug) to be multiplied
+        :type self: Plug 
+        :param other: A signal (block or plug) to be multiplied
+        :type other: Block or Plug 
+        :return: PROD or GAIN block
+        :rtype: Block subclass
+
+        This method is implicitly invoked by the * operator when the right operand is a ``Plug``
+        and the left operand is a ``Plug``, ``Block`` or constant::
+
+            result = X * Y[j]
+            result = X[i] * Y[j]
+            result = C * Y[j]
+
+        where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.
+
+        For the first two cases, a ``PROD("**")`` block named ``_prod.N`` whose inputs are the 
+        left and right operands.  
+        
+        For the third case, create a ``GAIN(C)`` block named ``_gain.N``.
+
+        .. note:: Signals are assumed to be scalars, but if ``C`` is a NumPy
+            array then the option ``matrix`` is set to True.
+
+        :seealso: :meth:`Plug.__mul__` :meth:`Block.__rmul__`
+        """
         if isinstance(other, (int, float, np.ndarray)):
             # constant * plug, create a CONSTANT block
             matrix = isinstance(other, np.ndarray)
             return self.block._autogain(other, premul=matrix, inputs=[self])
 
     def __truediv__(self, other):
+        """
+        Overloaded / operator for implicit block creation.
+
+        :param self: A signal (plug) to be multiplied (dividend)
+        :type self: Plug 
+        :param other: A signal (block or plug) to be divided (divisor)
+        :type other: Block or Plug 
+        :return: PROD or GAIN block
+        :rtype: Block subclass
+
+        This method is implicitly invoked by the / operator when the left operand is a ``Plug``
+        and the right operand is a ``Plug``, ``Block`` or constant::
+        
+            result = X[i] / Y
+            result = X[i] / Y[j]
+            result = X[i] / C
+
+        where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.
+
+        Create a ``PROD("**")`` block named ``_prod.N`` whose inputs are the 
+        left and right operands.
+
+        For the third case, create a ``GAIN(1/C)`` block named ``_gain.N``.
+
+        .. note:: Signals are assumed to be scalars, but if ``C`` is a NumPy
+            array then the option ``matrix`` is set to True.
+
+        :seealso: :meth:`Plug.__rtruediv__` :meth:`Block.__truediv__`
+        """
         if isinstance(other, (int, float, np.ndarray)):
             # plug / constant , create a CONSTANT block
             other = self.block.bd.CONSTANT(other)
         return self.block.bd.PROD('*/', inputs=(self, other))
 
     def __rtruediv__(self, other):
+        """
+        Overloaded / operator for implicit block creation.
+
+        :param self: A signal (plug) to be multiplied (dividend)
+        :type self: Plug 
+        :param other: A signal (block or plug) to be divided (divisor)
+        :type other: Block or Plug 
+        :return: PROD block
+        :rtype: Block subclass
+
+        This method is implicitly invoked by the / operator when the right operand is a ``Plug``
+        and the left operand is a ``Plug``, ``Block`` or constant::
+
+            result = X / Y[j]
+            result = X[i] / Y[j]
+            result = C / Y[j]
+
+        where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.
+
+        For the first two cases, a ``PROD("*/")`` block named ``_prod.N`` whose inputs are the 
+        left and right operands.  For the third case, a new CONSTANT block
+        named ``_const.N`` is also created.
+
+        .. note:: Signals are assumed to be scalars, but if ``C`` is a NumPy
+            array then the option ``matrix`` is set to True.
+
+        :seealso: :meth:`Plug.__truediv__` :meth:`Block.__rtruediv__`
+        """
         if isinstance(other, (int, float, np.ndarray)):
             # constant / plug, create a CONSTANT block
             other = self.block.bd.CONSTANT(other)
-        return self.block.bd.PROD('/*', inputs=(self, other))
+        return self.block.bd.PROD('*/', inputs=(other, self))
 
-    def __setitem__(self, port, src):
-        """
-        Convert a LHS block slice reference to a wire.
-
-        :param port: Port number
-        :type port: int
-        :param src: the RHS
-        :type src: Block or Plug
-
-        Used to create a wired connection by assignment, for example::
-
-            c = bd.CONSTANT(1)
-
-            c[0] = x
-
-        Ths method is invoked to create a wire from ``x`` to input port 0 of
-        the constant block ``c``.
-        """
-        # b[port] = src
-        # src --> b[port]
-        print('Plug connecting', src, self, port)
-        self.bd.connect(src, self[port])
 
     def __repr__(self):
         """
@@ -771,12 +988,13 @@ class Block:
 
         Used to create a wired connection by assignment, for example::
 
-            c = bd.CONSTANT(1)
+            X[0] = Y
 
-            c[0] = x
+        where ``X`` and ``Y`` are blocks. This method is implicitly invoked and
+        creates a wire from ``Y`` to input port 0 of ``X``.
 
-        Ths method is invoked to create a wire from ``x`` to port 0 of
-        the constant block ``c``.
+        .. note:: The square brackets on the left-hand-side is critical, and
+            ``X = Y`` will simply overwrite the reference to ``X``.
         """
         # b[port] = src
         # src --> b[port]
@@ -883,6 +1101,34 @@ class Block:
         return self.bd.GAIN(value, name=name, **kwargs)
 
     def __add__(self, other):
+        """
+        Overloaded + operator for implicit block creation.
+
+        :param self: A signal (block) to be added 
+        :type self: Block 
+        :param other: A signal (block or plug) to be added
+        :type other: Block or Plug 
+        :return: SUM block
+        :rtype: Block subclass
+
+        This method is implicitly invoked by the + operator
+        when the right operand is a ``Block``
+        and the left operand is a ``Plug``, ``Block`` or constant::
+        
+            result = X + Y
+            result = X + Y[j]
+            result = X + C
+
+        where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.
+
+        Creates a ``SUM("++") block named ``_sum.N`` whose inputs are the 
+        left and right operands.  For the third case, a new ``CONSTANT(C)`` block
+        named ``_const.N`` is also created.
+
+        .. note:: The inputs to the summing junction are reversed: right then left operand.
+
+        :seealso: :meth:`Block.__radd__` :meth:`Plug.__add__` 
+        """
         # value + value, create a SUM block
         name = "_sum.{:d}".format(self.bd.n_auto_sum)
         self.bd.n_auto_sum += 1
@@ -892,6 +1138,34 @@ class Block:
         return self.bd.SUM('++', inputs=(self, other), name=name)
 
     def __radd__(self, other):
+        """
+        Overloaded + operator for implicit block creation.
+
+        :param self: A signal (block) to be added 
+        :type self: Block 
+        :param other: A signal (block or plug) to be added
+        :type other: Block or Plug 
+        :return: SUM block
+        :rtype: Block subclass
+
+        This method is implicitly invoked by the + operator
+        when the right operand is a ``Block``
+        and the left operand is a ``Plug``, ``Block`` or constant::
+        
+            result = X + Y[j]
+            result = X[i] + Y[j]
+            result = C + Y[j]
+
+        where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.
+
+        Creates a ``SUM("++") block named ``_sum.N`` whose inputs are the 
+        left and right operands.  For the third case, a new ``CONSTANT(C)`` block
+        named ``_const.N`` is also created.
+
+        .. note:: The inputs to the summing junction are reversed: right then left operand.
+
+        :seealso: :meth:`Block.__add__` :meth:`Plug._r_add__`
+        """
         # value + value, create a SUM block
         name = "_sum.{:d}".format(self.bd.n_auto_sum)
         self.bd.n_auto_sum += 1
@@ -901,6 +1175,31 @@ class Block:
         return self.bd.SUM('++', inputs=(other, self), name=name)
 
     def __sub__(self, other):
+        """
+        Overloaded - operator for implicit block creation.
+
+        :param self: A signal (block) to be added (minuend)
+        :type self: Block 
+        :param other: A signal (block or plug) to be subtracted (subtrahend)
+        :type other: Block or Plug 
+        :return: SUM block
+        :rtype: Block subclass
+
+        This method is implicitly invoked by the - operator when the left operand is a ``Block``
+        and the right operand is a ``Plug``, ``Block`` or constant::
+        
+            result = X - Y
+            result = X - Y[j]
+            result = X - C
+
+        where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.
+
+        Creates a ``SUM("+-")`` block named ``_sum.N`` whose inputs are the 
+        left and right operands.  For the third case, a new ``CONSTANT(C)`` block
+        named ``_const.N`` is also created.
+
+        :seealso: :meth:`Block.__rsub__` :meth:`Plug.__sub__`
+        """
         # value - value, create a SUM block
         name = "_sum.{:d}".format(self.bd.n_auto_sum)
         self.bd.n_auto_sum += 1
@@ -910,6 +1209,33 @@ class Block:
         return self.bd.SUM('+-', inputs=(self, other), name=name)
 
     def __rsub__(self, other):
+        """
+        Overloaded - operator for implicit block creation.
+
+        :param self: A signal (block) to be added (minuend)
+        :type self: Block 
+        :param other: A signal (block or plug) to be subtracted (subtrahend)
+        :type other: Block or Plug 
+        :return: SUM block
+        :rtype: Block subclass
+
+        This method is implicitly invoked by the - operator when the left operand is a ``Block``
+        and the right operand is a ``Plug``, ``Block`` or constant::
+        
+            result = X - Y
+            result = X[i] - Y
+            result = C - Y
+
+        where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.
+
+        Creates a ``SUM("+-")`` block named ``_sum.N`` whose inputs are the 
+        left and right operands.  For the third case, a new ``CONSTANT(C)`` block
+        named ``_const.N`` is also created.
+
+        .. note:: The inputs to the summing junction are reversed: right then left operand.
+
+        :seealso: :meth:`Block.__sub__` :meth:`Plug.__rsub__`
+        """
         # value - value, create a SUM block
         name = "_sum.{:d}".format(self.bd.n_auto_sum)
         self.bd.n_auto_sum += 1
@@ -919,9 +1245,57 @@ class Block:
         return self.bd.SUM('+-', inputs=(other, self), name=name)
 
     def __neg__(self):
+        """
+        Overloaded unary minus operator for implicit block creation.
+
+        :param self: A signal (block) to be negated
+        :type self: Block 
+        :return: GAIN block
+        :rtype: Block subclass
+
+        This method is implicitly invoked by the - operator for unary minus when the operand is a ``Block``::
+        
+            result = -X
+
+        where ``X`` is a block.
+
+        Creates a ``GAIN(-1)`` block named ``_gain.N`` whose input is the 
+        operand.
+
+        :seealso: :meth:`Plug.__neg__`
+        """
         return self._autogain(-1.0, inputs=[self])
 
     def __mul__(self, other):
+        """
+        Overloaded * operator for implicit block creation.
+
+        :param self: A signal (block) to be multiplied 
+        :type self: Block 
+        :param other: A signal (block or plug) to be multiplied
+        :type other: Block or Plug 
+        :return: PROD or GAIN block
+        :rtype: Block subclass
+
+        This method is implicitly invoked by the * operator when the left operand is a ``Block``
+        and the right operand is a ``Plug``, ``Block`` or constant::
+        
+            result = X * Y
+            result = X * Y[j]
+            result = X * C
+
+        where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.
+
+        Create a ``PROD("**")`` block named ``_prod.N`` whose inputs are the 
+        left and right operands.
+
+        For the third case, create a ``GAIN(C)`` block named ``_gain.N``.
+
+        .. note:: Signals are assumed to be scalars, but if ``C`` is a NumPy
+            array then the option ``matrix`` is set to True.
+
+        :seealso: :meth:`Block.__rmul__` :meth:`Plug.__mul__`
+        """
         matrix = False
         if isinstance(other, (int, float, np.ndarray)):
             # block * constant, create a GAIN block
@@ -934,6 +1308,35 @@ class Block:
             return self.bd.PROD('**', inputs=[self, other], matrix=matrix, name=name)
 
     def __rmul__(self, other):
+        """
+        Overloaded * operator for implicit block creation.
+
+        :param self: A signal (block) to be multiplied
+        :type self: Block 
+        :param other: A signal (block or plug) to be multiplied
+        :type other: Block or Plug 
+        :return: PROD or GAIN block
+        :rtype: Block subclass
+
+        This method is implicitly invoked by the * operator when the right operand is a ``Block``
+        and the left operand is a ``Plug``, ``Block`` or constant::
+
+            result = X * Y
+            result = X[i] * Y
+            result = C * Y
+
+        where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.
+
+        For the first two cases, a ``PROD("**")`` block named ``_prod.N`` whose inputs are the 
+        left and right operands.  
+        
+        For the third case, create a ``GAIN(C)`` block named ``_gain.N``.
+
+        .. note:: Signals are assumed to be scalars, but if ``C`` is a NumPy
+            array then the option ``matrix`` is set to True.
+
+        :seealso: :meth:`Block.__mul__` :meth:`Plug.__rmul__` 
+        """
         matrix = False
         if isinstance(other, (int, float, np.ndarray)):
             # constant * block, create a GAIN block
@@ -941,6 +1344,35 @@ class Block:
             return self._autogain(other, premul=matrix, inputs=[self])
  
     def __truediv__(self, other):
+        """
+        Overloaded / operator for implicit block creation.
+
+        :param self: A signal (block) to be multiplied (dividend)
+        :type self: Block 
+        :param other: A signal (block or plug) to be divided (divisor)
+        :type other: Block or Plug 
+        :return: PROD or GAIN block
+        :rtype: Block subclass
+
+        This method is implicitly invoked by the / operator when the left operand is a ``Block``
+        and the right operand is a ``Plug``, ``Block`` or constant::
+        
+            result = X / Y
+            result = X / Y[j]
+            result = X / C
+
+        where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.
+
+        Create a ``PROD("**")`` block named ``_prod.N`` whose inputs are the 
+        left and right operands.
+
+        For the third case, create a ``GAIN(1/C)`` block named ``_gain.N``.
+
+        .. note:: Signals are assumed to be scalars, but if ``C`` is a NumPy
+            array then the option ``matrix`` is set to True.
+
+        :seealso: :meth:`Block.__rtruediv__` :meth:`Plug.__truediv__` 
+        """
         # value / value, create a PROD block
         name = "_prod.{:d}".format(self.bd.n_auto_prod)
         self.bd.n_auto_prod += 1
@@ -952,6 +1384,34 @@ class Block:
         return self.bd.PROD('*/', inputs=(self, other), matrix=matrix, name=name)
 
     def __rtruediv__(self, other):
+        """
+        Overloaded / operator for implicit block creation.
+
+        :param self: A signal (block) to be multiplied (dividend)
+        :type self: Block 
+        :param other: A signal (block or plug) to be divided (divisor)
+        :type other: Block or Plug 
+        :return: PROD block
+        :rtype: Block subclass
+
+        This method is implicitly invoked by the / operator when the right operand is a ``Block``
+        and the left operand is a ``Plug``, ``Block`` or constant::
+
+            result = X / Y
+            result = X[i] / Y
+            result = C / Y
+
+        where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.
+
+        For the first two cases, a ``PROD("*/")`` block named ``_prod.N`` whose inputs are the 
+        left and right operands.  For the third case, a new CONSTANT block
+        named ``_const.N`` is also created.
+
+        .. note:: Signals are assumed to be scalars, but if ``C`` is a NumPy
+            array then the option ``matrix`` is set to True.
+
+        :seealso: :meth:`Block.__truediv__` :meth:`Plug.__rtruediv__`
+        """
         # value / value, create a PROD block
         name = "_prod.{:d}".format(self.bd.n_auto_prod)
         self.bd.n_auto_prod += 1
