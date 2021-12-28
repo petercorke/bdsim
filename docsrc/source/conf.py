@@ -65,9 +65,14 @@ html_theme = 'sphinx_rtd_theme'
 #html_theme = 'pyramid'
 #html_theme = 'sphinxdoc'
 
+github_url = 'https://github.com/petercorke/bdsim'
+
 html_theme_options = {
-    #'github_user': 'petercorke',
-    #'github_repo': 'spatialmath-python',
+    "github_host": "gitlab.com",
+    'github_user': 'petercorke',
+    'github_repo': 'bdsim',
+    "display_github": True,
+    'github_version': 'HEAD',
     #'logo_name': False,
     'logo_only': False,
     #'description': 'Spatial maths and geometry for Python',
@@ -81,6 +86,7 @@ html_favicon = 'favicon.ico'
 html_logo = '../../figs/BDSimLogo_NoBackgnd@2x.png'
 html_last_updated_fmt = '%d-%b-%Y'
 autoclass_content = "class"
+html_show_sourcelink = True
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
