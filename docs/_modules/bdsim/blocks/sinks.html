@@ -87,8 +87,9 @@
             
               <p class="caption"><span class="caption-text">Code documentation:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../bdsim.html">bdsim package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../bdsim.html">bdsim overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../bdsim.blocks.html">Block library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../internals.html">bdsim internals</a></li>
 </ul>
 
             
@@ -163,7 +164,6 @@
 
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="c1"># The constructor of each class ``MyClass`` with a ``@block`` decorator becomes a method ``MYCLASS()`` of the BlockDiagram instance.</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">pi</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">sin</span><span class="p">,</span> <span class="n">cos</span><span class="p">,</span> <span class="n">atan2</span>
@@ -173,69 +173,86 @@
 
 
 <span class="kn">import</span> <span class="nn">spatialmath.base</span> <span class="k">as</span> <span class="nn">sm</span>
-
-<span class="kn">from</span> <span class="nn">bdsim.components</span> <span class="kn">import</span> <span class="n">SinkBlock</span><span class="p">,</span> <span class="n">block</span>
-
-
+<span class="kn">from</span> <span class="nn">bdsim.components</span> <span class="kn">import</span> <span class="n">SinkBlock</span>
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 
-<div class="viewcode-block" id="Print"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sinks.Print">[docs]</a><span class="nd">@block</span>
-<span class="k">class</span> <span class="nc">Print</span><span class="p">(</span><span class="n">SinkBlock</span><span class="p">):</span>
+<div class="viewcode-block" id="Print"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sinks.Print">[docs]</a><span class="k">class</span> <span class="nc">Print</span><span class="p">(</span><span class="n">SinkBlock</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;    </span>
 <span class="sd">    :blockname:`PRINT`</span>
 <span class="sd">    </span>
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
 <span class="sd">    </span>
-<span class="sd">       +--------+---------+---------+</span>
-<span class="sd">       | inputs | outputs |  states |</span>
-<span class="sd">       +--------+---------+---------+</span>
-<span class="sd">       | 1      | 0       | 0       |</span>
-<span class="sd">       +--------+---------+---------+</span>
-<span class="sd">       | any    |         |         | </span>
-<span class="sd">       +--------+---------+---------+</span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    | inputs | outputs |  states |</span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    | 1      | 0       | 0       |</span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    | any    |         |         | </span>
+<span class="sd">    +--------+---------+---------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="Print.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sinks.Print.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">nout</span> <span class="o">=</span> <span class="mi">0</span>
+
+<div class="viewcode-block" id="Print.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sinks.Print.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Print signal.</span>
+
 <span class="sd">        :param fmt: Format string, defaults to None</span>
 <span class="sd">        :type fmt: str, optional</span>
-<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
-<span class="sd">        :type ``*inputs``: Block or Plug</span>
-<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        :param file: file to write data to, defaults to None</span>
+<span class="sd">        :type file: file object, optional</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
+<span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: A PRINT block</span>
 <span class="sd">        :rtype: Print instance</span>
 <span class="sd">        </span>
-<span class="sd">        </span>
+<span class="sd">        Creates a console print block which displays the value of a signal </span>
+<span class="sd">        at each simulation time step. The display format is like::</span>
 
-<span class="sd">        </span>
-<span class="sd">        Create a console print block which displays the value of a signal to the console</span>
-<span class="sd">        at each simulation time step.</span>
-<span class="sd">        </span>
+<span class="sd">            PRINT(print.0 @ t=0.100) [-1.0 0.2]</span>
+
+<span class="sd">        and includes the block name, time, and the formatted value.</span>
+
 <span class="sd">        The numerical formatting of the signal is controlled by ``fmt``:</span>
-<span class="sd">            </span>
+
 <span class="sd">        - if not provided, ``str()`` is used to format the signal</span>
 <span class="sd">        - if provided:</span>
 <span class="sd">            - a scalar is formatted by the ``fmt.format()``</span>
-<span class="sd">            - a numpy array is formatted by ``fmt.format()`` applied to every element</span>
+<span class="sd">            - a NumPy array is formatted by ``fmt.format()`` applied to every</span>
+<span class="sd">              element</span>
+
+<span class="sd">        Examples::</span>
+
+<span class="sd">            pr = bd.PRINT()     # create PRINT block</span>
+<span class="sd">            bd.connect(x, inputs=pr)   # its input comes from x</span>
+
+<span class="sd">            bd.PRINT(x)         # create PRINT block with input from x</span>
+
+<span class="sd">            bd.PRINT(x, name=&#39;X&#39;)  # block name appears in the printed text</span>
+
+<span class="sd">            bd.PRINT(x, fmt=&quot;{:.1f}&quot;) # print with explicit format</span>
+
+<span class="sd">        .. note:: </span>
+<span class="sd">            - By default writes to stdout</span>
+<span class="sd">            - The output is cleaner if progress bar printing is disabled.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">format</span> <span class="o">=</span> <span class="n">fmt</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;print&#39;</span></div>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">format</span> <span class="o">=</span> <span class="n">fmt</span></div>
         
         <span class="c1"># TODO format can be a string or function</span>
 
-    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="n">prefix</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{:12s}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-            <span class="s1">&#39;PRINT(</span><span class="si">{:s}</span><span class="s1"> (t=</span><span class="si">{:.3f}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">t</span><span class="p">)</span>
+            <span class="s1">&#39;PRINT(</span><span class="si">{:s}</span><span class="s1"> (t=</span><span class="si">{:.3f}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">t</span><span class="p">)</span>
             <span class="p">)</span>
-                
         <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">format</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># no format string</span>
-            <span class="nb">print</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># format string provided</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
@@ -249,56 +266,160 @@
 <span class="c1"># ------------------------------------------------------------------------ #</span>
             
 
-<div class="viewcode-block" id="Stop"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sinks.Stop">[docs]</a><span class="nd">@block</span>
-<span class="k">class</span> <span class="nc">Stop</span><span class="p">(</span><span class="n">SinkBlock</span><span class="p">):</span>
+<div class="viewcode-block" id="Stop"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sinks.Stop">[docs]</a><span class="k">class</span> <span class="nc">Stop</span><span class="p">(</span><span class="n">SinkBlock</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`STOP`</span>
 <span class="sd">    </span>
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
 <span class="sd">    </span>
-<span class="sd">       +--------+---------+---------+</span>
-<span class="sd">       | inputs | outputs |  states |</span>
-<span class="sd">       +--------+---------+---------+</span>
-<span class="sd">       | 1      | 0       | 0       |</span>
-<span class="sd">       +--------+---------+---------+</span>
-<span class="sd">       | any    |         |         | </span>
-<span class="sd">       +--------+---------+---------+</span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    | inputs | outputs |  states |</span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    | 1      | 0       | 0       |</span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    | any    |         |         | </span>
+<span class="sd">    +--------+---------+---------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="Stop.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sinks.Stop.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">nout</span> <span class="o">=</span> <span class="mi">0</span>
+
+<div class="viewcode-block" id="Stop.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sinks.Stop.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :param stop: Function </span>
-<span class="sd">        :type stop: TYPE</span>
-<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
-<span class="sd">        :type ``*inputs``: Block or Plug</span>
-<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        Conditional simulation stop.</span>
+
+<span class="sd">        :param func: evaluate stop condition, defaults to None</span>
+<span class="sd">        :type func: callable, optional</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
+<span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: A STOP block</span>
 <span class="sd">        :rtype: Stop instance</span>
 
-<span class="sd">        Conditionally stop the simulation.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;stop&#39;</span>
-                    
-        <span class="bp">self</span><span class="o">.</span><span class="n">stop</span>  <span class="o">=</span> <span class="n">stop</span></div>
+<span class="sd">        Conditionally stop the simulation if the input is:</span>
 
-    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
-            <span class="n">stop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">elif</span> <span class="n">callable</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">):</span>
-            <span class="n">stop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="sd">        - bool type and True</span>
+<span class="sd">        - numeric type and &gt; 0</span>
+
+<span class="sd">        If ``func`` is provided, then it is applied to the block input</span>
+<span class="sd">        and if it returns True the simulation is stopped.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">callable</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;argument must be a callable&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stopfunc</span>  <span class="o">=</span> <span class="n">func</span></div>
+
+    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stopfunc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stopfunc</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+        <span class="n">stop</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+            <span class="n">stop</span> <span class="o">=</span> <span class="n">value</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;input to stop must be boolean or callable&#39;</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">stop</span> <span class="o">=</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;bad input type to stop block&#39;</span><span class="p">)</span>
+
+        <span class="c1"># we signal stop condition by setting state.stop to the block calling</span>
+        <span class="c1"># the stop</span>
         <span class="k">if</span> <span class="n">stop</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">stop</span> <span class="o">=</span> <span class="bp">self</span></div>
+            <span class="n">state</span><span class="o">.</span><span class="n">stop</span> <span class="o">=</span> <span class="bp">self</span></div>
+
+<span class="c1"># ------------------------------------------------------------------------ #</span>
+
+<div class="viewcode-block" id="Null"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sinks.Null">[docs]</a><span class="k">class</span> <span class="nc">Null</span><span class="p">(</span><span class="n">SinkBlock</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;    </span>
+<span class="sd">    :blockname:`NULL`</span>
+<span class="sd">    </span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
+<span class="sd">    </span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    | inputs | outputs |  states |</span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    | N      | 0       | 0       |</span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    | any    |         |         | </span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">nin</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">nout</span> <span class="o">=</span> <span class="mi">0</span>
+
+<div class="viewcode-block" id="Null.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sinks.Null.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Discard signal.</span>
+
+<span class="sd">        :param nin: number of input ports, defaults to 1</span>
+<span class="sd">        :type nin: int, optional</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
+<span class="sd">        :type blockargs: dict</span>
+<span class="sd">        :return: A NULL block</span>
+<span class="sd">        :rtype: Null instance</span>
+<span class="sd">        </span>
+<span class="sd">        Create a sink block with arbitrary number of input ports that discards</span>
+<span class="sd">        all data.  Useful for testing.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="n">nin</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span></div></div>
+        
+<span class="c1"># ------------------------------------------------------------------------ #</span>
+
+<div class="viewcode-block" id="Watch"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sinks.Watch">[docs]</a><span class="k">class</span> <span class="nc">Watch</span><span class="p">(</span><span class="n">SinkBlock</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;    </span>
+<span class="sd">    :blockname:`WATCH`</span>
+<span class="sd">    </span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
+<span class="sd">    </span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    | inputs | outputs |  states |</span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    | N      | 0       | 0       |</span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    | 1      |         |         | </span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">nout</span> <span class="o">=</span> <span class="mi">0</span>
+
+<div class="viewcode-block" id="Watch.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sinks.Watch.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Watch a signal.</span>
+
+<span class="sd">        :param blockargs: |BlockOptions|</span>
+<span class="sd">        :type blockargs: dict</span>
+<span class="sd">        :return: A NULL block</span>
+<span class="sd">        :rtype: Null instance</span>
+<span class="sd">        </span>
+<span class="sd">        Causes the input signal to be logged during the</span>
+<span class="sd">        simulation run.  Equivalent to adding it as the ``watch=`` argument</span>
+<span class="sd">        to ``bdsim.run``.</span>
+
+<span class="sd">        :seealso: :method:`BDSim.run`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="c1"># called at start of simulation, add this block to the watchlist</span>
+        <span class="n">plug</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inports</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">start</span>  <span class="c1"># start plug for input wire</span>
+
+        <span class="c1"># append to the watchlist, bdsim.run() will do the rest</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">watchlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">plug</span><span class="p">)</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">watchnamelist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">plug</span><span class="p">))</span></div>
+        
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
 
-    <span class="kn">import</span> <span class="nn">pathlib</span>
+    <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
     <span class="kn">import</span> <span class="nn">os.path</span>
 
-    <span class="n">exec</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">absolute</span><span class="p">(),</span> <span class="s2">&quot;test_sinks.py&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+    <span class="n">exec</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;tests&quot;</span> <span class="o">/</span> <span class="s2">&quot;test_sinks.py&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
 </pre></div>
 
            </div>
@@ -314,7 +435,7 @@
         
         &copy; Copyright 2020, Peter Corke
       <span class="lastupdated">
-        Last updated on 01-Apr-2021.
+        Last updated on 28-Dec-2021.
       </span>
 
     </p>

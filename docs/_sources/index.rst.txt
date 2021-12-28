@@ -17,4 +17,5 @@ Unlike Simulink or LabView we write Python code rather than drawing boxes and wi
 
    bdsim
    bdsim.blocks
+   internals
 

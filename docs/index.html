@@ -38,7 +38,7 @@
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="bdsim package" href="bdsim.html" /> 
+    <link rel="next" title="bdsim overview" href="bdsim.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -88,8 +88,9 @@
             
               <p class="caption"><span class="caption-text">Code documentation:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="bdsim.html">bdsim package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bdsim.html">bdsim overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="bdsim.blocks.html">Block library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="internals.html">bdsim internals</a></li>
 </ul>
 
             
@@ -152,7 +153,7 @@
   
   <div class="rst-breadcrumbs-buttons" role="navigation" aria-label="breadcrumb navigation">
       
-        <a href="bdsim.html" class="btn btn-neutral float-right" title="bdsim package" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="bdsim.html" class="btn btn-neutral float-right" title="bdsim overview" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
   </div>
@@ -169,9 +170,9 @@
 <div class="toctree-wrapper compound">
 <p class="caption"><span class="caption-text">Code documentation:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="bdsim.html">bdsim package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="bdsim.html#module-bdsim.blockdiagram">BlockDiagram class</a></li>
-<li class="toctree-l2"><a class="reference internal" href="bdsim.html#components">Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bdsim.html">bdsim overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bdsim.html#getting-started">Getting started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bdsim.html#using-operator-overloading">Using operator overloading</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="bdsim.blocks.html">Block library</a><ul>
@@ -180,10 +181,15 @@
 <li class="toctree-l2"><a class="reference internal" href="bdsim.blocks.html#module-bdsim.blocks.functions">Function blocks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="bdsim.blocks.html#module-bdsim.blocks.transfers">Transfer blocks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="bdsim.blocks.html#module-bdsim.blocks.discrete">Discrete-time blocks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bdsim.blocks.html#module-bdsim.blocks.linalg">Linear algebra blocks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="bdsim.blocks.html#module-bdsim.blocks.connections">Connection blocks</a></li>
-<li class="toctree-l2"><a class="reference internal" href="bdsim.blocks.html#robot-blocks">Robot blocks</a></li>
-<li class="toctree-l2"><a class="reference internal" href="bdsim.blocks.html#module-bdsim.blocks.io">io blocks</a></li>
-<li class="toctree-l2"><a class="reference internal" href="bdsim.blocks.html#module-bdsim.blocks.vision">Vision blocks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bdsim.blocks.html#external-toolbox-blocksets">External Toolbox blocksets</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="internals.html">bdsim internals</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#bdsim-class">BDSim class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#blockdiagram-class">BlockDiagram class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#components">Components</a></li>
 </ul>
 </li>
 </ul>
@@ -198,7 +204,7 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="bdsim.html" class="btn btn-neutral float-right" title="bdsim package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="bdsim.html" class="btn btn-neutral float-right" title="bdsim overview" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
     </div>
@@ -211,7 +217,7 @@
         
         &copy; Copyright 2020, Peter Corke
       <span class="lastupdated">
-        Last updated on 01-Apr-2021.
+        Last updated on 28-Dec-2021.
       </span>
 
     </p>

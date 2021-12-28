@@ -1,0 +1,14 @@
+<map id="inheritancefad3a12bf5" name="inheritancefad3a12bf5">
+<area shape="rect" id="node1" href="#bdsim.components.Block" target="_top" title="bdsim.components.Block" alt="" coords="8,198,104,212"/>
+<area shape="rect" id="node3" href="#bdsim.components.ClockedBlock" target="_top" title="A ClockedBlock is a subclass of Block that represents a block with inputs" alt="" coords="142,128,265,142"/>
+<area shape="rect" id="node4" href="#bdsim.components.FunctionBlock" target="_top" title="A FunctionBlock is a subclass of Block that represents a block that has inputs" alt="" coords="141,156,266,170"/>
+<area shape="rect" id="node7" href="#bdsim.components.SinkBlock" target="_top" title="A SinkBlock is a subclass of Block that represents a block that has inputs" alt="" coords="148,183,259,198"/>
+<area shape="rect" id="node8" href="#bdsim.components.SourceBlock" target="_top" title="A SourceBlock is a subclass of Block that represents a block that has outputs" alt="" coords="144,211,263,225"/>
+<area shape="rect" id="node11" href="#bdsim.components.SubsystemBlock" target="_top" title="A Function is a subclass of Block that represents a block that has inputs" alt="" coords="137,239,270,253"/>
+<area shape="rect" id="node12" href="#bdsim.components.TransferBlock" target="_top" title="A TransferBlock is a subclass of Block that represents a block with inputs" alt="" coords="141,267,265,281"/>
+<area shape="rect" id="node2" href="#bdsim.components.Clock" target="_top" title="bdsim.components.Clock" alt="" coords="8,170,104,184"/>
+<area shape="rect" id="node5" href="#bdsim.components.Plug" target="_top" title="Create a plug." alt="" coords="10,142,103,156"/>
+<area shape="rect" id="node6" href="#bdsim.components.PriorityQ" target="_top" title="bdsim.components.PriorityQ" alt="" coords="3,114,110,129"/>
+<area shape="rect" id="node9" href="#bdsim.components.Struct" target="_top" title="A dict like object that allows items to be added by attribute or by key." alt="" coords="668,59,765,73"/>
+<area shape="rect" id="node13" href="#bdsim.components.Wire" target="_top" title="Create a wire." alt="" coords="10,3,103,17"/>
+</map>

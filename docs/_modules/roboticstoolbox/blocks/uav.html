@@ -87,8 +87,9 @@
             
               <p class="caption"><span class="caption-text">Code documentation:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../bdsim.html">bdsim package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../bdsim.html">bdsim overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../bdsim.blocks.html">Block library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../internals.html">bdsim internals</a></li>
 </ul>
 
             
@@ -159,12 +160,11 @@
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">time</span>
 
-<span class="kn">from</span> <span class="nn">bdsim.components</span> <span class="kn">import</span> <span class="n">TransferBlock</span><span class="p">,</span> <span class="n">block</span>
+<span class="kn">from</span> <span class="nn">bdsim.components</span> <span class="kn">import</span> <span class="n">TransferBlock</span><span class="p">,</span> <span class="n">FunctionBlock</span>
 <span class="kn">from</span> <span class="nn">bdsim.graphics</span> <span class="kn">import</span> <span class="n">GraphicsBlock</span>
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 
-<div class="viewcode-block" id="MultiRotor"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.uav.MultiRotor">[docs]</a><span class="nd">@block</span>
-<span class="k">class</span> <span class="nc">MultiRotor</span><span class="p">(</span><span class="n">TransferBlock</span><span class="p">):</span>
+<div class="viewcode-block" id="MultiRotor"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.uav.MultiRotor">[docs]</a><span class="k">class</span> <span class="nc">MultiRotor</span><span class="p">(</span><span class="n">TransferBlock</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`MULTIROTOR`</span>
 <span class="sd">    </span>
@@ -179,6 +179,8 @@
 <span class="sd">       | A(4,)      | dict    |         | </span>
 <span class="sd">       +------------+---------+---------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
 
 	<span class="c1"># Flyer2dynamics lovingly coded by Paul Pounds, first coded 12/4/04</span>
@@ -234,34 +236,35 @@
 	<span class="c1"># </span>
 <div class="viewcode-block" id="MultiRotor.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.uav.MultiRotor.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">groundcheck</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">speedcheck</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a a multi-rotor dynamic model block.</span>
+
 <span class="sd">        :param model: Vehicle geometric and inertial parameters</span>
 <span class="sd">        :type model: dict</span>
 <span class="sd">        :param ``*inputs``: Optional incoming connections</span>
 <span class="sd">        :type ``*inputs``: Block or Plug</span>
-<span class="sd">        :param groundcheck: Prevent vehicle moving below ground , defaults to True</span>
+<span class="sd">        :param groundcheck: Prevent vehicle moving below ground, defaults to True</span>
 <span class="sd">        :type groundcheck: bool</span>
 <span class="sd">        :param speedcheck: Check for zero rotor speed, defaults to True</span>
 <span class="sd">        :type speedcheck: bool</span>
-<span class="sd">        :param x0: Initial state, defaults to all zeros</span>
-<span class="sd">        :type x0: TYPE, optional</span>
+<span class="sd">        :param x0: Initial state, defaults to None</span>
+<span class="sd">        :type x0: float, optional</span>
 <span class="sd">        :param ``**kwargs``: common Block options</span>
 <span class="sd">        :return: a MULTIROTOR block</span>
 <span class="sd">        :rtype: MultiRotor instance</span>
 <span class="sd">        </span>
-<span class="sd">        Create a a multi-rotor dynamic model block.</span>
 <span class="sd">        </span>
-<span class="sd">        The block has one input port which is a vector of input rotor speeds</span>
-<span class="sd">        in (radians/sec).  These are, looking down, clockwise from the front rotor</span>
-<span class="sd">        which lies on the x-axis.</span>
+<span class="sd">        **Block ports**</span>
 <span class="sd">        </span>
-<span class="sd">        The block has one output port which is a dictionary signal with the</span>
-<span class="sd">        following items:</span>
-<span class="sd">            </span>
-<span class="sd">            - ``x`` pose in the world frame as :math:`[x, y, z, \theta_Y, \theta_P, \theta_R]`</span>
-<span class="sd">            - ``vb`` translational velocity in the world frame (metres/sec)</span>
-<span class="sd">            - ``w`` angular rates in the world frame as yaw-pitch-roll rates (radians/second)</span>
-<span class="sd">            - ``a1s`` longitudinal flapping angles (radians)</span>
-<span class="sd">            - ``b1s`` lateral flapping angles (radians)</span>
+<span class="sd">            :input ω: a vector of input rotor speeds in (radians/sec).  These are,</span>
+<span class="sd">                looking down, clockwise from the front rotor which lies on the x-axis.</span>
+<span class="sd">                </span>
+<span class="sd">            :output x: a dictionary signal with the following items:</span>
+<span class="sd">                </span>
+<span class="sd">                - ``x`` pose in the world frame as :math:`[x, y, z, \theta_Y, \theta_P, \theta_R]`</span>
+<span class="sd">                - ``vb`` translational velocity in the world frame (metres/sec)</span>
+<span class="sd">                - ``w`` angular rates in the world frame as yaw-pitch-roll rates (radians/second)</span>
+<span class="sd">                - ``a1s`` longitudinal flapping angles (radians)</span>
+<span class="sd">                - ``b1s`` lateral flapping angles (radians)</span>
 <span class="sd">            </span>
 <span class="sd">        Based on MATLAB code developed by Pauline Pounds 2004.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -288,11 +291,13 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">speedcheck</span> <span class="o">=</span> <span class="n">speedcheck</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">nrotors</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">nrotors</span><span class="p">,))</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nrotors</span><span class="p">):</span>
             <span class="n">theta</span> <span class="o">=</span> <span class="n">i</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">nrotors</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span>
             <span class="c1">#  Di      Rotor hub displacements (1x3)</span>
             <span class="c1"># first rotor is on the x-axis, clockwise order looking down from above</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span> <span class="n">model</span><span class="p">[</span><span class="s1">&#39;d&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="n">model</span><span class="p">[</span><span class="s1">&#39;d&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="n">model</span><span class="p">[</span><span class="s1">&#39;h&#39;</span><span class="p">]]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">theta</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">theta</span>
             
         <span class="bp">self</span><span class="o">.</span><span class="n">a1s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">nrotors</span><span class="p">,))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">b1s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">nrotors</span><span class="p">,))</span></div>
@@ -334,6 +339,7 @@
         <span class="n">out</span><span class="p">[</span><span class="s1">&#39;w&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">iW</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">[</span><span class="mi">9</span><span class="p">:</span><span class="mi">12</span><span class="p">]</span>               <span class="c1"># RPY rates mapped to body frame</span>
         <span class="n">out</span><span class="p">[</span><span class="s1">&#39;a1s&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">a1s</span>
         <span class="n">out</span><span class="p">[</span><span class="s1">&#39;b1s&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">b1s</span>
+        <span class="n">out</span><span class="p">[</span><span class="s1">&#39;X&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span>
     
         <span class="k">return</span> <span class="p">[</span><span class="n">out</span><span class="p">]</span>
     
@@ -448,17 +454,96 @@
     
         <span class="n">do</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">model</span><span class="p">[</span><span class="s1">&#39;J&#39;</span><span class="p">])</span> <span class="o">@</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="o">-</span><span class="n">o</span><span class="p">,</span> <span class="n">model</span><span class="p">[</span><span class="s1">&#39;J&#39;</span><span class="p">]</span> <span class="o">@</span> <span class="n">o</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">tau</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span> <span class="c1"># row sum of torques</span>
     
-        <span class="c1"># stash the flapping information for plotting</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">a1s</span> <span class="o">=</span> <span class="n">a1s</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">b1s</span> <span class="o">=</span> <span class="n">b1s</span>
+        <span class="c1"># # stash the flapping information for plotting</span>
+        <span class="c1"># self.a1s = a1s</span>
+        <span class="c1"># self.b1s = b1s</span>
         
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="n">dz</span><span class="p">,</span> <span class="n">dn</span><span class="p">,</span> <span class="n">dv</span><span class="p">,</span> <span class="n">do</span><span class="p">]</span>  <span class="c1"># This is the state derivative vector</span></div>
+
+<span class="c1"># ------------------------------------------------------------------------ #</span>
+
+<div class="viewcode-block" id="MultiRotorMixer"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.uav.MultiRotorMixer">[docs]</a><span class="k">class</span> <span class="nc">MultiRotorMixer</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :blockname:`MULTIROTORMIXER`</span>
+<span class="sd">    </span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
+<span class="sd">    </span>
+<span class="sd">       +--------+---------+---------+</span>
+<span class="sd">       | inputs | outputs |  states |</span>
+<span class="sd">       +--------+---------+---------+</span>
+<span class="sd">       | 4      | 1       | 0       |</span>
+<span class="sd">       +--------+---------+---------+</span>
+<span class="sd">       | float  |         |         | </span>
+<span class="sd">       +--------+---------+---------+</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+ 
+    <span class="n">nin</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">inlabels</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;𝛕r&#39;</span><span class="p">,</span> <span class="s1">&#39;𝛕p&#39;</span><span class="p">,</span> <span class="s1">&#39;𝛕y&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">)</span>
+    <span class="n">outlabels</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;ω&#39;</span><span class="p">,)</span>
+
+<div class="viewcode-block" id="MultiRotorMixer.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.uav.MultiRotorMixer.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">maxw</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">minw</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a block that displays/animates a multi-rotor flying vehicle.</span>
+
+<span class="sd">        :param maxw: maximum rotor speed in rad/s, defaults to 1000</span>
+<span class="sd">        :type maxw: float</span>
+<span class="sd">        :param minw: minimum rotor speed in rad/s, defaults to 5</span>
+<span class="sd">        :type minw: float</span>
+<span class="sd">        :param kwargs: common Block options</span>
+<span class="sd">        :type kwargs: dict</span>
+<span class="sd">        :return: a MULTIROTORMIXER block</span>
+<span class="sd">        :rtype: MultiRotorMixer instance</span>
+
+
+<span class="sd">        **Block ports**</span>
+<span class="sd">        </span>
+<span class="sd">            :input 𝛕r: roll torque</span>
+<span class="sd">            :input 𝛕p: pitch torque</span>
+<span class="sd">            :input 𝛕y: yaw torque</span>
+<span class="sd">            :input T: total thrust</span>
+
+<span class="sd">            :output ω: 1D array of rotor speeds</span>
+
+<span class="sd">        Derived from Simulink model by Pauline Pounds 2004</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;multirotormixer&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">minw</span> <span class="o">=</span> <span class="n">minw</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">maxw</span> <span class="o">=</span> <span class="n">maxw</span></div>
+
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">nrotors</span><span class="p">,))</span>
+        <span class="n">tau</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nrotors</span><span class="p">:</span>
+            <span class="c1"># roll and pitch coupling</span>
+            <span class="n">w</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="o">-</span><span class="n">tau</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theta</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">+</span> <span class="n">tau</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theta</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+            <span class="c1"># yaw coupling</span>
+            <span class="n">sign</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">1</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span>
+            <span class="n">w</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="n">sign</span> <span class="o">*</span> <span class="n">tau</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+            <span class="c1"># overall thrust</span>
+            <span class="n">w</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="n">tau</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">nrotors</span>
+
+        <span class="c1"># clip the rotor speeds to the range [minw, maxw]</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">minw</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">maxw</span><span class="p">)</span>
+
+        <span class="c1"># convert to thrust</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">w</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span>
+
+        <span class="c1"># negate alterate rotors to indicate counter-rotation</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nrotors</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">1</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">w</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">w</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="p">[</span><span class="n">w</span><span class="p">]</span></div>
 
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 
-<div class="viewcode-block" id="MultiRotorPlot"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.uav.MultiRotorPlot">[docs]</a><span class="nd">@block</span>
-<span class="k">class</span> <span class="nc">MultiRotorPlot</span><span class="p">(</span><span class="n">GraphicsBlock</span><span class="p">):</span>
+<div class="viewcode-block" id="MultiRotorPlot"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.uav.MultiRotorPlot">[docs]</a><span class="k">class</span> <span class="nc">MultiRotorPlot</span><span class="p">(</span><span class="n">GraphicsBlock</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`MULTIROTORPLOT`</span>
 <span class="sd">    </span>
@@ -474,6 +559,10 @@
 <span class="sd">       +--------+---------+---------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
  
+    <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">nout</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">inlabels</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,)</span>
+
     <span class="c1"># Based on code lovingly coded by Paul Pounds, first coded 17/4/02</span>
     <span class="c1"># version 2 2004 added scaling and ground display</span>
     <span class="c1"># version 3 2010 improved rotor rendering and fixed mirroring bug</span>
@@ -497,21 +586,31 @@
      
 <div class="viewcode-block" id="MultiRotorPlot.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.uav.MultiRotorPlot.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="n">flapscale</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">projection</span><span class="o">=</span><span class="s1">&#39;ortho&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a block that displays/animates a multi-rotor flying vehicle.</span>
+
 <span class="sd">        :param model: A dictionary of vehicle geometric and inertial properties</span>
 <span class="sd">        :type model: dict</span>
 <span class="sd">        :param ``*inputs``: Optional incoming connections</span>
 <span class="sd">        :type ``*inputs``: Block or Plug</span>
-<span class="sd">        :param scale: dimensions of workspace: xmin, xmax, ymin, ymax, zmin, zmax</span>
-<span class="sd">        :type scale: array_like</span>
-<span class="sd">        :param flapscale: exagerate flapping angle by this factor, default is 1</span>
+<span class="sd">        :param scale: dimensions of workspace: xmin, xmax, ymin, ymax, zmin, zmax, defaults to [-2,2,-2,2,10]</span>
+<span class="sd">        :type scale: array_like, optional</span>
+<span class="sd">        :param flapscale: exagerate flapping angle by this factor, defaults to 1</span>
 <span class="sd">        :type flapscale: float</span>
-<span class="sd">        :param projection: 3D projection: ortho or perspective, defaults to &#39;ortho&#39;</span>
+<span class="sd">        :param projection: 3D projection, one of: &#39;ortho&#39; [default], &#39;perspective&#39;</span>
 <span class="sd">        :type projection: str</span>
 <span class="sd">        :param ``**kwargs``: common Block options</span>
-<span class="sd">        :return: a MULTIROTOPLOT block</span>
-<span class="sd">        :rtype: MultiRobotPlot instance</span>
+<span class="sd">        :return: a MULTIROTORPLOT block</span>
+<span class="sd">        :rtype: MultiRotorPlot instance</span>
 
-<span class="sd">        Create a block that displays/animates a multi-rotor flying vehicle.</span>
+
+<span class="sd">        **Block ports**</span>
+<span class="sd">        </span>
+<span class="sd">            :input y: a dictionary signal that includes the item:</span>
+<span class="sd">                </span>
+<span class="sd">                - ``x`` pose in the world frame as :math:`[x, y, z, \theta_Y, \theta_P, \theta_R]`</span>
+<span class="sd">                - ``X`` pose in the world frame as :math:`[x, y, z, \theta_Y, \theta_P, \theta_R]`</span>
+<span class="sd">                - ``a1s``</span>
+<span class="sd">                - ``b1s``</span>
 
 <span class="sd">        .. figure:: ../../figs/multirotorplot.png</span>
 <span class="sd">           :width: 500px</span>
@@ -529,7 +628,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">projection</span> <span class="o">=</span> <span class="n">projection</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">flapscale</span> <span class="o">=</span> <span class="n">flapscale</span></div>
 
-    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
         <span class="n">quad</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span>
         
         <span class="c1"># vehicle dimensons</span>
@@ -554,6 +653,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;X&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Y&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_zlabel</span><span class="p">(</span><span class="s1">&#39;-Z (height above ground)&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">panel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">text2D</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">transAxes</span><span class="p">,</span> 
+            <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">family</span><span class="o">=</span><span class="s1">&#39;monospace&#39;</span><span class="p">,</span> <span class="n">verticalalignment</span><span class="o">=</span><span class="s1">&#39;top&#39;</span><span class="p">,</span>
+            <span class="n">bbox</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">boxstyle</span><span class="o">=</span><span class="s1">&#39;round&#39;</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">))</span>
+
         
         <span class="c1"># TODO allow user to set maximum height of plot volume</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
@@ -561,8 +665,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_zlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">[</span><span class="mi">4</span><span class="p">])</span>
 
         <span class="c1"># plot the ground boundaries and the big cross</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">[</span><span class="mi">2</span><span class="p">]],</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">[</span><span class="mi">3</span><span class="p">]],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;b-&#39;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">[</span><span class="mi">3</span><span class="p">]],</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">[</span><span class="mi">2</span><span class="p">]],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;b-&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">[</span><span class="mi">3</span><span class="p">]],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;b-&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">[</span><span class="mi">2</span><span class="p">]],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;b-&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
         
         <span class="bp">self</span><span class="o">.</span><span class="n">shadow</span><span class="p">,</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;k--&#39;</span><span class="p">)</span>
@@ -583,32 +687,32 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">a1s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">nrotors</span><span class="p">,))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">b1s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">nrotors</span><span class="p">,))</span>
 
-    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
 
         <span class="k">def</span> <span class="nf">plot3</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
-            <span class="n">h</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-            <span class="n">h</span><span class="o">.</span><span class="n">set_3d_properties</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+            <span class="n">h</span><span class="o">.</span><span class="n">set_data_3d</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+            <span class="c1"># h.set_data(x, y)</span>
+            <span class="c1"># h.set_3d_properties(np.r_[z])</span>
             
         <span class="c1"># READ STATE</span>
-        <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span>
-        <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">3</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;x&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;x&#39;</span><span class="p">][</span><span class="mi">3</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span>
         
         <span class="c1"># TODO, check input dimensions, 12 or 12+2N, deal with flapping</span>
         
-        <span class="n">a1s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">a1s</span>
-        <span class="n">b1s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">b1s</span>
+        <span class="n">a1s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;a1s&#39;</span><span class="p">]</span>
+        <span class="n">b1s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;b1s&#39;</span><span class="p">]</span>
         
         <span class="n">quad</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span>
         
         <span class="c1"># vehicle dimensons</span>
-        <span class="n">d</span> <span class="o">=</span> <span class="n">quad</span><span class="p">[</span><span class="s1">&#39;d&#39;</span><span class="p">];</span>  <span class="c1"># Hub displacement from COG</span>
-        <span class="n">r</span> <span class="o">=</span> <span class="n">quad</span><span class="p">[</span><span class="s1">&#39;r&#39;</span><span class="p">];</span>  <span class="c1"># Rotor radius</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">quad</span><span class="p">[</span><span class="s1">&#39;d&#39;</span><span class="p">]</span>  <span class="c1"># Hub displacement from COG</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">quad</span><span class="p">[</span><span class="s1">&#39;r&#39;</span><span class="p">]</span>  <span class="c1"># Rotor radius</span>
         
         <span class="c1"># PREPROCESS ROTATION MATRIX</span>
-        <span class="n">phi</span> <span class="o">=</span> <span class="n">n</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>    <span class="c1"># Euler angles</span>
-        <span class="n">the</span> <span class="o">=</span> <span class="n">n</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
-        <span class="n">psi</span> <span class="o">=</span> <span class="n">n</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
-        
+        <span class="n">phi</span><span class="p">,</span> <span class="n">the</span><span class="p">,</span> <span class="n">psi</span> <span class="o">=</span> <span class="n">n</span>    <span class="c1"># Euler angles</span>
+
         <span class="c1"># BBF &gt; Inertial rotation matrix</span>
         <span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
                 <span class="p">[</span><span class="n">cos</span><span class="p">(</span><span class="n">the</span><span class="p">)</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">),</span> <span class="n">sin</span><span class="p">(</span><span class="n">psi</span><span class="p">)</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">the</span><span class="p">)</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span> <span class="o">-</span> <span class="n">cos</span><span class="p">(</span><span class="n">psi</span><span class="p">)</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">phi</span><span class="p">),</span> <span class="n">cos</span><span class="p">(</span><span class="n">psi</span><span class="p">)</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">the</span><span class="p">)</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span> <span class="o">+</span> <span class="n">sin</span><span class="p">(</span><span class="n">psi</span><span class="p">)</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">phi</span><span class="p">)],</span>   
@@ -655,14 +759,19 @@
         <span class="n">hub0</span> <span class="o">=</span> <span class="n">F</span> <span class="o">@</span> <span class="n">z</span>  <span class="c1"># centre of vehicle</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nrotors</span><span class="p">):</span>
             <span class="c1"># line from hub to centre plot3([hub(1,N) hub(1,S)],[hub(2,N) hub(2,S)],[hub(3,N) hub(3,S)],&#39;-b&#39;)</span>
-            <span class="n">plot3</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arm</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="p">[</span><span class="n">hub</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">],</span> <span class="n">hub0</span><span class="p">[</span><span class="mi">0</span><span class="p">]],[</span><span class="n">hub</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">i</span><span class="p">],</span> <span class="n">hub0</span><span class="p">[</span><span class="mi">1</span><span class="p">]],[</span><span class="n">hub</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="n">i</span><span class="p">],</span> <span class="n">hub0</span><span class="p">[</span><span class="mi">2</span><span class="p">]])</span>
+            <span class="n">plot3</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arm</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="p">[</span><span class="n">hub</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">],</span> <span class="n">hub0</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="p">[</span><span class="n">hub</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">i</span><span class="p">],</span> <span class="n">hub0</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="p">[</span><span class="n">hub</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="n">i</span><span class="p">],</span> <span class="n">hub0</span><span class="p">[</span><span class="mi">2</span><span class="p">]])</span>
             
             <span class="c1"># plot a circle at the hub itself</span>
             <span class="c1">#plot3([hub(1,i)],[hub(2,i)],[hub(3,i)],&#39;o&#39;)</span>
 
         <span class="c1"># plot the vehicle&#39;s centroid on the ground plane</span>
         <span class="n">plot3</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shadow</span><span class="p">,</span> <span class="p">[</span><span class="n">z</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="n">z</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
-        <span class="n">plot3</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">groundmark</span><span class="p">,</span> <span class="n">z</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="n">z</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span></div>
+        <span class="n">plot3</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">groundmark</span><span class="p">,</span> <span class="n">z</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="n">z</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">textstr</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;t=</span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">t</span><span class="si">:</span><span class="s2"> .2f</span><span class="si">}</span><span class="se">\n</span><span class="s2">h=</span><span class="si">{</span><span class="n">z</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">:</span><span class="s2"> .2f</span><span class="si">}</span><span class="se">\n</span><span class="s2">γ=</span><span class="si">{</span><span class="n">n</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2"> .2f</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="n">textstr</span><span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">)</span></div>
 
 
 </pre></div>
@@ -680,7 +789,7 @@
         
         &copy; Copyright 2020, Peter Corke
       <span class="lastupdated">
-        Last updated on 01-Apr-2021.
+        Last updated on 28-Dec-2021.
       </span>
 
     </p>
