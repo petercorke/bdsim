@@ -1,5 +1,5 @@
-bdsim overview
-==============
+Overview
+========
 
 
 Getting started
@@ -10,7 +10,7 @@ We first sketch the dynamic system we want to simulate as a block diagram, for e
 .. image:: ../../figs/bd1-sketch.png
    :width: 800
 
-which we can express concisely with `bdsim` as (see [`bdsim/examples/eg1.py`](https://github.com/petercorke/bdsim/blob/master/examples/eg1.py))
+which we can express concisely with `bdsim` as (see `bdsim/examples/eg1.py <https://github.com/petercorke/bdsim/blob/master/examples/eg1.py>`_)
 
 .. code-block:: python
    :linenos:
