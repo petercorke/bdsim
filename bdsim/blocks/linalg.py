@@ -391,9 +391,9 @@ class Slice1(FunctionBlock):
         if index is None:
             self.index = slice()
         elif isinstance(index, list):
-            self.rows =  index
+            self.index =  index
         elif isinstance(index, tuple) and len(index) == 3:
-            self.rows = slice(*index)
+            self.index = slice(*index)
         else:
             raise ValueError('bad index specifier')
 
@@ -401,7 +401,7 @@ class Slice1(FunctionBlock):
         array = self.inputs[0]
         if array.ndim != 1:
             raise RuntimeError('flatten1 block expecting 1d array')
-        return [out[index]]
+        return [array[self.index]]
 
 # ------------------------------------------------------------------------ #
 class Det(FunctionBlock):
