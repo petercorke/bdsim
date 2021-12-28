@@ -96,5 +96,5 @@ html_show_sourcelink = True
 rst_epilog = """
 .. role:: raw-html(raw)
    :format: html
-.. |BlockOptions| replace:: :raw-html:`<a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a>`
+.. |BlockOptions| replace:: :raw-html:`<a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a>`
 """

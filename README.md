@@ -28,7 +28,7 @@ A Python block diagram simulation package</a>
   <table>
   <tr>
   <td>
-  <img width=350 src="https://github.com/petercorke/bdsim/raw/master/figs/bd1-sketch.png">
+  <img width=450 src="https://github.com/petercorke/bdsim/raw/master/figs/bd1-sketch.png">
   </td>
   <td style="padding-left: 20px;">
   <pre style="font-size:10px;">
