@@ -433,8 +433,8 @@ class Function(FunctionBlock):
 
         if args is None:
             args = list()
-        if blockargs is None:
-            blockargs = dict()
+        if kwargs is None:
+            kwargs = dict()
             
         # TODO, don't know why this happens
         if len(args) > 0 and args[0] == {}:
@@ -443,7 +443,7 @@ class Function(FunctionBlock):
         if isinstance(func, (list, tuple)):
             for f in func:
                 assert callable(f), 'Function must be a callable'
-                if blockargs is None:
+                if kwargs is None:
                     # we can check the number of arguments
                     n = len(inspect.signature(func).parameters)
                     if persistent:
@@ -453,7 +453,7 @@ class Function(FunctionBlock):
     f"argument count mismatch: function has {n} args, dict={dict}, nin={nin}"
                                         )
         elif callable(func):
-            if len(blockargs) == 0:
+            if len(kwargs) == 0:
                 # we can check the number of arguments
                 n = len(inspect.signature(func).parameters)
                 if persistent:
@@ -471,7 +471,7 @@ class Function(FunctionBlock):
         else:
             self.userdata = None
         self.args = args
-        self.blockargs = blockargs
+        self.kwargs = kwargs
 
     def start(self, state=None):
         super().start()
@@ -483,7 +483,7 @@ class Function(FunctionBlock):
         if callable(self.func):
             # single function
             try:
-                val = self.func(*self.inputs, *self.args, **self.blockargs)
+                val = self.func(*self.inputs, *self.args, **self.kwargs)
             except TypeError:
                 raise RuntimeError('Function invocation failed, check number of arguments') from None
             if isinstance(val, (list, tuple)):
@@ -499,7 +499,7 @@ class Function(FunctionBlock):
             out = []
             for f in self.func:
                 try:
-                    val = f(*self.inputs, *self.args, **self.blockargs)
+                    val = f(*self.inputs, *self.args, **self.kwargs)
                 except TypeError:
                     raise RuntimeError('Function invocation failed, check number of arguments') from None
                 out.append(val)
