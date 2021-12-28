@@ -127,7 +127,7 @@ class Prod(FunctionBlock):
     nin = -1
     nout = 1
 
-    def __init__(self, ops='**', *inputs, matrix=False, **blockargs):
+    def __init__(self, ops='**', matrix=False, **blockargs):
         """
         Product junction.
 
@@ -165,7 +165,7 @@ class Prod(FunctionBlock):
               - only square matrices are supported.
     
         """
-        super().__init__(nin=len(ops), inputs=inputs, **blockargs)
+        super().__init__(nin=len(ops), **blockargs)
         assert isinstance(ops, str), 'first argument must be signs string'
         assert all([x in '*/' for x in ops]), 'invalid op'
         self.ops = ops

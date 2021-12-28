@@ -307,7 +307,7 @@ class WiringTest(unittest.TestCase):
         const1 = bd.CONSTANT(2)
         const2 = bd.CONSTANT(3)
 
-        dst[0] = bd.SUM('++', const1, const2)
+        dst[0] = bd.SUM('++', inputs=(const1, const2))
 
         bd.compile(verbose=False)
         bd.evaluate_plan(x=[], t=0)
@@ -320,7 +320,7 @@ class WiringTest(unittest.TestCase):
         const1 = bd.CONSTANT(2)
         const2 = bd.CONSTANT(3)
 
-        dst[0] = bd.SUM('++', const1, const2) >> bd.GAIN(2)
+        dst[0] = bd.SUM('++', inputs=(const1, const2)) >> bd.GAIN(2)
 
         bd.compile(verbose=False)
         bd.evaluate_plan(x=[], t=0)

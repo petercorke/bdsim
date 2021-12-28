@@ -376,28 +376,28 @@ class Plug:
         if isinstance(other, (int, float, np.ndarray)):
             # plug + constant, create a CONSTANT block
             other = self.block.bd.CONSTANT(other)
-        return self.block.bd.SUM('++', self, other)
+        return self.block.bd.SUM('++', inputs=(self, other))
 
     def __radd__(self, other):
         if isinstance(other, (int, float, np.ndarray)):
             # constant + plug, create a CONSTANT block
             other = self.block.bd.CONSTANT(other)
-        return self.block.bd.SUM('++', self, other)
+        return self.block.bd.SUM('++', inputs=(self, other))
 
     def __sub__(self, other):
         if isinstance(other, (int, float, np.ndarray)):
             # plug - constant, create a CONSTANT block
             other = self.block.bd.CONSTANT(other)
-        return self.block.bd.SUM('+-', self, other)
+        return self.block.bd.SUM('+-', inputs=(self, other))
 
     def __rsub__(self, other):
         if isinstance(other, (int, float, np.ndarray)):
             # constant - plug, create a CONSTANT block
             other = self.block.bd.CONSTANT(other)
-        return self.block.bd.SUM('-+', self, other)
+        return self.block.bd.SUM('-+', inputs=(self, other))
 
     def __neg__(self):
-        return self.block.bd.GAIN(-1, self)
+        return self.block.bd.GAIN(-1, inputs=[self])
 
     def __mul__(self, other):
         if isinstance(other, (int, float, np.ndarray)):
@@ -419,13 +419,13 @@ class Plug:
         if isinstance(other, (int, float, np.ndarray)):
             # plug / constant , create a CONSTANT block
             other = self.block.bd.CONSTANT(other)
-        return self.block.bd.PROD('*/', self, other)
+        return self.block.bd.PROD('*/', inputs=(self, other))
 
     def __rtruediv__(self, other):
         if isinstance(other, (int, float, np.ndarray)):
             # constant / plug, create a CONSTANT block
             other = self.block.bd.CONSTANT(other)
-        return self.block.bd.PROD('/*', self, other)
+        return self.block.bd.PROD('/*', inputs=(self, other))
 
     def __setitem__(self, port, src):
         """
@@ -915,7 +915,7 @@ class Block:
         if isinstance(other, (int, float, np.ndarray)):
             # block + constant, create a CONSTANT block
             other = self._autoconstant(other)
-        return self.bd.SUM('++', self, other, name=name)
+        return self.bd.SUM('++', inputs=(self, other), name=name)
 
     def __radd__(self, other):
         # value + value, create a SUM block
@@ -924,7 +924,7 @@ class Block:
         if isinstance(other, (int, float, np.ndarray)):
             # constant + block, create a CONSTANT block
             other = self._autoconstant(other)
-        return self.bd.SUM('++', other, self, name=name)
+        return self.bd.SUM('++', inputs=(other, self), name=name)
 
     def __sub__(self, other):
         # value - value, create a SUM block
@@ -933,7 +933,7 @@ class Block:
         if isinstance(other, (int, float, np.ndarray)):
             # block - constant, create a CONSTANT block
             other = self._autoconstant(other)
-        return self.bd.SUM('+-', self, other, name=name)
+        return self.bd.SUM('+-', inputs=(self, other), name=name)
 
     def __rsub__(self, other):
         # value - value, create a SUM block
@@ -942,23 +942,25 @@ class Block:
         if isinstance(other, (int, float, np.ndarray)):
             # constant - block, create a CONSTANT block
             other = self._autoconstant(other)
-        return self.bd.SUM('+-', other, self, name=name)
+        return self.bd.SUM('+-', inputs=(other, self), name=name)
 
     def __neg__(self):
         return self._autogain(-1.0, inputs=[self])
 
     def __mul__(self, other):
+        matrix = False
         if isinstance(other, (int, float, np.ndarray)):
             # block * constant, create a GAIN block
             matrix = isinstance(other, np.ndarray)
-            return self._autogain(other, premul=matrix, inputs=[self])
+            return self._autogain(other, premul=matrix, matrix=matrix, inputs=[self])
         else:
             # value * value, create a PROD block
             name = "_prod.{:d}".format(self.bd.n_auto_prod)
             self.bd.n_auto_prod += 1
-            return self.bd.PROD(self, other, matrix=True, name=name)
+            return self.bd.PROD('**', inputs=[self, other], matrix=matrix, name=name)
 
     def __rmul__(self, other):
+        matrix = False
         if isinstance(other, (int, float, np.ndarray)):
             # constant * block, create a GAIN block
             matrix = isinstance(other, np.ndarray)
@@ -968,21 +970,23 @@ class Block:
         # value / value, create a PROD block
         name = "_prod.{:d}".format(self.bd.n_auto_prod)
         self.bd.n_auto_prod += 1
+        matrix = False
         if isinstance(other, (int, float, np.ndarray)):
             # block / constant, create a CONSTANT block
             other = self._autoconstant(other)
             matrix = isinstance(other, np.ndarray)
-        return self.bd.PROD('*/', self, other, matrix=matrix, name=name)
+        return self.bd.PROD('*/', inputs=(self, other), matrix=matrix, name=name)
 
     def __rtruediv__(self, other):
         # value / value, create a PROD block
         name = "_prod.{:d}".format(self.bd.n_auto_prod)
         self.bd.n_auto_prod += 1
+        matrix = False
         if isinstance(other, (int, float, np.ndarray)):
             # constant / block, create a CONSTANT block
             other = self._autoconstant(other)
             matrix = isinstance(other, np.ndarray)
-        return self.bd.PROD('*/', other, self, matrix=matrix, name=name)
+        return self.bd.PROD('*/', inputs=(other, self), matrix=matrix, name=name)
 
     
 
