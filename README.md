@@ -269,7 +269,7 @@ The implicitly created blocks have names prefixed with an underscore.
 
 ![block diagram](https://github.com/petercorke/bdsim/raw/master/figs/eg1-bdedit.png)
 
-`bdedit` is a PyQt5-based graphical tool to create, edit, render and execute block diagram models.
+`bdedit` is a multi-platform PyQt5-based graphical tool to create, edit, render and execute block diagram models.
 
 From the examples folder
 ```
