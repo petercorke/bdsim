@@ -10,6 +10,7 @@ from pathlib import Path
 import sys
 import importlib
 import inspect
+import traceback
 from collections import Counter, namedtuple
 import numpy as np
 from colored import fg, attr
@@ -56,13 +57,15 @@ class BlockDiagram:
         self.nstates = 0
         self.ndstates = 0
         self._issubsystem = False
-        self._blockdict = {}
+        self.blocknames = {}
         self.options = None
         self.n_auto_sum = 0
         self.n_auto_prod = 0
+        self.n_auto_const = 0
+        self.n_auto_gain = 0
         
     def __getitem__(self, b):
-        return self._blockdict[b]
+        return self.blocknames[b]
 
     def __len__(self):
         return len(self.blocklist)
@@ -73,11 +76,12 @@ class BlockDiagram:
     
     def clock(self, *args, **kwargs):
         clock = Clock(*args, **kwargs)
+        clock.bd = self
         self.clocklist.append(clock)
         return clock
 
     def add_block(self, block):
-        if block.name in self._blockdict:
+        if block.name in self.blocknames:
             raise ValueError('block {} already added'.format(block.name))
         block.id = len(self.blocklist)
         if block.name is None:
@@ -86,9 +90,9 @@ class BlockDiagram:
             block.name = "{:s}.{:d}".format(block.type, i)
         block.bd = self
         self.blocklist.append(block)  # add to the list of available blocks
-        if block in self._blockdict:
+        if block in self.blocknames:
             raise Warning(f"block name {block} is not unique")
-        self._blockdict[block.name] = block
+        self.blocknames[block.name] = block
         
     def add_wire(self, wire, name=None):
         wire.id = len(self.wirelist)
@@ -139,7 +143,7 @@ class BlockDiagram:
                     wire = Wire( Plug(start.block, s, 'start'), Plug(end.block, e, 'end'), name)
                     self.add_wire(wire)
             elif start.isslice and not end.isslice:
-                # bundle goint to a block
+                # bundle going to a block
                 assert start.width == start.block.nin, "bundle width doesn't match number of input ports"
                 for inport,outport in enumerate(start.portlist):
                     wire = Wire( Plug(start.block, outport, 'start'), Plug(end.block, inport, 'end'), name)
@@ -227,7 +231,7 @@ class BlockDiagram:
                     # create default state names
                     self.statenames.extend([b.name + 'x' + str(i) for i in range(0, b.nstates)])
             if b.blockclass == 'clocked':
-                self.ndstates += b.nstates
+                self.ndstates += b.ndstates
                 if b._state_names is not None:
                     assert len(b._state_names) == b.nstates, 'number of state names not consistent with number of states'
                     self.dstatenames.extend(b._state_names)
@@ -258,13 +262,13 @@ class BlockDiagram:
             # check all inputs are connected
             for port, connection in enumerate(b.inports):
                 if connection is None:
-                    print('  ERROR: block {:s} input {:d} is not connected'.format(str(b), port))
+                    print('  ERROR: [{:s}] input {:d} is not connected'.format(str(b), port))
                     error = True
                     
             # check all outputs are connected
             for port,connections in enumerate(b.outports):
                 if len(connections) == 0:
-                    print('  INFORMATION: block {:s} output {:d} is not connected'.format(str(b), port))
+                    print('  INFORMATION: [{:s}] output {:d} is not connected'.format(str(b), port))
                     
             if b._inport_names is not None:
                 assert len(b._inport_names) == b.nin, 'incorrect number of input names given: ' + str(b)
@@ -301,7 +305,7 @@ class BlockDiagram:
         # create the execution plan/schedule
         self.execution_plan()
 
-        # evaluate the network once to check out wire types
+        ## evaluate the network once to check out wire types
         x = self.getstate0()
 
         for clock in self.clocklist:
@@ -312,13 +316,18 @@ class BlockDiagram:
             self.plan_print()
 
         if not subsystem and evaluate:
+            # run all the blocks for one step 
             try:
                 self.evaluate_plan(x, 0.0, sinks=False)
             except RuntimeError as err:
                 print('\nFrom compile: unrecoverable error in value propagation:', err)
+                traceback.print_exc(file=sys.stderr)
                 error = True
             
         if error:
+            # show report if there was an error
+            if not report:
+                self.report()
             if not subsystem:
                 raise RuntimeError('could not compile system')
         else:
@@ -402,7 +411,9 @@ class BlockDiagram:
         except:
             pass
 
-        self.DEBUG('state', '>>>>>>>>> t=', t, ', x=', x, '>>>>>>>>>>>>>>>>')
+        # TODO: this is super expensive because the string formatting
+        #  happens regardless of whether debugging is on
+        self.DEBUG('state', '>>>>>>>>> t={}, x={} >>>>>>>>>>>>>>>>', t, x)
         
         # reset all the blocks ready for the evalation
         self.reset()
@@ -416,11 +427,11 @@ class BlockDiagram:
         for clock in self.clocklist:
             clock.setstate()
 
-        self.DEBUG('propagate', 't={:.3f}'.format(t))
+        self.DEBUG('propagate', 't={:.3f}', t)
 
         for sequence, group in enumerate(self.plan):
 
-            self.DEBUG('propagate', '---- sequence = ', sequence)
+            # self.DEBUG('propagate', '---- sequence = ', sequence)
 
             for b in group:
                 # ask the block for output, check for errors
@@ -433,13 +444,14 @@ class BlockDiagram:
                     print('  inputs were: ', b.inputs)
                     if b.nstates > 0:
                         print('  state was: ', b._x)
+                    traceback.print_exc(file=sys.stderr)
 
                     raise RuntimeError from None
 
-                self.DEBUG('propagate', 'block {:s}: output = '.format(str(b),t) + str(out))
+                self.DEBUG('propagate', 'block {:s}: output = {}', b, out)
 
                 # check that output is a list of correct length
-                if not isinstance(out, list):
+                if not isinstance(out, (tuple, list)):
                     raise AssertionError(f"block {b} output {b} must be a list: {type(out)}")
                 if len(out) != b.nout:
                     raise AssertionError(f"block {b} output {b} has incorrect length: {len(out)} instead of {b.nout}")
@@ -455,8 +467,8 @@ class BlockDiagram:
                     value = out[port]
                     for w in outwires:     # every wire
                         
-                        self.DEBUG('propagate', '  [', port, '] = ', value, ' --> ', w.end.block.name, '[', w.end.port, ']')
-                        
+                        self.DEBUG('propagate', '  [{}] = {} -->  {}[{}]', port, value, w.end.block.name, w.end.port)
+
                         # send value to wire
                         w.send(value)
 
@@ -467,8 +479,6 @@ class BlockDiagram:
         YD = self.deriv()
 
         self.DEBUG('deriv', YD)
-
-
         return YD
 
     def execution_plan(self):
@@ -515,7 +525,7 @@ class BlockDiagram:
 
             for b in group.copy():
                 b._sequence = sequence
-                if b.blockclass in ('sink',):
+                if b.blockclass in ('sink', 'graphics'):
                     group.remove(b)
             if len(group) == 0:
                 break
@@ -590,23 +600,29 @@ class BlockDiagram:
 
     # ---------------------------------------------------------------------- #
 
-    def _debugger(self, integrator=None):
+    def _debugger(self, state=None, integrator=None):
 
-        if self.t_stop is not None and self.t < self.t_stop:
+        if state.t_stop is not None and state.t < state.t_stop:
             return
 
-        self.t_stop = None
+        state.t_stop = None
+        print('\n')
         while True:
-            cmd = input(f"(bdsim, t={self.t:.4f}) ")
+            cmd = input(f"(bdsim, t={state.t:.4f}) ")
 
             if len(cmd) == 0:
                 continue
 
             if cmd[0] == 'p':
                 # print variables
-                for b in self.blocklist:
-                    if b.nout > 0:
-                        print(b.name, b.output(t=self.t))
+                if len(cmd) > 1:
+                    id = int(cmd[1:])
+                    b = self.blocklist[id]
+                    print(b.name, b.output(t=state.t))
+                else:
+                    for b in self.blocklist:
+                        if b.nout > 0:
+                            print(b.name, b.output(t=state.t))
             elif cmd[0] == 'i':
                 print(integrator.status, integrator.step_size, integrator.nfev)
             elif cmd[0] == 's':
@@ -615,6 +631,7 @@ class BlockDiagram:
             elif cmd[0] == 'c':
                 # continue
                 self.debug_stop = False
+                self.t_stop = None
                 break
             elif cmd[0] == 't':
                 self.t_stop = float(cmd[1:])
@@ -623,10 +640,11 @@ class BlockDiagram:
                 sys.exit(1)
             elif cmd[0] in 'h?':
                 print("p    print all outputs")
+                print("pI   print block id I output")
                 print("i    print integrator status")
                 print("s    single step")
                 print("c    continue")
-                print("t T  stop at or after time T")
+                print("tT   stop at or after time T")
                 print("q    quit")
 
     # ---------------------------------------------------------------------- #
@@ -676,7 +694,7 @@ class BlockDiagram:
             table.row( w.id, start, end, w.fullname, typ)
         table.print()
 
-        if self.ndstates > 0:
+        if len(self.clocklist) > 0:
             # print all the clocked blocks
             print('\nClocked blocks::\n')
             table = ANSITable(
@@ -693,8 +711,8 @@ class BlockDiagram:
                     table.row( b.id, str(b), c.name, c.T, c.offset)
             table.print()
 
-        print('\nState variables:          {:d}'.format(self.nstates))
-        print('Discrete state variables: {:d}'.format(self.ndstates))
+        print('\nContinuous state variables: {:d}'.format(self.nstates))
+        print(  'Discrete state variables:   {:d}'.format(self.ndstates))
         
         if not self.compiled:
             print('** System has not been compiled, or had a compile time error')
@@ -702,16 +720,38 @@ class BlockDiagram:
     # ---------------------------------------------------------------------- #
 
     def _error_handler(self, where, block):
-        err = sys.exc_info()  # get the exception
+        # called from except clause
 
         import traceback
+        import types
 
-        print(fg('red'))
-        print(f"[{where}]: exception {err[0].__name__} occurred in {block.type} block {block.name}  ")
-        print(f">>>> {err[1]}\n")
-        traceback.print_tb(err[2])
-        print(attr(0))
-        raise RuntimeError('Fatal failure')
+        t, v, tb = sys.exc_info()  # get the exception
+
+        print(fg('red'))  # red text
+
+        # print the traceback
+        print(f"[{where}]: exception {t.__name__} occurred in {block.type} block {block.name}  ")
+        print(f"  {v}\n")
+        traceback.print_tb(tb)
+
+        # print all block inputs
+        print()
+        for i in range(block.nin):
+            input = block.inputs[i]
+            print(f"input {i} from {block.inports[i].start.block.name} [{input.__class__.__name__}]")
+            print('  ', input)
+
+        print(attr(0))  # default text
+
+        # traceback = err[2]
+        # back_frame = traceback.tb_frame.f_back
+
+        # back_tb = types.TracebackType(tb_next=None,
+        #                           tb_frame=back_frame,
+        #                           tb_lasti=back_frame.f_lasti,
+        #                           tb_lineno=back_frame.f_lineno)
+        # raise RuntimeError('Fatal failure').with_traceback(back_tb)
+        raise RuntimeError('Fatal failure') from None
 
     def getstate0(self):
         # get the state from each stateful block
@@ -739,7 +779,7 @@ class BlockDiagram:
             except:
                 self._error_handler('reset', b)
 
-    def step(self, state=None, graphics=False):
+    def step(self, state=None):
         """
         Step all blocks
 
@@ -759,13 +799,12 @@ class BlockDiagram:
         # TODO could be done by output method, even if no outputs
         
         for b in self.blocklist:
-            if b.isgraphics and not graphics:
-                continue
-            try:
-                b.step(state=state)
-                state.count += 1
-            except:
-                self._error_handler('step', b)
+            if state.options.graphics and b.isgraphics:
+                try:
+                    b.step(state=state)
+                    state.count += 1
+                except:
+                    self._error_handler('step', b)
 
     def deriv(self):
         """
@@ -804,9 +843,9 @@ class BlockDiagram:
         
         for c in self.clocklist:
             try:
-                c.start(**kwargs)
+                c.start(state=state, **kwargs)
             except:
-                self._error_handler('start clock', b)
+                self._error_handler('start clock', c)
 
         # safe wrapper for block starting, does error handling
         for b in self.blocklist:
@@ -816,7 +855,7 @@ class BlockDiagram:
             try:
                 b.start(state=state, **kwargs)
             except:
-                self._error_handler('start block', b)
+                self._error_handler('block.start', b)
                 
     def initialstate(self):
         for b in self.blocklist:
@@ -845,7 +884,7 @@ class BlockDiagram:
             try:
                 b.done(**kwargs)
             except:
-                self._error_handler('done', b)
+                self._error_handler('block.done', b)
         
     def dotfile(self, filename):
         """
@@ -909,9 +948,9 @@ class BlockDiagram:
             print('  inputs:  ', b.inputs)
             print('  outputs: ', b.output(t=0))
 
-    def DEBUG(self, debug, *args):
+    def DEBUG(self, debug, fmt, *args):
         if debug[0] in self.options.debug:
-            print('DEBUG.{:s}: '.format(debug), *args)
+            print('DEBUG.{:s}: ' + fmt.format(*args))
             
 if __name__ == "__main__":
 
