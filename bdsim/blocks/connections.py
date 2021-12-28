@@ -45,21 +45,26 @@ class Item(FunctionBlock):
 
     def __init__(self, item, **kwargs):
         """
+        Selector item from a dictionary signal.
+
         :param item: name of dictionary item
         :type item: str
-        :param kwargs: common Block options
+        :param kwargs: |BlockOptions|
+        :type kwargs: dict
         :return: An ITEM block
         :rtype: Item instance
-        
-        Create a signal selector block.
 
-        For a dictionary type inut signal select one item as the output signal.
+        For a dictionary type input signal, select one item as the output signal.
         For example::
             
             ITEM('xd')
             
-        selects the ``xd`` item from the dictionary output signal of the MULTIROTOR
-        block.
+        selects the ``xd`` item from the dictionary signal input to the block.
+
+        A dictionary signal can serve a similar purpose to a "bus" in Simulink(R).
+
+        This is somewhat like a demultiplexer :class:`DeMux` but allows for
+        named heterogeneous data.
 
         :seealso: :class:`Dict`
         """
@@ -70,7 +75,7 @@ class Item(FunctionBlock):
     def output(self, t=None):
         # TODO, handle inputs that are vectors themselves
         assert isinstance(self.inputs[0], dict), 'Input signal must be a dict'
-        assert self.item in self.inputs[0], 'Item is not in signal dict'
+        assert self.item in self.inputs[0], 'Item is not in input dict'
         return [self.inputs[0][self.item]]
 
 class Dict(FunctionBlock):
@@ -94,22 +99,25 @@ class Dict(FunctionBlock):
 
     def __init__(self, item, **kwargs):
         """
+        Create a dictionary signal.
+
         :param keys: list of dictionary keys
         :type keys: list
-        :param kwargs: common Block options
+        :param kwargs: |BlockOptions|
+        :type kwargs: dict
         :return: A DICT block
         :rtype: Dict instance
         
-        Create a dictionary block.  Inputs are assigned to a dictionary
-        output using the corresponding names from ``keys``.
-
-        For a dictionary type inut signal select one item as the output signal.
+        Inputs are assigned to a dictionary signal, using the corresponding 
+        names from ``keys``.
         For example::
             
             DICT(['x', 'xd', 'xdd'])
             
-        assigns the three inputs to the elements ``x``, ``xd``, ``xdd`` of
+        expects three inputs and assigns them to dictionary items ``x``, ``xd``, ``xdd`` of
         the output dictionary respectively.
+
+        A dictionary signal can serve a similar purpose to a "bus" in Simulink(R).
 
         This is somewhat like a multiplexer :class:`Mux` but allows for
         named heterogeneous data.
@@ -133,7 +141,6 @@ class Mux(FunctionBlock):
     .. table::
        :align: left
     
-
     +------------+---------+---------+
     | inputs     | outputs |  states |
     +------------+---------+---------+
@@ -149,22 +156,22 @@ class Mux(FunctionBlock):
 
     def __init__(self, nin=1, **kwargs):
         """
+        Multiplex signals.
+
         :param nin: Number of input ports, defaults to 1
         :type nin: int, optional
-        :param kwargs: common Block options
+        :param kwargs: |BlockOptions|
+        :type kwargs: dict
         :return: A MUX block
         :rtype: Mux instance
 
-        Create a multiplexer block.
-
-        This block takes a number of scalar or vector signals and concatenates
-        them into a single vector signal.  For example::
+        This block takes a number of scalar or 1D-array signals and concatenates
+        them into a single 1-D array signal.  For example::
             
-            MUX(2, func1[2], sum3)
+            MUX(2, inputs=(func1[2], sum3))
             
         multiplexes the outputs of blocks ``func1`` (port 2) and ``sum3`` into a
-        single output vector as a 1D array.  If the explicit inputs are omitted
-        they can be wired using the ``connect`` function.
+        single output vector as a 1D-array.
         
         :seealso: :class:`Dict`
         """
@@ -179,7 +186,6 @@ class Mux(FunctionBlock):
             elif isinstance(input, np.ndarray):
                 out.extend(input.flatten().tolist())
         return [ np.array(out) ]
-
 
 # ------------------------------------------------------------------------ #
 class DeMux(FunctionBlock):
@@ -204,17 +210,18 @@ class DeMux(FunctionBlock):
 
     def __init__(self, nout=1, **kwargs):
         """
+        Demultiplex signals.
+
         :param nout: number of outputs, defaults to 1
         :type nout: int, optional
-        :param kwargs: common Block options
+        :param kwargs: |BlockOptions|
+        :type kwargs: dict
         :return: A DEMUX block
         :rtype: DeMux instance
-        
-        Create a demultiplexer block.
 
-        This block has a single input port and ``nout`` output ports.  A vector
+        This block has a single input port and ``nout`` output ports.  A 1D-array
         input signal (with ``nout`` elements) is routed element-wise to individual
-        scalar output port.
+        scalar output ports.
 
         """
         super().__init__(nout=nout, **kwargs)
@@ -247,19 +254,20 @@ class Index(FunctionBlock):
 
     def __init__(self, index=[], **kwargs):
         """
+        Index an iterable signal.
+
         :param index: elements of input array, defaults to []
         :type index: list, slice or str, optional
-        :param kwargs: common Block options
+        :param kwargs: |BlockOptions|
+        :type kwargs: dict
         :return: An INDEX block
         :rtype: Index instance
         
-        Create an index block.
+        The specified element(s) of the input iterable (list, string, etc.)
+        are output.  The index can be an integer, sequence of integers, a Python slice
+        object, or a string with Python slice notation, eg. ``"::-1"``.
 
-        This block has a single input port and output output port.  The specified
-        elements of the 1d-array on the input port are output as another
-        1d-array.  The selection can be a list of indices, a Python slice
-        object, or a string with Python slice notation, eg. "::-1"
-
+        :seealso: :class:`Slice1` :class:`Slice2`
         """
         super().__init__(**kwargs)
 
@@ -294,8 +302,10 @@ class SubSystem(SubsystemBlock):
     nin = -1
     nout = -1
 
-    def __init__(self, subsys, **kwargs):
+    def __init__(self, subsys, nin=1, nout=1, **kwargs):
         """
+        Instantiate a subsystem.
+            
         :param subsys: Subsystem as either a filename or a ``BlockDiagram`` instance
         :type subsys: str or BlockDiagram
 
@@ -303,17 +313,15 @@ class SubSystem(SubsystemBlock):
         :type nin: int, optional
         :param nout: Number of output ports, defaults to 1
         :type nout: int, optional
-        
-        :param kwargs: common Block options
+        :param kwargs: |BlockOptions|
+        :type kwargs: dict
         :raises ImportError: DESCRIPTION
         :raises ValueError: DESCRIPTION
         :return: A SUBSYSTEM block
         :rtype: SubSystem instance
-        
-        Create a subsystem block.
 
-        This block represents a subsystem in a parent block diagram.  It can be
-        specified as either:
+        This block represents a subsystem in a block diagram.  The definition
+        of the subsystem can be:
             
             - the name of a module which is imported and must contain only
               only ``BlockDiagram`` instance, or
@@ -326,7 +334,7 @@ class SubSystem(SubsystemBlock):
             - one ``OutPort`` block, which has inputs but no outputs. These
               inputs are connected to the outputs to the enclosing ``SubSystem`` block.
               
-        Notes:
+        .. note::
             
         - The referenced block diagram is treated like a macro and copied into 
           the parent block diagram at compile time. The ``SubSystem``, ``InPort`` and
@@ -415,16 +423,21 @@ class InPort(SubsystemBlock):
 
     def __init__(self, nout=1, **kwargs):
         """
+        Input ports for a subsystem.
+
         :param nout: Number of output ports, defaults to 1
         :type nout: int, optional
-        :param kwargs: common Block options
+        :param kwargs: |BlockOptions|
+        :type kwargs: dict
         :return: An INPORT block
         :rtype: InPort instance
 
-        Create an input port block for a subsystem.
-        
         This block connects a subsystem to a parent block diagram.  Inputs to the
-        parent-level ``SubSystem`` block appear as outputs of this block.
+        parent-level ``SubSystem`` block appear as the outputs of this block.
+
+        .. note:: Only one ``INPORT`` block can appear in a block diagram but it
+            can have multiple ports.  This is different to Simulink(R) which 
+            would require multiple single-port input blocks.
         """
         super().__init__(nout=nout, **kwargs)
 
@@ -456,16 +469,22 @@ class OutPort(SubsystemBlock):
 
     def __init__(self, nin=1, **kwargs):
         """
+        Output ports for a subsystem.
+
         :param nin: Number of input ports, defaults to 1
         :type nin: int, optional
-        :param kwargs: common Block options
+        :param kwargs: |BlockOptions|
+        :type kwargs: dict
         :return: A OUTPORT block
         :rtype: OutPort instance
         
-        Create an output port block for a subsystem.
+        This block connects a subsystem to a parent block diagram.  The the 
+        inputs of this block become the outputs of the parent-level ``SubSystem``
+        block.
 
-        This block connects a subsystem to a parent block diagram.  Outputs of the
-        parent-level ``SubSystem`` block are the inputs of this block.
+        .. note:: Only one ``OUTPORT`` block can appear in a block diagram but it
+            can have multiple ports.  This is different to Simulink(R) which 
+            would require multiple single-port output blocks.
         """
         super().__init__(nin=nin, **kwargs)
 

@@ -8,8 +8,6 @@ Sink blocks:
 
 """
 
-# The constructor of each class ``MyClass`` with a ``@block`` decorator becomes a method ``MYCLASS()`` of the BlockDiagram instance.
-
 import numpy as np
 from math import pi, sqrt, sin, cos, atan2
 
@@ -48,9 +46,9 @@ class Scope(GraphicsBlock):
     nin = -1
     nout = 0
 
-    def __init__(self, nin=1, vector=0, styles=None, stairs=False, scale='auto', labels=None, grid=True, watch=False, **kwargs):
+    def __init__(self, nin=1, vector=0, styles=None, stairs=False, scale='auto', labels=None, grid=True, watch=False, **blockargs):
         """
-        Create a block that plots input ports against time.
+        Plots input signals against time.
         
         :param nin: number of inputs, defaults to 1 or if given, the length of
                     style vector
@@ -70,7 +68,8 @@ class Scope(GraphicsBlock):
         :type grid: bool or sequence
         :param watch: add these signals to the watchlist, defaults to False
         :type watch: bool, optional
-        :param kwargs: common Block options
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
         :return: A SCOPE block
         :rtype: Scope instance
 
@@ -148,7 +147,7 @@ class Scope(GraphicsBlock):
         self.nplots = nplots
         self.vector = vector
         
-        super().__init__(nin=nin, **kwargs)
+        super().__init__(nin=nin, **blockargs)
 
         if styles is None:
             self.styles = [ None ] * nplots
@@ -272,7 +271,7 @@ class ScopeXY(GraphicsBlock):
     nin = 2
     nout = 0
 
-    def __init__(self, style=None, scale='auto', aspect='equal', labels=['X', 'Y'], init=None, nin=2, **kwargs):
+    def __init__(self, style=None, scale='auto', aspect='equal', labels=['X', 'Y'], init=None, nin=2, **blockargs):
         """
         :param style: line style, defaults to None
         :type style: optional str or dict
@@ -280,7 +279,10 @@ class ScopeXY(GraphicsBlock):
         :type scale: str or array_like(2) or array_like(4)
         :param labels: axis labels (xlabel, ylabel), defaults to ["X","Y"]
         :type labels: 2-element tuple or list
-        :param kwargs: common Block options
+        :param init: function to initialize the graphics, defaults to None
+        :type init: callable
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
         :return: A SCOPEXY block
         :rtype: ScopeXY instance
 
@@ -303,7 +305,7 @@ class ScopeXY(GraphicsBlock):
         :input x: signal plotted on horizontal axis
         :input y: signal plotted on vertical axis
         """
-        super().__init__(**kwargs)
+        super().__init__(**blockargs)
         self.xdata = []
         self.ydata = []
         if init is not None:
@@ -326,10 +328,10 @@ class ScopeXY(GraphicsBlock):
         self.ax = self.fig.gca()
         
         args = []
-        kwargs = {}
+        blockargs = {}
         style = self.styles
         if isinstance(style, dict):
-            kwargs = style
+            blockargs = style
         elif isinstance(style, str):
             args = [style]
         self.line, = self.ax.plot(self.xdata, self.ydata, *args, **kwargs)
@@ -369,7 +371,7 @@ class ScopeXY(GraphicsBlock):
                 self.ax.autoscale_view()
             super().step(state=state)
         
-    def done(self, block=False, **kwargs):
+    def done(self, block=False, **blockargs):
         if self.bd.options.graphics:
             plt.show(block=block)
             super().done()
@@ -393,7 +395,7 @@ class ScopeXY1(ScopeXY):
     nin = 1
     nout = 0
 
-    def __init__(self, indices=[0, 1], **kwargs):
+    def __init__(self, indices=[0, 1], **blockargs):
         """
         :param indices: indices of elements to select from block input vector, defaults to [0,1]
         :type indices: array_like(2)
@@ -403,7 +405,10 @@ class ScopeXY1(ScopeXY):
         :type scale: str or array_like(2) or array_like(4)
         :param labels: axis labels (xlabel, ylabel)
         :type labels: 2-element tuple or list
-        :param kwargs: common Block options
+        :param init: function to initialize the graphics, defaults to None
+        :type init: callable
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
         :return: A SCOPEXY block
         :rtype: ScopeXY instance
 
@@ -423,7 +428,7 @@ class ScopeXY1(ScopeXY):
             - a 2-tuple [min, max] which is used for the x- and y-axes
             - a 4-tuple [xmin, xmax, ymin, ymax]
         """
-        super().__init__(**kwargs)
+        super().__init__(**blockargs)
         self.inport_names(('xy',))
         if len(indices) != 2:
             raise ValueError('indices must have 2 elements')

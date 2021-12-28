@@ -8,7 +8,6 @@ Sink blocks:
 
 """
 
-# The constructor of each class ``MyClass`` with a ``@block`` decorator becomes a method ``MYCLASS()`` of the BlockDiagram instance.
 
 import numpy as np
 from math import pi, sqrt, sin, cos, atan2
@@ -18,10 +17,7 @@ from matplotlib.pyplot import Polygon
 
 
 import spatialmath.base as sm
-
 from bdsim.components import SinkBlock
-
-
 
 # ------------------------------------------------------------------------ #
 
@@ -44,16 +40,21 @@ class Print(SinkBlock):
     nin = 1
     nout = 0
 
-    def __init__(self, fmt=None, **kwargs):
+    def __init__(self, fmt=None, file=None, **blockargs):
         """
+        Print signal.
+
         :param fmt: Format string, defaults to None
         :type fmt: str, optional
-        :param kwargs: common Block options
+        :param file: file to write data to, defaults to None
+        :type file: file object, optional
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
         :return: A PRINT block
         :rtype: Print instance
         
-        Create a console print block which displays the value of a signal to the
-        console at each simulation time step. The format is like::
+        Creates a console print block which displays the value of a signal 
+        at each simulation time step. The display format is like::
 
             PRINT(print.0 @ t=0.100) [-1.0 0.2]
 
@@ -77,13 +78,13 @@ class Print(SinkBlock):
             bd.PRINT(x, name='X')  # block name appears in the printed text
 
             bd.PRINT(x, fmt="{:.1f}") # print with explicit format
-        
 
-
-        .. note:: The output is cleaner if progress bar printing is disabled.
+        .. note:: 
+            - By default writes to stdout
+            - The output is cleaner if progress bar printing is disabled.
 
         """
-        super().__init__(**kwargs)
+        super().__init__(**blockargs)
         self.format = fmt
         
         # TODO format can be a string or function
@@ -128,11 +129,14 @@ class Stop(SinkBlock):
     nin = 1
     nout = 0
 
-    def __init__(self, func=None, **kwargs):
+    def __init__(self, func=None, **blockargs):
         """
+        Conditional simulation stop.
+
         :param func: evaluate stop condition, defaults to None
         :type func: callable, optional
-        :param kwargs: common Block options
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
         :return: A STOP block
         :rtype: Stop instance
 
@@ -144,7 +148,7 @@ class Stop(SinkBlock):
         If ``func`` is provided, then it is applied to the block input
         and if it returns True the simulation is stopped.
         """
-        super().__init__(**kwargs)
+        super().__init__(**blockargs)
 
         if not callable(func):
             raise TypeError('argument must be a callable')
@@ -190,19 +194,22 @@ class Null(SinkBlock):
     nin = -1
     nout = 0
 
-    def __init__(self, nin=1, **kwargs):
+    def __init__(self, nin=1, **blockargs):
         """
+        Discard signal.
+
         :param nin: number of input ports, defaults to 1
         :type nin: int, optional
-        :param kwargs: common Block options
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
         :return: A NULL block
         :rtype: Null instance
         
         Create a sink block with arbitrary number of input ports that discards
-        all data.  Used for testing.
+        all data.  Useful for testing.
 
         """
-        super().__init__(nin=nin, **kwargs)
+        super().__init__(nin=nin, **blockargs)
         
 # ------------------------------------------------------------------------ #
 
@@ -225,18 +232,22 @@ class Watch(SinkBlock):
     nin = 1
     nout = 0
 
-    def __init__(self, **kwargs):
+    def __init__(self, **blockargs):
         """
-        :param kwargs: common Block options
+        Watch a signal.
+
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
         :return: A NULL block
         :rtype: Null instance
         
-        Create a watch block that causes the input to be logged during the
+        Causes the input signal to be logged during the
         simulation run.  Equivalent to adding it as the ``watch=`` argument
         to ``bdsim.run``.
 
+        :seealso: :method:`BDSim.run`
         """
-        super().__init__(**kwargs)
+        super().__init__(**blockargs)
 
     def start(self, state=None):
         # called at start of simulation, add this block to the watchlist

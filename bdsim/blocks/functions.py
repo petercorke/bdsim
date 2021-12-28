@@ -26,7 +26,7 @@ from bdsim.components import FunctionBlock
 class Sum(FunctionBlock):
     """
     :blockname:`SUM`
-    
+
     .. table::
        :align: left
     
@@ -44,46 +44,40 @@ class Sum(FunctionBlock):
     nin = -1
     nout = 1
 
-    def __init__(self, signs='++', *inputs, angles=False, **kwargs):
+    def __init__(self, signs='++', angles=False, **blockargs):
 
         """
+        Summing junction.
+
         :param signs: signs associated with input ports, accepted characters: + or -, defaults to '++'
         :type signs: str, optional
         :param angles: the signals are angles, wraps to [-pi,pi], defaults to False
         :type angles: bool, optional
-        :param kwargs: common Block options
+        :param blockargs: common `Block options <https://petercorke.github.io/bdsim/bdsim.html?highlight=block.__init__#bdsim.components.Block.__init__`_
+        :type blockargs: dict
         :return: A SUM block
         :rtype: Sum instance
-
-        
-        Create a summing junction.
     
-        The number of input ports is determined by the length of the `signs`
-        string.  For example::
+        Add or subtract input signals according to the `signs` string.  The
+        number of input ports is the length of this string.
+        
+        For example::
             
             sum = bd.SUM('+-+')
 
-        If inputs are specified then connections are automatically made::
+        is a 3-input summing junction which computes port0 - port1 + port2.
 
-            sum = bd.SUM('++', block1, block2)
-
-        is equivalent to::
-
-            sum = bd.SUM('++')
-            bd.connect(block1, sum[0])
-            bd.connect(block2, sum[1])
-
-        The equivalent implicit summation blocks is created by::
+        Implicit SUM blocks are created by::
 
             sum = block1 + block2
 
-        which will create a summation block named "autosum.N"
+        which will create a summation block named "_sum.N".
 
-            
-        is a 3-input summing junction where ports 0 and 2 are added and
-        port 1 is subtracted.
+        .. note:: The signals must be compatible, all scalars, or all arrays 
+            of the same shape.
+
         """
-        super().__init__(nin=len(signs), inputs=inputs, **kwargs)
+        super().__init__(nin=len(signs), **blockargs)
         assert isinstance(signs, str), 'first argument must be signs string'
         assert all([x in '+-' for x in signs]), 'invalid sign'
         self.signs = signs
@@ -133,44 +127,45 @@ class Prod(FunctionBlock):
     nin = -1
     nout = 1
 
-    def __init__(self, ops='**', *inputs, matrix=False, **kwargs):
+    def __init__(self, ops='**', *inputs, matrix=False, **blockargs):
         """
+        Product junction.
+
         :param ops: operations associated with input ports, accepted characters: * or /, defaults to '**'
         :type ops: str, optional
         :param inputs: Optional incoming connections
         :type inputs: Block or Plug
         :param matrix: Arguments are matrices, defaults to False
         :type matrix: bool, optional
-        :param kwargs: common Block options
+        :param blockargs: common Block options
+        :type blockargs: dict
         :return: A PROD block
         :rtype: Prod instance
         
-        Create a product junction.
-    
-        The number of input ports is determined by the length of the `ops`
-        string.  For example::
+        Multiply or divide input signals according to the `ops` string.  The
+        number of input ports is the length of this string.
+        
+        For example::
             
             prod = PROD('*/*')
             
-        is a 3-input product junction where ports 0 and 2 are multiplied and
-        port 1 is divided.
+        is a 3-input product junction which computes port0 / port 1 * port2.
 
-        If inputs are specified then connections are automatically made::
+        Implicit PROD blocks are created by::
 
-            prod = bd.PROD('*/', block1, block2)
+            sum = block1  block2
 
-        is equivalent to::
+        which will create a summation block named "_prod.N".
 
-            prod = bd.PROD('*/')
-            bd.connect(block1, prod[0])
-            bd.connect(block2, prod[1])
-
-        The inputs can be scalars or NumPy arrays.  By default the ``*``
-        and ``/`` operators are used.  The flag ``matrix`` will instead use
-        ``@`` and ``@ np.linalg.inv()``.
+        .. note::
+            - The inputs can be scalars or NumPy arrays.  
+            - By default the ``*`` and ``/`` operators are used.
+            - The option ``matrix`` will instead use ``@`` and ``@ np.linalg.inv()``.
+              - the shapes of matrices must conform.
+              - only square matrices are supported.
     
         """
-        super().__init__(nin=len(ops), inputs=inputs, **kwargs)
+        super().__init__(nin=len(ops), inputs=inputs, **blockargs)
         assert isinstance(ops, str), 'first argument must be signs string'
         assert all([x in '*/' for x in ops]), 'invalid op'
         self.ops = ops
@@ -222,47 +217,33 @@ class Gain(FunctionBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, K=1, *inputs, premul=False, **kwargs):
+    def __init__(self, K=1, premul=False, **blockargs):
         """
+        Gain block.
+
         :param K: The gain value, defaults to 1
         :type K: array_like
-        :param inputs: Optional incoming connection
-        :type inputs: Block or Plug
         :param premul: premultiply by constant, default is postmultiply, defaults to False
         :type premul: bool, optional
-        :param kwargs: common Block options
+        :param blockargs: common Block options
+        :type blockargs: dict
         :return: A GAIN block
         :rtype: Gain instance
         
-        Create a gain block.
-    
-        This block has only one input :math:`u` and one output port. The output
-        is the product of the input by the gain :math:`u K`.
+        Scale the input signal. If the input is :math:`u` the output is :math:`u K`.
 
-        If :math:`u` and ``K`` are both NumPy arrays the ``@`` operator is used.
-        To premultiply by the gain, to compute :math:`K u` use the
-        ``premul`` option.
+        Either or both the input and gain can be Numpy arrays and Numpy will
+        compute the appropriate product :math:`u K`. 
         
-        Either or both the input and gain can be numpy arrays and numpy will
-        compute the appropriate product.  If both are numpy arrays then the
-        matmult operator `@` is used and by default the input is postmultiplied
-        by the gain, but this can be changed using the ``premul`` option.
+        If :math:`u` and ``K`` are both NumPy arrays the ``@`` operator is used
+        and :math:`u` is postmultiplied by the gain. To premultiply by the gain, 
+        to compute :math:`K u` use the ``premul`` option.
 
         For example::
 
             gain = bd.GAIN(constant)
-
-        If an input is specified then connections are automatically made::
-
-            gain = bd.GAIN(constant, block1)
-
-        is equivalent to::
-
-            gain = bd.GAIN(constant)
-            bd.connect(block1, gain)
-
         """
-        super().__init__(**kwargs)
+        super().__init__(**blockargs)
         self.K  = K
         self.premul = premul
 
@@ -305,43 +286,35 @@ class Clip(FunctionBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, min=-math.inf, max=math.inf, **kwargs):
+    def __init__(self, min=-math.inf, max=math.inf, **blockargs):
         """
+        Signal clipping.
+
         :param min: Minimum value, defaults to -math.inf
         :type min: float or array_like, optional
         :param max: Maximum value, defaults to math.inf
         :type max: float or array_like, optional
-        :param kwargs: common Block options
+        :param blockargs: common Block options
+        :type blockargs: dict
         :return: A CLIP block
         :rtype: Clip instance
-
-        Create a value clipping block.
         
-        Input signals are clipped to the range from ``minimum`` to ``maximum`` inclusive.
+        The input signal is clipped to the range from ``minimum`` to ``maximum`` inclusive.
         
-        The signal can be a vector in which case each element is clipped.  The
+        The signal can be a 1D-array in which case each element is clipped.  The
         minimum and maximum values can be:
             
             - a scalar, in which case the same value applies to every element of 
               the input vector , or
-            - a vector, of the same shape as the input vector that applies elementwise to
+            - a 1D-array, of the same shape as the input vector that applies elementwise to
               the input vector.
 
         For example::
 
             clip = bd.CLIP()
-
-        If an input is specified then a connection is automatically made::
-
-            clip = bd.CLIP(block1, args)
-
-        is equivalent to::
-
-            clip = bd.CLIP()
-            bd.connect(block1, clip)
         
         """
-        super().__init__(**kwargs)
+        super().__init__(**blockargs)
         self.min = min
         self.max = max
         
@@ -379,6 +352,8 @@ class Function(FunctionBlock):
     def __init__(self, func=None, nin=1, nout=1, persistent=False, args=None, kwargs=None, **blockargs):
     
         """
+        Python function.
+
         :param func: A function or lambda, or list thereof, defaults to None
         :type func: callable or sequence of callables, optional
         :param nin: number of inputs, defaults to 1
@@ -396,9 +371,8 @@ class Function(FunctionBlock):
         :return: A FUNCTION block
         :rtype: A Function instance
     
-        Create a Python function block.  Inputs to the block are passed
-        as separate arguments to the function.  Constant positional or 
-        keyword arguments can also be passed to the function.
+        Inputs to the block are passed as separate arguments to the function.  
+        Programmatic ositional or keyword arguments can also be passed to the function.
     
         A block with one output port that sums its two input ports is::
             
@@ -418,14 +392,14 @@ class Function(FunctionBlock):
             
             FUNCTION(myfun, nin=2, args=(p1,p2), persistent=True)
             
-        where a dictionary is passed in as the last argument which is kept from call to call.
+        where a dictionary is passed in as the last argument and which is kept from call to call.
             
         A block with a function that takes two inputs and additional keyword arguments::
         
             def myfun(u1, u2, param1=1, param2=2, param3=3, param4=4):
                 pass
             
-            FUNCTION(myfun, nin=2, kwargs={'param2':7, 'param3':8})
+            FUNCTION(myfun, nin=2, kwargs=dict(param2=7, param3=8))
                      
         A block with two inputs and two outputs, the outputs are defined by two lambda
         functions with the same inputs::
@@ -433,7 +407,7 @@ class Function(FunctionBlock):
             FUNCTION( [ lambda x, y: x_t, lambda x, y: x* y])
         
         A block with two inputs and two outputs, the outputs are defined by a 
-        single function::
+        single function which returns a list::
             
             def myfun(u1, u2):
                 return [ u1+u2, u1*u2 ]
@@ -459,8 +433,8 @@ class Function(FunctionBlock):
 
         if args is None:
             args = list()
-        if kwargs is None:
-            kwargs = dict()
+        if blockargs is None:
+            blockargs = dict()
             
         # TODO, don't know why this happens
         if len(args) > 0 and args[0] == {}:
@@ -469,7 +443,7 @@ class Function(FunctionBlock):
         if isinstance(func, (list, tuple)):
             for f in func:
                 assert callable(f), 'Function must be a callable'
-                if kwargs is None:
+                if blockargs is None:
                     # we can check the number of arguments
                     n = len(inspect.signature(func).parameters)
                     if persistent:
@@ -479,7 +453,7 @@ class Function(FunctionBlock):
     f"argument count mismatch: function has {n} args, dict={dict}, nin={nin}"
                                         )
         elif callable(func):
-            if len(kwargs) == 0:
+            if len(blockargs) == 0:
                 # we can check the number of arguments
                 n = len(inspect.signature(func).parameters)
                 if persistent:
@@ -497,7 +471,7 @@ class Function(FunctionBlock):
         else:
             self.userdata = None
         self.args = args
-        self.kwargs = kwargs
+        self.blockargs = blockargs
 
     def start(self, state=None):
         super().start()
@@ -509,7 +483,7 @@ class Function(FunctionBlock):
         if callable(self.func):
             # single function
             try:
-                val = self.func(*self.inputs, *self.args, **self.kwargs)
+                val = self.func(*self.inputs, *self.args, **self.blockargs)
             except TypeError:
                 raise RuntimeError('Function invocation failed, check number of arguments') from None
             if isinstance(val, (list, tuple)):
@@ -525,12 +499,14 @@ class Function(FunctionBlock):
             out = []
             for f in self.func:
                 try:
-                    val = f(*self.inputs, *self.args, **self.kwargs)
+                    val = f(*self.inputs, *self.args, **self.blockargs)
                 except TypeError:
                     raise RuntimeError('Function invocation failed, check number of arguments') from None
                 out.append(val)
             return out
-        
+
+# ------------------------------------------------------------------------ #
+
 class Interpolate(FunctionBlock):
     """
     :blockname:`INTERPOLATE`
@@ -550,8 +526,10 @@ class Interpolate(FunctionBlock):
     nin = -1
     nout = 1
 
-    def __init__(self, x=None, y=None, xy=None, time=False, kind='linear', **kwargs):
+    def __init__(self, x=None, y=None, xy=None, time=False, kind='linear', **blockargs):
         """
+        Interpolate signal.
+
         :param x: x-values of function, defaults to None
         :type x: array_like, shape (N,) optional
         :param y: y-values of function, defaults to None
@@ -562,24 +540,23 @@ class Interpolate(FunctionBlock):
         :type time: bool, optional
         :param kind: interpolation method, defaults to 'linear'
         :type kind: str, optional
-        :param kwargs: common Block options
+        :param blockargs: common Block options
+        :type blockargs: dict
         :return: An INTERPOLATE block
         :rtype: An Interpolate instance
         
-        Create an interpolation block.
-    
-        A block that interpolates its input according to a piecewise function.
+        Interpolate the input signal using to a piecewise function.
         
         A simple triangle function with domain [0,10] and range [0,1] can be
         defined by::
             
             INTERPOLATE(x=(0,5,10), y=(0,1,0))
         
-        We might also express this as::
+        We might also express this as a list of 2D-coordinats::
             
             INTERPOLATE(xy=[(0,0), (5,1), (10,0)])
         
-        The data can also be expressed as numpy arrays.  If that is the case,
+        The data can also be expressed as Numpy arrays.  If that is the case,
         the interpolation function can be vector valued. ``x`` has a shape of
         (N,1) and ``y`` has a shape of (N,M).  Alternatively ``xy`` has a shape
         of (N,M+1) and the first column is the x-data.
@@ -596,7 +573,7 @@ class Interpolate(FunctionBlock):
             self.blockclass = 'source'
         else:
             nin = 1
-        super().__init__(nin=nin, **kwargs)
+        super().__init__(nin=nin, **blockargs)
 
         if xy is None:
             # process separate x and y vectors
@@ -617,7 +594,7 @@ class Interpolate(FunctionBlock):
         self.f = scipy.interpolate.interp1d(x=x, y=y, kind=kind, axis=0)
         self.x = x
                 
-    def start(self, state, **kwargs):
+    def start(self, state, **blockargs):
         if self.time:
             assert self.x[0] >= 0, 'interpolation not defined for t<0'
             assert self.x[-1] <= state.T, 'interpolation not defined for t>T'

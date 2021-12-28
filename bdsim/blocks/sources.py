@@ -6,14 +6,10 @@ Source blocks:
 - are a subclass of ``SourceBlock`` |rarr| ``Block``
 
 """
-# The constructor of each class ``MyClass`` with a ``@block`` decorator becomes a method ``MYCLASS()`` of the BlockDiagram instance.
-
 
 import numpy as np
 import math
-
 from bdsim.components import SourceBlock
-
 
 # ------------------------------------------------------------------------ #
 class Constant(SourceBlock):
@@ -36,22 +32,20 @@ class Constant(SourceBlock):
     nin = 0
     nout = 1
 
-    def __init__(self, value=None, **kwargs):
+    def __init__(self, value=None, **blockargs):
         """
+        Constant value.
+
         :param value: the constant, defaults to None
         :type value: any, optional
-        :param kwargs: common Block options
+        :param blockargs: |BlockOptions|
         :return: a CONSTANT block
         :rtype: Constant instance
-        
-        Create a constant block.
 
         This block has only one output port, but the value can be any 
-        Python type, so long as the connected input port can handle it.
-        For example float, list or numpy ndarray.
-
+        Python type, for example float, list or Numpy ndarray.
         """
-        super().__init__(**kwargs)
+        super().__init__(**blockargs)
         
         if isinstance(value, (tuple, list)):
             value = np.array(value)
@@ -83,20 +77,19 @@ class Time(SourceBlock):
     nin = 0
     nout = 1
 
-    def __init__(self, value=None, **kwargs):
+    def __init__(self, value=None, **blockargs):
         """
-        :param kwargs: common Block options
+        Simulation time.
+
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
         :return: a TIME block
         :rtype: Time instance
         
-        Create a time block.
-
-        This block has only one output port, but the value can be any 
-        Python type, so long as the connected input port can handle it.
-        For example float, list or numpy ndarray.
+        The block has only one output port which is the current simulation time.
 
         """
-        super().__init__(**kwargs)
+        super().__init__(**blockargs)
 
     def output(self, t=None):
         return [t]  
@@ -124,13 +117,15 @@ class WaveForm(SourceBlock):
     def __init__(self, wave='square',
                  freq=1, unit='Hz', phase=0, amplitude=1, offset=0,
                  min=None, max=None, duty=0.5,
-                 **kwargs):
+                 **blockargs):
         """
-        :param wave: type of waveform to generate, one of: 'sine', 'square' [default], 'triangle'
+        Waveform as function of time.
+
+        :param wave: type of waveform to generate, one of: 'sine', 'square', 'triangle', defaults to 'square'
         :type wave: str, optional
         :param freq: frequency, defaults to 1
         :type freq: float, optional
-        :param unit: frequency unit, one of: 'rad/s', 'Hz' [default]
+        :param unit: frequency unit, one of: 'rad/s', 'Hz', defaults to 'Hz'
         :type unit: str, optional
         :param amplitude: amplitude, defaults to 1
         :type amplitude: float, optional
@@ -144,7 +139,8 @@ class WaveForm(SourceBlock):
         :type max: float, optional
         :param duty: duty cycle for square wave in range [0,1], defaults to 0.5
         :type duty: float, optional
-        :param kwargs: common Block options
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
         :return: a WAVEFORM block
         :rtype: WaveForm instance
         
@@ -172,8 +168,13 @@ class WaveForm(SourceBlock):
         At time 0 the sine and triangle wave are zero and increasing, and the
         square wave has its first rise.  We can specify a phase shift with 
         a number in the range [0,1] where 1 corresponds to one cycle.
+
+        .. note:: For discontinuous signals (square, triangle) the block declares
+            events for every discontinuity.
+
+        :seealso: :method:`declare_events`
         """
-        super().__init__(**kwargs)
+        super().__init__(**blockargs)
 
         assert 0<duty<1, 'duty must be in range [0,1]'
         
@@ -269,26 +270,32 @@ class Piecewise(SourceBlock):
     nin = 0
     nout = 1
 
-    def __init__(self, *seq, **kwargs):
+    def __init__(self, *seq, **blockargs):
         """
+        Piecewise constant signal.
+
         :param seq: sequence of time, value pairs
         :type seq: list of 2-tuples
-        :param kwargs: common Block options
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
         :return: a PIECEWISE block
         :rtype: Piecewise instance
         
-        Create a piecewise constant signal block.
-
         Outputs a piecewise constant function of time.  This is described as
-        a series of 2-tupes (time, value).  The output value is taken from the
+        a series of 2-tuples (time, value).  The output value is taken from the
         active tuple, that is, the latest one in the list whose time is no greater
         than simulation time.
         
-        Note that there is no default initial value, the list should contain
-        a tuple with time zero otherwise the output will be undefined.
+        .. note::
+            - The tuples must be order by monotonically increasing time.
+            - There is no default initial value, the list should contain
+              a tuple with time zero otherwise the output will be undefined.
 
+        .. note:: The block declares an event for the start of each segment.
+
+        :seealso: :method:`declare_events`
         """
-        super().__init__(**kwargs)
+        super().__init__(**blockargs)
         
         self.t = [ x[0] for x in seq]
         self.y = [ x[1] for x in seq]
@@ -326,25 +333,29 @@ class Step(SourceBlock):
 
     def __init__(self, T=1,
                  off=0, on=1,
-                 **kwargs):
-
+                 **blockargs):
         """
+        Step signal.
+
         :param T: time of step, defaults to 1
         :type T: float, optional
         :param off: initial value, defaults to 0
         :type off: float, optional
         :param on: final value, defaults to 1
         :type on: float, optional
-        :param kwargs: common Block options
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
         :return: a STEP block
         :rtype: Step
         
-        Create a step signal block.
-
         Output a step signal that transitions from the value ``off`` to ``on``
         when time equals ``T``.
+
+        .. note:: The block declares an event for the step time.
+
+        :seealso: :method:`declare_events`
         """
-        super().__init__(**kwargs)
+        super().__init__(**blockargs)
         
         self.T = T
         self.off = off
@@ -385,25 +396,30 @@ class Ramp(SourceBlock):
 
     def __init__(self, T=1,
                  off=0, slope=1, 
-                 **kwargs):
+                 **blockargs):
 
         """
+        Ramp signal.
+
         :param T: time of ramp start, defaults to 1
         :type T: float, optional
         :param off: initial value, defaults to 0
         :type off: float, optional
         :param slope: gradient of slope, defaults to 1
         :type slope: float, optional
-        :param kwargs: common Block options
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
         :return: a RAMP block
         :rtype: Ramp
         
-        Create a ramp signal block.
-
         Output a ramp signal that starts increasing from the value ``off``
         when time equals ``T`` linearly with time, with a gradient of ``slope``.
+
+        .. note:: The block declares an event for the ramp start time.
+
+        :seealso: :method:`declare_event`
         """
-        super().__init__(**kwargs)
+        super().__init__(**blockargs)
         
         self.T = T
         self.off = off

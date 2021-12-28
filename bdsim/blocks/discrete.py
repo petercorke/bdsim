@@ -6,8 +6,6 @@ Transfer blocks:
 - are a subclass of ``TransferBlock`` |rarr| ``Block``
 
 """
-# The constructor of each class ``MyClass`` with a ``@block`` decorator becomes a method ``MYCLASS()`` of the BlockDiagram instance.
-
 
 import numpy as np
 import math
@@ -42,37 +40,27 @@ class ZOH(ClockedBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, clock, x0=0, min=None, max=None, **kwargs):
+    def __init__(self, clock, x0=0, **blockargs):
         """
+        Zero-order hold.
+
         :param clock: clock source
         :type clock: Clock
-        :param x0: Initial state, defaults to 0
+        :param x0: Initial value of the hold, defaults to 0
         :type x0: array_like, optional
-        :param min: Minimum value of state, defaults to None
-        :type min: float or array_like, optional
-        :param max: Maximum value of state, defaults to None
-        :type max: float or array_like, optional
-        :param kwargs: common Block options
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
         :return: a ZOH block
         :rtype: Integrator instance
 
-        Create a zero-order hold block.
-
         Output is the input at the previous clock time.  The state can be a scalar or a
         vector, this is given by the type of ``x0``.
-
-        The minimum and maximum values can be:
-
-            - a scalar, in which case the same value applies to every element of 
-              the state vector, or
-            - a vector, of the same shape as ``x0`` that applies elementwise to
-              the state.
 
         .. note:: If input is not a scalar, ``x0`` must have the shape of the
             input signal.
         """
         self.type = 'sampler'
-        super().__init__(nin=1, nout=1, clock=clock, **kwargs)
+        super().__init__(nin=1, nout=1, clock=clock, **blockargs)
 
         x0 = base.getvector(x0)
         self._x0 = x0
@@ -109,8 +97,10 @@ class DIntegrator(ClockedBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, clock, x0=0, gain=1.0, min=None, max=None, **kwargs):
+    def __init__(self, clock, x0=0, gain=1.0, min=None, max=None, **blockargs):
         """
+        Discrete-time integrator.
+
         :param clock: clock source
         :type clock: Clock
         :param x0: Initial state, defaults to 0
@@ -119,11 +109,12 @@ class DIntegrator(ClockedBlock):
         :type min: float or array_like, optional
         :param max: Maximum value of state, defaults to None
         :type max: float or array_like, optional
-        :param kwargs: common Block options
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
         :return: an INTEGRATOR block
         :rtype: Integrator instance
 
-        Create an integrator block.
+        Create a discrete-time integrator block.
 
         Output is the time integral of the input.  The state can be a scalar or a
         vector, this is given by the type of ``x0``.
@@ -135,7 +126,7 @@ class DIntegrator(ClockedBlock):
             - a vector, of the same shape as ``x0`` that applies elementwise to
               the state.
         """
-        super().__init__(clock=clock, **kwargs)
+        super().__init__(clock=clock, **blockargs)
 
         if isinstance(x0, (int, float)):
             self.ndstates = 1
@@ -187,7 +178,7 @@ class DPoseIntegrator(ClockedBlock):
        +------------+---------+---------+
        | 1          | 1       | N       |
        +------------+---------+---------+
-       | A(N,)      | A(N,)   |         |
+       | A(6,)      | SE3     |         |
        +------------+---------+---------+
     """
 
@@ -196,22 +187,28 @@ class DPoseIntegrator(ClockedBlock):
     inlabels = ('ν',)
     outlabels = ('ξ',)
 
-    def __init__(self, clock, x0=None, **kwargs):
-        """
+    def __init__(self, clock, x0=None, **blockargs):
+        r"""
+        Discrete-time spatial velocity integrator.
+
         :param clock: clock source
         :type clock: Clock
         :param x0: Initial pose, defaults to null
         :type x0: SE3, optional
-        :param kwargs: common Block options
-        :return: an INTEGRATOR block
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        :return: an DPOSEINTEGRATOR block
         :rtype: Integrator instance
 
-        Create an spatial velocity integrator block.
+        This block integrates spatial velocity over time.
+        The block input is a spatial velocity as a 6-vector
+        :math:`(v_x, v_y, v_z, \omega_x, \omega_y, \omega_z)` and the output
+        is pose as an ``SE3`` instance.
 
-        Output is pose based on integrating the input spatial velocity over
-        time.
+        .. note:: State is a velocity twist.
+
         """
-        super().__init__(clock=clock, **kwargs)
+        super().__init__(clock=clock, **blockargs)
 
         if x0 is None:
             x0 = Twist3()
@@ -257,7 +254,7 @@ class DPoseIntegrator(ClockedBlock):
 #        +------------+---------+---------+
 #     """
 
-#     def __init__(self, *inputs, A=None, B=None, C=None, x0=None, verbose=False, **kwargs):
+#     def __init__(self, *inputs, A=None, B=None, C=None, x0=None, verbose=False, **blockargs):
 #         r"""
 #         :param ``*inputs``: Optional incoming connections
 #         :type ``*inputs``: Block or Plug
@@ -267,7 +264,7 @@ class DPoseIntegrator(ClockedBlock):
 #         :type D: array_like, optional
 #         :param x0: initial states, defaults to zero
 #         :type x0: array_like, optional
-#         :param ``**kwargs``: common Block options
+#         :param ``**blockargs``: |BlockOptions|
 #         :return: A SCOPE block
 #         :rtype: LTI_SISO instance
 
@@ -312,7 +309,7 @@ class DPoseIntegrator(ClockedBlock):
 #             nout = C.shape[0]
 #             assert C.shape[1] == n, 'C must have same number of columns as A'
 
-#         super().__init__(nin=nin, nout=nout, inputs=inputs, **kwargs)
+#         super().__init__(nin=nin, nout=nout, inputs=inputs, **blockargs)
 
 #         self.A = A
 #         self.B = B
@@ -351,7 +348,7 @@ class DPoseIntegrator(ClockedBlock):
      
 #     """
 
-#     def __init__(self, N=1, D=[1, 1], *inputs, x0=None, verbose=False, **kwargs):
+#     def __init__(self, N=1, D=[1, 1], *inputs, x0=None, verbose=False, **blockargs):
 #         r"""
 #         :param N: numerator coefficients, defaults to 1
 #         :type N: array_like, optional
@@ -361,7 +358,7 @@ class DPoseIntegrator(ClockedBlock):
 #         :type ``*inputs``: Block or Plug
 #         :param x0: initial states, defaults to zero
 #         :type x0: array_like, optional
-#         :param ``**kwargs``: common Block options
+#         :param ``**blockargs``: |BlockOptions|
 #         :return: A SCOPE block
 #         :rtype: LTI_SISO instance
 
@@ -428,7 +425,7 @@ class DPoseIntegrator(ClockedBlock):
 #             print('B=', B)
 #             print('C=', C)
 
-#         super().__init__(A=A, B=B, C=C, x0=x0, **kwargs)
+#         super().__init__(A=A, B=B, C=C, x0=x0, **blockargs)
 #         self.type = 'LTI'
 
 

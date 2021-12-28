@@ -19,4 +19,4 @@ Components
    :members:
    :undoc-members:
    :show-inheritance:
-   :special-members: __mul__, __setattr__, __getattr__, __setitem__, __getitem__
+   :special-members: __init__, __mul__, __setattr__, __getattr__, __setitem__, __getitem__
