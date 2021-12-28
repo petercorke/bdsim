@@ -2,16 +2,17 @@
 
 import bdsim
 
-sim = bdsim.BDSim(animation=True)  # create simulator
-print(sim)
+sim = bdsim.BDSim()  # create simulator
 bd = sim.blockdiagram()  # create an empty block diagram
 
+sim.blocks()
+
 # define the blocks
-demand = bd.STEP(T=1, pos=(0,0), name='demand')
-sum = bd.SUM('+-', pos=(1,0))
-gain = bd.GAIN(10, pos=(1.5,0))
-plant = bd.LTI_SISO(0.5, [2, 1], name='plant', pos=(3,0))
-scope = bd.SCOPE(styles=['k', 'r--'], pos=(4,0))
+demand = bd.STEP(T=1, name='demand')
+sum = bd.SUM('+-')
+gain = bd.GAIN(10)
+plant = bd.LTI_SISO(0.5, [2, 1], name='plant')
+scope = bd.SCOPE(styles=['k', 'r--'], movie='eg1.mp4')
 
 # connect the blocks
 bd.connect(demand, sum[0], scope[1])
@@ -23,10 +24,9 @@ bd.connect(plant, scope[0])
 bd.compile()   # check the diagram
 bd.report()    # list all blocks and wires
 
-sim.set_options(animation=True, graphics=True)
-out = sim.run(bd, 5, watch=[plant,demand])  # simulate for 5s
-
-sim.savefig(scope, 'scope0')
-sim.done(block=False)
-
+out = sim.run(bd, 5)  # simulate for 5s
+# out = sim.run(bd, 5 watch=[plant,demand])  # simulate for 5s
 print(out)
+
+# sim.savefig(scope, 'scope0') # save scope figure as scope0.pdf
+sim.done(bd, block=True)  # keep figures open on screen
