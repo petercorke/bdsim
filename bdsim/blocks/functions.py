@@ -137,7 +137,7 @@ class Prod(FunctionBlock):
         :type inputs: Block or Plug
         :param matrix: Arguments are matrices, defaults to False
         :type matrix: bool, optional
-        :param blockargs: common Block options
+        :param blockargs: |BlockOptions|
         :type blockargs: dict
         :return: A PROD block
         :rtype: Prod instance
@@ -225,7 +225,7 @@ class Gain(FunctionBlock):
         :type K: array_like
         :param premul: premultiply by constant, default is postmultiply, defaults to False
         :type premul: bool, optional
-        :param blockargs: common Block options
+        :param blockargs: |BlockOptions|
         :type blockargs: dict
         :return: A GAIN block
         :rtype: Gain instance
@@ -294,7 +294,7 @@ class Clip(FunctionBlock):
         :type min: float or array_like, optional
         :param max: Maximum value, defaults to math.inf
         :type max: float or array_like, optional
-        :param blockargs: common Block options
+        :param blockargs: |BlockOptions|
         :type blockargs: dict
         :return: A CLIP block
         :rtype: Clip instance
@@ -366,7 +366,7 @@ class Function(FunctionBlock):
         :type args: list, optional
         :param kwargs: extra keyword arguments passed to the function, defaults to {}
         :type kwargs: dict, optional
-        :param blockargs: common Block options
+        :param blockargs: |BlockOptions|
         :type blockargs: dict, optional
         :return: A FUNCTION block
         :rtype: A Function instance
@@ -540,7 +540,7 @@ class Interpolate(FunctionBlock):
         :type time: bool, optional
         :param kind: interpolation method, defaults to 'linear'
         :type kind: str, optional
-        :param blockargs: common Block options
+        :param blockargs: |BlockOptions|
         :type blockargs: dict
         :return: An INTERPOLATE block
         :rtype: An Interpolate instance

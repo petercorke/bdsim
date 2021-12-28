@@ -172,7 +172,7 @@ class WaveForm(SourceBlock):
         .. note:: For discontinuous signals (square, triangle) the block declares
             events for every discontinuity.
 
-        :seealso: :method:`declare_events`
+        :seealso :meth:`declare_events`
         """
         super().__init__(**blockargs)
 
@@ -293,7 +293,7 @@ class Piecewise(SourceBlock):
 
         .. note:: The block declares an event for the start of each segment.
 
-        :seealso: :method:`declare_events`
+        :seealso: :meth:`declare_events`
         """
         super().__init__(**blockargs)
         
@@ -353,7 +353,7 @@ class Step(SourceBlock):
 
         .. note:: The block declares an event for the step time.
 
-        :seealso: :method:`declare_events`
+        :seealso: :meth:`declare_events`
         """
         super().__init__(**blockargs)
         

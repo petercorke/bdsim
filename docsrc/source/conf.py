@@ -90,4 +90,5 @@ autoclass_content = "class"
 rst_epilog = """
 .. role:: raw-html(raw)
    :format: html
+.. |BlockOptions| replace:: :raw-html:`<a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a>`
 """
