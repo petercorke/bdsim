@@ -7,20 +7,24 @@ class GraphicsBlock(SinkBlock):
     """
     A GraphicsBlock is a subclass of SinkBlock that represents a block that has inputs
     but no outputs and creates/updates a graphical display.
-
-    :param movie: Save animation in this file, defaults to None
-    :type movie: str, optional
-    :param kwargs: common Block options
-    :return: A PRINT block
-    :rtype: Print instance
-
-    The animation is saved as an MP4 video in the specified file.
     """
     blockclass='graphics'
     
-    def __init__(self, movie=None, **kwargs):
+    def __init__(self, movie=None, **blockargs):
+        """
+        Create a graphical display block.
 
-        super().__init__(**kwargs)
+        :param movie: Save animation in this file in MP4 format, defaults to None
+        :type movie: str, optional
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        :return: transfer function block base class
+        :rtype: TransferBlock
+
+        This is the parent class of all graphic display blocks.
+        """
+
+        super().__init__(**blockargs)
         self._graphics = True
 
         self.movie = movie

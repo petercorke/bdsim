@@ -1120,13 +1120,21 @@ class SinkBlock(Block):
     """
     blockclass='sink'
 
-    def __init__(self, **kwargs):
+    def __init__(self, **blockargs):
+        """
+        Create a sink block.
+
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        :return: sink block base class
+        :rtype: SinkBlock
+
+        This is the parent class of all sink blocks.
+        """
         # print('Sink constructor')
-        super().__init__(**kwargs)
+        super().__init__(**blockargs)
         self.nout = 0
         self.nstates = 0
-
-
 
 class SourceBlock(Block):
     """
@@ -1135,12 +1143,21 @@ class SourceBlock(Block):
     """
     blockclass = 'source'
 
-    def __init__(self, **kwargs):
+    def __init__(self, **blockargs):
+        """
+        Create a source block.
+
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        :return: source block base class
+        :rtype: SourceBlock
+
+        This is the parent class of all source blocks.
+        """
         # print('Source constructor')
-        super().__init__(**kwargs)
+        super().__init__(**blockargs)
         self.nin = 0
         self.nstates = 0
-
 
 class TransferBlock(Block):
     """
@@ -1150,10 +1167,20 @@ class TransferBlock(Block):
     """
     blockclass = 'transfer'
 
-    def __init__(self, nstates=1, **kwargs):
+    def __init__(self, nstates=1, **blockargs):
+        """
+        Create a transfer function block.
+
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        :return: transfer function block base class
+        :rtype: TransferBlock
+
+        This is the parent class of all transfer function blocks.
+        """
         # print('Transfer constructor')
         self.nstates = nstates
-        super().__init__(**kwargs)
+        super().__init__(**blockargs)
 
     def reset(self):
         super().reset()
@@ -1171,8 +1198,6 @@ class TransferBlock(Block):
     def check(self):
         assert len(self._x0) == self.nstates, 'incorrect length for initial state'
         assert self.nin > 0 or self.nout > 0, 'no inputs or outputs specified'
-
-
 class FunctionBlock(Block):
     """
     A FunctionBlock is a subclass of Block that represents a block that has inputs
@@ -1181,23 +1206,43 @@ class FunctionBlock(Block):
     """
     blockclass = 'function'
 
-    def __init__(self, **kwargs):
+    def __init__(self, **blockargs):
+        """
+        Create a function block.
+
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        :return: function block base class
+        :rtype: FunctionBlock
+
+        This is the parent class of all function blocks.
+        """
         # print('Function constructor')
-        super().__init__(**kwargs)
+        super().__init__(**blockargs)
         self.nstates = 0
 
 
 class SubsystemBlock(Block):
     """
-    A Function is a subclass of Block that represents a block that has inputs
+    A SubSystem  s a subclass of Block that represents a block that has inputs
     and outputs but no state variables.  Typically used to describe operations
     such as gain, summation or various mappings.
     """
     blockclass = 'subsystem'
 
-    def __init__(self, **kwargs):
+    def __init__(self, **blockargs):
+        """
+        Create a subsystem block.
+
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        :return: subsystem block base class
+        :rtype: SubsystemBlock
+
+        This is the parent class of all subsystem blocks.
+        """
         # print('Subsystem constructor')
-        super().__init__(**kwargs)
+        super().__init__(**blockargs)
         self.nstates = 0
 
 class ClockedBlock(Block):
@@ -1208,9 +1253,19 @@ class ClockedBlock(Block):
     """
     blockclass = 'clocked'
 
-    def __init__(self, clock=None, **kwargs):
+    def __init__(self, clock=None, **blockargs):
+        """
+        Create a clocked block.
+
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        :return: clocked block base class
+        :rtype: ClockedBlock
+
+        This is the parent class of all clocked blocks.
+        """
         # print('Clocked constructor')
-        super().__init__(**kwargs)
+        super().__init__(**blockargs)
         assert clock is not None, 'clocked block must have a clock'
         self._clocked = True
         self.clock = clock
