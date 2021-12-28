@@ -550,72 +550,11 @@ class Clock:
         self.x.append(self.getstate())
 # ------------------------------------------------------------------------- #
 
-
-blocklist = []
-
-
-def block(cls):
-    """
-    Decorator for block classes
-
-    :param cls: A block to be registered for the simulator
-    :type cls: subclass of Block
-    :return: the class
-    :rtype: subclass of Block
-
-    @block
-    class MyBlock:
-
-    The modules in ``./blocks`` uses the ``block`` decorator to declare
-    that they are a block which will be made available as a method of the
-    ``BlockDiagram`` instance.  The method name is a capitalized version of
-    the class name.
-    """
-
-    if issubclass(cls, Block):
-        blocklist.append(cls)  # append class to a global list
-    else:
-        raise ValueError('@block used on non Block subclass')
-    return cls
-
-# ------------------------------------------------------------------------- #
-
 class Block:
 
-    """
-    Construct a new block object.
-
-    :param name: Name of the block, defaults to None
-    :type name: str, optional
-    :param inames: Names of input ports, defaults to None
-    :type inames: list of str, optional
-    :param onames: Names of output ports, defaults to None
-    :type onames: list of str, optional
-    :param snames: Names of states, defaults to None
-    :type snames: list of str, optional
-    :param pos: Position of block on the canvas, defaults to None
-    :type pos: 2-element tuple or list, optional
-    :param bd: Parent block diagram, defaults to None
-    :type bd: BlockDiagram, optional
-    :param nin: Number of inputs, defaults to None
-    :type nin: int, optional
-    :param nout: Number of outputs, defaults to None
-    :type nout: int, optional
-    :param ``*inputs``: Optional incoming connections
-    :type ``*inputs``: Block or Plug
-    :param ``**kwargs``: Unknow arguments
-    :return: A Block superclass
-    :rtype: Block
-
-    A block object is the superclass of all blocks in the simulation environment.
-
-    This is the top-level initializer, and handles most options passed to
-    the superclass initializer for each block in the library.
-
-    """
+ 
     varinputs = False
     varoutputs = False
-
 
     __array_ufunc__ = None  # allow block operators with NumPy values
 
@@ -648,9 +587,44 @@ class Block:
 
     _latex_remove = str.maketrans({'$':'', '\\':'', '{':'', '}':'', '^':''})
 
-    def __init__(self, nin=None, nout=None, type=None, name=None, 
+    def __init__(self, name=None, nin=None, nout=None, inputs=None, type=None,  
         inames=None, onames=None, snames=None, 
-        pos=None, inputs=None, bd=None, blockclass=None, **kwargs):
+        pos=None, bd=None, blockclass=None, verbose=False, **kwargs):
+
+        """
+        Construct a new block object.
+
+        :param name: Name of the block, defaults to None
+        :type name: str, optional
+        :param nin: Number of inputs, defaults to None
+        :type nin: int, optional
+        :param nout: Number of outputs, defaults to None
+        :type nout: int, optional
+        :param inputs: Optional incoming connections
+        :type inputs: Block, Plug or list of Block or Plug
+        :param inames: Names of input ports, defaults to None
+        :type inames: list of str, optional
+        :param onames: Names of output ports, defaults to None
+        :type onames: list of str, optional
+        :param snames: Names of states, defaults to None
+        :type snames: list of str, optional
+        :param pos: Position of block on the canvas, defaults to None
+        :type pos: 2-element tuple or list, optional
+        :param bd: Parent block diagram, defaults to None
+        :type bd: BlockDiagram, optional
+        :param verbose: enable diagnostic prints, defaults to False
+        :type verbose: bool, optional
+        :param kwargs: Unused arguments
+        :type kwargs: dict
+        :return: A Block superclass
+        :rtype: Block
+
+        A block object is the superclass of all blocks in the simulation environment.
+
+        This is the top-level initializer, and handles most options passed to
+        the superclass initializer for each block in the library.
+
+        """
 
         # print('Block constructor, bd = ', bd)
         if name is not None:
@@ -674,7 +648,7 @@ class Block:
         self._clocked = False
         self._graphics = False
         self._parameters = {}
-
+        self.verbose = verbose
 
         if nin is not None:
             self.nin = nin
