@@ -188,16 +188,10 @@
   <div class="section" id="block-library">
 <span id="id1"></span><h1>Block library<a class="headerlink" href="#block-library" title="Permalink to this headline">¶</a></h1>
 <p>The block diagrams comprise blocks which belong to one of a number of different categories. These come from
-the package <code class="docutils literal notranslate"><span class="pre">bdsim.blocks</span></code>.</p>
-<div class="graphviz"><img src="_images/inheritance-fe2bf2fc66ff6abe73d810d88cdbb9dbe8fca353.png" alt="Inheritance diagram of bdsim.components.SourceBlock, bdsim.components.SinkBlock, bdsim.graphics.GraphicsBlock, bdsim.components.FunctionBlock, bdsim.components.TransferBlock, bdsim.components.SubsystemBlock" usemap="#inheritance978cde46aa" class="inheritance graphviz" /></div>
-<map id="inheritance978cde46aa" name="inheritance978cde46aa">
-<area shape="rect" id="node1" href="internals.html#bdsim.components.Block" target="_top" title="bdsim.components.Block" alt="" coords="5,104,175,129"/>
-<area shape="rect" id="node2" href="internals.html#bdsim.components.FunctionBlock" target="_top" title="A FunctionBlock is a subclass of Block that represents a block that has inputs" alt="" coords="231,5,449,31"/>
-<area shape="rect" id="node3" href="internals.html#bdsim.components.SinkBlock" target="_top" title="A SinkBlock is a subclass of Block that represents a block that has inputs" alt="" coords="243,55,437,80"/>
-<area shape="rect" id="node4" href="internals.html#bdsim.components.SourceBlock" target="_top" title="A SourceBlock is a subclass of Block that represents a block that has outputs" alt="" coords="235,104,445,129"/>
-<area shape="rect" id="node5" href="internals.html#bdsim.components.SubsystemBlock" target="_top" title="A Function is a subclass of Block that represents a block that has inputs" alt="" coords="223,153,457,179"/>
-<area shape="rect" id="node6" href="internals.html#bdsim.components.TransferBlock" target="_top" title="A TransferBlock is a subclass of Block that represents a block with inputs" alt="" coords="231,203,449,228"/>
-</map><div class="section" id="module-bdsim.blocks.sources">
+the package <code class="docutils literal notranslate"><span class="pre">bdsim.blocks</span></code>, <code class="docutils literal notranslate"><span class="pre">roboticstoolbox.blocks</span></code>, <code class="docutils literal notranslate"><span class="pre">machinevisiontoolbox.blocks</span></code>.</p>
+<p>Icons, if shown to the left of the black header bar, are as used with <a class="reference external" href="https://github.com/petercorke/bdsim/tree/master/bdsim/bdedit">bdedit</a>.</p>
+<div class="graphviz"><img src="_images/inheritance-af7f307d273227aa82ea3606256c0bea24eae672.png" alt="Inheritance diagram of bdsim.components.SourceBlock, bdsim.components.SinkBlock, bdsim.graphics.GraphicsBlock, bdsim.components.FunctionBlock, bdsim.components.TransferBlock, bdsim.components.SubsystemBlock" class="inheritance graphviz" /></div>
+<div class="section" id="module-bdsim.blocks.sources">
 <span id="source-blocks"></span><h2>Source blocks<a class="headerlink" href="#module-bdsim.blocks.sources" title="Permalink to this headline">¶</a></h2>
 <p>Source blocks:</p>
 <ul class="simple">
@@ -208,7 +202,7 @@ the package <code class="docutils literal notranslate"><span class="pre">bdsim.b
 <dl class="py class">
 <dt id="bdsim.blocks.sources.Constant">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.sources.</code><code class="sig-name descname">Constant</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sources.html#Constant"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sources.Constant" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.SourceBlock" title="bdsim.components.SourceBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SourceBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SourceBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -255,7 +249,7 @@ A(N,)</p></td>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>value</strong> (<em>any</em><em>, </em><em>optional</em>) – the constant, defaults to None</p></li>
-<li><p><strong>blockargs</strong> – <span class="raw-html"><a href="http://petercorke.com">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -274,7 +268,7 @@ Python type, for example float, list or Numpy ndarray.</p>
 <dl class="py class">
 <dt id="bdsim.blocks.sources.Piecewise">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.sources.</code><code class="sig-name descname">Piecewise</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sources.html#Piecewise"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sources.Piecewise" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.SourceBlock" title="bdsim.components.SourceBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SourceBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SourceBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -320,7 +314,7 @@ Python type, for example float, list or Numpy ndarray.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>seq</strong> (<em>list of 2-tuples</em>) – sequence of time, value pairs</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="http://petercorke.com">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -348,7 +342,7 @@ a tuple with time zero otherwise the output will be undefined.</p></li>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Seealso</dt>
-<dd class="field-odd"><p><a href="#id2"><span class="problematic" id="id3">:method:`declare_events`</span></a></p>
+<dd class="field-odd"><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">declare_events()</span></code></p>
 </dd>
 </dl>
 </dd></dl>
@@ -358,7 +352,7 @@ a tuple with time zero otherwise the output will be undefined.</p></li>
 <dl class="py class">
 <dt id="bdsim.blocks.sources.Ramp">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.sources.</code><code class="sig-name descname">Ramp</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sources.html#Ramp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sources.Ramp" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.SourceBlock" title="bdsim.components.SourceBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SourceBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SourceBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -406,7 +400,7 @@ a tuple with time zero otherwise the output will be undefined.</p></li>
 <li><p><strong>T</strong> (<em>float</em><em>, </em><em>optional</em>) – time of ramp start, defaults to 1</p></li>
 <li><p><strong>off</strong> (<em>float</em><em>, </em><em>optional</em>) – initial value, defaults to 0</p></li>
 <li><p><strong>slope</strong> (<em>float</em><em>, </em><em>optional</em>) – gradient of slope, defaults to 1</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="http://petercorke.com">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -424,7 +418,7 @@ when time equals <code class="docutils literal notranslate"><span class="pre">T<
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Seealso</dt>
-<dd class="field-odd"><p><a href="#id4"><span class="problematic" id="id5">:method:`declare_event`</span></a></p>
+<dd class="field-odd"><p><a href="#id2"><span class="problematic" id="id3">:method:`declare_event`</span></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -434,7 +428,7 @@ when time equals <code class="docutils literal notranslate"><span class="pre">T<
 <dl class="py class">
 <dt id="bdsim.blocks.sources.Step">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.sources.</code><code class="sig-name descname">Step</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sources.html#Step"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sources.Step" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.SourceBlock" title="bdsim.components.SourceBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SourceBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SourceBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -482,7 +476,7 @@ when time equals <code class="docutils literal notranslate"><span class="pre">T<
 <li><p><strong>T</strong> (<em>float</em><em>, </em><em>optional</em>) – time of step, defaults to 1</p></li>
 <li><p><strong>off</strong> (<em>float</em><em>, </em><em>optional</em>) – initial value, defaults to 0</p></li>
 <li><p><strong>on</strong> (<em>float</em><em>, </em><em>optional</em>) – final value, defaults to 1</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="http://petercorke.com">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -500,7 +494,7 @@ when time equals <code class="docutils literal notranslate"><span class="pre">T<
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Seealso</dt>
-<dd class="field-odd"><p><a href="#id6"><span class="problematic" id="id7">:method:`declare_events`</span></a></p>
+<dd class="field-odd"><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">declare_events()</span></code></p>
 </dd>
 </dl>
 </dd></dl>
@@ -510,7 +504,7 @@ when time equals <code class="docutils literal notranslate"><span class="pre">T<
 <dl class="py class">
 <dt id="bdsim.blocks.sources.Time">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.sources.</code><code class="sig-name descname">Time</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sources.html#Time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sources.Time" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.SourceBlock" title="bdsim.components.SourceBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SourceBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SourceBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -554,7 +548,7 @@ when time equals <code class="docutils literal notranslate"><span class="pre">T<
 <dd><p>Simulation time.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="http://petercorke.com">common Block options</a></span></p>
+<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>a TIME block</p>
@@ -571,7 +565,7 @@ when time equals <code class="docutils literal notranslate"><span class="pre">T<
 <dl class="py class">
 <dt id="bdsim.blocks.sources.WaveForm">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.sources.</code><code class="sig-name descname">WaveForm</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sources.html#WaveForm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sources.WaveForm" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.SourceBlock" title="bdsim.components.SourceBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SourceBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SourceBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -625,7 +619,7 @@ when time equals <code class="docutils literal notranslate"><span class="pre">T<
 <li><p><strong>min</strong> (<em>float</em><em>, </em><em>optional</em>) – minimum value, defaults to 0</p></li>
 <li><p><strong>max</strong> (<em>float</em><em>, </em><em>optional</em>) – maximum value, defaults to 1</p></li>
 <li><p><strong>duty</strong> (<em>float</em><em>, </em><em>optional</em>) – duty cycle for square wave in range [0,1], defaults to 0.5</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="http://petercorke.com">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -663,11 +657,7 @@ a number in the range [0,1] where 1 corresponds to one cycle.</p>
 <p>For discontinuous signals (square, triangle) the block declares
 events for every discontinuity.</p>
 </div>
-<dl class="field-list simple">
-<dt class="field-odd">Seealso</dt>
-<dd class="field-odd"><p><a href="#id8"><span class="problematic" id="id9">:method:`declare_events`</span></a></p>
-</dd>
-</dl>
+<p>:seealso <code class="xref py py-meth docutils literal notranslate"><span class="pre">declare_events()</span></code></p>
 </dd></dl>
 
 </dd></dl>
@@ -685,7 +675,7 @@ events for every discontinuity.</p>
 <dl class="py class">
 <dt id="bdsim.blocks.sinks.Null">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.sinks.</code><code class="sig-name descname">Null</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#Null"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.Null" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.SinkBlock" title="bdsim.components.SinkBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SinkBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SinkBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -731,7 +721,7 @@ events for every discontinuity.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>nin</strong> (<em>int</em><em>, </em><em>optional</em>) – number of input ports, defaults to 1</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="http://petercorke.com">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -750,7 +740,7 @@ all data.  Useful for testing.</p>
 <dl class="py class">
 <dt id="bdsim.blocks.sinks.Print">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.sinks.</code><code class="sig-name descname">Print</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#Print"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.Print" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.SinkBlock" title="bdsim.components.SinkBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SinkBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SinkBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -797,7 +787,7 @@ all data.  Useful for testing.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>fmt</strong> (<em>str</em><em>, </em><em>optional</em>) – Format string, defaults to None</p></li>
 <li><p><strong>file</strong> (<em>file object</em><em>, </em><em>optional</em>) – file to write data to, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="http://petercorke.com">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -851,7 +841,7 @@ element</p></li>
 <dl class="py class">
 <dt id="bdsim.blocks.sinks.Stop">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.sinks.</code><code class="sig-name descname">Stop</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#Stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.Stop" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.SinkBlock" title="bdsim.components.SinkBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SinkBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SinkBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -897,7 +887,7 @@ element</p></li>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>func</strong> (<em>callable</em><em>, </em><em>optional</em>) – evaluate stop condition, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="http://petercorke.com">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -921,7 +911,7 @@ and if it returns True the simulation is stopped.</p>
 <dl class="py class">
 <dt id="bdsim.blocks.sinks.Watch">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.sinks.</code><code class="sig-name descname">Watch</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#Watch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.sinks.Watch" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.SinkBlock" title="bdsim.components.SinkBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SinkBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SinkBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -965,7 +955,7 @@ and if it returns True the simulation is stopped.</p>
 <dd><p>Watch a signal.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="http://petercorke.com">common Block options</a></span></p>
+<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>A NULL block</p>
@@ -979,7 +969,7 @@ simulation run.  Equivalent to adding it as the <code class="docutils literal no
 to <code class="docutils literal notranslate"><span class="pre">bdsim.run</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Seealso</dt>
-<dd class="field-odd"><p><a href="#id10"><span class="problematic" id="id11">:method:`BDSim.run`</span></a></p>
+<dd class="field-odd"><p><a href="#id4"><span class="problematic" id="id5">:method:`BDSim.run`</span></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -998,7 +988,7 @@ to <code class="docutils literal notranslate"><span class="pre">bdsim.run</span>
 <dl class="py class">
 <dt id="bdsim.blocks.functions.Clip">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.functions.</code><code class="sig-name descname">Clip</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Clip"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.functions.Clip" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -1047,7 +1037,7 @@ A(N,)</p></td>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>min</strong> (<em>float</em><em> or </em><em>array_like</em><em>, </em><em>optional</em>) – Minimum value, defaults to -math.inf</p></li>
 <li><p><strong>max</strong> (<em>float</em><em> or </em><em>array_like</em><em>, </em><em>optional</em>) – Maximum value, defaults to math.inf</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – common Block options</p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1079,7 +1069,7 @@ the input vector.</p></li>
 <dl class="py class">
 <dt id="bdsim.blocks.functions.Function">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.functions.</code><code class="sig-name descname">Function</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Function"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.functions.Function" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -1130,7 +1120,7 @@ the input vector.</p></li>
 <li><p><strong>persistent</strong> (<em>bool</em><em>, </em><em>optional</em>) – pass in a reference to a dictionary instance to hold persistent state, defaults to False</p></li>
 <li><p><strong>args</strong> (<em>list</em><em>, </em><em>optional</em>) – extra positional arguments passed to the function, defaults to []</p></li>
 <li><p><strong>kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – extra keyword arguments passed to the function, defaults to {}</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – common Block options</p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1203,7 +1193,7 @@ are assigned to sequential input ports:</p>
 <dl class="py class">
 <dt id="bdsim.blocks.functions.Gain">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.functions.</code><code class="sig-name descname">Gain</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Gain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.functions.Gain" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -1254,7 +1244,7 @@ A(N,M)</p></td>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>K</strong> (<em>array_like</em>) – The gain value, defaults to 1</p></li>
 <li><p><strong>premul</strong> (<em>bool</em><em>, </em><em>optional</em>) – premultiply by constant, default is postmultiply, defaults to False</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – common Block options</p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1281,7 +1271,7 @@ to compute <span class="math notranslate nohighlight">\(K u\)</span> use the <co
 <dl class="py class">
 <dt id="bdsim.blocks.functions.Interpolate">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.functions.</code><code class="sig-name descname">Interpolate</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Interpolate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.functions.Interpolate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -1331,7 +1321,7 @@ to compute <span class="math notranslate nohighlight">\(K u\)</span> use the <co
 <li><p><strong>xy</strong> (<em>array_like</em><em>, </em><em>optional</em>) – combined x- and y-values of function, defaults to None</p></li>
 <li><p><strong>time</strong> (<em>bool</em><em>, </em><em>optional</em>) – x new is simulation time, defaults to False</p></li>
 <li><p><strong>kind</strong> (<em>str</em><em>, </em><em>optional</em>) – interpolation method, defaults to ‘linear’</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – common Block options</p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1368,7 +1358,7 @@ input ports and is a <code class="docutils literal notranslate"><span class="pre
 <dl class="py class">
 <dt id="bdsim.blocks.functions.Prod">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.functions.</code><code class="sig-name descname">Prod</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Prod"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.functions.Prod" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -1418,9 +1408,9 @@ A(N,M)</p></td>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>ops</strong> (<em>str</em><em>, </em><em>optional</em>) – operations associated with input ports, accepted characters: * or /, defaults to ‘**’</p></li>
-<li><p><strong>inputs</strong> (<a class="reference internal" href="internals.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="internals.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>inputs</strong> (<a class="reference internal" href="internals.html#bdsim.Block" title="bdsim.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="internals.html#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
 <li><p><strong>matrix</strong> (<em>bool</em><em>, </em><em>optional</em>) – Arguments are matrices, defaults to False</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – common Block options</p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1459,7 +1449,7 @@ number of input ports is the length of this string.</p>
 <dl class="py class">
 <dt id="bdsim.blocks.functions.Sum">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.functions.</code><code class="sig-name descname">Sum</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Sum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.functions.Sum" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -1510,7 +1500,7 @@ A(N,M)</p></td>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>signs</strong> (<em>str</em><em>, </em><em>optional</em>) – signs associated with input ports, accepted characters: + or -, defaults to ‘++’</p></li>
 <li><p><strong>angles</strong> (<em>bool</em><em>, </em><em>optional</em>) – the signals are angles, wraps to [-pi,pi], defaults to False</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – common <a href="#id17"><span class="problematic" id="id18">`Block options &lt;https://petercorke.github.io/bdsim/bdsim.html?highlight=block.__init__#bdsim.components.Block.__init__`_</span></a></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – common <a href="#id11"><span class="problematic" id="id12">`Block options &lt;https://petercorke.github.io/bdsim/bdsim.html?highlight=block.__init__#bdsim.components.Block.__init__`_</span></a></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1553,7 +1543,7 @@ of the same shape.</p>
 <dl class="py class">
 <dt id="bdsim.blocks.transfers.Integrator">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.transfers.</code><code class="sig-name descname">Integrator</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/transfers.html#Integrator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.transfers.Integrator" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.TransferBlock" title="bdsim.components.TransferBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -1603,7 +1593,7 @@ A(N,)</p></td>
 <li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – Initial state, defaults to 0</p></li>
 <li><p><strong>min</strong> (<em>float</em><em> or </em><em>array_like</em><em>, </em><em>optional</em>) – Minimum value of state, defaults to None</p></li>
 <li><p><strong>max</strong> (<em>float</em><em> or </em><em>array_like</em><em>, </em><em>optional</em>) – Maximum value of state, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="http://petercorke.com">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1680,7 +1670,7 @@ the state.</p></li>
 <li><p><strong>N</strong> (<em>array_like</em><em>, </em><em>optional</em>) – numerator coefficients, defaults to 1</p></li>
 <li><p><strong>D</strong> (<em>array_like</em><em>, </em><em>optional</em>) – denominator coefficients, defaults to [1,1]</p></li>
 <li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – initial states, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="http://petercorke.com">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1711,7 +1701,7 @@ form.</p>
 <dl class="py class">
 <dt id="bdsim.blocks.transfers.LTI_SS">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.transfers.</code><code class="sig-name descname">LTI_SS</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/transfers.html#LTI_SS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.transfers.LTI_SS" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.TransferBlock" title="bdsim.components.TransferBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -1761,7 +1751,7 @@ A(nc,)</p></td>
 <li><p><strong>N</strong> (<em>array_like</em><em>, </em><em>optional</em>) – numerator coefficients, defaults to 1</p></li>
 <li><p><strong>D</strong> (<em>array_like</em><em>, </em><em>optional</em>) – denominator coefficients, defaults to [1,1]</p></li>
 <li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – initial states, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="http://petercorke.com">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1792,7 +1782,7 @@ form.</p>
 <dl class="py class">
 <dt id="bdsim.blocks.transfers.PoseIntegrator">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.transfers.</code><code class="sig-name descname">PoseIntegrator</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/transfers.html#PoseIntegrator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.transfers.PoseIntegrator" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.TransferBlock" title="bdsim.components.TransferBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -1838,7 +1828,7 @@ form.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>x0</strong> (<em>SE3</em><em>, </em><em>optional</em>) – Initial pose, defaults to null</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="http://petercorke.com">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1876,7 +1866,7 @@ is pose as an <code class="docutils literal notranslate"><span class="pre">SE3</
 <dl class="py class">
 <dt id="bdsim.blocks.discrete.DIntegrator">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.discrete.</code><code class="sig-name descname">DIntegrator</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/discrete.html#DIntegrator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.discrete.DIntegrator" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.ClockedBlock" title="bdsim.components.ClockedBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.ClockedBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.ClockedBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -1923,11 +1913,11 @@ A(N,)</p></td>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>clock</strong> (<a class="reference internal" href="internals.html#bdsim.components.Clock" title="bdsim.components.Clock"><em>Clock</em></a>) – clock source</p></li>
+<li><p><strong>clock</strong> (<a class="reference internal" href="internals.html#bdsim.Clock" title="bdsim.Clock"><em>Clock</em></a>) – clock source</p></li>
 <li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – Initial state, defaults to 0</p></li>
 <li><p><strong>min</strong> (<em>float</em><em> or </em><em>array_like</em><em>, </em><em>optional</em>) – Minimum value of state, defaults to None</p></li>
 <li><p><strong>max</strong> (<em>float</em><em> or </em><em>array_like</em><em>, </em><em>optional</em>) – Maximum value of state, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="http://petercorke.com">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1961,7 +1951,7 @@ the state.</p></li>
 <dl class="py class">
 <dt id="bdsim.blocks.discrete.DPoseIntegrator">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.discrete.</code><code class="sig-name descname">DPoseIntegrator</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/discrete.html#DPoseIntegrator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.discrete.DPoseIntegrator" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.ClockedBlock" title="bdsim.components.ClockedBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.ClockedBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.ClockedBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -2006,9 +1996,9 @@ the state.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>clock</strong> (<a class="reference internal" href="internals.html#bdsim.components.Clock" title="bdsim.components.Clock"><em>Clock</em></a>) – clock source</p></li>
+<li><p><strong>clock</strong> (<a class="reference internal" href="internals.html#bdsim.Clock" title="bdsim.Clock"><em>Clock</em></a>) – clock source</p></li>
 <li><p><strong>x0</strong> (<em>SE3</em><em>, </em><em>optional</em>) – Initial pose, defaults to null</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="http://petercorke.com">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -2038,7 +2028,7 @@ is pose as an <code class="docutils literal notranslate"><span class="pre">SE3</
 <dl class="py class">
 <dt id="bdsim.blocks.discrete.ZOH">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.discrete.</code><code class="sig-name descname">ZOH</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/discrete.html#ZOH"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.discrete.ZOH" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.ClockedBlock" title="bdsim.components.ClockedBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.ClockedBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.ClockedBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -2085,9 +2075,9 @@ A(N,)</p></td>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>clock</strong> (<a class="reference internal" href="internals.html#bdsim.components.Clock" title="bdsim.components.Clock"><em>Clock</em></a>) – clock source</p></li>
+<li><p><strong>clock</strong> (<a class="reference internal" href="internals.html#bdsim.Clock" title="bdsim.Clock"><em>Clock</em></a>) – clock source</p></li>
 <li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – Initial value of the hold, defaults to 0</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="http://petercorke.com">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -2125,7 +2115,7 @@ input signal.</p>
 <dl class="py class">
 <dt id="bdsim.blocks.linalg.Cond">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.linalg.</code><code class="sig-name descname">Cond</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/linalg.html#Cond"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.linalg.Cond" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -2169,7 +2159,7 @@ input signal.</p>
 <dd><p>Compute the matrix condition number.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="http://petercorke.com">common Block options</a></span></p>
+<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>A COND block</p>
@@ -2188,7 +2178,7 @@ input signal.</p>
 <dl class="py class">
 <dt id="bdsim.blocks.linalg.Det">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.linalg.</code><code class="sig-name descname">Det</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/linalg.html#Det"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.linalg.Det" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -2232,7 +2222,7 @@ input signal.</p>
 <dd><p>Matrix determinant</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="http://petercorke.com">common Block options</a></span></p>
+<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>A DET block</p>
@@ -2254,7 +2244,7 @@ input signal.</p>
 <dl class="py class">
 <dt id="bdsim.blocks.linalg.Flatten">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.linalg.</code><code class="sig-name descname">Flatten</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/linalg.html#Flatten"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.linalg.Flatten" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -2300,7 +2290,7 @@ input signal.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>order</strong> (<em>str</em>) – flattening order, either “C” or “F”, defaults to “C”</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="http://petercorke.com">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -2323,7 +2313,7 @@ input signal.</p>
 <dl class="py class">
 <dt id="bdsim.blocks.linalg.Inverse">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.linalg.</code><code class="sig-name descname">Inverse</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/linalg.html#Inverse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.linalg.Inverse" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -2370,7 +2360,7 @@ float</p></td>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>pinv</strong> (<em>bool</em><em>, </em><em>optional</em>) – force pseudo inverse, defaults to False</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="http://petercorke.com">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -2401,7 +2391,7 @@ output on the second port.</p>
 <dl class="py class">
 <dt id="bdsim.blocks.linalg.Norm">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.linalg.</code><code class="sig-name descname">Norm</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/linalg.html#Norm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.linalg.Norm" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -2449,7 +2439,7 @@ A(N,M)</p></td>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>axis</strong> (<em>int</em><em>, </em><em>optional</em>) – specifies the axis along which to compute the vector norms, defaults to None.</p></li>
 <li><p><strong>ord</strong> (<em>int</em><em> or </em><em>str</em>) – Order of the norm, default to None.</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="http://petercorke.com">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -2472,7 +2462,7 @@ A(N,M)</p></td>
 <dl class="py class">
 <dt id="bdsim.blocks.linalg.Slice1">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.linalg.</code><code class="sig-name descname">Slice1</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/linalg.html#Slice1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.linalg.Slice1" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -2518,7 +2508,7 @@ A(N,M)</p></td>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>index</strong> (<em>tuple</em><em>(</em><em>3</em><em>)</em>) – slice, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="http://petercorke.com">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -2565,7 +2555,7 @@ describes a Python slice <code class="docutils literal notranslate"><span class=
 <dl class="py class">
 <dt id="bdsim.blocks.linalg.Slice2">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.linalg.</code><code class="sig-name descname">Slice2</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/linalg.html#Slice2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.linalg.Slice2" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -2612,7 +2602,7 @@ describes a Python slice <code class="docutils literal notranslate"><span class=
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>rows</strong> (<em>tuple</em><em>(</em><em>3</em><em>) or </em><em>list</em>) – row selection, defaults to None</p></li>
 <li><p><strong>cols</strong> (<em>tuple</em><em>(</em><em>3</em><em>) or </em><em>list</em>) – column selection, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="http://petercorke.com">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -2663,7 +2653,7 @@ and one for columns.</p>
 <dl class="py class">
 <dt id="bdsim.blocks.linalg.Transpose">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.linalg.</code><code class="sig-name descname">Transpose</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/linalg.html#Transpose"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.linalg.Transpose" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -2707,7 +2697,7 @@ and one for columns.</p>
 <dd><p>Matrix transpose.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="http://petercorke.com">common Block options</a></span></p>
+<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>A TRANSPOSE block</p>
@@ -2764,7 +2754,7 @@ with shape (N,1).</p></li>
 <dl class="py class">
 <dt id="bdsim.blocks.connections.DeMux">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.connections.</code><code class="sig-name descname">DeMux</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#DeMux"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.connections.DeMux" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -2811,7 +2801,7 @@ A(nout,)</p></td>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>nout</strong> (<em>int</em><em>, </em><em>optional</em>) – number of outputs, defaults to 1</p></li>
-<li><p><strong>kwargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="http://petercorke.com">common Block options</a></span></p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -2831,7 +2821,7 @@ scalar output ports.</p>
 <dl class="py class">
 <dt id="bdsim.blocks.connections.Dict">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.connections.</code><code class="sig-name descname">Dict</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#Dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.connections.Dict" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -2877,7 +2867,7 @@ scalar output ports.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>keys</strong> (<em>list</em>) – list of dictionary keys</p></li>
-<li><p><strong>kwargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="http://petercorke.com">common Block options</a></span></p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -2910,7 +2900,7 @@ named heterogeneous data.</p>
 <dl class="py class">
 <dt id="bdsim.blocks.connections.InPort">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.connections.</code><code class="sig-name descname">InPort</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#InPort"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.connections.InPort" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.SubsystemBlock" title="bdsim.components.SubsystemBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SubsystemBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SubsystemBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -2956,7 +2946,7 @@ named heterogeneous data.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>nout</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of output ports, defaults to 1</p></li>
-<li><p><strong>kwargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="http://petercorke.com">common Block options</a></span></p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -2981,7 +2971,7 @@ would require multiple single-port input blocks.</p>
 <dl class="py class">
 <dt id="bdsim.blocks.connections.Index">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.connections.</code><code class="sig-name descname">Index</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#Index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.connections.Index" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -3027,7 +3017,7 @@ would require multiple single-port input blocks.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>index</strong> (<em>list</em><em>, </em><em>slice</em><em> or </em><em>str</em><em>, </em><em>optional</em>) – elements of input array, defaults to []</p></li>
-<li><p><strong>kwargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="http://petercorke.com">common Block options</a></span></p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -3052,7 +3042,7 @@ object, or a string with Python slice notation, eg. <code class="docutils litera
 <dl class="py class">
 <dt id="bdsim.blocks.connections.Item">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.connections.</code><code class="sig-name descname">Item</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#Item"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.connections.Item" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -3098,7 +3088,7 @@ object, or a string with Python slice notation, eg. <code class="docutils litera
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>item</strong> (<em>str</em>) – name of dictionary item</p></li>
-<li><p><strong>kwargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="http://petercorke.com">common Block options</a></span></p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -3129,7 +3119,7 @@ named heterogeneous data.</p>
 <dl class="py class">
 <dt id="bdsim.blocks.connections.Mux">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.connections.</code><code class="sig-name descname">Mux</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#Mux"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.connections.Mux" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -3177,7 +3167,7 @@ A(M,)</p></td>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>nin</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of input ports, defaults to 1</p></li>
-<li><p><strong>kwargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="http://petercorke.com">common Block options</a></span></p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -3206,7 +3196,7 @@ single output vector as a 1D-array.</p>
 <dl class="py class">
 <dt id="bdsim.blocks.connections.OutPort">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.connections.</code><code class="sig-name descname">OutPort</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#OutPort"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.connections.OutPort" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.SubsystemBlock" title="bdsim.components.SubsystemBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SubsystemBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SubsystemBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -3252,7 +3242,7 @@ single output vector as a 1D-array.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>nin</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of input ports, defaults to 1</p></li>
-<li><p><strong>kwargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="http://petercorke.com">common Block options</a></span></p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -3278,7 +3268,7 @@ would require multiple single-port output blocks.</p>
 <dl class="py class">
 <dt id="bdsim.blocks.connections.SubSystem">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.blocks.connections.</code><code class="sig-name descname">SubSystem</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#SubSystem"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.blocks.connections.SubSystem" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.SubsystemBlock" title="bdsim.components.SubsystemBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SubsystemBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SubsystemBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -3326,7 +3316,7 @@ would require multiple single-port output blocks.</p>
 <li><p><strong>subsys</strong> (<em>str</em><em> or </em><em>BlockDiagram</em>) – Subsystem as either a filename or a <code class="docutils literal notranslate"><span class="pre">BlockDiagram</span></code> instance</p></li>
 <li><p><strong>nin</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of input ports, defaults to 1</p></li>
 <li><p><strong>nout</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of output ports, defaults to 1</p></li>
-<li><p><strong>kwargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="http://petercorke.com">common Block options</a></span></p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises</dt>
@@ -3434,10 +3424,10 @@ subsystem.</p></li>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>*inputs</strong> (<a class="reference internal" href="internals.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="internals.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="internals.html#bdsim.Block" title="bdsim.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="internals.html#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
 <li><p><strong>robot</strong> (<em>Robot subclass</em>) – Robot model</p></li>
 <li><p><strong>backend</strong> (<em>str</em><em>, </em><em>optional</em>) – RTB backend name, defaults to ‘pyplot’</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – common Block options</p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -3465,7 +3455,7 @@ block name.</p>
 <dl class="py class">
 <dt id="roboticstoolbox.blocks.arm.CTraj">
 <em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.arm.</code><code class="sig-name descname">CTraj</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#CTraj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.CTraj" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.SourceBlock" title="bdsim.components.SourceBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SourceBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SourceBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -3514,7 +3504,7 @@ block name.</p>
 <li><p><strong>T2</strong> (<em>SE3</em>) – final pose</p></li>
 <li><p><strong>T</strong> (<em>float</em>) – motion time</p></li>
 <li><p><strong>lspb</strong> (<em>bool</em>) – Use LSPB motion profile along the path</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – common Block options</p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -3533,7 +3523,7 @@ to provide initial acceleration and final deceleration.  Otherwise,
 motion is at constant velocity.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Seealso</dt>
-<dd class="field-odd"><p><a href="#id12"><span class="problematic" id="id13">:method:`SE3.interp`</span></a></p>
+<dd class="field-odd"><p><a href="#id6"><span class="problematic" id="id7">:method:`SE3.interp`</span></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -3543,7 +3533,7 @@ motion is at constant velocity.</p>
 <dl class="py class">
 <dt id="roboticstoolbox.blocks.arm.CirclePath">
 <em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.arm.</code><code class="sig-name descname">CirclePath</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#CirclePath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.CirclePath" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.SourceBlock" title="bdsim.components.SourceBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SourceBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SourceBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -3593,7 +3583,7 @@ motion is at constant velocity.</p>
 <li><p><strong>frequency</strong> (<em>float</em>) – rotational frequency, defaults to 1</p></li>
 <li><p><strong>unit</strong> (<em>str</em>) – unit for frequency, one of: ‘rps’ [default], ‘rad’</p></li>
 <li><p><strong>phase</strong> (<em>float</em>) – phase</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – common Block options</p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -3617,7 +3607,7 @@ motion of a frame with fixed orientation following a circular path.</p>
 <dl class="py class">
 <dt id="roboticstoolbox.blocks.arm.Delta2Tr">
 <em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.arm.</code><code class="sig-name descname">Delta2Tr</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#Delta2Tr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.Delta2Tr" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -3660,7 +3650,7 @@ motion of a frame with fixed orientation following a circular path.</p>
 <code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">blockargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#Delta2Tr.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.Delta2Tr.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – common Block options</p>
+<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>a DELTA2TR block</p>
@@ -3694,7 +3684,7 @@ motion of a frame with fixed orientation following a circular path.</p>
 <dl class="py class">
 <dt id="roboticstoolbox.blocks.arm.FDyn">
 <em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.arm.</code><code class="sig-name descname">FDyn</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#FDyn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.FDyn" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.TransferBlock" title="bdsim.components.TransferBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -3742,7 +3732,7 @@ ndarray</p></td>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>robot</strong> (<em>Robot subclass</em>) – Robot model</p></li>
 <li><p><strong>q0</strong> (<em>array_like</em><em>(</em><em>n</em><em>)</em>) – Initial joint configuration</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – common Block options</p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -3774,7 +3764,7 @@ ndarray</p></td>
 <dl class="py class">
 <dt id="roboticstoolbox.blocks.arm.FDyn_X">
 <em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.arm.</code><code class="sig-name descname">FDyn_X</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#FDyn_X"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.FDyn_X" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.TransferBlock" title="bdsim.components.TransferBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -3822,7 +3812,7 @@ ndarray</p></td>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>robot</strong> (<em>Robot subclass</em>) – Robot model</p></li>
 <li><p><strong>end</strong> (<em>Link</em><em> or </em><em>str</em>) – Link to compute pose of, defaults to end-effector</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – common Block options</p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -3854,7 +3844,7 @@ ndarray</p></td>
 <dl class="py class">
 <dt id="roboticstoolbox.blocks.arm.FKine">
 <em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.arm.</code><code class="sig-name descname">FKine</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#FKine"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.FKine" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -3898,10 +3888,10 @@ ndarray</p></td>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>*inputs</strong> (<a class="reference internal" href="internals.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="internals.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>*inputs</strong> (<a class="reference internal" href="internals.html#bdsim.Block" title="bdsim.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="internals.html#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
 <li><p><strong>robot</strong> (<em>Robot subclass</em><em>, </em><em>optional</em>) – Robot model, defaults to None</p></li>
 <li><p><strong>args</strong> (<em>dict</em><em>, </em><em>optional</em>) – Options for fkine, defaults to {}</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – common Block options</p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -3930,7 +3920,7 @@ ndarray</p></td>
 <dl class="py class">
 <dt id="roboticstoolbox.blocks.arm.Gravload">
 <em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.arm.</code><code class="sig-name descname">Gravload</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#Gravload"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.Gravload" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -3976,7 +3966,7 @@ ndarray</p></td>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>robot</strong> (<em>Robot subclass</em>) – Robot model</p></li>
 <li><p><strong>gravity</strong> (<em>float</em>) – gravitational acceleration</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – common Block options</p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -4006,7 +3996,7 @@ ndarray</p></td>
 <dl class="py class">
 <dt id="roboticstoolbox.blocks.arm.Gravload_X">
 <em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.arm.</code><code class="sig-name descname">Gravload_X</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#Gravload_X"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.Gravload_X" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -4052,7 +4042,7 @@ ndarray</p></td>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>robot</strong> (<em>Robot subclass</em>) – Robot model</p></li>
 <li><p><strong>gravity</strong> (<em>float</em>) – gravitational acceleration</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – common Block options</p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -4082,7 +4072,7 @@ ndarray</p></td>
 <dl class="py class">
 <dt id="roboticstoolbox.blocks.arm.IDyn">
 <em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.arm.</code><code class="sig-name descname">IDyn</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#IDyn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.IDyn" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -4130,7 +4120,7 @@ ndarray</p></td>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>robot</strong> (<em>Robot subclass</em>) – Robot model</p></li>
 <li><p><strong>gravity</strong> (<em>float</em>) – gravitational acceleration</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – common Block options</p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -4162,7 +4152,7 @@ ndarray</p></td>
 <dl class="py class">
 <dt id="roboticstoolbox.blocks.arm.IKine">
 <em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.arm.</code><code class="sig-name descname">IKine</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#IKine"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.IKine" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -4210,7 +4200,7 @@ ndarray</p></td>
 <li><p><strong>q0</strong> (<em>array_like</em><em>(</em><em>n</em><em>)</em><em>, </em><em>optional</em>) – Initial joint angles, defaults to None</p></li>
 <li><p><strong>useprevious</strong> (<em>bool</em><em>, </em><em>optional</em>) – Use previous IK solution as q0, defaults to True</p></li>
 <li><p><strong>ik</strong> (<em>callable f</em><em>(</em><em>T</em><em>)</em>) – Specify an IK function, defaults to ‘ikine_LM’</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – common Block options</p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -4240,7 +4230,7 @@ ndarray</p></td>
 <dl class="py class">
 <dt id="roboticstoolbox.blocks.arm.Inertia">
 <em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.arm.</code><code class="sig-name descname">Inertia</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#Inertia"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.Inertia" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -4285,7 +4275,7 @@ ndarray</p></td>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>robot</strong> (<em>Robot subclass</em>) – Robot model</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – common Block options</p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -4315,7 +4305,7 @@ ndarray</p></td>
 <dl class="py class">
 <dt id="roboticstoolbox.blocks.arm.Inertia_X">
 <em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.arm.</code><code class="sig-name descname">Inertia_X</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#Inertia_X"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.Inertia_X" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -4360,7 +4350,7 @@ ndarray</p></td>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>robot</strong> (<em>Robot subclass</em>) – Robot model</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – common Block options</p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -4390,7 +4380,7 @@ ndarray</p></td>
 <dl class="py class">
 <dt id="roboticstoolbox.blocks.arm.JTraj">
 <em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.arm.</code><code class="sig-name descname">JTraj</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#JTraj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.JTraj" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.SourceBlock" title="bdsim.components.SourceBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SourceBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SourceBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -4440,7 +4430,7 @@ ndarray</p></td>
 <li><p><strong>T</strong> (<em>array_like</em><em> or </em><em>int</em><em>, </em><em>optional</em>) – time vector or number of steps, defaults to None</p></li>
 <li><p><strong>qd0</strong> (<em>array_like</em><em>(</em><em>n</em><em>)</em><em>, </em><em>optional</em>) – initial velocity, defaults to None</p></li>
 <li><p><strong>qdf</strong> (<em>array_like</em><em>(</em><em>n</em><em>)</em><em>, </em><em>optional</em>) – final velocity, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – common Block options</p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -4480,7 +4470,7 @@ linearly.</p>
 <dl class="py class">
 <dt id="roboticstoolbox.blocks.arm.Jacobian">
 <em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.arm.</code><code class="sig-name descname">Jacobian</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#Jacobian"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.Jacobian" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -4529,7 +4519,7 @@ linearly.</p>
 <li><p><strong>inverse</strong> (<em>bool</em><em>, </em><em>optional</em>) – output inverse of Jacobian, defaults to False</p></li>
 <li><p><strong>pinv</strong> (<em>bool</em><em>, </em><em>optional</em>) – output pseudo-inverse of Jacobian, defaults to False</p></li>
 <li><p><strong>transpose</strong> (<em>bool</em><em>, </em><em>optional</em>) – output transpose of Jacobian, defaults to False</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – common Block options</p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -4559,7 +4549,7 @@ linearly.</p>
 <dl class="py class">
 <dt id="roboticstoolbox.blocks.arm.LSPB">
 <em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.arm.</code><code class="sig-name descname">LSPB</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#LSPB"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.LSPB" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.SourceBlock" title="bdsim.components.SourceBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SourceBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SourceBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -4607,7 +4597,7 @@ linearly.</p>
 <li><p><strong>q0</strong> (<em>array_like</em><em>(</em><em>n</em><em>)</em>) – initial joint coordinate</p></li>
 <li><p><strong>qf</strong> (<em>array_like</em><em>(</em><em>n</em><em>)</em>) – final joint coordinate</p></li>
 <li><p><strong>T</strong> (<em>array_like</em><em> or </em><em>int</em><em>, </em><em>optional</em>) – time vector or number of steps, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – common Block options</p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -4647,7 +4637,7 @@ linearly.</p>
 <dl class="py class">
 <dt id="roboticstoolbox.blocks.arm.Point2Tr">
 <em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.arm.</code><code class="sig-name descname">Point2Tr</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#Point2Tr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.Point2Tr" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -4692,7 +4682,7 @@ linearly.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>T</strong> (<em>SE3</em>) – the transform</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – common Block options</p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -4726,7 +4716,7 @@ linearly.</p>
 <dl class="py class">
 <dt id="roboticstoolbox.blocks.arm.TR2T">
 <em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.arm.</code><code class="sig-name descname">TR2T</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#TR2T"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.TR2T" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -4771,7 +4761,7 @@ linearly.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>T</strong> (<em>SE3</em>) – the transform</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – common Block options</p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -4805,7 +4795,7 @@ linearly.</p>
 <dl class="py class">
 <dt id="roboticstoolbox.blocks.arm.Tr2Delta">
 <em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.arm.</code><code class="sig-name descname">Tr2Delta</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#Tr2Delta"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.Tr2Delta" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -4848,7 +4838,7 @@ linearly.</p>
 <code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">blockargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#Tr2Delta.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.Tr2Delta.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – common Block options</p>
+<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>a TR2DELTA block</p>
@@ -4883,7 +4873,7 @@ linearly.</p>
 <dl class="py class">
 <dt id="roboticstoolbox.blocks.arm.Traj">
 <em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.arm.</code><code class="sig-name descname">Traj</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#Traj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.Traj" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -4932,7 +4922,7 @@ linearly.</p>
 <li><p><strong>T</strong> (<em>array_like</em><em> or </em><em>int</em><em>, </em><em>optional</em>) – time vector or number of steps, defaults to None</p></li>
 <li><p><strong>time</strong> (<em>bool</em><em>, </em><em>optional</em>) – x is simulation time, defaults to False</p></li>
 <li><p><strong>traj</strong> (<em>str</em><em>, </em><em>optional</em>) – trajectory type, one of: ‘lspb’ [default], ‘tpoly’</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – common Block options</p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -4955,7 +4945,7 @@ polynomial profile.</p>
 <dl class="py class">
 <dt id="roboticstoolbox.blocks.mobile.Bicycle">
 <em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.mobile.</code><code class="sig-name descname">Bicycle</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/mobile.html#Bicycle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.mobile.Bicycle" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.TransferBlock" title="bdsim.components.TransferBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -5005,7 +4995,7 @@ polynomial profile.</p>
 <li><p><strong>accel_max</strong> (<em>float</em><em>, </em><em>optional</em>) – maximum acceleration, defaults to math.inf</p></li>
 <li><p><strong>steer_max</strong> (<em>float</em><em>, </em><em>optional</em>) – maximum steering angle, defaults to math.pi*0.45</p></li>
 <li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – Inital state, defaults to None</p></li>
-<li><p><strong>**blockargs</strong> – common Block options</p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -5044,7 +5034,7 @@ is applied to the magnitude of this input.</p>
 <dl class="py class">
 <dt id="roboticstoolbox.blocks.mobile.DiffSteer">
 <em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.mobile.</code><code class="sig-name descname">DiffSteer</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/mobile.html#DiffSteer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.mobile.DiffSteer" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.TransferBlock" title="bdsim.components.TransferBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -5095,14 +5085,11 @@ is applied to the magnitude of this input.</p>
 <li><p><strong>accel_max</strong> (<em>float</em><em>, </em><em>optional</em>) – maximum acceleration, defaults to math.inf</p></li>
 <li><p><strong>steer_max</strong> (<em>float</em><em>, </em><em>optional</em>) – maximum steering rate, defaults to 1</p></li>
 <li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – Inital state, defaults to None</p></li>
-<li><p><strong>**blockargs</strong> – common Block options</p></li>
+<li><p><strong>blockargs</strong> (<em>dict        :return: a DIFFSTEER block</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>a DIFFSTEER block</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>DifSteer instance</p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>DifSteer instance</p>
 </dd>
 </dl>
 <p>Unicycle kinematic model with state <span class="math notranslate nohighlight">\([x, y,       heta]\)</span>, with
@@ -5138,7 +5125,7 @@ moves forward.</p>
 <dl class="py class">
 <dt id="roboticstoolbox.blocks.mobile.Unicycle">
 <em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.mobile.</code><code class="sig-name descname">Unicycle</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/mobile.html#Unicycle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.mobile.Unicycle" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.TransferBlock" title="bdsim.components.TransferBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -5188,14 +5175,11 @@ moves forward.</p>
 <li><p><strong>accel_max</strong> (<em>float</em><em>, </em><em>optional</em>) – maximum acceleration, defaults to math.inf</p></li>
 <li><p><strong>steer_max</strong> (<em>float</em><em>, </em><em>optional</em>) – maximum steering rate, defaults to 1</p></li>
 <li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – Inital state, defaults to None</p></li>
-<li><p><strong>**blockargs</strong> – common Block options</p></li>
+<li><p><strong>blockargs</strong> (<em>dict        :return: a UNICYCLE block</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>a UNICYCLE block</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>Unicycle instance</p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Unicycle instance</p>
 </dd>
 </dl>
 <p>Unicycle kinematic model with state <span class="math notranslate nohighlight">\([x, y, \theta]\)</span>.</p>
@@ -5277,14 +5261,11 @@ is applied to the magnitude of this input.</p>
 <li><p><strong>labels</strong> (<em>array_like</em><em>(</em><em>2</em><em>) or </em><em>list</em>) – axis labels (xlabel, ylabel), defaults to [“X”,”Y”]</p></li>
 <li><p><strong>square</strong> (<em>bool</em><em>, </em><em>optional</em>) – Set aspect ratio to 1, defaults to True</p></li>
 <li><p><strong>init</strong> (<em>callable</em><em>, </em><em>optional</em>) – initialize graphics, defaults to None</p></li>
-<li><p><strong>**blockargs</strong> – common Block options</p></li>
+<li><p><strong>blockargs</strong> (<em>dict        :return: A VEHICLEPLOT block</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A VEHICLEPLOT block</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>VehiclePlot instance</p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>VehiclePlot instance</p>
 </dd>
 </dl>
 <p>Create a vehicle animation similar to the figure below.</p>
@@ -5306,10 +5287,10 @@ plot. In the example below, this is the dot and star.</p></li>
 the option <code class="docutils literal notranslate"><span class="pre">path</span></code> is set to a linestyle.</p></li>
 </ul>
 </div></blockquote>
-<div class="figure align-default" id="id15">
+<div class="figure align-default" id="id9">
 <a class="reference internal image-reference" href="_images/rvc4_4.gif"><img alt="example of generated graphic" src="_images/rvc4_4.gif" style="width: 500px;" /></a>
 <p class="caption"><span class="caption-text">Example of vehicle display (animated).  The label at the top is the
-block name.</span><a class="headerlink" href="#id15" title="Permalink to this image">¶</a></p>
+block name.</span><a class="headerlink" href="#id9" title="Permalink to this image">¶</a></p>
 </div>
 </dd></dl>
 
@@ -5321,7 +5302,7 @@ block name.</span><a class="headerlink" href="#id15" title="Permalink to this im
 <dl class="py class">
 <dt id="roboticstoolbox.blocks.uav.MultiRotor">
 <em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.uav.</code><code class="sig-name descname">MultiRotor</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/uav.html#MultiRotor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.uav.MultiRotor" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.TransferBlock" title="bdsim.components.TransferBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -5361,17 +5342,16 @@ block name.</span><a class="headerlink" href="#id15" title="Permalink to this im
 </table>
 <dl class="py method">
 <dt id="roboticstoolbox.blocks.uav.MultiRotor.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">inputs</span></em>, <em class="sig-param"><span class="n">groundcheck</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">speedcheck</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">x0</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/uav.html#MultiRotor.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.uav.MultiRotor.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">groundcheck</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">speedcheck</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">x0</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">blockargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/uav.html#MultiRotor.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.uav.MultiRotor.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a a multi-rotor dynamic model block.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<em>dict</em>) – Vehicle geometric and inertial parameters</p></li>
-<li><p><strong>*inputs</strong> (<a class="reference internal" href="internals.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="internals.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
 <li><p><strong>groundcheck</strong> (<em>bool</em>) – Prevent vehicle moving below ground, defaults to True</p></li>
 <li><p><strong>speedcheck</strong> (<em>bool</em>) – Check for zero rotor speed, defaults to True</p></li>
 <li><p><strong>x0</strong> (<em>float</em><em>, </em><em>optional</em>) – Initial state, defaults to None</p></li>
-<li><p><strong>**kwargs</strong> – common Block options</p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -5408,7 +5388,7 @@ looking down, clockwise from the front rotor which lies on the x-axis.</p>
 <dl class="py class">
 <dt id="roboticstoolbox.blocks.uav.MultiRotorMixer">
 <em class="property">class </em><code class="sig-prename descclassname">roboticstoolbox.blocks.uav.</code><code class="sig-name descname">MultiRotorMixer</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/uav.html#MultiRotorMixer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.uav.MultiRotorMixer" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.components.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></p>
 <p>
     <table width="100%">
     	<col style="width:80%">
@@ -5448,14 +5428,14 @@ looking down, clockwise from the front rotor which lies on the x-axis.</p>
 </table>
 <dl class="py method">
 <dt id="roboticstoolbox.blocks.uav.MultiRotorMixer.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">maxw</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="n">minw</span><span class="o">=</span><span class="default_value">5</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/uav.html#MultiRotorMixer.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.uav.MultiRotorMixer.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">maxw</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="n">minw</span><span class="o">=</span><span class="default_value">5</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">blockargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/uav.html#MultiRotorMixer.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.uav.MultiRotorMixer.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a block that displays/animates a multi-rotor flying vehicle.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>maxw</strong> (<em>float</em>) – maximum rotor speed in rad/s, defaults to 1000</p></li>
 <li><p><strong>minw</strong> (<em>float</em>) – minimum rotor speed in rad/s, defaults to 5</p></li>
-<li><p><strong>kwargs</strong> (<em>dict</em>) – common Block options</p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -5533,17 +5513,16 @@ looking down, clockwise from the front rotor which lies on the x-axis.</p>
 </table>
 <dl class="py method">
 <dt id="roboticstoolbox.blocks.uav.MultiRotorPlot.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">inputs</span></em>, <em class="sig-param"><span class="n">scale</span><span class="o">=</span><span class="default_value">[- 2, 2, - 2, 2, 10]</span></em>, <em class="sig-param"><span class="n">flapscale</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">projection</span><span class="o">=</span><span class="default_value">'ortho'</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/uav.html#MultiRotorPlot.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.uav.MultiRotorPlot.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">scale</span><span class="o">=</span><span class="default_value">[- 2, 2, - 2, 2, 10]</span></em>, <em class="sig-param"><span class="n">flapscale</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">projection</span><span class="o">=</span><span class="default_value">'ortho'</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">blockargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/uav.html#MultiRotorPlot.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.uav.MultiRotorPlot.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a block that displays/animates a multi-rotor flying vehicle.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<em>dict</em>) – A dictionary of vehicle geometric and inertial properties</p></li>
-<li><p><strong>*inputs</strong> (<a class="reference internal" href="internals.html#bdsim.components.Block" title="bdsim.components.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="internals.html#bdsim.components.Plug" title="bdsim.components.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
 <li><p><strong>scale</strong> (<em>array_like</em><em>, </em><em>optional</em>) – dimensions of workspace: xmin, xmax, ymin, ymax, zmin, zmax, defaults to [-2,2,-2,2,10]</p></li>
 <li><p><strong>flapscale</strong> (<em>float</em>) – exagerate flapping angle by this factor, defaults to 1</p></li>
 <li><p><strong>projection</strong> (<em>str</em>) – 3D projection, one of: ‘ortho’ [default], ‘perspective’</p></li>
-<li><p><strong>**kwargs</strong> – common Block options</p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -5567,9 +5546,9 @@ looking down, clockwise from the front rotor which lies on the x-axis.</p>
 </dd>
 </dl>
 </div></blockquote>
-<div class="figure align-default" id="id16">
+<div class="figure align-default" id="id10">
 <a class="reference internal image-reference" href="_images/multirotorplot.png"><img alt="example of generated graphic" src="_images/multirotorplot.png" style="width: 500px;" /></a>
-<p class="caption"><span class="caption-text">Example of quad-rotor display.</span><a class="headerlink" href="#id16" title="Permalink to this image">¶</a></p>
+<p class="caption"><span class="caption-text">Example of quad-rotor display.</span><a class="headerlink" href="#id10" title="Permalink to this image">¶</a></p>
 </div>
 <p>Written by Pauline Pounds 2004</p>
 </dd></dl>
@@ -5608,7 +5587,7 @@ looking down, clockwise from the front rotor which lies on the x-axis.</p>
         
         &copy; Copyright 2020, Peter Corke
       <span class="lastupdated">
-        Last updated on 28-Dec-2021.
+        Last updated on 29-Dec-2021.
       </span>
 
     </p>

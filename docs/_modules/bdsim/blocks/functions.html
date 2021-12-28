@@ -89,7 +89,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../bdsim.html">bdsim overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../bdsim.blocks.html">Block library</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../internals.html">bdsim internals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../internals.html">Supporting classes</a></li>
 </ul>
 
             
@@ -293,7 +293,7 @@
 <span class="sd">        :type inputs: Block or Plug</span>
 <span class="sd">        :param matrix: Arguments are matrices, defaults to False</span>
 <span class="sd">        :type matrix: bool, optional</span>
-<span class="sd">        :param blockargs: common Block options</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: A PROD block</span>
 <span class="sd">        :rtype: Prod instance</span>
@@ -381,7 +381,7 @@
 <span class="sd">        :type K: array_like</span>
 <span class="sd">        :param premul: premultiply by constant, default is postmultiply, defaults to False</span>
 <span class="sd">        :type premul: bool, optional</span>
-<span class="sd">        :param blockargs: common Block options</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: A GAIN block</span>
 <span class="sd">        :rtype: Gain instance</span>
@@ -450,7 +450,7 @@
 <span class="sd">        :type min: float or array_like, optional</span>
 <span class="sd">        :param max: Maximum value, defaults to math.inf</span>
 <span class="sd">        :type max: float or array_like, optional</span>
-<span class="sd">        :param blockargs: common Block options</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: A CLIP block</span>
 <span class="sd">        :rtype: Clip instance</span>
@@ -522,7 +522,7 @@
 <span class="sd">        :type args: list, optional</span>
 <span class="sd">        :param kwargs: extra keyword arguments passed to the function, defaults to {}</span>
 <span class="sd">        :type kwargs: dict, optional</span>
-<span class="sd">        :param blockargs: common Block options</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict, optional</span>
 <span class="sd">        :return: A FUNCTION block</span>
 <span class="sd">        :rtype: A Function instance</span>
@@ -696,7 +696,7 @@
 <span class="sd">        :type time: bool, optional</span>
 <span class="sd">        :param kind: interpolation method, defaults to &#39;linear&#39;</span>
 <span class="sd">        :type kind: str, optional</span>
-<span class="sd">        :param blockargs: common Block options</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: An INTERPOLATE block</span>
 <span class="sd">        :rtype: An Interpolate instance</span>
@@ -784,7 +784,7 @@
         
         &copy; Copyright 2020, Peter Corke
       <span class="lastupdated">
-        Last updated on 28-Dec-2021.
+        Last updated on 29-Dec-2021.
       </span>
 
     </p>

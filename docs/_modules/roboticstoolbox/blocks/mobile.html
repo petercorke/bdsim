@@ -89,7 +89,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../bdsim.html">bdsim overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../bdsim.blocks.html">Block library</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../internals.html">bdsim internals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../internals.html">Supporting classes</a></li>
 </ul>
 
             
@@ -205,7 +205,8 @@
 <span class="sd">        :type steer_max: float, optional</span>
 <span class="sd">        :param x0: Inital state, defaults to None</span>
 <span class="sd">        :type x0: array_like, optional</span>
-<span class="sd">        :param ``**blockargs``: common Block options</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
+<span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: a BICYCLE block</span>
 <span class="sd">        :rtype: Bicycle instance</span>
 
@@ -283,8 +284,8 @@
 <span class="sd">        :type steer_max: float, optional</span>
 <span class="sd">        :param x0: Inital state, defaults to None</span>
 <span class="sd">        :type x0: array_like, optional</span>
-<span class="sd">        :param ``**blockargs``: common Block options</span>
-<span class="sd">        :return: a UNICYCLE block</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
+<span class="sd">        :type blockargs: dict        :return: a UNICYCLE block</span>
 <span class="sd">        :rtype: Unicycle instance</span>
 
 <span class="sd">        Unicycle kinematic model with state :math:`[x, y, \theta]`.</span>
@@ -371,8 +372,8 @@
 <span class="sd">        :type steer_max: float, optional</span>
 <span class="sd">        :param x0: Inital state, defaults to None</span>
 <span class="sd">        :type x0: array_like, optional</span>
-<span class="sd">        :param ``**blockargs``: common Block options</span>
-<span class="sd">        :return: a DIFFSTEER block</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
+<span class="sd">        :type blockargs: dict        :return: a DIFFSTEER block</span>
 <span class="sd">        :rtype: DifSteer instance</span>
 <span class="sd">        </span>
 <span class="sd">        Unicycle kinematic model with state :math:`[x, y, \theta]`, with</span>
@@ -451,8 +452,8 @@
 <span class="sd">        :type square: bool, optional</span>
 <span class="sd">        :param init: initialize graphics, defaults to None</span>
 <span class="sd">        :type init: callable, optional</span>
-<span class="sd">        :param ``**blockargs``: common Block options</span>
-<span class="sd">        :return: A VEHICLEPLOT block</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
+<span class="sd">        :type blockargs: dict        :return: A VEHICLEPLOT block</span>
 <span class="sd">        :rtype: VehiclePlot instance</span>
 
 <span class="sd">        Create a vehicle animation similar to the figure below.</span>
@@ -577,7 +578,7 @@
         
         &copy; Copyright 2020, Peter Corke
       <span class="lastupdated">
-        Last updated on 28-Dec-2021.
+        Last updated on 29-Dec-2021.
       </span>
 
     </p>

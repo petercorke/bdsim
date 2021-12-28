@@ -90,7 +90,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="bdsim.html">bdsim overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="bdsim.blocks.html">Block library</a></li>
-<li class="toctree-l1"><a class="reference internal" href="internals.html">bdsim internals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="internals.html">Supporting classes</a></li>
 </ul>
 
             
@@ -165,8 +165,35 @@
             
   <div class="section" id="block-diagrams-for-python">
 <h1>Block diagrams for Python<a class="headerlink" href="#block-diagrams-for-python" title="Permalink to this headline">¶</a></h1>
-<p>This Python package enables modelling and simulation of dynamic systems conceptualized in block diagram form, but represented in terms of Python class and method calls.</p>
-<p>Unlike Simulink or LabView we write Python code rather than drawing boxes and wires.  Wires can communicate any Python type such as scalars, strings, lists, dictionaries, numpy arrays, other objects, and even functions.</p>
+<table>
+<tr>
+<td>
+<img width=350 src="https://github.com/petercorke/bdsim/raw/master/figs/bd1-sketch.png">
+</td>
+<td style="padding-left: 20px;">
+<pre style="font-size:10px;">
+# define the blocks
+demand = bd.STEP(T=1, name='demand')
+sum = bd.SUM('+-')
+gain = bd.GAIN(10)
+plant = bd.LTI_SISO(0.5, [2, 1])
+scope = bd.SCOPE(styles=['k', 'r--'])
+
+# connect the blocks
+bd.connect(demand, sum[0], scope[1])
+bd.connect(plant, sum[1])
+bd.connect(sum, gain)
+bd.connect(gain, plant)
+bd.connect(plant, scope[0])
+</pre>
+</td>
+</tr>
+</table><p>This Python package enables modelling and simulation of dynamic systems
+conceptualized in block diagram form, but represented in terms of Python class
+and method calls.</p>
+<p>Unlike Simulink or LabView we write Python code rather than drawing boxes and
+wires.  Wires can communicate any Python type such as scalars, strings, lists,
+dictionaries, numpy arrays, other objects, and even functions.</p>
 <div class="toctree-wrapper compound">
 <p class="caption"><span class="caption-text">Code documentation:</span></p>
 <ul>
@@ -186,7 +213,7 @@
 <li class="toctree-l2"><a class="reference internal" href="bdsim.blocks.html#external-toolbox-blocksets">External Toolbox blocksets</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="internals.html">bdsim internals</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="internals.html">Supporting classes</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="internals.html#bdsim-class">BDSim class</a></li>
 <li class="toctree-l2"><a class="reference internal" href="internals.html#blockdiagram-class">BlockDiagram class</a></li>
 <li class="toctree-l2"><a class="reference internal" href="internals.html#components">Components</a></li>
@@ -217,7 +244,7 @@
         
         &copy; Copyright 2020, Peter Corke
       <span class="lastupdated">
-        Last updated on 28-Dec-2021.
+        Last updated on 29-Dec-2021.
       </span>
 
     </p>

@@ -89,7 +89,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../bdsim.html">bdsim overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../bdsim.blocks.html">Block library</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../internals.html">bdsim internals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../internals.html">Supporting classes</a></li>
 </ul>
 
             
@@ -205,7 +205,7 @@
 <span class="sd">        :type robot: Robot subclass, optional</span>
 <span class="sd">        :param args: Options for fkine, defaults to {}</span>
 <span class="sd">        :type args: dict, optional</span>
-<span class="sd">        :param blockargs: common Block options</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: a FORWARD_KINEMATICS block</span>
 <span class="sd">        :rtype: Foward_Kinematics instance</span>
@@ -264,7 +264,7 @@
 <span class="sd">        :type useprevious: bool, optional</span>
 <span class="sd">        :param ik: Specify an IK function, defaults to &#39;ikine_LM&#39;</span>
 <span class="sd">        :type ik: callable f(T)</span>
-<span class="sd">        :param blockargs: common Block options</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: an INVERSE_KINEMATICS block</span>
 <span class="sd">        :rtype: Inverse_Kinematics instance</span>
@@ -361,7 +361,7 @@
 <span class="sd">        :type pinv: bool, optional</span>
 <span class="sd">        :param transpose: output transpose of Jacobian, defaults to False</span>
 <span class="sd">        :type transpose: bool, optional</span>
-<span class="sd">        :param blockargs: common Block options</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: a JACOBIAN block</span>
 <span class="sd">        :rtype: Jacobian instance</span>
@@ -439,7 +439,7 @@
 
 <div class="viewcode-block" id="Tr2Delta.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.arm.Tr2Delta.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :param blockargs: common Block options</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: a TR2DELTA block</span>
 <span class="sd">        :rtype: Tr2Delta instance</span>
@@ -492,7 +492,7 @@
 
 <div class="viewcode-block" id="Delta2Tr.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#roboticstoolbox.blocks.arm.Delta2Tr.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :param blockargs: common Block options</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: a DELTA2TR block</span>
 <span class="sd">        :rtype: Delta2Tr instance</span>
@@ -543,7 +543,7 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param T: the transform</span>
 <span class="sd">        :type T: SE3</span>
-<span class="sd">        :param blockargs: common Block options</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: a POINT2TR block</span>
 <span class="sd">        :rtype: Point2Tr instance</span>
@@ -597,7 +597,7 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param T: the transform</span>
 <span class="sd">        :type T: SE3</span>
-<span class="sd">        :param blockargs: common Block options</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: a POINT2TR block</span>
 <span class="sd">        :rtype: Point2Tr instance</span>
@@ -653,7 +653,7 @@
 <span class="sd">        :type robot: Robot subclass</span>
 <span class="sd">        :param q0: Initial joint configuration</span>
 <span class="sd">        :type q0: array_like(n)</span>
-<span class="sd">        :param blockargs: common Block options</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: a FORWARD_DYNAMICS block</span>
 <span class="sd">        :rtype: Foward_Dynamics instance</span>
@@ -740,7 +740,7 @@
 <span class="sd">        :type robot: Robot subclass</span>
 <span class="sd">        :param gravity: gravitational acceleration</span>
 <span class="sd">        :type gravity: float</span>
-<span class="sd">        :param blockargs: common Block options</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: an INVERSE_DYNAMICS block</span>
 <span class="sd">        :rtype: Inverse_Dynamics instance</span>
@@ -803,7 +803,7 @@
 <span class="sd">        :type robot: Robot subclass</span>
 <span class="sd">        :param gravity: gravitational acceleration</span>
 <span class="sd">        :type gravity: float</span>
-<span class="sd">        :param blockargs: common Block options</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: a GRAVLOAD block</span>
 <span class="sd">        :rtype: Gravload instance</span>
@@ -859,7 +859,7 @@
 <span class="sd">        :type robot: Robot subclass</span>
 <span class="sd">        :param gravity: gravitational acceleration</span>
 <span class="sd">        :type gravity: float</span>
-<span class="sd">        :param blockargs: common Block options</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: a GRAVLOAD block</span>
 <span class="sd">        :rtype: Gravload instance</span>
@@ -919,7 +919,7 @@
 
 <span class="sd">        :param robot: Robot model</span>
 <span class="sd">        :type robot: Robot subclass</span>
-<span class="sd">        :param blockargs: common Block options</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: an INERTIA block</span>
 <span class="sd">        :rtype: Inertia instance</span>
@@ -972,7 +972,7 @@
 
 <span class="sd">        :param robot: Robot model</span>
 <span class="sd">        :type robot: Robot subclass</span>
-<span class="sd">        :param blockargs: common Block options</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: an INERTIA_X block</span>
 <span class="sd">        :rtype: Inertia_X instance</span>
@@ -1032,7 +1032,7 @@
 <span class="sd">        :type robot: Robot subclass</span>
 <span class="sd">        :param end: Link to compute pose of, defaults to end-effector</span>
 <span class="sd">        :type end: Link or str</span>
-<span class="sd">        :param blockargs: common Block options</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: a FDYN_X block</span>
 <span class="sd">        :rtype: FDyn_X instance</span>
@@ -1154,7 +1154,7 @@
 <span class="sd">        :type robot: Robot subclass</span>
 <span class="sd">        :param backend: RTB backend name, defaults to &#39;pyplot&#39;</span>
 <span class="sd">        :type backend: str, optional</span>
-<span class="sd">        :param blockargs: common Block options</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: An ARMPLOT block</span>
 <span class="sd">        :rtype: ArmPlot instance</span>
@@ -1241,7 +1241,7 @@
 <span class="sd">        :type time: bool, optional</span>
 <span class="sd">        :param traj: trajectory type, one of: &#39;lspb&#39; [default], &#39;tpoly&#39;</span>
 <span class="sd">        :type traj: str, optional</span>
-<span class="sd">        :param blockargs: common Block options</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: TRAJ block</span>
 <span class="sd">        :rtype: Traj instance</span>
@@ -1340,7 +1340,7 @@
 <span class="sd">        :type qd0: array_like(n), optional</span>
 <span class="sd">        :param qdf: final velocity, defaults to None</span>
 <span class="sd">        :type qdf: array_like(n), optional</span>
-<span class="sd">        :param blockargs: common Block options</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: TRAJ block</span>
 <span class="sd">        :rtype: Traj instance</span>
@@ -1490,7 +1490,7 @@
 <span class="sd">        :type qf: array_like(n)</span>
 <span class="sd">        :param T: time vector or number of steps, defaults to None</span>
 <span class="sd">        :type T: array_like or int, optional</span>
-<span class="sd">        :param blockargs: common Block options</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: LSPB block</span>
 <span class="sd">        :rtype: LSPB instance</span>
@@ -1570,7 +1570,7 @@
 <span class="sd">        :type T: float</span>
 <span class="sd">        :param lspb: Use LSPB motion profile along the path</span>
 <span class="sd">        :type lspb: bool</span>
-<span class="sd">        :param blockargs: common Block options</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: CTRAJ block</span>
 <span class="sd">        :rtype: CTraj instance</span>
@@ -1658,7 +1658,7 @@
 <span class="sd">        :type unit: str</span>
 <span class="sd">        :param phase: phase</span>
 <span class="sd">        :type phase: float</span>
-<span class="sd">        :param blockargs: common Block options</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: TRAJ block</span>
 <span class="sd">        :rtype: Traj instance</span>
@@ -1736,7 +1736,7 @@
         
         &copy; Copyright 2020, Peter Corke
       <span class="lastupdated">
-        Last updated on 28-Dec-2021.
+        Last updated on 29-Dec-2021.
       </span>
 
     </p>

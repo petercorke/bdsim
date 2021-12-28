@@ -89,7 +89,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../bdsim.html">bdsim overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../bdsim.blocks.html">Block library</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../internals.html">bdsim internals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../internals.html">Supporting classes</a></li>
 </ul>
 
             
@@ -194,7 +194,7 @@
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="se">\r</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s1"> |</span><span class="si">{</span><span class="n">bar</span><span class="si">}</span><span class="s1">| </span><span class="si">{</span><span class="n">percent</span><span class="si">}</span><span class="s1">% </span><span class="si">{</span><span class="n">suffix</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">printEnd</span><span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">BDSimState</span><span class="p">:</span>
+<div class="viewcode-block" id="BDSimState"><a class="viewcode-back" href="../../internals.html#bdsim.BDSimState">[docs]</a><span class="k">class</span> <span class="nc">BDSimState</span><span class="p">:</span>
 
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :ivar x: state vector</span>
@@ -214,7 +214,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="BDSimState.__init__"><a class="viewcode-back" href="../../internals.html#bdsim.BDSimState.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="kc">None</span>           <span class="c1"># continuous state vector numpy.ndarray</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">T</span> <span class="o">=</span> <span class="kc">None</span>           <span class="c1"># maximum.BlockDiagram time</span>
@@ -225,10 +225,10 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">debugger</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">t_stop</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># time-based breakpoint</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">eventq</span> <span class="o">=</span> <span class="n">PriorityQ</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eventq</span> <span class="o">=</span> <span class="n">PriorityQ</span><span class="p">()</span></div>
 
-    <span class="k">def</span> <span class="nf">declare_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">eventq</span><span class="o">.</span><span class="n">push</span><span class="p">((</span><span class="n">t</span><span class="p">,</span> <span class="n">block</span><span class="p">))</span>
+<div class="viewcode-block" id="BDSimState.declare_event"><a class="viewcode-back" href="../../internals.html#bdsim.BDSimState.declare_event">[docs]</a>    <span class="k">def</span> <span class="nf">declare_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eventq</span><span class="o">.</span><span class="n">push</span><span class="p">((</span><span class="n">t</span><span class="p">,</span> <span class="n">block</span><span class="p">))</span></div></div>
 
 <div class="viewcode-block" id="BDSim"><a class="viewcode-back" href="../../internals.html#bdsim.BDSim">[docs]</a><span class="k">class</span> <span class="nc">BDSim</span><span class="p">:</span>
 
@@ -1052,7 +1052,7 @@
         
         &copy; Copyright 2020, Peter Corke
       <span class="lastupdated">
-        Last updated on 28-Dec-2021.
+        Last updated on 29-Dec-2021.
       </span>
 
     </p>
