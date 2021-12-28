@@ -23,7 +23,31 @@ A Python block diagram simulation package</a>
 </tr>
 </table>
 
-`bdsim` is Python 3 package that enables modelling and simulation of continuous-time, discrete-time or hybrid dynamic systems.  Systems are conceptualized in block diagram form, but represented in terms of Python objects.  
+`bdsim` is Python 3 package that enables modelling and simulation of continuous-time, discrete-time or hybrid dynamic systems.  Systems are conceptualized in block diagram form, but represented in terms of Python objects. 
+
+  <table>
+  <tr>
+  <td>
+  <img width=350 src="https://github.com/petercorke/bdsim/raw/master/figs/bd1-sketch.png">
+  </td>
+  <td style="padding-left: 20px;">
+  <pre style="font-size:10px;">
+  # define the blocks
+  demand = bd.STEP(T=1, name='demand')
+  sum = bd.SUM('+-')
+  gain = bd.GAIN(10)
+  plant = bd.LTI_SISO(0.5, [2, 1])
+  scope = bd.SCOPE(styles=['k', 'r--'])
+  # connect the blocks
+  bd.connect(demand, sum[0], scope[1])
+  bd.connect(plant, sum[1])
+  bd.connect(sum, gain)
+  bd.connect(gain, plant)
+  bd.connect(plant, scope[0])
+  </pre>
+  </td>
+  </tr>
+  </table>
 
 Key features include:
 

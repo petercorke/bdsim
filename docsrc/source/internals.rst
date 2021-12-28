@@ -1,9 +1,12 @@
-bdsim internals
-===============
+Supporting classes
+******************
+
+
+.. inheritance-diagram:: bdsim.components
 
 
 BDSim class
------------
+===========
 
 This class describes the run-time environment for executing a block diagram.
 
@@ -26,7 +29,7 @@ This class describes the run-time environment for executing a block diagram.
    :special-members: __init__
 
 BlockDiagram class
-------------------
+==================
 
 This class describes a block diagram, a collection of blocks and wires that
 can be "executed".
@@ -37,9 +40,11 @@ can be "executed".
    :show-inheritance:
 
 Components
-----------
+==========
 
-.. inheritance-diagram:: bdsim.components
+
+Wire
+----
 
 .. autoclass:: bdsim.Wire
    :members:
@@ -47,55 +52,78 @@ Components
    :show-inheritance:
    :special-members: __init__, __mul__, __setattr__, __getattr__, __setitem__, __getitem__
 
+Plug
+----
+
 .. autoclass:: bdsim.Plug
    :members:
    :undoc-members:
    :show-inheritance:
-   :special-members: __init__, __mul__, __setattr__, __getattr__, __setitem__, __getitem__
+   :special-members:
+   :exclude-members: __dict__, __weakref__, __array_ufunc__
 
+Blocks
+------
 
 .. autoclass:: bdsim.Block
    :members:
    :undoc-members:
    :show-inheritance:
-   :special-members: __init__, __mul__, __setattr__, __getattr__, __setitem__, __getitem__
+   :special-members: 
 
+Source block
+^^^^^^^^^^^^
 
 .. autoclass:: bdsim.SourceBlock
    :members:
    :undoc-members:
    :show-inheritance:
-   :special-members: __init__, __mul__, __setattr__, __getattr__, __setitem__, __getitem__
+   :special-members: 
+
+Simulink block
+^^^^^^^^^^^^^^
 
 .. autoclass:: bdsim.SinkBlock
    :members:
    :undoc-members:
    :show-inheritance:
-   :special-members: __init__, __mul__, __setattr__, __getattr__, __setitem__, __getitem__
+   :special-members: 
+
+Function block
+^^^^^^^^^^^^^^
 
 .. autoclass:: bdsim.FunctionBlock
    :members:
    :undoc-members:
    :show-inheritance:
-   :special-members: __init__, __mul__, __setattr__, __getattr__, __setitem__, __getitem__
+   :special-members: 
+
+Transfer function block
+^^^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: bdsim.TransferBlock
    :members:
    :undoc-members:
    :show-inheritance:
-   :special-members: __init__, __mul__, __setattr__, __getattr__, __setitem__, __getitem__
+   :special-members: 
+
+Subsystem block
+^^^^^^^^^^^^^^^
 
 .. autoclass:: bdsim.SubsystemBlock
    :members:
    :undoc-members:
    :show-inheritance:
-   :special-members: __init__, __mul__, __setattr__, __getattr__, __setitem__, __getitem__
+   :special-members: 
+
+Graphics block
+^^^^^^^^^^^^^^
 
 .. autoclass:: bdsim.GraphicsBlock
    :members:
    :undoc-members:
    :show-inheritance:
-   :special-members: __init__, __mul__, __setattr__, __getattr__, __setitem__, __getitem__
+   :special-members: 
 
 
 Discrete-time systems
