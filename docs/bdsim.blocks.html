@@ -154,7 +154,7 @@ A(N,)</p></td>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>value</strong> (<em>any</em><em>, </em><em>optional</em>) – the constant, defaults to None</p></li>
-<li><p><strong>blockargs</strong> – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -219,7 +219,7 @@ Python type, for example float, list or Numpy ndarray.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>seq</strong> (<em>list of 2-tuples</em>) – sequence of time, value pairs</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -305,7 +305,7 @@ a tuple with time zero otherwise the output will be undefined.</p></li>
 <li><p><strong>T</strong> (<em>float</em><em>, </em><em>optional</em>) – time of ramp start, defaults to 1</p></li>
 <li><p><strong>off</strong> (<em>float</em><em>, </em><em>optional</em>) – initial value, defaults to 0</p></li>
 <li><p><strong>slope</strong> (<em>float</em><em>, </em><em>optional</em>) – gradient of slope, defaults to 1</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -381,7 +381,7 @@ when time equals <code class="docutils literal notranslate"><span class="pre">T<
 <li><p><strong>T</strong> (<em>float</em><em>, </em><em>optional</em>) – time of step, defaults to 1</p></li>
 <li><p><strong>off</strong> (<em>float</em><em>, </em><em>optional</em>) – initial value, defaults to 0</p></li>
 <li><p><strong>on</strong> (<em>float</em><em>, </em><em>optional</em>) – final value, defaults to 1</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -453,7 +453,7 @@ when time equals <code class="docutils literal notranslate"><span class="pre">T<
 <dd><p>Simulation time.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p>
+<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>a TIME block</p>
@@ -524,7 +524,7 @@ when time equals <code class="docutils literal notranslate"><span class="pre">T<
 <li><p><strong>min</strong> (<em>float</em><em>, </em><em>optional</em>) – minimum value, defaults to 0</p></li>
 <li><p><strong>max</strong> (<em>float</em><em>, </em><em>optional</em>) – maximum value, defaults to 1</p></li>
 <li><p><strong>duty</strong> (<em>float</em><em>, </em><em>optional</em>) – duty cycle for square wave in range [0,1], defaults to 0.5</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -626,7 +626,7 @@ events for every discontinuity.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>nin</strong> (<em>int</em><em>, </em><em>optional</em>) – number of input ports, defaults to 1</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -692,7 +692,7 @@ all data.  Useful for testing.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>fmt</strong> (<em>str</em><em>, </em><em>optional</em>) – Format string, defaults to None</p></li>
 <li><p><strong>file</strong> (<em>file object</em><em>, </em><em>optional</em>) – file to write data to, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -792,7 +792,7 @@ element</p></li>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>func</strong> (<em>callable</em><em>, </em><em>optional</em>) – evaluate stop condition, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -860,7 +860,7 @@ and if it returns True the simulation is stopped.</p>
 <dd><p>Watch a signal.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p>
+<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>A NULL block</p>
@@ -942,7 +942,7 @@ A(N,)</p></td>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>min</strong> (<em>float</em><em> or </em><em>array_like</em><em>, </em><em>optional</em>) – Minimum value, defaults to -math.inf</p></li>
 <li><p><strong>max</strong> (<em>float</em><em> or </em><em>array_like</em><em>, </em><em>optional</em>) – Maximum value, defaults to math.inf</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1025,7 +1025,7 @@ the input vector.</p></li>
 <li><p><strong>persistent</strong> (<em>bool</em><em>, </em><em>optional</em>) – pass in a reference to a dictionary instance to hold persistent state, defaults to False</p></li>
 <li><p><strong>args</strong> (<em>list</em><em>, </em><em>optional</em>) – extra positional arguments passed to the function, defaults to []</p></li>
 <li><p><strong>kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – extra keyword arguments passed to the function, defaults to {}</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1149,7 +1149,7 @@ A(N,M)</p></td>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>K</strong> (<em>array_like</em>) – The gain value, defaults to 1</p></li>
 <li><p><strong>premul</strong> (<em>bool</em><em>, </em><em>optional</em>) – premultiply by constant, default is postmultiply, defaults to False</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1226,7 +1226,7 @@ to compute <span class="math notranslate nohighlight">\(K u\)</span> use the <co
 <li><p><strong>xy</strong> (<em>array_like</em><em>, </em><em>optional</em>) – combined x- and y-values of function, defaults to None</p></li>
 <li><p><strong>time</strong> (<em>bool</em><em>, </em><em>optional</em>) – x new is simulation time, defaults to False</p></li>
 <li><p><strong>kind</strong> (<em>str</em><em>, </em><em>optional</em>) – interpolation method, defaults to ‘linear’</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1315,7 +1315,7 @@ A(N,M)</p></td>
 <li><p><strong>ops</strong> (<em>str</em><em>, </em><em>optional</em>) – operations associated with input ports, accepted characters: * or /, defaults to ‘**’</p></li>
 <li><p><strong>inputs</strong> (<a class="reference internal" href="internals.html#bdsim.Block" title="bdsim.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="internals.html#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
 <li><p><strong>matrix</strong> (<em>bool</em><em>, </em><em>optional</em>) – Arguments are matrices, defaults to False</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1498,7 +1498,7 @@ A(N,)</p></td>
 <li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – Initial state, defaults to 0</p></li>
 <li><p><strong>min</strong> (<em>float</em><em> or </em><em>array_like</em><em>, </em><em>optional</em>) – Minimum value of state, defaults to None</p></li>
 <li><p><strong>max</strong> (<em>float</em><em> or </em><em>array_like</em><em>, </em><em>optional</em>) – Maximum value of state, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1575,7 +1575,7 @@ the state.</p></li>
 <li><p><strong>N</strong> (<em>array_like</em><em>, </em><em>optional</em>) – numerator coefficients, defaults to 1</p></li>
 <li><p><strong>D</strong> (<em>array_like</em><em>, </em><em>optional</em>) – denominator coefficients, defaults to [1,1]</p></li>
 <li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – initial states, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1656,7 +1656,7 @@ A(nc,)</p></td>
 <li><p><strong>N</strong> (<em>array_like</em><em>, </em><em>optional</em>) – numerator coefficients, defaults to 1</p></li>
 <li><p><strong>D</strong> (<em>array_like</em><em>, </em><em>optional</em>) – denominator coefficients, defaults to [1,1]</p></li>
 <li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – initial states, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1733,7 +1733,7 @@ form.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>x0</strong> (<em>SE3</em><em>, </em><em>optional</em>) – Initial pose, defaults to null</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1822,7 +1822,7 @@ A(N,)</p></td>
 <li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – Initial state, defaults to 0</p></li>
 <li><p><strong>min</strong> (<em>float</em><em> or </em><em>array_like</em><em>, </em><em>optional</em>) – Minimum value of state, defaults to None</p></li>
 <li><p><strong>max</strong> (<em>float</em><em> or </em><em>array_like</em><em>, </em><em>optional</em>) – Maximum value of state, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1903,7 +1903,7 @@ the state.</p></li>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>clock</strong> (<a class="reference internal" href="internals.html#bdsim.Clock" title="bdsim.Clock"><em>Clock</em></a>) – clock source</p></li>
 <li><p><strong>x0</strong> (<em>SE3</em><em>, </em><em>optional</em>) – Initial pose, defaults to null</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1982,7 +1982,7 @@ A(N,)</p></td>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>clock</strong> (<a class="reference internal" href="internals.html#bdsim.Clock" title="bdsim.Clock"><em>Clock</em></a>) – clock source</p></li>
 <li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – Initial value of the hold, defaults to 0</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -2064,7 +2064,7 @@ input signal.</p>
 <dd><p>Compute the matrix condition number.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p>
+<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>A COND block</p>
@@ -2127,7 +2127,7 @@ input signal.</p>
 <dd><p>Matrix determinant</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p>
+<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>A DET block</p>
@@ -2195,7 +2195,7 @@ input signal.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>order</strong> (<em>str</em>) – flattening order, either “C” or “F”, defaults to “C”</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -2265,7 +2265,7 @@ float</p></td>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>pinv</strong> (<em>bool</em><em>, </em><em>optional</em>) – force pseudo inverse, defaults to False</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -2344,7 +2344,7 @@ A(N,M)</p></td>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>axis</strong> (<em>int</em><em>, </em><em>optional</em>) – specifies the axis along which to compute the vector norms, defaults to None.</p></li>
 <li><p><strong>ord</strong> (<em>int</em><em> or </em><em>str</em>) – Order of the norm, default to None.</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -2413,7 +2413,7 @@ A(N,M)</p></td>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>index</strong> (<em>tuple</em><em>(</em><em>3</em><em>)</em>) – slice, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -2507,7 +2507,7 @@ describes a Python slice <code class="docutils literal notranslate"><span class=
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>rows</strong> (<em>tuple</em><em>(</em><em>3</em><em>) or </em><em>list</em>) – row selection, defaults to None</p></li>
 <li><p><strong>cols</strong> (<em>tuple</em><em>(</em><em>3</em><em>) or </em><em>list</em>) – column selection, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -2602,7 +2602,7 @@ and one for columns.</p>
 <dd><p>Matrix transpose.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p>
+<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>A TRANSPOSE block</p>
@@ -2706,7 +2706,7 @@ A(nout,)</p></td>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>nout</strong> (<em>int</em><em>, </em><em>optional</em>) – number of outputs, defaults to 1</p></li>
-<li><p><strong>kwargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -2772,7 +2772,7 @@ scalar output ports.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>keys</strong> (<em>list</em>) – list of dictionary keys</p></li>
-<li><p><strong>kwargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -2851,7 +2851,7 @@ named heterogeneous data.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>nout</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of output ports, defaults to 1</p></li>
-<li><p><strong>kwargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -2922,7 +2922,7 @@ would require multiple single-port input blocks.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>index</strong> (<em>list</em><em>, </em><em>slice</em><em> or </em><em>str</em><em>, </em><em>optional</em>) – elements of input array, defaults to []</p></li>
-<li><p><strong>kwargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -2993,7 +2993,7 @@ object, or a string with Python slice notation, eg. <code class="docutils litera
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>item</strong> (<em>str</em>) – name of dictionary item</p></li>
-<li><p><strong>kwargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -3072,7 +3072,7 @@ A(M,)</p></td>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>nin</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of input ports, defaults to 1</p></li>
-<li><p><strong>kwargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -3147,7 +3147,7 @@ single output vector as a 1D-array.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>nin</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of input ports, defaults to 1</p></li>
-<li><p><strong>kwargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -3221,7 +3221,7 @@ would require multiple single-port output blocks.</p>
 <li><p><strong>subsys</strong> (<em>str</em><em> or </em><em>BlockDiagram</em>) – Subsystem as either a filename or a <code class="docutils literal notranslate"><span class="pre">BlockDiagram</span></code> instance</p></li>
 <li><p><strong>nin</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of input ports, defaults to 1</p></li>
 <li><p><strong>nout</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of output ports, defaults to 1</p></li>
-<li><p><strong>kwargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises</dt>
@@ -3332,7 +3332,7 @@ subsystem.</p></li>
 <li><p><strong>*inputs</strong> (<a class="reference internal" href="internals.html#bdsim.Block" title="bdsim.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="internals.html#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
 <li><p><strong>robot</strong> (<em>Robot subclass</em>) – Robot model</p></li>
 <li><p><strong>backend</strong> (<em>str</em><em>, </em><em>optional</em>) – RTB backend name, defaults to ‘pyplot’</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -3409,7 +3409,7 @@ block name.</p>
 <li><p><strong>T2</strong> (<em>SE3</em>) – final pose</p></li>
 <li><p><strong>T</strong> (<em>float</em>) – motion time</p></li>
 <li><p><strong>lspb</strong> (<em>bool</em>) – Use LSPB motion profile along the path</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -3488,7 +3488,7 @@ motion is at constant velocity.</p>
 <li><p><strong>frequency</strong> (<em>float</em>) – rotational frequency, defaults to 1</p></li>
 <li><p><strong>unit</strong> (<em>str</em>) – unit for frequency, one of: ‘rps’ [default], ‘rad’</p></li>
 <li><p><strong>phase</strong> (<em>float</em>) – phase</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -3555,7 +3555,7 @@ motion of a frame with fixed orientation following a circular path.</p>
 <code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">blockargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#Delta2Tr.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.Delta2Tr.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p>
+<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>a DELTA2TR block</p>
@@ -3637,7 +3637,7 @@ ndarray</p></td>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>robot</strong> (<em>Robot subclass</em>) – Robot model</p></li>
 <li><p><strong>q0</strong> (<em>array_like</em><em>(</em><em>n</em><em>)</em>) – Initial joint configuration</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -3717,7 +3717,7 @@ ndarray</p></td>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>robot</strong> (<em>Robot subclass</em>) – Robot model</p></li>
 <li><p><strong>end</strong> (<em>Link</em><em> or </em><em>str</em>) – Link to compute pose of, defaults to end-effector</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -3796,7 +3796,7 @@ ndarray</p></td>
 <li><p><strong>*inputs</strong> (<a class="reference internal" href="internals.html#bdsim.Block" title="bdsim.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="internals.html#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
 <li><p><strong>robot</strong> (<em>Robot subclass</em><em>, </em><em>optional</em>) – Robot model, defaults to None</p></li>
 <li><p><strong>args</strong> (<em>dict</em><em>, </em><em>optional</em>) – Options for fkine, defaults to {}</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -3871,7 +3871,7 @@ ndarray</p></td>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>robot</strong> (<em>Robot subclass</em>) – Robot model</p></li>
 <li><p><strong>gravity</strong> (<em>float</em>) – gravitational acceleration</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -3947,7 +3947,7 @@ ndarray</p></td>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>robot</strong> (<em>Robot subclass</em>) – Robot model</p></li>
 <li><p><strong>gravity</strong> (<em>float</em>) – gravitational acceleration</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -4025,7 +4025,7 @@ ndarray</p></td>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>robot</strong> (<em>Robot subclass</em>) – Robot model</p></li>
 <li><p><strong>gravity</strong> (<em>float</em>) – gravitational acceleration</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -4105,7 +4105,7 @@ ndarray</p></td>
 <li><p><strong>q0</strong> (<em>array_like</em><em>(</em><em>n</em><em>)</em><em>, </em><em>optional</em>) – Initial joint angles, defaults to None</p></li>
 <li><p><strong>useprevious</strong> (<em>bool</em><em>, </em><em>optional</em>) – Use previous IK solution as q0, defaults to True</p></li>
 <li><p><strong>ik</strong> (<em>callable f</em><em>(</em><em>T</em><em>)</em>) – Specify an IK function, defaults to ‘ikine_LM’</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -4180,7 +4180,7 @@ ndarray</p></td>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>robot</strong> (<em>Robot subclass</em>) – Robot model</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -4255,7 +4255,7 @@ ndarray</p></td>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>robot</strong> (<em>Robot subclass</em>) – Robot model</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -4335,7 +4335,7 @@ ndarray</p></td>
 <li><p><strong>T</strong> (<em>array_like</em><em> or </em><em>int</em><em>, </em><em>optional</em>) – time vector or number of steps, defaults to None</p></li>
 <li><p><strong>qd0</strong> (<em>array_like</em><em>(</em><em>n</em><em>)</em><em>, </em><em>optional</em>) – initial velocity, defaults to None</p></li>
 <li><p><strong>qdf</strong> (<em>array_like</em><em>(</em><em>n</em><em>)</em><em>, </em><em>optional</em>) – final velocity, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -4424,7 +4424,7 @@ linearly.</p>
 <li><p><strong>inverse</strong> (<em>bool</em><em>, </em><em>optional</em>) – output inverse of Jacobian, defaults to False</p></li>
 <li><p><strong>pinv</strong> (<em>bool</em><em>, </em><em>optional</em>) – output pseudo-inverse of Jacobian, defaults to False</p></li>
 <li><p><strong>transpose</strong> (<em>bool</em><em>, </em><em>optional</em>) – output transpose of Jacobian, defaults to False</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -4502,7 +4502,7 @@ linearly.</p>
 <li><p><strong>q0</strong> (<em>array_like</em><em>(</em><em>n</em><em>)</em>) – initial joint coordinate</p></li>
 <li><p><strong>qf</strong> (<em>array_like</em><em>(</em><em>n</em><em>)</em>) – final joint coordinate</p></li>
 <li><p><strong>T</strong> (<em>array_like</em><em> or </em><em>int</em><em>, </em><em>optional</em>) – time vector or number of steps, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -4587,7 +4587,7 @@ linearly.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>T</strong> (<em>SE3</em>) – the transform</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -4666,7 +4666,7 @@ linearly.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>T</strong> (<em>SE3</em>) – the transform</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -4743,7 +4743,7 @@ linearly.</p>
 <code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">blockargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboticstoolbox/blocks/arm.html#Tr2Delta.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboticstoolbox.blocks.arm.Tr2Delta.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p>
+<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>a TR2DELTA block</p>
@@ -4827,7 +4827,7 @@ linearly.</p>
 <li><p><strong>T</strong> (<em>array_like</em><em> or </em><em>int</em><em>, </em><em>optional</em>) – time vector or number of steps, defaults to None</p></li>
 <li><p><strong>time</strong> (<em>bool</em><em>, </em><em>optional</em>) – x is simulation time, defaults to False</p></li>
 <li><p><strong>traj</strong> (<em>str</em><em>, </em><em>optional</em>) – trajectory type, one of: ‘lspb’ [default], ‘tpoly’</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -4900,7 +4900,7 @@ polynomial profile.</p>
 <li><p><strong>accel_max</strong> (<em>float</em><em>, </em><em>optional</em>) – maximum acceleration, defaults to math.inf</p></li>
 <li><p><strong>steer_max</strong> (<em>float</em><em>, </em><em>optional</em>) – maximum steering angle, defaults to math.pi*0.45</p></li>
 <li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – Inital state, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -4990,7 +4990,7 @@ is applied to the magnitude of this input.</p>
 <li><p><strong>accel_max</strong> (<em>float</em><em>, </em><em>optional</em>) – maximum acceleration, defaults to math.inf</p></li>
 <li><p><strong>steer_max</strong> (<em>float</em><em>, </em><em>optional</em>) – maximum steering rate, defaults to 1</p></li>
 <li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – Inital state, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict        :return: a DIFFSTEER block</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict        :return: a DIFFSTEER block</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -5080,7 +5080,7 @@ moves forward.</p>
 <li><p><strong>accel_max</strong> (<em>float</em><em>, </em><em>optional</em>) – maximum acceleration, defaults to math.inf</p></li>
 <li><p><strong>steer_max</strong> (<em>float</em><em>, </em><em>optional</em>) – maximum steering rate, defaults to 1</p></li>
 <li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – Inital state, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict        :return: a UNICYCLE block</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict        :return: a UNICYCLE block</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -5166,7 +5166,7 @@ is applied to the magnitude of this input.</p>
 <li><p><strong>labels</strong> (<em>array_like</em><em>(</em><em>2</em><em>) or </em><em>list</em>) – axis labels (xlabel, ylabel), defaults to [“X”,”Y”]</p></li>
 <li><p><strong>square</strong> (<em>bool</em><em>, </em><em>optional</em>) – Set aspect ratio to 1, defaults to True</p></li>
 <li><p><strong>init</strong> (<em>callable</em><em>, </em><em>optional</em>) – initialize graphics, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict        :return: A VEHICLEPLOT block</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict        :return: A VEHICLEPLOT block</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -5256,7 +5256,7 @@ block name.</span><a class="headerlink" href="#id9" title="Permalink to this ima
 <li><p><strong>groundcheck</strong> (<em>bool</em>) – Prevent vehicle moving below ground, defaults to True</p></li>
 <li><p><strong>speedcheck</strong> (<em>bool</em>) – Check for zero rotor speed, defaults to True</p></li>
 <li><p><strong>x0</strong> (<em>float</em><em>, </em><em>optional</em>) – Initial state, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -5340,7 +5340,7 @@ looking down, clockwise from the front rotor which lies on the x-axis.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>maxw</strong> (<em>float</em>) – maximum rotor speed in rad/s, defaults to 1000</p></li>
 <li><p><strong>minw</strong> (<em>float</em>) – minimum rotor speed in rad/s, defaults to 5</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -5427,7 +5427,7 @@ looking down, clockwise from the front rotor which lies on the x-axis.</p>
 <li><p><strong>scale</strong> (<em>array_like</em><em>, </em><em>optional</em>) – dimensions of workspace: xmin, xmax, ymin, ymax, zmin, zmax, defaults to [-2,2,-2,2,10]</p></li>
 <li><p><strong>flapscale</strong> (<em>float</em>) – exagerate flapping angle by this factor, defaults to 1</p></li>
 <li><p><strong>projection</strong> (<em>str</em>) – 3D projection, one of: ‘ortho’ [default], ‘perspective’</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>

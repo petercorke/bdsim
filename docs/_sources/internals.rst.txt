@@ -50,7 +50,7 @@ Wire
    :members:
    :undoc-members:
    :show-inheritance:
-   :special-members: __init__, __mul__, __setattr__, __getattr__, __setitem__, __getitem__
+   :exclude-members: __dict__, __weakref__, __array_ufunc__, __module__
 
 Plug
 ----
@@ -60,7 +60,7 @@ Plug
    :undoc-members:
    :show-inheritance:
    :special-members:
-   :exclude-members: __dict__, __weakref__, __array_ufunc__
+   :exclude-members: __dict__, __weakref__, __array_ufunc__, __module__
 
 Blocks
 ------
@@ -70,6 +70,7 @@ Blocks
    :undoc-members:
    :show-inheritance:
    :special-members: 
+   :exclude-members: __dict__, __weakref__, __array_ufunc__, __module__
 
 Source block
 ^^^^^^^^^^^^
@@ -80,8 +81,8 @@ Source block
    :show-inheritance:
    :special-members: 
 
-Simulink block
-^^^^^^^^^^^^^^
+Sink block
+^^^^^^^^^^
 
 .. autoclass:: bdsim.SinkBlock
    :members:

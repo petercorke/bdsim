@@ -48,7 +48,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#plug">Plug</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#blocks">Blocks</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#source-block">Source block</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#simulink-block">Simulink block</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sink-block">Sink block</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#function-block">Function block</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#transfer-function-block">Transfer function block</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#subsystem-block">Subsystem block</a></li>
@@ -563,12 +563,6 @@ wires are used to build inter-block references.</p>
 a set of output ports on one block to a same sized set of input ports on 
 another block.</p>
 <dl class="py method">
-<dt id="bdsim.Wire.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">start</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">end</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#Wire.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.Wire.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
-</dd></dl>
-
-<dl class="py method">
 <dt id="bdsim.Wire.fullname">
 <em class="property">property </em><code class="sig-name descname">fullname</code><a class="headerlink" href="#bdsim.Wire.fullname" title="Permalink to this definition">¶</a></dt>
 <dd><p>Display wire connection details.</p>
@@ -644,7 +638,38 @@ Wire to a specific port on a Block.</p>
 <dl class="py method">
 <dt id="bdsim.Plug.__add__">
 <code class="sig-name descname">__add__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#Plug.__add__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.Plug.__add__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Overloaded + operator for implicit block creation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>self</strong> (<a class="reference internal" href="#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – A signal (plug) to be added</p></li>
+<li><p><strong>other</strong> (<a class="reference internal" href="#bdsim.Block" title="bdsim.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – A signal (block or plug) to be added</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>SUM block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Block subclass</p>
+</dd>
+</dl>
+<p>This method is implicitly invoked by the + operator when the left operand is a <code class="docutils literal notranslate"><span class="pre">Plug</span></code>
+and the right operand is a <code class="docutils literal notranslate"><span class="pre">Plug</span></code>, <code class="docutils literal notranslate"><span class="pre">Block</span></code> or constant:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">Y</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">Y</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">C</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">X</span></code> and <code class="docutils literal notranslate"><span class="pre">Y</span></code> are blocks and <code class="docutils literal notranslate"><span class="pre">C</span></code> is a Python or NumPy constant.</p>
+<p>Create a <code class="docutils literal notranslate"><span class="pre">SUM(&quot;++&quot;)</span></code> block named <code class="docutils literal notranslate"><span class="pre">_sum.N</span></code> whose inputs are the 
+left and right operands.  For the third case, a new <code class="docutils literal notranslate"><span class="pre">CONSTANT(C)</span></code> block
+named <code class="docutils literal notranslate"><span class="pre">_const.N</span></code> is also created.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Seealso</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#bdsim.Plug.__radd__" title="bdsim.Plug.__radd__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Plug.__radd__()</span></code></a> <a class="reference internal" href="#bdsim.Block.__add__" title="bdsim.Block.__add__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Block.__add__()</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="bdsim.Plug.__init__">
@@ -652,25 +677,115 @@ Wire to a specific port on a Block.</p>
 <dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
 </dd></dl>
 
-<dl class="py attribute">
-<dt id="bdsim.Plug.__module__">
-<code class="sig-name descname">__module__</code><em class="property"> = 'bdsim.components'</em><a class="headerlink" href="#bdsim.Plug.__module__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 <dl class="py method">
 <dt id="bdsim.Plug.__mul__">
 <code class="sig-name descname">__mul__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#Plug.__mul__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.Plug.__mul__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Overloaded * operator for implicit block creation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>self</strong> (<a class="reference internal" href="#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – A signal (plug) to be multiplied</p></li>
+<li><p><strong>other</strong> (<a class="reference internal" href="#bdsim.Block" title="bdsim.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – A signal (block or plug) to be multiplied</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>PROD or GAIN block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Block subclass</p>
+</dd>
+</dl>
+<p>This method is implicitly invoked by the * operator when the left operand is a <code class="docutils literal notranslate"><span class="pre">Plug</span></code>
+and the right operand is a <code class="docutils literal notranslate"><span class="pre">Plug</span></code>, <code class="docutils literal notranslate"><span class="pre">Block</span></code> or constant:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">Y</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">Y</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">C</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">X</span></code> and <code class="docutils literal notranslate"><span class="pre">Y</span></code> are blocks and <code class="docutils literal notranslate"><span class="pre">C</span></code> is a Python or NumPy constant.</p>
+<p>Create a <code class="docutils literal notranslate"><span class="pre">PROD(&quot;**&quot;)</span></code> block named <code class="docutils literal notranslate"><span class="pre">_prod.N</span></code> whose inputs are the 
+left and right operands.</p>
+<p>For the third case, create a <code class="docutils literal notranslate"><span class="pre">GAIN(C)</span></code> block named <code class="docutils literal notranslate"><span class="pre">_gain.N</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Signals are assumed to be scalars, but if <code class="docutils literal notranslate"><span class="pre">C</span></code> is a NumPy
+array then the option <code class="docutils literal notranslate"><span class="pre">matrix</span></code> is set to True.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Seealso</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#bdsim.Plug.__rmul__" title="bdsim.Plug.__rmul__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Plug.__rmul__()</span></code></a> <a class="reference internal" href="#bdsim.Block.__mul__" title="bdsim.Block.__mul__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Block.__mul__()</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="bdsim.Plug.__neg__">
 <code class="sig-name descname">__neg__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#Plug.__neg__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.Plug.__neg__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Overloaded unary minus operator for implicit block creation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>self</strong> (<a class="reference internal" href="#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – A signal (plug) to be negated</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>GAIN block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Block subclass</p>
+</dd>
+</dl>
+<p>This method is implicitly invoked by the - operator for unary minus when the operand is a <code class="docutils literal notranslate"><span class="pre">Plug</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="o">-</span><span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">X</span></code> is a block.</p>
+<p>Create a <code class="docutils literal notranslate"><span class="pre">GAIN(-1)</span></code> block named <code class="docutils literal notranslate"><span class="pre">_gain.N</span></code> whose input is the 
+operand.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Seealso</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#bdsim.Block.__neg__" title="bdsim.Block.__neg__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Block.__neg__()</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="bdsim.Plug.__radd__">
 <code class="sig-name descname">__radd__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#Plug.__radd__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.Plug.__radd__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Overloaded + operator for implicit block creation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>self</strong> (<a class="reference internal" href="#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – A signal (plug) to be added</p></li>
+<li><p><strong>other</strong> (<a class="reference internal" href="#bdsim.Block" title="bdsim.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – A signal (block or plug) to be added</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>SUM block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Block subclass</p>
+</dd>
+</dl>
+<p>This method is implicitly invoked by the + operator when the right operand is a <code class="docutils literal notranslate"><span class="pre">Plug</span></code>
+and the left operand is a <code class="docutils literal notranslate"><span class="pre">Plug</span></code>, <code class="docutils literal notranslate"><span class="pre">Block</span></code> or constant:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">X</span> <span class="o">+</span> <span class="n">Y</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">Y</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">C</span> <span class="o">+</span> <span class="n">Y</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">X</span></code> and <code class="docutils literal notranslate"><span class="pre">Y</span></code> are blocks and <code class="docutils literal notranslate"><span class="pre">C</span></code> is a Python or NumPy constant.</p>
+<p>Create a <code class="docutils literal notranslate"><span class="pre">SUM(&quot;++&quot;)</span> <span class="pre">block</span> <span class="pre">named</span> <span class="pre">``_sum.N</span></code> whose inputs are the 
+left and right operands.  For the third case, a new <code class="docutils literal notranslate"><span class="pre">CONSTANT(C)</span></code> block
+named <code class="docutils literal notranslate"><span class="pre">_const.N</span></code> is also created.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The inputs to the summing junction are reversed: right then left operand.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Seealso</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#bdsim.Plug.__add__" title="bdsim.Plug.__add__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Plug.__add__()</span></code></a> <a class="reference internal" href="#bdsim.Block.__radd__" title="bdsim.Block.__radd__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Block.__radd__()</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="bdsim.Plug.__repr__">
@@ -693,12 +808,48 @@ Wire to a specific port on a Block.</p>
 <dl class="py method">
 <dt id="bdsim.Plug.__rmul__">
 <code class="sig-name descname">__rmul__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#Plug.__rmul__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.Plug.__rmul__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Overloaded * operator for implicit block creation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>self</strong> (<a class="reference internal" href="#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – A signal (plug) to be multiplied</p></li>
+<li><p><strong>other</strong> (<a class="reference internal" href="#bdsim.Block" title="bdsim.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – A signal (block or plug) to be multiplied</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>PROD or GAIN block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Block subclass</p>
+</dd>
+</dl>
+<p>This method is implicitly invoked by the * operator when the right operand is a <code class="docutils literal notranslate"><span class="pre">Plug</span></code>
+and the left operand is a <code class="docutils literal notranslate"><span class="pre">Plug</span></code>, <code class="docutils literal notranslate"><span class="pre">Block</span></code> or constant:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">X</span> <span class="o">*</span> <span class="n">Y</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">Y</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">C</span> <span class="o">*</span> <span class="n">Y</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">X</span></code> and <code class="docutils literal notranslate"><span class="pre">Y</span></code> are blocks and <code class="docutils literal notranslate"><span class="pre">C</span></code> is a Python or NumPy constant.</p>
+<p>For the first two cases, a <code class="docutils literal notranslate"><span class="pre">PROD(&quot;**&quot;)</span></code> block named <code class="docutils literal notranslate"><span class="pre">_prod.N</span></code> whose inputs are the 
+left and right operands.</p>
+<p>For the third case, create a <code class="docutils literal notranslate"><span class="pre">GAIN(C)</span></code> block named <code class="docutils literal notranslate"><span class="pre">_gain.N</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Signals are assumed to be scalars, but if <code class="docutils literal notranslate"><span class="pre">C</span></code> is a NumPy
+array then the option <code class="docutils literal notranslate"><span class="pre">matrix</span></code> is set to True.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Seealso</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#bdsim.Plug.__mul__" title="bdsim.Plug.__mul__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Plug.__mul__()</span></code></a> <a class="reference internal" href="#bdsim.Block.__rmul__" title="bdsim.Block.__rmul__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Block.__rmul__()</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="bdsim.Plug.__rshift__">
 <code class="sig-name descname">__rshift__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">right</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#Plug.__rshift__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.Plug.__rshift__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Operator for implicit wiring.</p>
+<dd><p>Overloaded &gt;&gt; operator for implicit wiring.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -740,44 +891,160 @@ will be assigned to <code class="docutils literal notranslate"><span class="pre"
 <dl class="py method">
 <dt id="bdsim.Plug.__rsub__">
 <code class="sig-name descname">__rsub__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#Plug.__rsub__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.Plug.__rsub__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Overloaded - operator for implicit block creation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>self</strong> (<a class="reference internal" href="#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – A signal (plug) to be added (minuend)</p></li>
+<li><p><strong>other</strong> (<a class="reference internal" href="#bdsim.Block" title="bdsim.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – A signal (block or plug) to be subtracted (subtrahend)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>SUM block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Block subclass</p>
+</dd>
+</dl>
+<p>This method is implicitly invoked by the - operator when the left operand is a <code class="docutils literal notranslate"><span class="pre">Plug</span></code>
+and the right operand is a <code class="docutils literal notranslate"><span class="pre">Plug</span></code>, <code class="docutils literal notranslate"><span class="pre">Block</span></code> or constant:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">X</span> <span class="o">-</span> <span class="n">Y</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">Y</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">C</span> <span class="o">-</span> <span class="n">Y</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">X</span></code> and <code class="docutils literal notranslate"><span class="pre">Y</span></code> are blocks and <code class="docutils literal notranslate"><span class="pre">C</span></code> is a Python or NumPy constant.</p>
+<p>Create a <code class="docutils literal notranslate"><span class="pre">SUM(&quot;+-&quot;)</span></code> block named <code class="docutils literal notranslate"><span class="pre">_sum.N</span></code> whose inputs are the 
+left and right operands.  For the third case, a new <code class="docutils literal notranslate"><span class="pre">CONSTANT(C)</span></code> block
+named <code class="docutils literal notranslate"><span class="pre">_const.N</span></code> is also created.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The inputs to the summing junction are reversed: right then left operand.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Seealso</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#bdsim.Plug.__sub__" title="bdsim.Plug.__sub__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Plug.__sub__()</span></code></a> <a class="reference internal" href="#bdsim.Block.__rsub__" title="bdsim.Block.__rsub__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Block.__rsub__()</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="bdsim.Plug.__rtruediv__">
 <code class="sig-name descname">__rtruediv__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#Plug.__rtruediv__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.Plug.__rtruediv__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt id="bdsim.Plug.__setitem__">
-<code class="sig-name descname">__setitem__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">port</span></em>, <em class="sig-param"><span class="n">src</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#Plug.__setitem__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.Plug.__setitem__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convert a LHS block slice reference to a wire.</p>
+<dd><p>Overloaded / operator for implicit block creation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>port</strong> (<em>int</em>) – Port number</p></li>
-<li><p><strong>src</strong> (<a class="reference internal" href="#bdsim.Block" title="bdsim.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – the RHS</p></li>
+<li><p><strong>self</strong> (<a class="reference internal" href="#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – A signal (plug) to be multiplied (dividend)</p></li>
+<li><p><strong>other</strong> (<a class="reference internal" href="#bdsim.Block" title="bdsim.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – A signal (block or plug) to be divided (divisor)</p></li>
 </ul>
 </dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>PROD block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Block subclass</p>
+</dd>
 </dl>
-<p>Used to create a wired connection by assignment, for example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">c</span> <span class="o">=</span> <span class="n">bd</span><span class="o">.</span><span class="n">CONSTANT</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-
-<span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span>
+<p>This method is implicitly invoked by the / operator when the right operand is a <code class="docutils literal notranslate"><span class="pre">Plug</span></code>
+and the left operand is a <code class="docutils literal notranslate"><span class="pre">Plug</span></code>, <code class="docutils literal notranslate"><span class="pre">Block</span></code> or constant:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">X</span> <span class="o">/</span> <span class="n">Y</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="n">Y</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">C</span> <span class="o">/</span> <span class="n">Y</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
 </pre></div>
 </div>
-<p>Ths method is invoked to create a wire from <code class="docutils literal notranslate"><span class="pre">x</span></code> to input port 0 of
-the constant block <code class="docutils literal notranslate"><span class="pre">c</span></code>.</p>
+<p>where <code class="docutils literal notranslate"><span class="pre">X</span></code> and <code class="docutils literal notranslate"><span class="pre">Y</span></code> are blocks and <code class="docutils literal notranslate"><span class="pre">C</span></code> is a Python or NumPy constant.</p>
+<p>For the first two cases, a <code class="docutils literal notranslate"><span class="pre">PROD(&quot;*/&quot;)</span></code> block named <code class="docutils literal notranslate"><span class="pre">_prod.N</span></code> whose inputs are the 
+left and right operands.  For the third case, a new CONSTANT block
+named <code class="docutils literal notranslate"><span class="pre">_const.N</span></code> is also created.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Signals are assumed to be scalars, but if <code class="docutils literal notranslate"><span class="pre">C</span></code> is a NumPy
+array then the option <code class="docutils literal notranslate"><span class="pre">matrix</span></code> is set to True.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Seealso</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#bdsim.Plug.__truediv__" title="bdsim.Plug.__truediv__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Plug.__truediv__()</span></code></a> <a class="reference internal" href="#bdsim.Block.__rtruediv__" title="bdsim.Block.__rtruediv__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Block.__rtruediv__()</span></code></a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt id="bdsim.Plug.__sub__">
 <code class="sig-name descname">__sub__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#Plug.__sub__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.Plug.__sub__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Overloaded - operator for implicit block creation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>self</strong> (<a class="reference internal" href="#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – A signal (plug) to be added (minuend)</p></li>
+<li><p><strong>other</strong> (<a class="reference internal" href="#bdsim.Block" title="bdsim.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – A signal (block or plug) to be subtracted (subtrahend)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>SUM block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Block subclass</p>
+</dd>
+</dl>
+<p>This method is implicitly invoked by the - operator when the left operand is a <code class="docutils literal notranslate"><span class="pre">Plug</span></code>
+and the right operand is a <code class="docutils literal notranslate"><span class="pre">Plug</span></code>, <code class="docutils literal notranslate"><span class="pre">Block</span></code> or constant:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">Y</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">Y</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">C</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">X</span></code> and <code class="docutils literal notranslate"><span class="pre">Y</span></code> are blocks and <code class="docutils literal notranslate"><span class="pre">C</span></code> is a Python or NumPy constant.</p>
+<p>Create a <code class="docutils literal notranslate"><span class="pre">SUM(&quot;+-&quot;)</span></code> block named <code class="docutils literal notranslate"><span class="pre">_sum.N</span></code> whose inputs are the 
+left and right operands.  For the third case, a new <code class="docutils literal notranslate"><span class="pre">CONSTANT(C)</span></code> block
+named <code class="docutils literal notranslate"><span class="pre">_const.N</span></code> is also created.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Seealso</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#bdsim.Plug.__rsub__" title="bdsim.Plug.__rsub__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Plug.__rsub__()</span></code></a> <a class="reference internal" href="#bdsim.Block.__sub__" title="bdsim.Block.__sub__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Block.__sub__()</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="bdsim.Plug.__truediv__">
 <code class="sig-name descname">__truediv__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#Plug.__truediv__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.Plug.__truediv__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Overloaded / operator for implicit block creation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>self</strong> (<a class="reference internal" href="#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – A signal (plug) to be multiplied (dividend)</p></li>
+<li><p><strong>other</strong> (<a class="reference internal" href="#bdsim.Block" title="bdsim.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – A signal (block or plug) to be divided (divisor)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>PROD or GAIN block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Block subclass</p>
+</dd>
+</dl>
+<p>This method is implicitly invoked by the / operator when the left operand is a <code class="docutils literal notranslate"><span class="pre">Plug</span></code>
+and the right operand is a <code class="docutils literal notranslate"><span class="pre">Plug</span></code>, <code class="docutils literal notranslate"><span class="pre">Block</span></code> or constant:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="n">Y</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="n">Y</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="n">C</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">X</span></code> and <code class="docutils literal notranslate"><span class="pre">Y</span></code> are blocks and <code class="docutils literal notranslate"><span class="pre">C</span></code> is a Python or NumPy constant.</p>
+<p>Create a <code class="docutils literal notranslate"><span class="pre">PROD(&quot;**&quot;)</span></code> block named <code class="docutils literal notranslate"><span class="pre">_prod.N</span></code> whose inputs are the 
+left and right operands.</p>
+<p>For the third case, create a <code class="docutils literal notranslate"><span class="pre">GAIN(1/C)</span></code> block named <code class="docutils literal notranslate"><span class="pre">_gain.N</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Signals are assumed to be scalars, but if <code class="docutils literal notranslate"><span class="pre">C</span></code> is a NumPy
+array then the option <code class="docutils literal notranslate"><span class="pre">matrix</span></code> is set to True.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Seealso</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#bdsim.Plug.__rtruediv__" title="bdsim.Plug.__rtruediv__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Plug.__rtruediv__()</span></code></a> <a class="reference internal" href="#bdsim.Block.__truediv__" title="bdsim.Block.__truediv__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Block.__truediv__()</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="bdsim.Plug.isslice">
@@ -841,17 +1108,43 @@ or output ports of the block.</p>
 <dl class="py method">
 <dt id="bdsim.Block.__add__">
 <code class="sig-name descname">__add__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#Block.__add__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.Block.__add__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt id="bdsim.Block.__array_ufunc__">
-<code class="sig-name descname">__array_ufunc__</code><em class="property"> = None</em><a class="headerlink" href="#bdsim.Block.__array_ufunc__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt id="bdsim.Block.__dict__">
-<code class="sig-name descname">__dict__</code><em class="property"> = mappingproxy({'__module__': 'bdsim.components', 'varinputs': False, 'varoutputs': False, '__array_ufunc__': None, '__new__': &lt;staticmethod object&gt;, '_latex_remove': {36: '', 92: '', 123: '', 125: '', 94: ''}, '__init__': &lt;function Block.__init__&gt;, 'add_param': &lt;function Block.add_param&gt;, 'set_param': &lt;function Block.set_param&gt;, 'info': &lt;property object&gt;, 'isclocked': &lt;property object&gt;, 'isgraphics': &lt;property object&gt;, '_eval': &lt;function Block._eval&gt;, '__getitem__': &lt;function Block.__getitem__&gt;, '__setitem__': &lt;function Block.__setitem__&gt;, '__setattr__': &lt;function Block.__setattr__&gt;, '__rshift__': &lt;function Block.__rshift__&gt;, '_autoconstant': &lt;function Block._autoconstant&gt;, '_autogain': &lt;function Block._autogain&gt;, '__add__': &lt;function Block.__add__&gt;, '__radd__': &lt;function Block.__radd__&gt;, '__sub__': &lt;function Block.__sub__&gt;, '__rsub__': &lt;function Block.__rsub__&gt;, '__neg__': &lt;function Block.__neg__&gt;, '__mul__': &lt;function Block.__mul__&gt;, '__rmul__': &lt;function Block.__rmul__&gt;, '__truediv__': &lt;function Block.__truediv__&gt;, '__rtruediv__': &lt;function Block.__rtruediv__&gt;, '__str__': &lt;function Block.__str__&gt;, '__repr__': &lt;function Block.__repr__&gt;, '_fixname': &lt;function Block._fixname&gt;, 'inport_names': &lt;function Block.inport_names&gt;, 'outport_names': &lt;function Block.outport_names&gt;, 'state_names': &lt;function Block.state_names&gt;, 'sourcename': &lt;function Block.sourcename&gt;, 'reset': &lt;function Block.reset&gt;, 'add_outport': &lt;function Block.add_outport&gt;, 'add_inport': &lt;function Block.add_inport&gt;, 'setinput': &lt;function Block.setinput&gt;, 'setinputs': &lt;function Block.setinputs&gt;, 'start': &lt;function Block.start&gt;, 'check': &lt;function Block.check&gt;, 'done': &lt;function Block.done&gt;, 'step': &lt;function Block.step&gt;, 'savefig': &lt;function Block.savefig&gt;, '__dict__': &lt;attribute '__dict__' of 'Block' objects&gt;, '__weakref__': &lt;attribute '__weakref__' of 'Block' objects&gt;, '__doc__': None})</em><a class="headerlink" href="#bdsim.Block.__dict__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Overloaded + operator for implicit block creation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>self</strong> (<a class="reference internal" href="#bdsim.Block" title="bdsim.Block"><em>Block</em></a>) – A signal (block) to be added</p></li>
+<li><p><strong>other</strong> (<a class="reference internal" href="#bdsim.Block" title="bdsim.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – A signal (block or plug) to be added</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>SUM block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Block subclass</p>
+</dd>
+</dl>
+<p>This method is implicitly invoked by the + operator
+when the right operand is a <code class="docutils literal notranslate"><span class="pre">Block</span></code>
+and the left operand is a <code class="docutils literal notranslate"><span class="pre">Plug</span></code>, <code class="docutils literal notranslate"><span class="pre">Block</span></code> or constant:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">X</span> <span class="o">+</span> <span class="n">Y</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">X</span> <span class="o">+</span> <span class="n">Y</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">X</span> <span class="o">+</span> <span class="n">C</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">X</span></code> and <code class="docutils literal notranslate"><span class="pre">Y</span></code> are blocks and <code class="docutils literal notranslate"><span class="pre">C</span></code> is a Python or NumPy constant.</p>
+<p>Creates a <code class="docutils literal notranslate"><span class="pre">SUM(&quot;++&quot;)</span> <span class="pre">block</span> <span class="pre">named</span> <span class="pre">``_sum.N</span></code> whose inputs are the 
+left and right operands.  For the third case, a new <code class="docutils literal notranslate"><span class="pre">CONSTANT(C)</span></code> block
+named <code class="docutils literal notranslate"><span class="pre">_const.N</span></code> is also created.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The inputs to the summing junction are reversed: right then left operand.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Seealso</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#bdsim.Block.__radd__" title="bdsim.Block.__radd__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Block.__radd__()</span></code></a> <a class="reference internal" href="#bdsim.Plug.__add__" title="bdsim.Plug.__add__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Plug.__add__()</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="bdsim.Block.__getitem__">
@@ -910,20 +1203,75 @@ or output ports of the block.</p>
 the superclass initializer for each block in the library.</p>
 </dd></dl>
 
-<dl class="py attribute">
-<dt id="bdsim.Block.__module__">
-<code class="sig-name descname">__module__</code><em class="property"> = 'bdsim.components'</em><a class="headerlink" href="#bdsim.Block.__module__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 <dl class="py method">
 <dt id="bdsim.Block.__mul__">
 <code class="sig-name descname">__mul__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#Block.__mul__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.Block.__mul__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Overloaded * operator for implicit block creation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>self</strong> (<a class="reference internal" href="#bdsim.Block" title="bdsim.Block"><em>Block</em></a>) – A signal (block) to be multiplied</p></li>
+<li><p><strong>other</strong> (<a class="reference internal" href="#bdsim.Block" title="bdsim.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – A signal (block or plug) to be multiplied</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>PROD or GAIN block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Block subclass</p>
+</dd>
+</dl>
+<p>This method is implicitly invoked by the * operator when the left operand is a <code class="docutils literal notranslate"><span class="pre">Block</span></code>
+and the right operand is a <code class="docutils literal notranslate"><span class="pre">Plug</span></code>, <code class="docutils literal notranslate"><span class="pre">Block</span></code> or constant:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">X</span> <span class="o">*</span> <span class="n">Y</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">X</span> <span class="o">*</span> <span class="n">Y</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">X</span> <span class="o">*</span> <span class="n">C</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">X</span></code> and <code class="docutils literal notranslate"><span class="pre">Y</span></code> are blocks and <code class="docutils literal notranslate"><span class="pre">C</span></code> is a Python or NumPy constant.</p>
+<p>Create a <code class="docutils literal notranslate"><span class="pre">PROD(&quot;**&quot;)</span></code> block named <code class="docutils literal notranslate"><span class="pre">_prod.N</span></code> whose inputs are the 
+left and right operands.</p>
+<p>For the third case, create a <code class="docutils literal notranslate"><span class="pre">GAIN(C)</span></code> block named <code class="docutils literal notranslate"><span class="pre">_gain.N</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Signals are assumed to be scalars, but if <code class="docutils literal notranslate"><span class="pre">C</span></code> is a NumPy
+array then the option <code class="docutils literal notranslate"><span class="pre">matrix</span></code> is set to True.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Seealso</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#bdsim.Block.__rmul__" title="bdsim.Block.__rmul__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Block.__rmul__()</span></code></a> <a class="reference internal" href="#bdsim.Plug.__mul__" title="bdsim.Plug.__mul__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Plug.__mul__()</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="bdsim.Block.__neg__">
 <code class="sig-name descname">__neg__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#Block.__neg__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.Block.__neg__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Overloaded unary minus operator for implicit block creation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>self</strong> (<a class="reference internal" href="#bdsim.Block" title="bdsim.Block"><em>Block</em></a>) – A signal (block) to be negated</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>GAIN block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Block subclass</p>
+</dd>
+</dl>
+<p>This method is implicitly invoked by the - operator for unary minus when the operand is a <code class="docutils literal notranslate"><span class="pre">Block</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="o">-</span><span class="n">X</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">X</span></code> is a block.</p>
+<p>Creates a <code class="docutils literal notranslate"><span class="pre">GAIN(-1)</span></code> block named <code class="docutils literal notranslate"><span class="pre">_gain.N</span></code> whose input is the 
+operand.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Seealso</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#bdsim.Plug.__neg__" title="bdsim.Plug.__neg__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Plug.__neg__()</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="bdsim.Block.__new__">
@@ -951,7 +1299,43 @@ the superclass initializer for each block in the library.</p>
 <dl class="py method">
 <dt id="bdsim.Block.__radd__">
 <code class="sig-name descname">__radd__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#Block.__radd__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.Block.__radd__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Overloaded + operator for implicit block creation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>self</strong> (<a class="reference internal" href="#bdsim.Block" title="bdsim.Block"><em>Block</em></a>) – A signal (block) to be added</p></li>
+<li><p><strong>other</strong> (<a class="reference internal" href="#bdsim.Block" title="bdsim.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – A signal (block or plug) to be added</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>SUM block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Block subclass</p>
+</dd>
+</dl>
+<p>This method is implicitly invoked by the + operator
+when the right operand is a <code class="docutils literal notranslate"><span class="pre">Block</span></code>
+and the left operand is a <code class="docutils literal notranslate"><span class="pre">Plug</span></code>, <code class="docutils literal notranslate"><span class="pre">Block</span></code> or constant:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">X</span> <span class="o">+</span> <span class="n">Y</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">Y</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">C</span> <span class="o">+</span> <span class="n">Y</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">X</span></code> and <code class="docutils literal notranslate"><span class="pre">Y</span></code> are blocks and <code class="docutils literal notranslate"><span class="pre">C</span></code> is a Python or NumPy constant.</p>
+<p>Creates a <code class="docutils literal notranslate"><span class="pre">SUM(&quot;++&quot;)</span> <span class="pre">block</span> <span class="pre">named</span> <span class="pre">``_sum.N</span></code> whose inputs are the 
+left and right operands.  For the third case, a new <code class="docutils literal notranslate"><span class="pre">CONSTANT(C)</span></code> block
+named <code class="docutils literal notranslate"><span class="pre">_const.N</span></code> is also created.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The inputs to the summing junction are reversed: right then left operand.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Seealso</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#bdsim.Block.__add__" title="bdsim.Block.__add__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Block.__add__()</span></code></a> <code class="xref py py-meth docutils literal notranslate"><span class="pre">Plug._r_add__()</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="bdsim.Block.__repr__">
@@ -962,7 +1346,43 @@ the superclass initializer for each block in the library.</p>
 <dl class="py method">
 <dt id="bdsim.Block.__rmul__">
 <code class="sig-name descname">__rmul__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#Block.__rmul__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.Block.__rmul__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Overloaded * operator for implicit block creation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>self</strong> (<a class="reference internal" href="#bdsim.Block" title="bdsim.Block"><em>Block</em></a>) – A signal (block) to be multiplied</p></li>
+<li><p><strong>other</strong> (<a class="reference internal" href="#bdsim.Block" title="bdsim.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – A signal (block or plug) to be multiplied</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>PROD or GAIN block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Block subclass</p>
+</dd>
+</dl>
+<p>This method is implicitly invoked by the * operator when the right operand is a <code class="docutils literal notranslate"><span class="pre">Block</span></code>
+and the left operand is a <code class="docutils literal notranslate"><span class="pre">Plug</span></code>, <code class="docutils literal notranslate"><span class="pre">Block</span></code> or constant:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">X</span> <span class="o">*</span> <span class="n">Y</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">Y</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">C</span> <span class="o">*</span> <span class="n">Y</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">X</span></code> and <code class="docutils literal notranslate"><span class="pre">Y</span></code> are blocks and <code class="docutils literal notranslate"><span class="pre">C</span></code> is a Python or NumPy constant.</p>
+<p>For the first two cases, a <code class="docutils literal notranslate"><span class="pre">PROD(&quot;**&quot;)</span></code> block named <code class="docutils literal notranslate"><span class="pre">_prod.N</span></code> whose inputs are the 
+left and right operands.</p>
+<p>For the third case, create a <code class="docutils literal notranslate"><span class="pre">GAIN(C)</span></code> block named <code class="docutils literal notranslate"><span class="pre">_gain.N</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Signals are assumed to be scalars, but if <code class="docutils literal notranslate"><span class="pre">C</span></code> is a NumPy
+array then the option <code class="docutils literal notranslate"><span class="pre">matrix</span></code> is set to True.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Seealso</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#bdsim.Block.__mul__" title="bdsim.Block.__mul__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Block.__mul__()</span></code></a> <a class="reference internal" href="#bdsim.Plug.__rmul__" title="bdsim.Plug.__rmul__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Plug.__rmul__()</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="bdsim.Block.__rshift__">
@@ -1011,12 +1431,83 @@ will be assigned to <code class="docutils literal notranslate"><span class="pre"
 <dl class="py method">
 <dt id="bdsim.Block.__rsub__">
 <code class="sig-name descname">__rsub__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#Block.__rsub__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.Block.__rsub__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Overloaded - operator for implicit block creation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>self</strong> (<a class="reference internal" href="#bdsim.Block" title="bdsim.Block"><em>Block</em></a>) – A signal (block) to be added (minuend)</p></li>
+<li><p><strong>other</strong> (<a class="reference internal" href="#bdsim.Block" title="bdsim.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – A signal (block or plug) to be subtracted (subtrahend)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>SUM block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Block subclass</p>
+</dd>
+</dl>
+<p>This method is implicitly invoked by the - operator when the left operand is a <code class="docutils literal notranslate"><span class="pre">Block</span></code>
+and the right operand is a <code class="docutils literal notranslate"><span class="pre">Plug</span></code>, <code class="docutils literal notranslate"><span class="pre">Block</span></code> or constant:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">X</span> <span class="o">-</span> <span class="n">Y</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">Y</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">C</span> <span class="o">-</span> <span class="n">Y</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">X</span></code> and <code class="docutils literal notranslate"><span class="pre">Y</span></code> are blocks and <code class="docutils literal notranslate"><span class="pre">C</span></code> is a Python or NumPy constant.</p>
+<p>Creates a <code class="docutils literal notranslate"><span class="pre">SUM(&quot;+-&quot;)</span></code> block named <code class="docutils literal notranslate"><span class="pre">_sum.N</span></code> whose inputs are the 
+left and right operands.  For the third case, a new <code class="docutils literal notranslate"><span class="pre">CONSTANT(C)</span></code> block
+named <code class="docutils literal notranslate"><span class="pre">_const.N</span></code> is also created.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The inputs to the summing junction are reversed: right then left operand.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Seealso</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#bdsim.Block.__sub__" title="bdsim.Block.__sub__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Block.__sub__()</span></code></a> <a class="reference internal" href="#bdsim.Plug.__rsub__" title="bdsim.Plug.__rsub__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Plug.__rsub__()</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="bdsim.Block.__rtruediv__">
 <code class="sig-name descname">__rtruediv__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#Block.__rtruediv__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.Block.__rtruediv__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Overloaded / operator for implicit block creation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>self</strong> (<a class="reference internal" href="#bdsim.Block" title="bdsim.Block"><em>Block</em></a>) – A signal (block) to be multiplied (dividend)</p></li>
+<li><p><strong>other</strong> (<a class="reference internal" href="#bdsim.Block" title="bdsim.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – A signal (block or plug) to be divided (divisor)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>PROD block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Block subclass</p>
+</dd>
+</dl>
+<p>This method is implicitly invoked by the / operator when the right operand is a <code class="docutils literal notranslate"><span class="pre">Block</span></code>
+and the left operand is a <code class="docutils literal notranslate"><span class="pre">Plug</span></code>, <code class="docutils literal notranslate"><span class="pre">Block</span></code> or constant:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">X</span> <span class="o">/</span> <span class="n">Y</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="n">Y</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">C</span> <span class="o">/</span> <span class="n">Y</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">X</span></code> and <code class="docutils literal notranslate"><span class="pre">Y</span></code> are blocks and <code class="docutils literal notranslate"><span class="pre">C</span></code> is a Python or NumPy constant.</p>
+<p>For the first two cases, a <code class="docutils literal notranslate"><span class="pre">PROD(&quot;*/&quot;)</span></code> block named <code class="docutils literal notranslate"><span class="pre">_prod.N</span></code> whose inputs are the 
+left and right operands.  For the third case, a new CONSTANT block
+named <code class="docutils literal notranslate"><span class="pre">_const.N</span></code> is also created.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Signals are assumed to be scalars, but if <code class="docutils literal notranslate"><span class="pre">C</span></code> is a NumPy
+array then the option <code class="docutils literal notranslate"><span class="pre">matrix</span></code> is set to True.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Seealso</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#bdsim.Block.__truediv__" title="bdsim.Block.__truediv__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Block.__truediv__()</span></code></a> <a class="reference internal" href="#bdsim.Plug.__rtruediv__" title="bdsim.Plug.__rtruediv__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Plug.__rtruediv__()</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="bdsim.Block.__setattr__">
@@ -1061,13 +1552,16 @@ if <code class="docutils literal notranslate"><span class="pre">name</span></cod
 </dd>
 </dl>
 <p>Used to create a wired connection by assignment, for example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">c</span> <span class="o">=</span> <span class="n">bd</span><span class="o">.</span><span class="n">CONSTANT</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-
-<span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">X</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">Y</span>
 </pre></div>
 </div>
-<p>Ths method is invoked to create a wire from <code class="docutils literal notranslate"><span class="pre">x</span></code> to port 0 of
-the constant block <code class="docutils literal notranslate"><span class="pre">c</span></code>.</p>
+<p>where <code class="docutils literal notranslate"><span class="pre">X</span></code> and <code class="docutils literal notranslate"><span class="pre">Y</span></code> are blocks. This method is implicitly invoked and
+creates a wire from <code class="docutils literal notranslate"><span class="pre">Y</span></code> to input port 0 of <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The square brackets on the left-hand-side is critical, and
+<code class="docutils literal notranslate"><span class="pre">X</span> <span class="pre">=</span> <span class="pre">Y</span></code> will simply overwrite the reference to <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p>
+</div>
 </dd></dl>
 
 <dl class="py method">
@@ -1079,17 +1573,78 @@ the constant block <code class="docutils literal notranslate"><span class="pre">
 <dl class="py method">
 <dt id="bdsim.Block.__sub__">
 <code class="sig-name descname">__sub__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#Block.__sub__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.Block.__sub__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Overloaded - operator for implicit block creation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>self</strong> (<a class="reference internal" href="#bdsim.Block" title="bdsim.Block"><em>Block</em></a>) – A signal (block) to be added (minuend)</p></li>
+<li><p><strong>other</strong> (<a class="reference internal" href="#bdsim.Block" title="bdsim.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – A signal (block or plug) to be subtracted (subtrahend)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>SUM block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Block subclass</p>
+</dd>
+</dl>
+<p>This method is implicitly invoked by the - operator when the left operand is a <code class="docutils literal notranslate"><span class="pre">Block</span></code>
+and the right operand is a <code class="docutils literal notranslate"><span class="pre">Plug</span></code>, <code class="docutils literal notranslate"><span class="pre">Block</span></code> or constant:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">X</span> <span class="o">-</span> <span class="n">Y</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">X</span> <span class="o">-</span> <span class="n">Y</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">X</span> <span class="o">-</span> <span class="n">C</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">X</span></code> and <code class="docutils literal notranslate"><span class="pre">Y</span></code> are blocks and <code class="docutils literal notranslate"><span class="pre">C</span></code> is a Python or NumPy constant.</p>
+<p>Creates a <code class="docutils literal notranslate"><span class="pre">SUM(&quot;+-&quot;)</span></code> block named <code class="docutils literal notranslate"><span class="pre">_sum.N</span></code> whose inputs are the 
+left and right operands.  For the third case, a new <code class="docutils literal notranslate"><span class="pre">CONSTANT(C)</span></code> block
+named <code class="docutils literal notranslate"><span class="pre">_const.N</span></code> is also created.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Seealso</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#bdsim.Block.__rsub__" title="bdsim.Block.__rsub__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Block.__rsub__()</span></code></a> <a class="reference internal" href="#bdsim.Plug.__sub__" title="bdsim.Plug.__sub__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Plug.__sub__()</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="bdsim.Block.__truediv__">
 <code class="sig-name descname">__truediv__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#Block.__truediv__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.Block.__truediv__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt id="bdsim.Block.__weakref__">
-<code class="sig-name descname">__weakref__</code><a class="headerlink" href="#bdsim.Block.__weakref__" title="Permalink to this definition">¶</a></dt>
-<dd><p>list of weak references to the object (if defined)</p>
+<dd><p>Overloaded / operator for implicit block creation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>self</strong> (<a class="reference internal" href="#bdsim.Block" title="bdsim.Block"><em>Block</em></a>) – A signal (block) to be multiplied (dividend)</p></li>
+<li><p><strong>other</strong> (<a class="reference internal" href="#bdsim.Block" title="bdsim.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – A signal (block or plug) to be divided (divisor)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>PROD or GAIN block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Block subclass</p>
+</dd>
+</dl>
+<p>This method is implicitly invoked by the / operator when the left operand is a <code class="docutils literal notranslate"><span class="pre">Block</span></code>
+and the right operand is a <code class="docutils literal notranslate"><span class="pre">Plug</span></code>, <code class="docutils literal notranslate"><span class="pre">Block</span></code> or constant:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">X</span> <span class="o">/</span> <span class="n">Y</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">X</span> <span class="o">/</span> <span class="n">Y</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">X</span> <span class="o">/</span> <span class="n">C</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">X</span></code> and <code class="docutils literal notranslate"><span class="pre">Y</span></code> are blocks and <code class="docutils literal notranslate"><span class="pre">C</span></code> is a Python or NumPy constant.</p>
+<p>Create a <code class="docutils literal notranslate"><span class="pre">PROD(&quot;**&quot;)</span></code> block named <code class="docutils literal notranslate"><span class="pre">_prod.N</span></code> whose inputs are the 
+left and right operands.</p>
+<p>For the third case, create a <code class="docutils literal notranslate"><span class="pre">GAIN(1/C)</span></code> block named <code class="docutils literal notranslate"><span class="pre">_gain.N</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Signals are assumed to be scalars, but if <code class="docutils literal notranslate"><span class="pre">C</span></code> is a NumPy
+array then the option <code class="docutils literal notranslate"><span class="pre">matrix</span></code> is set to True.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Seealso</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#bdsim.Block.__rtruediv__" title="bdsim.Block.__rtruediv__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Block.__rtruediv__()</span></code></a> <a class="reference internal" href="#bdsim.Plug.__truediv__" title="bdsim.Plug.__truediv__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Plug.__truediv__()</span></code></a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -1274,7 +1829,7 @@ but no inputs.  Its output is a function of parameters and time.</p>
 <dd><p>Create a source block.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p>
+<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>source block base class</p>
@@ -1299,8 +1854,8 @@ but no inputs.  Its output is a function of parameters and time.</p>
 </dd></dl>
 
 </div>
-<div class="section" id="simulink-block">
-<h4>Simulink block<a class="headerlink" href="#simulink-block" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="sink-block">
+<h4>Sink block<a class="headerlink" href="#sink-block" title="Permalink to this headline">¶</a></h4>
 <dl class="py class">
 <dt id="bdsim.SinkBlock">
 <em class="property">class </em><code class="sig-prename descclassname">bdsim.</code><code class="sig-name descname">SinkBlock</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bd</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/components.html#SinkBlock"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#bdsim.SinkBlock" title="Permalink to this definition">¶</a></dt>
@@ -1314,7 +1869,7 @@ graphics.</p>
 <dd><p>Create a sink block.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p>
+<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>sink block base class</p>
@@ -1354,7 +1909,7 @@ such as gain, summation or various mappings.</p>
 <dd><p>Create a function block.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p>
+<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>function block base class</p>
@@ -1394,7 +1949,7 @@ system, either linear or nonlinear.</p>
 <dd><p>Create a transfer function block.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p>
+<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>transfer function block base class</p>
@@ -1454,7 +2009,7 @@ such as gain, summation or various mappings.</p>
 <dd><p>Create a subsystem block.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p>
+<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>subsystem block base class</p>
@@ -1495,7 +2050,7 @@ but no outputs and creates/updates a graphical display.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>movie</strong> (<em>str</em><em>, </em><em>optional</em>) – Save animation in this file in MP4 format, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1573,7 +2128,7 @@ system, either linear or nonlinear.</p>
 <dd><p>Create a clocked block.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block.__init__#bdsim.components.Block">common Block options</a></span></p>
+<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>clocked block base class</p>

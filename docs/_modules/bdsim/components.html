@@ -217,7 +217,7 @@
 <span class="sd">    another block.</span>
 <span class="sd">    &quot;&quot;&quot;</span>      
                 
-<div class="viewcode-block" id="Wire.__init__"><a class="viewcode-back" href="../../internals.html#bdsim.Wire.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="kc">None</span>
@@ -225,7 +225,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">end</span> <span class="o">=</span> <span class="n">end</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="kc">None</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -401,7 +401,7 @@
 
 <div class="viewcode-block" id="Plug.__rshift__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__rshift__">[docs]</a>    <span class="k">def</span> <span class="fm">__rshift__</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Operator for implicit wiring.</span>
+<span class="sd">        Overloaded &gt;&gt; operator for implicit wiring.</span>
 
 <span class="sd">        :param left: A plug to be wired from</span>
 <span class="sd">        :type left: Plug</span>
@@ -442,33 +442,186 @@
         <span class="k">return</span> <span class="n">right</span></div>
 
 <div class="viewcode-block" id="Plug.__add__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__add__">[docs]</a>    <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Overloaded + operator for implicit block creation.</span>
+
+<span class="sd">        :param self: A signal (plug) to be added </span>
+<span class="sd">        :type self: Plug </span>
+<span class="sd">        :param other: A signal (block or plug) to be added</span>
+<span class="sd">        :type other: Block or Plug </span>
+<span class="sd">        :return: SUM block</span>
+<span class="sd">        :rtype: Block subclass</span>
+
+<span class="sd">        This method is implicitly invoked by the + operator when the left operand is a ``Plug``</span>
+<span class="sd">        and the right operand is a ``Plug``, ``Block`` or constant::</span>
+<span class="sd">        </span>
+<span class="sd">            result = X[i] + Y</span>
+<span class="sd">            result = X[i] + Y[j]</span>
+<span class="sd">            result = X[i] + C</span>
+
+<span class="sd">        where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.</span>
+
+<span class="sd">        Create a ``SUM(&quot;++&quot;)`` block named ``_sum.N`` whose inputs are the </span>
+<span class="sd">        left and right operands.  For the third case, a new ``CONSTANT(C)`` block</span>
+<span class="sd">        named ``_const.N`` is also created.</span>
+
+<span class="sd">        :seealso: :meth:`Plug.__radd__` :meth:`Block.__add__`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>
             <span class="c1"># plug + constant, create a CONSTANT block</span>
             <span class="n">other</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">CONSTANT</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">SUM</span><span class="p">(</span><span class="s1">&#39;++&#39;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="Plug.__radd__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__radd__">[docs]</a>    <span class="k">def</span> <span class="fm">__radd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Overloaded + operator for implicit block creation.</span>
+
+<span class="sd">        :param self: A signal (plug) to be added </span>
+<span class="sd">        :type self: Plug </span>
+<span class="sd">        :param other: A signal (block or plug) to be added</span>
+<span class="sd">        :type other: Block or Plug </span>
+<span class="sd">        :return: SUM block</span>
+<span class="sd">        :rtype: Block subclass</span>
+
+<span class="sd">        This method is implicitly invoked by the + operator when the right operand is a ``Plug``</span>
+<span class="sd">        and the left operand is a ``Plug``, ``Block`` or constant::</span>
+<span class="sd">        </span>
+<span class="sd">            result = X + Y[j]</span>
+<span class="sd">            result = X[i] + Y[j]</span>
+<span class="sd">            result = C + Y[j]</span>
+
+<span class="sd">        where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.</span>
+
+<span class="sd">        Create a ``SUM(&quot;++&quot;) block named ``_sum.N`` whose inputs are the </span>
+<span class="sd">        left and right operands.  For the third case, a new ``CONSTANT(C)`` block</span>
+<span class="sd">        named ``_const.N`` is also created.</span>
+
+<span class="sd">        .. note:: The inputs to the summing junction are reversed: right then left operand.</span>
+
+<span class="sd">        :seealso: :meth:`Plug.__add__` :meth:`Block.__radd__`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>
             <span class="c1"># constant + plug, create a CONSTANT block</span>
             <span class="n">other</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">CONSTANT</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">SUM</span><span class="p">(</span><span class="s1">&#39;++&#39;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">))</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">SUM</span><span class="p">(</span><span class="s1">&#39;++&#39;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="Plug.__sub__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__sub__">[docs]</a>    <span class="k">def</span> <span class="fm">__sub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Overloaded - operator for implicit block creation.</span>
+
+<span class="sd">        :param self: A signal (plug) to be added (minuend)</span>
+<span class="sd">        :type self: Plug </span>
+<span class="sd">        :param other: A signal (block or plug) to be subtracted (subtrahend)</span>
+<span class="sd">        :type other: Block or Plug </span>
+<span class="sd">        :return: SUM block</span>
+<span class="sd">        :rtype: Block subclass</span>
+
+<span class="sd">        This method is implicitly invoked by the - operator when the left operand is a ``Plug``</span>
+<span class="sd">        and the right operand is a ``Plug``, ``Block`` or constant::</span>
+<span class="sd">        </span>
+<span class="sd">            result = X[i] - Y</span>
+<span class="sd">            result = X[i] - Y[j]</span>
+<span class="sd">            result = X[i] - C</span>
+
+<span class="sd">        where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.</span>
+
+<span class="sd">        Create a ``SUM(&quot;+-&quot;)`` block named ``_sum.N`` whose inputs are the </span>
+<span class="sd">        left and right operands.  For the third case, a new ``CONSTANT(C)`` block</span>
+<span class="sd">        named ``_const.N`` is also created.</span>
+
+<span class="sd">        :seealso: :meth:`Plug.__rsub__` :meth:`Block.__sub__`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>
             <span class="c1"># plug - constant, create a CONSTANT block</span>
             <span class="n">other</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">CONSTANT</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">SUM</span><span class="p">(</span><span class="s1">&#39;+-&#39;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="Plug.__rsub__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__rsub__">[docs]</a>    <span class="k">def</span> <span class="fm">__rsub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Overloaded - operator for implicit block creation.</span>
+
+<span class="sd">        :param self: A signal (plug) to be added (minuend)</span>
+<span class="sd">        :type self: Plug </span>
+<span class="sd">        :param other: A signal (block or plug) to be subtracted (subtrahend)</span>
+<span class="sd">        :type other: Block or Plug </span>
+<span class="sd">        :return: SUM block</span>
+<span class="sd">        :rtype: Block subclass</span>
+
+<span class="sd">        This method is implicitly invoked by the - operator when the left operand is a ``Plug``</span>
+<span class="sd">        and the right operand is a ``Plug``, ``Block`` or constant::</span>
+<span class="sd">        </span>
+<span class="sd">            result = X - Y[j]</span>
+<span class="sd">            result = X[i] - Y[j]</span>
+<span class="sd">            result = C - Y[j]</span>
+
+<span class="sd">        where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.</span>
+
+<span class="sd">        Create a ``SUM(&quot;+-&quot;)`` block named ``_sum.N`` whose inputs are the </span>
+<span class="sd">        left and right operands.  For the third case, a new ``CONSTANT(C)`` block</span>
+<span class="sd">        named ``_const.N`` is also created.</span>
+
+<span class="sd">        .. note:: The inputs to the summing junction are reversed: right then left operand.</span>
+
+<span class="sd">        :seealso: :meth:`Plug.__sub__` :meth:`Block.__rsub__`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># TODO deal with other cases as per above</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>
             <span class="c1"># constant - plug, create a CONSTANT block</span>
             <span class="n">other</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">CONSTANT</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">SUM</span><span class="p">(</span><span class="s1">&#39;-+&#39;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">))</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">SUM</span><span class="p">(</span><span class="s1">&#39;+-&#39;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="Plug.__neg__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__neg__">[docs]</a>    <span class="k">def</span> <span class="fm">__neg__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Overloaded unary minus operator for implicit block creation.</span>
+
+<span class="sd">        :param self: A signal (plug) to be negated</span>
+<span class="sd">        :type self: Plug </span>
+<span class="sd">        :return: GAIN block</span>
+<span class="sd">        :rtype: Block subclass</span>
+
+<span class="sd">        This method is implicitly invoked by the - operator for unary minus when the operand is a ``Plug``::</span>
+<span class="sd">        </span>
+<span class="sd">            result = -X[i]</span>
+
+<span class="sd">        where ``X`` is a block.</span>
+
+<span class="sd">        Create a ``GAIN(-1)`` block named ``_gain.N`` whose input is the </span>
+<span class="sd">        operand.</span>
+
+<span class="sd">        :seealso: :meth:`Block.__neg__`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">GAIN</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="p">])</span></div>
 
 <div class="viewcode-block" id="Plug.__mul__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__mul__">[docs]</a>    <span class="k">def</span> <span class="fm">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Overloaded * operator for implicit block creation.</span>
+
+<span class="sd">        :param self: A signal (plug) to be multiplied </span>
+<span class="sd">        :type self: Plug </span>
+<span class="sd">        :param other: A signal (block or plug) to be multiplied</span>
+<span class="sd">        :type other: Block or Plug </span>
+<span class="sd">        :return: PROD or GAIN block</span>
+<span class="sd">        :rtype: Block subclass</span>
+
+<span class="sd">        This method is implicitly invoked by the * operator when the left operand is a ``Plug``</span>
+<span class="sd">        and the right operand is a ``Plug``, ``Block`` or constant::</span>
+<span class="sd">        </span>
+<span class="sd">            result = X[i] * Y</span>
+<span class="sd">            result = X[i] * Y[j]</span>
+<span class="sd">            result = X[i] * C</span>
+
+<span class="sd">        where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.</span>
+
+<span class="sd">        Create a ``PROD(&quot;**&quot;)`` block named ``_prod.N`` whose inputs are the </span>
+<span class="sd">        left and right operands.</span>
+
+<span class="sd">        For the third case, create a ``GAIN(C)`` block named ``_gain.N``.</span>
+
+<span class="sd">        .. note:: Signals are assumed to be scalars, but if ``C`` is a NumPy</span>
+<span class="sd">            array then the option ``matrix`` is set to True.</span>
+
+<span class="sd">        :seealso: :meth:`Plug.__rmul__` :meth:`Block.__mul__`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>
             <span class="c1"># plug * constant, create a GAIN block</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">_autogain</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">premul</span><span class="o">=</span><span class="n">matrix</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="p">])</span>
@@ -479,45 +632,109 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">PROD</span><span class="p">(</span><span class="s1">&#39;**&#39;</span><span class="p">,</span> <span class="n">matrix</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">])</span></div>
 
 <div class="viewcode-block" id="Plug.__rmul__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__rmul__">[docs]</a>    <span class="k">def</span> <span class="fm">__rmul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Overloaded * operator for implicit block creation.</span>
+
+<span class="sd">        :param self: A signal (plug) to be multiplied</span>
+<span class="sd">        :type self: Plug </span>
+<span class="sd">        :param other: A signal (block or plug) to be multiplied</span>
+<span class="sd">        :type other: Block or Plug </span>
+<span class="sd">        :return: PROD or GAIN block</span>
+<span class="sd">        :rtype: Block subclass</span>
+
+<span class="sd">        This method is implicitly invoked by the * operator when the right operand is a ``Plug``</span>
+<span class="sd">        and the left operand is a ``Plug``, ``Block`` or constant::</span>
+
+<span class="sd">            result = X * Y[j]</span>
+<span class="sd">            result = X[i] * Y[j]</span>
+<span class="sd">            result = C * Y[j]</span>
+
+<span class="sd">        where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.</span>
+
+<span class="sd">        For the first two cases, a ``PROD(&quot;**&quot;)`` block named ``_prod.N`` whose inputs are the </span>
+<span class="sd">        left and right operands.  </span>
+<span class="sd">        </span>
+<span class="sd">        For the third case, create a ``GAIN(C)`` block named ``_gain.N``.</span>
+
+<span class="sd">        .. note:: Signals are assumed to be scalars, but if ``C`` is a NumPy</span>
+<span class="sd">            array then the option ``matrix`` is set to True.</span>
+
+<span class="sd">        :seealso: :meth:`Plug.__mul__` :meth:`Block.__rmul__`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>
             <span class="c1"># constant * plug, create a CONSTANT block</span>
             <span class="n">matrix</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">_autogain</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">premul</span><span class="o">=</span><span class="n">matrix</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="p">])</span></div>
 
 <div class="viewcode-block" id="Plug.__truediv__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__truediv__">[docs]</a>    <span class="k">def</span> <span class="fm">__truediv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Overloaded / operator for implicit block creation.</span>
+
+<span class="sd">        :param self: A signal (plug) to be multiplied (dividend)</span>
+<span class="sd">        :type self: Plug </span>
+<span class="sd">        :param other: A signal (block or plug) to be divided (divisor)</span>
+<span class="sd">        :type other: Block or Plug </span>
+<span class="sd">        :return: PROD or GAIN block</span>
+<span class="sd">        :rtype: Block subclass</span>
+
+<span class="sd">        This method is implicitly invoked by the / operator when the left operand is a ``Plug``</span>
+<span class="sd">        and the right operand is a ``Plug``, ``Block`` or constant::</span>
+<span class="sd">        </span>
+<span class="sd">            result = X[i] / Y</span>
+<span class="sd">            result = X[i] / Y[j]</span>
+<span class="sd">            result = X[i] / C</span>
+
+<span class="sd">        where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.</span>
+
+<span class="sd">        Create a ``PROD(&quot;**&quot;)`` block named ``_prod.N`` whose inputs are the </span>
+<span class="sd">        left and right operands.</span>
+
+<span class="sd">        For the third case, create a ``GAIN(1/C)`` block named ``_gain.N``.</span>
+
+<span class="sd">        .. note:: Signals are assumed to be scalars, but if ``C`` is a NumPy</span>
+<span class="sd">            array then the option ``matrix`` is set to True.</span>
+
+<span class="sd">        :seealso: :meth:`Plug.__rtruediv__` :meth:`Block.__truediv__`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>
             <span class="c1"># plug / constant , create a CONSTANT block</span>
             <span class="n">other</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">CONSTANT</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">PROD</span><span class="p">(</span><span class="s1">&#39;*/&#39;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="Plug.__rtruediv__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__rtruediv__">[docs]</a>    <span class="k">def</span> <span class="fm">__rtruediv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Overloaded / operator for implicit block creation.</span>
+
+<span class="sd">        :param self: A signal (plug) to be multiplied (dividend)</span>
+<span class="sd">        :type self: Plug </span>
+<span class="sd">        :param other: A signal (block or plug) to be divided (divisor)</span>
+<span class="sd">        :type other: Block or Plug </span>
+<span class="sd">        :return: PROD block</span>
+<span class="sd">        :rtype: Block subclass</span>
+
+<span class="sd">        This method is implicitly invoked by the / operator when the right operand is a ``Plug``</span>
+<span class="sd">        and the left operand is a ``Plug``, ``Block`` or constant::</span>
+
+<span class="sd">            result = X / Y[j]</span>
+<span class="sd">            result = X[i] / Y[j]</span>
+<span class="sd">            result = C / Y[j]</span>
+
+<span class="sd">        where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.</span>
+
+<span class="sd">        For the first two cases, a ``PROD(&quot;*/&quot;)`` block named ``_prod.N`` whose inputs are the </span>
+<span class="sd">        left and right operands.  For the third case, a new CONSTANT block</span>
+<span class="sd">        named ``_const.N`` is also created.</span>
+
+<span class="sd">        .. note:: Signals are assumed to be scalars, but if ``C`` is a NumPy</span>
+<span class="sd">            array then the option ``matrix`` is set to True.</span>
+
+<span class="sd">        :seealso: :meth:`Plug.__truediv__` :meth:`Block.__rtruediv__`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>
             <span class="c1"># constant / plug, create a CONSTANT block</span>
             <span class="n">other</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">CONSTANT</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">PROD</span><span class="p">(</span><span class="s1">&#39;/*&#39;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">))</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">PROD</span><span class="p">(</span><span class="s1">&#39;*/&#39;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="p">))</span></div>
 
-<div class="viewcode-block" id="Plug.__setitem__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__setitem__">[docs]</a>    <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">src</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Convert a LHS block slice reference to a wire.</span>
-
-<span class="sd">        :param port: Port number</span>
-<span class="sd">        :type port: int</span>
-<span class="sd">        :param src: the RHS</span>
-<span class="sd">        :type src: Block or Plug</span>
-
-<span class="sd">        Used to create a wired connection by assignment, for example::</span>
-
-<span class="sd">            c = bd.CONSTANT(1)</span>
-
-<span class="sd">            c[0] = x</span>
-
-<span class="sd">        Ths method is invoked to create a wire from ``x`` to input port 0 of</span>
-<span class="sd">        the constant block ``c``.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># b[port] = src</span>
-        <span class="c1"># src --&gt; b[port]</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Plug connecting&#39;</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">port</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="bp">self</span><span class="p">[</span><span class="n">port</span><span class="p">])</span></div>
 
 <div class="viewcode-block" id="Plug.__repr__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__repr__">[docs]</a>    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -840,12 +1057,13 @@
 
 <span class="sd">        Used to create a wired connection by assignment, for example::</span>
 
-<span class="sd">            c = bd.CONSTANT(1)</span>
+<span class="sd">            X[0] = Y</span>
 
-<span class="sd">            c[0] = x</span>
+<span class="sd">        where ``X`` and ``Y`` are blocks. This method is implicitly invoked and</span>
+<span class="sd">        creates a wire from ``Y`` to input port 0 of ``X``.</span>
 
-<span class="sd">        Ths method is invoked to create a wire from ``x`` to port 0 of</span>
-<span class="sd">        the constant block ``c``.</span>
+<span class="sd">        .. note:: The square brackets on the left-hand-side is critical, and</span>
+<span class="sd">            ``X = Y`` will simply overwrite the reference to ``X``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># b[port] = src</span>
         <span class="c1"># src --&gt; b[port]</span>
@@ -952,6 +1170,34 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">GAIN</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Block.__add__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__add__">[docs]</a>    <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Overloaded + operator for implicit block creation.</span>
+
+<span class="sd">        :param self: A signal (block) to be added </span>
+<span class="sd">        :type self: Block </span>
+<span class="sd">        :param other: A signal (block or plug) to be added</span>
+<span class="sd">        :type other: Block or Plug </span>
+<span class="sd">        :return: SUM block</span>
+<span class="sd">        :rtype: Block subclass</span>
+
+<span class="sd">        This method is implicitly invoked by the + operator</span>
+<span class="sd">        when the right operand is a ``Block``</span>
+<span class="sd">        and the left operand is a ``Plug``, ``Block`` or constant::</span>
+<span class="sd">        </span>
+<span class="sd">            result = X + Y</span>
+<span class="sd">            result = X + Y[j]</span>
+<span class="sd">            result = X + C</span>
+
+<span class="sd">        where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.</span>
+
+<span class="sd">        Creates a ``SUM(&quot;++&quot;) block named ``_sum.N`` whose inputs are the </span>
+<span class="sd">        left and right operands.  For the third case, a new ``CONSTANT(C)`` block</span>
+<span class="sd">        named ``_const.N`` is also created.</span>
+
+<span class="sd">        .. note:: The inputs to the summing junction are reversed: right then left operand.</span>
+
+<span class="sd">        :seealso: :meth:`Block.__radd__` :meth:`Plug.__add__` </span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># value + value, create a SUM block</span>
         <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;_sum.</span><span class="si">{:d}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">n_auto_sum</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">n_auto_sum</span> <span class="o">+=</span> <span class="mi">1</span>
@@ -961,6 +1207,34 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">SUM</span><span class="p">(</span><span class="s1">&#39;++&#39;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Block.__radd__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__radd__">[docs]</a>    <span class="k">def</span> <span class="fm">__radd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Overloaded + operator for implicit block creation.</span>
+
+<span class="sd">        :param self: A signal (block) to be added </span>
+<span class="sd">        :type self: Block </span>
+<span class="sd">        :param other: A signal (block or plug) to be added</span>
+<span class="sd">        :type other: Block or Plug </span>
+<span class="sd">        :return: SUM block</span>
+<span class="sd">        :rtype: Block subclass</span>
+
+<span class="sd">        This method is implicitly invoked by the + operator</span>
+<span class="sd">        when the right operand is a ``Block``</span>
+<span class="sd">        and the left operand is a ``Plug``, ``Block`` or constant::</span>
+<span class="sd">        </span>
+<span class="sd">            result = X + Y[j]</span>
+<span class="sd">            result = X[i] + Y[j]</span>
+<span class="sd">            result = C + Y[j]</span>
+
+<span class="sd">        where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.</span>
+
+<span class="sd">        Creates a ``SUM(&quot;++&quot;) block named ``_sum.N`` whose inputs are the </span>
+<span class="sd">        left and right operands.  For the third case, a new ``CONSTANT(C)`` block</span>
+<span class="sd">        named ``_const.N`` is also created.</span>
+
+<span class="sd">        .. note:: The inputs to the summing junction are reversed: right then left operand.</span>
+
+<span class="sd">        :seealso: :meth:`Block.__add__` :meth:`Plug._r_add__`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># value + value, create a SUM block</span>
         <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;_sum.</span><span class="si">{:d}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">n_auto_sum</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">n_auto_sum</span> <span class="o">+=</span> <span class="mi">1</span>
@@ -970,6 +1244,31 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">SUM</span><span class="p">(</span><span class="s1">&#39;++&#39;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Block.__sub__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__sub__">[docs]</a>    <span class="k">def</span> <span class="fm">__sub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Overloaded - operator for implicit block creation.</span>
+
+<span class="sd">        :param self: A signal (block) to be added (minuend)</span>
+<span class="sd">        :type self: Block </span>
+<span class="sd">        :param other: A signal (block or plug) to be subtracted (subtrahend)</span>
+<span class="sd">        :type other: Block or Plug </span>
+<span class="sd">        :return: SUM block</span>
+<span class="sd">        :rtype: Block subclass</span>
+
+<span class="sd">        This method is implicitly invoked by the - operator when the left operand is a ``Block``</span>
+<span class="sd">        and the right operand is a ``Plug``, ``Block`` or constant::</span>
+<span class="sd">        </span>
+<span class="sd">            result = X - Y</span>
+<span class="sd">            result = X - Y[j]</span>
+<span class="sd">            result = X - C</span>
+
+<span class="sd">        where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.</span>
+
+<span class="sd">        Creates a ``SUM(&quot;+-&quot;)`` block named ``_sum.N`` whose inputs are the </span>
+<span class="sd">        left and right operands.  For the third case, a new ``CONSTANT(C)`` block</span>
+<span class="sd">        named ``_const.N`` is also created.</span>
+
+<span class="sd">        :seealso: :meth:`Block.__rsub__` :meth:`Plug.__sub__`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># value - value, create a SUM block</span>
         <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;_sum.</span><span class="si">{:d}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">n_auto_sum</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">n_auto_sum</span> <span class="o">+=</span> <span class="mi">1</span>
@@ -979,6 +1278,33 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">SUM</span><span class="p">(</span><span class="s1">&#39;+-&#39;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Block.__rsub__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__rsub__">[docs]</a>    <span class="k">def</span> <span class="fm">__rsub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Overloaded - operator for implicit block creation.</span>
+
+<span class="sd">        :param self: A signal (block) to be added (minuend)</span>
+<span class="sd">        :type self: Block </span>
+<span class="sd">        :param other: A signal (block or plug) to be subtracted (subtrahend)</span>
+<span class="sd">        :type other: Block or Plug </span>
+<span class="sd">        :return: SUM block</span>
+<span class="sd">        :rtype: Block subclass</span>
+
+<span class="sd">        This method is implicitly invoked by the - operator when the left operand is a ``Block``</span>
+<span class="sd">        and the right operand is a ``Plug``, ``Block`` or constant::</span>
+<span class="sd">        </span>
+<span class="sd">            result = X - Y</span>
+<span class="sd">            result = X[i] - Y</span>
+<span class="sd">            result = C - Y</span>
+
+<span class="sd">        where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.</span>
+
+<span class="sd">        Creates a ``SUM(&quot;+-&quot;)`` block named ``_sum.N`` whose inputs are the </span>
+<span class="sd">        left and right operands.  For the third case, a new ``CONSTANT(C)`` block</span>
+<span class="sd">        named ``_const.N`` is also created.</span>
+
+<span class="sd">        .. note:: The inputs to the summing junction are reversed: right then left operand.</span>
+
+<span class="sd">        :seealso: :meth:`Block.__sub__` :meth:`Plug.__rsub__`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># value - value, create a SUM block</span>
         <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;_sum.</span><span class="si">{:d}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">n_auto_sum</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">n_auto_sum</span> <span class="o">+=</span> <span class="mi">1</span>
@@ -988,9 +1314,57 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">SUM</span><span class="p">(</span><span class="s1">&#39;+-&#39;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Block.__neg__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__neg__">[docs]</a>    <span class="k">def</span> <span class="fm">__neg__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Overloaded unary minus operator for implicit block creation.</span>
+
+<span class="sd">        :param self: A signal (block) to be negated</span>
+<span class="sd">        :type self: Block </span>
+<span class="sd">        :return: GAIN block</span>
+<span class="sd">        :rtype: Block subclass</span>
+
+<span class="sd">        This method is implicitly invoked by the - operator for unary minus when the operand is a ``Block``::</span>
+<span class="sd">        </span>
+<span class="sd">            result = -X</span>
+
+<span class="sd">        where ``X`` is a block.</span>
+
+<span class="sd">        Creates a ``GAIN(-1)`` block named ``_gain.N`` whose input is the </span>
+<span class="sd">        operand.</span>
+
+<span class="sd">        :seealso: :meth:`Plug.__neg__`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_autogain</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="p">])</span></div>
 
 <div class="viewcode-block" id="Block.__mul__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__mul__">[docs]</a>    <span class="k">def</span> <span class="fm">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Overloaded * operator for implicit block creation.</span>
+
+<span class="sd">        :param self: A signal (block) to be multiplied </span>
+<span class="sd">        :type self: Block </span>
+<span class="sd">        :param other: A signal (block or plug) to be multiplied</span>
+<span class="sd">        :type other: Block or Plug </span>
+<span class="sd">        :return: PROD or GAIN block</span>
+<span class="sd">        :rtype: Block subclass</span>
+
+<span class="sd">        This method is implicitly invoked by the * operator when the left operand is a ``Block``</span>
+<span class="sd">        and the right operand is a ``Plug``, ``Block`` or constant::</span>
+<span class="sd">        </span>
+<span class="sd">            result = X * Y</span>
+<span class="sd">            result = X * Y[j]</span>
+<span class="sd">            result = X * C</span>
+
+<span class="sd">        where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.</span>
+
+<span class="sd">        Create a ``PROD(&quot;**&quot;)`` block named ``_prod.N`` whose inputs are the </span>
+<span class="sd">        left and right operands.</span>
+
+<span class="sd">        For the third case, create a ``GAIN(C)`` block named ``_gain.N``.</span>
+
+<span class="sd">        .. note:: Signals are assumed to be scalars, but if ``C`` is a NumPy</span>
+<span class="sd">            array then the option ``matrix`` is set to True.</span>
+
+<span class="sd">        :seealso: :meth:`Block.__rmul__` :meth:`Plug.__mul__`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">matrix</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>
             <span class="c1"># block * constant, create a GAIN block</span>
@@ -1003,6 +1377,35 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">PROD</span><span class="p">(</span><span class="s1">&#39;**&#39;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">],</span> <span class="n">matrix</span><span class="o">=</span><span class="n">matrix</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Block.__rmul__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__rmul__">[docs]</a>    <span class="k">def</span> <span class="fm">__rmul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Overloaded * operator for implicit block creation.</span>
+
+<span class="sd">        :param self: A signal (block) to be multiplied</span>
+<span class="sd">        :type self: Block </span>
+<span class="sd">        :param other: A signal (block or plug) to be multiplied</span>
+<span class="sd">        :type other: Block or Plug </span>
+<span class="sd">        :return: PROD or GAIN block</span>
+<span class="sd">        :rtype: Block subclass</span>
+
+<span class="sd">        This method is implicitly invoked by the * operator when the right operand is a ``Block``</span>
+<span class="sd">        and the left operand is a ``Plug``, ``Block`` or constant::</span>
+
+<span class="sd">            result = X * Y</span>
+<span class="sd">            result = X[i] * Y</span>
+<span class="sd">            result = C * Y</span>
+
+<span class="sd">        where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.</span>
+
+<span class="sd">        For the first two cases, a ``PROD(&quot;**&quot;)`` block named ``_prod.N`` whose inputs are the </span>
+<span class="sd">        left and right operands.  </span>
+<span class="sd">        </span>
+<span class="sd">        For the third case, create a ``GAIN(C)`` block named ``_gain.N``.</span>
+
+<span class="sd">        .. note:: Signals are assumed to be scalars, but if ``C`` is a NumPy</span>
+<span class="sd">            array then the option ``matrix`` is set to True.</span>
+
+<span class="sd">        :seealso: :meth:`Block.__mul__` :meth:`Plug.__rmul__` </span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">matrix</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>
             <span class="c1"># constant * block, create a GAIN block</span>
@@ -1010,6 +1413,35 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_autogain</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">premul</span><span class="o">=</span><span class="n">matrix</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="p">])</span></div>
  
 <div class="viewcode-block" id="Block.__truediv__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__truediv__">[docs]</a>    <span class="k">def</span> <span class="fm">__truediv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Overloaded / operator for implicit block creation.</span>
+
+<span class="sd">        :param self: A signal (block) to be multiplied (dividend)</span>
+<span class="sd">        :type self: Block </span>
+<span class="sd">        :param other: A signal (block or plug) to be divided (divisor)</span>
+<span class="sd">        :type other: Block or Plug </span>
+<span class="sd">        :return: PROD or GAIN block</span>
+<span class="sd">        :rtype: Block subclass</span>
+
+<span class="sd">        This method is implicitly invoked by the / operator when the left operand is a ``Block``</span>
+<span class="sd">        and the right operand is a ``Plug``, ``Block`` or constant::</span>
+<span class="sd">        </span>
+<span class="sd">            result = X / Y</span>
+<span class="sd">            result = X / Y[j]</span>
+<span class="sd">            result = X / C</span>
+
+<span class="sd">        where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.</span>
+
+<span class="sd">        Create a ``PROD(&quot;**&quot;)`` block named ``_prod.N`` whose inputs are the </span>
+<span class="sd">        left and right operands.</span>
+
+<span class="sd">        For the third case, create a ``GAIN(1/C)`` block named ``_gain.N``.</span>
+
+<span class="sd">        .. note:: Signals are assumed to be scalars, but if ``C`` is a NumPy</span>
+<span class="sd">            array then the option ``matrix`` is set to True.</span>
+
+<span class="sd">        :seealso: :meth:`Block.__rtruediv__` :meth:`Plug.__truediv__` </span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># value / value, create a PROD block</span>
         <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;_prod.</span><span class="si">{:d}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">n_auto_prod</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">n_auto_prod</span> <span class="o">+=</span> <span class="mi">1</span>
@@ -1021,6 +1453,34 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">PROD</span><span class="p">(</span><span class="s1">&#39;*/&#39;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">),</span> <span class="n">matrix</span><span class="o">=</span><span class="n">matrix</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Block.__rtruediv__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__rtruediv__">[docs]</a>    <span class="k">def</span> <span class="fm">__rtruediv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Overloaded / operator for implicit block creation.</span>
+
+<span class="sd">        :param self: A signal (block) to be multiplied (dividend)</span>
+<span class="sd">        :type self: Block </span>
+<span class="sd">        :param other: A signal (block or plug) to be divided (divisor)</span>
+<span class="sd">        :type other: Block or Plug </span>
+<span class="sd">        :return: PROD block</span>
+<span class="sd">        :rtype: Block subclass</span>
+
+<span class="sd">        This method is implicitly invoked by the / operator when the right operand is a ``Block``</span>
+<span class="sd">        and the left operand is a ``Plug``, ``Block`` or constant::</span>
+
+<span class="sd">            result = X / Y</span>
+<span class="sd">            result = X[i] / Y</span>
+<span class="sd">            result = C / Y</span>
+
+<span class="sd">        where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.</span>
+
+<span class="sd">        For the first two cases, a ``PROD(&quot;*/&quot;)`` block named ``_prod.N`` whose inputs are the </span>
+<span class="sd">        left and right operands.  For the third case, a new CONSTANT block</span>
+<span class="sd">        named ``_const.N`` is also created.</span>
+
+<span class="sd">        .. note:: Signals are assumed to be scalars, but if ``C`` is a NumPy</span>
+<span class="sd">            array then the option ``matrix`` is set to True.</span>
+
+<span class="sd">        :seealso: :meth:`Block.__truediv__` :meth:`Plug.__rtruediv__`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># value / value, create a PROD block</span>
         <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;_prod.</span><span class="si">{:d}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">n_auto_prod</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">n_auto_prod</span> <span class="o">+=</span> <span class="mi">1</span>
