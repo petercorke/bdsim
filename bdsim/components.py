@@ -288,20 +288,33 @@ class Plug:
         Return port numbers.
         
         :return: Port numbers
-        :rtype: int or list of int
+        :rtype: list of int
         
-        If the port is a simple index, eg. ``[2]`` returns 2.
+        If the port is a simple index, eg. ``[2]`` returns [2].
         
         If the port is a slice, eg. ``[0:3]``, returns [0, 1, 2].
-
+        For the case ``[2:]`` the upper bound is the maximum number of input
+        or output ports of the block.
         """
-        if isinstance(self.port, slice):
-            if self.port.step is None:
-                return range(self.port.start, self.port.stop)
+        if isinstance(self.port, int):
+            # easy case, this plug is a single wire
+            return [self.port]
+
+        elif isinstance(self.port, slice):
+            # this plug is a bunch of wires
+            start = self.port.start or 0
+            step = self.port.step or 1
+            if self.port.stop is None:
+                if self.type == 'start':
+                    stop = self.block.nout
+                else:
+                    stop = self.block.nin
             else:
-                return range(self.port.start, self.port.stop, self.port.step)
+                stop = self.port.stop
+
+            return range(start, stop, step)
         else:
-            return self.port
+            return ValueError('bad plug index')
 
     @property
     def width(self):
