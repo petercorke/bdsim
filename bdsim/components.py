@@ -1164,7 +1164,7 @@ class Block:
 
         .. note:: The inputs to the summing junction are reversed: right then left operand.
 
-        :seealso: :meth:`Block.__add__` :meth:`Plug._r_add__`
+        :seealso: :meth:`Block.__add__` :meth:`Plug.__radd__`
         """
         # value + value, create a SUM block
         name = "_sum.{:d}".format(self.bd.n_auto_sum)
