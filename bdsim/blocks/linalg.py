@@ -52,7 +52,9 @@ class Inverse(FunctionBlock):
         non-square matrix the pseudo-inverse is used.  The condition number is
         output on the second port.
 
-        :seealso: :func:`numpy.linalg.inv` :func:`numpy.linalg.pinv` :func:`numpy.linalg.cond`
+        :seealso: `numpy.linalg.inv <https://numpy.org/doc/stable/reference/generated/numpy.linalg.inv.html>`_,
+            `numpy.linalg.pinv <https://numpy.org/doc/stable/reference/generated/numpy.linalg.pinv.html>`_,
+            `numpy.linalg.cond <https://numpy.org/doc/stable/reference/generated/numpy.linalg.cond.html>`_
         """
         super().__init__(**blockargs)
         self.type = 'inverse'
@@ -120,7 +122,7 @@ class Transpose(FunctionBlock):
             - An input 2D-array column vector of shape (N,1) becomes a 2D-array
              row vector with shape (1,N).
 
-        :seealso: :func:`numpy.transpose`
+        :seealso: `numpy.linalg.transpose <https://numpy.org/doc/stable/reference/generated/numpy.linalg.transpose.html>`_
         """
         super().__init__(**blockargs)
         self.type = 'transpose'
@@ -172,7 +174,7 @@ class Norm(FunctionBlock):
 
         Computes the specified norm for a 1D- or 2D-array.
 
-        :seealso: :func:`numpy.linalg.norm`
+        :seealso: `numpy.linalg.norm <https://numpy.org/doc/stable/reference/generated/numpy.linalg.norm.html>`_
         """
         super().__init__(**blockargs)
         self.type = 'norm'
@@ -217,7 +219,7 @@ class Flatten(FunctionBlock):
 
         Flattens the incoming array in either row major ('C') or column major ('F') order.
         
-        :seealso: :func:`numpy.flatten`
+        :seealso: `numpy.flatten <https://numpy.org/doc/stable/reference/generated/numpy.flatten.html>`_
         """
         super().__init__(**blockargs)
         self.type = 'flatten'
@@ -434,7 +436,7 @@ class Det(FunctionBlock):
         
         Compute the matrix determinant.
 
-        :seealso: :func:`numpy.linalg.inv`
+        :seealso: `numpy.linalg.det <https://numpy.org/doc/stable/reference/generated/numpy.linalg.det.html>`_
         """
         super().__init__(**blockargs)
         self.type = 'det'
@@ -472,7 +474,7 @@ class Cond(FunctionBlock):
         :return: A COND block
         :rtype: Cond instance
         
-        :seealso: :func:`numpy.linalg.cond`
+        :seealso: `numpy.linalg.cond <https://numpy.org/doc/stable/reference/generated/numpy.linalg.cond.html>`_
         """
         super().__init__(**blockargs)
         self.type = 'cond'
