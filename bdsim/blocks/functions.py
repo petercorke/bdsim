@@ -13,6 +13,7 @@ import numpy as np
 import scipy.interpolate
 import math
 import inspect
+import spatialmath.base as smb
 
 from bdsim.components import FunctionBlock
 
@@ -44,15 +45,22 @@ class Sum(FunctionBlock):
     nin = -1
     nout = 1
 
-    def __init__(self, signs='++', angles=False, **blockargs):
+    _modefuncs = {
+            'r': lambda x: x,
+            'c': smb.wrap_mpi_pi,
+            'C': smb.wrap_0_2pi,
+            'L': smb.wrap_0_pi
+    }
+
+    def __init__(self, signs='++', mode=None, **blockargs):
 
         """
         Summing junction.
 
         :param signs: signs associated with input ports, accepted characters: + or -, defaults to '++'
         :type signs: str, optional
-        :param angles: the signals are angles, wraps to [-pi,pi], defaults to False
-        :type angles: bool, optional
+        :param mode: controls angle wrapping per element, defaults to None
+        :type mode: str, optional
         :param blockargs: common `Block options <https://petercorke.github.io/bdsim/bdsim.html?highlight=block.__init__#bdsim.components.Block.__init__`_
         :type blockargs: dict
         :return: A SUM block
@@ -67,11 +75,20 @@ class Sum(FunctionBlock):
 
         is a 3-input summing junction which computes port0 - port1 + port2.
 
-        Implicit SUM blocks are created by::
+        If some elements are angles then ``mode`` controls, per element, how
+        they are wrapped.  The elements of the string can be
 
-            sum = block1 + block2
+            +------------+----------------------------------+
+            | character  | purpose                          |
+            +------------+----------------------------------+
+            | r          | real number, don't wrap          |
+            | c          | angle on circle, wrap to [-π, π) |
+            | C          | angle on circle, wrap to [0, 2π) |
+            | L          | latitude angle, wrap to [0, π]   |
+            +------------+----------------------------------+
 
-        which will create a summation block named "_sum.N".
+        For example if ``mode="rc"`` then a 2-element array would have its
+        second element wrapped to the range [-π, π).
 
         .. note:: The signals must be compatible, all scalars, or all arrays 
             of the same shape.
@@ -81,7 +98,7 @@ class Sum(FunctionBlock):
         assert isinstance(signs, str), 'first argument must be signs string'
         assert all([x in '+-' for x in signs]), 'invalid sign'
         self.signs = signs
-        self.angles = angles
+        self.mode = mode
         
         
     def output(self, t=None):
@@ -100,8 +117,13 @@ class Sum(FunctionBlock):
                 else:
                     sum = sum + input
         
-        if self.angles:
-            sum = np.mod(sum + math.pi, 2 * math.pi) - math.pi
+        if self.mode is not None:
+            if len(self.mode) != len(sum):
+                raise ValueError('length of mode string doesnt match')
+            if isinstance(sum, np.ndarray):
+                sum = np.array([self._modefuncs[m](x) for (m, x) in zip(self.mode, sum)])
+            else:
+                sum = self._modefuncs[mode[0]](sum)
 
         return [sum]
 
@@ -150,12 +172,6 @@ class Prod(FunctionBlock):
             prod = PROD('*/*')
             
         is a 3-input product junction which computes port0 / port 1 * port2.
-
-        Implicit PROD blocks are created by::
-
-            sum = block1  block2
-
-        which will create a summation block named "_prod.N".
 
         .. note::
             - The inputs can be scalars or NumPy arrays.  
