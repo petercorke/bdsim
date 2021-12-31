@@ -29,6 +29,7 @@ class InterfaceWindow(QMainWindow):
         # The name of the current model is initially set to None, this is then
         # overwritten when the model is saved
         self.filename = None
+        self.bgmode = 0  # default background/grid mode
 
         self.initUI(resolution, debug)
 
@@ -42,10 +43,10 @@ class InterfaceWindow(QMainWindow):
         self.fontSizeBox = QSpinBox()
         self.runButtonParameters = {
             'SimTime' : 10,
-            'Graphics' : False,
-            'Animation' : False,
+            'Graphics' : True,
+            'Animation' : True,
             'Verbose' : False,
-            'Progress' : False,
+            'Progress' : True,
             'Debug' : ""
         }
 
@@ -320,6 +321,18 @@ class InterfaceWindow(QMainWindow):
 
         main_block_found = False
 
+        args = []
+        for key, value in self.runButtonParameters.items():
+            arg = key.lower()
+            if isinstance(value, bool):
+                if not arg:
+                    arg = 'no-' + arg
+                args.append('--' + arg)
+            else:
+                if isinstance(value, str):
+                    value = '"' + value + '"'
+                args.append(f'--{arg}={value}')
+        print(args)
 
         # Go through blocks within scene, if a main block exists, extract the file_name from the main block
         for block in self.centralWidget().scene.blocks:
@@ -343,6 +356,7 @@ class InterfaceWindow(QMainWindow):
                 command = ['python']
                 if self.args.pdb:
                     command.extend(['-m', 'pdb'])
+                command.extend(args)
                 command.extend([main_file_name, model_name])
                 print(f"{datetime.datetime.now()}:: spawning {' '.join(command)}")
 
@@ -353,12 +367,13 @@ class InterfaceWindow(QMainWindow):
                     print(f"failed to spawn subprocess")
                     return
                     
-
         if not main_block_found:
             model_name = os.path.basename(self.filename)
             print("#" * 100)
 
             command = ['bdrun', model_name]
+            command.extend(args)
+
             print(f"{datetime.datetime.now()}:: spawning {' '.join(command)}")
 
             # spawn with Popen which is non-blocking
