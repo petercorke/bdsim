@@ -790,7 +790,9 @@ class BlockDiagram:
 
         Tell all blocks to take action on new inputs by invoking their
         ``step`` method and passing the ``state`` object.  Used to save
-        results to a figure or file
+        results to a figure or file.
+
+        Called at the end of every integration interval.
 
         .. note:: 
             - if ``graphics`` is False, Graphics blocks are not called
@@ -799,12 +801,13 @@ class BlockDiagram:
         # TODO could be done by output method, even if no outputs
         
         for b in self.blocklist:
-            if state.options.graphics and b.isgraphics:
-                try:
-                    b.step(state=state)
-                    state.count += 1
-                except:
-                    self._error_handler('step', b)
+            if  b.isgraphics and not state.options.graphics:
+                continue  # skip graphics blocks
+            try:
+                b.step(state=state)
+                state.count += 1
+            except:
+                self._error_handler('step', b)
 
     def deriv(self):
         """
@@ -863,7 +866,7 @@ class BlockDiagram:
                 b._x = b._x0
 
 
-    def done(self, graphics=False, **kwargs):
+    def done(self, graphics=False):
         """
         Finishup all blocks
 
@@ -882,7 +885,7 @@ class BlockDiagram:
             if b.isgraphics and not graphics:
                 continue
             try:
-                b.done(**kwargs)
+                b.done()
             except:
                 self._error_handler('block.done', b)
         
