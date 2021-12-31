@@ -32,13 +32,14 @@ class Constant(SourceBlock):
     nin = 0
     nout = 1
 
-    def __init__(self, value=None, **blockargs):
+    def __init__(self, value=0, **blockargs):
         """
         Constant value.
 
-        :param value: the constant, defaults to None
+        :param value: the constant, defaults to 0
         :type value: any, optional
         :param blockargs: |BlockOptions|
+        :type blockargs: dict
         :return: a CONSTANT block
         :rtype: Constant instance
 
@@ -121,11 +122,11 @@ class WaveForm(SourceBlock):
         """
         Waveform as function of time.
 
-        :param wave: type of waveform to generate, one of: 'sine', 'square', 'triangle', defaults to 'square'
+        :param wave: type of waveform to generate, one of: 'sine', 'square' [default], 'triangle'
         :type wave: str, optional
         :param freq: frequency, defaults to 1
         :type freq: float, optional
-        :param unit: frequency unit, one of: 'rad/s', 'Hz', defaults to 'Hz'
+        :param unit: frequency unit, one of: 'rad/s', 'Hz' [default]
         :type unit: str, optional
         :param amplitude: amplitude, defaults to 1
         :type amplitude: float, optional
