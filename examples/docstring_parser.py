@@ -18,7 +18,7 @@ def docstring_parser():
     excludevars = ('kwargs', 'inputs')
 
     # sim = bdsim.BDSim(verbose=True)
-    for package in ('bdsim', 'roboticstoolbox'):
+    for package in ('bdsim', 'roboticstoolbox', 'machinevisiontoolbox'):
         spec = importlib.util.find_spec('.blocks', package=package)
         m = spec.loader.load_module()
         path = m.__path__
