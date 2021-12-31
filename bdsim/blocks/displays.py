@@ -222,10 +222,11 @@ class Scope(GraphicsBlock):
         # inputs are set
         self.tdata = np.append(self.tdata, state.t)
 
-        if self.vector:
+        if self.vector > 0:
             # vector input on the input
             data = self.inputs[0]
-            assert len(data) == self.nplots, 'vector input wrong width'
+            assert len(data) == self.vector, 'vector parameter doesnt match input'
+            assert len(data) == self.nplots, 'number of plots dosent match inputq'
             for i,input in enumerate(data):
                 self.ydata[i] = np.append(self.ydata[i], input)
         else:
