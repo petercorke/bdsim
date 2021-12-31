@@ -59,7 +59,7 @@ class Sum(FunctionBlock):
 
         :param signs: signs associated with input ports, accepted characters: + or -, defaults to '++'
         :type signs: str, optional
-        :param mode: controls angle wrapping per element, defaults to None
+        :param mode: controls angle wrapping per element, accepted characters r or c or C or L, defaults to None
         :type mode: str, optional
         :param blockargs: common `Block options <https://petercorke.github.io/bdsim/bdsim.html?highlight=block.__init__#bdsim.components.Block.__init__`_
         :type blockargs: dict
@@ -118,12 +118,12 @@ class Sum(FunctionBlock):
                     sum = sum + input
         
         if self.mode is not None:
-            if len(self.mode) != len(sum):
-                raise ValueError('length of mode string doesnt match')
             if isinstance(sum, np.ndarray):
+                if len(self.mode) != len(sum):
+                    raise ValueError('length of mode string doesnt match')
                 sum = np.array([self._modefuncs[m](x) for (m, x) in zip(self.mode, sum)])
             else:
-                sum = self._modefuncs[mode[0]](sum)
+                sum = self._modefuncs[self.mode[0]](sum)
 
         return [sum]
 
