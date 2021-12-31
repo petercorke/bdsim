@@ -484,17 +484,20 @@ class Interface(QWidget):
 
         # Find all other images in the current directory (files ending with .png)
         # as bdedit only saves images with .png extensions
-        images_in_dir = []
-        dir_list = os.listdir(os.path.dirname(picture_path))
-        for img in fnmatch.filter(dir_list, "*.png"):
-            images_in_dir.append(img)
+        # HACK
+        # images_in_dir = []
+        # dir_list = os.listdir(os.path.dirname(picture_path))
+        # for img in fnmatch.filter(dir_list, "*.png"):
+        #     images_in_dir.append(img)
 
-        # Check if saving current model under the model name would create a duplicate
+        # # Check if saving current model under the model name would create a duplicate
+        # no_duplicates = True
+        # for image in images_in_dir:
+        #     if name_to_save == image:
+        #         no_duplicates = False
+        #         break
+        #HACK
         no_duplicates = True
-        for image in images_in_dir:
-            if name_to_save == image:
-                no_duplicates = False
-                break
 
         # If no duplicates are found, save screenshot under current model name
         if no_duplicates:

@@ -488,21 +488,25 @@ class InterfaceWindow(QMainWindow):
 
     def miscToggleBackground(self):
         """
-        This method is called to toggle the type of background drawn within
-        the ``Scene``. The options are:
-
-        - Enabled: light grey background with grid lines
-        - Disabled: white background with no grid lines
+        This method is called to cycle through various background and grid 
+        options.
         """
-
-        # The mode of the Scene is called to be updated to whatever value was
-        # selected from the grid_mode dropdown menu (Light, Dark, Off)
-        self.interface.scene.grScene.updateMode(self.actDisableBackground.isChecked())
-        # For each block within the Scene, the mode of their outline is also updated
-        for eachBlock in self.interface.scene.blocks:
-            # If the block has a mode (Connector Blocks do not)
-            if not (eachBlock.block_type == "CONNECTOR" or eachBlock.block_type == "Connector"):
-                eachBlock.grBlock.updateMode(self.actDisableBackground.isChecked())
+        # possible modes
+        modes = [
+            ('grey', True), 
+            ('white', True), 
+            ('white', False)
+            ]
+        
+        self.bgmode = (self.bgmode + 1) % len(modes)  # update current mode
+        mode = modes[self.bgmode]
+        self.interface.scene.grScene.updateBackgroundMode(*mode)
+        # # For each block within the Scene, the mode of their outline is also updated
+        # for eachBlock in self.interface.scene.blocks:
+        #     # If the block has a mode (Connector Blocks do not)
+        #     if not (eachBlock.block_type == "CONNECTOR" or eachBlock.block_type == "Connector"):
+        #         # eachBlock.grBlock.updateBackgroundMode(self.actDisableBackground.isChecked())
+        #         eachBlock.grBlock.updateBackgroundMode(mode[0], mode[1])
 
     # -----------------------------------------------------------------------------
     def textAlignment(self, alignment):

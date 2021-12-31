@@ -76,18 +76,18 @@ class GraphicsScene(QGraphicsScene):
         self.setSceneRect(-width//2, -height//2, width, height)
 
     # -----------------------------------------------------------------------------
-    def updateMode(self, value):
-        """
-        This method toggles the background mode for the GraphicsScene.
-        When background is True [default] background is grey with grid lines.
-        When background is False, background is white without grid lines.
+    def updateBackgroundMode(self, bgcolor, grid):
+        """        Set the background color and grid status for the GraphicsScene.
 
-        :param value: the boolean value to keep or disable background (True/False)
-        :type value: bool, required
+        :param bgcolor: the background color
+        :type bgcolor: str, required
+        :param grid: grid drawn
+        :type grid: bool, required
         """
 
         # Set the mode of the background and update the GraphicsScene
-        self.mode = value
+        self.bgcolor = bgcolor
+        self.grid = grid
         self.update()
 
     # -----------------------------------------------------------------------------
@@ -95,13 +95,28 @@ class GraphicsScene(QGraphicsScene):
         """
         This method updates the colors used for painting the background of the ``GraphicsScene``.
         """
+        if self.bgcolor == 'white':
+            self._color_background = QColorConstants.Svg.white
+        elif self.bgcolor == 'grey':
+            self._color_background = QColor("#E0E0E0")    # Light gray
+        else:
+            raise ValueError(f"bad color {self.bgcolor}")
 
-        if self.mode == False:
-            self._color_background = QColor("#E0E0E0")          # Light gray
+        if self.grid is True:
+            # set color of major and minor grid lines
             self._color_light = QColorConstants.Svg.lightgray
             self._color_dark = QColorConstants.Svg.silver
-        elif self.mode == True:
-            self._color_background = self._default_background_color     # Light gray
+        elif self.grid is False:
+            # no grid, major and minor grid lines are background color
+            self._color_light = self._color_background
+            self._color_dark = self._color_background
+
+        # if self.mode == False:
+        #     self._color_background = QColor("#E0E0E0")          # Light gray
+        #     self._color_light = QColorConstants.Svg.lightgray
+        #     self._color_dark = QColorConstants.Svg.silver
+        # elif self.mode == True:
+        #     self._color_background = self._default_background_color     # Light gray
 
         # Set the line thickness of the smaller, then larger grid squares
         self._pen_light = QPen(self._color_light)

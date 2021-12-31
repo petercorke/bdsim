@@ -32,7 +32,10 @@ def main():
     parser.add_argument('--pdb', 
         action='store_const', const=True, default=False,
         help='Enable pdb for spawned python subprocess')
-    parser.add_argument('--fontsize', '-s', type=int, default=12,
+    parser.add_argument('--background', '-b', type=str, default='grey',
+        choices=['white', 'grey'],
+        help='Set background color')
+    parser.add_argument('--fontsize', '-s', type=int, default='12',
         help='Set font size of block names')
     args, unparsed_args = parser.parse_known_args()
     
@@ -91,13 +94,14 @@ def main():
                 print("File at given path not found")
                 sys.exit(0)
 
+        window.centralWidget().scene.grScene.updateBackgroundMode(args.background, True)
         if args.print:
             # Check if a model has been given to load (should always be the case if trying to screenshot)
             # If it has, the logic for validating that path will always be checked before trying to screenshot in the above code
             if args.file:
                 def screenshot(filename):
-                    # Set the background mode to off (white background)
-                    window.centralWidget().scene.grScene.updateMode(True)
+                    # Set the background mode to white, no grid lines
+                    window.centralWidget().scene.grScene.updateBackgroundMode('white', False)
                     window.centralWidget().scene.grScene.checkMode()
 
                     # Hide and then unselect all connector blocks present in the model
