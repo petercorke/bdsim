@@ -86,6 +86,7 @@ class Print(SinkBlock):
         """
         super().__init__(**blockargs)
         self.format = fmt
+        self.file = None
         
         # TODO format can be a string or function
 
@@ -96,16 +97,16 @@ class Print(SinkBlock):
         value = self.inputs[0]
         if self.format is None:
             # no format string
-            print(prefix, str(value))
+            print(prefix, str(value), file=self.file)
         else:
             # format string provided
             if isinstance(value, (int, float)):
-                print(prefix, self.format.format(value))
+                print(prefix, self.format.format(value), file=self.file)
             elif isinstance(value, np.ndarray):
                 with np.printoptions(formatter={'all':lambda x: self.format.format(x)}):
-                    print(prefix, value)
+                    print(prefix, value, file=self.file)
             else:
-                print(prefix, str(value))
+                print(prefix, str(value), file=self.file)
 
 # ------------------------------------------------------------------------ #
             
