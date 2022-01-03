@@ -439,13 +439,14 @@ class BlockDiagram:
                     out = b.output(t)
                 except Exception as err:
                     # output method failed, report it
-                    print('--Error at t={:f} when computing output of block {:s}'.format(t, str(b)))
+                    print(fg('red'))
+                    print('--Error at t={:f} when computing output of [{:s}:: {:s}]'.format(t, b.type, str(b)))
                     print('  {}'.format(err))
                     print('  inputs were: ', b.inputs)
                     if b.nstates > 0:
                         print('  state was: ', b._x)
                     traceback.print_exc(file=sys.stderr)
-
+                    print(attr(0))
                     raise RuntimeError from None
 
                 self.DEBUG('propagate', 'block {:s}: output = {}', b, out)
