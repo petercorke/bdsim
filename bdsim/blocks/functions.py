@@ -49,7 +49,8 @@ class Sum(FunctionBlock):
             'r': lambda x: x,
             'c': smb.wrap_mpi_pi,
             'C': smb.wrap_0_2pi,
-            'L': smb.wrap_0_pi
+            'L': smb.wrap_0_pi,
+            'l': smb.wrap_0_pi,
     }
 
     def __init__(self, signs='++', mode=None, **blockargs):
@@ -118,12 +119,25 @@ class Sum(FunctionBlock):
                     sum = sum + input
         
         if self.mode is not None:
+            print('before', sum)
             if isinstance(sum, np.ndarray):
-                if len(self.mode) != len(sum):
-                    raise ValueError('length of mode string doesnt match')
-                sum = np.array([self._modefuncs[m](x) for (m, x) in zip(self.mode, sum)])
+                if sum.ndim == 1:
+                    if len(self.mode) != len(sum):
+                        raise ValueError('length of mode string doesnt match')
+                    sum = np.array([self._modefuncs[m](x) for (m, x) in zip(self.mode, sum)])
+                elif sum.ndim == 2:
+                    if len(self.mode) != sum.shape[0]:
+                        raise ValueError('length of mode string doesnt match number of rows')
+                    out = []
+                    for col in sum.T:
+                        out.append([self._modefuncs[m](x) for (m, x) in zip(self.mode, col)])
+                    sum = np.array(out).T
+
+                else:
+                    raise ValueError('expecting 1D or 2D array')
             else:
                 sum = self._modefuncs[self.mode[0]](sum)
+            print('after', sum)
 
         return [sum]
 
