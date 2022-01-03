@@ -24,57 +24,93 @@ def bdload(bd, filename = None, globals={}, **kwargs):
     #  block input and output ports have an associated socket id
     #  each wire is specified by the socket ids of its start and end
 
-    input_dict = {}      # block input id -> Plug
+    output_dict = {}      # block output id -> Plug
     connector_dict = {}  # connector block: input socket -> output socket
     wire_dict = {}       # wire: start socket t-> end socket
     block_dict = {}      # block: block id -> Block instance
 
     # create a dictionary of all blocks
     for block in model['blocks']:
-        # Connector block
+        # Connector block, create a dict that maps end port id to start port id
         if block['block_type'] == "CONNECTOR":
             start = block['inputs'][0]['id']
             end = block['outputs'][0]['id']
-            connector_dict[start] = end
+            connector_dict[end] = start
+
         elif block['block_type'] == "MAIN":
-            continue
-        
+            continue  # nothing to be done
+
         else:
             # regular bdsim Block
             block_init = bd.__dict__[block['block_type']]  # block class
             params = dict(block['parameters'])  # block params as a dict
+
+            if verbose:
+                print(f"[{block['title']}]:")
+            # process the parameters
             for key, value in params.items():
-                if isinstance(value, str) and value[0] == '=':
-                    value = eval(value[1:], globals)
-                    print(f"Resolving: block [{block['title']}].{key} := {value}")
-                    params[key] = value
+                if verbose:
+                    print(f"    {key}: ", end='')
 
-            newblock = block_init(name=block['title'], **params)    # instantiate the block
-            print(f"{block['title']} --> {newblock.name}")
+                newvalue = None
+                if isinstance(value, str):
+                    # either an "any" type or an assignment
+                    if value[0] == '=':
+                        # assignment
+                        try:
+                            newvalue = eval(value[1:], globals(), globalvars)
+                        except (ValueError, TypeError, NameError, SyntaxError):
+                            print(fg('red'))
+                            print(f"bdload: error resolving parameter {key}: {value} for block [{block['title']}]")
+                            print(attr(0))
+                            raise RuntimeError(f"cannot instantiate block {block['title']} - bad parameters?")
+                    else:
+                        # assume it's an "any" type, attempt to evaluate it
+                        try:
+                            newvalue = eval(value, globals(), globalvars)
+                        except (NameError, SyntaxError):
+                            pass
+                    
+                if newvalue is not None:
+                    params[key] = newvalue
+                    if verbose:
+                        print(f" {value} -> {newvalue}")
+                else:
+                    if verbose:
+                        print(f" {value}")
+                    
+            # instantiate the block
+            try:
+                if 'blockargs' in params:
+                    blockargs = params['blockargs']
+                    del params['blockargs']
+
+                blockargs = blockargs or {}
+
+                newblock = block_init(name=block['title'], **params, **blockargs)    # instantiate the block
+            
+            except (ValueError, TypeError, NameError, SyntaxError):
+                print(fg('red'))
+                print(f"bdload: error instantiating block [{block['title']}]")
+                args = ', '.join([f"{arg[0]}={arg[1]}" for arg in block['parameters']])
+                print(f"  {block['block_type']}({args})")
+                print(attr(0))
+                raise RuntimeError(f"cannot instantiate block {block['title']} - bad parameters?")
+
             block_dict[block['id']] = newblock # add to mapping
-            for input in block['inputs']:
-                # each input id is mapped to the input Plug
-                input_dict[input['id']] = newblock[input['index']]
+            for output in block['outputs']:
+                # each output id is mapped to the output Plug
+                output_dict[output['id']] = newblock[output['index']]
 
-    # create a dictionary of all wires: map start id -> list of end ids
-    # start id is associated with a block output port (socket)
-    # can be multiple wires from an output port, hence this maps to a list
+    # create a dictionary of all wires: map end id -> start id
+    # end id is associated with a block input port (socket)
+    # this maps to a unique output port
     for wire in model['wires']:
         start = wire['start_socket']
         end = wire['end_socket']
-        if start in wire_dict:
-            # subsequent entry, append to the list
-            wire_dict[start].append(end)
-        else:
-            # first entry, a list of one
-            wire_dict[start] = [end]
+        wire_dict[end] = start
         
-
-    # print('blocks', block_dict)
-    # print('inputs', input_dict)
-    # print('wires', wire_dict)
-    # print('connectors', connector_dict)
-
+    # do the wiring
     for block in model['blocks']:
         if block['block_type'] == "CONNECTOR":
             continue
@@ -82,25 +118,26 @@ def bdload(bd, filename = None, globals={}, **kwargs):
         # only process real blocks
         id = block['id']
 
-        for output in block['outputs']:
-            # for every output port
-            out_id = output['id']  # get the socket id
+        for input in block['inputs']:
+            # for every input port
+            in_id = input['id']  # get the socket id
 
-            for end_id in wire_dict[out_id]:
-                # for every wire
+            if in_id not in wire_dict:
+                raise ValueError(f"bdload: error block [{block['title']}] has unconnected input port")
 
-                # while end of wire goes to a connector, follow its output and
-                # subsequent wire to the next block
-                while end_id in connector_dict:
-                    end_id = connector_dict[end_id]  # other side of the connector
-                    end_id = wire_dict[end_id][0]    # other end of the wire
+            # if input has a wire attached (should have!)
+            start_id =  wire_dict[in_id]
+
+            while start_id in connector_dict:
+                start_id = wire_dict[connector_dict[start_id]]  # other side of the connector
                 
-                # end_id now refers to a bdsim block
-                start = block_dict[id][output['index']]  # create an output Plug
-                end = input_dict[end_id]   # get Plug it goes to
+            # start_id now refers to a bdsim block output
+            end = block_dict[id][input['index']]  # create an output Plug
+            start = output_dict[start_id]   # get Plug it goes to
 
+            if verbose:
                 print(start, ' --> ', end)
-                bd.connect(start, end)
+            bd.connect(start, end)
 
     return bd
 
