@@ -43,14 +43,14 @@ class Item(FunctionBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, item, **kwargs):
+    def __init__(self, item, **blockargs):
         """
         Selector item from a dictionary signal.
 
         :param item: name of dictionary item
         :type item: str
-        :param kwargs: |BlockOptions|
-        :type kwargs: dict
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
         :return: An ITEM block
         :rtype: Item instance
 
@@ -69,7 +69,7 @@ class Item(FunctionBlock):
         :seealso: :class:`Dict`
         """
 
-        super().__init__(**kwargs)
+        super().__init__(**blockargs)
         self.item = item
     
     def output(self, t=None):
@@ -97,14 +97,14 @@ class Dict(FunctionBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, item, **kwargs):
+    def __init__(self, item, **blockargs):
         """
         Create a dictionary signal.
 
         :param keys: list of dictionary keys
         :type keys: list
-        :param kwargs: |BlockOptions|
-        :type kwargs: dict
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
         :return: A DICT block
         :rtype: Dict instance
         
@@ -125,7 +125,7 @@ class Dict(FunctionBlock):
         :seealso: :class:`Item` :class:`Mux`
         """
 
-        super().__init__(**kwargs)
+        super().__init__(**blockargs)
         self.item = item
     
     def output(self, t=None):
@@ -154,14 +154,14 @@ class Mux(FunctionBlock):
     nin = -1
     nout = 1
 
-    def __init__(self, nin=1, **kwargs):
+    def __init__(self, nin=1, **blockargs):
         """
         Multiplex signals.
 
         :param nin: Number of input ports, defaults to 1
         :type nin: int, optional
-        :param kwargs: |BlockOptions|
-        :type kwargs: dict
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
         :return: A MUX block
         :rtype: Mux instance
 
@@ -175,7 +175,7 @@ class Mux(FunctionBlock):
         
         :seealso: :class:`Dict`
         """
-        super().__init__(nin=nin, **kwargs)
+        super().__init__(nin=nin, **blockargs)
     
     def output(self, t=None):
         # TODO, handle inputs that are vectors themselves
@@ -208,14 +208,14 @@ class DeMux(FunctionBlock):
     nin = 1
     nout = -1
 
-    def __init__(self, nout=1, **kwargs):
+    def __init__(self, nout=1, **blockargs):
         """
         Demultiplex signals.
 
         :param nout: number of outputs, defaults to 1
         :type nout: int, optional
-        :param kwargs: |BlockOptions|
-        :type kwargs: dict
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
         :return: A DEMUX block
         :rtype: DeMux instance
 
@@ -224,7 +224,7 @@ class DeMux(FunctionBlock):
         scalar output ports.
 
         """
-        super().__init__(nout=nout, **kwargs)
+        super().__init__(nout=nout, **blockargs)
     
     def output(self, t=None):
         # TODO, handle inputs that are vectors themselves
@@ -252,14 +252,14 @@ class Index(FunctionBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, index=[], **kwargs):
+    def __init__(self, index=[], **blockargs):
         """
         Index an iterable signal.
 
         :param index: elements of input array, defaults to []
         :type index: list, slice or str, optional
-        :param kwargs: |BlockOptions|
-        :type kwargs: dict
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
         :return: An INDEX block
         :rtype: Index instance
         
@@ -269,7 +269,7 @@ class Index(FunctionBlock):
 
         :seealso: :class:`Slice1` :class:`Slice2`
         """
-        super().__init__(**kwargs)
+        super().__init__(**blockargs)
 
         if isinstance(index, str):
             args = [None if a == '' else int(a) for a in index.split(':')]
@@ -302,7 +302,7 @@ class SubSystem(SubsystemBlock):
     nin = -1
     nout = -1
 
-    def __init__(self, subsys, nin=1, nout=1, **kwargs):
+    def __init__(self, subsys, nin=1, nout=1, **blockargs):
         """
         Instantiate a subsystem.
             
@@ -313,8 +313,8 @@ class SubSystem(SubsystemBlock):
         :type nin: int, optional
         :param nout: Number of output ports, defaults to 1
         :type nout: int, optional
-        :param kwargs: |BlockOptions|
-        :type kwargs: dict
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
         :raises ImportError: DESCRIPTION
         :raises ValueError: DESCRIPTION
         :return: A SUBSYSTEM block
@@ -346,7 +346,7 @@ class SubSystem(SubsystemBlock):
           from the number of ports on the ``InPort`` and ``OutPort`` blocks within the
           subsystem.
         """
-        super().__init__(**kwargs)
+        super().__init__(**blockargs)
         
         if isinstance(subsys, str):
             # attempt to import the file
@@ -421,14 +421,14 @@ class InPort(SubsystemBlock):
     nin = 0
     nout = -1
 
-    def __init__(self, nout=1, **kwargs):
+    def __init__(self, nout=1, **blockargs):
         """
         Input ports for a subsystem.
 
         :param nout: Number of output ports, defaults to 1
         :type nout: int, optional
-        :param kwargs: |BlockOptions|
-        :type kwargs: dict
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
         :return: An INPORT block
         :rtype: InPort instance
 
@@ -439,7 +439,7 @@ class InPort(SubsystemBlock):
             can have multiple ports.  This is different to Simulink(R) which 
             would require multiple single-port input blocks.
         """
-        super().__init__(nout=nout, **kwargs)
+        super().__init__(nout=nout, **blockargs)
 
     def output(self, t=None):
         # signal feed through
@@ -467,14 +467,14 @@ class OutPort(SubsystemBlock):
     nin = -1
     nout = 0
 
-    def __init__(self, nin=1, **kwargs):
+    def __init__(self, nin=1, **blockargs):
         """
         Output ports for a subsystem.
 
         :param nin: Number of input ports, defaults to 1
         :type nin: int, optional
-        :param kwargs: |BlockOptions|
-        :type kwargs: dict
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
         :return: A OUTPORT block
         :rtype: OutPort instance
         
@@ -486,7 +486,7 @@ class OutPort(SubsystemBlock):
             can have multiple ports.  This is different to Simulink(R) which 
             would require multiple single-port output blocks.
         """
-        super().__init__(nin=nin, **kwargs)
+        super().__init__(nin=nin, **blockargs)
 
     def output(self, t=None):
         # signal feed through
