@@ -303,7 +303,7 @@ class Slice2(FunctionBlock):
         self.type = 'slice2'
 
         if rows is None:
-            self.rows = slice()
+            self.rows = slice(None, None, None)
         elif isinstance(rows, list):
             self.rows =  rows
         elif isinstance(rows, tuple) and len(rows) == 3:
@@ -312,19 +312,20 @@ class Slice2(FunctionBlock):
             raise ValueError('bad rows specifier')
             
         if cols is None:
-            self.cols = slice()
+            self.cols = slice(None, None, None)
         elif isinstance(cols, list):
-            self.rows =  cols
+            self.cols =  cols
         elif isinstance(cols, tuple) and len(cols) == 3:
             self.cols = slice(*cols)
         else:
             raise ValueError('bad rows specifier')
 
+
     def output(self, t=None):
         array = self.inputs[0]
         if array.ndim != 2:
-            raise RuntimeError('flatten2 block expecting 2d array')
-        return [out[rows, cols]]
+            raise RuntimeError('Slice2 block expecting 2d array')
+        return [array[self.rows, self.cols]]
 
 # ------------------------------------------------------------------------ #
 
@@ -391,7 +392,7 @@ class Slice1(FunctionBlock):
         self.type = 'slice1'
 
         if index is None:
-            self.index = slice()
+            self.index = slice(None, None, None)
         elif isinstance(index, list):
             self.index =  index
         elif isinstance(index, tuple) and len(index) == 3:
@@ -402,7 +403,7 @@ class Slice1(FunctionBlock):
     def output(self, t=None):
         array = self.inputs[0]
         if array.ndim != 1:
-            raise RuntimeError('flatten1 block expecting 1d array')
+            raise RuntimeError('Slice1 block expecting 1d array')
         return [array[self.index]]
 
 # ------------------------------------------------------------------------ #
