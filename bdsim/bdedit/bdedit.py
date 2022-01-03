@@ -5,6 +5,7 @@ import os
 import sys
 import ctypes
 import argparse
+from pathlib import Path
 
 from sys import platform
 from pathlib import Path
@@ -24,8 +25,8 @@ def main():
     parser.add_argument('file', type=str, nargs='?',
         help='Load this model into interactive session')
     parser.add_argument('--print', '-p', 
-        action='store_const', const=True, default=False,
-        help='Save model to screenshot and exit')
+        nargs='?', action='store', const='', default=None,
+        help='Save model to screenshot and exit, can optionally specify a filename, PDF extension is default')
     parser.add_argument('--debug', '-d', 
         action='store_const', const=True, default=False,
         help='Enable debugging')
@@ -83,54 +84,61 @@ def main():
 
         window.centralWidget().scene.block_name_fontsize = args.fontsize
 
-        if args.file:
+        if args.file is not None:
 
-            # Check if file at given file path exists
+            # Attempt to load the .bd file
             if os.path.isfile(args.file):
                 window.loadFromFilePath(args.file)
-
-            # If file not found at path, return error msg
             else:
-                print("File at given path not found")
-                sys.exit(0)
+                raise ValueError(f"bdfile {args.file} not found")
 
+        # fire up the GUI
         window.centralWidget().scene.grScene.updateBackgroundMode(args.background, True)
-        if args.print:
-            # Check if a model has been given to load (should always be the case if trying to screenshot)
-            # If it has, the logic for validating that path will always be checked before trying to screenshot in the above code
-            if args.file:
-                def screenshot(filename):
-                    # Set the background mode to white, no grid lines
-                    window.centralWidget().scene.grScene.updateBackgroundMode('white', False)
-                    window.centralWidget().scene.grScene.checkMode()
+        
+        if args.print is not None:
+            # render a screenshot to file
+            def screenshot(filename):
+                # Set the background mode to white, no grid lines
+                window.centralWidget().scene.grScene.updateBackgroundMode('white', False)
+                window.centralWidget().scene.grScene.checkMode()
 
-                    # Hide and then unselect all connector blocks present in the model
-                    window.centralWidget().scene.hide_connector_blocks = True
+                # Hide and then unselect all connector blocks present in the model
+                window.centralWidget().scene.hide_connector_blocks = True
 
-                    for block in window.centralWidget().scene.blocks:
-                        if block.block_type in ["Connector", "CONNECTOR"]:
-                            block.grBlock.setSelected(False)
+                for block in window.centralWidget().scene.blocks:
+                    if block.block_type in ["Connector", "CONNECTOR"]:
+                        block.grBlock.setSelected(False)
 
-                    # Update the points where wires overlap within the scene to draw the wire seperations
-                    if window.centralWidget().scene.wires:
-                        window.centralWidget().scene.wires[0].checkIntersections()
+                # Update the points where wires overlap within the scene to draw the wire seperations
+                if window.centralWidget().scene.wires:
+                    window.centralWidget().scene.wires[0].checkIntersections()
 
-                    window.centralWidget().save_image(filename)
-                    sys.exit(0)
-
-                # Extract the name of given model
-                file_basename = os.path.basename(args.file)
-                filename = os.path.splitext(file_basename)[0]
-
-                # After 100ms non-blocking delay, screenshot the model
-                QTimer.singleShot(100, lambda: screenshot(filename))
-
-            # No file found, return error and exit
-            else:
-                print("No file given to load model")
+                window.centralWidget().save_image(filename)
                 sys.exit(0)
 
-    # Finally when the application is closed, the application is exited out of
+            # figure out the filename to save it as
+            file = Path(args.print)
+
+            if args.print == '':
+                # no filename given on command line
+                #  use the model file name, drop the path, and set extension pdf if none given
+                
+                # wait till python 3.9 for the next line to work
+                # path = Path(args.file).with_stem(filename.stem + "-screenshot").with_suffix('.pdf').name
+
+                path = Path(args.file).with_suffix('.pdf')
+                path = path.stem + "-screenshot" + path.suffix
+                
+            else:
+                # filename was given on command line
+                path = Path(args.print)
+                if path.suffix == '':
+                    path = path.with_suffix('.pdf')
+
+            # After 100ms non-blocking delay, screenshot the model
+            QTimer.singleShot(100, lambda: screenshot(str(path)))
+
+    # run the GUI until it exits
     sys.exit(app.exec_())
 
 if __name__ == '__main__':

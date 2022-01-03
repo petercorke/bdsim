@@ -415,6 +415,7 @@ class Scene(Serializable):
             elif block_type == "MAIN" or block_type == "Main":
                 Main(self, self.window).deserialize(block_data, hashmap)
 
+
             # Otherwise if it is any other block (will be an auto-imported block)
             else:
                 # For each block class within the blocklist

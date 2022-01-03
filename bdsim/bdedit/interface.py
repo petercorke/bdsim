@@ -454,12 +454,17 @@ class Interface(QWidget):
 
         # Crop the image to area of interest
         output_image = output_image.copy(rect)
+        # by default this is in QImage.Format_RGBA64 = 26 format, convert
+        # 8-bit RGB pixels
+        output_image = output_image.convertToFormat(QImage.Format_RGB888)
 
-        screenshot_name = self.getScreenshotName(picture_path)
-
-        # And the image is saved under the given file name, as a png
-        output_image.save(screenshot_name)
-        print("Screenshot saved --> ", screenshot_name)
+        # use PIL to do the PDF printing
+        from PIL import Image
+        bytes = output_image.bits().asstring(output_image.sizeInBytes())
+        img_PIL = Image.frombuffer('RGB', (output_image.width(), output_image.height()), bytes, 'raw', 'RGB', 0, 1)
+        img_PIL.save(picture_path)
+        # # And the image is saved under the given file name, as a PDF
+        print("Screenshot saved --> ", picture_path)
 
     # -----------------------------------------------------------------------------
     def getScreenshotName(self, picture_path, increment=None):
