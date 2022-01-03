@@ -114,6 +114,8 @@ class Scope(GraphicsBlock):
             else:
                 raise ValueError('unknown argument to listify')
 
+        # number of lines plotted (nplots) is inferred from the number of labels
+        # or linestyles
         nplots = None
 
         if styles is not None:
@@ -143,6 +145,8 @@ class Scope(GraphicsBlock):
         else:
             if vector == 0:
                 nin = nplots
+            if vector != nplots:
+                raise ValueError('vector > 0 doesnt match nplots')
 
         self.nplots = nplots
         self.vector = vector
@@ -165,7 +169,7 @@ class Scope(GraphicsBlock):
         # TODO, wire width
         # inherit names from wires, block needs to be able to introspect
         
-    def start(self, state=None, **kwargs):        
+    def start(self, state=None):        
         # init the arrays that hold the data
         self.tdata = np.array([])
         self.ydata = [np.array([]),] * self.nplots
@@ -186,7 +190,7 @@ class Scope(GraphicsBlock):
                 kwargs = style
             elif isinstance(style, str):
                 args = [style]
-            self.line[i], = self.ax.plot(self.tdata, self.ydata[i], *args, label=self.styles[i], **kwargs)
+            self.line[i], = self.ax.plot(self.tdata, self.ydata[i], *args, label=self.styles[i], linewidth=2)
 
         # label the axes
         if self.labels is not None:
@@ -225,8 +229,10 @@ class Scope(GraphicsBlock):
         if self.vector > 0:
             # vector input on the input
             data = self.inputs[0]
-            assert len(data) == self.vector, 'vector parameter doesnt match input'
-            assert len(data) == self.nplots, 'number of plots dosent match inputq'
+            if len(data) != self.nplots:
+                raise RuntimeError('number of signals to plot doesnt match init parameters')
+            # assert len(data) == self.vector, 'vector parameter doesnt match input'
+            # assert len(data) == self.nplots, 'number of plots dosent match inputs'
             for i,input in enumerate(data):
                 self.ydata[i] = np.append(self.ydata[i], input)
         else:
