@@ -39,3 +39,8 @@
 
 ./tex2icon.py -r 80 -o idyn.png -t '\vec{\tau}\!\left(\vec{q}, \dvec{q}, \ddvec{q}\right)'
 ./tex2icon.py -r 80 -o idynx.png -t '\vec{w}\!\left(\vec{q}, \dvec{q}, \ddvec{x}\right)'
+
+./tex2icon.py -r 170 -o pose_postmul.png -t '\oplus \pose[x]_y'
+./tex2icon.py -r 170 -o pose_premul.png -t '\pose[x]_y \oplus'
+./tex2icon.py -r 170 -o pose_inverse.png -t '\ominus'
+./tex2icon.py -r 115 -o transform_vector.png -t '\pose[x]_y \sbullet \vec{p}'
