@@ -689,7 +689,7 @@ class BlockDiagram:
                 value = w.end.block.inputs[w.end.port]
                 typ = type(value).__name__
                 if isinstance(value, np.ndarray):
-                    typ += ' {:s}'.format(str(value.shape))
+                    typ += '{:s}.{:s}'.format(str(value.shape), str(value.dtype))
             except:
                 typ = '??'
             table.row( w.id, start, end, w.fullname, typ)
