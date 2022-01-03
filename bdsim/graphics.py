@@ -36,7 +36,8 @@ class GraphicsBlock(SinkBlock):
 
         if self.movie is not None and not self.bd.options.animation:
             print('enabling global animation option to allow movie option on block', self)
-            self.bd.options.animation = True
+            if not self.bd.options.animation:
+                print('must enable animation to render a movie')
         if self.movie is not None:
             self.writer = animation.FFMpegWriter(fps=10, extra_args=['-vcodec', 'libx264'])
             self.writer.setup(fig=self.fig, outfile=self.movie)
@@ -51,7 +52,7 @@ class GraphicsBlock(SinkBlock):
         if self.movie is not None:
             self.writer.grab_frame()
 
-    def done(self, state=None, block=False, **kwargs):
+    def done(self, state=None, block=False):
         if self.fig is not None:
             self.fig.canvas.start_event_loop(0.001)
             if self.movie is not None:
@@ -161,7 +162,7 @@ class GraphicsBlock(SinkBlock):
 
             else:
                 # shape is given explictly
-                screen_width, screen_height = [int(x) for x in options.shape.split(':')]
+                screen_width, screen_height = [int(x) for x in options.shape.split('x')]
 
                 f = plt.gcf()
 
