@@ -737,114 +737,117 @@ class Block(Serializable):
         # The id of this Block is set to whatever was stored as its id in the JSON file.
         self.id = data['id']
 
-        # The remaining parameters associated to this Block are mapped to itself
-        #hashmap[data['id']] = self
+        try:
+            # The remaining parameters associated to this Block are mapped to itself
+            #hashmap[data['id']] = self
 
-        if self.block_type not in ["Connector", "CONNECTOR"]:
-            self.title = data['title']
-            self.inputsNum = data['inputsNum']
-            self.outputsNum = data['outputsNum']
-            self.width = data['width']
-            self.height = data['height']
+            if self.block_type not in ["Connector", "CONNECTOR"]:
+                self.title = data['title']
+                self.inputsNum = data['inputsNum']
+                self.outputsNum = data['outputsNum']
+                self.width = data['width']
+                self.height = data['height']
 
-            # If a model contains data on whether a block should be flipped, assign variable to that value
-            # If error occurs, model doesn't contain this variable, so ignore
-            try:
-                if data["flipped"]:
-                    self.flipped = data["flipped"]
-            except KeyError:
-                pass
+                # If a model contains data on whether a block should be flipped, assign variable to that value
+                # If error occurs, model doesn't contain this variable, so ignore
+                try:
+                    if data["flipped"]:
+                        self.flipped = data["flipped"]
+                except KeyError:
+                    pass
 
-        # The position of the Block within the Scene, are set accordingly.
-        self.setPos(data['pos_x'], data['pos_y'])
+            # The position of the Block within the Scene, are set accordingly.
+            self.setPos(data['pos_x'], data['pos_y'])
 
-        # When block is drawn, by default it is created with its allocated number of input/output sockets.
-        # When deserializing a block, we want the sockets to be in the locations where they were saved.
-        # Hence, we must delete the default created input/output sockets to override them with the saved sockets.
-        if self.inputs:
-            # RemoveSockets is a method accessible only through a socket, while self.inputs is a list of sockets
-            # 'removeSockets' removes all sockets associated with a block.
-            self.inputs[0].removeSockets("Input")
-        if self.outputs:
-            # Same usage of 'removeSocket' as above
-            self.outputs[0].removeSockets("Output")
+            # When block is drawn, by default it is created with its allocated number of input/output sockets.
+            # When deserializing a block, we want the sockets to be in the locations where they were saved.
+            # Hence, we must delete the default created input/output sockets to override them with the saved sockets.
+            if self.inputs:
+                # RemoveSockets is a method accessible only through a socket, while self.inputs is a list of sockets
+                # 'removeSockets' removes all sockets associated with a block.
+                self.inputs[0].removeSockets("Input")
+            if self.outputs:
+                # Same usage of 'removeSocket' as above
+                self.outputs[0].removeSockets("Output")
 
-        # The input and output lists for this Block are cleared
-        self.inputs = []
-        self.outputs = []
+            # The input and output lists for this Block are cleared
+            self.inputs = []
+            self.outputs = []
 
-        # The saved user-editable parameters associated with the Block, are written over the default ones
-        # this instance of the block was created with, after reconstruction.
-        # Iterator for parameters
-        if self.block_type not in ["Connector", "CONNECTOR"]:
-            i = 0
+            # The saved user-editable parameters associated with the Block, are written over the default ones
+            # this instance of the block was created with, after reconstruction.
+            # Iterator for parameters
+            if self.block_type not in ["Connector", "CONNECTOR"]:
+                i = 0
 
-            for paramName, paramVal in data['parameters']:
-                # If debug mode is enabled, this code will print to console to validate that the
-                # parameters are being overwritten into the same location they were previously stored in.
-                if DEBUG: print("----------------------")
-                if DEBUG: print("Cautionary check")
-                if DEBUG: print("current value:", [self.parameters[i][0], self.parameters[i][1], self.parameters[i][2]])
-                if DEBUG: print("setting to value:", [paramName, self.parameters[i][1], paramVal])
-                self.parameters[i][0] = paramName
-                self.parameters[i][2] = paramVal
+                for paramName, paramVal in data['parameters']:
+                    # If debug mode is enabled, this code will print to console to validate that the
+                    # parameters are being overwritten into the same location they were previously stored in.
+                    if DEBUG: print("----------------------")
+                    if DEBUG: print("Cautionary check")
+                    if DEBUG: print("current value:", [self.parameters[i][0], self.parameters[i][1], self.parameters[i][2]])
+                    if DEBUG: print("setting to value:", [paramName, self.parameters[i][1], paramVal])
+                    self.parameters[i][0] = paramName
+                    self.parameters[i][2] = paramVal
 
-                # If there are subsystem, outport or inport blocks with labels for their sockets, extract that information into self.input_names and self.output_names as needed
-                if self.block_type in ['SUBSYSTEM', 'OUTPORT', 'INPORT']:
+                    # If there are subsystem, outport or inport blocks with labels for their sockets, extract that information into self.input_names and self.output_names as needed
+                    if self.block_type in ['SUBSYSTEM', 'OUTPORT', 'INPORT']:
 
-                    if paramName == "inport labels":
-                        if paramVal:
-                            self.input_names = [str(j) for j in paramVal]
+                        if paramName == "inport labels":
+                            if paramVal:
+                                self.input_names = [str(j) for j in paramVal]
 
-                    if paramName == "outport labels":
-                        if paramVal:
-                            self.output_names = [str(j) for j in paramVal]
+                        if paramName == "outport labels":
+                            if paramVal:
+                                self.output_names = [str(j) for j in paramVal]
 
-                i += 1
+                    i += 1
 
-        # And the saved (input and output) sockets are written into these lists respectively,
-        # deserializing the socket-relevant information while doing so.
-        for i, socket_data in enumerate(data['inputs']):
-            try:
-                if self.input_names:
-                    new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'], socket_label=self.input_names[i])
-                else:
-                    new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'])
-            except (AttributeError, IndexError):
-                    new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'])
-            new_socket.deserialize(socket_data, hashmap)
-            self.inputs.append(new_socket)
+            # And the saved (input and output) sockets are written into these lists respectively,
+            # deserializing the socket-relevant information while doing so.
+            for i, socket_data in enumerate(data['inputs']):
+                try:
+                    if self.input_names:
+                        new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'], socket_label=self.input_names[i])
+                    else:
+                        new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'])
+                except (AttributeError, IndexError):
+                        new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'])
+                new_socket.deserialize(socket_data, hashmap)
+                self.inputs.append(new_socket)
 
-        self.updateSocketSigns()
+            self.updateSocketSigns()
 
-        for i, socket_data in enumerate(data['outputs']):
-            try:
-                if self.output_names:
-                    new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'], socket_label=self.output_names[i])
-                else:
-                    new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'])
-            except (AttributeError, IndexError):
-                    new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'])
-            new_socket.deserialize(socket_data, hashmap)
-            self.outputs.append(new_socket)
+            for i, socket_data in enumerate(data['outputs']):
+                try:
+                    if self.output_names:
+                        new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'], socket_label=self.output_names[i])
+                    else:
+                        new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'])
+                except (AttributeError, IndexError):
+                        new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'])
+                new_socket.deserialize(socket_data, hashmap)
+                self.outputs.append(new_socket)
 
-        if self.block_type not in ["Connector", "CONNECTOR"]:
-            if self.parameters:
-                self._createParamWindow()
+            if self.block_type not in ["Connector", "CONNECTOR"]:
+                if self.parameters:
+                    self._createParamWindow()
 
-        # print("block type, name: ", [self.block_type, self.title])
-        # print("input sockets:")
-        # for socket in self.inputs:
-        #     if socket:
-        #         print("socket, id:", [socket, id(socket)])
-        # print()
-        # print("output sockets:")
-        # for socket in self.outputs:
-        #     if socket:
-        #         print("socket, id:", [socket, id(socket)])
-        # print("----------------------")
+            # print("block type, name: ", [self.block_type, self.title])
+            # print("input sockets:")
+            # for socket in self.inputs:
+            #     if socket:
+            #         print("socket, id:", [socket, id(socket)])
+            # print()
+            # print("output sockets:")
+            # for socket in self.outputs:
+            #     if socket:
+            #         print("socket, id:", [socket, id(socket)])
+            # print("----------------------")
 
-        return True
+            return True
+        except (ValueError, NameError, IndexError):
+            print(f"error deserializing block [{self.block_type}::{self.title}] - maybe JSON file has old function parameters")
 
 
 # -----------------------------------------------------------------------------
