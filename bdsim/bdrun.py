@@ -1,10 +1,44 @@
 import json
-from bdsim import *
 import sys
 
-def bdload(bd, filename = None, globals={}, **kwargs):
+from bdsim import BDSim
+from colored import fg, attr
 
-    print('in bdrun', sys.argv)
+# available for use in bdedit expressions
+import numpy as np
+import math
+from math import pi
+try:
+    from spatialmath import SE3, SE2
+except:
+    pass
+
+def bdload(bd, filename = None, globalvars={}, verbose=False, **kwargs):
+    """
+    Load a block diagram model
+
+    :param bd: [description]
+    :type bd: [type]
+    :param filename: [description], defaults to None
+    :type filename: [type], optional
+    :param globalvars: [description], defaults to {}
+    :type globalvars: dict, optional
+    :param verbose: [description], defaults to False
+    :type verbose: bool, optional
+    :raises RuntimeError: [description]
+    :raises RuntimeError: [description]
+    :raises ValueError: [description]
+    :return: [description]
+    :rtype: [type]
+
+    Block diagrams are saved as JSON files.
+
+    A number of errors can arise at this stage:
+
+    * a parameter starting with "=" cannot be evaluated
+    * the block throws an error when instantiated, incorrect parameter values
+    * unconnected input port
+    """
 
     if filename is None:
         filename = sys.argv[-1]
@@ -141,20 +175,23 @@ def bdload(bd, filename = None, globals={}, **kwargs):
 
     return bd
 
-def bdrun(T, filename = None, globals={}, **kwargs):
+def bdrun(filename = None, globals={}, **kwargs):
+
+    print('in bdrun', sys.argv)
+
     sim = BDSim(**kwargs)
 
+    print('bdrun starting')
     bd = sim.blockdiagram()
 
-    bd = bdload(bd, filename=filename, globals=globals, **kwargs)
+    bd = bdload(bd, filename=filename, globalvars=globals, **kwargs)
     bd.compile()
     bd.report()
 
-    print('** sim for ', T)
-    sim.run(bd, T)
-    sim.done(bd, block=True)
-    print('** DONE')
+    T = 10.0
+    qout = sim.run(bd, 5, dt=0.02)  # simulate for 5s
+    # sim.done(bd, block=True)
+    print('bdrun exiting')
 
 if __name__ == "__main__":
-
     bdrun()
