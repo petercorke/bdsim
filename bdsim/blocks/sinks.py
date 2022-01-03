@@ -97,11 +97,15 @@ class Print(SinkBlock):
         value = self.inputs[0]
         if self.format is None:
             # no format string
-            print(prefix, str(value), file=self.file)
+            if hasattr(value, 'strline'):
+                print(prefix, value.strline(), file=self.file)
+            else:
+                print(prefix, str(value), file=self.file)
         else:
             # format string provided
             if isinstance(value, (int, float)):
                 print(prefix, self.format.format(value), file=self.file)
+
             elif isinstance(value, np.ndarray):
                 with np.printoptions(formatter={'all':lambda x: self.format.format(x)}):
                     print(prefix, value, file=self.file)
