@@ -365,7 +365,7 @@ class Function(FunctionBlock):
     nin = -1
     nout = -1
 
-    def __init__(self, func=None, nin=1, nout=1, persistent=False, args=None, kwargs=None, **blockargs):
+    def __init__(self, func=None, nin=1, nout=1, persistent=False, fargs=None, fkwargs=None, **blockargs):
     
         """
         Python function.
@@ -378,10 +378,10 @@ class Function(FunctionBlock):
         :type nout: int, optional
         :param persistent: pass in a reference to a dictionary instance to hold persistent state, defaults to False
         :type persistent: bool, optional
-        :param args: extra positional arguments passed to the function, defaults to []
-        :type args: list, optional
-        :param kwargs: extra keyword arguments passed to the function, defaults to {}
-        :type kwargs: dict, optional
+        :param fargs: extra positional arguments passed to the function, defaults to []
+        :type fargs: list, optional
+        :param fkwargs: extra keyword arguments passed to the function, defaults to {}
+        :type fkwargs: dict, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict, optional
         :return: A FUNCTION block
@@ -445,36 +445,39 @@ class Function(FunctionBlock):
             bd.connect(block1, func[0])
             bd.connect(block2, func[1])
         """
+        if func is None:
+            raise ValueError('function is not defined')
+            
         super().__init__(nin=nin, nout=nout, **blockargs)
 
-        if args is None:
-            args = list()
-        if kwargs is None:
-            kwargs = dict()
+        if fargs is None:
+            fargs = list()
+        if fkwargs is None:
+            fkwargs = dict()
             
         # TODO, don't know why this happens
-        if len(args) > 0 and args[0] == {}:
-            args = []
+        if len(fargs) > 0 and fargs[0] == {}:
+            fargs = []
 
         if isinstance(func, (list, tuple)):
             for f in func:
                 assert callable(f), 'Function must be a callable'
-                if kwargs is None:
+                if fkwargs is None:
                     # we can check the number of arguments
                     n = len(inspect.signature(func).parameters)
                     if persistent:
                         n -= 1  # discount dict if used
-                    if nin + len(args) != n:
+                    if nin + len(fargs) != n:
                         raise ValueError(
     f"argument count mismatch: function has {n} args, dict={dict}, nin={nin}"
                                         )
         elif callable(func):
-            if len(kwargs) == 0:
+            if len(fkwargs) == 0:
                 # we can check the number of arguments
                 n = len(inspect.signature(func).parameters)
                 if persistent:
                     n -= 1  # discount dict if used
-                if nin + len(args) != n:
+                if nin + len(fargs) != n:
                     raise ValueError(
     f"argument count mismatch: function has {n} args, dict={dict}, nin={nin}"
                                     )
@@ -483,11 +486,11 @@ class Function(FunctionBlock):
         self.func  = func
         if persistent:
             self.userdata = dict()
-            args += (self.userdata,)
+            fargs += (self.userdata,)
         else:
             self.userdata = None
-        self.args = args
-        self.kwargs = kwargs
+        self.args = fargs
+        self.kwargs = fkwargs
 
     def start(self, state=None):
         super().start()
