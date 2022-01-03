@@ -76,7 +76,6 @@ class BDSimState:
 
 class BDSim:
 
-    options = None
     _blocklibrary = None
 
     def __init__(self, packages=None, **kwargs):
@@ -105,17 +104,20 @@ class BDSim:
         ===================  =========  ========  ===========================================
         Command line switch  Argument   Default   Behaviour
         ===================  =========  ========  ===========================================
-        ++nographics, +g     graphics   True      enable graphical display
-        ++animation, +a      animation  True      update graphics at each time step
-        --nographics, -g     graphics   True      disable graphical display
-        --animation, -a      animation  True      don't update graphics at each time step
-        --noprogress, -p     progress   True      do not display simulation progress bar
+        --graphics, +g       graphics   True      enable graphical display
+        --animation, +a      animation  True      update graphics at each time step
+        --hold, +h           hold       True      hold graphics in done()
+        --no-graphics, -g    graphics   True      disable graphical display
+        --no-animation, -a   animation  True      don't update graphics at each time step
+        --no-hold, -h        hold       True      do not hold graphics in done()
+        --no-progress, -p    progress   True      do not display simulation progress bar
         --backend BE         backend    'Qt5Agg'  matplotlib backend
         --tiles RxC, -t RxC  tiles      '3x4'     arrangement of figure tiles on the display
         --shape WxH          shape      None      window size, default matplotlib size
         --altscreen          altscreen  True      use secondary monitor if it exists
         --verbose, -v        verbose    False     be verbose
         --debug F, -d F      debug      ''        debug flag string
+        --simtime T[,dt]     simtime    (10,)     simulation time
         ===================  =========  ========  ===========================================
 
         .. note:: ``animation`` and ``graphics`` options are coupled.  If 
@@ -131,9 +133,7 @@ class BDSim:
         self.packages = packages
 
         # process command line and overall options
-        if BDSim.options is None:
-            BDSim.options = self.get_options(**kwargs)
-
+        self._init_options(**kwargs)
         # load modules from the blocks folder
         if BDSim._blocklibrary is None:
             BDSim._blocklibrary = self.load_blocks(self.options.verbose)
@@ -151,7 +151,7 @@ class BDSim:
     
     def __repr__(self):
         s = str(self)
-        for k, v in self.options.items():
+        for k, v in self.options._asdict().items():
             s += '  {:s}: {}\n'.format(k, v)
         return s
 
@@ -179,8 +179,8 @@ class BDSim:
         if self.options.progress:
             print('\r' + ' '* 90 + '\r')
 
-    def run(self, bd, T=10.0, dt=0.1, solver='RK45', solver_args={}, debug='',
-            block=False, checkfinite=True, minstepsize=1e-12, watch=[],
+    def run(self, bd, T=5, dt=0.01, solver='RK45', solver_args={}, debug='',
+            block=None, checkfinite=True, minstepsize=1e-12, watch=[],
             ):
         """
         Run the block diagram
@@ -237,6 +237,21 @@ class BDSim:
         
         assert bd.compiled, 'Network has not been compiled'
 
+        # get simulation time
+        #  --simtime=T  or --simtime=T,dt
+        try:
+            default_times = eval(self.option('simtime'))
+            if isinstance(default_times, (int, float)):
+                T = default_times
+            else:
+                T, dt = default_times
+        except:
+            pass
+
+        # final default values
+        # T = T or 5
+        # dt = dt or 0.01
+
         state = BDSimState()
         self.state = state
         state.T = T
@@ -255,8 +270,9 @@ class BDSim:
             if debug not in state.options.debug:
                 state.options.debug += debug
         
+        # turn off progress bar if any debug options are given
         if len(state.options.debug) > 0:
-            state.options.progress = False
+            self.set_options(progress = False)
 
         # process the watchlist
         #  elements can be:
@@ -328,7 +344,8 @@ class BDSim:
                 # get next event from the queue and the list of blocks or
                 # clocks at that time
                 tnext, sources = self.state.eventq.pop(dt=1e-6)
-
+                if tnext is None:
+                    break
                 # run system until next event time
                 x = self.run_interval(bd, tprev, tnext, x, state=state)
                 nintervals += 1
@@ -379,12 +396,17 @@ class BDSim:
         out.ynames = watchnamelist
 
         # pause until all graphics blocks close
-        bd.done(block=block)
+        self.done(self.bd, block=self.options.hold)
 
         return out
 
-    def done(self, bd, **kwargs):
-        bd.done(graphics=self.options.graphics, **kwargs)
+    def done(self, bd, block=False):
+
+        if 'hold' in self.cmd_options:
+            block = self.cmd_options['hold']
+
+        plt.show(block=block)
+        bd.done(graphics=self.options.graphics)
         
     def run_interval(self, bd, t0, T, x0, state):
         """
@@ -420,6 +442,9 @@ class BDSim:
 
                 if state.dt is not None:
                     state.solver_args['max_step'] = state.dt
+
+                print('@@@@@@@@@@@')
+                print(ydot, t0, x0, T, state.solver_args)
                 integrator = scipy_integrator(ydot,
                     t0=t0, y0=x0, t_bound=T, **state.solver_args)
 
@@ -518,7 +543,6 @@ class BDSim:
                 if 'i' in state.options.debug:
                     bd._debugger(state=state)
 
-                
         except RuntimeError as err:
             # bad things happens, print a message and return no result
             print('unrecoverable error in evaluation: ', err)
@@ -757,58 +781,104 @@ class BDSim:
                         print(f"{dots('')}: {s}")
                     else:
                         print(f"{dots(k)}: {s}")
+
+    @property
+    def options(self):
+        """
+        Return current options.
+
+        :return: current options
+        :rtype: namedtuple
+
+        Return an immutable named tuple containing the current options, 
+        for example::
+
+                sim.options.graphics
+
+        The option are determined from a merge of two dictionaries:
+        - command line options (higheset precedence)
+        - program options from constructor or ``set_options``.
+
+        :seealso: :meth:`set_options` :meth:`__init__`
+        """
+        return self._options
+
+    def option(self, option, default=None):
+        """
+        Return value of particular option
+
+        :param option: option name
+        :type option: str
+        :param default: default value
+        :type default: any
+        :return: value of option
+        :rtype: any
+
+        If the ``option`` has been overridden by command line option, return
+        that value, otherwise the ``default`` value.
+        """
+        if option in self.cmd_options:
+            return self.cmd_options[option]
+        else:
+            return default
+
     def set_options(self, **options):
         """
         Set simulation options at run time
 
-        The options are the same as those for the constructor.
+        The options are the same as those for the constructor, for example:
 
-        Example::
+            sim = bdsim.BDsim()
+            sim.set_options(graphics=False)
 
-                sim = bdsim.BDsim()
-                sim.set_options(graphics=False)
+        or::
+
+            sim = bdsim.BDsim(graphics=False)
+
+        Command line options override program set options.
 
         :seealso: :meth:`__init__`
         """
-
-        # TODO:
-        # --no-animation -a
-        # --animation +a
-        # --no-altscreen -A
-        # --altscreen  +A
         for key, value in options.items():
-            self.options[key] = value
+            self.prog_options[key] = value
 
         # animation and graphics options are coupled
         #
         #  graphics False, no graphics at all
         #  graphics True, animation False, show graphs at end of run
         #  graphics True, animation True, animate graphs during the run
-        if 'animation' in options and options['animation']:
-            self.options.graphics = True
-        if 'graphics' in options and not options['graphics']:
-            self.options.animation = False
 
-    def get_options(self, sysargs=True, **kwargs):
+        optdict = {**self.prog_options, **self.cmd_options}
+
+        if optdict['animation']:
+            optdict['graphics'] = True
+        if not optdict['graphics']:
+            optdict['animation'] = False
+        self._options = self.opt_tuple(**optdict)
+
+    def _init_options(self, sysargs=True, **unused):
+        self.prog_options = {
+            'backend': 'Qt5Agg',  # 'TkAgg',
+            'tiles': '3x4',
+            'graphics': True,
+            'animation': False,
+            'hold':  True,
+            'shape': None,
+            'altscreen': True,
+            'progress': True,
+            'verbose': False,
+            'debug': '',
+            'simtime': None,
+            }
+        self.opt_tuple = namedtuple('bdsim_options', self.prog_options.keys())
+
         # option priority (high to low):
         #  - command line
         #  - argument to BDSim()
         #  - defaults
         # all switches and their default values
-        defaults = {
-            'backend': 'Qt5Agg',  # 'TkAgg',
-            'tiles': '3x4',
-            'graphics': True,
-            'animation': False,
-            'shape': None,
-            'altscreen': True,
-            'progress': True,
-            'verbose': False,
-            'debug': ''
-            }
         
         # any passed kwargs can override the defaults
-        options = {**defaults, **kwargs} # second argument has precedence
 
         if sysargs:
             # command line arguments and graphics
@@ -817,56 +887,54 @@ class BDSim:
                     formatter_class=argparse.ArgumentDefaultsHelpFormatter
                     )
             parser.add_argument('--backend', '-b', type=str, metavar='BACKEND',
-                default=options['backend'],
                 help='matplotlib backend to choose')
             parser.add_argument('--tiles', '-t', type=str, metavar='ROWSxCOLS',
-                default=options['tiles'],
                 help='window tiling as NxM')
             parser.add_argument('--shape', type=str, metavar='WIDTHxHEIGHT',
-                default=options['shape'],
                 help='window size as WxH, defaults to matplotlib default')
 
             parser.add_argument('-g', '--no-graphics',
-                default=options['graphics'], 
                 action='store_const', const=False, dest='graphics',
                 help='disable graphic display, also does --no-animation')
             parser.add_argument('+g', '--graphics',
-                default=options['graphics'], 
                 action='store_const', const=True, dest='graphics',
                 help='enable graphic display')
 
             parser.add_argument('-a', '--no-animation',
-                default=options['animation'], 
                 action='store_const', const=False, dest='animation',
                 help='do not animate graphics')
             parser.add_argument('+a', '--animation',
-                default=options['animation'], 
                 action='store_const', const=True, dest='animation',
                 help='animate graphics, also does ++graphics')
 
+            parser.add_argument('-H', '--no-hold',
+                action='store_const', const=False, dest='hold',
+                help='do not hold graphics in done()')
+            parser.add_argument('+H', '--hold',
+                action='store_const', const=True, dest='hold',
+                help='hold graphics in done()')
+
             parser.add_argument('+A', '--altscreen',
-                default=options['altscreen'], 
                 action='store_const', const=True, dest='altscreen',
                 help='display plots on second monitor')
             parser.add_argument('-A', '--no-altscreen',
-                default=options['altscreen'], 
                 action='store_const', const=False, dest='altscreen',
                 help='do not display plots on second monitor')
 
-            parser.add_argument('--noprogress', '-p', 
-                default=options['progress'],
+            parser.add_argument('--no-progress', '-p', 
                 action='store_const', const=False, dest='progress',
                 help='animate graphics')
             parser.add_argument('--verbose', '-v', 
-                default=options['verbose'],
                 action='store_const', const=True,
                 help='debug flags')
             parser.add_argument('--debug', '-d', type=str, metavar='[psd]',
-                default=options['debug'],
                 help='debug flags: p/ropagate, s/tate, d/eriv, i/nteractive')
+            parser.add_argument('--simtime', '-S', type=str,
+                help='simulation time: T or T,dt')
 
-            args, unknown = parser.parse_known_args()
+            args, unknownargs = parser.parse_known_args()
             options = vars(args)  # get args as a dictionary
+            self.argv = unknownargs
 
         # print(options)
         # ensure graphics is enabled if animation is requested
@@ -878,6 +946,12 @@ class BDSim:
                 print('{:10s}: {:}'.format(k, v))
         
         # stash these away
-        options = Struct(**options, name='Options')
+        optdict = {}
+        for k, v in args._get_kwargs():
+            if v is not None:
+                optdict[k] = v
 
-        return options
+        self.cmd_options = optdict
+
+
+        self.set_options(**unused)
