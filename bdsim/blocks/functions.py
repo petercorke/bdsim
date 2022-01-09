@@ -119,7 +119,6 @@ class Sum(FunctionBlock):
                     sum = sum + input
         
         if self.mode is not None:
-            print('before', sum)
             if isinstance(sum, np.ndarray):
                 if sum.ndim == 1:
                     if len(self.mode) != len(sum):

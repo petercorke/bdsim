@@ -298,8 +298,8 @@ class Piecewise(SourceBlock):
         """
         super().__init__(**blockargs)
         
-        self.t = [ x[0] for x in seq]
-        self.y = [ x[1] for x in seq]
+        self.t = [x[0] for x in seq]
+        self.y = [x[1] for x in seq]
 
     def start(self, state=None):
         for t in self.t:
