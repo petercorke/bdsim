@@ -113,7 +113,7 @@ def main():
                 if window.centralWidget().scene.wires:
                     window.centralWidget().scene.wires[0].checkIntersections()
 
-                window.centralWidget().save_image(filename)
+                window.centralWidget().save_image(filename)  # in interface.py
                 sys.exit(0)
 
             # figure out the filename to save it as

@@ -449,6 +449,9 @@ class Interface(QWidget):
 
         # Grab the dimensions of the space all blocks within the sceen occupy
         [x, y, width, height] = self.grab_screenshot_dimensions()
+
+        # ensure number of bytes in row (width*3) is a multiple of 4
+        width += (width * 3) % 4
         # Scale the dimensions from above, to the image
         rect = QRect(int(output_image.width()/2 + (x * ratio)), int(output_image.height()/2 + (y * ratio)), int(width * ratio), int(height * ratio))
 
@@ -456,6 +459,7 @@ class Interface(QWidget):
         output_image = output_image.copy(rect)
         # by default this is in QImage.Format_RGBA64 = 26 format, convert
         # 8-bit RGB pixels
+        #  see https://doc.qt.io/qt-5/qimage.html
         output_image = output_image.convertToFormat(QImage.Format_RGB888)
 
         # use PIL to do the PDF printing
