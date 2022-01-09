@@ -496,12 +496,17 @@ class BlockDiagram:
                 except Exception as err:
                     # output method failed, report it
                     print(fg('red'))
-                    print('--Error at t={:f} when computing output of [{:s}:: {:s}]'.format(t, b.type, str(b)))
-                    print('  {}'.format(err))
-                    print('  inputs were: ', b.inputs)
+                    print('--Error at t={:f} when computing output of [{:s}::{:s}]'.format(t, b.type, str(b)))
+                    print()
+                    # print('  {}'.format(err))
+                    traceback.print_exc(limit=-1, file=sys.stderr)
+
+                    print()
+                    for i, input in enumerate(b.inputs):
+                        print(f"Input[{i}] = {input}")
+
                     if b.nstates > 0:
-                        print('  state was: ', b._x)
-                    traceback.print_exc(file=sys.stderr)
+                        print(f"Block state x = {b._x}")
                     print(attr(0))
                     raise RuntimeError from None
 
