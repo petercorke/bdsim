@@ -682,7 +682,7 @@ class BDSim:
                 # check if it's a valid block class
                 if not inspect.isclass(value):
                     continue
-                if inspect.getmro(value)[-2].__name__ != 'Block':
+                if Block not in inspect.getmro(value):
                     continue
                 if name.endswith('Block'):
                     continue

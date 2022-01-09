@@ -1766,7 +1766,8 @@ class ClockedBlock(Block):
         assert self.nin > 0 or self.nout > 0, 'no inputs or outputs specified'
         self._x = self._x0
 
-
+class EventSource:
+    pass
 
 # c = Clock(5)
 # c1 = Clock(5, 2)

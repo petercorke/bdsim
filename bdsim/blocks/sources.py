@@ -9,7 +9,7 @@ Source blocks:
 
 import numpy as np
 import math
-from bdsim.components import SourceBlock
+from bdsim.components import SourceBlock, EventSource
 
 # ------------------------------------------------------------------------ #
 class Constant(SourceBlock):
@@ -96,7 +96,7 @@ class Time(SourceBlock):
         return [t]  
 # ------------------------------------------------------------------------ #
 
-class WaveForm(SourceBlock):
+class WaveForm(SourceBlock, EventSource):
     """
     :blockname:`WAVEFORM`
     
@@ -252,7 +252,7 @@ class WaveForm(SourceBlock):
 
 # ------------------------------------------------------------------------ #
 
-class Piecewise(SourceBlock):
+class Piecewise(SourceBlock, EventSource):
     """
     :blockname:`PIECEWISE`
     
@@ -313,7 +313,7 @@ class Piecewise(SourceBlock):
     
 # ------------------------------------------------------------------------ #
 
-class Step(SourceBlock):
+class Step(SourceBlock, EventSource):
     """
     :blockname:`STEP`
     
@@ -376,7 +376,7 @@ class Step(SourceBlock):
 
 # ------------------------------------------------------------------------ #
 
-class Ramp(SourceBlock):
+class Ramp(SourceBlock, EventSource):
     """
     :blockname:`RAMP`
     
