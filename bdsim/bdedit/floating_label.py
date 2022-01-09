@@ -144,7 +144,8 @@ class ContentWidget(QWidget):
         self.defaultWeight = QFont.Normal
         self.defaultItalics = False
         self.defaultUnderline = False
-        self.defaultColor = QColor("#000000")
+        # self.defaultColor = QColor("#000000")
+        self.defaultColor = QColor("#0000ff")
         self.defaultAlignment = Qt.AlignLeft
         self.defaultBackgroundColor = QColor(255, 255, 255)
 
@@ -169,7 +170,7 @@ class ContentWidget(QWidget):
 
         self.setDefaultFormatting()
 
-        self.text_edit.document().setPlainText(self.floating_label.label_text)
+        self.text_edit.setPlainText(self.floating_label.label_text)
         self.text_edit.textChanged.connect(self.updateText)
 
     def initUI(self):
