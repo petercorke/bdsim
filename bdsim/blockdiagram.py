@@ -716,9 +716,63 @@ class BlockDiagram:
 
     # ---------------------------------------------------------------------- #
 
+    def report_summary(self):
+        """
+        Print a summary of block diagram.
+
+        Print a table with 4 columns:
+
+        1. Block name, sorted in alphabetical order
+        2. The input port (if not a source block)
+        3. The block driving this port (if not a source block)
+        4. The type of value driving this port (if not a source block)
+
+        If the block is an event source, add a ``@`` suffix.
+        """
+        table = ANSITable(
+                Column("block", headalign="^", colalign="<"),
+                Column("inport", headalign="^", colalign="<"),
+                Column("source", headalign="^", colalign="<"),
+                Column("type", headalign="^", colalign="<"),
+                border="thin"
+            )
+
+        first = True
+        for b in sorted(self.blocklist, key=lambda x: x.name):
+            name = str(b)
+            if isinstance(b, EventSource):
+                name += '@'
+            # add a divider before each subsequent row
+            if not first:
+                    table.rule()
+            else:
+                first = False
+
+            # print the details
+            if len(b.sources) > 0:
+                # non source block, list all its inputs, one per row
+                for (port, source) in enumerate(b.sources): # every port
+
+                    value = b.getvalue(port)
+                    typ = type(value).__name__
+                    if isinstance(value, np.ndarray):
+                        typ += '{:s}.{:s}'.format(str(value.shape), str(value.dtype))
+
+                    table.row(name if port == 0 else "", port, source.block.name, typ)
+            else:
+                # source block, just list the name
+                table.row(name, "", "", "")
+        table.print()
+
     def report(self):
         """
-        Print a tabular report about the block diagram
+        Print a tabular report about the block diagram.
+
+        Print the important lists in pretty format.
+
+        * block list, all blocks
+        * wire list, all wires
+        * clock list, all discrete time clocks
 
         """
         # print all the blocks
