@@ -46,7 +46,7 @@ class Scope(GraphicsBlock):
     nin = -1
     nout = 0
 
-    def __init__(self, nin=1, vector=0, styles=None, stairs=False, scale='auto', labels=None, grid=True, watch=False, **blockargs):
+    def __init__(self, nin=0, vector=0, styles=None, stairs=False, scale='auto', labels=None, grid=True, watch=False, **blockargs):
         """
         Plots input signals against time.
         
@@ -134,23 +134,31 @@ class Scope(GraphicsBlock):
         else:
             self.labels = None
 
-        if vector > 0 and nin > 1:
-            raise ValueError('if vector > 0 nin must be 1')
 
-        if nplots is None:
-            # nplots still indeterminate
-            if vector > 0:
+        if vector > 0:
+            if nin > 1:
+                raise ValueError('if vector > 0 nin must be 1')
+            if nplots is None:
                 nplots = vector
             else:
-                nplots = nin
+                if vector != nplots:
+                    raise ValueError('vector > 0 doesnt match nplots')
+        
+        if nplots is None:
+            # still indeterminate, set default
+            nin = 1
+            nplots = 1
+
+        if vector > 0:
+            nin = 1
+            nplots = vector
         else:
-            if vector > 0 and vector != nplots:
-                raise ValueError('vector > 0 doesnt match nplots')
+            nin = nplots
 
         self.nplots = nplots
         self.vector = vector
         
-        super().__init__(nin=nplots, **blockargs)
+        super().__init__(nin=nin, **blockargs)
 
         if styles is None:
             self.styles = [ None ] * nplots
