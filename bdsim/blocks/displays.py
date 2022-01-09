@@ -138,20 +138,19 @@ class Scope(GraphicsBlock):
             raise ValueError('if vector > 0 nin must be 1')
 
         if nplots is None:
+            # nplots still indeterminate
             if vector > 0:
                 nplots = vector
             else:
                 nplots = nin
         else:
-            if vector == 0:
-                nin = nplots
-            if vector != nplots:
+            if vector > 0 and vector != nplots:
                 raise ValueError('vector > 0 doesnt match nplots')
 
         self.nplots = nplots
         self.vector = vector
         
-        super().__init__(nin=nin, **blockargs)
+        super().__init__(nin=nplots, **blockargs)
 
         if styles is None:
             self.styles = [ None ] * nplots
