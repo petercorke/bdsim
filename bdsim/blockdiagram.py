@@ -123,34 +123,90 @@ class BlockDiagram:
             block[1] = SigGen()  # use setitem
             block[1] = SumJunction(block2[3], block3[4]) * Gain(value=2)
         """
-                        
-        # convert to default plug on port 0 if need be
-        if isinstance(start, Block):
-            start = Plug(start, 0)
+
         start.type = 'start'
 
         for end in ends:
-            if isinstance(end, Block):
-                end = Plug(end, 0)
-            end.type = 'end'
-                    
-            if start.isslice and end.isslice:
-                # we have a bundle of signals
-                                
-                assert start.width == end.width, 'slice wires must have same width'
-                
-                for (s,e) in zip(start.portlist, end.portlist):
-                    wire = Wire( Plug(start.block, s, 'start'), Plug(end.block, e, 'end'), name)
+
+            if isinstance(start, Block):
+                if isinstance(end, Block):
+                    # connect(X, Y)
+                    # wires from all outport to all inports
+                    assert start.nout == end.nin, "can only connect blocks where number of input and output ports match"
+                    for i in range(start.nout):
+                        wire = Wire(StartPlug(start, i), EndPlug(end, i), name)
+                        self.add_wire(wire)
+
+                elif isinstance(end, Plug) and not end.isslice:
+                    # connect(X, Y[i])
+                    assert start.nout == 1, "can only connect single output block to a port"
+                    end.type = 'end'
+                    wire = Wire(StartPlug(start, 0), end, name)
                     self.add_wire(wire)
-            elif start.isslice and not end.isslice:
-                # bundle going to a block
-                assert start.width == start.block.nin, "bundle width doesn't match number of input ports"
-                for inport,outport in enumerate(start.portlist):
-                    wire = Wire( Plug(start.block, outport, 'start'), Plug(end.block, inport, 'end'), name)
+
+                elif isinstance(end, Plug) and end.isslice:
+                    # connect(X, Y[m:n])
+                    assert start.nout == end.width, "can only connect single output block to an input port slice of width 1"
+                    end.type = 'end'
+                    for i in range(start.nout):
+                        wire = Wire(StartPlug(start, i), end[i], name)
+                        self.add_wire(wire)
+
+                else:
+                    raise ValueError('bad end type')
+
+            elif isinstance(start, Plug) and not start.isslice:
+
+                if isinstance(end, Block):
+                    # connect(X[i], Y)
+                    # wires from all outport to all inports
+                    assert end.nin == 1, "can only connect a port to a block with single input port"
+                    wire = Wire(start, EndPlug(end, 0), name)
                     self.add_wire(wire)
+
+                elif isinstance(end, Plug) and not end.isslice:
+                    # connect(X[i], Y[i])
+                    end.type = 'end'
+                    wire = Wire(start, end, name)
+                    self.add_wire(wire)
+
+                elif isinstance(end, Plug) and end.isslice:
+                    # connect(X[i], Y[m:n])
+                    assert end.width == 1, "can only connect output port to an input port slice of width 1"
+                    end.type = 'end'
+                    wire = Wire(start, end[0], name)
+                    self.add_wire(wire)
+
+                else:
+                    raise ValueError('bad end type')
+
+            elif isinstance(start, Plug) and start.isslice:
+
+                if isinstance(end, Block):
+                    # connect(X[i:j], Y)
+                    assert start.width == end.nin, "can only connect output slice to a block with matching number of input ports"
+                    for i in range(end.nin):
+                        wire = Wire(start[i], EndPlug(end, i), name)
+                        self.add_wire(wire)
+
+                elif isinstance(end, Plug) and not end.isslice:
+                    # connect(X[i:j], Y[m])
+                    assert start.width == 1, "can only connect output slice of width 1 to a port"
+                    wire = Wire(start[0], end, name)
+                    self.add_wire(wire)
+
+                if isinstance(end, Plug) and end.isslice:
+                    # connect(X[i:j], Y[m:n])
+                    assert start.width == end.width, "can only connect port slices of same width"
+                    for i in range(start.width):
+                        wire = Wire(start[i], end[i], name)
+                        self.add_wire(wire)
+
+                else:
+                    raise ValueError('bad end type')
+
             else:
-                wire = Wire(start, end, name)
-                self.add_wire(wire)
+                raise ValueError('bad start type')
         
     # ---------------------------------------------------------------------- #
 

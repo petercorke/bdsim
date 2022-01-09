@@ -316,6 +316,9 @@ class Plug:
         else:
             return ValueError('bad plug index')
 
+    def __getitem__(self, i):
+        return self.__class__(self.block, self.portlist[i])
+
     @property
     def width(self):
         """
@@ -680,6 +683,19 @@ class Plug:
 
         """
         return str(self.block) + "[" + str(self.port) + "]"
+
+class StartPlug(Plug):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, type='start', **kwargs)
+
+class EndPlug(Plug):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, type='end', **kwargs)
+
+
+
 
 # ------------------------------------------------------------------------- #
 
