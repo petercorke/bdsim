@@ -136,7 +136,6 @@ class Sum(FunctionBlock):
                     raise ValueError('expecting 1D or 2D array')
             else:
                 sum = self._modefuncs[self.mode[0]](sum)
-            print('after', sum)
 
         return [sum]
 
@@ -629,7 +628,9 @@ class Interpolate(FunctionBlock):
     def start(self, state, **blockargs):
         if self.time:
             assert self.x[0] >= 0, 'interpolation not defined for t<0'
-            assert self.x[-1] <= state.T, 'interpolation not defined for t>T'
+            if self.x[-1] is np.inf:
+                self.x[-1] = state.T
+            assert self.x[-1] >= state.T, 'interpolation not defined for t>T'
         
     def output(self, t=None):
         if self.time:
