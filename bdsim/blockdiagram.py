@@ -1020,7 +1020,7 @@ class BlockDiagram:
 
     def DEBUG(self, debug, fmt, *args):
         if debug[0] in self.options.debug:
-            print('DEBUG.{:s}: ' + fmt.format(*args))
+            print(f'DEBUG.{debug:s}: ' + fmt.format(*args))
             
 if __name__ == "__main__":
 

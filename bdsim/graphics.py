@@ -103,19 +103,20 @@ class GraphicsBlock(SinkBlock):
         gstate = state
         options = state.options
 
-        print('#figs', plt.get_fignums())
+        self.bd.DEBUG('graphics', '{} matplotlib figures exist', len(plt.get_fignums()))
 
         if gstate.fignum == 0:
             # no figures yet created, lazy initialization
+            self.bd.DEBUG('graphics', 'lazy initialization')
             
             matplotlib.use(options.backend)            
             mpl_backend = matplotlib.get_backend()
 
+            self.bd.DEBUG('graphics', '  backend={:s}', mpl_backend)
+
             # split the string            
             ntiles = [int(x) for x in options.tiles.split('x')]
 
-            print("Graphics:")
-            print('  backend:', mpl_backend)
             xoffset = 0
             if options.shape is None:
                 if mpl_backend == 'Qt5Agg':
@@ -125,7 +126,7 @@ class GraphicsBlock(SinkBlock):
                     # next line creates a figure
                     sz = screen.availableSize()
                     dpiscale = screen.devicePixelRatio() # is 2.0 for Mac laptop screen
-                    print(sz.width(), sz.height(), dpiscale)
+                    self.bd.DEBUG('graphics', '  {} x {} @ {}dpi', sz.width(), sz.height(), dpiscale)
 
                     # check for a second screen
                     if options.altscreen:
@@ -136,17 +137,17 @@ class GraphicsBlock(SinkBlock):
                         elif vsize[0] >= sz[0]:
                             # extra monitor to the right
                             xoffset = vsize[0]
+                        self.bd.DEBUG('graphics', '  altscreen offset {}', xoffset)
 
                     screen_width, screen_height = sz.width(), sz.height()
                     dpi = screen.physicalDotsPerInch()
                     f = plt.gcf()
 
                 elif mpl_backend == 'TkAgg':
-                    print('  #figs', plt.get_fignums())
                     window = plt.get_current_fig_manager().window
                     screen_width, screen_height = window.winfo_screenwidth(), window.winfo_screenheight()
                     dpiscale = 1
-                    print('  Size: %d x %d' % (screen_width, screen_height))
+                    self.bd.DEBUG('graphics', '  screensize: {:d} x {:d}', screen_width, screen_height)
                     f = plt.gcf()
                     dpi = f.dpi
 
@@ -183,15 +184,13 @@ class GraphicsBlock(SinkBlock):
             # subsequent figures
             f = plt.figure(figsize=gstate.figsize)
 
-        print('  #figs', plt.get_fignums())
         # move the figure to right place on screen
         row = gstate.fignum // gstate.ntiles[0]
         col = gstate.fignum % gstate.ntiles[0]
         move_figure(f, col * gstate.figsize[0] * gstate.dpi, row * gstate.figsize[1] * gstate.dpi)
         gstate.fignum += 1
         
-        #print('create figure', self.fignum, row, col)
-        print(f)
+        self.bd.DEBUG('graphics', 'create figure {:d} at ({:d}, {:d})', gstate.fignum, row, col)
         return f
 
 
