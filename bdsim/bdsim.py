@@ -443,7 +443,6 @@ class BDSim:
                 if state.dt is not None:
                     state.solver_args['max_step'] = state.dt
 
-                print('@@@@@@@@@@@')
                 print(ydot, t0, x0, T, state.solver_args)
                 integrator = scipy_integrator(ydot,
                     t0=t0, y0=x0, t_bound=T, **state.solver_args)

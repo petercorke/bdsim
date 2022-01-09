@@ -343,7 +343,7 @@ class BlockDiagram:
         def _DFS(path):
             start = path[0]
             tail = path[-1]
-            for outgoing in tail.outports:
+            for outgoing in tail.output_wires:
                 # for every port on this block
                 for w in outgoing:
                     dest = w.end.block
@@ -473,8 +473,6 @@ class BlockDiagram:
         except:
             pass
 
-        # TODO: this is super expensive because the string formatting
-        #  happens regardless of whether debugging is on
         self.DEBUG('state', '>>>>>>>>> t={}, x={} >>>>>>>>>>>>>>>>', t, x)
         
         # reset all the blocks ready for the evalation
