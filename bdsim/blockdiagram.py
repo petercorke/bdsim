@@ -97,6 +97,8 @@ class BlockDiagram:
     def add_wire(self, wire, name=None):
         wire.id = len(self.wirelist)
         wire.name = name
+        # just add wire to the list, gets instantiated at compile time
+        # when add_output_wire and add_input_wire are called on the blocks
         return self.wirelist.append(wire)
     
     def __str__(self):
@@ -297,15 +299,19 @@ class BlockDiagram:
 
         # initialize lists of input and output ports
         for b in self.blocklist:
-            b.outports = [[] for i in range(0, b.nout)]
-            b.inports = [None for i in range(0, b.nin)]
+            b.output_wires = [[] for i in range(0, b.nout)]
+            b.input_wires = [None for i in range(0, b.nin)]
+            b.sources = [None for i in range(0, b.nin)]
+
+            # used to build execution plan
+            # TODO: might overlap with sources
             b._parents = [None for i in range(0, b.nin)]
         
         # connect the source and destination blocks to each wire
         for w in self.wirelist:
             try:
-                w.start.block.add_outport(w)
-                w.end.block.add_inport(w)
+                w.start.block.add_output_wire(w)
+                w.end.block.add_input_wire(w)
 
                 w.end.block._parents[w.end.port] = w.start.block
 
@@ -316,13 +322,13 @@ class BlockDiagram:
         # check connections every block 
         for b in self.blocklist:
             # check all inputs are connected
-            for port, connection in enumerate(b.inports):
+            for port, connection in enumerate(b.input_wires):
                 if connection is None:
                     print('  ERROR: [{:s}] input {:d} is not connected'.format(str(b), port))
                     error = True
                     
             # check all outputs are connected
-            for port,connections in enumerate(b.outports):
+            for port,connections in enumerate(b.output_wires):
                 if len(connections) == 0:
                     print('  INFORMATION: [{:s}] output {:d} is not connected'.format(str(b), port))
                     
@@ -524,18 +530,19 @@ class BlockDiagram:
                 if checkfinite and isinstance(out, (int, float, np.ndarray)) and not np.isfinite(out).any():
                     raise RuntimeError(f"block {b} output contains NaN")
 
-                # send block outputs to all downstream connected blocks
-                for (port, outwires) in enumerate(b.outports): # every port
-                    value = out[port]
-                    for w in outwires:     # every wire
+                # # send block outputs to all downstream connected blocks
+                # for (port, outwires) in enumerate(b.outports): # every port
+                #     value = out[port]
+                #     for w in outwires:     # every wire
                         
-                        self.DEBUG('propagate', '  [{}] = {} -->  {}[{}]', port, value, w.end.block.name, w.end.port)
+                #         self.DEBUG('propagate', '  [{}] = {} -->  {}[{}]', port, value, w.end.block.name, w.end.port)
 
-                        # send value to wire
-                        w.send(value)
+                #         # send value to wire
+                #         w.send(value)
 
-                        # TODO send return status no longer needed
-                        # TODO use common error handler in all cases above
+                #         # TODO send return status no longer needed
+                #         # TODO use common error handler in all cases above
+                b.output_values = out
 
         # gather the derivative
         YD = self.deriv()
@@ -800,7 +807,7 @@ class BlockDiagram:
         print()
         for i in range(block.nin):
             input = block.inputs[i]
-            print(f"input {i} from {block.inports[i].start.block.name} [{input.__class__.__name__}]")
+            print(f"input {i} from {block.sources[i].name} [{input.__class__.__name__}]")
             print('  ', input)
 
         print(attr(0))  # default text

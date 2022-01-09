@@ -971,6 +971,17 @@ class Block:
         assert len(out) == self.nout, 'result list is wrong length'
         return out
 
+    def getvalue(self, port):
+        p = self.sources[port]
+        return p.block.output_values[p.port]
+
+    def input(self, port):
+        return self.getvalue(port)
+
+    @property
+    def inputs(self):
+        return [self.input(i) for i in range(self.nin)]
+
     def __getitem__(self, port):
         """
         Convert a block slice reference to a plug.
@@ -1538,36 +1549,37 @@ class Block:
             self.inputs = [None] * self.nin
         self.updated = False
 
-    def add_outport(self, w):
+    def add_output_wire(self, w):
         port = w.start.port
-        assert port < len(self.outports), 'port number too big'
-        self.outports[port].append(w)
+        assert port < len(self.output_wires), 'port number too big'
+        self.output_wires[port].append(w)
 
-    def add_inport(self, w):
+    def add_input_wire(self, w):
         port = w.end.port
-        assert self.inports[port] is None, 'attempting to connect second wire to an input'
-        self.inports[port] = w
+        assert self.input_wires[port] is None, 'attempting to connect second wire to an input'
+        self.input_wires[port] = w
+        self.sources[port] = w.start
 
-    def setinput(self, port, value):
-        """
-        Receive input from a wire
+    # def setinput(self, port, value):
+    #     """
+    #     Receive input from a wire
 
-        :param self: Block to be updated
-        :type wire: Block
-        :param port: Input port to be updated
-        :type port: int
-        :param value: Input value
-        :type val: any
-        """
-        # stash it away
-        self.inputs[port] = value
+    #     :param self: Block to be updated
+    #     :type wire: Block
+    #     :param port: Input port to be updated
+    #     :type port: int
+    #     :param value: Input value
+    #     :type val: any
+    #     """
+    #     # stash it away
+    #     self.inputs[port] = value
 
 
-    def setinputs(self, *pos):
-        assert len(pos) == self.nin, 'mismatch in number of inputs'
-        self.reset()
-        for i, val in enumerate(pos):
-            self.inputs[i] = val
+    # def setinputs(self, *pos):
+    #     assert len(pos) == self.nin, 'mismatch in number of inputs'
+    #     self.reset()
+    #     for i, val in enumerate(pos):
+    #         self.inputs[i] = val
 
     def start(self, **kwargs):  # begin of a simulation
         pass
