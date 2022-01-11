@@ -46,15 +46,15 @@ class Scope(GraphicsBlock):
     nin = -1
     nout = 0
 
-    def __init__(self, nin=0, vector=0, styles=None, stairs=False, scale='auto', labels=None, grid=True, watch=False, **blockargs):
+    def __init__(self, nin=0, vector=None, styles=None, stairs=False, scale='auto', labels=None, grid=True, watch=False, **blockargs):
         """
         Plots input signals against time.
         
         :param nin: number of inputs, defaults to 1 or if given, the length of
                     style vector
         :type nin: int, optional
-        :param vector: vector input of this width, defaults to 0
-        :type vector: int, optional
+        :param vector: vector signal on single input port, defaults to 0
+        :type vector: int or list, optional
         :param styles: styles for each line to be plotted
         :type styles: str or dict, list of strings or dicts; one per line, optional
         :param stairs: force staircase style plot, defaults to False
@@ -73,15 +73,23 @@ class Scope(GraphicsBlock):
         :return: A SCOPE block
         :rtype: Scope instance
 
-        Create a block that plots input ports against time.  
+        Create a block that plots:
+        
+        * scalar input ports against time, ``vector=None``
+        * selected elements of a NumPy array on a single input port. If ``vector`` is an
+          int this is the expected width of the array. If ``vector`` is a list of ints these
+          are the indices of the array to display.  
 
         Each line can have its own color or style which is specified by:
         
             - a dict of options for `Line2D <https://matplotlib.org/3.2.2/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D>`_ or 
             - a  MATLAB-style linestyle like 'k--'
         
-        The number of inputs will be inferred from the length of the ``labels``
-        list if not specified.
+        The number of lines to plot will be inferred from: 
+        * the length of the ``labels`` list if specified
+        * the length of the ``styles`` list if specified
+        * ``nin`` if specified
+        * ``vector`` if specified
 
         If multiple lines are plotted then a heterogeneous list of styles, dicts or strings,
         one per line must be given.
@@ -98,6 +106,7 @@ class Scope(GraphicsBlock):
             SCOPE(styles='k--')
             SCOPE(styles=[{'color': 'blue'}, {'color': 'red', 'linestyle': '--'}])
             SCOPE(styles=['k', 'r--'])
+            SCOPE(vector=[0,1,2]) # display elements 0, 1, 2 of array on port 0
 
             
         .. figure:: ../../figs/Figure_1.png
@@ -134,24 +143,33 @@ class Scope(GraphicsBlock):
         else:
             self.labels = None
 
+        if vector is not None:
+            # vector argument is given
 
-        if vector > 0:
             if nin > 1:
-                raise ValueError('if vector > 0 nin must be 1')
-            if nplots is None:
-                nplots = vector
+                raise ValueError('if vector is given, nin must be 1')
+            
+            if isinstance(vector, int):
+                nvec = vector
+            elif isinstance(vector, list):
+                nvec = len(vector)
             else:
-                if vector != nplots:
-                    raise ValueError('vector > 0 doesnt match nplots')
-        
+                raise ValueError('vector must be an int or list')
+
+            if nplots is None:
+                nplots = nvec
+            else:
+                if nvec != nplots:
+                    raise ValueError('vector argument doesnt match nplots')
+
         if nplots is None:
             # still indeterminate, set default
             nin = 1
             nplots = 1
 
-        if vector > 0:
+        if vector is not None:
             nin = 1
-            nplots = vector
+            nplots = nvec
         else:
             nin = nplots
 
@@ -233,28 +251,26 @@ class Scope(GraphicsBlock):
         # inputs are set
         self.tdata = np.append(self.tdata, state.t)
 
-        if self.vector > 0:
-            # vector input on the input
-            data = self.inputs[0]
-            if len(data) != self.nplots:
-                raise RuntimeError('number of signals to plot doesnt match init parameters')
-            # assert len(data) == self.vector, 'vector parameter doesnt match input'
-            # assert len(data) == self.nplots, 'number of plots dosent match inputs'
-            for i,input in enumerate(data):
-                self.ydata[i] = np.append(self.ydata[i], input)
-        else:
-            # stash data from the inputs
-            assert len(self.inputs) == self.nplots, 'insufficient inputs'
-            for i,input in enumerate(self.inputs):
-                self.ydata[i] = np.append(self.ydata[i], input)
+        if self.vector is None:
+            # take data from multiple inputs as a list
+            data = self.inputs
 
-        plt.figure(self.fig.number)  # make current
-        # if self.stairs:
-        #     for i in range(0, self.nplots):
-        #         t = np.repeat(self.tdata, 2)
-        #         y = np.repeat(self.ydata[i], 2)
-        #         self.line[i].set_data(t[1:], y[:-1])
-        # else:
+        else:
+            # single input with vector data
+            data = self.inputs[0]
+            if isinstance(self.vector, list):
+                data = data[self.vector]
+
+        if len(data) != self.nplots:
+            raise RuntimeError('number of signals to plot doesnt match init parameters')
+
+        # append new data to the set
+        for i, y in enumerate(data):
+            self.ydata[i] = np.append(self.ydata[i], y)
+
+        # plot the data
+        plt.figure(self.fig.number)  # make figure current
+
         for i in range(0, self.nplots):
             self.line[i].set_data(self.tdata, self.ydata[i])
     
