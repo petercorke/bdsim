@@ -13,23 +13,22 @@ try:
 except:
     pass
 
-def bdload(bd, filename = None, globalvars={}, verbose=False, **kwargs):
+def bdload(bd, filename, globalvars={}, verbose=False, **kwargs):
     """
     Load a block diagram model
 
-    :param bd: [description]
-    :type bd: [type]
-    :param filename: [description], defaults to None
-    :type filename: [type], optional
-    :param globalvars: [description], defaults to {}
+    :param bd: block diagram to load into
+    :type bd: BlockDiagram instance
+    :param filename: name of JSON file to load from
+    :type filename: str or Path
+    :param globalvars: global variables for evaluating expressions, defaults to {}
     :type globalvars: dict, optional
-    :param verbose: [description], defaults to False
+    :param verbose: print parameters of all blocks as they are instantiated, defaults to False
     :type verbose: bool, optional
-    :raises RuntimeError: [description]
-    :raises RuntimeError: [description]
-    :raises ValueError: [description]
-    :return: [description]
-    :rtype: [type]
+    :raises RuntimeError: unable to load the file
+    :raises ValueError: unable to load the file
+    :return: the loaded block diagram
+    :rtype: BlockDiagram instance
 
     Block diagrams are saved as JSON files.
 
@@ -38,19 +37,19 @@ def bdload(bd, filename = None, globalvars={}, verbose=False, **kwargs):
     * a parameter starting with "=" cannot be evaluated
     * the block throws an error when instantiated, incorrect parameter values
     * unconnected input port
+
+    If the JSON file contains a parameter of the form ``"=expression"`` then
+    it is evaluated using ``eval`` with the global name space given by
+    ``globalvars``.  This means that you can embed lambda expressions that use
+    functions/classes defined in your module if ``globalargs`` is set to ``globals()``.
+
     """
 
-    if filename is None:
-        filename = sys.argv[-1]
-
     # load the JSON file
-
-    # TODO should have argparser, need to be careful how it interacts with bdsim
-    #  argparser
     with open(filename, 'r') as f:
         model = json.load(f)
 
-    # results is a dict with elements: blocks, wires
+    # result is a dict with elements: blocks, wires
 
     # load the blocks and build mappings
 
@@ -62,6 +61,8 @@ def bdload(bd, filename = None, globalvars={}, verbose=False, **kwargs):
     connector_dict = {}  # connector block: input socket -> output socket
     wire_dict = {}       # wire: start socket t-> end socket
     block_dict = {}      # block: block id -> Block instance
+
+    namespace = {**globals(), **globalvars}
 
     # create a dictionary of all blocks
     for block in model['blocks']:
@@ -92,16 +93,17 @@ def bdload(bd, filename = None, globalvars={}, verbose=False, **kwargs):
                     if value[0] == '=':
                         # assignment
                         try:
-                            newvalue = eval(value[1:], globals(), globalvars)
+                            newvalue = eval(value[1:], namespace)
                         except (ValueError, TypeError, NameError, SyntaxError):
                             print(fg('red'))
                             print(f"bdload: error resolving parameter {key}: {value} for block [{block['title']}]")
+                            traceback.print_exc(limit=-1, file=sys.stderr)
                             print(attr(0))
                             raise RuntimeError(f"cannot instantiate block {block['title']} - bad parameters?")
                     else:
                         # assume it's an "any" type, attempt to evaluate it
                         try:
-                            newvalue = eval(value, globals(), globalvars)
+                            newvalue = eval(value, namespace)
                         except (NameError, SyntaxError):
                             pass
                     
