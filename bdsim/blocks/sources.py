@@ -134,9 +134,9 @@ class WaveForm(SourceBlock, EventSource):
         :type offset: float, optional
         :param phase: Initial phase of signal in the range [0,1], defaults to 0
         :type phase: float, optional
-        :param min: minimum value, defaults to 0
+        :param min: minimum value, defaults to None
         :type min: float, optional
-        :param max: maximum value, defaults to 1
+        :param max: maximum value, defaults to None
         :type max: float, optional
         :param duty: duty cycle for square wave in range [0,1], defaults to 0.5
         :type duty: float, optional
