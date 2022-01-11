@@ -312,11 +312,12 @@ class BlockDiagram:
             try:
                 w.start.block.add_output_wire(w)
                 w.end.block.add_input_wire(w)
-
                 w.end.block._parents[w.end.port] = w.start.block
 
             except:
+                print(fg('red'))
                 print('error connecting wire ', w.fullname + ': ', sys.exc_info()[1])
+                print(attr(0))
                 error = True
             
         # check connections every block 
@@ -733,7 +734,7 @@ class BlockDiagram:
                 Column("block", headalign="^", colalign="<"),
                 Column("inport", headalign="^", colalign="<"),
                 Column("source", headalign="^", colalign="<"),
-                Column("type", headalign="^", colalign="<"),
+                Column("source type", headalign="^", colalign="<"),
                 border="thin"
             )
 
