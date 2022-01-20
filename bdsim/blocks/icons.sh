@@ -15,9 +15,9 @@
 
 ./tex2icon.py -r 140 -o dposeintegrator.png -t '\sum_0^T \vec{\nu}'
 
-./tex2icon.py -r 120 -o dict.png -t '\mathrm{\{\cdots\}}'
-./tex2icon.py -r 120 -o index.png -t '\mathrm{[}k\mathrm{]}'
-./tex2icon.py -r 120 -o item.png -t '\mathrm{\{\}[}k\mathrm{]}'
+./tex2icon.py -r 150 -o dict.png -t '\mathbf{\{\cdots\}}'
+./tex2icon.py -r 150 -o index.png -t '\mathbf{[}k\mathrm{]}'
+./tex2icon.py -r 150 -o item.png -t '\mathbf{\{\}[}k\mathrm{]}'
 
 ./tex2icon.py -r 180 -o transpose.png -t '\mat{A}^{\!T}'
 ./tex2icon.py -r 180 -o inverse.png -t '\mat{A}^{\!-\!1}'
@@ -40,7 +40,7 @@
 ./tex2icon.py -r 80 -o idyn.png -t '\vec{\tau}\!\left(\vec{q}, \dvec{q}, \ddvec{q}\right)'
 ./tex2icon.py -r 80 -o idynx.png -t '\vec{w}\!\left(\vec{q}, \dvec{q}, \ddvec{x}\right)'
 
-./tex2icon.py -r 170 -o pose_postmul.png -t '\oplus \pose[x]_y'
-./tex2icon.py -r 170 -o pose_premul.png -t '\pose[x]_y \oplus'
-./tex2icon.py -r 170 -o pose_inverse.png -t '\ominus'
-./tex2icon.py -r 115 -o transform_vector.png -t '\pose[x]_y \sbullet \vec{p}'
+./tex2icon.py -r 180 -o pose_postmul.png -t '\mathbf{\oplus\\!\pose[x]_y}'
+./tex2icon.py -r 180 -o pose_premul.png -t '\mathbf{\pose[x]_y\\!\oplus}'
+./tex2icon.py -r 170 -o pose_inverse.png -t '\mathbf{\ominus}'
+./tex2icon.py -r 150 -o transform_vector.png -t '\mathbf{\pose[x]_y}\\!\sbullet\\!\vec{p}'
