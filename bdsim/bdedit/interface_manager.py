@@ -4,6 +4,7 @@ import json
 import subprocess
 import datetime
 from sys import platform
+from pathlib import Path
 
 # PyQt5 imports
 from PyQt5.QtGui import *
@@ -342,22 +343,30 @@ class InterfaceWindow(QMainWindow):
                         value = '"' + value + '"'
                 args.append(f'--{arg}={value}')
         print(args)
+        print(self.args)
 
         if main_block_found:
 
             # Check if given file_name from the main block, contains a file extension
-            file_name, extension = os.path.splitext(main_file_name)
-            if not extension:
-                main_file_name = os.path.join(main_file_name + ".py")
+
+            bdfile = Path(self.filename)
+            mainfile = Path(main_file_name)
+            if not mainfile.is_absolute():
+                mainfile = bdfile.resolve().with_name(mainfile.name)
+            mainfile = mainfile.with_suffix(".py")
+
+            # file_name, extension = os.path.splitext(main_file_name)
+            # if not extension:
+            #     main_file_name = os.path.join(main_file_name + ".py")
             model_name = os.path.basename(self.filename)
-            if not os.path.isfile(model_name):
+            if not mainfile.is_file():
                 print(f"Main block detected: file {main_file_name} could not be opened")
                 return
 
             command = ['python']
             if self.args.pdb:
                 command.extend(['-m', 'pdb'])
-            command.extend([main_file_name, model_name])
+            command.extend([str(mainfile), str(bdfile)])
             command.extend(args)
 
         else:
