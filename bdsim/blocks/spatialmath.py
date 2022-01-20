@@ -31,8 +31,8 @@ if sm:
             """
             Post multiply pose.
 
-            :param pose: The pose
-            :type pose: SE3 or SE2
+            :param pose: pose to apply
+            :type pose: SO2, SE2, SO3 or SE3
             :param blockargs: |BlockOptions|
             :type blockargs: dict
             :return: A POSE_POSTMUL block
@@ -44,8 +44,8 @@ if sm:
 
                 gain = bd.POSE_POSTMUL(SE3())
             """
-            if not isinstance(pose, (SE2, SE3)):
-                raise ValueError('post must be SE2 or SE3')
+            if not isinstance(pose, (SO2, SO3, SE2, SE3)):
+                raise ValueError('post must be SO2, SE2, SO3 or SE3')
 
             super().__init__(**blockargs)
             self.pose  = pose
@@ -79,8 +79,8 @@ if sm:
             """
             Pre multiply pose.
 
-            :param pose: The gain value
-            :type pose: SE3 or SE2
+            :param pose: pose to apply
+            :type pose: SO2, SE2, SO3 or SE3
             :param blockargs: |BlockOptions|
             :type blockargs: dict
             :return: A POSE_PREMUL block
@@ -92,8 +92,8 @@ if sm:
 
                 gain = bd.POSE_POSTMUL(SE3())
             """
-            if not isinstance(pose, (SE2, SE3)):
-                raise ValueError('post must be SE2 or SE3')
+            if not isinstance(pose, (SO2, SO3, SE2, SE3)):
+                raise ValueError('post must be SO2, SE2, SO3 or SE3')
 
             super().__init__(**blockargs)
             self.pose  = pose
@@ -127,6 +127,8 @@ if sm:
             """
             Pre multiply pose.
 
+            :param pose: pose to apply
+            :type pose: SO2, SE2, SO3 or SE3
             :param blockargs: |BlockOptions|
             :type blockargs: dict
             :return: A TRANSFORM_VECTOR block
@@ -138,8 +140,8 @@ if sm:
 
                 gain = bd.POSE_POSTMUL(SE3())
             """
-            if not isinstance(pose, (SE2, SE3)):
-                raise ValueError('post must be SE2 or SE3')
+            if not isinstance(pose, (SO2, SO3, SE2, SE3)):
+                raise ValueError('post must be SO2, SE2, SO3 or SE3')
 
             super().__init__(nin=2, **blockargs)
             
