@@ -129,11 +129,11 @@ class PoseIntegrator(TransferBlock):
         Pose integrator
 
         :param x0: Initial pose, defaults to null
-        :type x0: SE3, optional
+        :type x0: SE3, Twist3, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: an INTEGRATOR block
-        :rtype: Integrator instance
+        :return: an POSEINTEGRATOR block
+        :rtype: PoseIntegrator instance
 
         This block integrates spatial velocity over time.
         The block input is a spatial velocity as a 6-vector
@@ -147,23 +147,18 @@ class PoseIntegrator(TransferBlock):
         super().__init__(**blockargs)
 
         if x0 is None:
-            x0 = SE3()
+            x0 = np.zeros((6,))
 
-        self.nstates = 6
+        self.nstates = len(x0)
 
-        self._x0 = np.r_[x0]
-
-        print('nstates', self.nstates)
+        self._x0 = x0
 
     def output(self, t=None):
         return [Twist3(self._x).SE3(1)]
 
     def deriv(self):
-        xd = np.array(self.inputs)
-        for i in range(0, self.nstates):
-            if self._x[i] < self.min[i] or self._x[i] > self.max[i]:
-                xd[i] = 0
-        return xd
+
+        return self.inputs[0]
 
 # ------------------------------------------------------------------------ #
 
