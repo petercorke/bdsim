@@ -3,7 +3,7 @@
 """
 Components of the simulation system, namely blocks, wires and plugs.
 """
-
+import types
 import math
 from re import S
 import numpy as np
@@ -946,13 +946,13 @@ class Block:
         return self._graphics
 
     # for use in unit testing
-    def _eval(self, *inputs, t=None):
+    def _output(self, *inputs, t=0.0):
         """
         Evaluate a block for unit testing.
         
         :param *inputs: List of input port values
         :type *inputs: list
-        :param t: Simulation time, defaults to None
+        :param t: Simulation time, defaults to 0.0
         :type t: float, optional
         :return: Block output port values
         :rtype: list
@@ -963,13 +963,45 @@ class Block:
         
         Mostly used for making concise unit tests.
 
+        .. warning:: the instance is monkey patched, not useable in a block
+            diagram subsequently.
+
         """
+        def _getvalue(self, port):
+            return self._eval_inputs[port]
+        
+        # monkey patch the instance so that input comes from an attribute
+        # rather than the source block.  for testing we don't have a source
+        # block
+        self.getvalue = types.MethodType(_getvalue, self)
+
+        # check inputs and assign to attribute
         assert len(inputs) == self.nin, 'wrong number of inputs provided'
-        self.inputs = inputs
+        self._eval_inputs = inputs
+        
+        # evaluate the block
         out = self.output(t=t)
+
+        # sanity check the output
         assert isinstance(out, list), 'result must be a list'
         assert len(out) == self.nout, 'result list is wrong length'
         return out
+
+    def _step(self, *inputs, state=None):
+        def _getvalue(self, port):
+            return self._eval_inputs[port]
+        
+        # monkey patch the instance so that input comes from an attribute
+        # rather than the source block.  for testing we don't have a source
+        # block
+        self.getvalue = types.MethodType(_getvalue, self)
+
+        # check inputs and assign to attribute
+        assert len(inputs) == self.nin, 'wrong number of inputs provided'
+        self._eval_inputs = inputs
+        
+        # step the block
+        self.step(state=state)
 
     def getvalue(self, port):
         p = self.sources[port]
