@@ -71,6 +71,9 @@ class Interface(QWidget):
         # the libraryBrowser to be scrollable
         self.libraryBrowserBox = QGroupBox()
 
+        # # Set file extension for screenshots. PDF (default) PNG if specified from command line args
+        # self.screenshot_extension_format = 'pdf'
+
         # The Scene interface is called to be initialized
         self.initUI(resolution, debug, parent)
 
@@ -532,9 +535,9 @@ class Interface(QWidget):
 
         # Given the filepath where to save the picture, find the basename of the screenshot
         if increment is None:
-            name_to_save = os.path.join(os.path.splitext(os.path.basename(picture_path))[0] + "-screenshot.pdf")
+            name_to_save = os.path.join(os.path.splitext(os.path.basename(picture_path))[0] + ".pdf")
         else:
-            name_to_save = os.path.join(os.path.splitext(os.path.basename(picture_path))[0] + "-screenshot-" + str(increment)) + ".pdf"
+            name_to_save = os.path.join(os.path.splitext(os.path.basename(picture_path))[0] + "-" + str(increment)) + ".pdf"
             increment += 1
 
         # Find all other images in the current directory (files ending with .png)
