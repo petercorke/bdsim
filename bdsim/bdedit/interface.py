@@ -470,7 +470,7 @@ class Interface(QWidget):
         return [left - spacer, top - spacer, width, height]
 
     # -----------------------------------------------------------------------------
-    def save_image(self, picture_path):
+    def save_image(self, picture_path, picture_name=None):
         """
         This method takes a filename and saves a snapshot of all the items within
         the ``Scene`` into it. Currently the resolution of this image is set to
@@ -478,6 +478,8 @@ class Interface(QWidget):
 
         :param picture_path: path where the given model is saved, and where the image will be saved
         :type picture_path: path, required
+        :param picture_name: name of screenshot, same as model name if not given
+        :type picture_name: str, optional
         """
 
         print("Rendering image")
@@ -509,43 +511,36 @@ class Interface(QWidget):
         #  see https://doc.qt.io/qt-5/qimage.html
         output_image = output_image.convertToFormat(QImage.Format_RGB888)
 
-        save_path = self.getScreenshotName(picture_path)
+        save_path = self.getScreenshotName(picture_path, picture_name)
 
         # use PIL to do the PDF printing
         from PIL import Image
         bytes = output_image.bits().asstring(output_image.sizeInBytes())
         img_PIL = Image.frombuffer('RGB', (output_image.width(), output_image.height()), bytes, 'raw', 'RGB', 0, 1)
-        img_PIL.save(save_path, format='pdf')
+        img_PIL.save(save_path)
         # # And the image is saved under the given file name, as a PDF
         print("Screenshot saved --> ", save_path)
 
     # -----------------------------------------------------------------------------
-    def getScreenshotName(self, picture_path, increment=None):
-        """
-        This function takes a path of where the current model is saved, and searches
-        if there are any screenshots in this path with the same name as the model.
-        If a duplicate name is detected, the given picture_name is incremented
-        with a -N, where N is a unique integer.
-
-        :param picture_path: path of model to extract name from
-        :type picture_path: path, required
-        :param increment: integer which makes filename unique. Incremented internally.
-        :type increment: int, optional
+    def getScreenshotName(self, picture_path, picture_name):
         """
 
-        # Given the filepath where to save the picture, find the basename of the screenshot
-        if increment is None:
+        """
+
+        # If picture_name is None, save screenshot under same name as model file.
+        # Extract directory of model file and save screenshot in same place, suffixed with .pdf by default
+        if picture_name is None:
             name_to_save = os.path.join(os.path.splitext(os.path.basename(picture_path))[0] + ".pdf")
+        # If picture name is given, use this name when saving screenshot
         else:
-            name_to_save = os.path.join(os.path.splitext(os.path.basename(picture_path))[0] + "-" + str(increment)) + ".pdf"
-            increment += 1
+            name_to_save = os.path.join(picture_name)
 
         # Find all other images in the current directory (files ending with .png)
         # as bdedit only saves images with .png extensions
         # HACK
         images_in_dir = []
         dir_list = os.listdir(os.path.dirname(picture_path))
-        for img in fnmatch.filter(dir_list, "*.pdf"):
+        for img in fnmatch.filter(dir_list, "*.pdf"), fnmatch.filter(dir_list, "*.png"):
             images_in_dir.append(img)
 
         # Check if saving current model under the model name would create a duplicate
@@ -561,8 +556,52 @@ class Interface(QWidget):
         if no_duplicates:
             return os.path.join(os.path.dirname(picture_path), name_to_save)
         else:
-            if increment is None: return self.getScreenshotName(picture_path, 1)
-            else: return self.getScreenshotName(picture_path, increment)
+            print("Handle not yet implemented. Saving screenshot would override existing screenshot with same name.")
+
+    # def getScreenshotName(self, picture_path, increment=None):
+    #     """
+    #     This function takes a path of where the current model is saved, and searches
+    #     if there are any screenshots in this path with the same name as the model.
+    #     If a duplicate name is detected, the given picture_name is incremented
+    #     with a -N, where N is a unique integer.
+    #
+    #     :param picture_path: path of model to extract name from
+    #     :type picture_path: path, required
+    #     :param increment: integer which makes filename unique. Incremented internally.
+    #     :type increment: int, optional
+    #     """
+    #
+    #     # Given the filepath where to save the picture, find the basename of the screenshot
+    #     if increment is None:
+    #         name_to_save = os.path.join(os.path.splitext(os.path.basename(picture_path))[0] + ".pdf")
+    #     else:
+    #         name_to_save = os.path.join(os.path.splitext(os.path.basename(picture_path))[0] + "-" + str(increment)) + ".pdf"
+    #         increment += 1
+    #
+    #     # Find all other images in the current directory (files ending with .png)
+    #     # as bdedit only saves images with .png extensions
+    #     # HACK
+    #     images_in_dir = []
+    #     print('Picture path:', picture_path)
+    #     dir_list = os.listdir(os.path.dirname(picture_path))
+    #     for img in fnmatch.filter(dir_list, "*.pdf"):
+    #         images_in_dir.append(img)
+    #
+    #     # Check if saving current model under the model name would create a duplicate
+    #     no_duplicates = True
+    #     for image in images_in_dir:
+    #         if name_to_save == image:
+    #             no_duplicates = False
+    #             break
+    #     #HACK
+    #     # no_duplicates = True
+    #
+    #     # If no duplicates are found, save screenshot under current model name
+    #     if no_duplicates:
+    #         return os.path.join(os.path.dirname(picture_path), name_to_save)
+    #     else:
+    #         if increment is None: return self.getScreenshotName(picture_path, 1)
+    #         else: return self.getScreenshotName(picture_path, increment)
 
     # -----------------------------------------------------------------------------
     def updateSceneDimensions(self):

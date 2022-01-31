@@ -38,13 +38,16 @@ def main():
         help='Set background color')
     parser.add_argument('--fontsize', '-s', type=int, default='12',
         help='Set font size of block names')
+    parser.add_argument('--format', '-f', type=str, nargs='?',
+        help='Specify screenshot extension type; PDF (default) or PNG')
     args, unparsed_args = parser.parse_known_args()
     
     # args holds all the command line info:
     #  args.file file name if given, else None
     #  args.debug True if -d option given
     #  args.print True if -p option given, load the file, save screenshot, then exit
-    #  args.fontsize intger fontsize if given, sets default size of block names
+    #  args.fontsize integer fontsize if given, sets default size of block names
+    #  args.format PDF if unspecified, PDF or PNG if specified
 
     # insert argv[0] into head of list of remaining args, and hand that to Qt
     unparsed_args.insert(0, sys.argv[0])
@@ -78,7 +81,7 @@ def main():
     window.args = args
 
     # Check what command line arguments have been passed, if any
-    if args.file or args.print or args.debug or args.fontsize:
+    if args.file or args.print or args.debug or args.fontsize or args.format:
 
         # Call bdedit functionality based on passed args
 
@@ -97,7 +100,7 @@ def main():
         
         if args.print is not None:
             # render a screenshot to file
-            def screenshot(filename):
+            def screenshot(model_path, screenshot_name):
                 # Set the background mode to white, no grid lines
                 window.centralWidget().scene.grScene.updateBackgroundMode('white', False)
                 window.centralWidget().scene.grScene.checkMode()
@@ -109,11 +112,11 @@ def main():
                     if block.block_type in ["Connector", "CONNECTOR"]:
                         block.grBlock.setSelected(False)
 
-                # Update the points where wires overlap within the scene to draw the wire seperations
+                # Update the points where wires overlap within the scene to draw the wire separations
                 if window.centralWidget().scene.wires:
                     window.centralWidget().scene.wires[0].checkIntersections()
 
-                window.centralWidget().save_image(filename)  # in interface.py
+                window.centralWidget().save_image(model_path, screenshot_name)  # in interface.py
                 sys.exit(0)
 
             # figure out the filename to save it as
@@ -121,22 +124,29 @@ def main():
 
             if args.print == '':
                 # no filename given on command line
-                #  use the model file name, drop the path, and set extension pdf if none given
+                # use the model file name, drop the path, and set extension pdf if none given
                 
                 # wait till python 3.9 for the next line to work
                 # path = Path(args.file).with_stem(filename.stem + "-screenshot").with_suffix('.pdf').name
 
-                path = Path(args.file).with_suffix('.pdf')
-                path = path.stem + "-screenshot" + path.suffix
+                if args.format == 'png':
+                    path = Path(args.file).with_suffix('.png')
+                else:
+                    path = Path(args.file).with_suffix('.pdf')
+
+                path = path.stem + path.suffix
                 
             else:
                 # filename was given on command line
                 path = Path(args.print)
                 if path.suffix == '':
-                    path = path.with_suffix('.pdf')
+                    if args.format == 'png':
+                        path = path.with_suffix('.png')
+                    else:
+                        path = path.with_suffix('.pdf')
 
             # After 100ms non-blocking delay, screenshot the model
-            QTimer.singleShot(100, lambda: screenshot(str(path)))
+            QTimer.singleShot(100, lambda: screenshot(args.file, str(path)))
 
     # run the GUI until it exits
     sys.exit(app.exec_())
