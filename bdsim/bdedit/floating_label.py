@@ -221,6 +221,6 @@ class ContentWidget(QWidget):
         self.text_edit.setFontWeight(self.defaultWeight)
         self.text_edit.setFontItalic(self.defaultItalics)
         self.text_edit.setFontUnderline(self.defaultUnderline)
-        self.text_edit.setTextColor(self.defaultColor)
         self.text_edit.setAlignment(self.defaultAlignment)
+        self.text_edit.setTextColor(self.defaultColor)
 

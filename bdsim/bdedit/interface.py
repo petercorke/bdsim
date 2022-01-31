@@ -399,8 +399,16 @@ class Interface(QWidget):
     # Todo, update documentation of this function
     # -----------------------------------------------------------------------------
     def grab_screenshot_dimensions(self):
+
+        def find_boundaries(L, T, R, B, left, top, right, btm):
+            if L < left: left = L
+            if T < top: top = T
+            if R > right: right = R
+            if B > btm: btm = B
+            return [left, top, right, btm]
+
         # Define initial dimensions of screenshot (if no blocks in scene)
-        top, btm, left, right = 0,0,0,0
+        top, btm, left, right = 0, 0, 0, 0
         spacer = 50 # half a typical block's width
 
         # Go through each block in scene, to find the top/bottom/left/right-most blocks
@@ -410,10 +418,46 @@ class Interface(QWidget):
             b_right = b_left + block.width
             b_btm = b_top + block.height
 
-            if b_left < left: left = b_left
-            if b_top < top: top = b_top
-            if b_right > right: right = b_right
-            if b_btm > btm: btm = b_btm
+            [left, top, right, btm] = find_boundaries(b_left, b_top, b_right, b_btm, left, top, right, btm)
+
+            # if b_left < left: left = b_left
+            # if b_top < top: top = b_top
+            # if b_right > right: right = b_right
+            # if b_btm > btm: btm = b_btm
+
+        # Then go through each floating text item, grouping box, and wire segments
+        for floating_text in self.scene.floating_labels:
+            f_left = floating_text.grContent.pos().x()
+            f_top = floating_text.grContent.pos().y()
+            f_rect = floating_text.grContent.boundingRect()
+            f_right = f_left + f_rect.width()
+            f_btm = f_top + f_rect.height()
+
+            [left, top, right, btm] = find_boundaries(f_left, f_top, f_right, f_btm, left, top, right, btm)
+            # print("floating label - rect, left, top, right, btm:", [f_rect, f_left, f_top, f_right, f_btm])
+
+        for gbox in self.scene.grouping_boxes:
+            g_left = gbox.grGBox.pos().x()
+            g_top = gbox.grGBox.pos().y()
+            g_rect = gbox.grGBox.boundingRect()
+            g_right = g_left + g_rect.width()
+            g_btm = g_top + g_rect.height()
+
+            [left, top, right, btm] = find_boundaries(g_left, g_top, g_right, g_btm, left, top, right, btm)
+
+            # print("grouping box - rect, left, top, right, btm:", [g_rect, g_left, g_top, g_right, g_btm])
+
+        for wire in self.scene.wires:
+            w_rect = wire.grWire.boundingRect()
+            w_left = w_rect.left()
+            w_top = w_rect.top()
+            w_right = w_left + w_rect.width()
+            w_btm = w_top + w_rect.height()
+
+            [left, top, right, btm] = find_boundaries(w_left, w_top, w_right, w_btm, left, top, right, btm)
+
+            # print("wire - rect, left, top, right, btm:", [w_rect, w_left, w_top, w_right, w_btm])
+
 
         if DEBUG: print("Left most:", left, " | Top most:", top, " | Right most:", right, " | Bottom most:", btm)
 
@@ -447,7 +491,7 @@ class Interface(QWidget):
         self.scene.grScene.render(painter)
         painter.end()
 
-        # Grab the dimensions of the space all blocks within the sceen occupy
+        # Grab the dimensions of the space all blocks within the screen occupy
         [x, y, width, height] = self.grab_screenshot_dimensions()
 
         # ensure number of bytes in row (width*3) is a multiple of 4
@@ -462,13 +506,15 @@ class Interface(QWidget):
         #  see https://doc.qt.io/qt-5/qimage.html
         output_image = output_image.convertToFormat(QImage.Format_RGB888)
 
+        save_path = self.getScreenshotName(picture_path)
+
         # use PIL to do the PDF printing
         from PIL import Image
         bytes = output_image.bits().asstring(output_image.sizeInBytes())
         img_PIL = Image.frombuffer('RGB', (output_image.width(), output_image.height()), bytes, 'raw', 'RGB', 0, 1)
-        img_PIL.save(picture_path)
+        img_PIL.save(save_path, format='pdf')
         # # And the image is saved under the given file name, as a PDF
-        print("Screenshot saved --> ", picture_path)
+        print("Screenshot saved --> ", save_path)
 
     # -----------------------------------------------------------------------------
     def getScreenshotName(self, picture_path, increment=None):
@@ -486,27 +532,27 @@ class Interface(QWidget):
 
         # Given the filepath where to save the picture, find the basename of the screenshot
         if increment is None:
-            name_to_save = os.path.join(os.path.splitext(os.path.basename(picture_path))[0] + "-screenshot.png")
+            name_to_save = os.path.join(os.path.splitext(os.path.basename(picture_path))[0] + "-screenshot.pdf")
         else:
-            name_to_save = os.path.join(os.path.splitext(os.path.basename(picture_path))[0] + "-screenshot-" + str(increment)) + ".png"
+            name_to_save = os.path.join(os.path.splitext(os.path.basename(picture_path))[0] + "-screenshot-" + str(increment)) + ".pdf"
             increment += 1
 
         # Find all other images in the current directory (files ending with .png)
         # as bdedit only saves images with .png extensions
         # HACK
-        # images_in_dir = []
-        # dir_list = os.listdir(os.path.dirname(picture_path))
-        # for img in fnmatch.filter(dir_list, "*.png"):
-        #     images_in_dir.append(img)
+        images_in_dir = []
+        dir_list = os.listdir(os.path.dirname(picture_path))
+        for img in fnmatch.filter(dir_list, "*.pdf"):
+            images_in_dir.append(img)
 
-        # # Check if saving current model under the model name would create a duplicate
-        # no_duplicates = True
-        # for image in images_in_dir:
-        #     if name_to_save == image:
-        #         no_duplicates = False
-        #         break
-        #HACK
+        # Check if saving current model under the model name would create a duplicate
         no_duplicates = True
+        for image in images_in_dir:
+            if name_to_save == image:
+                no_duplicates = False
+                break
+        #HACK
+        # no_duplicates = True
 
         # If no duplicates are found, save screenshot under current model name
         if no_duplicates:

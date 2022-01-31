@@ -52,22 +52,47 @@ def import_blocks(scene, window):
             block_path = block_ds["path"]
             block_icon = os.path.join(block_path[0], "Icons", block_type.lower() + ".png")
 
-            # Make a block instance of the given class
-            try:
-                # Grab number of input/output sockets for block, once it has been instantiated
-                if block_ds["nin"] < 0 or block_ds["nout"] < 0:
-                    block_instance = block_ds["class"]()
-                    block_inputsNum = block_instance.nin
-                    block_outputsNum = block_instance.nout
-                else:
-                    block_inputsNum = block_ds["nin"]
-                    block_outputsNum = block_ds["nout"]
+            # # Make a block instance of the given class
+            # try:
+            #     # Grab number of input/output sockets for block, once it has been instantiated
+            #     if block_ds["nin"] < 0 or block_ds["nout"] < 0:
+            #         block_instance = block_ds["class"]()
+            #         block_inputsNum = block_instance.nin
+            #         block_outputsNum = block_instance.nout
+            #     else:
+            #         block_inputsNum = block_ds["nin"]
+            #         block_outputsNum = block_ds["nout"]
+            #
+            # except Exception as e:
+            #     # When exception occurs here it is related to an assertion being raised in bdsim
+            #     # This can be ignored as we only need the nin/nout values once the block is instantiated
+            #     block_inputsNum = block_instance.nin
+            #     block_outputsNum = block_instance.nout
 
-            except Exception as e:
-                # When exception occurs here it is related to an assertion being raised in bdsim
-                # This can be ignored as we only need the nin/nout values once the block is instantiated
-                block_inputsNum = block_instance.nin
-                block_outputsNum = block_instance.nout
+            # Grab values assigned to this block's nin and nout class variables
+            # If the variables are >= 0, copy the values, otherwise if negative, set equal to 1 (aside from some blocks)
+            # If nin or nout not defined as a class variable, assign value of 0 (no inputs or outputs)
+            if hasattr(block_ds["class"], 'nin'):
+                if block_name in ["Sum Block", "Prod Block", "Traj Block"]:
+                    if block_name == "Traj Block":
+                        block_inputsNum = 0
+                    else:
+                        block_inputsNum = 2
+                else:
+                    if block_ds["class"].nin > -1:
+                        block_inputsNum = block_ds["class"].nin
+                    else:
+                        block_inputsNum = 1
+            else:
+                        block_inputsNum = 0
+
+            if hasattr(block_ds["class"], 'nout'):
+                if block_ds["class"].nout > -1:
+                    block_outputsNum = block_ds["class"].nout
+                else:
+                    block_outputsNum = 1
+            else:
+                    block_outputsNum = 0
 
             # Grab the names of the input/output sockets
             block_input_names, block_output_names = [], []
@@ -81,14 +106,7 @@ def import_blocks(scene, window):
                     block_output_names.append(output_socket_name)
 
             # For debugging nin/nout and inlabels/outlabels that bdedit sees
-            # print(block_name)
-            # print("class nin ", block_ds["class"].nin)
-            # print("class nout ", block_ds["class"].nout)
-            # print("inst nin ", block_inputsNum)
-            # print("inst nout ", block_outputsNum)
-            # print("inport ", block_input_names)
-            # print("outport ", block_output_names)
-            # print()
+            # pr4
 
             # Reconstruct URL from block type and path
             block_group = block_ds["module"].split('.')[-1]

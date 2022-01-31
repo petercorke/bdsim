@@ -581,7 +581,6 @@ class GraphicsConnectorBlock(QGraphicsItem):
         # If block has been moved, update the variable within the model, to then update the
         # title of the model, to indicate that there is unsaved progress
         if self.wasMoved:
-            print("connector block was moved")
             self.wasMoved = False
             self.block.scene.has_been_modified = True
-            self.block.scene.history.storeHistory("Block moved")
+            self.block.scene.history.storeHistory("Connector Block moved")

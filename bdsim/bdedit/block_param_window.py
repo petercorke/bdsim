@@ -202,7 +202,7 @@ class ParamWindow(QWidget):
 
         # Create timer to keep message opened for 5 seconds if error, 1.5 seconds if success
         self.timer = QtCore.QTimer()
-        self.timer.setInterval(message_duration * 1000)
+        self.timer.setInterval(int(message_duration * 1000))
         self.timer.timeout.connect(closeMessage)
         self.timer.start()
 
