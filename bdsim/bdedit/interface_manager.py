@@ -76,7 +76,7 @@ class InterfaceWindow(QMainWindow):
 
         # Miscellaneous actions
         self.actFlipBlocks = QAction('Flip Blocks', self, shortcut='F',toolTip="Flip selected blocks.", triggered=self.miscFlip)
-        self.actScreenshot = QAction('Screenshot', self, shortcut='P',toolTip="Take and save a screenshot of your diagram.",triggered=self.miscScreenshot)
+        self.actScreenshot = QAction('Screenshot', self, shortcut='P',toolTip="Take and save a screenshot of your diagram.",triggered = lambda checked: self.miscScreenshot(None))
         self.actWireOverlaps = QAction('Toggle Wire Overlaps', self, shortcut='I',toolTip="Toggle markers where wires overlap.",triggered=self.miscEnableOverlaps, checkable=True)
         self.actHideConnectors = QAction('Toggle Connectors', self, shortcut='H',toolTip="Toggle visibilitiy of connector blocks (hidden/visible).",triggered=self.miscHideConnectors, checkable=True)
         self.actDisableBackground = QAction('Disable Background', self, shortcut='T',toolTip="Toggle background mode (grey with grid / white without grid).",triggered=self.miscToggleBackground, checkable=True)
@@ -126,6 +126,7 @@ class InterfaceWindow(QMainWindow):
         # self.fileMenu.addAction(self.actExit)
         # self._file_menubar.addMenu(self.fileMenu)
         # # self._file_menubar.setNativeMenuBar(False)
+
         menubar = self.menuBar()
         self.fileMenu = menubar.addMenu('File')
         self.fileMenu.setToolTipsVisible(True)
@@ -134,6 +135,15 @@ class InterfaceWindow(QMainWindow):
         self.fileMenu.addSeparator()
         self.fileMenu.addAction(self.actSave)
         self.fileMenu.addAction(self.actSaveAs)
+
+        exportMenu = QMenu('Export As', self)
+        exportMenu.setIcon(QIcon(":/Icons_Reference/Icons/export_as.png"))
+        exportPDF = QAction('PDF', self, toolTip="Export model as a pdf.", triggered = lambda checked: self.exportAsToFile('pdf'))
+        exportPNG = QAction('PNG', self, toolTip="Export model as a png.", triggered = lambda checked: self.exportAsToFile('png'))
+        exportMenu.addAction(exportPDF)
+        exportMenu.addAction(exportPNG)
+        self.fileMenu.addMenu(exportMenu)
+
         self.fileMenu.addSeparator()
         self.fileMenu.addAction(self.actExit)
 
@@ -469,6 +479,10 @@ class InterfaceWindow(QMainWindow):
         return True
 
     # -----------------------------------------------------------------------------
+    def exportAsToFile(self, fileType):
+        self.miscScreenshot(fileType)
+
+    # -----------------------------------------------------------------------------
     def editUndo(self):
         self.interface.scene.history.undo()
 
@@ -490,13 +504,13 @@ class InterfaceWindow(QMainWindow):
         if self.interface:
             self.interface.scene.grScene.enable_intersections = not self.interface.scene.grScene.enable_intersections
 
-    def miscScreenshot(self):
+    def miscScreenshot(self, fileType):
         if self.interface:
             if self.filename is None:
                 print("Please save your model before taking a screenshot, then try again.")
                 self.saveToFile()
             else:
-                self.interface.save_image(self.filename)
+                self.interface.save_image(self.filename, picture_name=None, picture_format=fileType)
 
     def miscHideConnectors(self):
         if self.interface:

@@ -470,7 +470,7 @@ class Interface(QWidget):
         return [left - spacer, top - spacer, width, height]
 
     # -----------------------------------------------------------------------------
-    def save_image(self, picture_path, picture_name=None):
+    def save_image(self, picture_path, picture_name=None, picture_format=None):
         """
         This method takes a filename and saves a snapshot of all the items within
         the ``Scene`` into it. Currently the resolution of this image is set to
@@ -511,7 +511,7 @@ class Interface(QWidget):
         #  see https://doc.qt.io/qt-5/qimage.html
         output_image = output_image.convertToFormat(QImage.Format_RGB888)
 
-        save_path = self.getScreenshotName(picture_path, picture_name)
+        save_path = self.getScreenshotName(picture_path, picture_name, picture_format)
 
         # use PIL to do the PDF printing
         from PIL import Image
@@ -522,18 +522,19 @@ class Interface(QWidget):
         print("Screenshot saved --> ", save_path)
 
     # -----------------------------------------------------------------------------
-    def getScreenshotName(self, picture_path, picture_name):
+    def getScreenshotName(self, picture_path, picture_name, picture_format=None):
         """
 
         """
 
         # If picture_name is None, save screenshot under same name as model file.
         # Extract directory of model file and save screenshot in same place, suffixed with .pdf by default
+        # If picture_format is given, this overrides the default file type. This can only happen if user selects file type when exporting image from menubar
         if picture_name is None:
-            name_to_save = os.path.join(os.path.splitext(os.path.basename(picture_path))[0] + ".pdf")
+            name_to_save = os.path.join(os.path.splitext(os.path.basename(picture_path))[0] + ".pdf") if picture_format is None else os.path.join(os.path.splitext(os.path.basename(picture_path))[0] + "." + picture_format)
         # If picture name is given, use this name when saving screenshot
         else:
-            name_to_save = os.path.join(picture_name)
+            name_to_save = os.path.join(picture_name) if picture_format is None else os.path.join(picture_name + "." + picture_format)
 
         # Find all other images in the current directory (files ending with .png)
         # as bdedit only saves images with .png extensions
