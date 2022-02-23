@@ -256,6 +256,7 @@ class Scene(Serializable):
 
         # Removes the first block from the self.blocks array, until the array is empty
         while len(self.blocks) > 0:
+            self.blocks[0].parameterWindow.setVisible(False)
             self.blocks[0].remove()
 
         # Removes the first label from self.floating_labels array, until it is empty
@@ -354,10 +355,10 @@ class Scene(Serializable):
         blocks, wires, labels, gboxes = [], [], [], []
         for block in self.blocks:
             blocks.append(block.serialize())
-            # If parameter window still opened for any block, close it
-            if block.parameterWindow:
-                if block.parameterWindow.isVisible():
-                    block.closeParamWindow()
+            # # If parameter window still opened for any block, close it
+            # if block.parameterWindow:
+            #     if block.parameterWindow.isVisible():
+            #         block.closeParamWindow()
 
         for wire in self.wires: wires.append(wire.serialize())
         for label in self.floating_labels: labels.append(label.serialize())

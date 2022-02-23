@@ -40,16 +40,20 @@ class InterfaceWindow(QMainWindow):
         self.interface.scene.addHasBeenModifiedListener(self.updateApplicationName)
         self.setCentralWidget(self.interface)
 
+        self.runButtonParameters = {
+            'SimTime': 10,
+            'Graphics': True,
+            'Animation': True,
+            'Verbose': False,
+            'Progress': True,
+            'Debug': ""
+        }
+
         self.toolbar = QToolBar()
         self.fontSizeBox = QSpinBox()
-        self.runButtonParameters = {
-            'SimTime' : 10,
-            'Graphics' : True,
-            'Animation' : True,
-            'Verbose' : False,
-            'Progress' : True,
-            'Debug' : ""
-        }
+        self.simTimeBox = QLineEdit()
+
+        self.floatValidator = QDoubleValidator()
 
         # Create the toolbar action items and the toolbar itself
         self.createActions()
@@ -80,7 +84,13 @@ class InterfaceWindow(QMainWindow):
         self.actWireOverlaps = QAction('Toggle Wire Overlaps', self, shortcut='I',toolTip="Toggle markers where wires overlap.",triggered=self.miscEnableOverlaps, checkable=True)
         self.actHideConnectors = QAction('Toggle Connectors', self, shortcut='H',toolTip="Toggle visibilitiy of connector blocks (hidden/visible).",triggered=self.miscHideConnectors, checkable=True)
         self.actDisableBackground = QAction('Disable Background', self, shortcut='T',toolTip="Toggle background mode (grey with grid / white without grid).",triggered=self.miscToggleBackground, checkable=True)
+
+        # Actions related to model simulation
         self.actRunButton = QAction(QIcon(":/Icons_Reference/Icons/run.png"), 'Run', self, shortcut='R',toolTip="<b>Run Button (R)</b><p>Simulate your block diagram model.</p>",triggered=self.runButton)
+        self.actAbortButton = QAction(QIcon(":/Icons_Reference/Icons/abort.png"), 'Abort', self, shortcut='Q',toolTip="<b>Abort Button (Q)</b><p>Abort simulation of your block diagram model.</p>",triggered=self.abortButton)
+        self.actSimTime = self.simTimeBox.addAction(QIcon(":/Icons_Reference/Icons/simTime.png"), self.simTimeBox.LeadingPosition)
+        self.simTimeBox.setText(str(self.runButtonParameters["SimTime"])); self.simTimeBox.setMinimumWidth(55); self.simTimeBox.setMaximumWidth(75);
+        self.simTimeBox.setValidator(self.floatValidator); self.simTimeBox.editingFinished.connect(self.updateSimTime)
 
         # Actions related to formatting floating text labels
         self.actAlignLeft = QAction(QIcon(":/Icons_Reference/Icons/left_align.png"), 'Left', self, shortcut='Ctrl+Shift+L', toolTip="<b>Left Align (Ctrl+Shift+L)</b><p>Left align your selected floating text.</p>", triggered= lambda: self.textAlignment("AlignLeft"), checkable=True)
@@ -233,6 +243,8 @@ class InterfaceWindow(QMainWindow):
     def createToolbarItems(self):
         self.toolbar = self.addToolBar('ToolbarItems')
         self.toolbar.addAction(self.actRunButton)
+        self.toolbar.addAction(self.actAbortButton)
+        self.toolbar.addWidget(self.simTimeBox)
         self.toolbar.addSeparator()
         self.toolbar.addAction(self.actAlignLeft)
         self.toolbar.addAction(self.actAlignCenter)
@@ -247,7 +259,6 @@ class InterfaceWindow(QMainWindow):
         self.toolbar.addAction(self.actTextColor)
         self.toolbar.addAction(self.actRemoveFormat)
         self.toolbar.addSeparator()
-
     # -----------------------------------------------------------------------------
 
     def updateApplicationName(self):
@@ -300,12 +311,13 @@ class InterfaceWindow(QMainWindow):
 
         elif value == 'SimTime':
             sim_time, done = QInputDialog.getText(
-                self, 'Input Dialog', 'Enter simulation time (sec):')
+                self, 'Input Dialog', 'Enter simulation time (sec):', QLineEdit.Normal, str(self.runButtonParameters[value]))
             if done:
                 try:
                     # If simulation time is positive integer, update value
                     if float(sim_time) > 0:
-                        self.runButtonParameters[value] = sim_time
+                        self.runButtonParameters[value] = float(sim_time)
+                        self.simTimeBox.setText(str(self.runButtonParameters[value]))
 
                     # Else return feedback
                     else:
@@ -318,8 +330,8 @@ class InterfaceWindow(QMainWindow):
                     self.setRunBtnOptions(value)
 
             else:
-                # Set default simulation time to 10 sec if no value provided
-                self.runButtonParameters[value] = 10
+                # Leave simulation time value unchanged.
+                pass
 
         print(self.runButtonParameters)
 
@@ -394,6 +406,33 @@ class InterfaceWindow(QMainWindow):
 
         except (ValueError, OSError):
             print(f"failed to spawn subprocess")
+
+    # -----------------------------------------------------------------------------
+    def abortButton(self):
+        # Added function for handling what the abort button does when pressed.
+        print("Abort button pressed. Functionality yet to be implemented. Function in 'interface_manager' under 'runButton' function")
+        pass
+
+    # -----------------------------------------------------------------------------
+    def updateSimTime(self):
+        # This function is called when the Simulation Time value has been changed in the toolbar text widget.
+        sim_time = self.simTimeBox.text()
+
+        try:
+            # If simulation time is positive integer, update value
+            if float(sim_time) > 0:
+                self.runButtonParameters['SimTime'] = float(sim_time)
+                self.simTimeBox.setText(str(self.runButtonParameters['SimTime']))
+
+            # Else return feedback
+            else:
+                print("Incompatible simulation time given. Expected a positive non-zero float or integer.")
+
+        # If value is not an integer, return feedback
+        except ValueError as e:
+            print("Incompatible simulation time given. Expected a positive non-zero float or integer.")
+
+        print(self.runButtonParameters)
 
     # -----------------------------------------------------------------------------
     def newFile(self):

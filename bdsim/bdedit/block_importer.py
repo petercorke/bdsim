@@ -105,9 +105,6 @@ def import_blocks(scene, window):
                 for output_socket_name in block_ds["class"].outlabels:
                     block_output_names.append(output_socket_name)
 
-            # For debugging nin/nout and inlabels/outlabels that bdedit sees
-            # pr4
-
             # Reconstruct URL from block type and path
             block_group = block_ds["module"].split('.')[-1]
             try:

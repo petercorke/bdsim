@@ -5,6 +5,8 @@
 	<file>Icons/bdsim_logo2.png</file>
 
 	<file>Icons/run.png</file>
+	<file>Icons/abort.png</file>
+	<file>Icons/simTime.png</file>
 	<file>Icons/error.png</file>
 	<file>Icons/success.png</file>
 
