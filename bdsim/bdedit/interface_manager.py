@@ -41,7 +41,7 @@ class InterfaceWindow(QMainWindow):
         self.setCentralWidget(self.interface)
 
         self.runButtonParameters = {
-            'SimTime': 10,
+            'SimTime': 10.0,
             'Graphics': True,
             'Animation': True,
             'Verbose': False,
@@ -89,6 +89,7 @@ class InterfaceWindow(QMainWindow):
         self.actRunButton = QAction(QIcon(":/Icons_Reference/Icons/run.png"), 'Run', self, shortcut='R',toolTip="<b>Run Button (R)</b><p>Simulate your block diagram model.</p>",triggered=self.runButton)
         self.actAbortButton = QAction(QIcon(":/Icons_Reference/Icons/abort.png"), 'Abort', self, shortcut='Q',toolTip="<b>Abort Button (Q)</b><p>Abort simulation of your block diagram model.</p>",triggered=self.abortButton)
         self.actSimTime = self.simTimeBox.addAction(QIcon(":/Icons_Reference/Icons/simTime.png"), self.simTimeBox.LeadingPosition)
+        self.actSimTime.setToolTip("<b>Simulation Time</b><p>Description to be added</p>")
         self.simTimeBox.setText(str(self.runButtonParameters["SimTime"])); self.simTimeBox.setMinimumWidth(55); self.simTimeBox.setMaximumWidth(75);
         self.simTimeBox.setValidator(self.floatValidator); self.simTimeBox.editingFinished.connect(self.updateSimTime)
 
