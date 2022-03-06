@@ -273,6 +273,7 @@ class ParamWindow(QWidget):
 
                 # Make a label of that parameters' name
                 self.label = QLabel('<font size=3><b>'+parameter[0]+": "+'</font>')
+                self.label.setToolTip(parameter[4])
 
                 # If the parameter type is a boolean, create the intractable space as a checkbox, otherwise
                 # make an editable line for that parameter, and populate it with the parameters' current value
@@ -401,7 +402,7 @@ class ParamWindow(QWidget):
         if self.parameters:
 
             # For each definition of a parameter, in the blocks' defined parameters
-            for [paramName, paramType, paramVal, paramOptions] in self.parameters:
+            for [paramName, paramType, paramVal, paramOptions, _] in self.parameters:
                 i += 1
 
                 # If parameter type is boolean, then retrieve checked state of checkbox, otherwise

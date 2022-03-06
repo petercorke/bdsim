@@ -217,7 +217,7 @@ class Interface(QWidget):
 
             group_of_buttons = []
 
-            # Grab the each group that blocks belong to, and create a library panel button for those groups
+            # Grab each group that blocks belong to, and create a library panel button for those groups
             cleaned_class_group = sub_class_group[0][:-1] if sub_class_group[0].endswith('s') else sub_class_group[0]
             group_button = QPushButton(" + " + cleaned_class_group.capitalize() + " Blocks")
 
