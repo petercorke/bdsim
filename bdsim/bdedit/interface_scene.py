@@ -122,9 +122,13 @@ class Scene(Serializable):
         self.grScene = GraphicsScene(self)
         self.updateSceneDimensions()
 
-        # Create variables to record when and by who this diagram was created
+        # Create variables to record when and by whom this diagram was created
         self.creation_time = int(time.time())
         self.created_by = getpass.getuser()
+
+        # Copy variable of simulation time from interface manager for saving
+        # Initialized to 10.0, overwritten when changed in GUI or if loaded from model
+        self.sim_time = 10.0
 
     # -----------------------------------------------------------------------------
     def determineFont(self):
@@ -367,6 +371,7 @@ class Scene(Serializable):
             ('id', self.id),
             ('created_by', self.created_by),
             ('creation_time', self.creation_time),
+            ('simulation_time', self.sim_time),
             ('scene_width', self.scene_width),
             ('scene_height', self.scene_height),
             ('blocks', blocks),
@@ -402,6 +407,13 @@ class Scene(Serializable):
             self.creation_time = int(time.time())
             self.created_by = getpass.getuser()
 
+        # If sim_time parameter exists in model, load it
+        try:
+            self.sim_time = data['simulation_time']
+        # Otherwise, ignore as model will be updated on save
+        except:
+            pass
+
         hashmap = {}
 
         # All the blocks which were saved, are re-created from the JSON file
@@ -415,7 +427,6 @@ class Scene(Serializable):
 
             elif block_type == "MAIN" or block_type == "Main":
                 Main(self, self.window).deserialize(block_data, hashmap)
-
 
             # Otherwise if it is any other block (will be an auto-imported block)
             else:

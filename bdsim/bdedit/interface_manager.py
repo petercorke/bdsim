@@ -319,6 +319,7 @@ class InterfaceWindow(QMainWindow):
                     if float(sim_time) > 0:
                         self.runButtonParameters[value] = float(sim_time)
                         self.simTimeBox.setText(str(self.runButtonParameters[value]))
+                        self.interface.scene.sim_time = float(sim_time)
 
                     # Else return feedback
                     else:
@@ -424,6 +425,7 @@ class InterfaceWindow(QMainWindow):
             if float(sim_time) > 0:
                 self.runButtonParameters['SimTime'] = float(sim_time)
                 self.simTimeBox.setText(str(self.runButtonParameters['SimTime']))
+                self.interface.scene.sim_time = float(sim_time)
 
             # Else return feedback
             else:
@@ -438,9 +440,24 @@ class InterfaceWindow(QMainWindow):
     # -----------------------------------------------------------------------------
     def newFile(self):
         if self.exitingWithoutSave():
+            # Clear scene and all its elements. Reset simulation time parameters
             self.centralWidget().scene.clear()
+            self.runButtonParameters = {
+                'SimTime': 10.0,
+                'Graphics': True,
+                'Animation': True,
+                'Verbose': False,
+                'Progress': True,
+                'Debug': ""
+            }
+            self.simTimeBox.setText(str(self.runButtonParameters['SimTime']))
+            self.interface.scene.sim_time = self.runButtonParameters['SimTime']
+
+            # Reset filename and update GUI to display default file name
             self.filename = None
             self.updateApplicationName()
+
+            # Reset history stack
             self.centralWidget().scene.history.clear()
             self.centralWidget().scene.history.storeInitialHistoryStamp()
 
@@ -479,6 +496,9 @@ class InterfaceWindow(QMainWindow):
                 self.centralWidget().scene.loadFromFile(fname)
                 self.filename = fname
                 self.updateApplicationName()
+                # Update SimTime in runButtonParameters in case it was set in model
+                self.runButtonParameters['SimTime'] = self.interface.scene.sim_time
+                self.simTimeBox.setText(str(self.runButtonParameters['SimTime']))
 
     # -----------------------------------------------------------------------------
     def saveToFile(self):
