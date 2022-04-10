@@ -1,7 +1,9 @@
+import sys
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib import animation
 from bdsim.components import SinkBlock
+
 
 class GraphicsBlock(SinkBlock):
     """
@@ -26,6 +28,7 @@ class GraphicsBlock(SinkBlock):
 
         super().__init__(**blockargs)
         self._graphics = True
+
 
         self.movie = movie
 
@@ -98,7 +101,10 @@ class GraphicsBlock(SinkBlock):
             else:
                 # This works for QT and GTK
                 # You can also use window.setGeometry
-                f.canvas.manager.window.move(x, y)
+                try:
+                    f.canvas.manager.window.move(x, y)
+                except AttributeError:
+                    pass  # can't do this for MacOSX
         
         gstate = state
         options = state.options
@@ -109,7 +115,19 @@ class GraphicsBlock(SinkBlock):
             # no figures yet created, lazy initialization
             self.bd.DEBUG('graphics', 'lazy initialization')
             
-            matplotlib.use(options.backend)            
+            if options.backend is None:
+                if sys.platform == 'darwin':
+                    # try Qt5Agg
+                    try:
+                        matplotlib.use('Qt5Agg')
+                    except ImportError:
+                        pass  # otherwise use default (MacOSX)
+            else:
+                try:
+                    matplotlib.use(options.backend)
+                except ImportError:
+                    self.fatal(f"can't select backend: {options.backend}")
+
             mpl_backend = matplotlib.get_backend()
 
             self.bd.DEBUG('graphics', '  backend={:s}', mpl_backend)
