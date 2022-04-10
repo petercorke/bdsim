@@ -179,7 +179,7 @@ class BDSim:
         if self.options.progress:
             print('\r' + ' '* 90 + '\r')
 
-    def run(self, bd, T=5, dt=0.01, solver='RK45', solver_args={}, debug='',
+    def run(self, bd, T=5, dt=None, solver='RK45', solver_args={}, debug='',
             block=None, checkfinite=True, minstepsize=1e-12, watch=[],
             ):
         """
@@ -187,7 +187,7 @@ class BDSim:
         
         :param T: maximum integration time, defaults to 10.0
         :type T: float, optional
-        :param dt: maximum time step, defaults to 0.1
+        :param dt: maximum time step
         :type dt: float, optional
         :param solver: integration method, defaults to ``RK45``
         :type solver: str, optional
@@ -205,7 +205,14 @@ class BDSim:
         :rtype: Sim class
         
         Assumes that the network has been compiled.
-        
+
+        The system is simulated from time 0 to ``T``.
+
+        The integration step time ``dt`` defaults to ``T/100`` but can be
+        specified.  Finer control can be achieved using ``max_step`` and
+        ``first_step`` parameters to the underlying integrator using the
+        ``solver_args`` parameter.
+
         Results are returned in a class with attributes:
             
         - ``t`` the time vector: ndarray, shape=(M,)
@@ -255,6 +262,9 @@ class BDSim:
         state = BDSimState()
         self.state = state
         state.T = T
+
+        if dt is None and not 'max_step' in solver_args:
+            dt = T / 100
         state.dt = dt
         state.count = 0
         state.solver = solver
@@ -273,6 +283,8 @@ class BDSim:
         # turn off progress bar if any debug options are given
         if len(state.options.debug) > 0:
             self.set_options(progress = False)
+        if block is not None:
+            self.set_options(hold=block)
 
         # process the watchlist
         #  elements can be:
@@ -396,7 +408,8 @@ class BDSim:
         out.ynames = watchnamelist
 
         # pause until all graphics blocks close
-        self.done(self.bd, block=self.options.hold)
+        if self.options.graphics:
+            self.done(self.bd, block=self.options.hold)
 
         return out
 
@@ -426,6 +439,7 @@ class BDSim:
         :rtype: ndarray(n)
 
         The system is integrated from from ``x0`` to ``xf`` over the interval ``t0`` to ``tf``.
+
         """
         try:
             if bd.nstates > 0:
@@ -489,6 +503,8 @@ class BDSim:
 
             elif len(clocklist) == 0:
                 # block diagram has no continuous or discrete states
+
+                assert dt is not None, 'if no states must specify dt'
     
                 for t in np.arange(t0, T, state.dt):  # step through the time range
                     # evaluate the block diagram
@@ -857,7 +873,7 @@ class BDSim:
 
     def _init_options(self, sysargs=True, **unused):
         self.prog_options = {
-            'backend': 'Qt5Agg',  # 'TkAgg',
+            'backend': None,
             'tiles': '3x4',
             'graphics': True,
             'animation': False,
@@ -954,3 +970,18 @@ class BDSim:
 
 
         self.set_options(**unused)
+
+    def fatal(self, message, retval=1):
+        """
+        Fatal simulation error
+
+        :param message: Error message
+        :type message: str
+        :param retval: system return value (*nix only) defaults to 1
+        :type retval: int, optional
+
+        Display the error message then terminate the process.  For operating
+        systems that support it, return an integer code.
+        """
+        print(message)
+        sys.exit(retval)
