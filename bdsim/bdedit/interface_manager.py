@@ -40,16 +40,20 @@ class InterfaceWindow(QMainWindow):
         self.interface.scene.addHasBeenModifiedListener(self.updateApplicationName)
         self.setCentralWidget(self.interface)
 
+        self.runButtonParameters = {
+            'SimTime': 10.0,
+            'Graphics': True,
+            'Animation': True,
+            'Verbose': False,
+            'Progress': True,
+            'Debug': ""
+        }
+
         self.toolbar = QToolBar()
         self.fontSizeBox = QSpinBox()
-        self.runButtonParameters = {
-            'SimTime' : 10,
-            'Graphics' : True,
-            'Animation' : True,
-            'Verbose' : False,
-            'Progress' : True,
-            'Debug' : ""
-        }
+        self.simTimeBox = QLineEdit()
+
+        self.floatValidator = QDoubleValidator()
 
         # Create the toolbar action items and the toolbar itself
         self.createActions()
@@ -76,11 +80,18 @@ class InterfaceWindow(QMainWindow):
 
         # Miscellaneous actions
         self.actFlipBlocks = QAction('Flip Blocks', self, shortcut='F',toolTip="Flip selected blocks.", triggered=self.miscFlip)
-        self.actScreenshot = QAction('Screenshot', self, shortcut='P',toolTip="Take and save a screenshot of your diagram.",triggered=self.miscScreenshot)
+        self.actScreenshot = QAction('Screenshot', self, shortcut='P',toolTip="Take and save a screenshot of your diagram.",triggered = lambda checked: self.miscScreenshot(None))
         self.actWireOverlaps = QAction('Toggle Wire Overlaps', self, shortcut='I',toolTip="Toggle markers where wires overlap.",triggered=self.miscEnableOverlaps, checkable=True)
         self.actHideConnectors = QAction('Toggle Connectors', self, shortcut='H',toolTip="Toggle visibilitiy of connector blocks (hidden/visible).",triggered=self.miscHideConnectors, checkable=True)
         self.actDisableBackground = QAction('Disable Background', self, shortcut='T',toolTip="Toggle background mode (grey with grid / white without grid).",triggered=self.miscToggleBackground, checkable=True)
+
+        # Actions related to model simulation
         self.actRunButton = QAction(QIcon(":/Icons_Reference/Icons/run.png"), 'Run', self, shortcut='R',toolTip="<b>Run Button (R)</b><p>Simulate your block diagram model.</p>",triggered=self.runButton)
+        self.actAbortButton = QAction(QIcon(":/Icons_Reference/Icons/abort.png"), 'Abort', self, shortcut='Q',toolTip="<b>Abort Button (Q)</b><p>Abort simulation of your block diagram model.</p>",triggered=self.abortButton)
+        self.actSimTime = self.simTimeBox.addAction(QIcon(":/Icons_Reference/Icons/simTime.png"), self.simTimeBox.LeadingPosition)
+        self.actSimTime.setToolTip("<b>Simulation Time</b><p>Description to be added</p>")
+        self.simTimeBox.setText(str(self.runButtonParameters["SimTime"])); self.simTimeBox.setMinimumWidth(55); self.simTimeBox.setMaximumWidth(75);
+        self.simTimeBox.setValidator(self.floatValidator); self.simTimeBox.editingFinished.connect(self.updateSimTime)
 
         # Actions related to formatting floating text labels
         self.actAlignLeft = QAction(QIcon(":/Icons_Reference/Icons/left_align.png"), 'Left', self, shortcut='Ctrl+Shift+L', toolTip="<b>Left Align (Ctrl+Shift+L)</b><p>Left align your selected floating text.</p>", triggered= lambda: self.textAlignment("AlignLeft"), checkable=True)
@@ -126,6 +137,7 @@ class InterfaceWindow(QMainWindow):
         # self.fileMenu.addAction(self.actExit)
         # self._file_menubar.addMenu(self.fileMenu)
         # # self._file_menubar.setNativeMenuBar(False)
+
         menubar = self.menuBar()
         self.fileMenu = menubar.addMenu('File')
         self.fileMenu.setToolTipsVisible(True)
@@ -134,6 +146,15 @@ class InterfaceWindow(QMainWindow):
         self.fileMenu.addSeparator()
         self.fileMenu.addAction(self.actSave)
         self.fileMenu.addAction(self.actSaveAs)
+
+        exportMenu = QMenu('Export As', self)
+        exportMenu.setIcon(QIcon(":/Icons_Reference/Icons/export_as.png"))
+        exportPDF = QAction('PDF', self, toolTip="Export model as a pdf.", triggered = lambda checked: self.exportAsToFile('pdf'))
+        exportPNG = QAction('PNG', self, toolTip="Export model as a png.", triggered = lambda checked: self.exportAsToFile('png'))
+        exportMenu.addAction(exportPDF)
+        exportMenu.addAction(exportPNG)
+        self.fileMenu.addMenu(exportMenu)
+
         self.fileMenu.addSeparator()
         self.fileMenu.addAction(self.actExit)
 
@@ -223,6 +244,8 @@ class InterfaceWindow(QMainWindow):
     def createToolbarItems(self):
         self.toolbar = self.addToolBar('ToolbarItems')
         self.toolbar.addAction(self.actRunButton)
+        self.toolbar.addAction(self.actAbortButton)
+        self.toolbar.addWidget(self.simTimeBox)
         self.toolbar.addSeparator()
         self.toolbar.addAction(self.actAlignLeft)
         self.toolbar.addAction(self.actAlignCenter)
@@ -237,7 +260,6 @@ class InterfaceWindow(QMainWindow):
         self.toolbar.addAction(self.actTextColor)
         self.toolbar.addAction(self.actRemoveFormat)
         self.toolbar.addSeparator()
-
     # -----------------------------------------------------------------------------
 
     def updateApplicationName(self):
@@ -290,12 +312,14 @@ class InterfaceWindow(QMainWindow):
 
         elif value == 'SimTime':
             sim_time, done = QInputDialog.getText(
-                self, 'Input Dialog', 'Enter simulation time (sec):')
+                self, 'Input Dialog', 'Enter simulation time (sec):', QLineEdit.Normal, str(self.runButtonParameters[value]))
             if done:
                 try:
                     # If simulation time is positive integer, update value
                     if float(sim_time) > 0:
-                        self.runButtonParameters[value] = sim_time
+                        self.runButtonParameters[value] = float(sim_time)
+                        self.simTimeBox.setText(str(self.runButtonParameters[value]))
+                        self.interface.scene.sim_time = float(sim_time)
 
                     # Else return feedback
                     else:
@@ -308,8 +332,8 @@ class InterfaceWindow(QMainWindow):
                     self.setRunBtnOptions(value)
 
             else:
-                # Set default simulation time to 10 sec if no value provided
-                self.runButtonParameters[value] = 10
+                # Leave simulation time value unchanged.
+                pass
 
         print(self.runButtonParameters)
 
@@ -386,11 +410,54 @@ class InterfaceWindow(QMainWindow):
             print(f"failed to spawn subprocess")
 
     # -----------------------------------------------------------------------------
+    def abortButton(self):
+        # Added function for handling what the abort button does when pressed.
+        print("Abort button pressed. Functionality yet to be implemented. Function in 'interface_manager' under 'runButton' function")
+        pass
+
+    # -----------------------------------------------------------------------------
+    def updateSimTime(self):
+        # This function is called when the Simulation Time value has been changed in the toolbar text widget.
+        sim_time = self.simTimeBox.text()
+
+        try:
+            # If simulation time is positive integer, update value
+            if float(sim_time) > 0:
+                self.runButtonParameters['SimTime'] = float(sim_time)
+                self.simTimeBox.setText(str(self.runButtonParameters['SimTime']))
+                self.interface.scene.sim_time = float(sim_time)
+
+            # Else return feedback
+            else:
+                print("Incompatible simulation time given. Expected a positive non-zero float or integer.")
+
+        # If value is not an integer, return feedback
+        except ValueError as e:
+            print("Incompatible simulation time given. Expected a positive non-zero float or integer.")
+
+        print(self.runButtonParameters)
+
+    # -----------------------------------------------------------------------------
     def newFile(self):
         if self.exitingWithoutSave():
+            # Clear scene and all its elements. Reset simulation time parameters
             self.centralWidget().scene.clear()
+            self.runButtonParameters = {
+                'SimTime': 10.0,
+                'Graphics': True,
+                'Animation': True,
+                'Verbose': False,
+                'Progress': True,
+                'Debug': ""
+            }
+            self.simTimeBox.setText(str(self.runButtonParameters['SimTime']))
+            self.interface.scene.sim_time = self.runButtonParameters['SimTime']
+
+            # Reset filename and update GUI to display default file name
             self.filename = None
             self.updateApplicationName()
+
+            # Reset history stack
             self.centralWidget().scene.history.clear()
             self.centralWidget().scene.history.storeInitialHistoryStamp()
 
@@ -429,6 +496,9 @@ class InterfaceWindow(QMainWindow):
                 self.centralWidget().scene.loadFromFile(fname)
                 self.filename = fname
                 self.updateApplicationName()
+                # Update SimTime in runButtonParameters in case it was set in model
+                self.runButtonParameters['SimTime'] = self.interface.scene.sim_time
+                self.simTimeBox.setText(str(self.runButtonParameters['SimTime']))
 
     # -----------------------------------------------------------------------------
     def saveToFile(self):
@@ -469,6 +539,10 @@ class InterfaceWindow(QMainWindow):
         return True
 
     # -----------------------------------------------------------------------------
+    def exportAsToFile(self, fileType):
+        self.miscScreenshot(fileType)
+
+    # -----------------------------------------------------------------------------
     def editUndo(self):
         self.interface.scene.history.undo()
 
@@ -490,13 +564,13 @@ class InterfaceWindow(QMainWindow):
         if self.interface:
             self.interface.scene.grScene.enable_intersections = not self.interface.scene.grScene.enable_intersections
 
-    def miscScreenshot(self):
+    def miscScreenshot(self, fileType):
         if self.interface:
             if self.filename is None:
                 print("Please save your model before taking a screenshot, then try again.")
                 self.saveToFile()
             else:
-                self.interface.save_image(self.filename)
+                self.interface.save_image(self.filename, picture_name=None, picture_format=fileType)
 
     def miscHideConnectors(self):
         if self.interface:

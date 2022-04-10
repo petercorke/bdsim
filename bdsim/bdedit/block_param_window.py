@@ -273,15 +273,22 @@ class ParamWindow(QWidget):
 
                 # Make a label of that parameters' name
                 self.label = QLabel('<font size=3><b>'+parameter[0]+": "+'</font>')
-                # Make an editable line for that parameter, and populate it with the parameters' current value
-                self.line = QLineEdit(str(parameter[2]))
+                self.label.setToolTip(parameter[4])
+
+                # If the parameter type is a boolean, create the intractable space as a checkbox, otherwise
+                # make an editable line for that parameter, and populate it with the parameters' current value
+                if not issubclass(parameter[1], bool):
+                    self.line = QLineEdit(str(parameter[2]))
+                else:
+                    self.line = QCheckBox(); self.line.setChecked(parameter[2])
+
                 # Set the width of the editable line to the above-defined width (150 pixels)
                 self.line.setFixedWidth(self._parameter_line_width)
                 # Append the current value of the parameter into the following list (for later comparison)
                 self.parameter_values.append(self.line)
                 # Add the label and editable line into our row widget
                 self.row_x.layout.addWidget(self.label, alignment=Qt.AlignCenter)
-                self.row_x.layout.addWidget(self.line)
+                self.row_x.layout.addWidget(self.line, alignment=Qt.AlignCenter)
 
                 # Add out row widget to the layout of the parameter window
                 self.row_x.setLayout(self.row_x.layout)
@@ -395,10 +402,15 @@ class ParamWindow(QWidget):
         if self.parameters:
 
             # For each definition of a parameter, in the blocks' defined parameters
-            for [paramName, paramType, paramVal, paramOptions] in self.parameters:
+            for [paramName, paramType, paramVal, paramOptions, _] in self.parameters:
                 i += 1
-                # Extract the text from the editable line as the value to set the parameter to
-                inputValue = self.parameter_values[i].text()
+
+                # If parameter type is boolean, then retrieve checked state of checkbox, otherwise
+                # extract the text from the editable line as the value to set the parameter to
+                if not issubclass(paramType, bool):
+                    inputValue = self.parameter_values[i].text()
+                else:
+                    inputValue = str(self.parameter_values[i].isChecked())
 
                 # If a value has been provided for that parameter, perform sanity checking on that input
                 if inputValue:
@@ -638,7 +650,7 @@ class ParamWindow(QWidget):
             self.block.scene.has_been_modified = True
             self.block.scene.history.storeHistory("Block parameters updated")
 
-        # Finally notify the GraphicsBlock to update itself, should the number of sockets, or the block
+        # Finally, notify the GraphicsBlock to update itself, should the number of sockets, or the block
         # height have been called to change
         self.block.grBlock.update()
 
@@ -787,7 +799,8 @@ class ParamWindow(QWidget):
                     if len(inputValue) == 0:
                         return "@InvalidType@"
                     else:
-                        return isValueInOption(inputValue.lower(), requiredOptions)
+                        # return isValueInOption(inputValue.lower(), requiredOptions)
+                        return isValueInOption(inputValue, requiredOptions)
 
                         # # Check if the input is made up of normal characters [a-zA-z0-9]
                         # if inputValue.isalnum():

@@ -30,8 +30,8 @@ def import_blocks(scene, window):
     }
 
     # Make in/out labels parameter for subsystem blocks
-    inlabels_param = ["inport labels", list, None, [["type", [type(None), list]]]]
-    outlabels_param = ["outport labels", list, None, [["type", [type(None), list]]]]
+    inlabels_param = ["inport labels", list, None, [["type", [type(None), list]]], "List of names for respective inport sockets"]
+    outlabels_param = ["outport labels", list, None, [["type", [type(None), list]]], "List of names for respective outport sockets"]
 
     block_list = parser.docstring_parser()
 
@@ -105,9 +105,6 @@ def import_blocks(scene, window):
                 for output_socket_name in block_ds["class"].outlabels:
                     block_output_names.append(output_socket_name)
 
-            # For debugging nin/nout and inlabels/outlabels that bdedit sees
-            # pr4
-
             # Reconstruct URL from block type and path
             block_group = block_ds["module"].split('.')[-1]
             try:
@@ -117,10 +114,13 @@ def import_blocks(scene, window):
 
             block_parameters = []  # Once name, type, value, restrictions are extracted, this will be populated
 
-
             for param in block_ds["params"].items():
                 # Extract parameter name
                 param_name = param[0]
+                if param[1][1]:
+                    param_tooltip = param[1][1]
+                else:
+                    param_tooltip = ""
 
                 # Extract parameter type
                 # Split string based on white spaces
@@ -136,7 +136,7 @@ def import_blocks(scene, window):
                     # 1st value should be the type, with following values being either
                     # * other accepted types,
                     # * the optional keyword (also indicates if value should have a default),
-                    # * or human readable string
+                    # * or human-readable string
 
                     # 1. go through each word in the split string, searching for likely terms (sequence, string, etc)
                     # 2. match found strings to their desired interpretation, sequence = list/tuple/range, string = str
@@ -384,8 +384,8 @@ def import_blocks(scene, window):
 
                         param_restrictions.append(restriction)
 
-                    # Using the extracted information, contstruct the parameter list
-                    block_parameters.append([param_name, param_type, param_value, param_restrictions])
+                    # Using the extracted information, construct the parameter list
+                    block_parameters.append([param_name, param_type, param_value, param_restrictions, param_tooltip])
 
                 except Exception as e:
                     print("@@@@@@@ Fatal error: Cannot parse parameter info to construct parameter for block: -> '" + block_type + "', parameter name: -> '" + param_name + "'.@@@@@@")

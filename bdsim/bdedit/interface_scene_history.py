@@ -169,7 +169,7 @@ class SceneHistory():
             if self.FATAL_ERROR == False:
                 print("-------------------------------------------------------------------------")
                 print("Caught fatal exception while trying to undo/redo. "
-                      "\nThis may have caused unsaved changes to become corrupted, appologies. "
+                      "\nThis may have caused unsaved changes to become corrupted, apologies. "
                       "\nPlease note the error and report it to Daniel.")
                 print("-------------------------------------------------------------------------")
                 traceback.print_exc(file=sys.stderr)
