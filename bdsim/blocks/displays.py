@@ -53,7 +53,7 @@ class Scope(GraphicsBlock):
         :param nin: number of inputs, defaults to 1 or if given, the length of
                     style vector
         :type nin: int, optional
-        :param vector: vector signal on single input port, defaults to 0
+        :param vector: vector signal on single input port, defaults to None
         :type vector: int or list, optional
         :param styles: styles for each line to be plotted
         :type styles: str or dict, list of strings or dicts; one per line, optional
@@ -145,6 +145,9 @@ class Scope(GraphicsBlock):
 
         if vector is not None:
             # vector argument is given
+            #  block has single input which is an array
+            #  vector is int, width of vector
+            #  vector is a list of ints, select those inputs from the input vector
 
             if nin > 1:
                 raise ValueError('if vector is given, nin must be 1')
@@ -238,7 +241,7 @@ class Scope(GraphicsBlock):
             self.ax.legend(self.labels)
 
         if self.watch:
-            for wire in self.inports:
+            for wire in self.input_wires:
                 plug = wire.start  # start plug for input wire
 
                 # append to the watchlist, bdsim.run() will do the rest
@@ -254,15 +257,14 @@ class Scope(GraphicsBlock):
         if self.vector is None:
             # take data from multiple inputs as a list
             data = self.inputs
+            if len(data) != self.nplots:
+                raise RuntimeError('number of signals to plot doesnt match init parameters')
 
         else:
             # single input with vector data
             data = self.inputs[0]
             if isinstance(self.vector, list):
                 data = data[self.vector]
-
-        if len(data) != self.nplots:
-            raise RuntimeError('number of signals to plot doesnt match init parameters')
 
         # append new data to the set
         for i, y in enumerate(data):
