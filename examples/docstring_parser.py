@@ -1,4 +1,5 @@
 import bdsim
+from bdsim.components import Block
 import re
 from collections import OrderedDict
 import inspect
@@ -31,7 +32,7 @@ def docstring_parser():
             # check if it's a valid block class
             if not inspect.isclass(block):
                 continue
-            if inspect.getmro(block)[-2].__name__ != 'Block':
+            if Block not in inspect.getmro(block):
                 continue
             if name.endswith('Block'):
                 continue

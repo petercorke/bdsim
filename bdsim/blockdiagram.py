@@ -523,7 +523,7 @@ class BlockDiagram:
                 if len(out) != b.nout:
                     raise AssertionError(f"block {b} output {b} has incorrect length: {len(out)} instead of {b.nout}")
 
-                # TODO check output validity once at the start
+                # TODO check output validity once at the startq
                 
                 # check it has no nan or inf values
                 if checkfinite and isinstance(out, (int, float, np.ndarray)) and not np.isfinite(out).any():
@@ -860,7 +860,7 @@ class BlockDiagram:
         print()
         for i in range(block.nin):
             input = block.inputs[i]
-            print(f"input {i} from {block.sources[i].name} [{input.__class__.__name__}]")
+            print(f"input {i} from {block.sources[i].block.name} [{input.__class__.__name__}]")
             print('  ', input)
 
         print(attr(0))  # default text
@@ -988,7 +988,7 @@ class BlockDiagram:
                 b._x = b._x0
 
 
-    def done(self, graphics=False):
+    def done(self, block=False, graphics=False):
         """
         Finishup all blocks
 
@@ -1007,7 +1007,7 @@ class BlockDiagram:
             if b.isgraphics and not graphics:
                 continue
             try:
-                b.done()
+                b.done(block=block)
             except:
                 self._error_handler('block.done', b)
         

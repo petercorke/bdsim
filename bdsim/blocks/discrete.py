@@ -2,7 +2,8 @@
 Transfer blocks:
 
 - have inputs and outputs
-- have state variables
+- have discrete-time state variables that are sampled/updated at the times
+  specified by the associated clock
 - are a subclass of ``TransferBlock`` |rarr| ``Block``
 
 """
