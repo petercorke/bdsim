@@ -2,71 +2,77 @@
 
 # run with command line -a switch to show animation
 
-from bdsim.blockdiagram import BlockDiagram
 import bdsim
-import math
+from math import pi, sqrt, atan, atan2
 
 sim = bdsim.BDSim()
 bd = sim.blockdiagram()
 
 # parameters
-xg = [5, 5, math.pi/2]
-Krho = bd.GAIN(1)
-Kalpha = bd.GAIN(5)
-Kbeta = bd.GAIN(-2)
-xg = [5, 5, math.pi/2]
+xg = [5, 5, pi/2]
+Krho = bd.GAIN(1, name='Krho')
+Kalpha = bd.GAIN(5, name='Kalpha')
+Kbeta = bd.GAIN(-2, name='Kbeta')
+
+xg = [5, 5, pi/2]
 x0 = [5, 2, 0]
+x0 = [5, 9, 0]
+
+x0 = [8, 5, pi/2]
 
 # annotate the graphics
 def background_graphics(ax):
-    ax.plot(*xg[0:2], '*')
-    ax.plot(*x0[0:2], 'o')
+    ax.plot(*xg[:2], '*')
+    ax.plot(*x0[:2], 'o')
 
 # convert x,y,theta state to polar form
 def polar(x, dict):
-    rho = math.sqrt(x[0]**2 + x[1]**2)
+    rho = sqrt(x[0]**2 + x[1]**2)
 
     if not 'direction' in dict:
         # direction not yet set, set it
-        beta = -math.atan2(-x[1], -x[0])
+        beta = -atan2(-x[1], -x[0])
         alpha = -x[2] - beta
-        dict['direction'] = -1 if -math.pi/2 <= alpha < math.pi/2 else 1
+        print('alpha', alpha)
+        if -pi / 2 <= alpha <= pi / 2:
+            dict['direction'] = 1
+        else:
+            dict['direction'] = -1
         print('set direction to ', dict['direction'])
 
-    
     if dict['direction'] == -1:
-        beta = -math.atan2(x[1], x[0]);
+        beta = -atan2(x[1], x[0]);
     else:
-        beta = -math.atan2(-x[1], -x[0])
+        beta = -atan2(-x[1], -x[0])
     alpha = -x[2] - beta
 
     # clip alpha
-    if alpha > math.pi/2:
-        alpha = math.pi/2
-    elif alpha < -math.pi/2:
-        alpha = -math.pi/2  
+    if alpha > pi/2:
+        alpha = pi/2
+    elif alpha < -pi/2:
+        alpha = -pi/2  
 
-    return [rho, alpha, beta, dict['direction']]
+    return [dict['direction'], rho, alpha, beta, ]
 
 # constants
-goal0 = bd.CONSTANT([xg[0], xg[1], 0])
-goalh = bd.CONSTANT(xg[2])
+goal0 = bd.CONSTANT([xg[0], xg[1], 0], name='goal_pos')
+goalh = bd.CONSTANT(xg[2], name='goal_heading')
 
 # stateful blocks
-bike = bd.BICYCLE(x0=x0, name='bike')
+bike = bd.BICYCLE(x0=x0, vlim=2, slim=1.3, name='vehicle')
 
 # functions
 fabs = bd.FUNCTION(lambda x: abs(x), name='abs')
-polar = bd.FUNCTION(polar, nout=4, dict=True, name='polar', inames=('x',),
-    onames=(r'$\rho$', r'$\alpha$', r'$\beta', 'direction'))
+polar = bd.FUNCTION(polar, nout=4, persistent=True, name='polar', inames=('x',),
+    onames=('direction', r'$\rho$', r'$\alpha$', r'$\beta'))
 stop = bd.STOP(lambda x: x < 0.01, name='close enough')
-steer_rate = bd.FUNCTION(lambda u: math.atan(u), name='atan')
+steer_rate = bd.FUNCTION(lambda u: atan(u), name='atan')
 
 # arithmetic
 vprod = bd.PROD('**', name='vprod')
-aprod = bd.PROD('**/', name='aprod')
+wprod = bd.PROD('**/', name='aprod')
 xerror = bd.SUM('+-')
-heading_sum = bd.SUM('++', angles=True)
+heading_sum = bd.SUM('++')
 gsum = bd.SUM('++')
 
 # displays
@@ -76,37 +82,33 @@ bscope = bd.SCOPE(name=r'$\beta$')
 
 # connections
 
-mux = bd.MUX(3)
-
-bd.connect(bike[0:3], mux[0:3], vplot[0:3])
-bd.connect(mux, xerror[0])
+bd.connect(bike, vplot)
+bd.connect(bike, xerror[0])
 bd.connect(goal0, xerror[1])
 
 bd.connect(xerror, polar)
-bd.connect(polar[0], Krho, stop) # rho
+bd.connect(polar[1], Krho, stop) # rho
 bd.connect(Krho, vprod[1])
-bd.connect(polar[1], Kalpha, ascope) # alpha
+bd.connect(polar[2], Kalpha, ascope) # alpha
 bd.connect(Kalpha, gsum[0])
-bd.connect(polar[2], heading_sum[0]) # beta
+bd.connect(polar[3], heading_sum[0]) # beta
 bd.connect(goalh, heading_sum[1])
 bd.connect(heading_sum, Kbeta, bscope)
 
-bd.connect(polar[3], vprod[0], aprod[1])
+bd.connect(polar[0], vprod[0], wprod[1])
 bd.connect(vprod, fabs, bike.v)
-bd.connect(fabs, aprod[2])
-bd.connect(aprod, steer_rate)
+bd.connect(fabs, wprod[2])
+bd.connect(wprod, steer_rate)
 bd.connect(steer_rate, bike.gamma)
 
 bd.connect(Kbeta, gsum[1])
-bd.connect(gsum, aprod[0])
+bd.connect(gsum, wprod[0])
 
 bd.compile()
 
-bd.plan_print()
-bd.plan_dotfile('plan.dot')
-bd.report()
-# bd.dotfile('rvc4_11.dot')
 
-out = sim.run(bd, debug='p')
+bd.report_summary()
+out = sim.run(bd, T=10)
 
 bd.done(block=True)
+

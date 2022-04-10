@@ -37,7 +37,8 @@ Kh = bd.GAIN(1)
 bike = bd.BICYCLE(x0=x0)
 vplot = bd.VEHICLEPLOT(scale=[0, 10], size=0.7, shape='box', init=background_graphics, movie='rvc4_6.mp4')
 hscope = bd.SCOPE(name='heading')
-mux = bd.MUX(2)
+xy = bd.INDEX([0, 1], name='xy')
+theta = bd.INDEX([2], name='theta')
 
 bd.connect(d2line, Kd)
 bd.connect(Kd, steer_sum[1])
@@ -45,19 +46,18 @@ bd.connect(steer_sum, bike.gamma)
 bd.connect(speed, bike.v)
 
 bd.connect(slope, heading_error[0])
-bd.connect(bike[2], heading_error[1])
+bd.connect(theta, heading_error[1])
 
 bd.connect(heading_error, Kh)
 bd.connect(Kh, steer_sum[0])
 
-bd.connect(mux, d2line)
+bd.connect(xy, d2line)
 
-bd.connect(bike[0:2], mux)
-bd.connect(bike[0:3], vplot[0:3])
-bd.connect(bike[2], hscope)
+bd.connect(bike, xy, theta, vplot)
+bd.connect(theta, hscope)
 
 bd.compile()
-bd.report()
+bd.report_summary()
 
 out = sim.run(bd, 20)
 
