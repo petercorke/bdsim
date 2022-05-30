@@ -14,7 +14,7 @@ from collections import UserDict
 
 class Struct(UserDict):
     """
-    A dict like object that allows items to be added by attribute or by key.
+    A dict-like object that allows items to be added by attribute or by key.
     
     For example::
         
@@ -80,6 +80,112 @@ class Struct(UserDict):
             s += fmt(k, v)
 
         return self.name + ':\n' + s
+
+class OptionsBase:
+    """
+    A dict-like object for holding program options
+    """
+
+    def __init__(self, args=None, defaults=None):
+        # self._opt_tuple = namedtuple('bdsim_options', defaults.keys())
+
+        #  - command line
+        #  - argument to BDSim(), set_options()
+        #  - defaults
+        # create a dict of all options
+        if args is not None:
+            optdict = {}
+            for k, v in args.items():
+                if v is not None:
+                    optdict[k] = v
+
+            # stash these away for use by option(), set_options()
+            self._args = optdict
+        else:
+            self._args = {}
+
+        self._defaults = defaults
+
+        self._optdict = {**self._defaults, **self._args}
+        self._optdict = self.sanity(self._optdict)
+
+        if self._optdict['verbose']:
+            print(self)
+
+    def option(self, option, default=None):
+        """
+        Return value of particular option
+
+        :param option: option name
+        :type option: str
+        :param default: default value
+        :type default: any
+        :return: value of option
+        :rtype: any
+
+        If the ``option`` has been overridden by command line option, return
+        that value, otherwise the ``default`` value.
+
+        :seealso: :meth:`options` :meth:`set_options` :meth:`__init__`
+
+        """
+        if option in self._optdict:
+            return self._optdict[option]
+        else:
+            return default
+
+    def set(self, **options):
+        """
+        Set simulation options at run time
+
+        The options are the same as those for the constructor, for example:
+
+            sim = bdsim.BDsim()
+            sim.set_options(graphics=False)
+
+        or::
+
+            sim = bdsim.BDsim(graphics=False)
+
+        Command line options override program set options.
+
+        :seealso: :meth:`__init__`
+        """
+        for key, value in options.items():
+            self._defaults[key] = value
+        
+        # merge the passed prog_options with the command line options
+        # command line options override
+        self._optdict = {**self._defaults, **self._args}
+
+        # animation and graphics options are coupled
+        #  * graphics False, no graphics at all
+        #  * graphics True, animation False, show graphs at end of run
+        #  * graphics True, animation True, animate graphs during the run
+
+        self._optdict = self.sanity(self._optdict)
+
+    def __getattr__(self, name):
+        if name.startswith('_'):
+            return super().__getattr__(name)
+        else:
+            return self._optdict[name]            
+
+    def __setattr__(self, name, value):
+        if name.startswith('_'):
+            super().__setattr__(name, value)
+        else:
+            self._optdict[name] = value
+            self._optdict = self.sanity(self._optdict)         
+
+    def __str__(self):
+        return '\n'.join(f'{k:10s}: {v}' for k, v in self._optdict.items())
+
+    def __repr__(self):
+        return str(self)
+
+    def sanity(self, options):
+        return options
 
 class PriorityQ:
 
