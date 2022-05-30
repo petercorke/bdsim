@@ -1,5 +1,5 @@
 try:
-    from spatialmath import SE2, SE3
+    from spatialmath import SE2, SE3, SO2, SO3
     sm = True
 except:
     sm = False
@@ -15,13 +15,13 @@ if sm:
         .. table::
         :align: left
         
-        +------------+---------+---------+
-        | inputs     | outputs |  states |
-        +------------+---------+---------+
-        | 1          | 1       | 0       |
-        +------------+---------+---------+
-        | SE3        | SE3     |         | 
-        +------------+---------+---------+
+        +------------+----------+---------+
+        | inputs     | outputs  |  states |
+        +------------+----------+---------+
+        | 1          | 1        | 0       |
+        +------------+----------+---------+
+        | SEn, SOn   | SEn, SOn |         | 
+        +------------+----------+---------+
         """
 
         nin = 1
@@ -42,10 +42,10 @@ if sm:
 
             For example::
 
-                gain = bd.POSE_POSTMUL(SE3())
+                pose_mul = bd.POSE_POSTMUL(SE3())
             """
             if not isinstance(pose, (SO2, SO3, SE2, SE3)):
-                raise ValueError('post must be SO2, SE2, SO3 or SE3')
+                raise ValueError('pose must be SO2, SE2, SO3 or SE3')
 
             super().__init__(**blockargs)
             self.pose  = pose
@@ -63,13 +63,13 @@ if sm:
         .. table::
         :align: left
         
-        +------------+---------+---------+
-        | inputs     | outputs |  states |
-        +------------+---------+---------+
-        | 1          | 1       | 0       |
-        +------------+---------+---------+
-        | SE3        | SE3     |         | 
-        +------------+---------+---------+
+        +------------+----------+---------+
+        | inputs     | outputs  |  states |
+        +------------+----------+---------+
+        | 1          | 1        | 0       |
+        +------------+----------+---------+
+        | SEn, SOn   | SEn, SOn |         | 
+        +------------+----------+---------+
         """
 
         nin = 1
@@ -90,10 +90,10 @@ if sm:
 
             For example::
 
-                gain = bd.POSE_POSTMUL(SE3())
+                pose_mul = bd.POSE_PREMUL(SE3())
             """
             if not isinstance(pose, (SO2, SO3, SE2, SE3)):
-                raise ValueError('post must be SO2, SE2, SO3 or SE3')
+                raise ValueError('pose must be SO2, SE2, SO3 or SE3')
 
             super().__init__(**blockargs)
             self.pose  = pose
@@ -114,9 +114,10 @@ if sm:
         +------------+---------+---------+
         | inputs     | outputs |  states |
         +------------+---------+---------+
-        | 1          | 1       | 0       |
+        | 2          | 1       | 0       |
         +------------+---------+---------+
-        | SE3        | SE3     |         | 
+        | SEn, SOn   | A(N,)   |         |
+        | A(N,)      |         |         | 
         +------------+---------+---------+
         """
 
@@ -125,10 +126,8 @@ if sm:
 
         def __init__(self, **blockargs):
             """
-            Pre multiply pose.
+            Transform a vector.
 
-            :param pose: pose to apply
-            :type pose: SO2, SE2, SO3 or SE3
             :param blockargs: |BlockOptions|
             :type blockargs: dict
             :return: A TRANSFORM_VECTOR block
@@ -138,15 +137,16 @@ if sm:
 
             For example::
 
-                gain = bd.POSE_POSTMUL(SE3())
+                vec_xform = bd.TRANSFORM_VECTOR()
             """
-            if not isinstance(pose, (SO2, SO3, SE2, SE3)):
-                raise ValueError('post must be SO2, SE2, SO3 or SE3')
-
             super().__init__(nin=2, **blockargs)
             
-        def output(self, t=None):            
-            return [self.inputs[0] * self.inputs[1]]
+        def output(self, t=None):
+
+            pose = self.inputs[0]
+            if not isinstance(pose, (SO2, SO3, SE2, SE3)):
+                raise ValueError('pose must be SO2, SE2, SO3 or SE3')           
+            return [pose * self.inputs[1]]
         
 # ------------------------------------------------------------------------ #
 
@@ -158,13 +158,13 @@ if sm:
         .. table::
         :align: left
         
-        +------------+---------+---------+
-        | inputs     | outputs |  states |
-        +------------+---------+---------+
-        | 1          | 1       | 0       |
-        +------------+---------+---------+
-        | SE3        | SE3     |         | 
-        +------------+---------+---------+
+        +------------+----------+---------+
+        | inputs     | outputs  |  states |
+        +------------+----------+---------+
+        | 1          | 1        | 0       |
+        +------------+----------+---------+
+        | SEn, SOn   | SEn, SOn |         | 
+        +------------+----------+---------+
         """
 
         nin = 1
@@ -179,18 +179,18 @@ if sm:
             :return: A POSE_INVERSE block
             :rtype: Pose_inverse instance
             
-            Transform the pose on the input signal.
+            Invert the pose on the input signal.
 
             For example::
 
-                gain = bd.POSE_POSTMUL(SE3())
+                gain = bd.POSE_INVERSE()
             """
             super().__init__(**blockargs)
             
         def output(self, t=None):            
             return [self.inputs[0].inv()]
         
-# ------------------------------------------------------------------------ ## ------------------------------------------------------------------------ #
+# ------------------------------------------------------------------------ #
 
 if __name__ == "__main__":  # pragma: no cover
 

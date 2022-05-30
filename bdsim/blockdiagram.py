@@ -126,7 +126,7 @@ class BlockDiagram:
             block[1] = SumJunction(block2[3], block3[4]) * Gain(value=2)
         """
 
-        start.type = 'start'
+        # start.type = 'start'
 
         for end in ends:
 
@@ -1077,7 +1077,7 @@ class BlockDiagram:
         if debug[0] in self.options.debug:
             print(f'DEBUG.{debug:s}: ' + fmt.format(*args))
             
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
 
     import bdsim
     bd = bdsim.BlockDiagram()

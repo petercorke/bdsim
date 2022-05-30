@@ -75,10 +75,10 @@ class Inverse(FunctionBlock):
             else:
                 try:
                     out = np.linalg.inv(mat)
-                except LinAlgError:
+                except np.linalg.LinAlgError:
                     raise RuntimeError('matrix is singular')
-
             return [out, np.linalg.cond(mat)]
+
         elif hasattr(mat, 'inv'):
             # ask the object to invert itself
             return [mat.inv(), None]
@@ -130,7 +130,7 @@ class Transpose(FunctionBlock):
     def output(self, t=None):
         mat = self.inputs[0]
 
-        if ndim == 1:
+        if mat.ndim == 1:
             out = mat.reshape((mat.shape[0], 1))
         else:
             out = mat.T
@@ -318,7 +318,7 @@ class Slice2(FunctionBlock):
         elif isinstance(cols, tuple) and len(cols) == 3:
             self.cols = slice(*cols)
         else:
-            raise ValueError('bad rows specifier')
+            raise ValueError('bad columns specifier')
 
 
     def output(self, t=None):
@@ -445,7 +445,7 @@ class Det(FunctionBlock):
     def output(self, t=None):
         mat = self.inputs[0]
         out = np.linalg.det(mat)
-        return [mat]
+        return [out]
 # ------------------------------------------------------------------------ #
 class Cond(FunctionBlock):
     """
@@ -483,7 +483,7 @@ class Cond(FunctionBlock):
     def output(self, t=None):
         mat = self.inputs[0]
         out = np.linalg.cond(mat)
-        return [mat]
+        return [out]
 
 if __name__ == "__main__":  # pragma: no cover
 

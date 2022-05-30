@@ -15,8 +15,6 @@ from math import pi, sqrt, sin, cos, atan2
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import Polygon
 
-
-import spatialmath.base as sm
 from bdsim.components import SinkBlock
 
 # ------------------------------------------------------------------------ #
@@ -86,7 +84,7 @@ class Print(SinkBlock):
         """
         super().__init__(**blockargs)
         self.format = fmt
-        self.file = None
+        self.file = file
         
         # TODO format can be a string or function
 
@@ -155,7 +153,7 @@ class Stop(SinkBlock):
         """
         super().__init__(**blockargs)
 
-        if not callable(func):
+        if func is not None and not callable(func):
             raise TypeError('argument must be a callable')
         self.stopfunc  = func
 
@@ -256,7 +254,7 @@ class Watch(SinkBlock):
 
     def start(self, state=None):
         # called at start of simulation, add this block to the watchlist
-        plug = self.inports[0].start  # start plug for input wire
+        plug = self.sources[0]  # start plug for input wire
 
         # append to the watchlist, bdsim.run() will do the rest
         state.watchlist.append(plug)

@@ -10,6 +10,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import animation
 from collections import UserDict
+
+
 class Struct(UserDict):
     """
     A dict like object that allows items to be added by attribute or by key.
@@ -170,18 +172,6 @@ class Wire:
         for k,v in self.__dict__.items():
             print("  {:8s}{:s}".format(k+":", str(v)))
             
-    def send(self, value, sinks=True):
-        """
-        Send a value to the port at end of this wire.
-        
-        :param value: A port value
-        :type value: float, numpy.ndarray, etc.
-
-        The value is sent to the input port connected to the end of this wire.
-        """
-        # dest is a Wire
-        return self.end.block.setinput(self.end.port, value)
-        
     def __repr__(self):
         """
         Display wire with name and connection details.
@@ -288,7 +278,7 @@ class Plug:
         Return port numbers.
         
         :return: Port numbers
-        :rtype: list of int
+        :rtype: iterable of int
         
         If the port is a simple index, eg. ``[2]`` returns [2].
         
@@ -462,6 +452,9 @@ class Plug:
         Create a ``SUM("+-")`` block named ``_sum.N`` whose inputs are the 
         left and right operands.  For the third case, a new ``CONSTANT(C)`` block
         named ``_const.N`` is also created.
+
+        .. note::
+                * The ``mode`` is None, regular addition
 
         :seealso: :meth:`Plug.__rsub__` :meth:`Block.__sub__`
         """
@@ -722,7 +715,10 @@ class Clock:
         self.t = []
         self.tick = 0
 
-        self.name = "clock." + str(len(clocklist))
+        if name is None:
+            self.name = "clock." + str(len(clocklist))
+        else:
+            self.name = name
 
         clocklist.append(self)
 
@@ -939,10 +935,24 @@ class Block:
 
     @property
     def isclocked(self):
+        """
+        Test if block is clocked
+
+        :return: True if block is clocked
+        :rtype: bool
+
+        True if block is clocked, False if it is continuous time.
+        """
         return self._clocked
 
     @property
     def isgraphics(self):
+        """
+        Test if block does graphics
+
+        :return: True if block does graphics
+        :rtype: bool
+        """
         return self._graphics
 
     # for use in unit testing
@@ -957,8 +967,8 @@ class Block:
         :return: Block output port values
         :rtype: list
         
-        The output ports of the block are evaluated for a given set of input
-        port values and simulation time. Input and output port values are treated
+        The output ports of the block are evaluated for a given simulation time
+        and set of input port values. Input and output port values are treated
         as lists.
         
         Mostly used for making concise unit tests.
@@ -967,13 +977,13 @@ class Block:
             diagram subsequently.
 
         """
-        def _getvalue(self, port):
+        def _input(self, port):
             return self._eval_inputs[port]
         
         # monkey patch the instance so that input comes from an attribute
         # rather than the source block.  for testing we don't have a source
         # block
-        self.getvalue = types.MethodType(_getvalue, self)
+        self.input = types.MethodType(_input, self)
 
         # check inputs and assign to attribute
         assert len(inputs) == self.nin, 'wrong number of inputs provided'
@@ -988,13 +998,13 @@ class Block:
         return out
 
     def _step(self, *inputs, state=None):
-        def _getvalue(self, port):
+        def _input(self, port):
             return self._eval_inputs[port]
         
         # monkey patch the instance so that input comes from an attribute
         # rather than the source block.  for testing we don't have a source
         # block
-        self.getvalue = types.MethodType(_getvalue, self)
+        self.input = types.MethodType(_input, self)
 
         # check inputs and assign to attribute
         assert len(inputs) == self.nin, 'wrong number of inputs provided'
@@ -1003,15 +1013,44 @@ class Block:
         # step the block
         self.step(state=state)
 
-    def getvalue(self, port):
-        p = self.sources[port]
-        return p.block.output_values[p.port]
-
     def input(self, port):
-        return self.getvalue(port)
+        """
+        Get input to block on specified port
+
+        :param port: port number
+        :type port: int
+        :return: value applied to specified input port
+        :rtype: any
+
+        Return the value of the input applied to the input port numbered
+        ``port``.  The type depends on the source port connected to this input.
+
+        .. note:: For unit testing purposes, it the block is simply an instance
+            of the class, then setting its attribute ``test_inputs`` to a list
+            provides the input values to the block.
+
+        :seealso: :meth:`inputs`
+        """
+        try:
+            p = self.sources[port]  # get plug for source block output
+            return p.block.output_values[p.port]
+        except:
+            # for unit testing a block may not have its input ports connected,
+            # take the value from this list instead
+            return self.test_inputs[port]
 
     @property
     def inputs(self):
+        """
+        Get block inputs as a list
+
+        :return: list of block inputs
+        :rtype: list
+
+        Returns a list of values corresponding to the input ports of the block.
+
+        :seealso: :meth:`input`
+        """
         return [self.input(i) for i in range(self.nin)]
 
     def __getitem__(self, port):
@@ -1184,7 +1223,9 @@ class Block:
         left and right operands.  For the third case, a new ``CONSTANT(C)`` block
         named ``_const.N`` is also created.
 
-        .. note:: The inputs to the summing junction are reversed: right then left operand.
+        .. note:: 
+            * The inputs to the summing junction are reversed: right then left operand.
+            * The ``mode`` is None, regular addition
 
         :seealso: :meth:`Block.__radd__` :meth:`Plug.__add__` 
         """
@@ -1221,7 +1262,9 @@ class Block:
         left and right operands.  For the third case, a new ``CONSTANT(C)`` block
         named ``_const.N`` is also created.
 
-        .. note:: The inputs to the summing junction are reversed: right then left operand.
+        .. note:: 
+            * The inputs to the summing junction are reversed: right then left operand.
+            * The ``mode`` is None, regular addition
 
         :seealso: :meth:`Block.__add__` :meth:`Plug.__radd__`
         """
@@ -1291,7 +1334,9 @@ class Block:
         left and right operands.  For the third case, a new ``CONSTANT(C)`` block
         named ``_const.N`` is also created.
 
-        .. note:: The inputs to the summing junction are reversed: right then left operand.
+        .. note:: 
+            * The inputs to the summing junction are reversed: right then left operand.
+            * The ``mode`` is None, regular addition
 
         :seealso: :meth:`Block.__sub__` :meth:`Plug.__rsub__`
         """

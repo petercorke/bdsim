@@ -983,5 +983,6 @@ class BDSim:
         Display the error message then terminate the process.  For operating
         systems that support it, return an integer code.
         """
+        # TODO print text in some color
         print(message)
         sys.exit(retval)

@@ -400,6 +400,9 @@ class SubSystem(SubsystemBlock):
 
         self.ssname = subsys.name
 
+        self.nin = ninp
+        self.nout = noutp
+
 # ------------------------------------------------------------------------ #
 
 class InPort(SubsystemBlock):
