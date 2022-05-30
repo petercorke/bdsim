@@ -44,8 +44,6 @@ import numpy.testing as nt
 
 class TransferTest(unittest.TestCase):
     
-
-        
     def test_LTI_SS(self):
         
         A=np.array([[1, 2], [3, 4]])
@@ -55,7 +53,7 @@ class TransferTest(unittest.TestCase):
         x = np.r_[10, 11]
         block.setstate(np.r_[x])
         u = -2
-        block.inputs = [u]
+        block.test_inputs = [u]
         nt.assert_equal(block.deriv(), A@x  + B*u)
         nt.assert_equal(block.output()[0], C@x)
         nt.assert_equal(block.getstate0(), np.r_[30, 40])
@@ -67,7 +65,7 @@ class TransferTest(unittest.TestCase):
         x = np.r_[10, 11]
         block._x = np.r_[x]
         u = -2
-        block.inputs = [u]
+        block.test_inputs = [u]
         nt.assert_equal(block.deriv(), A@x  + B@np.r_[u])
         nt.assert_equal(block.output()[0], C@x)
         nt.assert_equal(block.getstate0(), np.r_[30, 40])
@@ -81,12 +79,57 @@ class TransferTest(unittest.TestCase):
     
     def test_integrator(self):
         block = Integrator(x0=30)
+        self.assertEqual(block.nstates, 1)
+        self.assertEqual(block.ndstates, 0)
         x = np.r_[10]
         block._x = x
         u = -2
-        block.inputs = [u]
+        block.test_inputs = [u]
         nt.assert_equal(block.deriv(), u)
         nt.assert_equal(block.getstate0(), np.r_[30])
+
+        block = Integrator(x0=5, min=-10, max=10)  # state is scalar
+        x = np.r_[11]
+        block.setstate(x) # set state to 10
+        u = 2
+        block.test_inputs = [u]
+        nt.assert_equal(block.deriv(), 0)
+
+        x = np.r_[-11]
+        block.setstate(x) # set state to 10
+        u = -2
+        block.test_inputs = [u]
+        nt.assert_equal(block.deriv(), 0)
+
+    def test_dintegrator_vec(self):
+
+        block = Integrator(x0=[5, 6])  # state is vector
+        self.assertEqual(block.nstates, 2)
+        self.assertEqual(block.ndstates, 0)
+
+        nt.assert_equal(block.getstate0(), np.r_[5, 6])
+
+        x = np.r_[10, 11]
+        block.setstate(x) # set state to 10, 11
+        u = np.r_[-2, 3]
+        block.test_inputs = [u]
+        nt.assert_equal(block.output()[0], x)
+        nt.assert_equal(block.deriv(), u)
+
+        # test with limits
+        block = Integrator(x0=[5, 6], min=[-5, -10], max=[5, 10])  # state is vector
+        x = np.r_[-6, -11]
+        block.setstate(x) # set state to min
+        u = np.r_[-2, -3]
+        block.test_inputs = [u]
+        nt.assert_equal(block.deriv(), [0, 0])
+
+        x = np.r_[6, 11]
+        block.setstate(x) # set state to max
+        u = np.r_[2, 3]
+        block.test_inputs = [u]
+        nt.assert_equal(block.deriv(), [0, 0])
+
 
 # ---------------------------------------------------------------------------------------#
 if __name__ == '__main__':

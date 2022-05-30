@@ -341,7 +341,7 @@ class WiringTest(unittest.TestCase):
         bd.evaluate_plan(x=[], t=0)
         self.assertEqual(dst.inputs, [5])
 
-    def test_autosum2(self):
+    def test_autosum2a(self):
         bd = self.sim.blockdiagram()
 
         dst = bd.NULL(1)  # 1 ports
@@ -386,6 +386,35 @@ class WiringTest(unittest.TestCase):
         bd.evaluate_plan(x=[], t=0)
         self.assertEqual(dst.inputs, [5])
 
+    def test_autosum3a(self):
+        bd = self.sim.blockdiagram()
+
+        dst = bd.NULL(1)  # 1 ports
+        const1 = bd.CONSTANT(2)
+
+        dst[0] = const1 + 3
+
+        self.assertEqual(len(bd), 4)
+
+        bd.compile(verbose=False)
+        bd.evaluate_plan(x=[], t=0)
+        self.assertEqual(dst.inputs, [5])
+
+    def test_autosum3b(self):
+        bd = self.sim.blockdiagram()
+
+        dst = bd.NULL(1)  # 1 ports
+        const2 = bd.CONSTANT(3)
+
+        dst[0] = 2 + const2
+
+        self.assertEqual(len(bd), 4)
+
+        bd.compile(verbose=False)
+        bd.evaluate_plan(x=[], t=0)
+        self.assertEqual(dst.inputs, [5])
+
+    # ----------------------------------------------
     def test_autosub1(self):
         bd = self.sim.blockdiagram()
 
@@ -401,7 +430,7 @@ class WiringTest(unittest.TestCase):
         bd.evaluate_plan(x=[], t=0)
         self.assertEqual(dst.inputs, [-1])
 
-    def test_autosub2(self):
+    def test_autosub2a(self):
         bd = self.sim.blockdiagram()
 
         dst = bd.NULL(1)  # 1 ports
@@ -446,6 +475,36 @@ class WiringTest(unittest.TestCase):
         bd.evaluate_plan(x=[], t=0)
         self.assertEqual(dst.inputs, [-1])
 
+    def test_autosub3a(self):
+        bd = self.sim.blockdiagram()
+
+        dst = bd.NULL(1)  # 1 ports
+        const1 = bd.CONSTANT(2)
+
+        dst[0] = const1 - 3
+
+        self.assertEqual(len(bd), 4)
+
+        bd.compile(verbose=False)
+        bd.evaluate_plan(x=[], t=0)
+        self.assertEqual(dst.inputs, [-1])
+
+    def test_autosub3b(self):
+        bd = self.sim.blockdiagram()
+
+        dst = bd.NULL(1)  # 1 ports
+        const2 = bd.CONSTANT(3)
+
+        dst[0] = 2 - const2
+
+        self.assertEqual(len(bd), 4)
+
+        bd.compile(verbose=False)
+        bd.evaluate_plan(x=[], t=0)
+        self.assertEqual(dst.inputs, [-1])
+
+    # ----------------------------------------------
+
     def test_autoneg1(self):
         bd = self.sim.blockdiagram()
 
@@ -473,6 +532,8 @@ class WiringTest(unittest.TestCase):
         bd.compile(verbose=False)
         bd.evaluate_plan(x=[], t=0)
         self.assertEqual(dst.inputs, [-2])
+
+    # ----------------------------------------------
 
     def test_autoprod1(self):
         bd = self.sim.blockdiagram()
@@ -534,6 +595,38 @@ class WiringTest(unittest.TestCase):
         bd.evaluate_plan(x=[], t=0)
         self.assertEqual(dst.inputs, [1.5])
 
+    def test_autoprod3a(self):
+        bd = self.sim.blockdiagram()
+
+        dst = bd.NULL(1)  # 1 ports
+        const1 = bd.CONSTANT(2)
+        const2 = 3
+
+        dst[0] = const1 * const2
+
+        self.assertEqual(len(bd), 3)
+
+        bd.compile(verbose=False)
+        bd.evaluate_plan(x=[], t=0)
+        self.assertEqual(dst.inputs, [6])
+
+    def test_autoprod3b(self):
+        bd = self.sim.blockdiagram()
+
+        dst = bd.NULL(1)  # 1 ports
+        const1 = 2
+        const2 = bd.CONSTANT(3)
+
+        dst[0] = const1 * const2
+
+        self.assertEqual(len(bd), 3)
+
+        bd.compile(verbose=False)
+        bd.evaluate_plan(x=[], t=0)
+        self.assertEqual(dst.inputs, [6])
+
+    # ----------------------------------------------
+
     def test_autodiv1(self):
         bd = self.sim.blockdiagram()
 
@@ -593,6 +686,40 @@ class WiringTest(unittest.TestCase):
         bd.compile(verbose=False)
         bd.evaluate_plan(x=[], t=0)
         self.assertEqual(dst.inputs, [1.5])
+
+    def test_autodiv3a(self):
+        bd = self.sim.blockdiagram()
+
+        dst = bd.NULL(1)  # 1 ports
+        const1 = bd.CONSTANT(3)
+        const2 = 2
+
+        dst[0] = const1 / const2
+
+        self.assertEqual(len(bd), 4)
+
+        bd.compile(verbose=False)
+        bd.evaluate_plan(x=[], t=0)
+        self.assertEqual(dst.inputs, [1.5])
+
+        bd.evaluate_plan(x=[], t=0)
+        self.assertEqual(dst.inputs, [1.5])
+
+    def test_autodiv3b(self):
+        bd = self.sim.blockdiagram()
+
+        dst = bd.NULL(1)  # 1 ports
+        const1 = 3
+        const2 = bd.CONSTANT(2)
+
+        dst[0] = const1 / const2
+
+        self.assertEqual(len(bd), 4)
+
+        bd.compile(verbose=False)
+        bd.evaluate_plan(x=[], t=0)
+        self.assertEqual(dst.inputs, [1.5])
+
 class ImportTest(unittest.TestCase):
 
     @classmethod
@@ -616,10 +743,10 @@ class ImportTest(unittest.TestCase):
         const = bd.CONSTANT(1)
         scope = bd.SCOPE()
         
-        f = bd.SUBSYSTEM(ss, name='subsys')
+        ff = bd.SUBSYSTEM(ss, name='subsys')
         
-        bd.connect(const, f)
-        bd.connect(f, scope)
+        bd.connect(const, ff)
+        bd.connect(ff, scope)
         
         bd.compile(verbose=False)
         

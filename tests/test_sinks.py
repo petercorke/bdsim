@@ -41,6 +41,7 @@ import numpy.testing as nt
 
 from bdsim.blocks.sinks import *
 
+
 class SinkBlockTest(unittest.TestCase):
 
     def test_print(self):
@@ -48,11 +49,58 @@ class SinkBlockTest(unittest.TestCase):
         class State:
             pass
 
+        # print to a string so we can check result
+        import io
+        f = io.StringIO()
+
+        # needed for time
         s = State()
         s.t = 1
 
-        b = Print(name='print block')
+        b = Print(name='print block', file=f)
         b._step(1.23, state=s)
+        self.assertEqual(f.getvalue(), 
+            'PRINT(print block (t=1.000) 1.23\n')
+
+        # test print of object
+        class testObject:
+            def strline(self):
+                return f"testObject={self.value:d}"
+
+        to = testObject()
+        to.value = 123
+
+        # rewind the string buffer
+        f.truncate(0)
+        f.seek(0, 0)
+        b._step(to, state=s)
+        self.assertEqual(f.getvalue(), 
+            'PRINT(print block (t=1.000) testObject=123\n')
+
+        ## test with format string
+        f = io.StringIO()
+        b = Print(name='print block', file=f, fmt="{:.1f}")
+
+        b._step(1.23456, state=s)
+        self.assertEqual(f.getvalue(), 
+            'PRINT(print block (t=1.000) 1.2\n')
+
+        # rewind the string buffer
+        f.truncate(0)
+        f.seek(0, 0)
+
+        b._step(np.r_[1.23456, 4.5679], state=s)
+        self.assertEqual(f.getvalue(), 
+            'PRINT(print block (t=1.000) [1.2 4.6]\n')
+
+        # rewind the string buffer
+        f.truncate(0)
+        f.seek(0, 0)
+
+        b._step("a string", state=s)
+        self.assertEqual(f.getvalue(), 
+            'PRINT(print block (t=1.000) a string\n')
+
 
     def test_stop(self):
 
@@ -70,6 +118,41 @@ class SinkBlockTest(unittest.TestCase):
         self.assertTrue(s.stop)
         self.assertIs(s.stop, b)
 
+        b = Stop()
+        s.stop = None
+
+        b._step(0, state=s)
+        self.assertIsNone(s.stop)
+
+        b._step(1, state=s)
+        self.assertTrue(s.stop)
+        self.assertIs(s.stop, b)
+
+        s.stop = None
+        b._step(False, state=s)
+        self.assertIsNone(s.stop)
+
+        b._step(True, state=s)
+        self.assertTrue(s.stop)
+        self.assertIs(s.stop, b)
+
+        with self.assertRaises(TypeError):
+            b = Stop(func=3)
+
+    def test_watch(self):
+        from bdsim import bdsim
+
+        sim = bdsim.BDSim()  # create simulator
+        bd = sim.blockdiagram()
+        b1 = bd.CONSTANT(2)
+        b2 = bd.NULL()
+        b3 = bd.WATCH()
+        bd.connect(b1, b2, b3)
+        bd.compile()
+
+        #bd.start()
+        # state is not yet setup
+        #bd.state.watchlist
 
 # --------------------------------------------------------------------------------------#
 if __name__ == '__main__':

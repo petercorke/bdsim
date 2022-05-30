@@ -205,6 +205,18 @@ class SourceBlockTest(unittest.TestCase):
         self.assertEqual(block.output(2.1)[0], 0)
         self.assertEqual(block.output(9)[0], 0)
 
+    def test_ramp(self):
+        block = Ramp()
+        self.assertAlmostEqual(block._output(t=0)[0], 0)
+        self.assertAlmostEqual(block._output(t=1)[0], 0)
+        self.assertAlmostEqual(block._output(t=2)[0], 1)
+
+        block = Ramp(off=-1, T=2, slope=0.5)
+        self.assertAlmostEqual(block._output(t=0)[0], -1)
+        self.assertAlmostEqual(block._output(t=2)[0], -1)
+        self.assertAlmostEqual(block._output(t=4)[0], 0)
+        self.assertAlmostEqual(block._output(t=6)[0], 1)
+
 # ---------------------------------------------------------------------------------------#
 if __name__ == '__main__':
 
