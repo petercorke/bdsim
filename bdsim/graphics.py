@@ -152,7 +152,7 @@ class GraphicsBlock(SinkBlock):
                         if vsize[0] < 0:
                             # extra monitor to the left
                             xoffset = vsize[0]
-                        elif vsize[0] >= sz[0]:
+                        elif vsize[0] >= sz.width():
                             # extra monitor to the right
                             xoffset = vsize[0]
                         self.bd.DEBUG('graphics', '  altscreen offset {}', xoffset)
