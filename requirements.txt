@@ -1,6 +1,9 @@
 # file containing conda packages to install
 numpy
 scipy
+matplotlib
+spatialmath
+anistable
 coverage
 colored
 codecov
@@ -8,5 +11,3 @@ sphinx
 recommonmark
 sphinx_markdown_tables
 sphinx_rtd_theme
-matplotlib
-spatialmath
