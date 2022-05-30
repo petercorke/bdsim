@@ -190,4 +190,10 @@ if sm:
         def output(self, t=None):            
             return [self.inputs[0].inv()]
         
-# ------------------------------------------------------------------------ #
+# ------------------------------------------------------------------------ ## ------------------------------------------------------------------------ #
+
+if __name__ == "__main__":  # pragma: no cover
+
+    from pathlib import Path
+
+    exec(open(Path(__file__).parent.parent.parent / "tests" / "test_spatial.py").read())

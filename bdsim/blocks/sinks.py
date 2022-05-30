@@ -263,9 +263,8 @@ class Watch(SinkBlock):
         state.watchnamelist.append(str(plug))
         
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
 
     from pathlib import Path
-    import os.path
 
     exec(open(Path(__file__).parent.parent.parent / "tests" / "test_sinks.py").read())

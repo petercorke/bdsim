@@ -376,8 +376,7 @@ class LTI_SISO(LTI_SS):
 
 if __name__ == "__main__":
 
-    import pathlib
-    import os.path
+    from pathlib import Path
 
-    exec(open(os.path.join(pathlib.Path(
-        __file__).parent.absolute(), "test_transfers.py")).read())
+    exec(open(Path(__file__).parent.parent.parent / "tests" / "test_transfers.py").read())
+

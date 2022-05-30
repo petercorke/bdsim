@@ -430,10 +430,7 @@ class DPoseIntegrator(ClockedBlock):
 #         self.type = 'LTI'
 
 
-# if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
+    from pathlib import Path
 
-#     import pathlib
-#     import os.path
-
-#     exec(open(os.path.join(pathlib.Path(
-#         __file__).parent.absolute(), "test_transfers.py")).read())
+    exec(open(Path(__file__).parent.parent.parent / "tests" / "test_discrete.py").read())

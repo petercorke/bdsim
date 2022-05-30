@@ -476,9 +476,8 @@ class ScopeXY1(ScopeXY):
 # ------------------------------------------------------------------------ #
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
 
-    import pathlib
-    import os.path
+    from pathlib import Path
 
-    exec(open(os.path.join(pathlib.Path(__file__).parent.absolute(), "test_sinks.py")).read())
+    exec(open(Path(__file__).parent.parent.parent / "tests" / "test_displays.py").read())
