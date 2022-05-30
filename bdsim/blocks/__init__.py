@@ -6,6 +6,6 @@ from .discrete import *
 from .linalg import *
 from .displays import *
 from .connections import *
-from .spatialmath import *
+from .spatial import *
 
 url = "https://petercorke.github.io/bdsim/" + __package__
