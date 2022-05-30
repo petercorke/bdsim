@@ -754,7 +754,7 @@ class BlockDiagram:
                 # non source block, list all its inputs, one per row
                 for (port, source) in enumerate(b.sources): # every port
 
-                    value = b.getvalue(port)
+                    value = b.input(port)
                     typ = type(value).__name__
                     if isinstance(value, np.ndarray):
                         typ += '{:s}.{:s}'.format(str(value.shape), str(value.dtype))
