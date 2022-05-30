@@ -7,6 +7,8 @@ from collections import Counter, namedtuple
 from typing import NamedTuple
 import argparse
 import types
+import warnings
+
 from bdsim.components import *
 from bdsim.blockdiagram import BlockDiagram
 import copy
@@ -133,7 +135,7 @@ class BDSim:
         self.packages = packages
 
         # process command line and overall options
-        self._init_options(**kwargs)
+        self.options = Options(**kwargs)
         # load modules from the blocks folder
         if BDSim._blocklibrary is None:
             BDSim._blocklibrary = self.load_blocks(self.options.verbose)
@@ -282,9 +284,9 @@ class BDSim:
         
         # turn off progress bar if any debug options are given
         if len(state.options.debug) > 0:
-            self.set_options(progress = False)
+            self.options.progress = False
         if block is not None:
-            self.set_options(hold=block)
+            self.options.hold = block
 
         # process the watchlist
         #  elements can be:
@@ -797,26 +799,74 @@ class BDSim:
                     else:
                         print(f"{dots(k)}: {s}")
 
-    @property
-    def options(self):
+    def fatal(self, message, retval=1):
         """
-        Return current options.
+        Fatal simulation error
 
-        :return: current options
-        :rtype: namedtuple
+        :param message: Error message
+        :type message: str
+        :param retval: system return value (*nix only) defaults to 1
+        :type retval: int, optional
 
-        Return an immutable named tuple containing the current options, 
-        for example::
-
-                sim.options.graphics
-
-        The option are determined from a merge of two dictionaries:
-        - command line options (higheset precedence)
-        - program options from constructor or ``set_options``.
-
-        :seealso: :meth:`set_options` :meth:`__init__`
+        Display the error message then terminate the process.  For operating
+        systems that support it, return an integer code.
         """
-        return self._options
+        # TODO print text in some color
+        print(message)
+        sys.exit(retval)
+
+    def set_options(self, **options):
+        self.options.set(**options)
+        warnings.warn('use sim.options.OPT=VALUE instead', DeprecationWarning)
+
+class OptionsBase:
+
+    def __init__(self, args=None, defaults=None):
+        self._opt_tuple = namedtuple('bdsim_options', defaults.keys())
+
+        #  - command line
+        #  - argument to BDSim(), set_options()
+        #  - defaults
+        # create a dict of all options
+        if args is not None:
+            optdict = {}
+            for k, v in args.items():
+                if v is not None:
+                    optdict[k] = v
+
+            # stash these away for use by option(), set_options()
+            self._args = optdict
+        else:
+            self._args = {}
+
+        self._defaults = defaults
+
+        self._optdict = {**self._defaults, **self._args}
+        self._optdict = self.sanity(self._optdict)
+
+        if self._optdict['verbose']:
+            print(self)
+
+    # @property
+    # def options(self):
+    #     """
+    #     Return current options.
+
+    #     :return: current options
+    #     :rtype: namedtuple
+
+    #     Return an immutable named tuple containing the current options, 
+    #     for example::
+
+    #             sim.options.graphics
+
+    #     The option are determined from a merge of two dictionaries:
+    #     - command line options (higheset precedence)
+    #     - program options from constructor or ``set_options``.
+
+    #     :seealso: :meth:`option` :meth:`set_options` :meth:`__init__`
+    #     """
+    #     return self._opt_tuple(**self.optdict)
 
     def option(self, option, default=None):
         """
@@ -831,13 +881,16 @@ class BDSim:
 
         If the ``option`` has been overridden by command line option, return
         that value, otherwise the ``default`` value.
+
+        :seealso: :meth:`options` :meth:`set_options` :meth:`__init__`
+
         """
-        if option in self.cmd_options:
-            return self.cmd_options[option]
+        if option in self._optdict:
+            return self._optdict[option]
         else:
             return default
 
-    def set_options(self, **options):
+    def set(self, **options):
         """
         Set simulation options at run time
 
@@ -855,24 +908,45 @@ class BDSim:
         :seealso: :meth:`__init__`
         """
         for key, value in options.items():
-            self.prog_options[key] = value
+            self._defaults[key] = value
+        
+        # merge the passed prog_options with the command line options
+        # command line options override
+        self._optdict = {**self._defaults, **self._args}
 
         # animation and graphics options are coupled
-        #
-        #  graphics False, no graphics at all
-        #  graphics True, animation False, show graphs at end of run
-        #  graphics True, animation True, animate graphs during the run
+        #  * graphics False, no graphics at all
+        #  * graphics True, animation False, show graphs at end of run
+        #  * graphics True, animation True, animate graphs during the run
 
-        optdict = {**self.prog_options, **self.cmd_options}
+        self._optdict = self.sanity(self._optdict)
 
-        if optdict['animation']:
-            optdict['graphics'] = True
-        if not optdict['graphics']:
-            optdict['animation'] = False
-        self._options = self.opt_tuple(**optdict)
+    def __getattr__(self, name):
+        if name.startswith('_'):
+            return super().__getattr__(name)
+        else:
+            return self._optdict[name]            
 
-    def _init_options(self, sysargs=True, **unused):
-        self.prog_options = {
+    def __setattr__(self, name, value):
+        if name.startswith('_'):
+            super().__setattr__(name, value)
+        else:
+            self._optdict[name] = value
+            self._optdict = self.sanity(self._optdict)         
+
+    def __str__(self):
+        return '\n'.join(f'{k:10s}: {v}' for k, v in self._optdict.items())
+
+    def __repr__(self):
+        return str(self)
+
+    def sanity(self):
+        pass
+
+class Options(OptionsBase):
+    def __init__(self, sysargs=True, **unused):
+
+        defaults = {
             'backend': None,
             'tiles': '3x4',
             'graphics': True,
@@ -885,15 +959,6 @@ class BDSim:
             'debug': '',
             'simtime': None,
             }
-        self.opt_tuple = namedtuple('bdsim_options', self.prog_options.keys())
-
-        # option priority (high to low):
-        #  - command line
-        #  - argument to BDSim()
-        #  - defaults
-        # all switches and their default values
-        
-        # any passed kwargs can override the defaults
 
         if sysargs:
             # command line arguments and graphics
@@ -949,40 +1014,17 @@ class BDSim:
 
             args, unknownargs = parser.parse_known_args()
             options = vars(args)  # get args as a dictionary
-            self.argv = unknownargs
+            self._argv = unknownargs # save non-bdsim arguments
 
-        # print(options)
+        super().__init__(args=options, defaults=defaults)
+        # any non-bdsim arguments are stashed as well
+        #self.set_options(**unused)
+
+    def sanity(self, options):
         # ensure graphics is enabled if animation is requested
         if options['animation']:
             options['graphics'] = True
-
-        if options['verbose']:
-            for k, v in options.items():
-                print('{:10s}: {:}'.format(k, v))
-        
-        # stash these away
-        optdict = {}
-        for k, v in args._get_kwargs():
-            if v is not None:
-                optdict[k] = v
-
-        self.cmd_options = optdict
-
-
-        self.set_options(**unused)
-
-    def fatal(self, message, retval=1):
-        """
-        Fatal simulation error
-
-        :param message: Error message
-        :type message: str
-        :param retval: system return value (*nix only) defaults to 1
-        :type retval: int, optional
-
-        Display the error message then terminate the process.  For operating
-        systems that support it, return an integer code.
-        """
-        # TODO print text in some color
-        print(message)
-        sys.exit(retval)
+        # ensure animation is disabled if graphics is disabled
+        if not options['graphics']:
+            options['animation'] = False
+        return options
