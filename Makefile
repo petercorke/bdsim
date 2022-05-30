@@ -17,7 +17,7 @@ test:
 	python -m unittest
 
 coverage:
-	coverage run --omit=\*/test_\* -m unittest
+	coverage run --include=bdsim/\*.py --omit=bdsim/bdedit/\* -m unittest
 	coverage report
 
 docs: .FORCE
