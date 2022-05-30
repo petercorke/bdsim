@@ -106,6 +106,8 @@ class DIntegrator(ClockedBlock):
         :type clock: Clock
         :param x0: Initial state, defaults to 0
         :type x0: array_like, optional
+        :param gain: gain or scaling factor, defaults to 1
+        :type gain: float
         :param min: Minimum value of state, defaults to None
         :type min: float or array_like, optional
         :param max: Maximum value of state, defaults to None
@@ -130,41 +132,33 @@ class DIntegrator(ClockedBlock):
         super().__init__(clock=clock, **blockargs)
 
         if isinstance(x0, (int, float)):
-            self.ndstates = 1
-            if min is None:
-                min = -math.inf
-            if max is None:
-                max = math.inf
+            x0 = np.r_[x0]
                 
-        else:
-            if isinstance(x0, np.ndarray):
+        elif isinstance(x0, np.ndarray):
                 if x0.ndim > 1:
                     raise ValueError('state must be a 1D vector')
-            else:
+        else:
                 x0 = base.getvector(x0)
 
-            self.ndstates = x0.shape[0]
-            if min is None:
-                min = [-math.inf] * self.nstates
-            elif len(min) != self.nstates:
-                raise ValueError('minimum bound length must match x0')
+        self.ndstates = x0.shape[0]
 
-            if max is None:
-                max = [math.inf] * self.nstates
-            elif len(max) != self.nstates:
-                raise ValueError('maximum bound length must match x0')
+        if min is not None:
+            min = base.getvector(min, self.ndstates)
+        if max is not None:
+            max = base.getvector(max, self.ndstates)
 
-        self._x0 = np.r_[x0]
-        self.min = np.r_[min]
-        self.max = np.r_[max]
+        self._x0 = x0
+        self.min = min
+        self.max = max
         self.gain = gain
-        self.ndstates = len(x0)
 
     def output(self, t=None):
         return [self._x]
 
     def next(self):
         xnext = self._x + self.gain * self.clock.T * np.array(self.inputs[0])
+        if self.min is not None or self.max is not None:
+            xnext = np.clip(xnext, self.min, self.max)
         return xnext
 
 class DPoseIntegrator(ClockedBlock):

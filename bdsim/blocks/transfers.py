@@ -37,12 +37,14 @@ class Integrator(TransferBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, x0=0, min=None, max=None, **blockargs):
+    def __init__(self, x0=0, gain=1.0, min=None, max=None, **blockargs):
         """
         Integrator.
 
         :param x0: Initial state, defaults to 0
         :type x0: array_like, optional
+        :param gain: gain or scaling factor, defaults to 1
+        :type gain: float
         :param min: Minimum value of state, defaults to None
         :type min: float or array_like, optional
         :param max: Maximum value of state, defaults to None
@@ -62,48 +64,49 @@ class Integrator(TransferBlock):
               the state vector, or
             - a vector, of the same shape as ``x0`` that applies elementwise to
               the state.
+
+        .. note:: The minimum and maximum prevent integration outside the limits,
+            but assume that the initial state is within the limits.
         """
         super().__init__(**blockargs)
 
         if isinstance(x0, (int, float)):
-            self.nstates = 1
-            if min is None:
-                min = -math.inf
-            if max is None:
-                max = math.inf
+            x0 = np.r_[x0]
                 
-        else:
-            if isinstance(x0, np.ndarray):
+        elif isinstance(x0, np.ndarray):
                 if x0.ndim > 1:
                     raise ValueError('state must be a 1D vector')
-            else:
+        else:
                 x0 = base.getvector(x0)
 
-            self.nstates = x0.shape[0]
-            if min is None:
-                min = [-math.inf] * self.nstates
-            elif len(min) != self.nstates:
-                raise ValueError('minimum bound length must match x0')
+        self.nstates = x0.shape[0]
 
-            if max is None:
-                max = [math.inf] * self.nstates
-            elif len(max) != self.nstates:
-                raise ValueError('maximum bound length must match x0')
+        if min is not None:
+            min = base.getvector(min, self.nstates)
+        if max is not None:
+            max = base.getvector(max, self.nstates)
 
-        self._x0 = np.r_[x0]
-        self.min = np.r_[min]
-        self.max = np.r_[max]
+        self._x0 = x0
+        self.min = min
+        self.max = max
+        self.gain = gain
+
+        self._x0 = x0
+        self.min = min
+        self.max = max
         print('nstates', self.nstates)
 
     def output(self, t=None):
         return [self._x]
 
     def deriv(self):
-        xd = np.array(self.inputs)
-        for i in range(0, self.nstates):
-            if self._x[i] < self.min[i] or self._x[i] > self.max[i]:
-                xd[i] = 0
-        return xd
+        xd = base.getvector(self.inputs[0])
+        if self.min is not None:
+            xd[self._x < self.min] = 0
+        if self.max is not None:
+            xd[self._x > self.max] = 0
+
+        return self.gain * xd
 
 class PoseIntegrator(TransferBlock):
     """
