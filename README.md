@@ -89,10 +89,9 @@ which we can express concisely with `bdsim` as (see [`bdsim/examples/eg1.py`](ht
     13	
     14	# connect the blocks
     15	bd.connect(demand, sum[0], scope[1])
-    16	bd.connect(plant, sum[1])
     17	bd.connect(sum, gain)
     18	bd.connect(gain, plant)
-    19	bd.connect(plant, scope[0])
+    19	bd.connect(plant, sum[1], scope[0])
     20	
     21	bd.compile()   # check the diagram
     22	bd.report()    # list all blocks and wires
