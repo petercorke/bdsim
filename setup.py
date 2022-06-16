@@ -11,6 +11,18 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 with open(path.join(here, 'RELEASE'), encoding='utf-8') as f:
     release = f.read()
 
+docs_req = ["sphinx", "sphinx_rtd_theme", "sphinx-autorun", "sphinxcontrib-jsmath", "sphinx_markdown_tables"]
+
+dev_req = [
+    "sympy",
+    "pytest",
+    "pytest-cov",
+    "coverage",
+    "codecov",
+    "recommonmark",
+    "flake8"
+]
+
 
 setup(
     name='bdsim', 
@@ -28,7 +40,7 @@ setup(
     #   3 - Alpha
     #   4 - Beta
     #   5 - Production/Stable
-    'Development Status :: 4 - Beta',
+    'Development Status :: 5 - Production/Stable',
 
     # Indicate who your project is intended for
     'Intended Audience :: Developers',
@@ -37,7 +49,12 @@ setup(
 
     # Specify the Python versions you support here. In particular, ensure
     # that you indicate whether you support Python 2, Python 3 or both.
-    'Programming Language :: Python :: 3 :: Only'],
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+    ],
 
     project_urls={
         #'Documentation': 'https://petercorke.github.io/bdsim',
@@ -54,7 +71,7 @@ setup(
 
     keywords='python block-diagram dynamic simulation',
 
-    license='MIT', #TODO
+    license='MIT',
 
     python_requires='>=3.6',
 
@@ -62,6 +79,11 @@ setup(
 
     install_requires=['numpy', 'scipy', 'matplotlib', 'spatialmath-python', 'ansitable'],
     
+    extras_require={
+        "docs": docs_req,
+        "dev": dev_req
+    },
+
     entry_points = {
         'console_scripts': ['bdedit=bdsim.bdedit:main', 'bdrun=bdsim:bdrun'],
     }
