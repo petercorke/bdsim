@@ -708,6 +708,10 @@ class BDSim:
 
         return bd
 
+
+    def DEBUG(self, debug, fmt, *args):
+        if debug[0] in self.options.debug:
+            print(f'DEBUG.{debug:s}: ' + fmt.format(*args))
     def closefigs(self):
         for i in range(self.simstate.fignum):
             print('close', i+1)

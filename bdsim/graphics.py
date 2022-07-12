@@ -130,7 +130,7 @@ class GraphicsBlock(SinkBlock):
 
             mpl_backend = matplotlib.get_backend()
 
-            self.bd.DEBUG('graphics', '  backend={:s}', mpl_backend)
+            self.bd.runtime.DEBUG('graphics', '  backend={:s}', mpl_backend)
 
             # split the string            
             ntiles = [int(x) for x in options.tiles.split('x')]
@@ -144,7 +144,7 @@ class GraphicsBlock(SinkBlock):
                     # next line creates a figure
                     sz = screen.availableSize()
                     dpiscale = screen.devicePixelRatio() # is 2.0 for Mac laptop screen
-                    self.bd.DEBUG('graphics', '  {} x {} @ {}dpi', sz.width(), sz.height(), dpiscale)
+                    self.bd.runtime.DEBUG('graphics', '  {} x {} @ {}dpi', sz.width(), sz.height(), dpiscale)
 
                     # check for a second screen
                     if options.altscreen:
@@ -155,7 +155,7 @@ class GraphicsBlock(SinkBlock):
                         elif vsize[0] >= sz.width():
                             # extra monitor to the right
                             xoffset = vsize[0]
-                        self.bd.DEBUG('graphics', '  altscreen offset {}', xoffset)
+                        self.bd.runtime.DEBUG('graphics', '  altscreen offset {}', xoffset)
 
                     screen_width, screen_height = sz.width(), sz.height()
                     dpi = screen.physicalDotsPerInch()
@@ -165,7 +165,7 @@ class GraphicsBlock(SinkBlock):
                     window = plt.get_current_fig_manager().window
                     screen_width, screen_height = window.winfo_screenwidth(), window.winfo_screenheight()
                     dpiscale = 1
-                    self.bd.DEBUG('graphics', '  screensize: {:d} x {:d}', screen_width, screen_height)
+                    self.bd.runtime.DEBUG('graphics', '  screensize: {:d} x {:d}', screen_width, screen_height)
                     f = plt.gcf()
                     dpi = f.dpi
 
@@ -208,7 +208,7 @@ class GraphicsBlock(SinkBlock):
         move_figure(f, col * gstate.figsize[0] * gstate.dpi, row * gstate.figsize[1] * gstate.dpi)
         gstate.fignum += 1
         
-        self.bd.DEBUG('graphics', 'create figure {:d} at ({:d}, {:d})', gstate.fignum, row, col)
+        self.bd.runtime.DEBUG('graphics', 'create figure {:d} at ({:d}, {:d})', gstate.fignum, row, col)
         return f
 
 

@@ -493,7 +493,7 @@ class BlockDiagram:
         except:
             pass
 
-        self.DEBUG('state', '>>>>>>>>> t={}, x={} >>>>>>>>>>>>>>>>', t, x)
+        self.runtime.DEBUG('state', '>>>>>>>>> t={}, x={} >>>>>>>>>>>>>>>>', t, x)
         
         # reset all the blocks ready for the evalation
         self.reset()
@@ -507,11 +507,11 @@ class BlockDiagram:
         for clock in self.clocklist:
             clock.setstate()
 
-        self.DEBUG('propagate', 't={:.3f}', t)
+        self.runtime.DEBUG('propagate', 't={:.3f}', t)
 
         for sequence, group in enumerate(self.plan):
 
-            # self.DEBUG('propagate', '---- sequence = ', sequence)
+            # self.runtime.DEBUG('propagate', '---- sequence = ', sequence)
 
             for b in group:
                 # ask the block for output, check for errors
@@ -534,7 +534,7 @@ class BlockDiagram:
                     print(attr(0))
                     raise RuntimeError from None
 
-                self.DEBUG('propagate', 'block {:s}: output = {}', b, out)
+                self.runtime.DEBUG('propagate', 'block {:s}: output = {}', b, out)
 
                 # check that output is a list of correct length
                 if not isinstance(out, (tuple, list)):
@@ -565,7 +565,7 @@ class BlockDiagram:
         # gather the derivative
         YD = self.deriv()
 
-        self.DEBUG('deriv', YD)
+        self.runtime.DEBUG('deriv', YD)
         return YD
 
     def execution_plan(self):
@@ -1092,9 +1092,7 @@ class BlockDiagram:
             print('  inputs:  ', b.inputs)
             print('  outputs: ', b.output(t=0))
 
-    def DEBUG(self, debug, fmt, *args):
-        if debug[0] in self.options.debug:
-            print(f'DEBUG.{debug:s}: ' + fmt.format(*args))
+
             
 if __name__ == "__main__":  # pragma: no cover
 
