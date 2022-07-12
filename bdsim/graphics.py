@@ -120,11 +120,10 @@ class GraphicsBlock(SinkBlock):
             
             if options.backend is None:
                 if sys.platform == 'darwin':
-                    # try Qt5Agg
-                    try:
+                    # for MacOS, use Qt5Agg if its installed
+                    # otherwise use default (MacOSX)
+                    if 'Qt5Agg' in matplotlib.rcsetup.all_backends:
                         matplotlib.use('Qt5Agg')
-                    except ImportError:
-                        pass  # otherwise use default (MacOSX)
             else:
                 try:
                     matplotlib.use(options.backend)
