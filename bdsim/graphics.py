@@ -37,9 +37,9 @@ class GraphicsBlock(SinkBlock):
         plt.draw()
         plt.show(block=False)
 
-        if self.movie is not None and not self.bd.options.animation:
+        if self.movie is not None and not self.bd.runtime.options.animation:
             print('enabling global animation option to allow movie option on block', self)
-            if not self.bd.options.animation:
+            if not self.bd.runtime.options.animation:
                 print('must enable animation to render a movie')
         if self.movie is not None:
             try:
@@ -112,11 +112,11 @@ class GraphicsBlock(SinkBlock):
         gstate = state
         options = state.options
 
-        self.bd.DEBUG('graphics', '{} matplotlib figures exist', len(plt.get_fignums()))
+        self.bd.runtime.DEBUG('graphics', '{} matplotlib figures exist', len(plt.get_fignums()))
 
         if gstate.fignum == 0:
             # no figures yet created, lazy initialization
-            self.bd.DEBUG('graphics', 'lazy initialization')
+            self.bd.runtime.DEBUG('graphics', 'lazy initialization')
             
             if options.backend is None:
                 if sys.platform == 'darwin':
