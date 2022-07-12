@@ -12,6 +12,7 @@ import importlib
 import inspect
 import traceback
 from collections import Counter, namedtuple
+from copy import deepcopy
 import numpy as np
 from colored import fg, attr
 
@@ -69,6 +70,24 @@ class BlockDiagram:
 
     def __len__(self):
         return len(self.blocklist)
+
+    def __deepcopy__(self, memo):
+        # deep copy a block diagram
+        # retain references (don't copy) to blocks and the runtime
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            if type(v).__name__ == 'method':
+                # it's a block factory method
+                setattr(result, k, v)
+            elif k == "runtime":
+                # it's a reference to the runtime
+                setattr(result, k, v)
+            else:
+                # otherwise, do a deepcopy
+                setattr(result, k, deepcopy(v, memo))
+        return result
 
     @property
     def issubsystem(self):
