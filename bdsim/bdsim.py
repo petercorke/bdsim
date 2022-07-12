@@ -20,6 +20,75 @@ import re
 from colored import fg, attr
 
 block = namedtuple('block', 'name, cls, path')
+try:
+    from progress.bar import FillingCirclesBar
+    _FillingCirclesBar = False
+except:
+    _FillingCirclesBar = False
+
+class Progress:
+
+    # print a progress bar
+    # https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console
+    @staticmethod
+    def printProgressBar (fraction, prefix='', suffix='', decimals=1, length=50, fill = '█', printEnd = "\r"):
+
+        percent = ("{0:." + str(decimals) + "f}").format(fraction * 100)
+        filledLength = int(length * fraction)
+        bar = fill * filledLength + '-' * (length - filledLength)
+        print(f'\r{prefix} |{bar}| {percent}% {suffix}', end = printEnd)
+
+    def __init__(self, enable=True):
+        self.enable = enable
+        if not enable:
+            return
+
+    def start(self, T):
+
+        self.T = T
+
+        if not self.enable:
+            return
+
+        if _FillingCirclesBar:
+            self.bar = FillingCirclesBar('bdsim', max=100,
+                        suffix = '%(percent).1f%% - %(eta)ds')
+        else:
+            self.printProgressBar(0, prefix='Progress:', suffix='complete', length=60)
+
+
+    def end(self):
+        """
+        Clean up progress bar
+        """
+        if not self.enable:
+            return
+
+        if _FillingCirclesBar:
+            self.bar.finish()
+        else:
+            print('\r' + ' '* 90 + '\r')
+
+    def update(self, t):
+        """
+        Update progress bar
+
+        :param t: current simulation time, defaults to None
+        :type t: float, optional
+
+        Update progress bar as a percentage of the maximum simulation time,
+        given as an argument to ``run``.
+
+        :seealso: :meth:`run` :meth:`progress_done`
+        """
+        if not self.enable:
+            return
+
+        if _FillingCirclesBar:
+            self.bar.goto(round(t / self.T * 100))
+        else:
+            self.printProgressBar(t / self.T, prefix='Progress:', suffix='complete', length=60)
+
 
 # convert class name to BLOCK name
 # strip underscores and capitalize
@@ -145,8 +214,6 @@ class BDSimState:
     :ivar graphics: enable graphics
     :vartype graphics: bool
     """
-    
-
     def __init__(self):
 
         self.x = None           # continuous state vector numpy.ndarray
@@ -243,30 +310,6 @@ class BDSim:
         for k, v in self.options._asdict().items():
             s += '  {:s}: {}\n'.format(k, v)
         return s
-
-    def progress(self, t=None):
-        """
-        Update progress bar
-
-        :param t: current simulation time, defaults to None
-        :type t: float, optional
-
-        Update progress bar as a percentage of the maximum simulation time,
-        given as an argument to ``run``.
-
-        :seealso: :meth:`run` :meth:`progress_done`
-        """
-        if self.options.progress:
-            if t is None:
-                t = self.state.t
-            printProgressBar(t / self.state.T, prefix='Progress:', suffix='complete', length=60)
-
-    def progress_done(self):
-        """
-        Clean up progress bar
-        """
-        if self.options.progress:
-            print('\r' + ' '* 90 + '\r')
 
     def run(self, bd, T=5, dt=None, solver='RK45', solver_args={}, debug='',
             block=None, checkfinite=True, minstepsize=1e-12, watch=[],
@@ -423,7 +466,8 @@ class BDSim:
         state.xlist = []
         state.plist = [[] for p in state.watchlist]
 
-        self.progress(0)
+        self.progress = Progress(enable=self.options.progress)
+        self.progress.start(T)
 
         if len(self.state.eventq) == 0:
             # no simulation events, solve it in one go
@@ -468,7 +512,7 @@ class BDSim:
 
         # finished integration
 
-        self.progress_done()  # cleanup the progress bar
+        self.progress.end()  # cleanup the progress bar
 
         # print some info about the integration
         print(fg('yellow'))
@@ -571,7 +615,7 @@ class BDSim:
                     # # update all blocks that need to know
                     bd.step(state=self.state)
 
-                    self.progress()  # update the progress bar
+                    self.progress.update(self.state.t)  # update the progress bar
 
                     if integrator.status == 'finished':
                         break
@@ -610,7 +654,7 @@ class BDSim:
                     # update all blocks that need to know
                     bd.step(state=state)
 
-                    self.progress()  # update the progress bar
+                    self.progress.update(self.state.t)  # update the progress bar
 
                         
                     # has any block called a stop?
@@ -638,7 +682,7 @@ class BDSim:
                 # update all blocks that need to know
                 bd.step(state=state)
 
-                self.progress()  # update the progress bar
+                self.progress.update(self.state.t)  # update the progress bar
 
                 # has any block called a stop?
                 if state.stop is not None:
