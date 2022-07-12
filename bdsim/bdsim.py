@@ -25,17 +25,107 @@ block = namedtuple('block', 'name, cls, path')
 # strip underscores and capitalize
 def blockname(name):
     return name.upper()
+class TimeQ:
+    """
+    Time-ordered queue for events
 
+    The list comprises tuples of (time, block) to reflect an event associated
+    with the specified block at the specified time.
 
-# print a progress bar
-# https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console
-def printProgressBar (fraction, prefix='', suffix='', decimals=1, length=50, fill = '█', printEnd = "\r"):
+    The list is not ordered, and is sorted on a pop event.
+    """
 
-    percent = ("{0:." + str(decimals) + "f}").format(fraction * 100)
-    filledLength = int(length * fraction)
-    bar = fill * filledLength + '-' * (length - filledLength)
-    print(f'\r{prefix} |{bar}| {percent}% {suffix}', end = printEnd)
+    def __init__(self):
+        self.q = []
+        self.dirty = False
 
+    def __len__(self):
+        """
+        Length of time-ordered queue
+
+        :return: number of items in the queue
+        :rtype: int
+        """
+        return len(self.q)
+
+    def __str__(self):
+        """
+        String representation of time-ordered queue
+
+        :return: show length and first item
+        :rtype: str
+        """
+        if len(self) == 0:
+            return f"TimeQ: len={len(self)}"
+        else:
+            return f"TimeQ: len={len(self)}, first out {self.q[0]}"
+
+    def __repr__(self):
+        return str(self)
+
+    def push(self, value):
+        """
+        Push value onto time-ordered queue
+
+        :param value: tuple (time, block)
+        :type value: tuple
+
+        Push a block and a time onto the queue.
+        """
+        self.q.append(value)
+        self.dirty = True
+
+    def pop(self, dt=0):
+        """
+        Pop nearest items from the time-ordered queue
+
+        :param dt: time window, defaults to 0
+        :type dt: float, optional
+        :return: time of first block in queue and a list of blocks within the time window
+        :rtype: float, list
+
+        The next block is popped from the queue and all blocks in the time
+        window, that occur no more than ``dt`` later, are also popped.
+        """
+        if len(self) == 0:
+            return None, []
+
+        if self.dirty:
+            self.q.sort(key=lambda x: x[0])
+            self.dirty = False
+
+        qfirst = self.q.pop(0)
+        t = qfirst[0]
+        blocks = [qfirst[1]]
+        while len(self.q) > 0 and self.q[0][0] < (t + dt):
+            blocks.append(self.q.pop(0)[1])
+        return t, blocks
+
+    def pop_until(self, t):
+        """
+        Pop nearest items from time-ordered queue
+
+        :param t: time
+        :type t: float
+        :return: list of blocks remaining sorted by receding time
+        :rtype: list
+
+        Pops all items with time less than or equal to ``t``.
+        """
+        if len(self) == 0:
+            return []
+
+        if self.dirty:
+            self.q.sort(key=lambda x: x[0])
+            self.dirty = False
+
+        i = 0
+        while True:
+            if self.q[i][0] > t:
+                out = self.q[:i]
+                self.q = self.q[i:]
+                return out
+            i += 1
 
 class BDSimState:
 

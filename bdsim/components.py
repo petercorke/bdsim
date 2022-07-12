@@ -187,50 +187,14 @@ class OptionsBase:
     def sanity(self, options):
         return options
 
-class PriorityQ:
-
-    def __init__(self):
-        self.q = []
-
-    def __len__(self):
-        return len(self.q)
-
     def __str__(self):
-        if len(self) == 0:
-            return f"PriorityQ: len={len(self)}"
-        else:
-            return f"PriorityQ: len={len(self)}, first out {self.q[0]}"
+        dict = self._dict
+        maxwidth = max([len(option) for option in dict.keys()])
+        options = sorted(dict.keys())
+        return '\n'.join([f"{option.ljust(maxwidth)}: {dict[option]}" for option in options])
 
     def __repr__(self):
-        return str(self)
-
-    def push(self, value):
-        self.q.append(value)
-
-    def pop(self, dt=0):
-        if len(self) == 0:
-            return None, []
-        self.q.sort(key=lambda x: x[0])
-
-        qfirst = self.q.pop(0)
-        t = qfirst[0]
-        blocks = [qfirst[1]]
-        while len(self.q) > 0 and self.q[0][0] < (t + dt):
-            blocks.append(self.q.pop(0)[1])
-        return t, blocks
-
-    def pop_until(self, t):
-        if len(self) == 0:
-            return []
-
-        self.q.sort(key=lambda x: x[0])
-        i = 0
-        while True:
-            if self.q[i][0] > t:
-                out = self.q[:i]
-                self.q = self.q[i:]
-                return out
-            i += 1
+        return str(self)  
 
 class Wire:
     """
