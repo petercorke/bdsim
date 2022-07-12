@@ -928,6 +928,24 @@ class Options(OptionsBase):
             'simtime': None,
             }
 
+        # modify defaults according to envariable BDSIM which is comma/semicolon
+        # separated list of key=value pairs
+        # eg. setenv BDSIM graphics=True,hold=True
+        env = os.getenv('BDSIM')
+        if env is not None:
+            for key_value in env.split(',;'):
+                # for each key=value pair
+                key, value = [s.strip() for s in key_value.split('=')]
+                # attempt an eval, resolves True, False
+                try:
+                    value = eval(value)
+                except SyntaxError:
+                    pass
+                try:
+                    defalts[key] = value
+                except KeyError:
+                    print('envariable BDSIM, unknown option', key)
+
         if sysargs:
             # command line arguments and graphics
             parser = argparse.ArgumentParser(
