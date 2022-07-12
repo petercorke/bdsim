@@ -365,7 +365,7 @@ class SubSystem(SubsystemBlock):
             subsys = module.__dict__[simvars[0]]
             self.ssvar = simvars[0]
         elif isinstance(subsys, bdsim.BlockDiagram):
-            # use an in-memory digram
+            # use an in-memory diagram
             self.ssvar = None
         else:
             raise ValueError('argument must be filename or BlockDiagram instance')
