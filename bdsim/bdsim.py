@@ -478,7 +478,7 @@ class BDSim:
         print(attr(0))
 
         # save buffered data in a Struct
-        out = Struct('results')
+        out = BDStruct(name='results')
         out.t = np.array(state.tlist)
         out.x = np.array(state.xlist)
         out.xnames = bd.statenames
@@ -486,7 +486,7 @@ class BDSim:
         # save clocked states
         for c in bd.clocklist:
             name = c.name.replace('.', '')
-            clockdata = Struct(name)
+            clockdata = BDStruct(name)
             clockdata.t = np.array(c.t)
             clockdata.x = np.array(c.x)
             out.add(name, clockdata)

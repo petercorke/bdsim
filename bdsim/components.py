@@ -12,7 +12,7 @@ from matplotlib import animation
 from collections import UserDict
 
 
-class Struct(UserDict):
+class BDStruct(UserDict):
     """
     A dict-like object that allows items to be added by attribute or by key.
     
@@ -31,7 +31,7 @@ class Struct(UserDict):
         "thing {'a': 1, 'b': 2}"
     """
     
-    def __init__(self, name='Struct', **kwargs):
+    def __init__(self, name='BDStruct', **kwargs):
         super().__init__()
         self.name = name
         for key, value in kwargs.items():
@@ -53,136 +53,86 @@ class Struct(UserDict):
         # https://stackoverflow.com/questions/40583131/python-deepcopy-with-custom-getattr-and-setattr
         # https://stackoverflow.com/questions/25977996/supporting-the-deep-copy-operation-on-a-custom-class
         try:
-            return super().__getattribute__('data')[name]
-        except KeyError:
+            return self.data[name]
+        except AttributeError:
             raise AttributeError('unknown attribute ' + name)
         
     def __repr__(self):
         return str(self)
     
     def __str__(self):
-        def fmt(k, v, indent=0):
-            if isinstance(v, Struct):
-                s = '{:12s}: {:12s}\n'.format(k, type(v).__name__)
-                for k, v in v.items():
-                    s += fmt(k, v, indent + 1)
-                return s
-            elif isinstance(v, np.ndarray):
-                s = '            > ' * indent + '{:12s}| {:s}\n'.format(k, type(v).__name__ + ' ' + str(v.shape))
+        """
+        Display struct as a string
+
+        :return: struct in indented string format
+        :rtype: str
+
+        The struct is rendered with one line per element, and substructures
+        are indented.
+        """
+        rows = []
+
+        if len(self) == 0:
+            return ''
+        maxwidth = max([len(key) for key in self.keys()])
+        # if self.name is not None:
+        #     rows.append(self.name + '::')
+        for k, v in sorted(self.items(), key=lambda x: x[0]):
+            if isinstance(v, BDStruct):
+                rows.append("{:s}.{:s}::".format(k.ljust(maxwidth), v.name))
+                rows.append('\n'.join([' ' * (maxwidth + 3) + line for line in str(v).split('\n')]))
+            elif isinstance(v, str):
+                rows.append('{:s} = "{:s}" ({:s})'.format(k.ljust(maxwidth), str(v), type(v).__name__))
             else:
-                s = '            > ' * indent + '{:12s}| {:s} = {}\n'.format(k, type(v).__name__, v)
-            return s
+                rows.append("{:s} = {:s} ({:s})".format(k.ljust(maxwidth), str(v), type(v).__name__))
 
-        s = ''
-        for k, v in self.data.items():
-            if k.startswith('_'):
-                continue
-            s += fmt(k, v)
+        return '\n'.join(rows)
 
-        return self.name + ':\n' + s
+class OptionsBase():
 
-class OptionsBase:
-    """
-    A dict-like object for holding program options
-    """
-
-    def __init__(self, args=None, defaults=None):
-        # self._opt_tuple = namedtuple('bdsim_options', defaults.keys())
-
-        #  - command line
-        #  - argument to BDSim(), set_options()
-        #  - defaults
-        # create a dict of all options
-        if args is not None:
-            optdict = {}
-            for k, v in args.items():
-                if v is not None:
-                    optdict[k] = v
-
-            # stash these away for use by option(), set_options()
-            self._args = optdict
-        else:
-            self._args = {}
-
-        self._defaults = defaults
-
-        self._optdict = {**self._defaults, **self._args}
-        self._optdict = self.sanity(self._optdict)
-
-        if self._optdict['verbose']:
-            print(self)
-
-    def option(self, option, default=None):
-        """
-        Return value of particular option
-
-        :param option: option name
-        :type option: str
-        :param default: default value
-        :type default: any
-        :return: value of option
-        :rtype: any
-
-        If the ``option`` has been overridden by command line option, return
-        that value, otherwise the ``default`` value.
-
-        :seealso: :meth:`options` :meth:`set_options` :meth:`__init__`
-
-        """
-        if option in self._optdict:
-            return self._optdict[option]
-        else:
-            return default
-
-    def set(self, **options):
-        """
-        Set simulation options at run time
-
-        The options are the same as those for the constructor, for example:
-
-            sim = bdsim.BDsim()
-            sim.set_options(graphics=False)
-
-        or::
-
-            sim = bdsim.BDsim(graphics=False)
-
-        Command line options override program set options.
-
-        :seealso: :meth:`__init__`
-        """
-        for key, value in options.items():
-            self._defaults[key] = value
-        
-        # merge the passed prog_options with the command line options
-        # command line options override
-        self._optdict = {**self._defaults, **self._args}
-
-        # animation and graphics options are coupled
-        #  * graphics False, no graphics at all
-        #  * graphics True, animation False, show graphs at end of run
-        #  * graphics True, animation True, animate graphs during the run
-
-        self._optdict = self.sanity(self._optdict)
+    def __init__(self, args={}, defaults={}):
+        self._priority = list(args)
+        self._dict = {**defaults, **args}
 
     def __getattr__(self, name):
-        if name.startswith('_'):
-            return super().__getattr__(name)
-        else:
-            return self._optdict[name]            
+        try:
+            if name.startswith('_'):
+                return self.__dict__[name]
+            else:
+                return self.__dict__['_dict'][name]
+        except KeyError:
+            raise AttributeError(name)
 
     def __setattr__(self, name, value):
         if name.startswith('_'):
-            super().__setattr__(name, value)
+            self.__dict__[name] = value
         else:
-            self._optdict[name] = value
-            self._optdict = self.sanity(self._optdict)         
+            dict = self.__dict__['_dict']
+            if name not in self._priority:
+                dict[name] = value
+                self.__dict__['_dict'] = self.sanity(dict)
 
-    def __str__(self):
-        return '\n'.join(f'{k:10s}: {v}' for k, v in self._optdict.items())
+    # def __getattr__(self, name):
+    #     if name in self.__dict__['dict']:
+    #         return self.__dict__['dict'][name]
+    #     else:
+    #         try:
+    #             return self.__dict__[name]
+    #         except KeyError:
+    #             raise AttributeError(name)
 
-    def __repr__(self):
-        return str(self)
+    # def __setattr__(self, name, value):
+    #     dict = self.__dict__['dict']
+    #     if name not in self.priority:
+    #         dict[name] = value
+    #         self.__dict__['dict'] = self.sanity(dict)
+
+    def set(self, **changes):
+        dict = self._dict
+        for name, value in changes.items():
+            if name not in self._priority:
+                dict[name] = value
+        self._dict = self.sanity(dict)
 
     def sanity(self, options):
         return options
