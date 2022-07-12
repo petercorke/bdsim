@@ -42,9 +42,12 @@ class GraphicsBlock(SinkBlock):
             if not self.bd.options.animation:
                 print('must enable animation to render a movie')
         if self.movie is not None:
-            self.writer = animation.FFMpegWriter(fps=10, extra_args=['-vcodec', 'libx264'])
-            self.writer.setup(fig=self.fig, outfile=self.movie)
-            print('movie block', self, ' --> ', self.movie)
+            try:
+                self.writer = animation.FFMpegWriter(fps=10, extra_args=['-vcodec', 'libx264'])
+                self.writer.setup(fig=self.fig, outfile=self.movie)
+                print('movie block', self, ' --> ', self.movie)
+            except FileNotFoundError:
+                print('cannot save movie, please install ffmpeg')
 
     def step(self, state=None):
         super().step()
