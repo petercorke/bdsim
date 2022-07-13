@@ -9,6 +9,7 @@ import types
 import warnings
 
 from bdsim.blockdiagram import BlockDiagram
+from bdsim.components import OptionsBase, Block, Clock, BDStruct, Plug, clocklist
 import copy
 import tempfile
 import subprocess
@@ -16,10 +17,10 @@ import webbrowser
 
 import numpy as np
 import scipy.integrate as integrate
+import matplotlib.pyplot as plt
 import re
 from colored import fg, attr
 
-block = namedtuple('block', 'name, cls, path')
 try:
     from progress.bar import FillingCirclesBar
     _FillingCirclesBar = False
@@ -226,7 +227,7 @@ class BDSimState:
 
         self.debugger = True
         self.t_stop = None  # time-based breakpoint
-        self.eventq = PriorityQ()
+        self.eventq = TimeQ()
 
     def declare_event(self, block, t):
         self.eventq.push((t, block))
@@ -405,7 +406,8 @@ class BDSim:
         state.minstepsize = minstepsize
         state.stop = None # allow any block to stop.BlockDiagram by setting this to the block's name
         state.checkfinite = checkfinite
-        state.options = copy.copy(self.options)
+        # state.options = copy.copy(self.options)
+        state.options = self.options
         self.bd = bd
         state.t_stop = None
         if debug:
@@ -741,7 +743,8 @@ class BDSim:
             setattr(bd, blockname, f.__get__(self))
 
         # add a clone of the options
-        bd.options = copy.copy(self.options)
+        # bd.options = copy.copy(self.options)
+        bd.runtime = self
 
         return bd
 
@@ -829,7 +832,8 @@ class BDSim:
         - ``package`` containing the block
         - `doc` is the docstring from the class constructor
         """
-        
+        block = namedtuple('block', 'name, cls, path')
+
         packages = ['bdsim', 'roboticstoolbox', 'machinevisiontoolbox']
         env = os.getenv('BDSIMPATH')
         if env is not None:
@@ -1050,9 +1054,11 @@ class Options(OptionsBase):
 
             args, unknownargs = parser.parse_known_args()
             options = vars(args)  # get args as a dictionary
-            self._argv = unknownargs # save non-bdsim arguments
 
+        options = {option:value for option, value in options.items() if value is not None}
         super().__init__(args=options, defaults=defaults)
+        self._argv = unknownargs # save non-bdsim arguments
+
         # any non-bdsim arguments are stashed as well
         #self.set_options(**unused)
 
