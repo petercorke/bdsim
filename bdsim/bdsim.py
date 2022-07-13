@@ -545,14 +545,6 @@ class BDSim:
             self.done(self.bd, block=self.options.hold)
 
         return out
-
-    def done(self, bd, block=False):
-
-        if 'hold' in self.cmd_options:
-            block = self.cmd_options['hold']
-
-        plt.show(block=block)
-        bd.done(graphics=self.options.graphics)
         
     def run_interval(self, bd, t0, T, x0, state):
         """
@@ -756,6 +748,19 @@ class BDSim:
     def DEBUG(self, debug, fmt, *args):
         if debug[0] in self.options.debug:
             print(f'DEBUG.{debug:s}: ' + fmt.format(*args))
+
+    def done(self, bd, block=False):
+
+        if self.options.hold:
+            block = self.options.hold
+
+        try:
+            plt.show(block=block)
+        except KeyboardInterrupt:
+            print('bdsim: closing all windows')
+            sys.exit(1)
+        bd.done(graphics=self.options.graphics)
+
     def closefigs(self):
         for i in range(self.simstate.fignum):
             print('close', i+1)
