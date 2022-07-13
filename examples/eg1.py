@@ -23,6 +23,8 @@ bd.connect(sum, gain)
 bd.connect(gain, plant)
 bd.connect(plant, scope[0])
 
+bd.report()
+
 bd.compile()   # check the diagram
 bd.report_summary()    # list all blocks and wires
 
