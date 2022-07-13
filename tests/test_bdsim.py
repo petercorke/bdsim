@@ -7,7 +7,7 @@ import bdsim
 import unittest
 import numpy.testing as nt
 
-class BDSinTest(unittest.TestCase):
+class BDSimTest(unittest.TestCase):
 
     def test_options(self):
         sim = bdsim.BDSim()
