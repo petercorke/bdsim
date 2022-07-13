@@ -90,10 +90,6 @@ class Progress:
             self.printProgressBar(t / self.T, prefix='Progress:', suffix='complete', length=60)
 
 
-# convert class name to BLOCK name
-# strip underscores and capitalize
-def blockname(name):
-    return name.upper()
 class TimeQ:
     """
     Time-ordered queue for events
@@ -195,6 +191,11 @@ class TimeQ:
                 self.q = self.q[i:]
                 return out
             i += 1
+
+# convert class name to BLOCK name
+# strip underscores and capitalize
+def blockname(name):
+    return name.upper()
 
 class BDSimState:
 
@@ -792,6 +793,22 @@ class BDSim:
         webbrowser.open(f"file://{pdffile.name}")
         os.remove(pdffile.name)
 
+    def fatal(self, message, retval=1):
+        """
+        Fatal simulation error
+
+        :param message: Error message
+        :type message: str
+        :param retval: system return value (*nix only) defaults to 1
+        :type retval: int, optional
+
+        Display the error message then terminate the process.  For operating
+        systems that support it, return an integer code.
+        """
+        # TODO print text in some color
+        print(message)
+        sys.exit(retval)
+
     def load_blocks(self, verbose=True):
         """
         Dynamically load all block definitions.
@@ -938,22 +955,6 @@ class BDSim:
                         print(f"{dots('')}: {s}")
                     else:
                         print(f"{dots(k)}: {s}")
-
-    def fatal(self, message, retval=1):
-        """
-        Fatal simulation error
-
-        :param message: Error message
-        :type message: str
-        :param retval: system return value (*nix only) defaults to 1
-        :type retval: int, optional
-
-        Display the error message then terminate the process.  For operating
-        systems that support it, return an integer code.
-        """
-        # TODO print text in some color
-        print(message)
-        sys.exit(retval)
 
     def set_options(self, **options):
         self.options.set(**options)
