@@ -2,7 +2,7 @@ import unittest
 import numpy.testing as nt
 from bdsim.components import *
 from bdsim.blocks import *
-from bdsim import bdsim
+from bdsim import bdsim, TimeQ
 
 class WireTest(unittest.TestCase):
 
@@ -42,7 +42,6 @@ class PlugTest(unittest.TestCase):
 
         block = Mux(5)
         p = Plug(block, type='end')
-
         p = block[3]
         pl = p.portlist
         self.assertEqual(len(pl), 1)
@@ -87,7 +86,7 @@ class BlockTest(unittest.TestCase):
 class PriorityQTest(unittest.TestCase):
 
     def test_pushpop(self):
-        q = PriorityQ()
+        q = TimeQ()
 
         q.push((0, 'a'))
         q.push((3, 'd'))
@@ -98,7 +97,7 @@ class PriorityQTest(unittest.TestCase):
 
         self.assertIsInstance(str(q), str)
         self.assertIsInstance(repr(q), str)
-        self.assertEqual(str(q), "PriorityQ: len=4, first out (0, 'a')")
+        self.assertEqual(str(q), "TimeQ: len=4, first out (0, 'a')")
 
         x = q.pop()
         self.assertIsInstance(x, tuple)
@@ -114,7 +113,7 @@ class PriorityQTest(unittest.TestCase):
 
 
     def test_threshold(self):
-        q = PriorityQ()
+        q = TimeQ()
         q.push((0, 'a'))
         q.push((3, 'd'))
         q.push((2, 'c'))
@@ -129,7 +128,7 @@ class PriorityQTest(unittest.TestCase):
 
 
     def test_until(self):
-        q = PriorityQ()
+        q = TimeQ()
 
         q.push((0, 'a'))
         q.push((3, 'd'))
@@ -223,14 +222,43 @@ class ClockTest(unittest.TestCase):
         # t = c.next_event()
 
 class StructTest(unittest.TestCase):
-    # test struct for simuluation results return
+
+    def test_struct(self):
+
+        x = BDStruct()
+        x.a = 1
+        x.b = 'hello'
+        x.c = 4.56
+        x.d = [1, 2, 3]
+        self.assertEqual(x.a, 1)
+        self.assertEqual(x.b, 'hello')
+        self.assertEqual(x.c, 4.56)
+        self.assertEqual(x.d, [1, 2, 3])
+        s = str(x)
+        print(s)
+        self.assertEqual(len(s.split('\n')), 4)
+
+    def test_struct_struct(self):
+        x = BDStruct(f=2)
+        x.a = BDStruct(name='baz', a=1, b=4.56)
+        self.assertEqual(str(x), 'a.baz::\n    a = 1 (int)\n    b = 4.56 (float)\nf = 2 (int)')
+
+    def test_item(self):
+        x = BDStruct()
+        x['a'] = 1
+        x['b'] = 'hello'
+        self.assertEqual(x.a, 1)
+        self.assertEqual(x.b, 'hello')
+
+        self.assertEqual(x['a'], 1)
+        self.assertEqual(x['b'], 'hello')
 
     def test_init(self):
 
-        s = Struct(a=2, b=3)
+        s = BDStruct(a=2, b=3)
         self.assertEqual(s.a, 2)
         self.assertEqual(s.b, 3)
-        with self.assertRaises(AttributeError):
+        with self.assertRaises(KeyError):
             z = s.c
         
         s.c = 4
@@ -238,14 +266,69 @@ class StructTest(unittest.TestCase):
         s.c = 5
         self.assertEqual(s.c, 5)
 
-        s.add('d', 6)
+        s.d = 6
         self.assertEqual(s.d, 6)
 
         self.assertIsInstance(str(s), str)
         self.assertIsInstance(repr(s), str)
-        self.assertEqual(str(s), 'Struct:\na           | int = 2\nb           | int = 3\nc           | int = 5\nd           | int = 6\n')
+        self.assertEqual(str(s), 'a = 2 (int)\nb = 3 (int)\nc = 5 (int)\nd = 6 (int)')
 
+    def test_len(self):
+        s = BDStruct(a=2, c=1, b=3)
+        self.assertEqual(len(s), 3)
+
+
+class OptionTest(unittest.TestCase):
+
+        def test_init(self):
+            opt = OptionsBase()
+
+        def test_init1(self):
+            opt = OptionsBase(dict(foo=1, bar='hello'))
+
+            self.assertEqual(opt.foo, 1)
+            self.assertEqual(opt.bar, 'hello')
+
+
+        def test_init2(self):
+            opt = OptionsBase({}, dict(foo=1, bar='hello'))
+
+            self.assertEqual(opt.foo, 1)
+            self.assertEqual(opt.bar, 'hello')
+
+        def test_init1(self):
+            opt = OptionsBase(dict(foo=1, bar='hello'), dict(foo=2, baz=3))
+
+            self.assertEqual(opt.foo, 1)
+            self.assertEqual(opt.bar, 'hello')
+            self.assertEqual(opt.baz, 3)
+            
+        def test_set(self):
+            opt = OptionsBase(dict(foo=1, bar='hello'))
+
+            opt.foo = 2
+            self.assertEqual(opt.foo, 1)
+            self.assertEqual(opt.bar, 'hello')
+
+        def test_set2(self):
+            opt = OptionsBase(dict(foo=1, bar='hello'))
+
+            opt.set(foo=3)
+            self.assertEqual(opt.foo, 1)
+            self.assertEqual(opt.bar, 'hello')
+
+        def test_set3(self):
+            opt = OptionsBase({}, dict(foo=1, bar='hello'))
+
+            opt.set(foo=3)
+            self.assertEqual(opt.foo, 3)
+            self.assertEqual(opt.bar, 'hello')
 # ---------------------------------------------------------------------------------------#
 if __name__ == '__main__':
+
+    # opt = OptionsBase(dict(foo=1, bar='hello'), dict(foo=2))
+
+    # opt.set(foo=3)
+    # print(opt.foo)
 
     unittest.main()
