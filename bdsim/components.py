@@ -83,6 +83,8 @@ class BDStruct(UserDict):
                 rows.append('\n'.join([' ' * (maxwidth + 3) + line for line in str(v).split('\n')]))
             elif isinstance(v, str):
                 rows.append('{:s} = "{:s}" ({:s})'.format(k.ljust(maxwidth), str(v), type(v).__name__))
+            elif isinstance(v, np.ndarray):
+                rows.append('{:s} = ndarray:{:s} {:s}'.format(k.ljust(maxwidth), v.dtype.type.__name__, str(v.shape)))
             else:
                 rows.append("{:s} = {:s} ({:s})".format(k.ljust(maxwidth), str(v), type(v).__name__))
 
