@@ -1,0 +1,9 @@
+<map id="inheritance978cde46aa" name="inheritance978cde46aa">
+<area shape="rect" id="node1" href="internals.html#bdsim.Block" target="_top" title="bdsim.components.Block" alt="" coords="5,104,191,129"/>
+<area shape="rect" id="node2" href="internals.html#bdsim.FunctionBlock" target="_top" title="A FunctionBlock is a subclass of Block that represents a block that has inputs" alt="" coords="248,5,488,31"/>
+<area shape="rect" id="node3" href="internals.html#bdsim.SinkBlock" target="_top" title="A SinkBlock is a subclass of Block that represents a block that has inputs" alt="" coords="261,54,475,80"/>
+<area shape="rect" id="node4" href="internals.html#bdsim.SourceBlock" target="_top" title="A SourceBlock is a subclass of Block that represents a block that has outputs" alt="" coords="253,104,483,129"/>
+<area shape="rect" id="node5" href="internals.html#bdsim.SubsystemBlock" target="_top" title="A SubSystem &#160;s a subclass of Block that represents a block that has inputs" alt="" coords="239,153,497,178"/>
+<area shape="rect" id="node6" href="internals.html#bdsim.TransferBlock" target="_top" title="A TransferBlock is a subclass of Block that represents a block with inputs" alt="" coords="249,202,487,227"/>
+<area shape="rect" id="node7" href="internals.html#bdsim.GraphicsBlock" target="_top" title="A GraphicsBlock is a subclass of SinkBlock that represents a block that has inputs" alt="" coords="545,54,763,80"/>
+</map>

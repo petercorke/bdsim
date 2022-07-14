@@ -1,98 +1,202 @@
-
 <!DOCTYPE html>
-
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta charset="utf-8" />
-    <title>bdsim.blocks.sources &#8212; bdsim 0.5 documentation</title>
-    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
-    <script src="../../../_static/jquery.js"></script>
-    <script src="../../../_static/underscore.js"></script>
-    <script src="../../../_static/doctools.js"></script>
-    <script src="../../../_static/language_data.js"></script>
-    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bdsim.blocks.sources &mdash; Block diagram simulation 0.7 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../search.html" />
-   
-  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
 
-  </head><body>
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> Block diagram simulation
+            <img src="../../../_static/BDSimLogo_NoBackgnd@2x.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Code documentation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../bdsim.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../bdsim.blocks.html">Block library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../internals.html">Supporting classes</a></li>
+</ul>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          
+        </div>
+      </div>
+    </nav>
 
-          <div class="body" role="main">
-            
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Block diagram simulation</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      <li>bdsim.blocks.sources</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
   <h1>Source code for bdsim.blocks.sources</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Define source blocks for use in block diagrams.  These are blocks that:</span>
+<span class="sd">Source blocks:</span>
 
 <span class="sd">- have outputs but no inputs</span>
 <span class="sd">- have no state variables</span>
-<span class="sd">- are a subclass of ``SourceBlock``</span>
+<span class="sd">- are a subclass of ``SourceBlock`` |rarr| ``Block``</span>
 
-<span class="sd">Each class MyClass in this module becomes a method MYCLASS() of the Simulation object.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">math</span>
-
-<span class="kn">from</span> <span class="nn">bdsim.components</span> <span class="kn">import</span> <span class="n">SourceBlock</span><span class="p">,</span> <span class="n">block</span>
-
+<span class="kn">from</span> <span class="nn">bdsim.components</span> <span class="kn">import</span> <span class="n">SourceBlock</span><span class="p">,</span> <span class="n">EventSource</span>
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
-<div class="viewcode-block" id="Constant"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sources.Constant">[docs]</a><span class="nd">@block</span>
-<span class="k">class</span> <span class="nc">Constant</span><span class="p">(</span><span class="n">SourceBlock</span><span class="p">):</span>
-    
-<div class="viewcode-block" id="Constant.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sources.Constant.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Constant"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sources.Constant">[docs]</a><span class="k">class</span> <span class="nc">Constant</span><span class="p">(</span><span class="n">SourceBlock</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :blockname:`CONSTANT`</span>
+<span class="sd">    </span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
+<span class="sd">    </span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    | inputs | outputs |  states |</span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    | 0      | 1       | 0       |</span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    |        | float,  |         | </span>
+<span class="sd">    |        | A(N,)   |         |</span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">nin</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
+
+<div class="viewcode-block" id="Constant.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sources.Constant.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Create a constant block.</span>
-<span class="sd">        </span>
-<span class="sd">        :param value: the constant, defaults to None</span>
-<span class="sd">        :type value: any</span>
-<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        Constant value.</span>
+
+<span class="sd">        :param value: the constant, defaults to 0</span>
+<span class="sd">        :type value: any, optional</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
+<span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: a CONSTANT block</span>
 <span class="sd">        :rtype: Constant instance</span>
-<span class="sd">        </span>
-<span class="sd">        This block has only one output port, but the value can be any </span>
-<span class="sd">        Python type, so long as the connected input port can handle it.</span>
-<span class="sd">        For example float, list or numpy ndarray.</span>
 
+<span class="sd">        This block has only one output port, but the value can be any </span>
+<span class="sd">        Python type, for example float, list or Numpy ndarray.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
         
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
             <span class="n">value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;constant&#39;</span></div>
 
-<div class="viewcode-block" id="Constant.output"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sources.Constant.output">[docs]</a>    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">]</span>               </div></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_param</span><span class="p">(</span><span class="s1">&#39;value&#39;</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">]</span>               </div>
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 
-<div class="viewcode-block" id="WaveForm"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sources.WaveForm">[docs]</a><span class="nd">@block</span>
-<span class="k">class</span> <span class="nc">WaveForm</span><span class="p">(</span><span class="n">SourceBlock</span><span class="p">):</span>
+<div class="viewcode-block" id="Time"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sources.Time">[docs]</a><span class="k">class</span> <span class="nc">Time</span><span class="p">(</span><span class="n">SourceBlock</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :blockname:`TIME`</span>
+<span class="sd">    </span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
+<span class="sd">    </span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    | inputs | outputs |  states |</span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    | 0      | 1       | 0       |</span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    |        | float   |         | </span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">nin</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
+
+<div class="viewcode-block" id="Time.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sources.Time.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Simulation time.</span>
+
+<span class="sd">        :param blockargs: |BlockOptions|</span>
+<span class="sd">        :type blockargs: dict</span>
+<span class="sd">        :return: a TIME block</span>
+<span class="sd">        :rtype: Time instance</span>
+<span class="sd">        </span>
+<span class="sd">        The block has only one output port which is the current simulation time.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">t</span><span class="p">]</span>  </div>
+<span class="c1"># ------------------------------------------------------------------------ #</span>
+
+<div class="viewcode-block" id="WaveForm"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sources.WaveForm">[docs]</a><span class="k">class</span> <span class="nc">WaveForm</span><span class="p">(</span><span class="n">SourceBlock</span><span class="p">,</span> <span class="n">EventSource</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :blockname:`WAVEFORM`</span>
+<span class="sd">    </span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
+<span class="sd">    </span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    | inputs | outputs |  states |</span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    | 0      | 1       | 0       |</span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    |        | float   |         | </span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">nin</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
+
 <div class="viewcode-block" id="WaveForm.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sources.WaveForm.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wave</span><span class="o">=</span><span class="s1">&#39;square&#39;</span><span class="p">,</span>
                  <span class="n">freq</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;Hz&#39;</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">amplitude</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
                  <span class="nb">min</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">duty</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
-                 <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+                 <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Create a waveform generator block.</span>
-<span class="sd">        </span>
-<span class="sd">        :param wave: type of waveform to generate: &#39;sine&#39;, &#39;square&#39; [default], &#39;triangle&#39;</span>
+<span class="sd">        Waveform as function of time.</span>
+
+<span class="sd">        :param wave: type of waveform to generate, one of: &#39;sine&#39;, &#39;square&#39; [default], &#39;triangle&#39;</span>
 <span class="sd">        :type wave: str, optional</span>
 <span class="sd">        :param freq: frequency, defaults to 1</span>
 <span class="sd">        :type freq: float, optional</span>
-<span class="sd">        :param unit: frequency unit, can be &#39;rad/s&#39;, defaults to &#39;Hz&#39;</span>
+<span class="sd">        :param unit: frequency unit, one of: &#39;rad/s&#39;, &#39;Hz&#39; [default]</span>
 <span class="sd">        :type unit: str, optional</span>
 <span class="sd">        :param amplitude: amplitude, defaults to 1</span>
 <span class="sd">        :type amplitude: float, optional</span>
@@ -100,16 +204,19 @@
 <span class="sd">        :type offset: float, optional</span>
 <span class="sd">        :param phase: Initial phase of signal in the range [0,1], defaults to 0</span>
 <span class="sd">        :type phase: float, optional</span>
-<span class="sd">        :param min: minimum value, defaults to 0</span>
+<span class="sd">        :param min: minimum value, defaults to None</span>
 <span class="sd">        :type min: float, optional</span>
-<span class="sd">        :param max: maximum value, defaults to 1</span>
+<span class="sd">        :param max: maximum value, defaults to None</span>
 <span class="sd">        :type max: float, optional</span>
 <span class="sd">        :param duty: duty cycle for square wave in range [0,1], defaults to 0.5</span>
 <span class="sd">        :type duty: float, optional</span>
-<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
+<span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: a WAVEFORM block</span>
 <span class="sd">        :rtype: WaveForm instance</span>
 <span class="sd">        </span>
+<span class="sd">        Create a waveform generator block.</span>
+
 <span class="sd">        Examples::</span>
 <span class="sd">            </span>
 <span class="sd">            WAVEFORM(wave=&#39;sine&#39;, freq=2)   # 2Hz sine wave varying from -1 to 1</span>
@@ -132,29 +239,61 @@
 <span class="sd">        At time 0 the sine and triangle wave are zero and increasing, and the</span>
 <span class="sd">        square wave has its first rise.  We can specify a phase shift with </span>
 <span class="sd">        a number in the range [0,1] where 1 corresponds to one cycle.</span>
-<span class="sd">        </span>
+
+<span class="sd">        .. note:: For discontinuous signals (square, triangle) the block declares</span>
+<span class="sd">            events for every discontinuity.</span>
+
+<span class="sd">        :seealso :meth:`declare_events`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
 
         <span class="k">assert</span> <span class="mi">0</span><span class="o">&lt;</span><span class="n">duty</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;duty must be in range [0,1]&#39;</span>
         
-        <span class="bp">self</span><span class="o">.</span><span class="n">wave</span> <span class="o">=</span> <span class="n">wave</span>
+        <span class="k">if</span> <span class="n">wave</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;square&#39;</span><span class="p">,</span> <span class="s1">&#39;triangle&#39;</span><span class="p">,</span> <span class="s1">&#39;sine&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">wave</span> <span class="o">=</span> <span class="n">wave</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;bad waveform&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">unit</span> <span class="o">==</span> <span class="s1">&#39;Hz&#39;</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">freq</span> <span class="o">=</span> <span class="n">freq</span>
         <span class="k">elif</span> <span class="n">unit</span> <span class="o">==</span> <span class="s1">&#39;rad/s&#39;</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">freq</span> <span class="o">=</span> <span class="n">freq</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">phase</span> <span class="o">=</span> <span class="n">phase</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;bad unit&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">phase</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">phase</span> <span class="o">=</span> <span class="n">phase</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;phase out of range&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">min</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">amplitude</span> <span class="o">=</span> <span class="p">(</span><span class="nb">max</span> <span class="o">-</span> <span class="nb">min</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
             <span class="n">offset</span> <span class="o">=</span> <span class="p">(</span><span class="nb">max</span> <span class="o">+</span> <span class="nb">min</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span> 
             <span class="bp">self</span><span class="o">.</span><span class="n">min</span> <span class="o">=</span> <span class="nb">min</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mablock</span> <span class="o">=</span> <span class="nb">max</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">duty</span> <span class="o">=</span> <span class="n">duty</span>
+        <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">duty</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">duty</span> <span class="o">=</span> <span class="n">duty</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;duty out of range&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">amplitude</span> <span class="o">=</span> <span class="n">amplitude</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">offset</span> <span class="o">=</span> <span class="n">offset</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;waveform&#39;</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">offset</span> <span class="o">=</span> <span class="n">offset</span></div>
 
-<div class="viewcode-block" id="WaveForm.output"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sources.WaveForm.output">[docs]</a>    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">wave</span> <span class="o">==</span> <span class="s1">&#39;square&#39;</span><span class="p">:</span>
+            <span class="n">t1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">freq</span>
+            <span class="n">t2</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">duty</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">freq</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">wave</span> <span class="o">==</span> <span class="s1">&#39;triangle&#39;</span><span class="p">:</span>
+            <span class="n">t1</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.25</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">freq</span>
+            <span class="n">t2</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.75</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">freq</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c1"># t1 &lt; t2</span>
+        <span class="n">T</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">freq</span>
+        <span class="k">while</span> <span class="n">t1</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">simstate</span><span class="o">.</span><span class="n">T</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">simstate</span><span class="o">.</span><span class="n">declare_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">simstate</span><span class="o">.</span><span class="n">declare_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t2</span><span class="p">)</span>
+            <span class="n">t1</span> <span class="o">+=</span> <span class="n">T</span>
+            <span class="n">t2</span> <span class="o">+=</span> <span class="n">T</span>
+
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="n">T</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">freq</span>
         <span class="n">phase</span> <span class="o">=</span> <span class="p">(</span><span class="n">t</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">freq</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span> <span class="p">)</span> <span class="o">%</span> <span class="mf">1.0</span>
         
@@ -179,156 +318,241 @@
         <span class="n">out</span> <span class="o">=</span> <span class="n">out</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">amplitude</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span>
 
         <span class="c1">#print(&#39;waveform = &#39;, out)</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">out</span><span class="p">]</span></div></div>
+        <span class="k">return</span> <span class="p">[</span><span class="n">out</span><span class="p">]</span></div>
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 
-<div class="viewcode-block" id="Piecewise"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sources.Piecewise">[docs]</a><span class="nd">@block</span>
-<span class="k">class</span> <span class="nc">Piecewise</span><span class="p">(</span><span class="n">SourceBlock</span><span class="p">):</span>
-<div class="viewcode-block" id="Piecewise.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sources.Piecewise.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">seq</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Piecewise"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sources.Piecewise">[docs]</a><span class="k">class</span> <span class="nc">Piecewise</span><span class="p">(</span><span class="n">SourceBlock</span><span class="p">,</span> <span class="n">EventSource</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :blockname:`PIECEWISE`</span>
+<span class="sd">    </span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
+<span class="sd">    </span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    | inputs | outputs |  states |</span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    | 0      | 1       | 0       |</span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    |        | float   |         | </span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">nin</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
+
+<div class="viewcode-block" id="Piecewise.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sources.Piecewise.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">seq</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Create a piecewise constant signal block.</span>
-<span class="sd">        </span>
-<span class="sd">        :param ``*seq``: Sequence of time, value pairs</span>
-<span class="sd">        :type ``*seq``: list of 2-tuples</span>
-<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        Piecewise constant signal.</span>
+
+<span class="sd">        :param seq: sequence of time, value pairs</span>
+<span class="sd">        :type seq: list of 2-tuples</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
+<span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: a PIECEWISE block</span>
 <span class="sd">        :rtype: Piecewise instance</span>
 <span class="sd">        </span>
 <span class="sd">        Outputs a piecewise constant function of time.  This is described as</span>
-<span class="sd">        a series of 2-tupes (time, value).  The output value is taken from the</span>
+<span class="sd">        a series of 2-tuples (time, value).  The output value is taken from the</span>
 <span class="sd">        active tuple, that is, the latest one in the list whose time is no greater</span>
 <span class="sd">        than simulation time.</span>
 <span class="sd">        </span>
-<span class="sd">        Note that there is no default initial value, the list should contain</span>
-<span class="sd">        a tuple with time zero otherwise the output will be undefined.</span>
+<span class="sd">        .. note::</span>
+<span class="sd">            - The tuples must be order by monotonically increasing time.</span>
+<span class="sd">            - There is no default initial value, the list should contain</span>
+<span class="sd">              a tuple with time zero otherwise the output will be undefined.</span>
 
+<span class="sd">        .. note:: The block declares an event for the start of each segment.</span>
+
+<span class="sd">        :seealso: :meth:`declare_events`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
         
-        <span class="bp">self</span><span class="o">.</span><span class="n">t</span> <span class="o">=</span> <span class="p">[</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">seq</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="p">[</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">seq</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s2">&quot;piecewise&quot;</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">t</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">seq</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">seq</span><span class="p">]</span></div>
 
-<div class="viewcode-block" id="Piecewise.output"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sources.Piecewise.output">[docs]</a>    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">t</span><span class="p">:</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">declare_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
         <span class="n">i</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">t</span> <span class="o">&gt;=</span> <span class="n">_t</span> <span class="k">else</span> <span class="mi">0</span>  <span class="k">for</span> <span class="n">_t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">t</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span>
         <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
         <span class="c1">#print(out)</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">out</span><span class="p">]</span></div></div>
+        <span class="k">return</span> <span class="p">[</span><span class="n">out</span><span class="p">]</span></div>
     
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 
-<div class="viewcode-block" id="Step"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sources.Step">[docs]</a><span class="nd">@block</span>
-<span class="k">class</span> <span class="nc">Step</span><span class="p">(</span><span class="n">SourceBlock</span><span class="p">):</span>
+<div class="viewcode-block" id="Step"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sources.Step">[docs]</a><span class="k">class</span> <span class="nc">Step</span><span class="p">(</span><span class="n">SourceBlock</span><span class="p">,</span> <span class="n">EventSource</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :blockname:`STEP`</span>
+<span class="sd">    </span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
+<span class="sd">    </span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    | inputs | outputs |  states |</span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    | 0      | 1       | 0       |</span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    |        | float   |         | </span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">nin</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
+
 <div class="viewcode-block" id="Step.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sources.Step.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                  <span class="n">off</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-                 <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+                 <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Create a step signal block.</span>
-<span class="sd">        </span>
+<span class="sd">        Step signal.</span>
+
 <span class="sd">        :param T: time of step, defaults to 1</span>
 <span class="sd">        :type T: float, optional</span>
 <span class="sd">        :param off: initial value, defaults to 0</span>
 <span class="sd">        :type off: float, optional</span>
 <span class="sd">        :param on: final value, defaults to 1</span>
 <span class="sd">        :type on: float, optional</span>
-<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
+<span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: a STEP block</span>
 <span class="sd">        :rtype: Step</span>
 <span class="sd">        </span>
 <span class="sd">        Output a step signal that transitions from the value ``off`` to ``on``</span>
 <span class="sd">        when time equals ``T``.</span>
 
+<span class="sd">        .. note:: The block declares an event for the step time.</span>
+
+<span class="sd">        :seealso: :meth:`declare_events`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
         
         <span class="bp">self</span><span class="o">.</span><span class="n">T</span> <span class="o">=</span> <span class="n">T</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">off</span> <span class="o">=</span> <span class="n">off</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">on</span> <span class="o">=</span> <span class="n">on</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s2">&quot;step&quot;</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">on</span> <span class="o">=</span> <span class="n">on</span></div>
 
-<div class="viewcode-block" id="Step.output"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sources.Step.output">[docs]</a>    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">declare_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">t</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">:</span>
             <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">on</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">off</span>
 
         <span class="c1">#print(out)</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">out</span><span class="p">]</span></div></div>
+        <span class="k">return</span> <span class="p">[</span><span class="n">out</span><span class="p">]</span></div>
 
+<span class="c1"># ------------------------------------------------------------------------ #</span>
 
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<div class="viewcode-block" id="Ramp"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sources.Ramp">[docs]</a><span class="k">class</span> <span class="nc">Ramp</span><span class="p">(</span><span class="n">SourceBlock</span><span class="p">,</span> <span class="n">EventSource</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :blockname:`RAMP`</span>
+<span class="sd">    </span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
+<span class="sd">    </span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    | inputs | outputs |  states |</span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    | 0      | 1       | 0       |</span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    |        | float   |         | </span>
+<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="kn">import</span> <span class="nn">pathlib</span>
-    <span class="kn">import</span> <span class="nn">os.path</span>
+    <span class="n">nin</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
-    <span class="n">exec</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">absolute</span><span class="p">(),</span> <span class="s2">&quot;test_sources.py&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+<div class="viewcode-block" id="Ramp.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sources.Ramp.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                 <span class="n">off</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">slope</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> 
+                 <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Ramp signal.</span>
+
+<span class="sd">        :param T: time of ramp start, defaults to 1</span>
+<span class="sd">        :type T: float, optional</span>
+<span class="sd">        :param off: initial value, defaults to 0</span>
+<span class="sd">        :type off: float, optional</span>
+<span class="sd">        :param slope: gradient of slope, defaults to 1</span>
+<span class="sd">        :type slope: float, optional</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
+<span class="sd">        :type blockargs: dict</span>
+<span class="sd">        :return: a RAMP block</span>
+<span class="sd">        :rtype: Ramp</span>
+<span class="sd">        </span>
+<span class="sd">        Output a ramp signal that starts increasing from the value ``off``</span>
+<span class="sd">        when time equals ``T`` linearly with time, with a gradient of ``slope``.</span>
+
+<span class="sd">        .. note:: The block declares an event for the ramp start time.</span>
+
+<span class="sd">        :seealso: :method:`declare_event`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">T</span> <span class="o">=</span> <span class="n">T</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">off</span> <span class="o">=</span> <span class="n">off</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">slope</span> <span class="o">=</span> <span class="n">slope</span></div>
+
+    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">declare_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">t</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">off</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">slope</span> <span class="o">*</span> <span class="p">(</span><span class="n">t</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">off</span>
+
+        <span class="c1">#print(out)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">out</span><span class="p">]</span></div>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+    <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+
+    <span class="n">exec</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;tests&quot;</span> <span class="o">/</span> <span class="s2">&quot;test_sources.py&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
 </pre></div>
 
+           </div>
           </div>
-          
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Peter Corke.
+      <span class="lastupdated">Last updated on 14-Jul-2022.
+      </span></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../../index.html">bdsim</a></h1>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+    <!-- Theme Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-11Q6WJM565"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
 
+      gtag('config', 'G-11Q6WJM565', {
+          'anonymize_ip': false,
+      });
+    </script> 
 
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption"><span class="caption-text">Code documentation:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../bdsim.html">bdsim package</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../bdsim.blocks.html">bdsim.blocks package</a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../../index.html">Documentation overview</a><ul>
-  <li><a href="../../index.html">Module code</a><ul>
-  </ul></li>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2020, Peter Corke.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.4</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-    </div>
-
-    
-
-    
-  </body>
+</body>
 </html>

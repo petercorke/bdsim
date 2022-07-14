@@ -1,177 +1,295 @@
-
 <!DOCTYPE html>
-
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta charset="utf-8" />
-    <title>bdsim.blocks.transfers &#8212; bdsim 0.5 documentation</title>
-    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
-    <script src="../../../_static/jquery.js"></script>
-    <script src="../../../_static/underscore.js"></script>
-    <script src="../../../_static/doctools.js"></script>
-    <script src="../../../_static/language_data.js"></script>
-    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bdsim.blocks.transfers &mdash; Block diagram simulation 0.7 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../search.html" />
-   
-  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
 
-  </head><body>
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> Block diagram simulation
+            <img src="../../../_static/BDSimLogo_NoBackgnd@2x.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Code documentation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../bdsim.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../bdsim.blocks.html">Block library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../internals.html">Supporting classes</a></li>
+</ul>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          
+        </div>
+      </div>
+    </nav>
 
-          <div class="body" role="main">
-            
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Block diagram simulation</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      <li>bdsim.blocks.transfers</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
   <h1>Source code for bdsim.blocks.transfers</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Define transfer blocks for use in block diagrams.  These are blocks that:</span>
+<span class="sd">Transfer blocks:</span>
 
 <span class="sd">- have inputs and outputs</span>
 <span class="sd">- have state variables</span>
-<span class="sd">- are a subclass of ``TransferBlock``</span>
+<span class="sd">- are a subclass of ``TransferBlock`` |rarr| ``Block``</span>
 
-<span class="sd">Each class MyClass in this module becomes a method MYCLASS() of the Simulation object.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">scipy.signal</span>
 <span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">sin</span><span class="p">,</span> <span class="n">cos</span><span class="p">,</span> <span class="n">atan2</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">pi</span>
-
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">from</span> <span class="nn">spatialmath</span> <span class="kn">import</span> <span class="n">base</span>
 
-<span class="kn">from</span> <span class="nn">bdsim.components</span> <span class="kn">import</span> <span class="n">TransferBlock</span><span class="p">,</span> <span class="n">block</span>
+<span class="kn">from</span> <span class="nn">bdsim.components</span> <span class="kn">import</span> <span class="n">TransferBlock</span>
 
-<span class="c1"># ------------------------------------------------------------------------ #</span>
 
-<span class="c1"># @block</span>
-<span class="c1"># class SpatialIntegrator(TransferBlock):</span>
-<span class="c1">#     def __init__(self, **kwargs):</span>
-<span class="c1">#         super().__init__(**kwargs)</span>
-<span class="c1">#         self.type = &#39;spatialintegrator&#39;</span>
-        
-<span class="c1">#     def output(self, t=None):</span>
-<span class="c1">#         pass</span>
-    
-<span class="c1">#     def deriv(self):</span>
-<span class="c1">#         return xd</span>
+<div class="viewcode-block" id="Integrator"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.Integrator">[docs]</a><span class="k">class</span> <span class="nc">Integrator</span><span class="p">(</span><span class="n">TransferBlock</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :blockname:`INTEGRATOR`</span>
+<span class="sd">    </span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
+<span class="sd">    </span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | inputs     | outputs |  states |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | 1          | 1       | N       |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | float,     | float,  |         | </span>
+<span class="sd">       | A(N,)      | A(N,)   |         |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
-<span class="c1"># ------------------------------------------------------------------------ #</span>
+    <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
-<div class="viewcode-block" id="Integrator"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.Integrator">[docs]</a><span class="nd">@block</span>
-<span class="k">class</span> <span class="nc">Integrator</span><span class="p">(</span><span class="n">TransferBlock</span><span class="p">):</span>
-<div class="viewcode-block" id="Integrator.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.Integrator.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Integrator.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.Integrator.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Create an integrator block.</span>
-<span class="sd">        </span>
-<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
-<span class="sd">        :type ``*inputs``: Block or Plug</span>
+<span class="sd">        Integrator.</span>
+
 <span class="sd">        :param x0: Initial state, defaults to 0</span>
 <span class="sd">        :type x0: array_like, optional</span>
+<span class="sd">        :param gain: gain or scaling factor, defaults to 1</span>
+<span class="sd">        :type gain: float</span>
 <span class="sd">        :param min: Minimum value of state, defaults to None</span>
 <span class="sd">        :type min: float or array_like, optional</span>
 <span class="sd">        :param max: Maximum value of state, defaults to None</span>
 <span class="sd">        :type max: float or array_like, optional</span>
-<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
+<span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: an INTEGRATOR block</span>
 <span class="sd">        :rtype: Integrator instance</span>
-<span class="sd">        </span>
+
 <span class="sd">        Output is the time integral of the input.  The state can be a scalar or a</span>
-<span class="sd">        vector, this is given by the type of ``x0``.</span>
-<span class="sd">        </span>
+<span class="sd">        vector. The initial state, and type, is given by ``x0``.  The shape of</span>
+<span class="sd">        the input signal must match ``x0``.</span>
+
 <span class="sd">        The minimum and maximum values can be:</span>
-<span class="sd">            </span>
+
 <span class="sd">            - a scalar, in which case the same value applies to every element of </span>
 <span class="sd">              the state vector, or</span>
 <span class="sd">            - a vector, of the same shape as ``x0`` that applies elementwise to</span>
 <span class="sd">              the state.</span>
 
+<span class="sd">        .. note:: The minimum and maximum prevent integration outside the limits,</span>
+<span class="sd">            but assume that the initial state is within the limits.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
-            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">x0</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;state must be a vector&#39;</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span> <span class="o">=</span> <span class="n">x0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="k">if</span> <span class="nb">min</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="nb">min</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="nb">min</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span><span class="p">,</span> <span class="s1">&#39;minimum bound length must match x0&#39;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+            <span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="n">x0</span><span class="p">]</span>
                 
-            <span class="k">if</span> <span class="nb">max</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="nb">max</span> <span class="o">=</span> <span class="p">[</span><span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="nb">max</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span><span class="p">,</span> <span class="s1">&#39;mmaximum bound length must match x0&#39;</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span> <span class="o">=</span> <span class="mi">1</span>
-            <span class="k">if</span> <span class="nb">min</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="nb">min</span> <span class="o">=</span> <span class="o">-</span><span class="n">math</span><span class="o">.</span><span class="n">inf</span>
-            <span class="k">if</span> <span class="nb">max</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="nb">max</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="n">x0</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">min</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="nb">min</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="nb">max</span><span class="p">]</span></div>
-        
-<div class="viewcode-block" id="Integrator.output"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.Integrator.output">[docs]</a>    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">)</span></div>
-    
-<div class="viewcode-block" id="Integrator.deriv"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.Integrator.deriv">[docs]</a>    <span class="k">def</span> <span class="nf">deriv</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">xd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span><span class="p">):</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">min</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
-                <span class="n">xd</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">return</span> <span class="n">xd</span></div></div>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">x0</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;state must be a 1D vector&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+                <span class="n">x0</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">getvector</span><span class="p">(</span><span class="n">x0</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span> <span class="o">=</span> <span class="n">x0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">min</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">min</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">getvector</span><span class="p">(</span><span class="nb">min</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">max</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">getvector</span><span class="p">(</span><span class="nb">max</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_x0</span> <span class="o">=</span> <span class="n">x0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min</span> <span class="o">=</span> <span class="nb">min</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max</span> <span class="o">=</span> <span class="nb">max</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">=</span> <span class="n">gain</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_x0</span> <span class="o">=</span> <span class="n">x0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min</span> <span class="o">=</span> <span class="nb">min</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max</span> <span class="o">=</span> <span class="nb">max</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;nstates&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">deriv</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">xd</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">getvector</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">min</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">xd</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_x</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">min</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">xd</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_x</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">*</span> <span class="n">xd</span></div>
+
+<div class="viewcode-block" id="PoseIntegrator"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.PoseIntegrator">[docs]</a><span class="k">class</span> <span class="nc">PoseIntegrator</span><span class="p">(</span><span class="n">TransferBlock</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :blockname:`POSEINTEGRATOR`</span>
+<span class="sd">    </span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
+<span class="sd">    </span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | inputs     | outputs |  states |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | 1          | 1       | N       |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | A(N,)      | A(N,)   |         |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
+
+<div class="viewcode-block" id="PoseIntegrator.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.PoseIntegrator.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+        <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Pose integrator</span>
+
+<span class="sd">        :param x0: Initial pose, defaults to null</span>
+<span class="sd">        :type x0: SE3, Twist3, optional</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
+<span class="sd">        :type blockargs: dict</span>
+<span class="sd">        :return: an POSEINTEGRATOR block</span>
+<span class="sd">        :rtype: PoseIntegrator instance</span>
+
+<span class="sd">        This block integrates spatial velocity over time.</span>
+<span class="sd">        The block input is a spatial velocity as a 6-vector</span>
+<span class="sd">        :math:`(v_x, v_y, v_z, \omega_x, \omega_y, \omega_z)` and the output</span>
+<span class="sd">        is pose as an ``SE3`` instance.</span>
+
+<span class="sd">        .. note:: State is a velocity twist.</span>
+
+<span class="sd">        .. warning:: NOT WORKING YET</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">x0</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">6</span><span class="p">,))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x0</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_x0</span> <span class="o">=</span> <span class="n">x0</span></div>
+
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">Twist3</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">)</span><span class="o">.</span><span class="n">SE3</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span>
+
+    <span class="k">def</span> <span class="nf">deriv</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 
-<div class="viewcode-block" id="LTI_SS"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.LTI_SS">[docs]</a><span class="nd">@block</span>
-<span class="k">class</span> <span class="nc">LTI_SS</span><span class="p">(</span><span class="n">TransferBlock</span><span class="p">):</span>
-<div class="viewcode-block" id="LTI_SS.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.LTI_SS.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">A</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">B</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">C</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="LTI_SS"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.LTI_SS">[docs]</a><span class="k">class</span> <span class="nc">LTI_SS</span><span class="p">(</span><span class="n">TransferBlock</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :blockname:`LTI_SS`</span>
+<span class="sd">    </span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
+<span class="sd">    </span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | inputs     | outputs |  states |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | 1          | 1       | nc      |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | float,     | float,  |         | </span>
+<span class="sd">       | A(nb,)     | A(nc,)  |         |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
+
+<div class="viewcode-block" id="LTI_SS.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.LTI_SS.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">A</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">B</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">C</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
         <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Create a state-space LTI block.</span>
-<span class="sd">        </span>
-<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
-<span class="sd">        :type ``*inputs``: Block or Plug</span>
+<span class="sd">        State-space LTI dynamics.</span>
+
 <span class="sd">        :param N: numerator coefficients, defaults to 1</span>
 <span class="sd">        :type N: array_like, optional</span>
-<span class="sd">        :param D: denominator coefficients, defaults to [1, 1]</span>
+<span class="sd">        :param D: denominator coefficients, defaults to [1,1]</span>
 <span class="sd">        :type D: array_like, optional</span>
-<span class="sd">        :param x0: initial states, defaults to zero</span>
+<span class="sd">        :param x0: initial states, defaults to None</span>
 <span class="sd">        :type x0: array_like, optional</span>
-<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
+<span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: A SCOPE block</span>
 <span class="sd">        :rtype: LTI_SISO instance</span>
-<span class="sd">        </span>
-<span class="sd">        Describes the dynamics of a single-input single-output (SISO) linear</span>
+
+<span class="sd">        Implements the dynamics of a single-input single-output (SISO) linear</span>
 <span class="sd">        time invariant (LTI) system described by numerator and denominator</span>
 <span class="sd">        polynomial coefficients.</span>
 
 <span class="sd">        Coefficients are given in the order from highest order to zeroth </span>
 <span class="sd">        order, ie. :math:`2s^2 - 4s +3` is ``[2, -4, 3]``.</span>
-<span class="sd">        </span>
+
 <span class="sd">        Only proper transfer functions, where order of numerator is less</span>
 <span class="sd">        than denominator are allowed.</span>
-<span class="sd">        </span>
+
 <span class="sd">        The order of the states in ``x0`` is consistent with controller canonical</span>
 <span class="sd">        form.</span>
-<span class="sd">        </span>
+
 <span class="sd">        Examples::</span>
-<span class="sd">            </span>
+
 <span class="sd">            LTI_SISO(N=[1,2], D=[2, 3, -4])</span>
-<span class="sd">            </span>
+
 <span class="sd">        is the transfer function :math:`\frac{s+2}{2s^2+3s-4}`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1">#print(&#39;in SS constructor&#39;)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;LTI SS&#39;</span>
-
         <span class="k">assert</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;A must be square&#39;</span>
         <span class="n">n</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -180,70 +298,88 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">nin</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">assert</span> <span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">n</span><span class="p">,</span> <span class="s1">&#39;B must have same number of rows as A&#39;</span>
-        
+
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">C</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
             <span class="k">assert</span> <span class="n">C</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">n</span><span class="p">,</span> <span class="s1">&#39;C must have same number of columns as A&#39;</span>
-            <span class="n">C</span> <span class="o">=</span> <span class="n">C</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span><span class="n">n</span><span class="p">))</span>
+            <span class="n">C</span> <span class="o">=</span> <span class="n">C</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">nout</span> <span class="o">=</span> <span class="n">C</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="k">assert</span> <span class="n">C</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">n</span><span class="p">,</span> <span class="s1">&#39;C must have same number of columns as A&#39;</span>
-            
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="n">nin</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="n">nout</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">A</span> <span class="o">=</span> <span class="n">A</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">B</span> <span class="o">=</span> <span class="n">B</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">C</span> <span class="o">=</span> <span class="n">C</span>
-        
+
         <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        
+
         <span class="k">if</span> <span class="n">x0</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">nstates</span><span class="p">,))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_x0</span> <span class="o">=</span> <span class="n">x0</span></div>
-        
-<div class="viewcode-block" id="LTI_SS.output"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.LTI_SS.output">[docs]</a>    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">C</span><span class="nd">@self</span><span class="o">.</span><span class="n">_x</span><span class="p">)</span></div>
-    
-<div class="viewcode-block" id="LTI_SS.deriv"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.LTI_SS.deriv">[docs]</a>    <span class="k">def</span> <span class="nf">deriv</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="nd">@self</span><span class="o">.</span><span class="n">_x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">B</span><span class="nd">@np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">)</span></div></div>
+
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">C</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">deriv</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">B</span> <span class="o">@</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">)</span></div>
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 
-<div class="viewcode-block" id="LTI_SISO"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.LTI_SISO">[docs]</a><span class="nd">@block</span>
-<span class="k">class</span> <span class="nc">LTI_SISO</span><span class="p">(</span><span class="n">LTI_SS</span><span class="p">):</span>
-<div class="viewcode-block" id="LTI_SISO.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.LTI_SISO.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">D</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+<div class="viewcode-block" id="LTI_SISO"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.LTI_SISO">[docs]</a><span class="k">class</span> <span class="nc">LTI_SISO</span><span class="p">(</span><span class="n">LTI_SS</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :blockname:`LTI_SISO`</span>
+<span class="sd">    </span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
+<span class="sd">    </span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | inputs     | outputs |  states |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | 1          | 1       | n       |</span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">       | float      | float   |         | </span>
+<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">     </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
+
+<div class="viewcode-block" id="LTI_SISO.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.LTI_SISO.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">D</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">x0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
         <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Create a SISO LTI block.</span>
-<span class="sd">        </span>
+<span class="sd">        SISO LTI dynamics.</span>
+
 <span class="sd">        :param N: numerator coefficients, defaults to 1</span>
 <span class="sd">        :type N: array_like, optional</span>
-<span class="sd">        :param D: denominator coefficients, defaults to [1, 1]</span>
+<span class="sd">        :param D: denominator coefficients, defaults to [1,1]</span>
 <span class="sd">        :type D: array_like, optional</span>
-<span class="sd">        :param ``*inputs``: Optional incoming connections</span>
-<span class="sd">        :type ``*inputs``: Block or Plug</span>
-<span class="sd">        :param x0: initial states, defaults to zero</span>
+<span class="sd">        :param x0: initial states, defaults to None</span>
 <span class="sd">        :type x0: array_like, optional</span>
-<span class="sd">        :param ``**kwargs``: common Block options</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
+<span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: A SCOPE block</span>
 <span class="sd">        :rtype: LTI_SISO instance</span>
-<span class="sd">        </span>
-<span class="sd">        Describes the dynamics of a single-input single-output (SISO) linear</span>
+
+<span class="sd">        Implements the dynamics of a single-input single-output (SISO) linear</span>
 <span class="sd">        time invariant (LTI) system described by numerator and denominator</span>
 <span class="sd">        polynomial coefficients.</span>
 
 <span class="sd">        Coefficients are given in the order from highest order to zeroth </span>
 <span class="sd">        order, ie. :math:`2s^2 - 4s +3` is ``[2, -4, 3]``.</span>
-<span class="sd">        </span>
+
 <span class="sd">        Only proper transfer functions, where order of numerator is less</span>
 <span class="sd">        than denominator are allowed.</span>
-<span class="sd">        </span>
+
 <span class="sd">        The order of the states in ``x0`` is consistent with controller canonical</span>
 <span class="sd">        form.</span>
-<span class="sd">        </span>
+
 <span class="sd">        Examples::</span>
-<span class="sd">            </span>
+
 <span class="sd">            LTI_SISO(N=[1, 2], D=[2, 3, -4])</span>
-<span class="sd">            </span>
+
 <span class="sd">        is the transfer function :math:`\frac{s+2}{2s^2+3s-4}`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1">#print(&#39;in SISO constscutor&#39;)</span>
@@ -259,114 +395,104 @@
         <span class="k">if</span> <span class="n">x0</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,))</span>
         <span class="k">assert</span> <span class="n">nn</span> <span class="o">&lt;=</span> <span class="n">n</span><span class="p">,</span> <span class="s1">&#39;direct pass through is not supported&#39;</span>
-        
-        
+
         <span class="c1"># convert to numpy arrays</span>
-        <span class="n">N</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">D</span><span class="p">)</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">N</span><span class="p">),)),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">N</span><span class="p">)]</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">D</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">N</span><span class="p">),)),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">N</span><span class="p">)]</span>
         <span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">D</span><span class="p">)</span>
-        
+
         <span class="c1"># normalize the coefficients to obtain</span>
         <span class="c1">#</span>
         <span class="c1">#   b_0 s^n + b_1 s^(n-1) + ... + b_n</span>
         <span class="c1">#   ---------------------------------</span>
         <span class="c1">#   a_0 s^n + a_1 s^(n-1) + ....+ a_n</span>
-        
 
         <span class="c1"># normalize so leading coefficient of denominator is one</span>
-        <span class="n">D0</span> <span class="o">=</span> <span class="n">D</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">D</span> <span class="o">=</span> <span class="n">D</span> <span class="o">/</span> <span class="n">D0</span>
-        <span class="n">N</span> <span class="o">=</span> <span class="n">N</span> <span class="o">/</span> <span class="n">D0</span>
-        
-        <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">D</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># control canonic (companion matrix) form</span>
-        <span class="n">A</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,:]</span> <span class="o">=</span> <span class="o">-</span><span class="n">D</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
-        
-        <span class="n">B</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>
-        <span class="n">B</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
-        
-        <span class="n">C</span> <span class="o">=</span> <span class="p">(</span><span class="n">N</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="n">N</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">D</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span><span class="n">n</span><span class="p">))</span>
-        
-        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="c1"># D0 = D[0]</span>
+        <span class="c1"># D = D / D0</span>
+        <span class="c1"># N = N / D0</span>
+
+        <span class="c1"># A = np.eye(len(D) - 1, k=1)  # control canonic (companion matrix) form</span>
+        <span class="c1"># A[-1, :] = -D[1:]</span>
+
+        <span class="c1"># B = np.zeros((n, 1))</span>
+        <span class="c1"># B[-1] = 1</span>
+
+        <span class="c1"># C = (N[1:] - N[0] * D[1:]).reshape((1, n))</span>
+
+        <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">D</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">signal</span><span class="o">.</span><span class="n">tf2ss</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">D</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">num</span> <span class="o">=</span> <span class="n">N</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">den</span> <span class="o">=</span> <span class="n">D</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">D</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;D matrix is not zero&#39;</span><span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">A</span><span class="o">=</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="o">=</span><span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="o">=</span><span class="n">C</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="n">x0</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;A=&#39;</span><span class="p">,</span> <span class="n">A</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;B=&#39;</span><span class="p">,</span> <span class="n">B</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;C=&#39;</span><span class="p">,</span> <span class="n">C</span><span class="p">)</span>
+
+
+        <span class="k">def</span> <span class="nf">change_param</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">newvalue</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">param</span> <span class="o">==</span> <span class="s1">&#39;num&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">num</span> <span class="o">=</span> <span class="n">newvalue</span>
+            <span class="k">elif</span> <span class="n">param</span> <span class="o">==</span> <span class="s1">&#39;den&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">den</span> <span class="o">=</span> <span class="n">newvalue</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">B</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">C</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">signal</span><span class="o">.</span><span class="n">tf2ss</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">den</span><span class="p">)</span>
             
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">A</span><span class="o">=</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="o">=</span><span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="o">=</span><span class="n">C</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="n">x0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;LTI&#39;</span></div></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_param</span><span class="p">(</span><span class="s1">&#39;num&#39;</span><span class="p">,</span> <span class="n">change_param</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_param</span><span class="p">(</span><span class="s1">&#39;den&#39;</span><span class="p">,</span> <span class="n">change_param</span><span class="p">)</span></div></div>
 
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
 
-    <span class="kn">import</span> <span class="nn">pathlib</span>
-    <span class="kn">import</span> <span class="nn">os.path</span>
+    <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 
-    <span class="n">exec</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">absolute</span><span class="p">(),</span> <span class="s2">&quot;test_transfers.py&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+    <span class="n">exec</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;tests&quot;</span> <span class="o">/</span> <span class="s2">&quot;test_transfers.py&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+
 </pre></div>
 
+           </div>
           </div>
-          
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Peter Corke.
+      <span class="lastupdated">Last updated on 14-Jul-2022.
+      </span></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../../index.html">bdsim</a></h1>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+    <!-- Theme Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-11Q6WJM565"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
 
+      gtag('config', 'G-11Q6WJM565', {
+          'anonymize_ip': false,
+      });
+    </script> 
 
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption"><span class="caption-text">Code documentation:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../bdsim.html">bdsim package</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../bdsim.blocks.html">bdsim.blocks package</a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../../index.html">Documentation overview</a><ul>
-  <li><a href="../../index.html">Module code</a><ul>
-  </ul></li>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2020, Peter Corke.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.4</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-    </div>
-
-    
-
-    
-  </body>
+</body>
 </html>
