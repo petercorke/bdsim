@@ -585,7 +585,7 @@ class BDSim:
                 if state.dt is not None:
                     state.solver_args['max_step'] = state.dt
 
-                print(f"run interval: from {t0} to {t0+T}, args={state.solver_args}, {x0=}")
+                print(f"run interval: from {t0} to {t0+T}, args={state.solver_args}, x0={x0}")
                 integrator = scipy_integrator(ydot,
                     t0=t0, y0=x0, t_bound=T, **state.solver_args)
 
