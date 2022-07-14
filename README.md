@@ -1,13 +1,15 @@
 [![A Python Robotics Package](https://raw.githubusercontent.com/petercorke/robotics-toolbox-python/master/.github/svg/py_collection.min.svg)](https://github.com/petercorke/robotics-toolbox-python)
 [![QUT Centre for Robotics Open Source](https://github.com/qcr/qcr.github.io/raw/master/misc/badge.svg)](https://qcr.github.io)
 
-[![PyPI - Downloads](https://img.shields.io/pypi/dm/bdsim)](https://pypistats.org/packages/bdsim)
-[![PyPI pyversions](https://img.shields.io/pypi/pyversions/bdsim)](https://pypi.python.org/pypi/bdsim/)
-[![PyPI version fury.io](https://badge.fury.io/py/bdsim.svg)](https://pypi.python.org/pypi/bdsim/)
-[![PyPI status](https://img.shields.io/pypi/status/ansicolortags.svg)](https://pypi.python.org/pypi/bdsim/)
-[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/petercorke/bdsim/graphs/commit-activity)
-[![GitHub license](https://img.shields.io/github/license/Naereen/StrapDown.js.svg)](https://github.com/petercorke/bdsim/blob/master/LICENSE)
+[![PyPI version](https://badge.fury.io/py/bdsim.svg)](https://badge.fury.io/py/bdsim)
+![Python Version](https://img.shields.io/pypi/pyversions/bdsim.svg)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+[![Build Status](https://github.com/petercorke/bdsim/workflows/build/badge.svg?branch=master)](https://github.com/petercorke/bdsim/actions?query=workflow%3Abuild)
+[![Coverage](https://codecov.io/gh/petercorke/bdsim/branch/master/graph/badge.svg)](https://codecov.io/gh/petercorke/bdsim)
+[![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/petercorke/bdsim.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/petercorke/bdsim/context:python)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/bdsim)](https://pypistats.org/packages/bdsim)
+[![GitHub stars](https://img.shields.io/github/stars/petercorke/bdsim.svg?style=social&label=Star)](https://GitHub.com/petercorke/bdsim/stargazers/)
 
 <table style="border:0px">
 <tr style="border:0px">
