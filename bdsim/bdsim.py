@@ -997,7 +997,7 @@ class Options(OptionsBase):
                 except SyntaxError:
                     pass
                 try:
-                    defalts[key] = value
+                    defaults[key] = value
                 except KeyError:
                     print('envariable BDSIM, unknown option', key)
 
