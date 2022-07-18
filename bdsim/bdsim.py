@@ -23,7 +23,7 @@ from colored import fg, attr
 
 try:
     from progress.bar import FillingCirclesBar
-    _FillingCirclesBar = False
+    _FillingCirclesBar = True
 except:
     _FillingCirclesBar = False
 
@@ -41,6 +41,7 @@ class Progress:
 
     def __init__(self, enable=True):
         self.enable = enable
+        self.length = 20
         if not enable:
             return
 
@@ -55,7 +56,7 @@ class Progress:
             self.bar = FillingCirclesBar('bdsim', max=100,
                         suffix = '%(percent).1f%% - %(eta)ds')
         else:
-            self.printProgressBar(0, prefix='Progress:', suffix='complete', length=60)
+            self.printProgressBar(0, prefix='Progress:', suffix='complete', length=self.length)
 
 
     def end(self):
@@ -68,7 +69,7 @@ class Progress:
         if _FillingCirclesBar:
             self.bar.finish()
         else:
-            print('\r' + ' '* 90 + '\r')
+            print('\r' + ' '* (self.length+20) + '\r')
 
     def update(self, t):
         """
@@ -88,7 +89,7 @@ class Progress:
         if _FillingCirclesBar:
             self.bar.goto(round(t / self.T * 100))
         else:
-            self.printProgressBar(t / self.T, prefix='Progress:', suffix='complete', length=60)
+            self.printProgressBar(t / self.T, prefix='Progress:', suffix='complete', length=self.length)
 
 
 class TimeQ:
