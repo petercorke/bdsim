@@ -123,7 +123,11 @@ class GraphicsBlock(SinkBlock):
                     # for MacOS, use Qt5Agg if its installed
                     # otherwise use default (MacOSX)
                     if 'Qt5Agg' in matplotlib.rcsetup.all_backends:
-                        matplotlib.use('Qt5Agg')
+                        try:
+                            import PyQt5
+                            matplotlib.use('Qt5Agg')
+                        except:
+                            pass
             else:
                 try:
                     matplotlib.use(options.backend)
