@@ -946,7 +946,6 @@ class BlockDiagram:
                 continue  # skip graphics blocks
             try:
                 b.step(state=state)
-                state.count += 1
             except:
                 self._error_handler('step', b)
 

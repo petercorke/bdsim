@@ -194,6 +194,7 @@ class TimeQ:
                 return out
             i += 1
 
+
 # convert class name to BLOCK name
 # strip underscores and capitalize
 def blockname(name):
@@ -581,6 +582,7 @@ class BDSim:
 
                 def ydot(t, y):
                     state.t = t
+                    state.count += 1
                     return bd.evaluate_plan(y, t)
 
                 if state.dt is not None:

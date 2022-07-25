@@ -736,6 +736,7 @@ class Clock:
         self.x = []  # discrete state vector numpy.ndarray
         self.t = []
         self.tick = 0
+        self.timer = None
 
         if name is None:
             self.name = "clock." + str(len(clocklist))
