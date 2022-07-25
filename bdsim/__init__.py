@@ -5,6 +5,7 @@
 # from bdsim.bdrun import bdrun, bdload
 
 from .bdsim import *
+from .bdrealtime import *
 from .blockdiagram import *
 from .components import *
 from .graphics import GraphicsBlock
