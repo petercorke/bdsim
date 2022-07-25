@@ -47,7 +47,7 @@ class GraphicsBlock(SinkBlock):
                 self.writer.setup(fig=self.fig, outfile=self.movie)
                 print('movie block', self, ' --> ', self.movie)
             except FileNotFoundError:
-                print('cannot save movie, please install ffmpeg')
+                self.fatal('cannot save movie, please install ffmpeg')
 
     def step(self, state=None):
         super().step()
@@ -56,7 +56,10 @@ class GraphicsBlock(SinkBlock):
             self.fig.canvas.flush_events()
 
         if self.movie is not None:
-            self.writer.grab_frame()
+            try:
+                self.writer.grab_frame()
+            except AttributeError:
+                self.fatal('cannot save movie, please install ffmpeg')
 
     def done(self, state=None, block=False):
         if self.fig is not None:
