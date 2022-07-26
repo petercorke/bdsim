@@ -71,7 +71,7 @@ class TimeQRT(threading.Thread, TimeQ):
             # print('dequeue', t)
             stop = t0 + t
             ts = time.time()
-            sleep_time = stop - ts)
+            sleep_time = stop - ts
             if sleep_time > 0:
                 # print('sleeping for', sleep_time)
                 time.sleep(sleep_time)
