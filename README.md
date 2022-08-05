@@ -22,7 +22,7 @@ A Python block diagram simulation package</a>
 <li><a href="https://petercorke.github.io/bdsim">Documentation</a></li>
 <li><a href="https://github.com/petercorke/bdsim/wiki">Wiki (examples and details)</a></li>
 <li><a href="installation#">Installation</a></li>
-<li>Dependencies: numpy, scipy, matplotlibb, <a href="https://github.com/petercorke/ansitable">ansitable</a>, ffmpeg (if rendering animations as a movie)</li>
+<li>Dependencies: numpy, scipy, matplotlib, <a href="https://github.com/petercorke/ansitable">ansitable</a>, ffmpeg (if rendering animations as a movie)</li>
 </ul>
 </td>
 </tr>
