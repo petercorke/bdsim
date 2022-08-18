@@ -10,7 +10,6 @@ import warnings
 
 from bdsim.blockdiagram import BlockDiagram
 from bdsim.components import OptionsBase, Block, Clock, BDStruct, Plug, clocklist
-import copy
 import tempfile
 import subprocess
 import webbrowser
@@ -24,7 +23,7 @@ from colored import fg, attr
 try:
     from progress.bar import FillingCirclesBar
     _FillingCirclesBar = True
-except:
+except ImportError:
     _FillingCirclesBar = False
 
 class Progress:
