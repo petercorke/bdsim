@@ -80,7 +80,6 @@
 
 <span class="kn">from</span> <span class="nn">bdsim.blockdiagram</span> <span class="kn">import</span> <span class="n">BlockDiagram</span>
 <span class="kn">from</span> <span class="nn">bdsim.components</span> <span class="kn">import</span> <span class="n">OptionsBase</span><span class="p">,</span> <span class="n">Block</span><span class="p">,</span> <span class="n">Clock</span><span class="p">,</span> <span class="n">BDStruct</span><span class="p">,</span> <span class="n">Plug</span><span class="p">,</span> <span class="n">clocklist</span>
-<span class="kn">import</span> <span class="nn">copy</span>
 <span class="kn">import</span> <span class="nn">tempfile</span>
 <span class="kn">import</span> <span class="nn">subprocess</span>
 <span class="kn">import</span> <span class="nn">webbrowser</span>
@@ -94,7 +93,7 @@
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">progress.bar</span> <span class="kn">import</span> <span class="n">FillingCirclesBar</span>
     <span class="n">_FillingCirclesBar</span> <span class="o">=</span> <span class="kc">True</span>
-<span class="k">except</span><span class="p">:</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
     <span class="n">_FillingCirclesBar</span> <span class="o">=</span> <span class="kc">False</span>
 
 <span class="k">class</span> <span class="nc">Progress</span><span class="p">:</span>
@@ -1153,7 +1152,7 @@
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020, Peter Corke.
-      <span class="lastupdated">Last updated on 05-Aug-2022.
+      <span class="lastupdated">Last updated on 18-Aug-2022.
       </span></p>
   </div>
 
