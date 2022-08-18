@@ -1,6 +1,0 @@
-<map id="inheritance2835848f27" name="inheritance2835848f27">
-<area shape="rect" id="node1" href="bdsim.html#bdsim.components.Block" target="_top" title="Construct a new block object." alt="" coords="5,55,176,80"/>
-<area shape="rect" id="node2" href="bdsim.html#bdsim.components.FunctionBlock" target="_top" title="A FunctionBlock is a subclass of Block that represents a block that has inputs" alt="" coords="224,5,445,31"/>
-<area shape="rect" id="node3" href="bdsim.html#bdsim.components.SinkBlock" target="_top" title="A SinkBlock is a subclass of Block that represents a block that has inputs" alt="" coords="237,55,433,80"/>
-<area shape="rect" id="node4" href="bdsim.html#bdsim.components.SourceBlock" target="_top" title="A SourceBlock is a subclass of Block that represents a block that has outputs" alt="" coords="229,104,441,129"/>
-</map>

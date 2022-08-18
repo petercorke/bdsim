@@ -1,8 +1,0 @@
-<map id="inheritance978cde46aa" name="inheritance978cde46aa">
-<area shape="rect" id="node2" title="A FunctionBlock is a subclass of Block that represents a block that has inputs" alt="" coords="231,5,449,31"/>
-<area shape="rect" id="node3" title="A SinkBlock is a subclass of Block that represents a block that has inputs" alt="" coords="243,55,437,80"/>
-<area shape="rect" id="node4" title="A SourceBlock is a subclass of Block that represents a block that has outputs" alt="" coords="235,104,445,129"/>
-<area shape="rect" id="node5" title="A Function is a subclass of Block that represents a block that has inputs" alt="" coords="223,153,457,179"/>
-<area shape="rect" id="node6" title="A TransferBlock is a subclass of Block that represents a block with inputs" alt="" coords="231,203,449,228"/>
-<area shape="rect" id="node7" title="A GraphicsBlock is a subclass of SinkBlock that represents a block that has inputs" alt="" coords="505,55,704,80"/>
-</map>
