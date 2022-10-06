@@ -11,7 +11,7 @@ import os.path
 from pathlib import Path
 
 from bdsim.bdedit.block import blockname, blocklist, Block
-from examples import docstring_parser as parser
+from bdsim.bdedit.docstring_parser import docstring_parser as parser
 
 def import_blocks(scene, window):
 
