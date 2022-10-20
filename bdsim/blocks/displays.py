@@ -271,8 +271,6 @@ class Scope(GraphicsBlock):
             self.ydata[i] = np.append(self.ydata[i], y)
 
         # plot the data
-        plt.figure(self.fig.number)  # make figure current
-
         for i in range(0, self.nplots):
             self.line[i].set_data(self.tdata, self.ydata[i])
     
