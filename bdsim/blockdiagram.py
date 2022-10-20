@@ -758,10 +758,12 @@ class BlockDiagram:
             )
 
         first = True
+        legend = None
         for b in sorted(self.blocklist, key=lambda x: x.name):
             name = str(b)
             if isinstance(b, EventSource):
                 name += '@'
+                legend = 'Note: @ = event source'
             # add a divider before each subsequent row
             if not first:
                     table.rule()
@@ -783,6 +785,8 @@ class BlockDiagram:
                 # source block, just list the name
                 table.row(name, "", "", "")
         table.print()
+        if legend:
+            print(legend + '\n')
 
     def report(self):
         """
