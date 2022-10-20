@@ -121,9 +121,18 @@
 
 <div class="viewcode-block" id="GraphicsBlock.step"><a class="viewcode-back" href="../../internals.html#bdsim.GraphicsBlock.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
-            
+        
+        <span class="c1"># bring the figure up to date in a backend-specific way</span>
         <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">animation</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">flush_events</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">backend</span> <span class="o">==</span> <span class="s1">&#39;TkAgg&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">flush_events</span><span class="p">()</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">state</span><span class="o">.</span><span class="n">backend</span> <span class="o">==</span> <span class="s1">&#39;Qt5Agg&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">flush_events</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">movie</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
@@ -208,6 +217,7 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">fatal</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;can&#39;t select backend: </span><span class="si">{</span><span class="n">options</span><span class="o">.</span><span class="n">backend</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
             <span class="n">mpl_backend</span> <span class="o">=</span> <span class="n">matplotlib</span><span class="o">.</span><span class="n">get_backend</span><span class="p">()</span>
+            <span class="n">gstate</span><span class="o">.</span><span class="n">backend</span> <span class="o">=</span> <span class="n">mpl_backend</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">(</span><span class="s1">&#39;graphics&#39;</span><span class="p">,</span> <span class="s1">&#39;  backend=</span><span class="si">{:s}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">mpl_backend</span><span class="p">)</span>
 
@@ -218,16 +228,16 @@
             <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">shape</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">mpl_backend</span> <span class="o">==</span> <span class="s1">&#39;Qt5Agg&#39;</span><span class="p">:</span>
                     <span class="c1"># next line actually creates a figure if none already exist</span>
-                    <span class="n">screen</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">get_current_fig_manager</span><span class="p">()</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">screen</span><span class="p">()</span>
+                    <span class="n">QScreen</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">get_current_fig_manager</span><span class="p">()</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">screen</span><span class="p">()</span>
                     <span class="c1"># this is a QScreenClass object, see https://doc.qt.io/qt-5/qscreen.html#availableGeometry-prop</span>
                     <span class="c1"># next line creates a figure</span>
-                    <span class="n">sz</span> <span class="o">=</span> <span class="n">screen</span><span class="o">.</span><span class="n">availableSize</span><span class="p">()</span>
-                    <span class="n">dpiscale</span> <span class="o">=</span> <span class="n">screen</span><span class="o">.</span><span class="n">devicePixelRatio</span><span class="p">()</span> <span class="c1"># is 2.0 for Mac laptop screen</span>
+                    <span class="n">sz</span> <span class="o">=</span> <span class="n">QScreen</span><span class="o">.</span><span class="n">availableSize</span><span class="p">()</span>
+                    <span class="n">dpiscale</span> <span class="o">=</span> <span class="n">QScreen</span><span class="o">.</span><span class="n">devicePixelRatio</span><span class="p">()</span> <span class="c1"># is 2.0 for Mac laptop screen</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">(</span><span class="s1">&#39;graphics&#39;</span><span class="p">,</span> <span class="s1">&#39;  </span><span class="si">{}</span><span class="s1"> x </span><span class="si">{}</span><span class="s1"> @ </span><span class="si">{}</span><span class="s1">dpi&#39;</span><span class="p">,</span> <span class="n">sz</span><span class="o">.</span><span class="n">width</span><span class="p">(),</span> <span class="n">sz</span><span class="o">.</span><span class="n">height</span><span class="p">(),</span> <span class="n">dpiscale</span><span class="p">)</span>
 
                     <span class="c1"># check for a second screen</span>
                     <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">altscreen</span><span class="p">:</span>
-                        <span class="n">vsize</span> <span class="o">=</span> <span class="n">screen</span><span class="o">.</span><span class="n">availableVirtualGeometry</span><span class="p">()</span><span class="o">.</span><span class="n">getCoords</span><span class="p">()</span>
+                        <span class="n">vsize</span> <span class="o">=</span> <span class="n">QScreen</span><span class="o">.</span><span class="n">availableVirtualGeometry</span><span class="p">()</span><span class="o">.</span><span class="n">getCoords</span><span class="p">()</span>
                         <span class="k">if</span> <span class="n">vsize</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
                             <span class="c1"># extra monitor to the left</span>
                             <span class="n">xoffset</span> <span class="o">=</span> <span class="n">vsize</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -237,7 +247,7 @@
                         <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">(</span><span class="s1">&#39;graphics&#39;</span><span class="p">,</span> <span class="s1">&#39;  altscreen offset </span><span class="si">{}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">xoffset</span><span class="p">)</span>
 
                     <span class="n">screen_width</span><span class="p">,</span> <span class="n">screen_height</span> <span class="o">=</span> <span class="n">sz</span><span class="o">.</span><span class="n">width</span><span class="p">(),</span> <span class="n">sz</span><span class="o">.</span><span class="n">height</span><span class="p">()</span>
-                    <span class="n">dpi</span> <span class="o">=</span> <span class="n">screen</span><span class="o">.</span><span class="n">physicalDotsPerInch</span><span class="p">()</span>
+                    <span class="n">dpi</span> <span class="o">=</span> <span class="n">QScreen</span><span class="o">.</span><span class="n">physicalDotsPerInch</span><span class="p">()</span>
                     <span class="n">f</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">gcf</span><span class="p">()</span>
 
                 <span class="k">elif</span> <span class="n">mpl_backend</span> <span class="o">==</span> <span class="s1">&#39;TkAgg&#39;</span><span class="p">:</span>
@@ -274,17 +284,20 @@
             <span class="n">gstate</span><span class="o">.</span><span class="n">xoffset</span> <span class="o">=</span> <span class="n">xoffset</span>
 
             <span class="c1"># resize the figure</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">set_dpi</span><span class="p">(</span><span class="n">gstate</span><span class="o">.</span><span class="n">dpi</span><span class="p">)</span>
             <span class="n">f</span><span class="o">.</span><span class="n">set_size_inches</span><span class="p">(</span><span class="n">figsize</span><span class="p">,</span> <span class="n">forward</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="n">plt</span><span class="o">.</span><span class="n">ion</span><span class="p">()</span>
 
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># subsequent figures</span>
-            <span class="n">f</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="n">gstate</span><span class="o">.</span><span class="n">figsize</span><span class="p">)</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="n">gstate</span><span class="o">.</span><span class="n">figsize</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="n">gstate</span><span class="o">.</span><span class="n">dpi</span><span class="p">)</span>
 
         <span class="c1"># move the figure to right place on screen</span>
         <span class="n">row</span> <span class="o">=</span> <span class="n">gstate</span><span class="o">.</span><span class="n">fignum</span> <span class="o">//</span> <span class="n">gstate</span><span class="o">.</span><span class="n">ntiles</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">col</span> <span class="o">=</span> <span class="n">gstate</span><span class="o">.</span><span class="n">fignum</span> <span class="o">%</span> <span class="n">gstate</span><span class="o">.</span><span class="n">ntiles</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">move_figure</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">col</span> <span class="o">*</span> <span class="n">gstate</span><span class="o">.</span><span class="n">figsize</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">gstate</span><span class="o">.</span><span class="n">dpi</span><span class="p">,</span> <span class="n">row</span> <span class="o">*</span> <span class="n">gstate</span><span class="o">.</span><span class="n">figsize</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">gstate</span><span class="o">.</span><span class="n">dpi</span><span class="p">)</span>
+        <span class="n">scale</span> <span class="o">=</span> <span class="mf">1.02</span>
+        <span class="n">move_figure</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">col</span> <span class="o">*</span> <span class="n">gstate</span><span class="o">.</span><span class="n">figsize</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">gstate</span><span class="o">.</span><span class="n">dpi</span> <span class="o">*</span> <span class="n">scale</span><span class="p">,</span>
+            <span class="n">row</span> <span class="o">*</span> <span class="n">gstate</span><span class="o">.</span><span class="n">figsize</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">gstate</span><span class="o">.</span><span class="n">dpi</span> <span class="o">*</span> <span class="n">scale</span><span class="p">)</span>
         <span class="n">gstate</span><span class="o">.</span><span class="n">fignum</span> <span class="o">+=</span> <span class="mi">1</span>
         
         <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">(</span><span class="s1">&#39;graphics&#39;</span><span class="p">,</span> <span class="s1">&#39;create figure </span><span class="si">{:d}</span><span class="s1"> at (</span><span class="si">{:d}</span><span class="s1">, </span><span class="si">{:d}</span><span class="s1">)&#39;</span><span class="p">,</span> <span class="n">gstate</span><span class="o">.</span><span class="n">fignum</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span>
@@ -302,7 +315,7 @@
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020, Peter Corke.
-      <span class="lastupdated">Last updated on 18-Aug-2022.
+      <span class="lastupdated">Last updated on 20-Oct-2022.
       </span></p>
   </div>
 

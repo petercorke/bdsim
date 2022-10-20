@@ -110,7 +110,7 @@
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">enable</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">enable</span> <span class="o">=</span> <span class="n">enable</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="mi">20</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="mi">60</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">enable</span><span class="p">:</span>
             <span class="k">return</span>
 
@@ -365,7 +365,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="n">Options</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="c1"># load modules from the blocks folder</span>
         <span class="k">if</span> <span class="n">BDSim</span><span class="o">.</span><span class="n">_blocklibrary</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">BDSim</span><span class="o">.</span><span class="n">_blocklibrary</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_blocks</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span></div>
+            <span class="n">BDSim</span><span class="o">.</span><span class="n">_blocklibrary</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_blocks</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">blocks</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">blocks</span><span class="p">()</span></div>
 
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -377,10 +379,10 @@
         <span class="n">s</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;BDSim: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_blocklibrary</span><span class="p">)</span><span class="si">}</span><span class="s2"> blocks in library</span><span class="se">\n</span><span class="s2">&quot;</span>
         <span class="k">return</span> <span class="n">s</span>
         
-    
     <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">s</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">_asdict</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;Block diagram simulation runtime, </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_blocklibrary</span><span class="p">)</span><span class="si">}</span><span class="s1"> blocks imported to library.</span><span class="se">\n</span><span class="s1">&#39;</span>
+        <span class="n">s</span> <span class="o">+=</span> <span class="s1">&#39;simulation options:</span><span class="se">\n</span><span class="s1">&#39;</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">s</span> <span class="o">+=</span> <span class="s1">&#39;  </span><span class="si">{:s}</span><span class="s1">: </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">s</span>
 
@@ -657,7 +659,7 @@
                 <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">dt</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">state</span><span class="o">.</span><span class="n">solver_args</span><span class="p">[</span><span class="s1">&#39;max_step&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">dt</span>
 
-                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;run interval: from </span><span class="si">{</span><span class="n">t0</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">t0</span><span class="o">+</span><span class="n">T</span><span class="si">}</span><span class="s2">, args=</span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">solver_args</span><span class="si">}</span><span class="s2">, x0=</span><span class="si">{</span><span class="n">x0</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="c1"># print(f&quot;run interval: from {t0} to {t0+T}, args={state.solver_args}, x0={x0}&quot;)</span>
                 <span class="n">integrator</span> <span class="o">=</span> <span class="n">scipy_integrator</span><span class="p">(</span><span class="n">ydot</span><span class="p">,</span>
                     <span class="n">t0</span><span class="o">=</span><span class="n">t0</span><span class="p">,</span> <span class="n">y0</span><span class="o">=</span><span class="n">x0</span><span class="p">,</span> <span class="n">t_bound</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="o">**</span><span class="n">state</span><span class="o">.</span><span class="n">solver_args</span><span class="p">)</span>
 
@@ -1052,6 +1054,7 @@
             <span class="s1">&#39;verbose&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
             <span class="s1">&#39;debug&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
             <span class="s1">&#39;simtime&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s1">&#39;blocks&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
             <span class="p">}</span>
 
         <span class="c1"># modify defaults according to envariable BDSIM which is comma/semicolon</span>
@@ -1084,6 +1087,9 @@
                 <span class="n">help</span><span class="o">=</span><span class="s1">&#39;window tiling as NxM&#39;</span><span class="p">)</span>
             <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--shape&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;WIDTHxHEIGHT&#39;</span><span class="p">,</span>
                 <span class="n">help</span><span class="o">=</span><span class="s1">&#39;window size as WxH, defaults to matplotlib default&#39;</span><span class="p">)</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--blocks&#39;</span><span class="p">,</span>
+                <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_const&#39;</span><span class="p">,</span> <span class="n">const</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;blocks&#39;</span><span class="p">,</span>
+                <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Display blocks at startup&#39;</span><span class="p">)</span>
 
             <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-g&#39;</span><span class="p">,</span> <span class="s1">&#39;--no-graphics&#39;</span><span class="p">,</span>
                 <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_const&#39;</span><span class="p">,</span> <span class="n">const</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;graphics&#39;</span><span class="p">,</span>
@@ -1152,7 +1158,7 @@
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020, Peter Corke.
-      <span class="lastupdated">Last updated on 18-Aug-2022.
+      <span class="lastupdated">Last updated on 20-Oct-2022.
       </span></p>
   </div>
 
