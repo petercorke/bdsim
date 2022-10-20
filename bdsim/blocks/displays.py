@@ -389,11 +389,11 @@ class ScopeXY(GraphicsBlock):
         self.xdata.append(x)
         self.ydata.append(y)
 
-        if self.bd.options.graphics:
+        if self.bd.runtime.options.graphics:
             plt.figure(self.fig.number)
             self.line.set_data(self.xdata, self.ydata)
         
-            if self.bd.options.animation:
+            if self.bd.runtime.options.animation:
                 self.fig.canvas.flush_events()
 
             if isinstance(self.scale, str) and self.scale == 'auto':
@@ -402,7 +402,7 @@ class ScopeXY(GraphicsBlock):
             super().step(state=state)
         
     def done(self, block=False, **blockargs):
-        if self.bd.options.graphics:
+        if self.bd.runtime.options.graphics:
             plt.show(block=block)
             super().done()
             
