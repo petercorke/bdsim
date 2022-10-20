@@ -158,16 +158,16 @@ class GraphicsBlock(SinkBlock):
             if options.shape is None:
                 if mpl_backend == 'Qt5Agg':
                     # next line actually creates a figure if none already exist
-                    screen = plt.get_current_fig_manager().canvas.screen()
+                    QScreen = plt.get_current_fig_manager().canvas.screen()
                     # this is a QScreenClass object, see https://doc.qt.io/qt-5/qscreen.html#availableGeometry-prop
                     # next line creates a figure
-                    sz = screen.availableSize()
-                    dpiscale = screen.devicePixelRatio() # is 2.0 for Mac laptop screen
+                    sz = QScreen.availableSize()
+                    dpiscale = QScreen.devicePixelRatio() # is 2.0 for Mac laptop screen
                     self.bd.runtime.DEBUG('graphics', '  {} x {} @ {}dpi', sz.width(), sz.height(), dpiscale)
 
                     # check for a second screen
                     if options.altscreen:
-                        vsize = screen.availableVirtualGeometry().getCoords()
+                        vsize = QScreen.availableVirtualGeometry().getCoords()
                         if vsize[0] < 0:
                             # extra monitor to the left
                             xoffset = vsize[0]
@@ -177,7 +177,7 @@ class GraphicsBlock(SinkBlock):
                         self.bd.runtime.DEBUG('graphics', '  altscreen offset {}', xoffset)
 
                     screen_width, screen_height = sz.width(), sz.height()
-                    dpi = screen.physicalDotsPerInch()
+                    dpi = QScreen.physicalDotsPerInch()
                     f = plt.gcf()
 
                 elif mpl_backend == 'TkAgg':
@@ -214,17 +214,20 @@ class GraphicsBlock(SinkBlock):
             gstate.xoffset = xoffset
 
             # resize the figure
+            f.set_dpi(gstate.dpi)
             f.set_size_inches(figsize, forward=True)
             plt.ion()
 
         else:
             # subsequent figures
-            f = plt.figure(figsize=gstate.figsize)
+            f = plt.figure(figsize=gstate.figsize, dpi=gstate.dpi)
 
         # move the figure to right place on screen
         row = gstate.fignum // gstate.ntiles[0]
         col = gstate.fignum % gstate.ntiles[0]
-        move_figure(f, col * gstate.figsize[0] * gstate.dpi, row * gstate.figsize[1] * gstate.dpi)
+        scale = 1.02
+        move_figure(f, col * gstate.figsize[0] * gstate.dpi * scale,
+            row * gstate.figsize[1] * gstate.dpi * scale)
         gstate.fignum += 1
         
         self.bd.runtime.DEBUG('graphics', 'create figure {:d} at ({:d}, {:d})', gstate.fignum, row, col)
