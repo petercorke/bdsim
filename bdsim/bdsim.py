@@ -309,10 +309,10 @@ class BDSim:
         s = f"BDSim: {len(self._blocklibrary)} blocks in library\n"
         return s
         
-    
     def __repr__(self):
-        s = str(self)
-        for k, v in self.options._asdict().items():
+        s = f'Block diagram simulation runtime, {len(self._blocklibrary)} blocks imported to library.\n'
+        s += 'simulation options:\n'
+        for k, v in self.state.options.items():
             s += '  {:s}: {}\n'.format(k, v)
         return s
 
