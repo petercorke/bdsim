@@ -279,7 +279,6 @@ class Scope(GraphicsBlock):
             self.ax.autoscale_view(scalex=False, scaley=True)
         super().step(state=state)
         
-
 # ------------------------------------------------------------------------ #
 
 class ScopeXY(GraphicsBlock):
@@ -370,7 +369,7 @@ class ScopeXY(GraphicsBlock):
         self.ax.set_xlabel(self.labels[0])
         self.ax.set_ylabel(self.labels[1])
         self.ax.set_title(self.name)
-        if self.scale != 'auto':
+        if not (isinstance(self.scale, str) and self.scale == 'auto'):
             self.ax.set_xlim(*self.scale[0:2])
             self.ax.set_ylim(*self.scale[2:4])
         self.ax.set_aspect(self.aspect)
