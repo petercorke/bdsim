@@ -96,6 +96,9 @@ class OptionsBase():
         self._priority = list(args)
         self._dict = {**defaults, **args}
 
+    def items(self):
+        return self._dict.items()
+        
     def __getattr__(self, name):
         try:
             if name.startswith('_'):
@@ -1887,3 +1890,9 @@ class EventSource:
 # print(c, c1)
 # print(c.next(0), c1.next(0))
 
+if __name__ == "__main__":
+    opt = OptionsBase(dict(foo=1, bar='hello'))
+    print(opt.foo)
+    print(opt.bar)
+    opt.set(foo=3)
+    print(opt.foo)
