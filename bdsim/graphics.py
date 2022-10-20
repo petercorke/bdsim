@@ -51,9 +51,18 @@ class GraphicsBlock(SinkBlock):
 
     def step(self, state=None):
         super().step()
-            
+        
+        # bring the figure up to date in a backend-specific way
         if state.options.animation:
-            self.fig.canvas.flush_events()
+            if state.backend == 'TkAgg':
+                self.fig.canvas.flush_events()
+                plt.show(block=False)
+                plt.show(block=False)
+            elif state.backend == 'Qt5Agg':
+                self.fig.canvas.flush_events()
+                self.fig.canvas.draw()
+            else:
+                self.fig.canvas.draw()
 
         if self.movie is not None:
             try:
@@ -138,6 +147,7 @@ class GraphicsBlock(SinkBlock):
                     self.fatal(f"can't select backend: {options.backend}")
 
             mpl_backend = matplotlib.get_backend()
+            gstate.backend = mpl_backend
 
             self.bd.runtime.DEBUG('graphics', '  backend={:s}', mpl_backend)
 
