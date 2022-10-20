@@ -296,6 +296,8 @@ class BDSim:
         # load modules from the blocks folder
         if BDSim._blocklibrary is None:
             BDSim._blocklibrary = self.load_blocks(self.options.verbose)
+        if self.options.blocks:
+            self.blocks()
 
     def __str__(self):
         """
@@ -982,6 +984,7 @@ class Options(OptionsBase):
             'verbose': False,
             'debug': '',
             'simtime': None,
+            'blocks': False,
             }
 
         # modify defaults according to envariable BDSIM which is comma/semicolon
@@ -1014,6 +1017,9 @@ class Options(OptionsBase):
                 help='window tiling as NxM')
             parser.add_argument('--shape', type=str, metavar='WIDTHxHEIGHT',
                 help='window size as WxH, defaults to matplotlib default')
+            parser.add_argument('--blocks',
+                action='store_const', const=True, default=False, dest='blocks',
+                help='Display blocks at startup')
 
             parser.add_argument('-g', '--no-graphics',
                 action='store_const', const=False, dest='graphics',
