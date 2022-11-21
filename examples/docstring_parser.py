@@ -48,7 +48,12 @@ def docstring_parser():
             block_info['package'] = package
 
             # get the docstring
-            ds = block.__init__.__doc__  # inspect.getdoc(block)
+            ds = block.__doc__
+            if ds is None:
+                ds = block.__init__.__doc__
+
+            if ds is None:
+                print('no docstring for ', block)
 
             # parse out all lines of the form:
             #
@@ -133,6 +138,9 @@ def docstring_parser():
             block_info['blockclass'] = blockclass
 
             blocks[name] = block_info
+
+            if name == 'Prod':
+                print(block_info)
 
     # for k, v in blocks['Bicycle']['inputs'].items():
     #     print(k, v)

@@ -14,6 +14,8 @@ import scipy.interpolate
 import math
 import inspect
 import spatialmath.base as smb
+from typing import Any, Union, Callable
+ArrayLike = Union[np.ndarray, int, float, list, tuple]
 
 from bdsim.components import FunctionBlock
 
@@ -25,23 +27,50 @@ from bdsim.components import FunctionBlock
 
         
 class Sum(FunctionBlock):
-    """
+    """Summing junction.
     :blockname:`SUM`
 
-    .. table::
-       :align: left
+    :inputs: N [float, ndarray(N), ndarray(N,M)]
+
+    :outputs: 1 [float, ndarray(N), ndarray(N,M)]
+
+    :states: 0
     
-    +------------+---------+---------+
-    | inputs     | outputs |  states |
-    +------------+---------+---------+
-    | len(signs) | 1       | 0       |
-    +------------+---------+---------+
-    | float,     | float,  |         | 
-    | A(N,),     | A(N,),  |         |
-    | A(N,M)     | A(N,M)  |         | 
-    +------------+---------+---------+
-    """
+    Parameters
+    ----------
+
+    signs
+        signs associated with input ports, accepted characters: + or -, defaults to '++'
+    mode
+        controls angle wrapping per element, accepted characters r or c or C or L, defaults to None
+    blockargs
+        common `Block options <https://petercorke.github.io/bdsim/bdsim.html?highlight=block.__init__#bdsim.components.Block.__init__`_
+
+    Add or subtract input signals according to the `signs` string.  The
+    number of input ports is the length of this string.
     
+    For example::
+        
+        sum = bd.SUM('+-+')
+
+    is a 3-input summing junction which computes port0 - port1 + port2.
+
+    If some elements are angles then ``mode`` controls, per element, how
+    they are wrapped.  The elements of the string can be
+
+    | character  | purpose                           |
+    | :--------- | :-------------------------------- |
+    | r          | real number, don't wrap (default) |
+    | c          | angle on circle, wrap to [-π, π)  |
+    | C          | angle on circle, wrap to [0, 2π)  |
+    | L          | latitude angle, wrap to [0, π]    |
+
+    For example if ``mode="rc"`` then a 2-element array would have its
+    second element wrapped to the range [-π, π).
+
+    :note: The signals must be compatible, all scalars, or all arrays 
+        of the same shape.
+    """    
     nin = -1
     nout = 1
 
@@ -53,54 +82,12 @@ class Sum(FunctionBlock):
             'l': smb.wrap_0_pi,
     }
 
-    def __init__(self, signs='++', mode=None, **blockargs):
-
-        """
-        Summing junction.
-
-        :param signs: signs associated with input ports, accepted characters: + or -, defaults to '++'
-        :type signs: str, optional
-        :param mode: controls angle wrapping per element, accepted characters r or c or C or L, defaults to None
-        :type mode: str, optional
-        :param blockargs: common `Block options <https://petercorke.github.io/bdsim/bdsim.html?highlight=block.__init__#bdsim.components.Block.__init__`_
-        :type blockargs: dict
-        :return: A SUM block
-        :rtype: Sum instance
-    
-        Add or subtract input signals according to the `signs` string.  The
-        number of input ports is the length of this string.
-        
-        For example::
-            
-            sum = bd.SUM('+-+')
-
-        is a 3-input summing junction which computes port0 - port1 + port2.
-
-        If some elements are angles then ``mode`` controls, per element, how
-        they are wrapped.  The elements of the string can be
-
-            +------------+----------------------------------+
-            | character  | purpose                          |
-            +------------+----------------------------------+
-            | r          | real number, don't wrap          |
-            | c          | angle on circle, wrap to [-π, π) |
-            | C          | angle on circle, wrap to [0, 2π) |
-            | L          | latitude angle, wrap to [0, π]   |
-            +------------+----------------------------------+
-
-        For example if ``mode="rc"`` then a 2-element array would have its
-        second element wrapped to the range [-π, π).
-
-        .. note:: The signals must be compatible, all scalars, or all arrays 
-            of the same shape.
-
-        """
+    def __init__(self, signs:str='++', mode:str='r', **blockargs):
         super().__init__(nin=len(signs), **blockargs)
         assert isinstance(signs, str), 'first argument must be signs string'
         assert all([x in '+-' for x in signs]), 'invalid sign'
         self.signs = signs
         self.mode = mode
-        
         
     def output(self, t=None):
         for i, input in enumerate(self.inputs):
@@ -141,58 +128,50 @@ class Sum(FunctionBlock):
 
 # ------------------------------------------------------------------------ #
 class Prod(FunctionBlock):
-    """
+    """Product junction.
+
     :blockname:`PROD`
     
-    .. table::
-       :align: left
+    :inputs: N [float, ndarray(N), ndarray(N,M)]
+
+    :outputs: 1 [float, ndarray(N), ndarray(N,M)]
+
+    :states: 0
+
+    :param ops: operations associated with input ports, accepted characters: * or /, defaults to '**'
+    :type ops: str, optional
+    :param inputs: Optional incoming connections
+    :type inputs: Block or Plug
+    :param matrix: Arguments are matrices, defaults to False
+    :type matrix: bool, optional
+    :param blockargs: |BlockOptions|
+    :type blockargs: dict
+    :return: A PROD block
+    :rtype: Prod instance
     
-    +------------+---------+---------+
-    | inputs     | outputs |  states |
-    +------------+---------+---------+
-    | len(ops)   | 1       | 0       |
-    +------------+---------+---------+
-    | float,     | float,  |         | 
-    | A(N,),     | A(N,),  |         |
-    | A(N,M)     | A(N,M)  |         | 
-    +------------+---------+---------+
+    Multiply or divide input signals according to the `ops` string.  The
+    number of input ports is the length of this string.
+    
+    For example::
+        
+        prod = PROD('*/*')
+        
+    is a 3-input product junction which computes port0 / port 1 * port2.
+
+    :note: The inputs can be scalars or NumPy arrays.  
+    
+    :note: By default the ``*`` and ``/`` operators are used which perform element-wise
+        operations.
+    
+    :note: The option ``matrix`` will instead use ``@`` and ``@ np.linalg.inv()``. The 
+        shapes of matrices must conform.  A matrix on a ``/`` input must be square and
+        non-singular.
     """
     
     nin = -1
     nout = 1
 
-    def __init__(self, ops='**', matrix=False, **blockargs):
-        """
-        Product junction.
-
-        :param ops: operations associated with input ports, accepted characters: * or /, defaults to '**'
-        :type ops: str, optional
-        :param inputs: Optional incoming connections
-        :type inputs: Block or Plug
-        :param matrix: Arguments are matrices, defaults to False
-        :type matrix: bool, optional
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        :return: A PROD block
-        :rtype: Prod instance
-        
-        Multiply or divide input signals according to the `ops` string.  The
-        number of input ports is the length of this string.
-        
-        For example::
-            
-            prod = PROD('*/*')
-            
-        is a 3-input product junction which computes port0 / port 1 * port2.
-
-        .. note::
-            - The inputs can be scalars or NumPy arrays.  
-            - By default the ``*`` and ``/`` operators are used.
-            - The option ``matrix`` will instead use ``@`` and ``@ np.linalg.inv()``.
-              - the shapes of matrices must conform.
-              - only square matrices are supported.
-    
-        """
+    def __init__(self, ops:str='**', matrix:bool=False, **blockargs):
         super().__init__(nin=len(ops), **blockargs)
         assert isinstance(ops, str), 'first argument must be signs string'
         assert all([x in '*/' for x in ops]), 'invalid op'
@@ -245,7 +224,7 @@ class Gain(FunctionBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, K=1, premul=False, **blockargs):
+    def __init__(self, K:Union[int,float,np.ndarray]=1, premul:bool=False, **blockargs):
         """
         Gain block.
 
@@ -314,7 +293,7 @@ class Clip(FunctionBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, min=-math.inf, max=math.inf, **blockargs):
+    def __init__(self, min:ArrayLike=-math.inf, max:ArrayLike=math.inf, **blockargs):
         """
         Signal clipping.
 
@@ -377,7 +356,7 @@ class Function(FunctionBlock):
     nin = -1
     nout = -1
 
-    def __init__(self, func=None, nin=1, nout=1, persistent=False, fargs=None, fkwargs=None, **blockargs):
+    def __init__(self, func:Callable=None, nin:int=1, nout:int=1, persistent:bool=False, fargs:list=None, fkwargs:dict=None, **blockargs):
     
         """
         Python function.
@@ -557,7 +536,7 @@ class Interpolate(FunctionBlock):
     nin = -1
     nout = 1
 
-    def __init__(self, x=None, y=None, xy=None, time=False, kind='linear', **blockargs):
+    def __init__(self, x:Union[list,tuple,np.ndarray]=None, y:Union[list,tuple,np.ndarray]=None, xy:np.ndarray=None, time:bool=False, kind:str='linear', **blockargs):
         """
         Interpolate signal.
 
