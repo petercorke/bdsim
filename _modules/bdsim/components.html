@@ -166,9 +166,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_priority</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">defaults</span><span class="p">,</span> <span class="o">**</span><span class="n">args</span><span class="p">}</span>
 
-    <span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-        
     <span class="k">def</span> <span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">):</span>
@@ -809,7 +806,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># discrete state vector numpy.ndarray</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">t</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">tick</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">timer</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;clock.&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">clocklist</span><span class="p">))</span>
@@ -1960,12 +1956,6 @@
 <span class="c1"># print(c, c1)</span>
 <span class="c1"># print(c.next(0), c1.next(0))</span>
 
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
-    <span class="n">opt</span> <span class="o">=</span> <span class="n">OptionsBase</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">foo</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">bar</span><span class="o">=</span><span class="s1">&#39;hello&#39;</span><span class="p">))</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">opt</span><span class="o">.</span><span class="n">foo</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">opt</span><span class="o">.</span><span class="n">bar</span><span class="p">)</span>
-    <span class="n">opt</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">foo</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">opt</span><span class="o">.</span><span class="n">foo</span><span class="p">)</span>
 </pre></div>
 
            </div>
