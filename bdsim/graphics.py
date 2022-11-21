@@ -210,6 +210,12 @@ class GraphicsBlock(SinkBlock):
         col = gstate.fignum % gstate.ntiles[0]
         move_figure(f, col * gstate.figsize[0] * gstate.dpi, row * gstate.figsize[1] * gstate.dpi)
         gstate.fignum += 1
+
+        def onkeypress(event):
+            print('pressed', event.key)
+            plt.close('all')
+
+        f.canvas.mpl_connect('key_press_event', onkeypress)
         
         self.bd.runtime.DEBUG('graphics', 'create figure {:d} at ({:d}, {:d})', gstate.fignum, row, col)
         return f
