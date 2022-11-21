@@ -197,6 +197,7 @@ class GraphicsBlock(SinkBlock):
             gstate.xoffset = xoffset
 
             # resize the figure
+            f.set_dpi(gstate.dpi*dpiscale)
             f.set_size_inches(figsize, forward=True)
             plt.ion()
 
