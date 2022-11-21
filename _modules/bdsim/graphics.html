@@ -56,9 +56,9 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
-          <li><a href="../index.html">Module code</a> &raquo;</li>
-      <li>bdsim.graphics</li>
+      <li><a href="../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bdsim.graphics</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -284,7 +284,7 @@
             <span class="n">gstate</span><span class="o">.</span><span class="n">xoffset</span> <span class="o">=</span> <span class="n">xoffset</span>
 
             <span class="c1"># resize the figure</span>
-            <span class="n">f</span><span class="o">.</span><span class="n">set_dpi</span><span class="p">(</span><span class="n">gstate</span><span class="o">.</span><span class="n">dpi</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">set_dpi</span><span class="p">(</span><span class="n">gstate</span><span class="o">.</span><span class="n">dpi</span><span class="o">*</span><span class="n">dpiscale</span><span class="p">)</span>
             <span class="n">f</span><span class="o">.</span><span class="n">set_size_inches</span><span class="p">(</span><span class="n">figsize</span><span class="p">,</span> <span class="n">forward</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="n">plt</span><span class="o">.</span><span class="n">ion</span><span class="p">()</span>
 
@@ -299,6 +299,12 @@
         <span class="n">move_figure</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">col</span> <span class="o">*</span> <span class="n">gstate</span><span class="o">.</span><span class="n">figsize</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">gstate</span><span class="o">.</span><span class="n">dpi</span> <span class="o">*</span> <span class="n">scale</span><span class="p">,</span>
             <span class="n">row</span> <span class="o">*</span> <span class="n">gstate</span><span class="o">.</span><span class="n">figsize</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">gstate</span><span class="o">.</span><span class="n">dpi</span> <span class="o">*</span> <span class="n">scale</span><span class="p">)</span>
         <span class="n">gstate</span><span class="o">.</span><span class="n">fignum</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">def</span> <span class="nf">onkeypress</span><span class="p">(</span><span class="n">event</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;pressed&#39;</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s1">&#39;all&#39;</span><span class="p">)</span>
+
+        <span class="n">f</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">mpl_connect</span><span class="p">(</span><span class="s1">&#39;key_press_event&#39;</span><span class="p">,</span> <span class="n">onkeypress</span><span class="p">)</span>
         
         <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">(</span><span class="s1">&#39;graphics&#39;</span><span class="p">,</span> <span class="s1">&#39;create figure </span><span class="si">{:d}</span><span class="s1"> at (</span><span class="si">{:d}</span><span class="s1">, </span><span class="si">{:d}</span><span class="s1">)&#39;</span><span class="p">,</span> <span class="n">gstate</span><span class="o">.</span><span class="n">fignum</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">f</span></div></div>
@@ -315,7 +321,7 @@
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020, Peter Corke.
-      <span class="lastupdated">Last updated on 20-Oct-2022.
+      <span class="lastupdated">Last updated on 21-Nov-2022.
       </span></p>
   </div>
 

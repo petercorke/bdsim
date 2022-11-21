@@ -56,9 +56,9 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
-          <li><a href="../../index.html">Module code</a> &raquo;</li>
-      <li>bdsim.blocks.functions</li>
+      <li><a href="../../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bdsim.blocks.functions</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -84,6 +84,8 @@
 <span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">import</span> <span class="nn">inspect</span>
 <span class="kn">import</span> <span class="nn">spatialmath.base</span> <span class="k">as</span> <span class="nn">smb</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Callable</span>
+<span class="n">ArrayLike</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">]</span>
 
 <span class="kn">from</span> <span class="nn">bdsim.components</span> <span class="kn">import</span> <span class="n">FunctionBlock</span>
 
@@ -95,23 +97,50 @@
 
         
 <div class="viewcode-block" id="Sum"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Sum">[docs]</a><span class="k">class</span> <span class="nc">Sum</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;Summing junction.</span>
 <span class="sd">    :blockname:`SUM`</span>
 
-<span class="sd">    .. table::</span>
-<span class="sd">       :align: left</span>
+<span class="sd">    :inputs: N [float, ndarray(N), ndarray(N,M)]</span>
+
+<span class="sd">    :outputs: 1 [float, ndarray(N), ndarray(N,M)]</span>
+
+<span class="sd">    :states: 0</span>
 <span class="sd">    </span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | inputs     | outputs |  states |</span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | len(signs) | 1       | 0       |</span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | float,     | float,  |         | </span>
-<span class="sd">    | A(N,),     | A(N,),  |         |</span>
-<span class="sd">    | A(N,M)     | A(N,M)  |         | </span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+
+<span class="sd">    signs</span>
+<span class="sd">        signs associated with input ports, accepted characters: + or -, defaults to &#39;++&#39;</span>
+<span class="sd">    mode</span>
+<span class="sd">        controls angle wrapping per element, accepted characters r or c or C or L, defaults to None</span>
+<span class="sd">    blockargs</span>
+<span class="sd">        common `Block options &lt;https://petercorke.github.io/bdsim/bdsim.html?highlight=block.__init__#bdsim.components.Block.__init__`_</span>
+
+<span class="sd">    Add or subtract input signals according to the `signs` string.  The</span>
+<span class="sd">    number of input ports is the length of this string.</span>
+<span class="sd">    </span>
+<span class="sd">    For example::</span>
+<span class="sd">        </span>
+<span class="sd">        sum = bd.SUM(&#39;+-+&#39;)</span>
+
+<span class="sd">    is a 3-input summing junction which computes port0 - port1 + port2.</span>
+
+<span class="sd">    If some elements are angles then ``mode`` controls, per element, how</span>
+<span class="sd">    they are wrapped.  The elements of the string can be</span>
+
+<span class="sd">    | character  | purpose                           |</span>
+<span class="sd">    | :--------- | :-------------------------------- |</span>
+<span class="sd">    | r          | real number, don&#39;t wrap (default) |</span>
+<span class="sd">    | c          | angle on circle, wrap to [-π, π)  |</span>
+<span class="sd">    | C          | angle on circle, wrap to [0, 2π)  |</span>
+<span class="sd">    | L          | latitude angle, wrap to [0, π]    |</span>
+
+<span class="sd">    For example if ``mode=&quot;rc&quot;`` then a 2-element array would have its</span>
+<span class="sd">    second element wrapped to the range [-π, π).</span>
+
+<span class="sd">    :note: The signals must be compatible, all scalars, or all arrays </span>
+<span class="sd">        of the same shape.</span>
+<span class="sd">    &quot;&quot;&quot;</span>    
     <span class="n">nin</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
@@ -123,54 +152,12 @@
             <span class="s1">&#39;l&#39;</span><span class="p">:</span> <span class="n">smb</span><span class="o">.</span><span class="n">wrap_0_pi</span><span class="p">,</span>
     <span class="p">}</span>
 
-<div class="viewcode-block" id="Sum.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Sum.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signs</span><span class="o">=</span><span class="s1">&#39;++&#39;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
-
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Summing junction.</span>
-
-<span class="sd">        :param signs: signs associated with input ports, accepted characters: + or -, defaults to &#39;++&#39;</span>
-<span class="sd">        :type signs: str, optional</span>
-<span class="sd">        :param mode: controls angle wrapping per element, accepted characters r or c or C or L, defaults to None</span>
-<span class="sd">        :type mode: str, optional</span>
-<span class="sd">        :param blockargs: common `Block options &lt;https://petercorke.github.io/bdsim/bdsim.html?highlight=block.__init__#bdsim.components.Block.__init__`_</span>
-<span class="sd">        :type blockargs: dict</span>
-<span class="sd">        :return: A SUM block</span>
-<span class="sd">        :rtype: Sum instance</span>
-<span class="sd">    </span>
-<span class="sd">        Add or subtract input signals according to the `signs` string.  The</span>
-<span class="sd">        number of input ports is the length of this string.</span>
-<span class="sd">        </span>
-<span class="sd">        For example::</span>
-<span class="sd">            </span>
-<span class="sd">            sum = bd.SUM(&#39;+-+&#39;)</span>
-
-<span class="sd">        is a 3-input summing junction which computes port0 - port1 + port2.</span>
-
-<span class="sd">        If some elements are angles then ``mode`` controls, per element, how</span>
-<span class="sd">        they are wrapped.  The elements of the string can be</span>
-
-<span class="sd">            +------------+----------------------------------+</span>
-<span class="sd">            | character  | purpose                          |</span>
-<span class="sd">            +------------+----------------------------------+</span>
-<span class="sd">            | r          | real number, don&#39;t wrap          |</span>
-<span class="sd">            | c          | angle on circle, wrap to [-π, π) |</span>
-<span class="sd">            | C          | angle on circle, wrap to [0, 2π) |</span>
-<span class="sd">            | L          | latitude angle, wrap to [0, π]   |</span>
-<span class="sd">            +------------+----------------------------------+</span>
-
-<span class="sd">        For example if ``mode=&quot;rc&quot;`` then a 2-element array would have its</span>
-<span class="sd">        second element wrapped to the range [-π, π).</span>
-
-<span class="sd">        .. note:: The signals must be compatible, all scalars, or all arrays </span>
-<span class="sd">            of the same shape.</span>
-
-<span class="sd">        &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="Sum.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Sum.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signs</span><span class="p">:</span><span class="nb">str</span><span class="o">=</span><span class="s1">&#39;++&#39;</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span><span class="nb">str</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">signs</span><span class="p">),</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">signs</span><span class="p">,</span> <span class="nb">str</span><span class="p">),</span> <span class="s1">&#39;first argument must be signs string&#39;</span>
         <span class="k">assert</span> <span class="nb">all</span><span class="p">([</span><span class="n">x</span> <span class="ow">in</span> <span class="s1">&#39;+-&#39;</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">signs</span><span class="p">]),</span> <span class="s1">&#39;invalid sign&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">signs</span> <span class="o">=</span> <span class="n">signs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">mode</span></div>
-        
         
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="nb">input</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">):</span>
@@ -211,58 +198,50 @@
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 <div class="viewcode-block" id="Prod"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Prod">[docs]</a><span class="k">class</span> <span class="nc">Prod</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;Product junction.</span>
+
 <span class="sd">    :blockname:`PROD`</span>
 <span class="sd">    </span>
-<span class="sd">    .. table::</span>
-<span class="sd">       :align: left</span>
+<span class="sd">    :inputs: N [float, ndarray(N), ndarray(N,M)]</span>
+
+<span class="sd">    :outputs: 1 [float, ndarray(N), ndarray(N,M)]</span>
+
+<span class="sd">    :states: 0</span>
+
+<span class="sd">    :param ops: operations associated with input ports, accepted characters: * or /, defaults to &#39;**&#39;</span>
+<span class="sd">    :type ops: str, optional</span>
+<span class="sd">    :param inputs: Optional incoming connections</span>
+<span class="sd">    :type inputs: Block or Plug</span>
+<span class="sd">    :param matrix: Arguments are matrices, defaults to False</span>
+<span class="sd">    :type matrix: bool, optional</span>
+<span class="sd">    :param blockargs: |BlockOptions|</span>
+<span class="sd">    :type blockargs: dict</span>
+<span class="sd">    :return: A PROD block</span>
+<span class="sd">    :rtype: Prod instance</span>
 <span class="sd">    </span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | inputs     | outputs |  states |</span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | len(ops)   | 1       | 0       |</span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | float,     | float,  |         | </span>
-<span class="sd">    | A(N,),     | A(N,),  |         |</span>
-<span class="sd">    | A(N,M)     | A(N,M)  |         | </span>
-<span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    Multiply or divide input signals according to the `ops` string.  The</span>
+<span class="sd">    number of input ports is the length of this string.</span>
+<span class="sd">    </span>
+<span class="sd">    For example::</span>
+<span class="sd">        </span>
+<span class="sd">        prod = PROD(&#39;*/*&#39;)</span>
+<span class="sd">        </span>
+<span class="sd">    is a 3-input product junction which computes port0 / port 1 * port2.</span>
+
+<span class="sd">    :note: The inputs can be scalars or NumPy arrays.  </span>
+<span class="sd">    </span>
+<span class="sd">    :note: By default the ``*`` and ``/`` operators are used which perform element-wise</span>
+<span class="sd">        operations.</span>
+<span class="sd">    </span>
+<span class="sd">    :note: The option ``matrix`` will instead use ``@`` and ``@ np.linalg.inv()``. The </span>
+<span class="sd">        shapes of matrices must conform.  A matrix on a ``/`` input must be square and</span>
+<span class="sd">        non-singular.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     
     <span class="n">nin</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
-<div class="viewcode-block" id="Prod.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Prod.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ops</span><span class="o">=</span><span class="s1">&#39;**&#39;</span><span class="p">,</span> <span class="n">matrix</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Product junction.</span>
-
-<span class="sd">        :param ops: operations associated with input ports, accepted characters: * or /, defaults to &#39;**&#39;</span>
-<span class="sd">        :type ops: str, optional</span>
-<span class="sd">        :param inputs: Optional incoming connections</span>
-<span class="sd">        :type inputs: Block or Plug</span>
-<span class="sd">        :param matrix: Arguments are matrices, defaults to False</span>
-<span class="sd">        :type matrix: bool, optional</span>
-<span class="sd">        :param blockargs: |BlockOptions|</span>
-<span class="sd">        :type blockargs: dict</span>
-<span class="sd">        :return: A PROD block</span>
-<span class="sd">        :rtype: Prod instance</span>
-<span class="sd">        </span>
-<span class="sd">        Multiply or divide input signals according to the `ops` string.  The</span>
-<span class="sd">        number of input ports is the length of this string.</span>
-<span class="sd">        </span>
-<span class="sd">        For example::</span>
-<span class="sd">            </span>
-<span class="sd">            prod = PROD(&#39;*/*&#39;)</span>
-<span class="sd">            </span>
-<span class="sd">        is a 3-input product junction which computes port0 / port 1 * port2.</span>
-
-<span class="sd">        .. note::</span>
-<span class="sd">            - The inputs can be scalars or NumPy arrays.  </span>
-<span class="sd">            - By default the ``*`` and ``/`` operators are used.</span>
-<span class="sd">            - The option ``matrix`` will instead use ``@`` and ``@ np.linalg.inv()``.</span>
-<span class="sd">              - the shapes of matrices must conform.</span>
-<span class="sd">              - only square matrices are supported.</span>
-<span class="sd">    </span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="Prod.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Prod.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ops</span><span class="p">:</span><span class="nb">str</span><span class="o">=</span><span class="s1">&#39;**&#39;</span><span class="p">,</span> <span class="n">matrix</span><span class="p">:</span><span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">ops</span><span class="p">),</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ops</span><span class="p">,</span> <span class="nb">str</span><span class="p">),</span> <span class="s1">&#39;first argument must be signs string&#39;</span>
         <span class="k">assert</span> <span class="nb">all</span><span class="p">([</span><span class="n">x</span> <span class="ow">in</span> <span class="s1">&#39;*/&#39;</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">ops</span><span class="p">]),</span> <span class="s1">&#39;invalid op&#39;</span>
@@ -315,7 +294,7 @@
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
-<div class="viewcode-block" id="Gain.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Gain.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">K</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">premul</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Gain.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Gain.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">K</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span><span class="nb">float</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">premul</span><span class="p">:</span><span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Gain block.</span>
 
@@ -384,7 +363,7 @@
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
-<div class="viewcode-block" id="Clip.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Clip.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">min</span><span class="o">=-</span><span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Clip.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Clip.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">min</span><span class="p">:</span><span class="n">ArrayLike</span><span class="o">=-</span><span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="nb">max</span><span class="p">:</span><span class="n">ArrayLike</span><span class="o">=</span><span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Signal clipping.</span>
 
@@ -447,7 +426,7 @@
     <span class="n">nin</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
 
-<div class="viewcode-block" id="Function.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Function.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">persistent</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">fargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fkwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Function.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Function.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span><span class="n">Callable</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nin</span><span class="p">:</span><span class="nb">int</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nout</span><span class="p">:</span><span class="nb">int</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">persistent</span><span class="p">:</span><span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">fargs</span><span class="p">:</span><span class="nb">list</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fkwargs</span><span class="p">:</span><span class="nb">dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
     
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Python function.</span>
@@ -627,7 +606,7 @@
     <span class="n">nin</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
-<div class="viewcode-block" id="Interpolate.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Interpolate.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">xy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">time</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Interpolate.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Interpolate.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span><span class="nb">tuple</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span><span class="nb">tuple</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">xy</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">time</span><span class="p">:</span><span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span><span class="nb">str</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Interpolate signal.</span>
 
@@ -725,7 +704,7 @@
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020, Peter Corke.
-      <span class="lastupdated">Last updated on 20-Oct-2022.
+      <span class="lastupdated">Last updated on 21-Nov-2022.
       </span></p>
   </div>
 
