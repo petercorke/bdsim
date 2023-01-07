@@ -29,22 +29,23 @@ from bdsim.components import FunctionBlock
 class Sum(FunctionBlock):
     """Summing junction.
     :blockname:`SUM`
-
+    
     :inputs: N [float, ndarray(N), ndarray(N,M)]
 
     :outputs: 1 [float, ndarray(N), ndarray(N,M)]
 
     :states: 0
-    
-    Parameters
-    ----------
 
-    signs
-        signs associated with input ports, accepted characters: + or -, defaults to '++'
-    mode
-        controls angle wrapping per element, accepted characters r or c or C or L, defaults to None
-    blockargs
-        common `Block options <https://petercorke.github.io/bdsim/bdsim.html?highlight=block.__init__#bdsim.components.Block.__init__`_
+    :param signs: signs associated with input ports, accepted characters: + or -, defaults to '++'
+    :type signs: str, optional
+    :param mode: controls angle wrapping per element, accepted characters r or c or C or L, defaults to None
+    :type mode: str, optional
+    :param inputs: Optional incoming connections
+    :type inputs: Block or Plug
+    :param blockargs: |BlockOptions|
+    :type blockargs: dict
+    :return: A SUM block
+    :rtype: Sum instance
 
     Add or subtract input signals according to the `signs` string.  The
     number of input ports is the length of this string.
