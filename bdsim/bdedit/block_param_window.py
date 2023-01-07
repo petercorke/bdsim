@@ -273,14 +273,20 @@ class ParamWindow(QWidget):
 
                 # Make a label of that parameters' name
                 self.label = QLabel('<font size=3><b>'+parameter[0]+": "+'</font>')
-                self.label.setToolTip(parameter[4])
+                try:
+                    self.label.setToolTip(parameter[4])
+                except IndexError:
+                    print(parameter)
 
                 # If the parameter type is a boolean, create the intractable space as a checkbox, otherwise
                 # make an editable line for that parameter, and populate it with the parameters' current value
                 if not issubclass(parameter[1], bool):
                     self.line = QLineEdit(str(parameter[2]))
                 else:
-                    self.line = QCheckBox(); self.line.setChecked(parameter[2])
+                    try:
+                        self.line = QCheckBox(); self.line.setChecked(parameter[2])
+                    except TypeError:
+                        print('bad thing')
 
                 # Set the width of the editable line to the above-defined width (150 pixels)
                 self.line.setFixedWidth(self._parameter_line_width)
