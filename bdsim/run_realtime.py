@@ -26,7 +26,7 @@ import threading
 import time
 import threading
 
-from bdsim.bdsim import BDSim, TimeQ, blockname
+from bdsim.run_sim import BDSim, TimeQ, blockname
 
 
 # class TimeQRT(TimeQ):
