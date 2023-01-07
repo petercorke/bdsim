@@ -95,7 +95,7 @@
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 <div class="viewcode-block" id="Item"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Item">[docs]</a><span class="k">class</span> <span class="nc">Item</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
 
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`ITEM`</span>
 <span class="sd">    </span>
 <span class="sd">    .. table::</span>
@@ -114,7 +114,7 @@
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
 <div class="viewcode-block" id="Item.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Item.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Selector item from a dictionary signal.</span>
 
 <span class="sd">        :param item: name of dictionary item</span>
@@ -150,7 +150,7 @@
 
 <div class="viewcode-block" id="Dict"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Dict">[docs]</a><span class="k">class</span> <span class="nc">Dict</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
 
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`DICT`</span>
 <span class="sd">    </span>
 <span class="sd">    .. table::</span>
@@ -168,7 +168,7 @@
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
 <div class="viewcode-block" id="Dict.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Dict.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create a dictionary signal.</span>
 
 <span class="sd">        :param keys: list of dictionary keys</span>
@@ -205,7 +205,7 @@
         <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">item</span><span class="p">]]</span></div>
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 <div class="viewcode-block" id="Mux"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Mux">[docs]</a><span class="k">class</span> <span class="nc">Mux</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`MUX`</span>
 
 <span class="sd">    .. table::</span>
@@ -225,7 +225,7 @@
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
 <div class="viewcode-block" id="Mux.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Mux.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Multiplex signals.</span>
 
 <span class="sd">        :param nin: Number of input ports, defaults to 1</span>
@@ -259,7 +259,7 @@
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 <div class="viewcode-block" id="DeMux"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.DeMux">[docs]</a><span class="k">class</span> <span class="nc">DeMux</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`DEMUX`</span>
 <span class="sd">    </span>
 <span class="sd">    .. table::</span>
@@ -279,7 +279,7 @@
     <span class="n">nout</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
 
 <div class="viewcode-block" id="DeMux.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.DeMux.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Demultiplex signals.</span>
 
 <span class="sd">        :param nout: number of outputs, defaults to 1</span>
@@ -304,7 +304,7 @@
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 
 <div class="viewcode-block" id="Index"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Index">[docs]</a><span class="k">class</span> <span class="nc">Index</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`INDEX`</span>
 <span class="sd">    </span>
 <span class="sd">    .. table::</span>
@@ -323,7 +323,7 @@
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
 <div class="viewcode-block" id="Index.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Index.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="p">[],</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Index an iterable signal.</span>
 
 <span class="sd">        :param index: elements of input array, defaults to []</span>
@@ -354,7 +354,7 @@
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 
 <div class="viewcode-block" id="SubSystem"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.SubSystem">[docs]</a><span class="k">class</span> <span class="nc">SubSystem</span><span class="p">(</span><span class="n">SubsystemBlock</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`SUBSYSTEM`</span>
 <span class="sd">    </span>
 <span class="sd">    .. table::</span>
@@ -373,7 +373,7 @@
     <span class="n">nout</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
 
 <div class="viewcode-block" id="SubSystem.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.SubSystem.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subsys</span><span class="p">,</span> <span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Instantiate a subsystem.</span>
 <span class="sd">            </span>
 <span class="sd">        :param subsys: Subsystem as either a filename or a ``BlockDiagram`` instance</span>
@@ -476,7 +476,7 @@
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 
 <div class="viewcode-block" id="InPort"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.InPort">[docs]</a><span class="k">class</span> <span class="nc">InPort</span><span class="p">(</span><span class="n">SubsystemBlock</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`INPORT`</span>
 <span class="sd">    </span>
 <span class="sd">    .. table::</span>
@@ -495,7 +495,7 @@
     <span class="n">nout</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
 
 <div class="viewcode-block" id="InPort.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.InPort.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Input ports for a subsystem.</span>
 
 <span class="sd">        :param nout: Number of output ports, defaults to 1</span>
@@ -522,7 +522,7 @@
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 
 <div class="viewcode-block" id="OutPort"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.OutPort">[docs]</a><span class="k">class</span> <span class="nc">OutPort</span><span class="p">(</span><span class="n">SubsystemBlock</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`OUTPORT`</span>
 <span class="sd">    </span>
 <span class="sd">    .. table::</span>
@@ -541,7 +541,7 @@
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">0</span>
 
 <div class="viewcode-block" id="OutPort.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.OutPort.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Output ports for a subsystem.</span>
 
 <span class="sd">        :param nin: Number of input ports, defaults to 1</span>
@@ -580,7 +580,7 @@
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020, Peter Corke.
-      <span class="lastupdated">Last updated on 21-Nov-2022.
+      <span class="lastupdated">Last updated on 07-Jan-2023.
       </span></p>
   </div>
 

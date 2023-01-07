@@ -85,7 +85,7 @@
 <span class="kn">from</span> <span class="nn">bdsim.components</span> <span class="kn">import</span> <span class="n">FunctionBlock</span>
 
 <div class="viewcode-block" id="Inverse"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Inverse">[docs]</a><span class="k">class</span> <span class="nc">Inverse</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`INVERSE`</span>
 <span class="sd">    </span>
 <span class="sd">    .. table::</span>
@@ -107,7 +107,7 @@
     <span class="n">onames</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;inv&#39;</span><span class="p">,</span> <span class="s1">&#39;cond&#39;</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Inverse.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Inverse.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pinv</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Matrix inverse.</span>
 
 <span class="sd">        :param pinv: force pseudo inverse, defaults to False</span>
@@ -157,7 +157,7 @@
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 <div class="viewcode-block" id="Transpose"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Transpose">[docs]</a><span class="k">class</span> <span class="nc">Transpose</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`TRANSPOSE`</span>
 <span class="sd">    </span>
 <span class="sd">    .. table::</span>
@@ -176,7 +176,7 @@
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
 <div class="viewcode-block" id="Transpose.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Transpose.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Matrix transpose.</span>
 
 <span class="sd">        :param blockargs: |BlockOptions|</span>
@@ -210,7 +210,7 @@
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 
 <div class="viewcode-block" id="Norm"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Norm">[docs]</a><span class="k">class</span> <span class="nc">Norm</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`NORM`</span>
 <span class="sd">    </span>
 <span class="sd">    .. table::</span>
@@ -230,7 +230,7 @@
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
 <div class="viewcode-block" id="Norm.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Norm.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">ord</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Array norm.</span>
 
 <span class="sd">        :param axis: specifies the axis along which to compute the vector norms, defaults to None.</span>
@@ -258,7 +258,7 @@
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 
 <div class="viewcode-block" id="Flatten"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Flatten">[docs]</a><span class="k">class</span> <span class="nc">Flatten</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`FLATTEN`</span>
 <span class="sd">    </span>
 <span class="sd">    .. table::</span>
@@ -277,7 +277,7 @@
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
 <div class="viewcode-block" id="Flatten.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Flatten.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s1">&#39;C&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Flatten a multi-dimensional array.</span>
 
 <span class="sd">        :param order: flattening order, either &quot;C&quot; or &quot;F&quot;, defaults to &quot;C&quot;</span>
@@ -303,7 +303,7 @@
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 
 <div class="viewcode-block" id="Slice2"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Slice2">[docs]</a><span class="k">class</span> <span class="nc">Slice2</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`SLICE2`</span>
 <span class="sd">    </span>
 <span class="sd">    .. table::</span>
@@ -322,7 +322,7 @@
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
 <div class="viewcode-block" id="Slice2.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Slice2.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cols</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Slice out subarray of 2D-array.</span>
 
 <span class="sd">        :param rows: row selection, defaults to None</span>
@@ -400,7 +400,7 @@
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 
 <div class="viewcode-block" id="Slice1"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Slice1">[docs]</a><span class="k">class</span> <span class="nc">Slice1</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`SLICE1`</span>
 <span class="sd">    </span>
 <span class="sd">    .. table::</span>
@@ -419,7 +419,7 @@
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
 <div class="viewcode-block" id="Slice1.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Slice1.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Slice out subarray of 1D-array.</span>
 
 <span class="sd">        :param index: slice, defaults to None</span>
@@ -478,7 +478,7 @@
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 <div class="viewcode-block" id="Det"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Det">[docs]</a><span class="k">class</span> <span class="nc">Det</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`DET`</span>
 <span class="sd">    </span>
 <span class="sd">    .. table::</span>
@@ -497,7 +497,7 @@
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
 <div class="viewcode-block" id="Det.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Det.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Matrix determinant</span>
 
 <span class="sd">        :param blockargs: |BlockOptions|</span>
@@ -518,7 +518,7 @@
         <span class="k">return</span> <span class="p">[</span><span class="n">out</span><span class="p">]</span></div>
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 <div class="viewcode-block" id="Cond"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Cond">[docs]</a><span class="k">class</span> <span class="nc">Cond</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`COND`</span>
 <span class="sd">    </span>
 <span class="sd">    .. table::</span>
@@ -537,7 +537,7 @@
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
 <div class="viewcode-block" id="Cond.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Cond.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Compute the matrix condition number.</span>
 
 <span class="sd">        :param blockargs: |BlockOptions|</span>
@@ -570,7 +570,7 @@
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020, Peter Corke.
-      <span class="lastupdated">Last updated on 21-Nov-2022.
+      <span class="lastupdated">Last updated on 07-Jan-2023.
       </span></p>
   </div>
 

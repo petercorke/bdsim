@@ -76,14 +76,14 @@
 
 
 <div class="viewcode-block" id="GraphicsBlock"><a class="viewcode-back" href="../../internals.html#bdsim.GraphicsBlock">[docs]</a><span class="k">class</span> <span class="nc">GraphicsBlock</span><span class="p">(</span><span class="n">SinkBlock</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A GraphicsBlock is a subclass of SinkBlock that represents a block that has inputs</span>
 <span class="sd">    but no outputs and creates/updates a graphical display.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">blockclass</span><span class="o">=</span><span class="s1">&#39;graphics&#39;</span>
     
 <div class="viewcode-block" id="GraphicsBlock.__init__"><a class="viewcode-back" href="../../internals.html#bdsim.GraphicsBlock.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">movie</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create a graphical display block.</span>
 
 <span class="sd">        :param movie: Save animation in this file in MP4 format, defaults to None</span>
@@ -138,7 +138,7 @@
 
 
 <div class="viewcode-block" id="GraphicsBlock.savefig"><a class="viewcode-back" href="../../internals.html#bdsim.GraphicsBlock.savefig">[docs]</a>    <span class="k">def</span> <span class="nf">savefig</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;pdf&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Save the figure as an image file</span>
 
 <span class="sd">        :param fname: Name of file to save graphics to</span>
@@ -163,7 +163,7 @@
 <div class="viewcode-block" id="GraphicsBlock.create_figure"><a class="viewcode-back" href="../../internals.html#bdsim.GraphicsBlock.create_figure">[docs]</a>    <span class="k">def</span> <span class="nf">create_figure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
 
         <span class="k">def</span> <span class="nf">move_figure</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
-            <span class="sd">&quot;&quot;&quot;Move figure&#39;s upper left corner to pixel (x, y)&quot;&quot;&quot;</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Move figure&#39;s upper left corner to pixel (x, y)&quot;&quot;&quot;</span>
             <span class="n">backend</span> <span class="o">=</span> <span class="n">matplotlib</span><span class="o">.</span><span class="n">get_backend</span><span class="p">()</span>
             <span class="n">x</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="n">gstate</span><span class="o">.</span><span class="n">xoffset</span>
             <span class="n">y</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
@@ -302,7 +302,7 @@
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020, Peter Corke.
-      <span class="lastupdated">Last updated on 21-Nov-2022.
+      <span class="lastupdated">Last updated on 07-Jan-2023.
       </span></p>
   </div>
 

@@ -83,7 +83,7 @@
 
 
 <span class="k">class</span> <span class="nc">BDStruct</span><span class="p">(</span><span class="n">UserDict</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A dict-like object that allows items to be added by attribute or by key.</span>
 <span class="sd">    </span>
 <span class="sd">    For example::</span>
@@ -131,7 +131,7 @@
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
     
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Display struct as a string</span>
 
 <span class="sd">        :return: struct in indented string format</span>
@@ -219,7 +219,7 @@
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>  
 
 <div class="viewcode-block" id="Wire"><a class="viewcode-back" href="../../internals.html#bdsim.Wire">[docs]</a><span class="k">class</span> <span class="nc">Wire</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Create a wire.</span>
 <span class="sd">    </span>
 <span class="sd">    :param start: Plug at the start of a wire, defaults to None</span>
@@ -254,7 +254,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Interactive display of wire properties.</span>
 <span class="sd">        </span>
 <span class="sd">        Displays all attributes of the wire for debugging purposes.</span>
@@ -265,7 +265,7 @@
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  </span><span class="si">{:8s}{:s}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="o">+</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)))</span>
             
     <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Display wire with name and connection details.</span>
 <span class="sd">        </span>
 <span class="sd">        :return: Long-form wire description</span>
@@ -280,7 +280,7 @@
     
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">fullname</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Display wire connection details.</span>
 <span class="sd">        </span>
 <span class="sd">        :return: Wire name</span>
@@ -294,7 +294,7 @@
         <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{:s}</span><span class="s2">[</span><span class="si">{:d}</span><span class="s2">] --&gt; </span><span class="si">{:s}</span><span class="s2">[</span><span class="si">{:d}</span><span class="s2">]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">block</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">port</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">block</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">port</span><span class="p">)</span>
     
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Display wire name.</span>
 <span class="sd">        </span>
 <span class="sd">        :return: Wire name</span>
@@ -318,7 +318,7 @@
 <span class="c1"># ------------------------------------------------------------------------- # </span>
 
 <div class="viewcode-block" id="Plug"><a class="viewcode-back" href="../../internals.html#bdsim.Plug">[docs]</a><span class="k">class</span> <span class="nc">Plug</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Create a plug.</span>
 <span class="sd">    </span>
 <span class="sd">    :param block: The block being plugged into</span>
@@ -353,7 +353,7 @@
     
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">isslice</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Test if port number is a slice.</span>
 <span class="sd">        </span>
 <span class="sd">        :return: Whether the port is a slice</span>
@@ -366,7 +366,7 @@
     
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">portlist</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return port numbers.</span>
 <span class="sd">        </span>
 <span class="sd">        :return: Port numbers</span>
@@ -403,7 +403,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">width</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return number of ports connected.</span>
 
 <span class="sd">        :return: Number of ports</span>
@@ -416,7 +416,7 @@
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">portlist</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Plug.__rshift__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__rshift__">[docs]</a>    <span class="k">def</span> <span class="fm">__rshift__</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded &gt;&gt; operator for implicit wiring.</span>
 
 <span class="sd">        :param left: A plug to be wired from</span>
@@ -458,7 +458,7 @@
         <span class="k">return</span> <span class="n">right</span></div>
 
 <div class="viewcode-block" id="Plug.__add__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__add__">[docs]</a>    <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded + operator for implicit block creation.</span>
 
 <span class="sd">        :param self: A signal (plug) to be added </span>
@@ -489,7 +489,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">SUM</span><span class="p">(</span><span class="s1">&#39;++&#39;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="Plug.__radd__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__radd__">[docs]</a>    <span class="k">def</span> <span class="fm">__radd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded + operator for implicit block creation.</span>
 
 <span class="sd">        :param self: A signal (plug) to be added </span>
@@ -522,7 +522,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">SUM</span><span class="p">(</span><span class="s1">&#39;++&#39;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="Plug.__sub__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__sub__">[docs]</a>    <span class="k">def</span> <span class="fm">__sub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded - operator for implicit block creation.</span>
 
 <span class="sd">        :param self: A signal (plug) to be added (minuend)</span>
@@ -556,7 +556,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">SUM</span><span class="p">(</span><span class="s1">&#39;+-&#39;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="Plug.__rsub__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__rsub__">[docs]</a>    <span class="k">def</span> <span class="fm">__rsub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded - operator for implicit block creation.</span>
 
 <span class="sd">        :param self: A signal (plug) to be added (minuend)</span>
@@ -590,7 +590,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">SUM</span><span class="p">(</span><span class="s1">&#39;+-&#39;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="Plug.__neg__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__neg__">[docs]</a>    <span class="k">def</span> <span class="fm">__neg__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded unary minus operator for implicit block creation.</span>
 
 <span class="sd">        :param self: A signal (plug) to be negated</span>
@@ -612,7 +612,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">GAIN</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="p">])</span></div>
 
 <div class="viewcode-block" id="Plug.__mul__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__mul__">[docs]</a>    <span class="k">def</span> <span class="fm">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded * operator for implicit block creation.</span>
 
 <span class="sd">        :param self: A signal (plug) to be multiplied </span>
@@ -651,7 +651,7 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">PROD</span><span class="p">(</span><span class="s1">&#39;**&#39;</span><span class="p">,</span> <span class="n">matrix</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">])</span></div>
 
 <div class="viewcode-block" id="Plug.__rmul__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__rmul__">[docs]</a>    <span class="k">def</span> <span class="fm">__rmul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded * operator for implicit block creation.</span>
 
 <span class="sd">        :param self: A signal (plug) to be multiplied</span>
@@ -686,7 +686,7 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">_autogain</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">premul</span><span class="o">=</span><span class="n">matrix</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="p">])</span></div>
 
 <div class="viewcode-block" id="Plug.__truediv__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__truediv__">[docs]</a>    <span class="k">def</span> <span class="fm">__truediv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded / operator for implicit block creation.</span>
 
 <span class="sd">        :param self: A signal (plug) to be multiplied (dividend)</span>
@@ -721,7 +721,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">PROD</span><span class="p">(</span><span class="s1">&#39;*/&#39;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="Plug.__rtruediv__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__rtruediv__">[docs]</a>    <span class="k">def</span> <span class="fm">__rtruediv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded / operator for implicit block creation.</span>
 
 <span class="sd">        :param self: A signal (plug) to be multiplied (dividend)</span>
@@ -756,7 +756,7 @@
 
 
 <div class="viewcode-block" id="Plug.__repr__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__repr__">[docs]</a>    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Display plug details.</span>
 
 <span class="sd">        :return: Plug description</span>
@@ -880,7 +880,7 @@
     <span class="n">__array_ufunc__</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># allow block operators with NumPy values</span>
 
 <div class="viewcode-block" id="Block.__new__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__new__">[docs]</a>    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">bd</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Construct a new Block object.</span>
 
 <span class="sd">        :param cls: The class to construct</span>
@@ -912,7 +912,7 @@
         <span class="n">inames</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">onames</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">snames</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
         <span class="n">pos</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bd</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">blockclass</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Construct a new block object.</span>
 
 <span class="sd">        :param name: Name of the block, defaults to None</span>
@@ -1014,7 +1014,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Interactive display of block properties.</span>
 
 <span class="sd">        Displays all attributes of the block for debugging purposes.</span>
@@ -1027,7 +1027,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">isclocked</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Test if block is clocked</span>
 
 <span class="sd">        :return: True if block is clocked</span>
@@ -1039,7 +1039,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">isgraphics</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Test if block does graphics</span>
 
 <span class="sd">        :return: True if block does graphics</span>
@@ -1049,7 +1049,7 @@
 
     <span class="c1"># for use in unit testing</span>
     <span class="k">def</span> <span class="nf">_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mf">0.0</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Evaluate a block for unit testing.</span>
 <span class="sd">        </span>
 <span class="sd">        :param *inputs: List of input port values</span>
@@ -1106,7 +1106,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Block.input"><a class="viewcode-back" href="../../internals.html#bdsim.Block.input">[docs]</a>    <span class="k">def</span> <span class="nf">input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">port</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get input to block on specified port</span>
 
 <span class="sd">        :param port: port number</span>
@@ -1133,7 +1133,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get block inputs as a list</span>
 
 <span class="sd">        :return: list of block inputs</span>
@@ -1146,7 +1146,7 @@
         <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nin</span><span class="p">)]</span>
 
 <div class="viewcode-block" id="Block.__getitem__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__getitem__">[docs]</a>    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">port</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Convert a block slice reference to a plug.</span>
 
 <span class="sd">        :param port: Port number</span>
@@ -1168,7 +1168,7 @@
         <span class="k">return</span> <span class="n">Plug</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">port</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Block.__setitem__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__setitem__">[docs]</a>    <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">src</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Convert a LHS block slice reference to a wire.</span>
 
 <span class="sd">        :param port: Port number</span>
@@ -1192,7 +1192,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="bp">self</span><span class="p">[</span><span class="n">port</span><span class="p">])</span></div>
 
 <div class="viewcode-block" id="Block.__setattr__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__setattr__">[docs]</a>    <span class="k">def</span> <span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Convert a LHS block name reference to a wire.</span>
 
 <span class="sd">        :param name: Port name</span>
@@ -1229,7 +1229,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span></div>
 
 <div class="viewcode-block" id="Block.__rshift__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__rshift__">[docs]</a>    <span class="k">def</span> <span class="fm">__rshift__</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Operator for implicit wiring.</span>
 
 <span class="sd">        :param left: A block to be wired from</span>
@@ -1291,7 +1291,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">GAIN</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Block.__add__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__add__">[docs]</a>    <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded + operator for implicit block creation.</span>
 
 <span class="sd">        :param self: A signal (block) to be added </span>
@@ -1330,7 +1330,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">SUM</span><span class="p">(</span><span class="s1">&#39;++&#39;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Block.__radd__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__radd__">[docs]</a>    <span class="k">def</span> <span class="fm">__radd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded + operator for implicit block creation.</span>
 
 <span class="sd">        :param self: A signal (block) to be added </span>
@@ -1369,7 +1369,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">SUM</span><span class="p">(</span><span class="s1">&#39;++&#39;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Block.__sub__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__sub__">[docs]</a>    <span class="k">def</span> <span class="fm">__sub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded - operator for implicit block creation.</span>
 
 <span class="sd">        :param self: A signal (block) to be added (minuend)</span>
@@ -1403,7 +1403,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">SUM</span><span class="p">(</span><span class="s1">&#39;+-&#39;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Block.__rsub__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__rsub__">[docs]</a>    <span class="k">def</span> <span class="fm">__rsub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded - operator for implicit block creation.</span>
 
 <span class="sd">        :param self: A signal (block) to be added (minuend)</span>
@@ -1441,7 +1441,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">SUM</span><span class="p">(</span><span class="s1">&#39;+-&#39;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Block.__neg__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__neg__">[docs]</a>    <span class="k">def</span> <span class="fm">__neg__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded unary minus operator for implicit block creation.</span>
 
 <span class="sd">        :param self: A signal (block) to be negated</span>
@@ -1463,7 +1463,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_autogain</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="p">])</span></div>
 
 <div class="viewcode-block" id="Block.__mul__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__mul__">[docs]</a>    <span class="k">def</span> <span class="fm">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded * operator for implicit block creation.</span>
 
 <span class="sd">        :param self: A signal (block) to be multiplied </span>
@@ -1504,7 +1504,7 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">PROD</span><span class="p">(</span><span class="s1">&#39;**&#39;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">],</span> <span class="n">matrix</span><span class="o">=</span><span class="n">matrix</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Block.__rmul__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__rmul__">[docs]</a>    <span class="k">def</span> <span class="fm">__rmul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded * operator for implicit block creation.</span>
 
 <span class="sd">        :param self: A signal (block) to be multiplied</span>
@@ -1540,7 +1540,7 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_autogain</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">premul</span><span class="o">=</span><span class="n">matrix</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="p">])</span></div>
  
 <div class="viewcode-block" id="Block.__truediv__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__truediv__">[docs]</a>    <span class="k">def</span> <span class="fm">__truediv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded / operator for implicit block creation.</span>
 
 <span class="sd">        :param self: A signal (block) to be multiplied (dividend)</span>
@@ -1580,7 +1580,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">PROD</span><span class="p">(</span><span class="s1">&#39;*/&#39;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">),</span> <span class="n">matrix</span><span class="o">=</span><span class="n">matrix</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Block.__rtruediv__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__rtruediv__">[docs]</a>    <span class="k">def</span> <span class="fm">__rtruediv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded / operator for implicit block creation.</span>
 
 <span class="sd">        :param self: A signal (block) to be multiplied (dividend)</span>
@@ -1635,7 +1635,7 @@
         <span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_latex_remove</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Block.inport_names"><a class="viewcode-back" href="../../internals.html#bdsim.Block.inport_names">[docs]</a>    <span class="k">def</span> <span class="nf">inport_names</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">names</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Set the names of block input ports.</span>
 
 <span class="sd">        :param names: List of port names</span>
@@ -1656,7 +1656,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">portnames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Block.outport_names"><a class="viewcode-back" href="../../internals.html#bdsim.Block.outport_names">[docs]</a>    <span class="k">def</span> <span class="nf">outport_names</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">names</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Set the names of block output ports.</span>
 
 <span class="sd">        :param names: List of port names</span>
@@ -1680,7 +1680,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_state_names</span> <span class="o">=</span> <span class="n">names</span></div>
 
 <div class="viewcode-block" id="Block.sourcename"><a class="viewcode-back" href="../../internals.html#bdsim.Block.sourcename">[docs]</a>    <span class="k">def</span> <span class="nf">sourcename</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">port</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get the name of output port driving this input port.</span>
 
 <span class="sd">        :param port: Input port</span>
@@ -1770,7 +1770,7 @@
         <span class="k">pass</span></div></div>
 
 <div class="viewcode-block" id="SinkBlock"><a class="viewcode-back" href="../../internals.html#bdsim.SinkBlock">[docs]</a><span class="k">class</span> <span class="nc">SinkBlock</span><span class="p">(</span><span class="n">Block</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A SinkBlock is a subclass of Block that represents a block that has inputs</span>
 <span class="sd">    but no outputs. Typically used to save data to a variable, file or </span>
 <span class="sd">    graphics.</span>
@@ -1778,7 +1778,7 @@
     <span class="n">blockclass</span><span class="o">=</span><span class="s1">&#39;sink&#39;</span>
 
 <div class="viewcode-block" id="SinkBlock.__init__"><a class="viewcode-back" href="../../internals.html#bdsim.SinkBlock.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create a sink block.</span>
 
 <span class="sd">        :param blockargs: |BlockOptions|</span>
@@ -1794,14 +1794,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span> <span class="o">=</span> <span class="mi">0</span></div></div>
 
 <div class="viewcode-block" id="SourceBlock"><a class="viewcode-back" href="../../internals.html#bdsim.SourceBlock">[docs]</a><span class="k">class</span> <span class="nc">SourceBlock</span><span class="p">(</span><span class="n">Block</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A SourceBlock is a subclass of Block that represents a block that has outputs</span>
 <span class="sd">    but no inputs.  Its output is a function of parameters and time.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">blockclass</span> <span class="o">=</span> <span class="s1">&#39;source&#39;</span>
 
 <div class="viewcode-block" id="SourceBlock.__init__"><a class="viewcode-back" href="../../internals.html#bdsim.SourceBlock.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create a source block.</span>
 
 <span class="sd">        :param blockargs: |BlockOptions|</span>
@@ -1817,7 +1817,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span> <span class="o">=</span> <span class="mi">0</span></div></div>
 
 <div class="viewcode-block" id="TransferBlock"><a class="viewcode-back" href="../../internals.html#bdsim.TransferBlock">[docs]</a><span class="k">class</span> <span class="nc">TransferBlock</span><span class="p">(</span><span class="n">Block</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A TransferBlock is a subclass of Block that represents a block with inputs</span>
 <span class="sd">    outputs and states. Typically used to describe a continuous time dynamic</span>
 <span class="sd">    system, either linear or nonlinear.</span>
@@ -1825,7 +1825,7 @@
     <span class="n">blockclass</span> <span class="o">=</span> <span class="s1">&#39;transfer&#39;</span>
 
 <div class="viewcode-block" id="TransferBlock.__init__"><a class="viewcode-back" href="../../internals.html#bdsim.TransferBlock.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nstates</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create a transfer function block.</span>
 
 <span class="sd">        :param blockargs: |BlockOptions|</span>
@@ -1856,7 +1856,7 @@
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_x0</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span><span class="p">,</span> <span class="s1">&#39;incorrect length for initial state&#39;</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">nin</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">nout</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;no inputs or outputs specified&#39;</span></div></div>
 <div class="viewcode-block" id="FunctionBlock"><a class="viewcode-back" href="../../internals.html#bdsim.FunctionBlock">[docs]</a><span class="k">class</span> <span class="nc">FunctionBlock</span><span class="p">(</span><span class="n">Block</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A FunctionBlock is a subclass of Block that represents a block that has inputs</span>
 <span class="sd">    and outputs but no state variables.  Typically used to describe operations</span>
 <span class="sd">    such as gain, summation or various mappings.</span>
@@ -1864,7 +1864,7 @@
     <span class="n">blockclass</span> <span class="o">=</span> <span class="s1">&#39;function&#39;</span>
 
 <div class="viewcode-block" id="FunctionBlock.__init__"><a class="viewcode-back" href="../../internals.html#bdsim.FunctionBlock.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create a function block.</span>
 
 <span class="sd">        :param blockargs: |BlockOptions|</span>
@@ -1880,7 +1880,7 @@
 
 
 <div class="viewcode-block" id="SubsystemBlock"><a class="viewcode-back" href="../../internals.html#bdsim.SubsystemBlock">[docs]</a><span class="k">class</span> <span class="nc">SubsystemBlock</span><span class="p">(</span><span class="n">Block</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A SubSystem  s a subclass of Block that represents a block that has inputs</span>
 <span class="sd">    and outputs but no state variables.  Typically used to describe operations</span>
 <span class="sd">    such as gain, summation or various mappings.</span>
@@ -1888,7 +1888,7 @@
     <span class="n">blockclass</span> <span class="o">=</span> <span class="s1">&#39;subsystem&#39;</span>
 
 <div class="viewcode-block" id="SubsystemBlock.__init__"><a class="viewcode-back" href="../../internals.html#bdsim.SubsystemBlock.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create a subsystem block.</span>
 
 <span class="sd">        :param blockargs: |BlockOptions|</span>
@@ -1903,7 +1903,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span> <span class="o">=</span> <span class="mi">0</span></div></div>
 
 <div class="viewcode-block" id="ClockedBlock"><a class="viewcode-back" href="../../internals.html#bdsim.ClockedBlock">[docs]</a><span class="k">class</span> <span class="nc">ClockedBlock</span><span class="p">(</span><span class="n">Block</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A ClockedBlock is a subclass of Block that represents a block with inputs</span>
 <span class="sd">    outputs and discrete states. Typically used to describe a discrete time dynamic</span>
 <span class="sd">    system, either linear or nonlinear.</span>
@@ -1911,7 +1911,7 @@
     <span class="n">blockclass</span> <span class="o">=</span> <span class="s1">&#39;clocked&#39;</span>
 
 <div class="viewcode-block" id="ClockedBlock.__init__"><a class="viewcode-back" href="../../internals.html#bdsim.ClockedBlock.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clock</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create a clocked block.</span>
 
 <span class="sd">        :param blockargs: |BlockOptions|</span>
@@ -1966,7 +1966,7 @@
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020, Peter Corke.
-      <span class="lastupdated">Last updated on 21-Nov-2022.
+      <span class="lastupdated">Last updated on 07-Jan-2023.
       </span></p>
   </div>
 
