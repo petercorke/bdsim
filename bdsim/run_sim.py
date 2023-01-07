@@ -299,6 +299,39 @@ class BDSim:
         if self.options.blocks:
             self.blocks()
 
+    def blockinfo(self, block=None):
+        """Return info about all blocks
+
+        :param block: name of block to return info for, otherwise list of info for all
+        :type block: str, optional
+        :returns: parameters of blocks
+        :rtype: dict or list of dicts
+
+        Detailed metadata about a block is obtained by introspection and parsing the block's docstring.
+
+        ==========   =====================================================
+        Key          Description
+        ==========   =====================================================
+        path         Path to the folder containing block definition
+        classname    Name of class
+        url          URL of online documentation
+        class        Reference to the class
+        module       Name of the module  package.blocks.module
+        package      Name of the package, eg. bdsim, roboticstoolbox
+        params       Dict of (type, descrip), indexed by parameter name
+        inputs       List of names of block inputs
+        outputs      List of names of block outputs
+        nin          Number of inputs, -1 if variable
+        nout         Number of outputs, -1 if variable
+        blockclass   Block class, eg. source, sink etc.
+        ==========   =====================================================
+
+        """
+        if block is None:
+            return self._blocklibrary
+        else:
+            return self._blocklibrary[block]
+
     def __str__(self):
         """
         String representation of simulation
@@ -836,6 +869,89 @@ class BDSim:
         - ``package`` containing the block
         - `doc` is the docstring from the class constructor
         """
+
+        def parse_docstring(ds):
+
+            # this should have two versions: sphinx, numpy doc styles
+            import re
+            from collections import OrderedDict
+
+            re_isfield = re.compile(r'\s*:[a-zA-Zα-ωΑ-Ω0-9_ ]+:')
+            re_field = re.compile('^\s*:(?P<field>[a-zA-Z]+)(?: +(?P<var>[a-zA-Zα-ωΑ-Ω0-9_]+))?:(?P<body>.+)$')
+
+            # a-zA-Zα-ωΑ-Ω0-9_
+            def indent(s):
+                return len(s) - len(s.lstrip())
+
+            fieldnames = ('param', 'type', 'input', 'output')
+            excludevars = ('kwargs', 'inputs')
+
+            # parse out all lines of the form:
+            #
+            #  :field var: body
+            # or
+            #  :field var: body with a very long description that
+            #       carries over to another line or two
+            fieldlines = []
+            for para in ds.split('\n\n'):
+                # print(para)
+                # print('--')
+
+                indent_prev = None
+                infield = False
+
+                for line in para.split('\n'):
+                    if len(line) == 0:
+                        continue
+                    if indent_prev is None:
+                        indent_prev = indent(line)
+                    if re_isfield.match(line) is not None:
+                        fieldlines.append(line.lstrip())
+                        infield = True
+                    if indent(line) > indent_prev and infield:
+                        fieldlines[-1] += ' ' + line.lstrip()
+                    if indent(line) == indent_prev:
+                        infield = False
+
+            # fieldlines is a list of lines of the form
+            #
+            #   :field var: body
+            #
+            # where extension lines have been concatenated
+
+            # create a dict of dicts
+            #
+            #   dict[field][var] -> body
+            dict = OrderedDict()
+
+            for line in fieldlines:
+                m = re_field.match(line)
+                if m is not None:
+                    if name == 'Bicycle':
+                        z = 3
+                    field, var, body = m.groups()
+                    if var in excludevars or field not in fieldnames:
+                        continue
+                    if field not in dict:
+                        dict[field] = {var: body}
+                    else:
+                        dict[field][var] = body
+                    dict[m.group('field')]
+
+            # now connect pairs of lines of the form
+            #
+            # :param X: param description
+            # :type X: type description
+            #
+            # params[X] = (type description, param description)
+            params = {}
+            if 'param' in dict:
+                for var, descrip in dict['param'].items():
+                    typ = dict['type'].get(var, None)
+                    params[var] = (typ, descrip)
+
+            return params
+
         block = namedtuple('block', 'name, cls, path')
 
         packages = ['bdsim', 'roboticstoolbox', 'machinevisiontoolbox']
@@ -908,13 +1024,34 @@ class BDSim:
                 block_info['class'] = value
                 block_info['module'] = value.__module__
                 block_info['package'] = package
-                block_info['doc'] = block.__init__.__doc__ #inspect.getdoc(block)
+
+                # get the docstring from the class and the constructor
+                ds = ""
+                if value.__doc__ is not None:
+                    ds += value.__doc__
+                if value.__init__.__doc__ is not None:
+                    ds += value.__init__.__doc__
+                if ds is None:
+                    raise ValueError('block has no docstring')
+                block_info['doc'] = ds
+                param_dict = parse_docstring(ds)
+                block_info['params'] = param_dict
+
+                # now add all the other stuff we know about the block
+                block_info['inputs'] = param_dict.get('input')
+                block_info['outputs'] = param_dict.get('output')
+
+                block_info['nin'] = value.nin
+                block_info['nout'] = value.nout
+                block_info['blockclass'] = value.__base__.__name__.lower().replace('block', '')
+
                 blocks[blockname(name)] = block_info
 
             moduledicts[package] = moduledict
             
         self.moduledicts = moduledicts
         return blocks
+
 
     def blocks(self):
         """

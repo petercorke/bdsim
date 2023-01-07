@@ -11,7 +11,9 @@ import os.path
 from pathlib import Path
 
 from bdsim.bdedit.block import blockname, blocklist, Block
-from examples import docstring_parser as parser
+# from examples import docstring_parser as parser
+import bdsim
+
 
 def import_blocks(scene, window):
 
@@ -33,20 +35,27 @@ def import_blocks(scene, window):
     inlabels_param = ["inport labels", list, None, [["type", [type(None), list]]], "List of names for respective inport sockets"]
     outlabels_param = ["outport labels", list, None, [["type", [type(None), list]]], "List of names for respective outport sockets"]
 
-    block_list = parser.docstring_parser()
+    # block_list = parser.docstring_parser()
+    sim = bdsim.BDSim()  # create simulator
+    block_list = sim._blocklibrary
 
     block_library = []
     imported_block_groups = []
 
-    for i, block in enumerate(block_list.items()):
+    # for i, block in enumerate(block_list.items()):
+
+    for block_type, block_ds in sim.blockinfo().items():
         #if i == 4:
             # blocks is a dic of tuples
             # (block_type, {block_docstring_data})
 
-            block_type = block[0].upper()   # Block type
-            block_ds = block[1]     # Block docstring
+            print(f"reading definition of block {block_type}")
 
-            block_name = block_type.lower().capitalize() + " Block"
+            # block_type = block[0].upper()   # Block type
+            # block_ds = block[1]     # Block docstring
+
+            # block_name = block_type.lower().capitalize() + " Block"
+            block_name = block_ds["classname"] + " Block"
             block_classname = block_ds["classname"]
             block_parentclass = block_ds["blockclass"]
             block_path = block_ds["path"]
