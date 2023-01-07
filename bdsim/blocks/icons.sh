@@ -23,7 +23,7 @@
 ./tex2icon.py -r 180 -o inverse.png -t '\mat{A}^{\!-\!1}'
 
 ./tex2icon.py -r 250 -o integrator.png -t '\frac{1}{s}'
-./tex2icon.py -r 250 -o dintegrator.png -t '\frac{1}{z}'
+./tex2icon.py -r 220 -o dintegrator.png -t '\frac{z}{z-1}'
 
 ./tex2icon.py -r 150 -o lti_siso.png -t '\frac{N(s)}{D(s)}'
 ./tex2icon.py -r 90 -o lti_ss.png -t '\begin{array}{c|c} A & B\\ \hline C & D \end{array}'
