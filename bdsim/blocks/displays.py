@@ -46,7 +46,7 @@ class Scope(GraphicsBlock):
     nin = -1
     nout = 0
 
-    def __init__(self, nin=0, vector=None, styles=None, stairs=False, scale='auto', labels=None, grid=True, watch=False, **blockargs):
+    def __init__(self, nin=None, vector=None, styles=None, stairs=False, scale='auto', labels=None, grid=True, watch=False, **blockargs):
         """
         Plots input signals against time.
         
@@ -127,6 +127,9 @@ class Scope(GraphicsBlock):
         # or linestyles
         nplots = None
 
+        if nin is not None:
+            nplots = nin
+
         if styles is not None:
             self.styles = listify(styles)
             if nplots is not None:
@@ -149,7 +152,7 @@ class Scope(GraphicsBlock):
             #  vector is int, width of vector
             #  vector is a list of ints, select those inputs from the input vector
 
-            if nin > 1:
+            if nin is not None and nin != 1:
                 raise ValueError('if vector is given, nin must be 1')
             
             if isinstance(vector, int):
@@ -157,7 +160,7 @@ class Scope(GraphicsBlock):
             elif isinstance(vector, list):
                 nvec = len(vector)
             else:
-                raise ValueError('vector must be an int or list')
+                raise ValueError('vector must be an int or list of indices')
 
             if nplots is None:
                 nplots = nvec
@@ -173,8 +176,8 @@ class Scope(GraphicsBlock):
         if vector is not None:
             nin = 1
             nplots = nvec
-        else:
-            nin = nplots
+        # else:
+        #     nin = nplots
 
         self.nplots = nplots
         self.vector = vector
@@ -388,22 +391,22 @@ class ScopeXY(GraphicsBlock):
         self.xdata.append(x)
         self.ydata.append(y)
 
-        if self.bd.runtime.options.graphics:
-            plt.figure(self.fig.number)
-            self.line.set_data(self.xdata, self.ydata)
-        
-            if self.bd.runtime.options.animation:
-                self.fig.canvas.flush_events()
+        # if self.bd.runtime.options.graphics:
+        plt.figure(self.fig.number)
+        self.line.set_data(self.xdata, self.ydata)
+    
+        if self.bd.runtime.options.animation:
+            self.fig.canvas.flush_events()
 
-            if isinstance(self.scale, str) and self.scale == 'auto':
-                self.ax.relim()
-                self.ax.autoscale_view()
-            super().step(state=state)
+        if isinstance(self.scale, str) and self.scale == 'auto':
+            self.ax.relim()
+            self.ax.autoscale_view()
+        super().step(state=state)
         
-    def done(self, block=False, **blockargs):
-        if self.bd.runtime.options.graphics:
-            plt.show(block=block)
-            super().done()
+    # def done(self, block=False, **blockargs):
+    #     if self.bd.runtime.options.graphics:
+    #         plt.show(block=block)
+    #         super().done()
             
 class ScopeXY1(ScopeXY):
     """
