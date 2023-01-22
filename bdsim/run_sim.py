@@ -1107,9 +1107,9 @@ class BDSim:
 
 
 class Options(OptionsBase):
-    def __init__(self, sysargs=True, **unused):
+    def __init__(self, sysargs=True, **options):
 
-        defaults = {
+        default_options = {
             'backend': None,
             'tiles': '3x4',
             'graphics': True,
@@ -1138,7 +1138,7 @@ class Options(OptionsBase):
                 except SyntaxError:
                     pass
                 try:
-                    defaults[key] = value
+                    default_options[key] = value
                 except KeyError:
                     print('envariable BDSIM, unknown option', key)
 
@@ -1146,7 +1146,9 @@ class Options(OptionsBase):
             # command line arguments and graphics
             parser = argparse.ArgumentParser(
                 prefix_chars='-+',
-                    formatter_class=argparse.ArgumentDefaultsHelpFormatter
+                    formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+                    description="Block diagram simulation framework",
+                    epilog="set defaults using environment variable BDSIM as a single string containing command line options"
                     )
             parser.add_argument('--backend', '-b', type=str, metavar='BACKEND',
                 help='matplotlib backend to choose')
@@ -1198,20 +1200,35 @@ class Options(OptionsBase):
                 help='simulation time: T or T,dt')
 
             args, unknownargs = parser.parse_known_args()
-            options = vars(args)  # get args as a dictionary
+            cmdline_options = vars(args)  # get args as a dictionary
+            # keep only the options that are not None, ie. those that were
+            # explicitly set on the command line
+            cmdline_options = {option:value for option, value in cmdline_options.items() if value is not None}
 
-        options = {option:value for option, value in options.items() if value is not None}
-        super().__init__(args=options, defaults=defaults)
+            if 'graphics' in cmdline_options:
+                # -g or +g present
+                if not cmdline_options['graphics']:
+                    # -g then disable animation
+                    cmdline_options['animation'] = False
+            elif 'animation' in cmdline_options and cmdline_options['animation']:
+                # +a present
+                cmdline_options['graphics'] = True
+        else:
+            cmdline_options = dict()  # empty dictionary
+
+        super().__init__(readonly=cmdline_options, args=default_options)
+
+        # now handle the passed options
+        self.set(**options)
+
         self._argv = unknownargs # save non-bdsim arguments
-
-        # any non-bdsim arguments are stashed as well
-        #self.set_options(**unused)
 
     def sanity(self, options):
         # ensure graphics is enabled if animation is requested
-        if options['animation']:
-            options['graphics'] = True
         # ensure animation is disabled if graphics is disabled
         if not options['graphics']:
             options['animation'] = False
+        if options['animation']:
+            options['graphics'] = True
+
         return options

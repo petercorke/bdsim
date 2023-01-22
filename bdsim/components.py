@@ -91,10 +91,18 @@ class BDStruct(UserDict):
         return '\n'.join(rows)
 
 class OptionsBase():
+    """A struct like object for option handling
 
-    def __init__(self, args={}, defaults={}):
-        self._priority = list(args)
-        self._dict = {**defaults, **args}
+    Maintains an internal dict to keep options and their values.  Some of these
+    values, names in the ``_priority`` list are read-only and cannot be changed.
+
+    Values can be read/written as attributes, or the ``set`` method can take
+    a sequence of ``option=value`` arguments.
+    """
+
+    def __init__(self, readonly={}, args={}):
+        self._readonly = list(readonly)
+        self._dict = {**args, **readonly}
 
     def items(self):
         return self._dict.items()
@@ -113,30 +121,19 @@ class OptionsBase():
             self.__dict__[name] = value
         else:
             dict = self.__dict__['_dict']
-            if name not in self._priority:
+            if name not in self._readonly:
                 dict[name] = value
                 self.__dict__['_dict'] = self.sanity(dict)
 
-    # def __getattr__(self, name):
-    #     if name in self.__dict__['dict']:
-    #         return self.__dict__['dict'][name]
-    #     else:
-    #         try:
-    #             return self.__dict__[name]
-    #         except KeyError:
-    #             raise AttributeError(name)
-
-    # def __setattr__(self, name, value):
-    #     dict = self.__dict__['dict']
-    #     if name not in self.priority:
-    #         dict[name] = value
-    #         self.__dict__['dict'] = self.sanity(dict)
-
     def set(self, **changes):
+        # changes = self.sanity(changes)
         dict = self._dict
         for name, value in changes.items():
-            if name not in self._priority:
+            if name not in self._readonly:
                 dict[name] = value
+            elif dict[name] != value:
+                print(f"attempt to programmatically set option {name}={value} is overriden by command line option {name}={dict[name]}, ignored")
+
         self._dict = self.sanity(dict)
 
     def sanity(self, options):
@@ -1945,8 +1942,19 @@ class EventSource:
 # print(c.next(0), c1.next(0))
 
 if __name__ == "__main__":
-    opt = OptionsBase(dict(foo=1, bar='hello'))
-    print(opt.foo)
-    print(opt.bar)
-    opt.set(foo=3)
-    print(opt.foo)
+    # opt = OptionsBase(dict(foo=1, bar='hello'))
+    # print(opt.foo)
+    # print(opt.bar)
+    # opt.set(foo=3)
+    # print(opt.foo)
+
+
+    # from bdsim.blocks.functions import Sum
+    # print(Sum.parameters())
+
+    import bdsim
+
+    sim = bdsim.BDSim()  # create simulator
+
+    print(sim.moduledicts)
+
