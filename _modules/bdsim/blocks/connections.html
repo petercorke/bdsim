@@ -68,8 +68,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for bdsim.blocks.connections</h1><div class="highlight"><pre>
-<span></span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">Connection blocks are in two categories:</span>
 
 <span class="sd">1. Signal manipulation:</span>
@@ -97,16 +96,16 @@
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`ITEM`</span>
-<span class="sd">    </span>
+
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
-<span class="sd">    </span>
+
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    | inputs     | outputs |  states |</span>
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    | 1          | 1       | 0       |</span>
 <span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | dict       | any     |         | </span>
+<span class="sd">    | dict       | any     |         |</span>
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -126,9 +125,9 @@
 
 <span class="sd">        For a dictionary type input signal, select one item as the output signal.</span>
 <span class="sd">        For example::</span>
-<span class="sd">            </span>
+
 <span class="sd">            ITEM(&#39;xd&#39;)</span>
-<span class="sd">            </span>
+
 <span class="sd">        selects the ``xd`` item from the dictionary signal input to the block.</span>
 
 <span class="sd">        A dictionary signal can serve a similar purpose to a &quot;bus&quot; in Simulink(R).</span>
@@ -141,29 +140,31 @@
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">item</span> <span class="o">=</span> <span class="n">item</span></div>
-    
+
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="c1"># TODO, handle inputs that are vectors themselves</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">dict</span><span class="p">),</span> <span class="s1">&#39;Input signal must be a dict&#39;</span>
-        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;Item is not in input dict&#39;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">dict</span><span class="p">),</span> <span class="s2">&quot;Input signal must be a dict&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;Item is not in input dict&quot;</span>
         <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">item</span><span class="p">]]</span></div>
+
 
 <div class="viewcode-block" id="Dict"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Dict">[docs]</a><span class="k">class</span> <span class="nc">Dict</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`DICT`</span>
-<span class="sd">    </span>
+
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
-<span class="sd">    </span>
+
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    | inputs     | outputs |  states |</span>
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    | N          | 1       | 0       |</span>
 <span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | any        | dict    |         | </span>
+<span class="sd">    | any        | dict    |         |</span>
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
@@ -177,13 +178,13 @@
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: A DICT block</span>
 <span class="sd">        :rtype: Dict instance</span>
-<span class="sd">        </span>
-<span class="sd">        Inputs are assigned to a dictionary signal, using the corresponding </span>
+
+<span class="sd">        Inputs are assigned to a dictionary signal, using the corresponding</span>
 <span class="sd">        names from ``keys``.</span>
 <span class="sd">        For example::</span>
-<span class="sd">            </span>
+
 <span class="sd">            DICT([&#39;x&#39;, &#39;xd&#39;, &#39;xdd&#39;])</span>
-<span class="sd">            </span>
+
 <span class="sd">        expects three inputs and assigns them to dictionary items ``x``, ``xd``, ``xdd`` of</span>
 <span class="sd">        the output dictionary respectively.</span>
 
@@ -197,12 +198,14 @@
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">item</span> <span class="o">=</span> <span class="n">item</span></div>
-    
+
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="c1"># TODO, handle inputs that are vectors themselves</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">dict</span><span class="p">),</span> <span class="s1">&#39;Input signal must be a dict&#39;</span>
-        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;Item is not in signal dict&#39;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">dict</span><span class="p">),</span> <span class="s2">&quot;Input signal must be a dict&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;Item is not in signal dict&quot;</span>
         <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">item</span><span class="p">]]</span></div>
+
+
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 <div class="viewcode-block" id="Mux"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Mux">[docs]</a><span class="k">class</span> <span class="nc">Mux</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -210,14 +213,14 @@
 
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
-<span class="sd">    </span>
+
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    | inputs     | outputs |  states |</span>
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    | nin        | 1       | 0       |</span>
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    | float,     | A(M,)   |         |</span>
-<span class="sd">    | A(N,)      | A(M,)   |         | </span>
+<span class="sd">    | A(N,)      | A(M,)   |         |</span>
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -237,16 +240,16 @@
 
 <span class="sd">        This block takes a number of scalar or 1D-array signals and concatenates</span>
 <span class="sd">        them into a single 1-D array signal.  For example::</span>
-<span class="sd">            </span>
+
 <span class="sd">            MUX(2, inputs=(func1[2], sum3))</span>
-<span class="sd">            </span>
+
 <span class="sd">        multiplexes the outputs of blocks ``func1`` (port 2) and ``sum3`` into a</span>
 <span class="sd">        single output vector as a 1D-array.</span>
-<span class="sd">        </span>
+
 <span class="sd">        :seealso: :class:`Dict`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="n">nin</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span></div>
-    
+
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="c1"># TODO, handle inputs that are vectors themselves</span>
         <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
@@ -255,23 +258,24 @@
                 <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
                 <span class="n">out</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
-        <span class="k">return</span> <span class="p">[</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">out</span><span class="p">)</span> <span class="p">]</span></div>
+        <span class="k">return</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">out</span><span class="p">)]</span></div>
+
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 <div class="viewcode-block" id="DeMux"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.DeMux">[docs]</a><span class="k">class</span> <span class="nc">DeMux</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`DEMUX`</span>
-<span class="sd">    </span>
+
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
-<span class="sd">    </span>
+
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    | inputs     | outputs |  states |</span>
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    | 1          | nout    | 0       |</span>
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    | float,     | float   |         |</span>
-<span class="sd">    | A(nout,)   |         |         | </span>
+<span class="sd">    | A(nout,)   |         |         |</span>
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -295,21 +299,25 @@
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nout</span><span class="o">=</span><span class="n">nout</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span></div>
-    
+
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="c1"># TODO, handle inputs that are vectors themselves</span>
-        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">nout</span><span class="p">,</span> <span class="s1">&#39;Input width not equal to number of output ports&#39;</span>
+        <span class="k">assert</span> <span class="p">(</span>
+            <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">nout</span>
+        <span class="p">),</span> <span class="s2">&quot;Input width not equal to number of output ports&quot;</span>
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span></div>
 
+
 <span class="c1"># ------------------------------------------------------------------------ #</span>
+
 
 <div class="viewcode-block" id="Index"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Index">[docs]</a><span class="k">class</span> <span class="nc">Index</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`INDEX`</span>
-<span class="sd">    </span>
+
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
-<span class="sd">    </span>
+
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    | inputs     | outputs |  states |</span>
 <span class="sd">    +------------+---------+---------+</span>
@@ -332,7 +340,7 @@
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: An INDEX block</span>
 <span class="sd">        :rtype: Index instance</span>
-<span class="sd">        </span>
+
 <span class="sd">        The specified element(s) of the input iterable (list, string, etc.)</span>
 <span class="sd">        are output.  The index can be an integer, sequence of integers, a Python slice</span>
 <span class="sd">        object, or a string with Python slice notation, eg. ``&quot;::-1&quot;``.</span>
@@ -342,24 +350,27 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span> <span class="k">if</span> <span class="n">a</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span> <span class="k">else</span> <span class="nb">int</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">index</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)]</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span> <span class="k">if</span> <span class="n">a</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span> <span class="k">else</span> <span class="nb">int</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">index</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">index</span></div>
-    
+
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]]]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[[</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">]]]</span></div>
+
+
 <span class="c1"># ------------------------------------------------------------------------ #</span>
+
 
 <div class="viewcode-block" id="SubSystem"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.SubSystem">[docs]</a><span class="k">class</span> <span class="nc">SubSystem</span><span class="p">(</span><span class="n">SubsystemBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`SUBSYSTEM`</span>
-<span class="sd">    </span>
+
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
-<span class="sd">       </span>
+
 <span class="sd">    +------------+------------+---------+</span>
 <span class="sd">    | inputs     | outputs    |  states |</span>
 <span class="sd">    +------------+------------+---------+</span>
@@ -375,7 +386,7 @@
 <div class="viewcode-block" id="SubSystem.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.SubSystem.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subsys</span><span class="p">,</span> <span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Instantiate a subsystem.</span>
-<span class="sd">            </span>
+
 <span class="sd">        :param subsys: Subsystem as either a filename or a ``BlockDiagram`` instance</span>
 <span class="sd">        :type subsys: str or BlockDiagram</span>
 
@@ -392,23 +403,23 @@
 
 <span class="sd">        This block represents a subsystem in a block diagram.  The definition</span>
 <span class="sd">        of the subsystem can be:</span>
-<span class="sd">            </span>
+
 <span class="sd">            - the name of a module which is imported and must contain only</span>
 <span class="sd">              only ``BlockDiagram`` instance, or</span>
 <span class="sd">            - a ``BlockDiagram`` instance</span>
-<span class="sd">        </span>
+
 <span class="sd">        The referenced block diagram must contain one or both of:</span>
-<span class="sd">        </span>
+
 <span class="sd">            - one ``InPort`` block, which has outputs but no inputs. These</span>
 <span class="sd">              outputs are connected to the inputs to the enclosing ``SubSystem`` block.</span>
 <span class="sd">            - one ``OutPort`` block, which has inputs but no outputs. These</span>
 <span class="sd">              inputs are connected to the outputs to the enclosing ``SubSystem`` block.</span>
-<span class="sd">              </span>
+
 <span class="sd">        .. note::</span>
-<span class="sd">            </span>
-<span class="sd">        - The referenced block diagram is treated like a macro and copied into </span>
+
+<span class="sd">        - The referenced block diagram is treated like a macro and copied into</span>
 <span class="sd">          the parent block diagram at compile time. The ``SubSystem``, ``InPort`` and</span>
-<span class="sd">          ``OutPort`` blocks are eliminated, that is, all hierarchical structure is </span>
+<span class="sd">          ``OutPort`` blocks are eliminated, that is, all hierarchical structure is</span>
 <span class="sd">          lost.</span>
 <span class="sd">        - The same subsystem can be used multiple times, its blocks and wires</span>
 <span class="sd">           will be cloned.  Subsystems can also include subsystems.</span>
@@ -417,44 +428,51 @@
 <span class="sd">          subsystem.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
-        
+
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">subsys</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="c1"># attempt to import the file</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">subsys</span><span class="p">,</span> <span class="n">package</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+                <span class="n">module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">subsys</span><span class="p">,</span> <span class="n">package</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">SyntaxError</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;-- syntax error in block definiton: &#39;</span> <span class="o">+</span> <span class="n">subsys</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-- syntax error in block definiton: &quot;</span> <span class="o">+</span> <span class="n">subsys</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;-- module not found &#39;</span><span class="p">,</span> <span class="n">subsys</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-- module not found &quot;</span><span class="p">,</span> <span class="n">subsys</span><span class="p">)</span>
             <span class="c1"># get all the bdsim.BlockDiagram instances</span>
-            <span class="n">simvars</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">ref</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ref</span><span class="p">,</span> <span class="n">bdsim</span><span class="o">.</span><span class="n">BlockDiagram</span><span class="p">)]</span>
+            <span class="n">simvars</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">name</span>
+                <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">ref</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ref</span><span class="p">,</span> <span class="n">bdsim</span><span class="o">.</span><span class="n">BlockDiagram</span><span class="p">)</span>
+            <span class="p">]</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">simvars</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s1">&#39;no bdsim.Simulation instances in imported module&#39;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s2">&quot;no bdsim.Simulation instances in imported module&quot;</span><span class="p">)</span>
             <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">simvars</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s1">&#39;multiple bdsim.Simulation instances in imported module&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">simvars</span><span class="p">))</span>
+                <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                    <span class="s2">&quot;multiple bdsim.Simulation instances in imported module&quot;</span>
+                    <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">simvars</span><span class="p">)</span>
+                <span class="p">)</span>
             <span class="n">subsys</span> <span class="o">=</span> <span class="n">module</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="n">simvars</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ssvar</span> <span class="o">=</span> <span class="n">simvars</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">subsys</span><span class="p">,</span> <span class="n">bdsim</span><span class="o">.</span><span class="n">BlockDiagram</span><span class="p">):</span>
             <span class="c1"># use an in-memory diagram</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ssvar</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;argument must be filename or BlockDiagram instance&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;argument must be filename or BlockDiagram instance&quot;</span><span class="p">)</span>
 
         <span class="c1"># check if valid input and output ports</span>
         <span class="n">ninp</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">noutp</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">subsys</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;inport&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">&quot;inport&quot;</span><span class="p">:</span>
                 <span class="n">ninp</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="k">elif</span> <span class="n">b</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;outport&#39;</span><span class="p">:</span>
+            <span class="k">elif</span> <span class="n">b</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">&quot;outport&quot;</span><span class="p">:</span>
                 <span class="n">noutp</span> <span class="o">+=</span> <span class="mi">1</span>
-        
+
         <span class="k">if</span> <span class="n">ninp</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;subsystem cannot have more than one INPORT block&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;subsystem cannot have more than one INPORT block&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">noutp</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;subsystem cannot have more than one OUTPORT block&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;subsystem cannot have more than one OUTPORT block&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">ninp</span> <span class="o">+</span> <span class="n">noutp</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;subsystem cannot have zero INPORT or OUTPORT blocks&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;subsystem cannot have zero INPORT or OUTPORT blocks&quot;</span><span class="p">)</span>
 
         <span class="c1"># it&#39;s valid, make a deep copy</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">subsystem</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">subsys</span><span class="p">)</span>
@@ -463,9 +481,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">inport</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">outport</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">subsystem</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;inport&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">&quot;inport&quot;</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">inport</span> <span class="o">=</span> <span class="n">b</span>
-            <span class="k">elif</span> <span class="n">b</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;outport&#39;</span><span class="p">:</span>
+            <span class="k">elif</span> <span class="n">b</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">&quot;outport&quot;</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">outport</span> <span class="o">=</span> <span class="n">b</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">ssname</span> <span class="o">=</span> <span class="n">subsys</span><span class="o">.</span><span class="n">name</span>
@@ -473,15 +491,17 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">nin</span> <span class="o">=</span> <span class="n">ninp</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nout</span> <span class="o">=</span> <span class="n">noutp</span></div></div>
 
+
 <span class="c1"># ------------------------------------------------------------------------ #</span>
+
 
 <div class="viewcode-block" id="InPort"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.InPort">[docs]</a><span class="k">class</span> <span class="nc">InPort</span><span class="p">(</span><span class="n">SubsystemBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`INPORT`</span>
-<span class="sd">    </span>
+
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
-<span class="sd">    </span>
+
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    | inputs     | outputs |  states |</span>
 <span class="sd">    +------------+---------+---------+</span>
@@ -509,7 +529,7 @@
 <span class="sd">        parent-level ``SubSystem`` block appear as the outputs of this block.</span>
 
 <span class="sd">        .. note:: Only one ``INPORT`` block can appear in a block diagram but it</span>
-<span class="sd">            can have multiple ports.  This is different to Simulink(R) which </span>
+<span class="sd">            can have multiple ports.  This is different to Simulink(R) which</span>
 <span class="sd">            would require multiple single-port input blocks.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nout</span><span class="o">=</span><span class="n">nout</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span></div>
@@ -519,15 +539,17 @@
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span></div>
 
+
 <span class="c1"># ------------------------------------------------------------------------ #</span>
+
 
 <div class="viewcode-block" id="OutPort"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.OutPort">[docs]</a><span class="k">class</span> <span class="nc">OutPort</span><span class="p">(</span><span class="n">SubsystemBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`OUTPORT`</span>
-<span class="sd">    </span>
+
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
-<span class="sd">    </span>
+
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    | inputs     | outputs |  states |</span>
 <span class="sd">    +------------+---------+---------+</span>
@@ -550,13 +572,13 @@
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: A OUTPORT block</span>
 <span class="sd">        :rtype: OutPort instance</span>
-<span class="sd">        </span>
-<span class="sd">        This block connects a subsystem to a parent block diagram.  The the </span>
+
+<span class="sd">        This block connects a subsystem to a parent block diagram.  The the</span>
 <span class="sd">        inputs of this block become the outputs of the parent-level ``SubSystem``</span>
 <span class="sd">        block.</span>
 
 <span class="sd">        .. note:: Only one ``OUTPORT`` block can appear in a block diagram but it</span>
-<span class="sd">            can have multiple ports.  This is different to Simulink(R) which </span>
+<span class="sd">            can have multiple ports.  This is different to Simulink(R) which</span>
 <span class="sd">            would require multiple single-port output blocks.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="n">nin</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span></div>
@@ -565,11 +587,16 @@
         <span class="c1"># signal feed through</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span></div>
 
+
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 
     <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 
-    <span class="n">exec</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;tests&quot;</span> <span class="o">/</span> <span class="s2">&quot;test_connections.py&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+    <span class="n">exec</span><span class="p">(</span>
+        <span class="nb">open</span><span class="p">(</span>
+            <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;tests&quot;</span> <span class="o">/</span> <span class="s2">&quot;test_connections.py&quot;</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="p">)</span>
 </pre></div>
 
            </div>
@@ -580,7 +607,7 @@
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020, Peter Corke.
-      <span class="lastupdated">Last updated on 07-Jan-2023.
+      <span class="lastupdated">Last updated on 22-Jan-2023.
       </span></p>
   </div>
 

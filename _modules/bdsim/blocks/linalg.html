@@ -84,19 +84,20 @@
 
 <span class="kn">from</span> <span class="nn">bdsim.components</span> <span class="kn">import</span> <span class="n">FunctionBlock</span>
 
+
 <div class="viewcode-block" id="Inverse"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Inverse">[docs]</a><span class="k">class</span> <span class="nc">Inverse</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`INVERSE`</span>
-<span class="sd">    </span>
+
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
-<span class="sd">    </span>
+
 <span class="sd">    +----------+---------+---------+</span>
 <span class="sd">    | inputs   | outputs |  states |</span>
 <span class="sd">    +----------+---------+---------+</span>
 <span class="sd">    | 1        | 2       | 0       |</span>
 <span class="sd">    +----------+---------+---------+</span>
-<span class="sd">    | A(M,N)   | A(N,M)  |         | </span>
+<span class="sd">    | A(M,N)   | A(N,M)  |         |</span>
 <span class="sd">    |          | float   |         |</span>
 <span class="sd">    +----------+---------+---------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -104,7 +105,7 @@
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">2</span>
 
-    <span class="n">onames</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;inv&#39;</span><span class="p">,</span> <span class="s1">&#39;cond&#39;</span><span class="p">)</span>
+    <span class="n">onames</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;inv&quot;</span><span class="p">,</span> <span class="s2">&quot;cond&quot;</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Inverse.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Inverse.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pinv</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -116,7 +117,7 @@
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: An INVERSE block</span>
 <span class="sd">        :rtype: Inverse instance</span>
-<span class="sd">        </span>
+
 <span class="sd">        Compute inverse of the 2D-array input signal.  If the matrix is square</span>
 <span class="sd">        the inverse is computed unless the ``pinv`` flag is True.  For a</span>
 <span class="sd">        non-square matrix the pseudo-inverse is used.  The condition number is</span>
@@ -127,10 +128,10 @@
 <span class="sd">            `numpy.linalg.cond &lt;https://numpy.org/doc/stable/reference/generated/numpy.linalg.cond.html&gt;`_</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;inverse&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s2">&quot;inverse&quot;</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">pinv</span> <span class="o">=</span> <span class="n">pinv</span></div>
-        
+
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 
         <span class="n">mat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -146,29 +147,30 @@
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">mat</span><span class="p">)</span>
                 <span class="k">except</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">LinAlgError</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;matrix is singular&#39;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;matrix is singular&quot;</span><span class="p">)</span>
             <span class="k">return</span> <span class="p">[</span><span class="n">out</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span><span class="n">mat</span><span class="p">)]</span>
 
-        <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="s1">&#39;inv&#39;</span><span class="p">):</span>
+        <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="s2">&quot;inv&quot;</span><span class="p">):</span>
             <span class="c1"># ask the object to invert itself</span>
             <span class="k">return</span> <span class="p">[</span><span class="n">mat</span><span class="o">.</span><span class="n">inv</span><span class="p">(),</span> <span class="kc">None</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;object cannot be inverted&#39;</span><span class="p">)</span></div>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;object cannot be inverted&quot;</span><span class="p">)</span></div>
+
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 <div class="viewcode-block" id="Transpose"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Transpose">[docs]</a><span class="k">class</span> <span class="nc">Transpose</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`TRANSPOSE`</span>
-<span class="sd">    </span>
+
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
-<span class="sd">    </span>
+
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    | inputs     | outputs |  states |</span>
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    | 1          | 1       | 0       |</span>
 <span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | A(M,N)     | A(N,M)  |         | </span>
+<span class="sd">    | A(M,N)     | A(N,M)  |         |</span>
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -195,7 +197,7 @@
 <span class="sd">        :seealso: `numpy.linalg.transpose &lt;https://numpy.org/doc/stable/reference/generated/numpy.linalg.transpose.html&gt;`_</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;transpose&#39;</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s2">&quot;transpose&quot;</span></div>
 
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="n">mat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -207,21 +209,23 @@
 
         <span class="k">return</span> <span class="p">[</span><span class="n">out</span><span class="p">]</span></div>
 
+
 <span class="c1"># ------------------------------------------------------------------------ #</span>
+
 
 <div class="viewcode-block" id="Norm"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Norm">[docs]</a><span class="k">class</span> <span class="nc">Norm</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`NORM`</span>
-<span class="sd">    </span>
+
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
-<span class="sd">    </span>
+
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    | inputs     | outputs |  states |</span>
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    | 1          | 1       | 0       |</span>
 <span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | A(N,)      | float   |         | </span>
+<span class="sd">    | A(N,)      | float   |         |</span>
 <span class="sd">    | A(N,M)     |         |         |</span>
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -247,7 +251,7 @@
 <span class="sd">        :seealso: `numpy.linalg.norm &lt;https://numpy.org/doc/stable/reference/generated/numpy.linalg.norm.html&gt;`_</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;norm&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s2">&quot;norm&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">ord</span><span class="o">=</span><span class="nb">ord</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -255,28 +259,30 @@
         <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">out</span><span class="p">]</span></div>
 
+
 <span class="c1"># ------------------------------------------------------------------------ #</span>
+
 
 <div class="viewcode-block" id="Flatten"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Flatten">[docs]</a><span class="k">class</span> <span class="nc">Flatten</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`FLATTEN`</span>
-<span class="sd">    </span>
+
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
-<span class="sd">    </span>
+
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    | inputs     | outputs |  states |</span>
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    | 1          | 1       | 0       |</span>
 <span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | A(N,M )    | A(NM,)  |         | </span>
+<span class="sd">    | A(N,M )    | A(NM,)  |         |</span>
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
-<div class="viewcode-block" id="Flatten.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Flatten.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s1">&#39;C&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Flatten.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Flatten.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Flatten a multi-dimensional array.</span>
 
@@ -288,11 +294,11 @@
 <span class="sd">        :rtype: Flatten instance</span>
 
 <span class="sd">        Flattens the incoming array in either row major (&#39;C&#39;) or column major (&#39;F&#39;) order.</span>
-<span class="sd">        </span>
+
 <span class="sd">        :seealso: `numpy.flatten &lt;https://numpy.org/doc/stable/reference/generated/numpy.flatten.html&gt;`_</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;flatten&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s2">&quot;flatten&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">order</span> <span class="o">=</span> <span class="n">order</span></div>
 
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -300,21 +306,23 @@
         <span class="n">out</span> <span class="o">=</span> <span class="n">vec</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">out</span><span class="p">]</span></div>
 
+
 <span class="c1"># ------------------------------------------------------------------------ #</span>
+
 
 <div class="viewcode-block" id="Slice2"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Slice2">[docs]</a><span class="k">class</span> <span class="nc">Slice2</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`SLICE2`</span>
-<span class="sd">    </span>
+
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
-<span class="sd">    </span>
+
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    | inputs     | outputs |  states |</span>
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    | 1          | 1       | 0       |</span>
 <span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | A(N,M)     | A(K,L)  |         | </span>
+<span class="sd">    | A(N,M)     | A(K,L)  |         |</span>
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -333,7 +341,7 @@
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: A SLICE2 block</span>
 <span class="sd">        :rtype: Slice2 instance</span>
-<span class="sd">        </span>
+
 <span class="sd">        Compute a 2D slice of input 2D array.</span>
 
 <span class="sd">        If ``rows`` or ``cols`` is ``None`` it means all rows or columns</span>
@@ -349,7 +357,7 @@
 <span class="sd">            SLICE2(rows=[2,3], cols=[4,1]) # return elements [2,4] and [3,1] as a 1D array</span>
 
 <span class="sd">        If a single row or column is selected, the result will be a 1D array</span>
-<span class="sd">        </span>
+
 <span class="sd">        If ``rows`` or ``cols`` is a tuple, it must have three elements.  It</span>
 <span class="sd">        describes a Python slice ``(start, stop, step)`` where any element can be ``None``</span>
 
@@ -366,52 +374,53 @@
 
 <span class="sd">        The list and tuple notation can be mixed, for example, one for rows</span>
 <span class="sd">        and one for columns.</span>
-<span class="sd">        </span>
+
 <span class="sd">        :seealso: :class:`Slice1` :class:`Index`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;slice2&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s2">&quot;slice2&quot;</span>
 
         <span class="k">if</span> <span class="n">rows</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">rows</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">rows</span> <span class="o">=</span>  <span class="n">rows</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rows</span> <span class="o">=</span> <span class="n">rows</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">rows</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="o">*</span><span class="n">rows</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;bad rows specifier&#39;</span><span class="p">)</span>
-            
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;bad rows specifier&quot;</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="n">cols</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">cols</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">cols</span> <span class="o">=</span>  <span class="n">cols</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cols</span> <span class="o">=</span> <span class="n">cols</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">cols</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">cols</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="o">*</span><span class="n">cols</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;bad columns specifier&#39;</span><span class="p">)</span></div>
-
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;bad columns specifier&quot;</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="n">array</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">array</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Slice2 block expecting 2d array&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Slice2 block expecting 2d array&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">array</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">rows</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cols</span><span class="p">]]</span></div>
 
+
 <span class="c1"># ------------------------------------------------------------------------ #</span>
+
 
 <div class="viewcode-block" id="Slice1"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Slice1">[docs]</a><span class="k">class</span> <span class="nc">Slice1</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`SLICE1`</span>
-<span class="sd">    </span>
+
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
-<span class="sd">    </span>
+
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    | inputs     | outputs |  states |</span>
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    | 1          | 1       | 0       |</span>
 <span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | A(N)       | A(M)    |         | </span>
+<span class="sd">    | A(N)       | A(M)    |         |</span>
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -428,7 +437,7 @@
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: A SLICE1 block</span>
 <span class="sd">        :rtype: Slice1 instance</span>
-<span class="sd">        </span>
+
 <span class="sd">        Compute a 1D slice of input 1D array.</span>
 
 <span class="sd">        If ``index`` is ``None`` it means all elements.</span>
@@ -441,7 +450,7 @@
 <span class="sd">            SLICE1(index=[2,3]) # return elements 2 and 3 as a 1D array</span>
 <span class="sd">            SLICE1(index=[2])   # return element 2 as a 1D array</span>
 <span class="sd">            SLICE1(index=2)     # return element 2 as a NumPy scalar</span>
-<span class="sd">        </span>
+
 <span class="sd">        If ``index`` is a tuple, it must have three elements.  It</span>
 <span class="sd">        describes a Python slice ``(start, stop, step)`` where any element can be ``None``</span>
 
@@ -455,41 +464,42 @@
 
 <span class="sd">            SLICE1(index=(None,None,2))  # return every second element</span>
 <span class="sd">            SLICE1(index=(None,None,-1)) # reverse the elements</span>
-<span class="sd">        </span>
+
 <span class="sd">        :seealso: :class:`Slice1`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;slice1&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s2">&quot;slice1&quot;</span>
 
         <span class="k">if</span> <span class="n">index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span>  <span class="n">index</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">index</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">index</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="o">*</span><span class="n">index</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;bad index specifier&#39;</span><span class="p">)</span></div>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;bad index specifier&quot;</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="n">array</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">array</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Slice1 block expecting 1d array&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Slice1 block expecting 1d array&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">array</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">]]</span></div>
+
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 <div class="viewcode-block" id="Det"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Det">[docs]</a><span class="k">class</span> <span class="nc">Det</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`DET`</span>
-<span class="sd">    </span>
+
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
-<span class="sd">    </span>
+
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    | inputs     | outputs |  states |</span>
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    | 1          | 1       | 0       |</span>
 <span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | A(N,N)     | float   |         | </span>
+<span class="sd">    | A(N,N)     | float   |         |</span>
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -504,32 +514,34 @@
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: A DET block</span>
 <span class="sd">        :rtype: Det instance</span>
-<span class="sd">        </span>
+
 <span class="sd">        Compute the matrix determinant.</span>
 
 <span class="sd">        :seealso: `numpy.linalg.det &lt;https://numpy.org/doc/stable/reference/generated/numpy.linalg.det.html&gt;`_</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;det&#39;</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s2">&quot;det&quot;</span></div>
 
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="n">mat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">det</span><span class="p">(</span><span class="n">mat</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">out</span><span class="p">]</span></div>
+
+
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 <div class="viewcode-block" id="Cond"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Cond">[docs]</a><span class="k">class</span> <span class="nc">Cond</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`COND`</span>
-<span class="sd">    </span>
+
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
-<span class="sd">    </span>
+
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    | inputs     | outputs |  states |</span>
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    | 1          | 1       | 0       |</span>
 <span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | A(N,M)     | float   |         | </span>
+<span class="sd">    | A(N,M)     | float   |         |</span>
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -544,16 +556,17 @@
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: A COND block</span>
 <span class="sd">        :rtype: Cond instance</span>
-<span class="sd">        </span>
+
 <span class="sd">        :seealso: `numpy.linalg.cond &lt;https://numpy.org/doc/stable/reference/generated/numpy.linalg.cond.html&gt;`_</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;cond&#39;</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s2">&quot;cond&quot;</span></div>
 
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="n">mat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span><span class="n">mat</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">out</span><span class="p">]</span></div>
+
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
 
@@ -570,7 +583,7 @@
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020, Peter Corke.
-      <span class="lastupdated">Last updated on 07-Jan-2023.
+      <span class="lastupdated">Last updated on 22-Jan-2023.
       </span></p>
   </div>
 
