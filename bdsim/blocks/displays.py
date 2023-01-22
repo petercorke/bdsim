@@ -176,8 +176,8 @@ class Scope(GraphicsBlock):
         if vector is not None:
             nin = 1
             nplots = nvec
-        # else:
-        #     nin = nplots
+        else:
+            nin = nplots
 
         self.nplots = nplots
         self.vector = vector
