@@ -41,6 +41,76 @@ class BDSimTest(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             sim.options.set(graphics=False, animation=True)
+
+    def test_sim(self):
+        # all up test
+
+        sim = bdsim.BDSim(graphics=None, progress=False)
+        bd = sim.blockdiagram()
+
+        integ = bd.INTEGRATOR()
+        step = bd.STEP(t=1)
+        null = bd.NULL()
+        bd.connect(step, integ)
+        bd.connect(integ, null)
+
+        bd.compile()
+        out = sim.run(bd, 2)
+
+        self.assertIsInstance(out, bdsim.components.BDStruct)
+        self.assertTrue(hasattr(out, "t"))
+        self.assertIsInstance(out.t, np.ndarray)
+        self.assertEqual(out.t.ndim, 1)
+        n = out.t.shape[0]
+        self.assertGreater(n, 100)
+
+        self.assertTrue(hasattr(out, "x"))
+        self.assertIsInstance(out.x, np.ndarray)
+        self.assertEqual(out.x.shape, (n,1))
+
+        self.assertTrue(hasattr(out, "xnames"))
+        self.assertIsInstance(out.xnames, list)
+        self.assertEqual(len(out.xnames), 1)
+        self.assertEqual(out.xnames[0], "integrator.0x0")
+
+        self.assertTrue(hasattr(out, "ynames"))
+        self.assertIsInstance(out.ynames, list)
+        self.assertEqual(len(out.ynames), 0)
+
+    def test_sim_implicit(self):
+        # all up test
+
+        sim = bdsim.BDSim(graphics=None, progress=False)
+        bd = sim.blockdiagram()
+
+        integ = bd.INTEGRATOR()
+        step = bd.STEP(t=1)
+        null = bd.NULL()
+        integ[0] = step
+        null[0] = integ
+
+        bd.compile()
+        out = sim.run(bd, 2)
+
+        self.assertIsInstance(out, bdsim.components.BDStruct)
+        self.assertTrue(hasattr(out, "t"))
+        self.assertIsInstance(out.t, np.ndarray)
+        self.assertEqual(out.t.ndim, 1)
+        n = out.t.shape[0]
+        self.assertGreater(n, 100)
+
+        self.assertTrue(hasattr(out, "x"))
+        self.assertIsInstance(out.x, np.ndarray)
+        self.assertEqual(out.x.shape, (n,1))
+
+        self.assertTrue(hasattr(out, "xnames"))
+        self.assertIsInstance(out.xnames, list)
+        self.assertEqual(len(out.xnames), 1)
+        self.assertEqual(out.xnames[0], "integrator.0x0")
+
+        self.assertTrue(hasattr(out, "ynames"))
+        self.assertIsInstance(out.ynames, list)
+        self.assertEqual(len(out.ynames), 0)
 # ---------------------------------------------------------------------------------------#
 if __name__ == '__main__':
 
