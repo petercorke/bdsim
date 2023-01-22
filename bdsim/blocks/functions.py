@@ -22,7 +22,6 @@ from bdsim.components import FunctionBlock
 
 # PID
 # product
-# saturation
 # transform 3D points
 
         
@@ -83,7 +82,7 @@ class Sum(FunctionBlock):
             'l': smb.wrap_0_pi,
     }
 
-    def __init__(self, signs:str='++', mode:str='r', **blockargs):
+    def __init__(self, signs:str='++', mode:str=None, **blockargs):
         super().__init__(nin=len(signs), **blockargs)
         assert isinstance(signs, str), 'first argument must be signs string'
         assert all([x in '+-' for x in signs]), 'invalid sign'
@@ -110,11 +109,11 @@ class Sum(FunctionBlock):
             if isinstance(sum, np.ndarray):
                 if sum.ndim == 1:
                     if len(self.mode) != len(sum):
-                        raise ValueError('length of mode string doesnt match')
+                        raise ValueError("length of mode string doesn't match")
                     sum = np.array([self._modefuncs[m](x) for (m, x) in zip(self.mode, sum)])
                 elif sum.ndim == 2:
                     if len(self.mode) != sum.shape[0]:
-                        raise ValueError('length of mode string doesnt match number of rows')
+                        raise ValueError("length of mode string doesn't match number of rows")
                     out = []
                     for col in sum.T:
                         out.append([self._modefuncs[m](x) for (m, x) in zip(self.mode, col)])
@@ -122,8 +121,8 @@ class Sum(FunctionBlock):
 
                 else:
                     raise ValueError('expecting 1D or 2D array')
-            else:
-                sum = self._modefuncs[self.mode[0]](sum)
+            # else:
+            #     sum = self._modefuncs[self.mode[0]](sum)
 
         return [sum]
 
