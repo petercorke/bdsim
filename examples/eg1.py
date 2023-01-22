@@ -2,12 +2,8 @@
 
 import bdsim
 
-sim = bdsim.BDSim(debug='g', animation=True)  # create simulator
+sim = bdsim.BDSim(animation=True)  # create simulator
 bd = sim.blockdiagram()  # create an empty block diagram
-sim.blocks()
-
-print(sim.options)
-sim.set_options(animation=True)
 
 # define the blocks
 demand = bd.STEP(T=1, name='demand')
