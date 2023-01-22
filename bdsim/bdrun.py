@@ -120,8 +120,10 @@ def bdload(bd, filename, globalvars={}, verbose=False, **kwargs):
                 if 'blockargs' in params:
                     blockargs = params['blockargs']
                     del params['blockargs']
+                else:
+                    blockargs = {}
 
-                blockargs = blockargs or {}
+                # blockargs = blockargs or {}
 
                 newblock = block_init(name=block['title'], **params, **blockargs)    # instantiate the block
             
@@ -179,12 +181,11 @@ def bdload(bd, filename, globalvars={}, verbose=False, **kwargs):
 
 def bdrun(filename = None, globals={}, **kwargs):
 
-    print('in bdrun', sys.argv)
+    if filename is None:
+        filename = sys.argv[1]
 
-    sim = BDSim(**kwargs)
-
-    print('bdrun starting')
-    bd = sim.blockdiagram()
+    sim = BDSim(**kwargs)    # create simulator
+    bd = sim.blockdiagram()  # create diagram
 
     bd = bdload(bd, filename=filename, globalvars=globals, **kwargs)
     bd.compile()
