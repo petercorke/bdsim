@@ -73,17 +73,19 @@ class GraphicsSocket(QGraphicsItem):
         self.sign_width = 1.5
 
         # Fill colors of the socket shapes are defined
-        self._color_background_input = QColor("#3483eb")        # Blue
-        self._color_background_output = QColor("#f54242")       # Red
-        self._color_background_connector = QColor("#42f587")    # Lime Green (currently not used)
-        self._color_outline = QColor("#000000")                 # Black
+        self._color_background_input = QColor("#3483eb")  # Blue
+        self._color_background_output = QColor("#f54242")  # Red
+        self._color_background_connector = QColor(
+            "#42f587"
+        )  # Lime Green (currently not used)
+        self._color_outline = QColor("#000000")  # Black
 
         # Painter pens are assigned a colour and outline thickness
         self._pen = QPen(self._color_outline)
         self._pen.setWidthF(self.outline_width)
         self._sign_pen = QPen(self._color_outline)
         self._sign_pen.setWidthF(self.sign_width)
-        self._char_font = QFont('Arial', 14)
+        self._char_font = QFont("Arial", 14)
 
         self.setFlag(QGraphicsItem.ItemIsSelectable)
         self.setBrush()
@@ -150,7 +152,9 @@ class GraphicsSocket(QGraphicsItem):
 
             # This code paints a square for the input socket
             if self.socket.socket_type == INPUT:
-                painter.drawRect(-self.square, -self.square, 2 * self.square, 2 * self.square)
+                painter.drawRect(
+                    -self.square, -self.square, 2 * self.square, 2 * self.square
+                )
                 # If the input socket has a sign (will be true for the PROD and SUM Blocks)
                 # paint the relevant sign (+,-,*,/) next to the input socket
                 try:
@@ -159,16 +163,26 @@ class GraphicsSocket(QGraphicsItem):
                         if path is None:
                             painter.setPen(self._sign_pen)
                             painter.setFont(self._char_font)
-                            painter.drawText((10 + offset) * multi, char_height, self.socket.socket_sign)
+                            painter.drawText(
+                                (10 + offset) * multi,
+                                char_height,
+                                self.socket.socket_sign,
+                            )
                         else:
                             # The painter path for the respective sign depends on the sign relating to this socket
                             painter.setPen(self._sign_pen)
                             painter.drawPath(path)
                 except Exception as e:
                     if self.FATAL_ERROR == False:
-                        print("---------------------------------------------------------------------------------------")
-                        print("Caught fatal exception while trying to draw input socket labels. Please save your work.")
-                        print("---------------------------------------------------------------------------------------")
+                        print(
+                            "---------------------------------------------------------------------------------------"
+                        )
+                        print(
+                            "Caught fatal exception while trying to draw input socket labels. Please save your work."
+                        )
+                        print(
+                            "---------------------------------------------------------------------------------------"
+                        )
                         traceback.print_exc(file=sys.stderr)
                         self.FATAL_ERROR = True
 
@@ -185,12 +199,20 @@ class GraphicsSocket(QGraphicsItem):
                     if self.socket.socket_sign is not None:
                         painter.setPen(self._sign_pen)
                         painter.setFont(self._char_font)
-                        painter.drawText((10 + offset) * multi, char_height, self.socket.socket_sign)
+                        painter.drawText(
+                            (10 + offset) * multi, char_height, self.socket.socket_sign
+                        )
                 except Exception as e:
                     if self.FATAL_ERROR == False:
-                        print("----------------------------------------------------------------------------------------")
-                        print("Caught fatal exception while trying to draw output socket labels. Please save your work.")
-                        print("----------------------------------------------------------------------------------------")
+                        print(
+                            "----------------------------------------------------------------------------------------"
+                        )
+                        print(
+                            "Caught fatal exception while trying to draw output socket labels. Please save your work."
+                        )
+                        print(
+                            "----------------------------------------------------------------------------------------"
+                        )
                         traceback.print_exc(file=sys.stderr)
                         self.FATAL_ERROR = True
 
@@ -271,7 +293,10 @@ class GraphicsSocket(QGraphicsItem):
     def charDimensions(self):
 
         # Find how many pixels - height wise - this sockets' character is
-        (width, baseline), (offset_x, offset_y) = self.socket.node.scene._system_font.font.getsize(self.socket.socket_sign)
+        (width, baseline), (
+            offset_x,
+            offset_y,
+        ) = self.socket.node.scene._system_font.font.getsize(self.socket.socket_sign)
 
         char_width = QFontMetrics(self._char_font).width(self.socket.socket_sign)
         height = 5
@@ -321,7 +346,10 @@ class GraphicsSocket(QGraphicsItem):
     def shouldSocketsBeHidden(self):
 
         # Check if the sockets belong to a connector type block
-        if self.socket.node.block_type == "CONNECTOR" or self.socket.node.block_type == "Connector":
+        if (
+            self.socket.node.block_type == "CONNECTOR"
+            or self.socket.node.block_type == "Connector"
+        ):
             # Check if the toolbar checkbox for hiding connector blocks has been selected
             if self.socket.node.scene.hide_connector_blocks:
                 return True
@@ -343,8 +371,8 @@ class GraphicsSocket(QGraphicsItem):
         """
 
         return QRectF(
-            - self.radius - self.outline_width,
-            - self.radius - self.outline_width,
+            -self.radius - self.outline_width,
+            -self.radius - self.outline_width,
             2 * (self.radius + self.outline_width),
             2 * (self.radius + self.outline_width),
         )

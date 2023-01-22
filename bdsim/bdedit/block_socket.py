@@ -51,7 +51,15 @@ class Socket(Serializable):
     """
 
     # -----------------------------------------------------------------------------
-    def __init__(self, node, index=0, position=LEFT, socket_type=INPUT, multi_wire=True, socket_label=None):
+    def __init__(
+        self,
+        node,
+        index=0,
+        position=LEFT,
+        socket_type=INPUT,
+        multi_wire=True,
+        socket_label=None,
+    ):
         """
         This method initializes an instance of the ``Socket`` Class.
 
@@ -75,9 +83,9 @@ class Socket(Serializable):
         self.socket_sign = socket_label
         self.is_multi_wire = multi_wire
         self.grSocket = GraphicsSocket(self)
-        
+
         self.grSocket.setPos(*self.node.getSocketPosition(index, position))
-        
+
         self.wires = []
 
     # -----------------------------------------------------------------------------
@@ -128,8 +136,10 @@ class Socket(Serializable):
         :type wire: Wire, required
         """
 
-        if wire in self.wires: self.wires.remove(wire)
-        else: print("Socket remove edge not in list")
+        if wire in self.wires:
+            self.wires.remove(wire)
+        else:
+            print("Socket remove edge not in list")
 
     # -----------------------------------------------------------------------------
     def removeAllWires(self):
@@ -212,8 +222,10 @@ class Socket(Serializable):
         # If in DEBUG mode, this code will return the type of Socket that has just
         # been removed, and that the socket removal process has started. When this
         # process is finished, a done message will be printed.
-        if DEBUG: print("# Removing "+type+" Sockets", self)
-        if DEBUG: print(" - removing grSockets")
+        if DEBUG:
+            print("# Removing " + type + " Sockets", self)
+        if DEBUG:
+            print(" - removing grSockets")
 
         # This allows one method to be used for deleting input OR output sockets
         if type == "Input":
@@ -236,7 +248,8 @@ class Socket(Serializable):
         # Finally remove the socket class from the associated block
         self.node.removeSockets(type)
 
-        if DEBUG: print(" - everything is done.")
+        if DEBUG:
+            print(" - everything is done.")
 
     # -----------------------------------------------------------------------------
     def serialize(self):
@@ -250,13 +263,15 @@ class Socket(Serializable):
         :rtype: ``OrderedDict`` ([keys, values]*)
         """
 
-        return OrderedDict([
-            ('id', self.id),
-            ('index', self.index),
-            ('multi_wire', self.is_multi_wire),
-            ('position', self.position),
-            ('socket_type', self.socket_type),
-        ])
+        return OrderedDict(
+            [
+                ("id", self.id),
+                ("index", self.index),
+                ("multi_wire", self.is_multi_wire),
+                ("position", self.position),
+                ("socket_type", self.socket_type),
+            ]
+        )
 
     # -----------------------------------------------------------------------------
     def deserialize(self, data, hashmap={}):
@@ -275,8 +290,8 @@ class Socket(Serializable):
         """
 
         # The id of this Socket is set to whatever was stored as its id in the JSON file.
-        self.id = data['id']
+        self.id = data["id"]
         # The remaining variables associated to this Socket are mapped to itself
-        hashmap[data['id']] = self
+        hashmap[data["id"]] = self
 
         return True

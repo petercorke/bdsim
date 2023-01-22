@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import *
 
 # Majority of this code has been adapted with heavy inspiration from: https://stackoverflow.com/a/34442054
 
+
 class GraphicsGBox(QGraphicsRectItem):
 
     handleTopLeft = 1
@@ -50,10 +51,14 @@ class GraphicsGBox(QGraphicsRectItem):
 
         # Pen thickness and block-related spacings are defined
         self._line_thickness = 3.0  # Thickness of the block outline by default
-        self._selected_line_thickness = 5.0  # Thickness of the block outline on selection
+        self._selected_line_thickness = (
+            5.0  # Thickness of the block outline on selection
+        )
 
         # Colours for pens are defined
-        self._pen_selected = QPen(QColorConstants.Svg.orange, self._selected_line_thickness, Qt.SolidLine)
+        self._pen_selected = QPen(
+            QColorConstants.Svg.orange, self._selected_line_thickness, Qt.SolidLine
+        )
         self.bg_color = self.grouping_box.background_color
         self.br_color = self.grouping_box.border_color
 
@@ -82,7 +87,10 @@ class GraphicsGBox(QGraphicsRectItem):
         """
         Returns the resize handle below the given point.
         """
-        for k, v, in self.handles.items():
+        for (
+            k,
+            v,
+        ) in self.handles.items():
             if v.contains(point):
                 return k
         return None
@@ -108,6 +116,7 @@ class GraphicsGBox(QGraphicsRectItem):
         """
         Executed when the mouse is pressed on the item.
         """
+
         def updateColor(chosen_color):
             if chosen_color.isValid():
                 # Set alpha value of chosen color, to half transparency
@@ -115,7 +124,9 @@ class GraphicsGBox(QGraphicsRectItem):
 
                 self.bg_color = chosen_color
                 self.grouping_box.scene.has_been_modified = True
-                self.grouping_box.scene.history.storeHistory("Grouping box color changed")
+                self.grouping_box.scene.history.storeHistory(
+                    "Grouping box color changed"
+                )
 
         # Selected grouping box will be brought into focus, by sending others 1 layer back
         self.grouping_box.setFocusOfGroupingBox()
@@ -134,7 +145,9 @@ class GraphicsGBox(QGraphicsRectItem):
             # Open a color dialog window, and when the chosen color changes, call func updateColor
             # to update the background color of the grouping box
             colorDialog = QColorDialog()
-            colorDialog.currentColorChanged.connect(lambda checked: updateColor(colorDialog.currentColor()))
+            colorDialog.currentColorChanged.connect(
+                lambda checked: updateColor(colorDialog.currentColor())
+            )
 
             # If user selects okay, this finalizes the color selection
             if colorDialog.exec_() == QDialog.Accepted:
@@ -170,7 +183,9 @@ class GraphicsGBox(QGraphicsRectItem):
         if self.wasMoved:
             self.wasMoved = False
             self.grouping_box.scene.has_been_modified = True
-            self.grouping_box.scene.history.storeHistory("Grouping box moved or resized")
+            self.grouping_box.scene.history.storeHistory(
+                "Grouping box moved or resized"
+            )
 
     def boundingRect(self):
         """
@@ -186,13 +201,23 @@ class GraphicsGBox(QGraphicsRectItem):
         s = self.handleSize
         b = self.boundingRect()
         self.handles[self.handleTopLeft] = QRectF(b.left(), b.top(), s, s)
-        self.handles[self.handleTopMiddle] = QRectF(b.center().x() - s / 2, b.top(), s, s)
+        self.handles[self.handleTopMiddle] = QRectF(
+            b.center().x() - s / 2, b.top(), s, s
+        )
         self.handles[self.handleTopRight] = QRectF(b.right() - s, b.top(), s, s)
-        self.handles[self.handleMiddleLeft] = QRectF(b.left(), b.center().y() - s / 2, s, s)
-        self.handles[self.handleMiddleRight] = QRectF(b.right() - s, b.center().y() - s / 2, s, s)
+        self.handles[self.handleMiddleLeft] = QRectF(
+            b.left(), b.center().y() - s / 2, s, s
+        )
+        self.handles[self.handleMiddleRight] = QRectF(
+            b.right() - s, b.center().y() - s / 2, s, s
+        )
         self.handles[self.handleBottomLeft] = QRectF(b.left(), b.bottom() - s, s, s)
-        self.handles[self.handleBottomMiddle] = QRectF(b.center().x() - s / 2, b.bottom() - s, s, s)
-        self.handles[self.handleBottomRight] = QRectF(b.right() - s, b.bottom() - s, s, s)
+        self.handles[self.handleBottomMiddle] = QRectF(
+            b.center().x() - s / 2, b.bottom() - s, s, s
+        )
+        self.handles[self.handleBottomRight] = QRectF(
+            b.right() - s, b.bottom() - s, s, s
+        )
 
     def interactiveResize(self, mousePos):
         """
@@ -299,12 +324,20 @@ class GraphicsGBox(QGraphicsRectItem):
 
         # Finally, check if rectangle has been dragged inside out
         if rect.width() < spacing:
-            if self.handleSelected in [self.handleTopLeft, self.handleMiddleLeft, self.handleBottomLeft]:
+            if self.handleSelected in [
+                self.handleTopLeft,
+                self.handleMiddleLeft,
+                self.handleBottomLeft,
+            ]:
                 rect.setLeft(rect.right() - spacing)
             else:
                 rect.setRight(rect.left() + spacing)
         if rect.height() < spacing:
-            if self.handleSelected in [self.handleTopLeft, self.handleTopMiddle, self.handleTopRight]:
+            if self.handleSelected in [
+                self.handleTopLeft,
+                self.handleTopMiddle,
+                self.handleTopRight,
+            ]:
                 rect.setTop(rect.bottom() - spacing)
             else:
                 rect.setBottom(rect.top() + spacing)
@@ -338,13 +371,25 @@ class GraphicsGBox(QGraphicsRectItem):
         Paint the node in the graphic view.
         """
         painter.setBrush(QBrush(self.bg_color))
-        painter.setPen(QPen(self.br_color, 1.0, Qt.SolidLine) if not self.isSelected() else self._pen_selected)   # black default outline, thicker orange when selected
+        painter.setPen(
+            QPen(self.br_color, 1.0, Qt.SolidLine)
+            if not self.isSelected()
+            else self._pen_selected
+        )  # black default outline, thicker orange when selected
         painter.drawRect(self.rect())
 
         if self.isSelected():
             painter.setRenderHint(QPainter.Antialiasing)
             # painter.setBrush(QBrush(QColor("#FFFFA637")))
             painter.setBrush(QBrush(QColorConstants.Svg.orange))
-            painter.setPen(QPen(QColorConstants.Svg.black, 1.0, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+            painter.setPen(
+                QPen(
+                    QColorConstants.Svg.black,
+                    1.0,
+                    Qt.SolidLine,
+                    Qt.RoundCap,
+                    Qt.RoundJoin,
+                )
+            )
             for handle, rect in self.handles.items():
                 painter.drawEllipse(rect)

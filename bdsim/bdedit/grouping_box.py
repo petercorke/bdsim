@@ -17,7 +17,15 @@ DEBUG = False
 
 
 class Grouping_Box(Serializable):
-    def __init__(self, scene, window, width=500, height=300, bg_color=(146, 187, 255), pos=(-200, -100)):
+    def __init__(
+        self,
+        scene,
+        window,
+        width=500,
+        height=300,
+        bg_color=(146, 187, 255),
+        pos=(-200, -100),
+    ):
         super().__init__()
         self.scene = scene
         self.window = window
@@ -58,35 +66,41 @@ class Grouping_Box(Serializable):
     # Todo - update comments to match floating label, not block
     def remove(self):
 
-        if DEBUG: print("> Removing Grouping Box", self)
+        if DEBUG:
+            print("> Removing Grouping Box", self)
 
         # Remove the graphical representation of this grouping box from the scene.
-        if DEBUG: print(" - removing grGBox")
+        if DEBUG:
+            print(" - removing grGBox")
         self.scene.grScene.removeItem(self.grGBox)
         self.grGBox = None
 
         # Finally, call the removeGBox method from within the Scene, which
         # removes this GBox from the list of grouping boxes stored in the Scene.
-        if DEBUG: print(" - removing Grouping Box from the scene")
+        if DEBUG:
+            print(" - removing Grouping Box from the scene")
         self.scene.removeGBox(self)
-        if DEBUG: print(" - everything was done.")
+        if DEBUG:
+            print(" - everything was done.")
 
     # -----------------------------------------------------------------------------
     def serialize(self):
         actual_pos = self.grGBox.mapToScene(self.grGBox.rect())
-        return OrderedDict([
-            ('id', self.id),
-            ('pos_x', actual_pos.boundingRect().x()),
-            ('pos_y', actual_pos.boundingRect().y()),
-            ('width', self.grGBox.rect().width()),
-            ('height', self.grGBox.rect().height()),
-            ("color", self.grGBox.bg_color.getRgb()[0:3]),
-        ])
+        return OrderedDict(
+            [
+                ("id", self.id),
+                ("pos_x", actual_pos.boundingRect().x()),
+                ("pos_y", actual_pos.boundingRect().y()),
+                ("width", self.grGBox.rect().width()),
+                ("height", self.grGBox.rect().height()),
+                ("color", self.grGBox.bg_color.getRgb()[0:3]),
+            ]
+        )
 
     # -----------------------------------------------------------------------------
     def deserialize(self, data, hashmap={}):
         # The id of this Grouping Box is set to whatever was stored as its id in the JSON file.
-        self.id = data['id']
+        self.id = data["id"]
 
         return True
         pass

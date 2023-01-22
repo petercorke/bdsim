@@ -18,22 +18,22 @@ from spatialmath import base, Twist3, SE3
 
 from bdsim.components import ClockedBlock
 
-# ------------------------------------------------------------------------ 
+# ------------------------------------------------------------------------
 
 
 class ZOH(ClockedBlock):
     """
     :blockname:`ZOH`
-    
+
     .. table::
        :align: left
-    
+
     +------------+---------+---------+
     | inputs     | outputs |  states |
     +------------+---------+---------+
     | 1          | 1       | N       |
     +------------+---------+---------+
-    | float,     | float,  |         | 
+    | float,     | float,  |         |
     | A(N,)      | A(N,)   |         |
     +------------+---------+---------+
     """
@@ -60,7 +60,7 @@ class ZOH(ClockedBlock):
         .. note:: If input is not a scalar, ``x0`` must have the shape of the
             input signal.
         """
-        self.type = 'sampler'
+        self.type = "sampler"
         super().__init__(nin=1, nout=1, clock=clock, **blockargs)
 
         x0 = base.getvector(x0)
@@ -76,21 +76,23 @@ class ZOH(ClockedBlock):
         xnext = np.array(self.inputs)
         return xnext
 
-# ------------------------------------------------------------------------ 
+
+# ------------------------------------------------------------------------
+
 
 class DIntegrator(ClockedBlock):
     """
     :blockname:`DINTEGRATOR`
-    
+
     .. table::
        :align: left
-    
+
     +------------+---------+---------+
     | inputs     | outputs |  states |
     +------------+---------+---------+
     | 1          | 1       | N       |
     +------------+---------+---------+
-    | float,     | float,  |         | 
+    | float,     | float,  |         |
     | A(N,)      | A(N,)   |         |
     +------------+---------+---------+
     """
@@ -124,7 +126,7 @@ class DIntegrator(ClockedBlock):
 
         The minimum and maximum values can be:
 
-            - a scalar, in which case the same value applies to every element of 
+            - a scalar, in which case the same value applies to every element of
               the state vector, or
             - a vector, of the same shape as ``x0`` that applies elementwise to
               the state.
@@ -133,12 +135,12 @@ class DIntegrator(ClockedBlock):
 
         if isinstance(x0, (int, float)):
             x0 = np.r_[x0]
-                
+
         elif isinstance(x0, np.ndarray):
-                if x0.ndim > 1:
-                    raise ValueError('state must be a 1D vector')
+            if x0.ndim > 1:
+                raise ValueError("state must be a 1D vector")
         else:
-                x0 = base.getvector(x0)
+            x0 = base.getvector(x0)
 
         self.ndstates = x0.shape[0]
 
@@ -161,13 +163,14 @@ class DIntegrator(ClockedBlock):
             xnext = np.clip(xnext, self.min, self.max)
         return xnext
 
+
 class DPoseIntegrator(ClockedBlock):
     """
     :blockname:`DPOSEINTEGRATOR`
-    
+
     .. table::
        :align: left
-    
+
        +------------+---------+---------+
        | inputs     | outputs |  states |
        +------------+---------+---------+
@@ -179,8 +182,8 @@ class DPoseIntegrator(ClockedBlock):
 
     nin = 1
     nout = 1
-    inlabels = ('ν',)
-    outlabels = ('ξ',)
+    inlabels = ("ν",)
+    outlabels = ("ξ",)
 
     def __init__(self, clock, x0=None, **blockargs):
         r"""
@@ -218,7 +221,7 @@ class DPoseIntegrator(ClockedBlock):
 
         self._x0 = x0
 
-        print('nstates', self.nstates, x0)
+        print("nstates", self.nstates, x0)
 
     def output(self, t=None):
         return [Twist3(self._x).SE3()]
@@ -228,6 +231,7 @@ class DPoseIntegrator(ClockedBlock):
         pose = Twist3(self._x).SE3() * T_delta
         return Twist3(pose).A
 
+
 # ------------------------------------------------------------------------ #
 
 
@@ -235,16 +239,16 @@ class DPoseIntegrator(ClockedBlock):
 # class LTI_SS(TransferBlock):
 #     """
 #     :blockname:`LTI_SS`
-    
+
 #     .. table::
 #        :align: left
-    
+
 #        +------------+---------+---------+
 #        | inputs     | outputs |  states |
 #        +------------+---------+---------+
 #        | 1          | 01      | nc      |
 #        +------------+---------+---------+
-#        | float,     | float,  |         | 
+#        | float,     | float,  |         |
 #        | A(nb,)     | A(nc,)  |         |
 #        +------------+---------+---------+
 #     """
@@ -269,7 +273,7 @@ class DPoseIntegrator(ClockedBlock):
 #         time invariant (LTI) system described by numerator and denominator
 #         polynomial coefficients.
 
-#         Coefficients are given in the order from highest order to zeroth 
+#         Coefficients are given in the order from highest order to zeroth
 #         order, ie. :math:`2s^2 - 4s +3` is ``[2, -4, 3]``.
 
 #         Only proper transfer functions, where order of numerator is less
@@ -329,18 +333,18 @@ class DPoseIntegrator(ClockedBlock):
 # class LTI_SISO(LTI_SS):
 #     """
 #     :blockname:`LTI_SISO`
-    
+
 #     .. table::
 #        :align: left
-    
+
 #        +------------+---------+---------+
 #        | inputs     | outputs |  states |
 #        +------------+---------+---------+
 #        | 1          | 1       | n       |
 #        +------------+---------+---------+
-#        | float      | float   |         | 
+#        | float      | float   |         |
 #        +------------+---------+---------+
-     
+
 #     """
 
 #     def __init__(self, N=1, D=[1, 1], *inputs, x0=None, verbose=False, **blockargs):
@@ -363,7 +367,7 @@ class DPoseIntegrator(ClockedBlock):
 #         time invariant (LTI) system described by numerator and denominator
 #         polynomial coefficients.
 
-#         Coefficients are given in the order from highest order to zeroth 
+#         Coefficients are given in the order from highest order to zeroth
 #         order, ie. :math:`2s^2 - 4s +3` is ``[2, -4, 3]``.
 
 #         Only proper transfer functions, where order of numerator is less
@@ -427,4 +431,6 @@ class DPoseIntegrator(ClockedBlock):
 if __name__ == "__main__":  # pragma: no cover
     from pathlib import Path
 
-    exec(open(Path(__file__).parent.parent.parent / "tests" / "test_discrete.py").read())
+    exec(
+        open(Path(__file__).parent.parent.parent / "tests" / "test_discrete.py").read()
+    )

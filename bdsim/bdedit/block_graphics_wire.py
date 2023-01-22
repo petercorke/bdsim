@@ -91,7 +91,9 @@ class GraphicsWire(QGraphicsPathItem):
 
         # self._pen = QPen(self._color, 5, Qt.SolidLine, Qt.SquareCap, Qt.BevelJoin)
         self._pen = QPen(self._color, 5, Qt.SolidLine, Qt.SquareCap, Qt.RoundJoin)
-        self._pen_selected = QPen(self._color_selected, 8, Qt.SolidLine, Qt.SquareCap, Qt.BevelJoin)
+        self._pen_selected = QPen(
+            self._color_selected, 8, Qt.SolidLine, Qt.SquareCap, Qt.BevelJoin
+        )
 
         # Initializing the start and end sockets
         self.posSource = [0, 0]
@@ -222,9 +224,15 @@ class GraphicsWire(QGraphicsPathItem):
 
         except Exception as e:
             if self.FATAL_ERROR == False:
-                print("-------------------------------------------------------------------------")
-                print("Caught fatal exception while trying to draw wires. Please save your work.")
-                print("-------------------------------------------------------------------------")
+                print(
+                    "-------------------------------------------------------------------------"
+                )
+                print(
+                    "Caught fatal exception while trying to draw wires. Please save your work."
+                )
+                print(
+                    "-------------------------------------------------------------------------"
+                )
                 traceback.print_exc(file=sys.stderr)
                 self.FATAL_ERROR = True
 
@@ -240,13 +248,13 @@ class GraphicsWire(QGraphicsPathItem):
             (p1x, p1y) = self.wire.wire_coordinates[0]
             self.wire_points.append(QPointF(p1x, p1y))
 
-            for i, (x,y) in enumerate(self.wire.wire_coordinates):
+            for i, (x, y) in enumerate(self.wire.wire_coordinates):
                 if i == 0 or i == len(self.wire.wire_coordinates):
                     self.wire_points.append(QPointF(x, y + width))
                 else:
                     self.wire_points.append(QPointF(x + width, y + width))
 
-            for i, (x,y) in enumerate(reversed(self.wire.wire_coordinates)):
+            for i, (x, y) in enumerate(reversed(self.wire.wire_coordinates)):
                 if i == 0 or i == len(self.wire.wire_coordinates):
                     self.wire_points.append(QPointF(x, y - width))
                 else:
@@ -288,12 +296,16 @@ class GraphicsWire(QGraphicsPathItem):
             self.handleSegments = 5
 
         elif segments == 3:
-            self.handleCursors = self.handleCursors.fromkeys(self.handleCursors.keys(), Qt.ArrowCursor)
+            self.handleCursors = self.handleCursors.fromkeys(
+                self.handleCursors.keys(), Qt.ArrowCursor
+            )
             self.handleCursors[self.handleVSeg1] = Qt.SizeHorCursor
             self.handleSegments = 3
 
         else:
-            self.handleCursors = self.handleCursors.fromkeys(self.handleCursors.keys(), Qt.ArrowCursor)
+            self.handleCursors = self.handleCursors.fromkeys(
+                self.handleCursors.keys(), Qt.ArrowCursor
+            )
             self.handleSegments = segments
 
     # -----------------------------------------------------------------------------
@@ -309,16 +321,28 @@ class GraphicsWire(QGraphicsPathItem):
             # Clear current horizontal and vertical segemnt lists, and clear cursor handles
             self.wire.horizontal_segments.clear()
             self.wire.vertical_segments.clear()
-            self.segment_handles = self.segment_handles.fromkeys(self.segment_handles.keys(), None)
+            self.segment_handles = self.segment_handles.fromkeys(
+                self.segment_handles.keys(), None
+            )
 
             # Find max number of segments in our line
-            max_seg = len(self.wire.wire_coordinates)-1
+            max_seg = len(self.wire.wire_coordinates) - 1
 
             # From first to 2nd last coordinate point of the wire
             for counter in range(0, max_seg):
                 # Find top left and btm right points
-                top_left = min((self.wire.wire_coordinates[counter], self.wire.wire_coordinates[counter + 1]))
-                btm_right = max((self.wire.wire_coordinates[counter], self.wire.wire_coordinates[counter + 1]))
+                top_left = min(
+                    (
+                        self.wire.wire_coordinates[counter],
+                        self.wire.wire_coordinates[counter + 1],
+                    )
+                )
+                btm_right = max(
+                    (
+                        self.wire.wire_coordinates[counter],
+                        self.wire.wire_coordinates[counter + 1],
+                    )
+                )
                 s = self.handleSize
 
                 # Line segments always alternate, from horizontal to vertical to horizontal etc.
@@ -326,15 +350,31 @@ class GraphicsWire(QGraphicsPathItem):
                 # Append a line represented as ((x1,y2),(x2,y2)) to either horizontal or vertical line segment list
                 if counter % 2 == 0:
                     # Current and next coordinates are added into the horizontal line segments list
-                    self.wire.horizontal_segments.append([self.wire.wire_coordinates[counter], self.wire.wire_coordinates[counter+1]])
+                    self.wire.horizontal_segments.append(
+                        [
+                            self.wire.wire_coordinates[counter],
+                            self.wire.wire_coordinates[counter + 1],
+                        ]
+                    )
                     # Update rectangles for horizontal segments
-                    self.segment_handles[counter] = QRectF(QPointF(top_left[0]+s, top_left[1]-s), QPointF(btm_right[0]-s, btm_right[1]+s))
+                    self.segment_handles[counter] = QRectF(
+                        QPointF(top_left[0] + s, top_left[1] - s),
+                        QPointF(btm_right[0] - s, btm_right[1] + s),
+                    )
 
                 else:
                     # Current and next coordinates are added into the vertical line segments list
-                    self.wire.vertical_segments.append([self.wire.wire_coordinates[counter], self.wire.wire_coordinates[counter+1]])
+                    self.wire.vertical_segments.append(
+                        [
+                            self.wire.wire_coordinates[counter],
+                            self.wire.wire_coordinates[counter + 1],
+                        ]
+                    )
                     # Update rectangles for vertical segments
-                    self.segment_handles[counter] = QRectF(QPointF(top_left[0]-s, top_left[1]+s), QPointF(btm_right[0]+s, btm_right[1]-s))
+                    self.segment_handles[counter] = QRectF(
+                        QPointF(top_left[0] - s, top_left[1] + s),
+                        QPointF(btm_right[0] + s, btm_right[1] - s),
+                    )
 
             # Upate cursor handles
             if self.handleSegments != max_seg:
@@ -361,20 +401,33 @@ class GraphicsWire(QGraphicsPathItem):
 
             # If in DEBUG mode, this code will print the coordinates list and the
             # separated horizontal and vertical line segments of this Wire
-            if DEBUG_COORDINATES: print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-            if DEBUG_COORDINATES: print("coordinates:", [self.wire.wire_coordinates])
-            if DEBUG_COORDINATES: print("\nhorizontal lines:", [self.wire.horizontal_segments])
-            if DEBUG_COORDINATES: print("\nvertical lines:", [self.wire.vertical_segments])
-            if DEBUG_COORDINATES: print("\nline segments:")
-            if DEBUG_COORDINATES: [print("segment" + str(i) + ":", segment) for i, segment in enumerate(self.segment_handles.items())]
-            if DEBUG_COORDINATES: print("-------------------------------------------------------")
+            if DEBUG_COORDINATES:
+                print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+            if DEBUG_COORDINATES:
+                print("coordinates:", [self.wire.wire_coordinates])
+            if DEBUG_COORDINATES:
+                print("\nhorizontal lines:", [self.wire.horizontal_segments])
+            if DEBUG_COORDINATES:
+                print("\nvertical lines:", [self.wire.vertical_segments])
+            if DEBUG_COORDINATES:
+                print("\nline segments:")
+            if DEBUG_COORDINATES:
+                [
+                    print("segment" + str(i) + ":", segment)
+                    for i, segment in enumerate(self.segment_handles.items())
+                ]
+            if DEBUG_COORDINATES:
+                print("-------------------------------------------------------")
 
     # -----------------------------------------------------------------------------
     def handleAt(self, point):
         """
         Returns the resize handle below the given point.
         """
-        for k, v, in self.segment_handles.items():
+        for (
+            k,
+            v,
+        ) in self.segment_handles.items():
             if v is None:
                 return None
             elif v.contains(point):
@@ -482,7 +535,10 @@ class GraphicsWire(QGraphicsPathItem):
                 # Only 1 vertical segment in this case, so take the first vert segment [0]
                 segment = self.wire.vertical_segments[0].copy()
                 # Copy that segment, and add the difference the mouse has moved to the x [0] coord of the two points that make up this segment
-                for i, point in enumerate(segment.copy()): new_point = list(point); new_point[0] = toX; segment[i] = tuple(new_point)
+                for i, point in enumerate(segment.copy()):
+                    new_point = list(point)
+                    new_point[0] = toX
+                    segment[i] = tuple(new_point)
                 # Override the points making up this semgent in the temporary wire_coordinates -> 2nd and 3rd points [1:3]
                 custom_wire_coordinates[1:3] = segment
 
@@ -494,7 +550,10 @@ class GraphicsWire(QGraphicsPathItem):
                 # There are three horizontal segments to choose from, 1st and 3rd (last) cannot be moved, this means our segment is #2 [1].
                 segment = self.wire.horizontal_segments[1].copy()
                 # Copy that segment, and add the difference the mouse has moved to the y [1]) coord of the two points that make up this segment
-                for i, point in enumerate(segment.copy()): new_point = list(point); new_point[1] = toY; segment[i] = tuple(new_point)
+                for i, point in enumerate(segment.copy()):
+                    new_point = list(point)
+                    new_point[1] = toY
+                    segment[i] = tuple(new_point)
                 # Override the points making up this semgent in the temporary wire_coordinates -> 3rd and 4th points [2:4]
                 custom_wire_coordinates[2:4] = segment
 
@@ -502,14 +561,19 @@ class GraphicsWire(QGraphicsPathItem):
                 # There are two vertical segments to choose from, either can be moved as they do not attach directly to a socket.
                 if self.handleSelected == self.handleVSeg1:
                     segment = self.wire.vertical_segments[0].copy()
-                else: segment = self.wire.vertical_segments[1].copy()
+                else:
+                    segment = self.wire.vertical_segments[1].copy()
                 # Copy that segment, and add the difference the mouse has moved to the x [0]) coord of the two points that make up this segment
-                for i, point in enumerate(segment.copy()): new_point = list(point); new_point[0] = toX; segment[i] = tuple(new_point)
+                for i, point in enumerate(segment.copy()):
+                    new_point = list(point)
+                    new_point[0] = toX
+                    segment[i] = tuple(new_point)
                 # Override the points making up this semgent in the temporary wire_coordinates. Since we can either select the 1st or 2nd
                 # vertical segment, these points correspond to 2nd and 3rd points [1:3] or the 4th and 5th points [3:5]
                 if self.handleSelected == self.handleVSeg1:
                     custom_wire_coordinates[1:3] = segment
-                else: custom_wire_coordinates[3:5] = segment
+                else:
+                    custom_wire_coordinates[3:5] = segment
 
         self.updateWireCoordinates(custom_wire_coordinates)
 
@@ -522,7 +586,10 @@ class GraphicsWire(QGraphicsPathItem):
         # the data from the start_socket.
 
         # Start sockets could be an input or output socket, so find its true position w.r.t its block
-        start_point = self.wire.start_socket.node.grBlock.pos() + self.wire.start_socket.grSocket.pos()
+        start_point = (
+            self.wire.start_socket.node.grBlock.pos()
+            + self.wire.start_socket.grSocket.pos()
+        )
         start_coords = (start_point.x(), start_point.y())
 
         # print("\nsocket coords:", [start_coords])
@@ -537,9 +604,15 @@ class GraphicsWire(QGraphicsPathItem):
 
         # Take difference between start_socket_coords and whichever point is closest from wire.wire_coordinates
         if dist1 < dist2:
-            diff = [start_coords[0] - self.wire.wire_coordinates[0][0], start_coords[1] - self.wire.wire_coordinates[0][1]]
+            diff = [
+                start_coords[0] - self.wire.wire_coordinates[0][0],
+                start_coords[1] - self.wire.wire_coordinates[0][1],
+            ]
         else:
-            diff = [start_coords[0] - self.wire.wire_coordinates[-1][0], start_coords[1] - self.wire.wire_coordinates[-1][1]]
+            diff = [
+                start_coords[0] - self.wire.wire_coordinates[-1][0],
+                start_coords[1] - self.wire.wire_coordinates[-1][1],
+            ]
 
         # print("difference:", diff)
 
@@ -612,7 +685,14 @@ class GraphicsWireBezier(GraphicsWire):
 
         # Then a cubic line is drawn between the two provided points
         path = QPainterPath(QPointF(self.posSource[0], self.posSource[1]))
-        path.cubicTo(s[0] + dist, s[1], d[0] - dist, d[1]-dist, self.posDestination[0], self.posDestination[1])
+        path.cubicTo(
+            s[0] + dist,
+            s[1],
+            d[0] - dist,
+            d[1] - dist,
+            self.posDestination[0],
+            self.posDestination[1],
+        )
         return path
 
 
@@ -725,7 +805,8 @@ class GraphicsWireStep(GraphicsWire):
                 # If two sockets haven't been connected yet
 
                 # Don't do anything, start and end points of the path have already been defined, so a straight line will be drawn
-                if DEBUG: print("Wire style: O")
+                if DEBUG:
+                    print("Wire style: O")
                 pass
 
             # =========================  Start & End Sockets are on the same side of two Blocks  =========================
@@ -778,8 +859,16 @@ class GraphicsWireStep(GraphicsWire):
                         # LHS of destination block is further left than RHS of source block
 
                         # Wire from multiple sockets spaced from bottom of destination block at index (no overlap)
-                        if (dy - d_Offset[1] + destination_block_height + title_height + (d_index * block_padding) < sy) or (sx + xDist <= sx + (block_padding / 2)):
-                            if DEBUG: print("Wire style: A")
+                        if (
+                            dy
+                            - d_Offset[1]
+                            + destination_block_height
+                            + title_height
+                            + (d_index * block_padding)
+                            < sy
+                        ) or (sx + xDist <= sx + (block_padding / 2)):
+                            if DEBUG:
+                                print("Wire style: A")
                             # Draw C (inverted equivalent) line from S up to D, clipped to RHS of destination block
                             # ----------------------
                             #       (d-block)-<-|
@@ -787,12 +876,17 @@ class GraphicsWireStep(GraphicsWire):
                             #  (s-block)->------|
                             # ----------------------
 
-                            temporary_wire_coordinates.append((dx + (d_index * block_padding), sy))
-                            temporary_wire_coordinates.append((dx + (d_index * block_padding), dy))
+                            temporary_wire_coordinates.append(
+                                (dx + (d_index * block_padding), sy)
+                            )
+                            temporary_wire_coordinates.append(
+                                (dx + (d_index * block_padding), dy)
+                            )
 
                         # Bottom of destination block is equal to or below top of source block
                         else:
-                            if DEBUG: print("Wire style: B")
+                            if DEBUG:
+                                print("Wire style: B")
                             # Draw wrapped line between source and destination block, then above and around destination block
                             # --------------------------------
                             #              |---------------|
@@ -803,14 +897,26 @@ class GraphicsWireStep(GraphicsWire):
                             # --------------------------------
 
                             temporary_wire_coordinates.append((sx + xDist, sy))
-                            temporary_wire_coordinates.append((sx + xDist, dy - d_Offset[1] - (d_index * block_padding)))
                             temporary_wire_coordinates.append(
-                                (dx + d_index * block_padding, dy - d_Offset[1] - (d_index * block_padding)))
-                            temporary_wire_coordinates.append((dx + d_index * block_padding, dy))
+                                (
+                                    sx + xDist,
+                                    dy - d_Offset[1] - (d_index * block_padding),
+                                )
+                            )
+                            temporary_wire_coordinates.append(
+                                (
+                                    dx + d_index * block_padding,
+                                    dy - d_Offset[1] - (d_index * block_padding),
+                                )
+                            )
+                            temporary_wire_coordinates.append(
+                                (dx + d_index * block_padding, dy)
+                            )
 
                     # Top of destination block is equal to or below source block socket
                     else:
-                        if DEBUG: print("Wire style: C")
+                        if DEBUG:
+                            print("Wire style: C")
                         # Draw C (inverted equivalent) line from S down to D, clipped to RHS of destination block
                         # ------------------------
                         #   (s-block)->---------|
@@ -818,8 +924,12 @@ class GraphicsWireStep(GraphicsWire):
                         #           (d-block)-<-|
                         # ------------------------
 
-                        temporary_wire_coordinates.append((dx + d_index * block_padding, sy))
-                        temporary_wire_coordinates.append((dx + d_index * block_padding, dy))
+                        temporary_wire_coordinates.append(
+                            (dx + d_index * block_padding, sy)
+                        )
+                        temporary_wire_coordinates.append(
+                            (dx + d_index * block_padding, dy)
+                        )
 
                 # -------------------------------  End Socket on LHS of Destination Block  -------------------------------
                 else:
@@ -833,8 +943,16 @@ class GraphicsWireStep(GraphicsWire):
                         # RHS of source block further left than LHS of destination block
 
                         # Wire from multiple sockets spaced from bottom of source block at index (no overlap)
-                        if (sy - s_Offset[1] + source_block_height + title_height + (s_index * block_padding) < dy) or (dx + xDist <= dx + (block_padding / 2)):
-                            if DEBUG: print("Wire style: D")
+                        if (
+                            sy
+                            - s_Offset[1]
+                            + source_block_height
+                            + title_height
+                            + (s_index * block_padding)
+                            < dy
+                        ) or (dx + xDist <= dx + (block_padding / 2)):
+                            if DEBUG:
+                                print("Wire style: D")
                             # Draw C line from S down to D, clipped to LHS of source block
                             # ----------------------
                             #  |--<-(s-block)
@@ -842,12 +960,17 @@ class GraphicsWireStep(GraphicsWire):
                             #  |----->-(d-block)
                             # ----------------------
 
-                            temporary_wire_coordinates.append((sx - (s_index * block_padding), sy))
-                            temporary_wire_coordinates.append((sx - (s_index * block_padding), dy))
+                            temporary_wire_coordinates.append(
+                                (sx - (s_index * block_padding), sy)
+                            )
+                            temporary_wire_coordinates.append(
+                                (sx - (s_index * block_padding), dy)
+                            )
 
                         # Bottom of source block is equal to or below top of destination block
                         else:
-                            if DEBUG: print("Wire style: E")
+                            if DEBUG:
+                                print("Wire style: E")
                             # Draw wrapped line above and around the source block, then between the source and destination block
                             # --------------------------------
                             #  |---------------|
@@ -857,16 +980,29 @@ class GraphicsWireStep(GraphicsWire):
                             #                  |->-(d-block)
                             # --------------------------------
 
-                            temporary_wire_coordinates.append((sx - s_index * block_padding, sy))
                             temporary_wire_coordinates.append(
-                                (sx - s_index * block_padding, sy - s_Offset[1] - (s_index * block_padding)))
+                                (sx - s_index * block_padding, sy)
+                            )
                             temporary_wire_coordinates.append(
-                                (sx + source_block_width + xDist, sy - s_Offset[1] - (s_index * block_padding)))
-                            temporary_wire_coordinates.append((sx + source_block_width + xDist, dy))
+                                (
+                                    sx - s_index * block_padding,
+                                    sy - s_Offset[1] - (s_index * block_padding),
+                                )
+                            )
+                            temporary_wire_coordinates.append(
+                                (
+                                    sx + source_block_width + xDist,
+                                    sy - s_Offset[1] - (s_index * block_padding),
+                                )
+                            )
+                            temporary_wire_coordinates.append(
+                                (sx + source_block_width + xDist, dy)
+                            )
 
                     # Top of source block is equal to or below destination block
                     else:
-                        if DEBUG: print("Wire style: F")
+                        if DEBUG:
+                            print("Wire style: F")
                         # Draw C line from S up to D, clipped to LHS of source block
                         # --------------------
                         # |------->-(d-block)
@@ -874,8 +1010,12 @@ class GraphicsWireStep(GraphicsWire):
                         # |-<-(s-block)
                         # --------------------
 
-                        temporary_wire_coordinates.append((sx - s_index * block_padding, sy))
-                        temporary_wire_coordinates.append((sx - s_index * block_padding, dy))
+                        temporary_wire_coordinates.append(
+                            (sx - s_index * block_padding, sy)
+                        )
+                        temporary_wire_coordinates.append(
+                            (sx - s_index * block_padding, dy)
+                        )
 
                 # Update boolean that wire is completed, as to get here, the end point of the wire must be dropped
                 wire_completed = True
@@ -925,7 +1065,8 @@ class GraphicsWireStep(GraphicsWire):
                     # If start socket is not on same height as end socket
                     # Otherwise a straight line will be drawn when this logic is passed through
                     if sy != dy:
-                        if DEBUG: print("Wire style: G")
+                        if DEBUG:
+                            print("Wire style: G")
                         # Draw normal step line
                         # ---------------------------
                         #              |-<-(s-block)
@@ -940,14 +1081,22 @@ class GraphicsWireStep(GraphicsWire):
                 else:
 
                     # Source block is above destination block
-                    if sy - s_Offset[1] - (s_index * block_padding) < dy - d_Offset[1] - (d_index * block_padding):
+                    if sy - s_Offset[1] - (s_index * block_padding) < dy - d_Offset[
+                        1
+                    ] - (d_index * block_padding):
                         # Distance between bottom of source block and top of destination block
-                        yDist = ((dy - d_Offset[1]) - (sy - s_Offset[1] + source_block_height + title_height)) / 2
+                        yDist = (
+                            (dy - d_Offset[1])
+                            - (sy - s_Offset[1] + source_block_height + title_height)
+                        ) / 2
 
                         # Bottom of source block is above top of destination block OR
                         # --
-                        if (sy - s_Offset[1] + source_block_height + title_height) < (dy - d_Offset[1] - block_padding):
-                            if DEBUG: print("Wire style: H")
+                        if (sy - s_Offset[1] + source_block_height + title_height) < (
+                            dy - d_Offset[1] - block_padding
+                        ):
+                            if DEBUG:
+                                print("Wire style: H")
                             # Draw S line
                             #  |---<-(s-block)
                             #  |
@@ -956,17 +1105,34 @@ class GraphicsWireStep(GraphicsWire):
                             #    (d-block)-<--|
                             # ------------------
 
-                            temporary_wire_coordinates.append((sx - (s_index * block_padding), sy))
-                            temporary_wire_coordinates.append((sx - (s_index * block_padding), dy - d_Offset[1] - yDist))
-                            temporary_wire_coordinates.append((dx + (d_index * block_padding), dy - d_Offset[1] - yDist))
-                            temporary_wire_coordinates.append((dx + (d_index * block_padding), dy))
+                            temporary_wire_coordinates.append(
+                                (sx - (s_index * block_padding), sy)
+                            )
+                            temporary_wire_coordinates.append(
+                                (
+                                    sx - (s_index * block_padding),
+                                    dy - d_Offset[1] - yDist,
+                                )
+                            )
+                            temporary_wire_coordinates.append(
+                                (
+                                    dx + (d_index * block_padding),
+                                    dy - d_Offset[1] - yDist,
+                                )
+                            )
+                            temporary_wire_coordinates.append(
+                                (dx + (d_index * block_padding), dy)
+                            )
 
                         # Bottom of source block is at level with or below top of destination block
                         else:
 
                             # RHS of destination block is further left than RHS of source block
-                            if (dx + block_padding) < (sx + source_block_width + block_padding):
-                                if DEBUG: print("Wire style: I")
+                            if (dx + block_padding) < (
+                                sx + source_block_width + block_padding
+                            ):
+                                if DEBUG:
+                                    print("Wire style: I")
                                 # Draw line going around the top of the source block, clipped to RHS of source block + padding
                                 # --------------------------------------------------
                                 #     |--------------|            |--------------|
@@ -975,18 +1141,38 @@ class GraphicsWireStep(GraphicsWire):
                                 #  (d-block)-<-------|               (d-block)-<-|
                                 # --------------------------------------------------
 
-                                temporary_wire_coordinates.append((sx - (s_index * block_padding), sy))
                                 temporary_wire_coordinates.append(
-                                    (sx - (s_index * block_padding), sy - s_Offset[1] - (s_index * block_padding)))
-                                temporary_wire_coordinates.append((sx + source_block_width + (s_index * block_padding),
-                                                                   sy - s_Offset[1] - (s_index * block_padding)))
-                                temporary_wire_coordinates.append((sx + source_block_width + (s_index * block_padding), dy))
+                                    (sx - (s_index * block_padding), sy)
+                                )
+                                temporary_wire_coordinates.append(
+                                    (
+                                        sx - (s_index * block_padding),
+                                        sy - s_Offset[1] - (s_index * block_padding),
+                                    )
+                                )
+                                temporary_wire_coordinates.append(
+                                    (
+                                        sx
+                                        + source_block_width
+                                        + (s_index * block_padding),
+                                        sy - s_Offset[1] - (s_index * block_padding),
+                                    )
+                                )
+                                temporary_wire_coordinates.append(
+                                    (
+                                        sx
+                                        + source_block_width
+                                        + (s_index * block_padding),
+                                        dy,
+                                    )
+                                )
                                 # path.lineTo(sx + source_block_width + block_padding, sy - s_Offset[1] - (s_index * block_padding))
                                 # path.lineTo(sx + source_block_width + block_padding, dy)
 
                             # RHS of destination block is equal to or right of RHS of source block
                             else:
-                                if DEBUG: print("Wire style: J")
+                                if DEBUG:
+                                    print("Wire style: J")
                                 # Draw line going around the top of the source block, clipped to RHS of destination block + padding
                                 # -------------------------------------------------------------------------
                                 #  |-----------------------------|           |---------------------------|
@@ -995,22 +1181,45 @@ class GraphicsWireStep(GraphicsWire):
                                 #                    (d-block)-<-|
                                 # -------------------------------------------------------------------------
 
-                                temporary_wire_coordinates.append((sx - (s_index * block_padding), sy))
                                 temporary_wire_coordinates.append(
-                                    (sx - (s_index * block_padding), sy - s_Offset[1] - (s_index * block_padding)))
+                                    (sx - (s_index * block_padding), sy)
+                                )
                                 temporary_wire_coordinates.append(
-                                    (dx + (d_index * block_padding), sy - s_Offset[1] - (s_index * block_padding)))
-                                temporary_wire_coordinates.append((dx + (d_index * block_padding), dy))
+                                    (
+                                        sx - (s_index * block_padding),
+                                        sy - s_Offset[1] - (s_index * block_padding),
+                                    )
+                                )
+                                temporary_wire_coordinates.append(
+                                    (
+                                        dx + (d_index * block_padding),
+                                        sy - s_Offset[1] - (s_index * block_padding),
+                                    )
+                                )
+                                temporary_wire_coordinates.append(
+                                    (dx + (d_index * block_padding), dy)
+                                )
 
                     # Source block is below destination block
                     else:
                         # Distance between top of source block and bottom of destination block
-                        yDist = ((sy - s_Offset[1]) - (dy - d_Offset[1] + destination_block_height + title_height)) / 2
+                        yDist = (
+                            (sy - s_Offset[1])
+                            - (
+                                dy
+                                - d_Offset[1]
+                                + destination_block_height
+                                + title_height
+                            )
+                        ) / 2
 
                         # Top of source block is below bottom of destination block OR
                         # --
-                        if (sy - s_Offset[1] - block_padding) > (dy - d_Offset[1] + destination_block_height + title_height):
-                            if DEBUG: print("Wire style: K")
+                        if (sy - s_Offset[1] - block_padding) > (
+                            dy - d_Offset[1] + destination_block_height + title_height
+                        ):
+                            if DEBUG:
+                                print("Wire style: K")
                             # Draw Z line
                             # -----------------------
                             #        (d-block)-<--|
@@ -1020,17 +1229,34 @@ class GraphicsWireStep(GraphicsWire):
                             #  |-<-(s-block)
                             # -----------------------
 
-                            temporary_wire_coordinates.append((sx - (s_index * block_padding), sy))
-                            temporary_wire_coordinates.append((sx - (s_index * block_padding), sy - yDist - s_Offset[1]))
-                            temporary_wire_coordinates.append((dx + (s_index * block_padding), sy - yDist - s_Offset[1]))
-                            temporary_wire_coordinates.append((dx + (s_index * block_padding), dy))
+                            temporary_wire_coordinates.append(
+                                (sx - (s_index * block_padding), sy)
+                            )
+                            temporary_wire_coordinates.append(
+                                (
+                                    sx - (s_index * block_padding),
+                                    sy - yDist - s_Offset[1],
+                                )
+                            )
+                            temporary_wire_coordinates.append(
+                                (
+                                    dx + (s_index * block_padding),
+                                    sy - yDist - s_Offset[1],
+                                )
+                            )
+                            temporary_wire_coordinates.append(
+                                (dx + (s_index * block_padding), dy)
+                            )
 
                         # Top of source block is at level with or above bottom of destination block
                         else:
 
                             # LHS of destination is further left than LHS of source block
-                            if (dx - destination_block_width - block_padding) < (sx - block_padding):
-                                if DEBUG: print("Wire style: L")
+                            if (dx - destination_block_width - block_padding) < (
+                                sx - block_padding
+                            ):
+                                if DEBUG:
+                                    print("Wire style: L")
                                 # Draw line going around the top of the destination block, clipped to the LHS of destination block minus padding
                                 # ------------------------
                                 #  |--------------|
@@ -1041,16 +1267,35 @@ class GraphicsWireStep(GraphicsWire):
                                 # ------------------------
 
                                 temporary_wire_coordinates.append(
-                                    (dx - destination_block_width - (s_index * block_padding), sy))
-                                temporary_wire_coordinates.append((dx - destination_block_width - (s_index * block_padding),
-                                                                   dy - d_Offset[1] - (d_index * block_padding)))
+                                    (
+                                        dx
+                                        - destination_block_width
+                                        - (s_index * block_padding),
+                                        sy,
+                                    )
+                                )
                                 temporary_wire_coordinates.append(
-                                    (dx + d_index * block_padding, dy - d_Offset[1] - (d_index * block_padding)))
-                                temporary_wire_coordinates.append((dx + d_index * block_padding, dy))
+                                    (
+                                        dx
+                                        - destination_block_width
+                                        - (s_index * block_padding),
+                                        dy - d_Offset[1] - (d_index * block_padding),
+                                    )
+                                )
+                                temporary_wire_coordinates.append(
+                                    (
+                                        dx + d_index * block_padding,
+                                        dy - d_Offset[1] - (d_index * block_padding),
+                                    )
+                                )
+                                temporary_wire_coordinates.append(
+                                    (dx + d_index * block_padding, dy)
+                                )
 
                             # LHS of destination is equal to or right of LHS of source block
                             else:
-                                if DEBUG: print("Wire style: M")
+                                if DEBUG:
+                                    print("Wire style: M")
                                 # Draw line going around the top of the destination block, clipped to the LHS of source block minus padding
                                 # ----------------------
                                 #  |----------------|
@@ -1060,12 +1305,24 @@ class GraphicsWireStep(GraphicsWire):
                                 #  |-<-(s-block)
                                 # ----------------------
 
-                                temporary_wire_coordinates.append((sx - s_index * block_padding, sy))
                                 temporary_wire_coordinates.append(
-                                    (sx - s_index * block_padding, dy - d_Offset[1] - (d_index * block_padding)))
+                                    (sx - s_index * block_padding, sy)
+                                )
                                 temporary_wire_coordinates.append(
-                                    (dx + d_index * block_padding, dy - d_Offset[1] - (d_index * block_padding)))
-                                temporary_wire_coordinates.append((dx + d_index * block_padding, dy))
+                                    (
+                                        sx - s_index * block_padding,
+                                        dy - d_Offset[1] - (d_index * block_padding),
+                                    )
+                                )
+                                temporary_wire_coordinates.append(
+                                    (
+                                        dx + d_index * block_padding,
+                                        dy - d_Offset[1] - (d_index * block_padding),
+                                    )
+                                )
+                                temporary_wire_coordinates.append(
+                                    (dx + d_index * block_padding, dy)
+                                )
 
                 # Update boolean that wire is completed, as to get here, the end point of the wire must be dropped
                 wire_completed = True
@@ -1077,14 +1334,14 @@ class GraphicsWireStep(GraphicsWire):
             temporary_wire_coordinates.append((dx, dy))
 
             # The path of the wire is set to be drawn under the path logic that has just been calculated
-            for i, (x,y) in enumerate(temporary_wire_coordinates):
+            for i, (x, y) in enumerate(temporary_wire_coordinates):
                 if i == 0:
-                    path = QPainterPath(QPointF(x,y))
+                    path = QPainterPath(QPointF(x, y))
                 elif i == len(temporary_wire_coordinates):
                     path.lineTo(x, y)
                     path.moveTo(x, y)
                 else:
-                    path.lineTo(x,y)
+                    path.lineTo(x, y)
 
             # If the wire has been dropped on a destination socket (and is not being dragged around), update its coordinates
             if wire_completed:
@@ -1092,8 +1349,14 @@ class GraphicsWireStep(GraphicsWire):
             return path
         except Exception as e:
             if self.FATAL_ERROR == False:
-                print("------------------------------------------------------------------------------------")
-                print("Caught fatal exception while trying to calculate wire bends. Please save your work.")
-                print("------------------------------------------------------------------------------------")
+                print(
+                    "------------------------------------------------------------------------------------"
+                )
+                print(
+                    "Caught fatal exception while trying to calculate wire bends. Please save your work."
+                )
+                print(
+                    "------------------------------------------------------------------------------------"
+                )
                 traceback.print_exc(file=sys.stderr)
                 self.FATAL_ERROR = True

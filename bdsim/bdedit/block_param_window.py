@@ -103,7 +103,7 @@ class ParamWindow(QWidget):
 
         # The follow label is added to the parameter window, naming it
         # Items within the parameter window layout manager are set to align towards the top
-        param_window_label = QLabel('<font size=8><b>Block settings</font>')
+        param_window_label = QLabel("<font size=8><b>Block settings</font>")
         param_window_label.setAlignment(Qt.AlignCenter)
         self.layout.addWidget(param_window_label)
         self.layout.setAlignment(Qt.AlignTop)
@@ -177,14 +177,14 @@ class ParamWindow(QWidget):
         # Manually set the width of the QMessageBox layout to control text wrapping
         # The layout is a grid, so setting width of 1st row/column cell will set width of the widget
         self.message.item = self.message.layout().itemAtPosition(0, 1)
-        self.message.item.widget().setFixedWidth(self.width()-100)
+        self.message.item.widget().setFixedWidth(self.width() - 100)
 
         # If an error message - critical icon, if success message - green tick icon
         if messageType == "Error":
             self.message.setIcon(QMessageBox.Critical)
             self.message.setIconPixmap(QPixmap(":/Icons_Reference/Icons/error.png"))
             message_duration = 5
-        elif messageType == 'Success':
+        elif messageType == "Success":
             self.message.setIconPixmap(QPixmap(":/Icons_Reference/Icons/success.png"))
             message_duration = 1.5
 
@@ -232,9 +232,11 @@ class ParamWindow(QWidget):
         self.row1 = QWidget()
         self.row1.layout = QHBoxLayout()
         # Make a label of the block type
-        self.block_type_label = QLabel('<font size=4><b>type: </font>')
+        self.block_type_label = QLabel("<font size=4><b>type: </font>")
         # Make an editable line for the type, and populate it with the current block type
-        self.block_type = QLabel('<font size=4>' + str(self.block.block_type) + ' Block </font>')
+        self.block_type = QLabel(
+            "<font size=4>" + str(self.block.block_type) + " Block </font>"
+        )
         # Set the width of the editable line to the above-defined width (150 pixels)
         self.block_type.setFixedWidth(self._parameter_line_width)
         # Add the label and editable line into our row widget
@@ -250,7 +252,7 @@ class ParamWindow(QWidget):
         self.row2.layout = QHBoxLayout()
 
         # Make a label of the block title
-        self.title_label = QLabel('<font size=4><b>name: </font>')
+        self.title_label = QLabel("<font size=4><b>name: </font>")
         # Make an editable line for the title, and populate it with the current block title
         self.title_line = QLineEdit(self.block.title)
         # Set the width of the editable line to the above-defined width (150 pixels)
@@ -272,7 +274,9 @@ class ParamWindow(QWidget):
                 self.row_x.layout = QHBoxLayout()
 
                 # Make a label of that parameters' name
-                self.label = QLabel('<font size=3><b>'+parameter[0]+": "+'</font>')
+                self.label = QLabel(
+                    "<font size=3><b>" + parameter[0] + ": " + "</font>"
+                )
                 self.label.setToolTip(parameter[4])
 
                 # If the parameter type is a boolean, create the intractable space as a checkbox, otherwise
@@ -280,7 +284,8 @@ class ParamWindow(QWidget):
                 if not issubclass(parameter[1], bool):
                     self.line = QLineEdit(str(parameter[2]))
                 else:
-                    self.line = QCheckBox(); self.line.setChecked(parameter[2])
+                    self.line = QCheckBox()
+                    self.line.setChecked(parameter[2])
 
                 # Set the width of the editable line to the above-defined width (150 pixels)
                 self.line.setFixedWidth(self._parameter_line_width)
@@ -296,7 +301,7 @@ class ParamWindow(QWidget):
 
         # Finally add an update button, which will trigger the sanity checking of the
         # current values within the editable lines
-        self.update_button = QPushButton('Update Parameters')
+        self.update_button = QPushButton("Update Parameters")
         self.update_button.clicked.connect(self.updateBlockParameters)
         self.layout.addWidget(self.update_button)
 
@@ -355,7 +360,13 @@ class ParamWindow(QWidget):
                     message += "one of <font><b>" + str(option[1]) + "</font>"
                 # If the options consist of a range this parameters is restricted to
                 elif option[0] == "range":
-                    message += "a value between <font><b>" + str(option[1][0]) + "</font> and <font><b>" + str(option[1][1]) + "</font>"
+                    message += (
+                        "a value between <font><b>"
+                        + str(option[1][0])
+                        + "</font> and <font><b>"
+                        + str(option[1][1])
+                        + "</font>"
+                    )
                 # If the options consist of additional types this parameter is restricted to
                 elif option[0] == "type":
                     typeString = []
@@ -367,7 +378,9 @@ class ParamWindow(QWidget):
                     message += "a combination of <font><b>" + str(option[1]) + "</font>"
                 # If the options consists of a size restriction on how many elements are allowed in the list
                 elif option[0] == "size":
-                    message += "limited to a size of <font><b>" + str(option[1]) + "</font>"
+                    message += (
+                        "limited to a size of <font><b>" + str(option[1]) + "</font>"
+                    )
 
                 # If a parameter has multiple options (e.g. range and type restrictions)
                 # separate the options with "or" until only 1 option remains
@@ -415,16 +428,32 @@ class ParamWindow(QWidget):
                 # If a value has been provided for that parameter, perform sanity checking on that input
                 if inputValue:
                     if self.parameters[i][0] in ["nin", "ops", "signs", "nout"]:
-                        inputInCompatibleFormat = self.getSafeValue(inputValue, paramType, paramOptions)
+                        inputInCompatibleFormat = self.getSafeValue(
+                            inputValue, paramType, paramOptions
+                        )
                     else:
-                        if inputValue.startswith('='):
+                        if inputValue.startswith("="):
                             inputInCompatibleFormat = inputValue
                         else:
-                            inputInCompatibleFormat = self.getSafeValue(inputValue, paramType, paramOptions)
+                            inputInCompatibleFormat = self.getSafeValue(
+                                inputValue, paramType, paramOptions
+                            )
 
                     # If in DEBUG mode, this code will return the name, type, current value of the parameter attempting to update
                     # and then for the value that will override the parameter, the value, type(of the value), and whether it is or isn't compatible
-                    if DEBUG: print("paramName, paramType, paramVal - inputValue, type, compatible", [paramName, paramType, paramVal, '-', inputValue, type(inputValue), inputInCompatibleFormat])
+                    if DEBUG:
+                        print(
+                            "paramName, paramType, paramVal - inputValue, type, compatible",
+                            [
+                                paramName,
+                                paramType,
+                                paramVal,
+                                "-",
+                                inputValue,
+                                type(inputValue),
+                                inputInCompatibleFormat,
+                            ],
+                        )
 
                     # Once the sanity check has been performed, if the type is valid, check for parameter restrictions
                     if inputInCompatibleFormat != "@InvalidType@":
@@ -454,7 +483,9 @@ class ParamWindow(QWidget):
                                     if self.parameters[i][0] == "nin":
                                         num_sockets = self.parameters[i][2]
                                     else:
-                                        num_sockets = len(self.parameter_values[i].text())
+                                        num_sockets = len(
+                                            self.parameter_values[i].text()
+                                        )
 
                                     # Don't do anything, if the provided number of input sockets matches the number the block already has,
                                     # or if the symbols (+,-,*,/) for the block haven't changed
@@ -471,7 +502,9 @@ class ParamWindow(QWidget):
                                         # update the signs without removing the wires
                                         else:
                                             # Split the socket signs by number of characters given
-                                            chars = [char for char in inputInCompatibleFormat]
+                                            chars = [
+                                                char for char in inputInCompatibleFormat
+                                            ]
 
                                             # Go through each of the chars from the string of symbols for this block's signs
                                             # and set the respective socket to that symbol
@@ -490,7 +523,9 @@ class ParamWindow(QWidget):
                                         # Recreate input sockets to the number provided
                                         # If self.block is a SUM or PROD block, this will also update the input sockets' sign (+,_,*,/)
                                         self.block.inputsNum = num_sockets
-                                        self.block.makeInputSockets(self.block.inputsNum, orientation)
+                                        self.block.makeInputSockets(
+                                            self.block.inputsNum, orientation
+                                        )
 
                                 # If self.parameter relates to controlling the number of outputs a block has
                                 if self.parameters[i][0] in ["nout"]:
@@ -505,12 +540,16 @@ class ParamWindow(QWidget):
                                         if self.block.outputs:
                                             orientation = self.block.outputs[0].position
                                             # Remove all current output sockets
-                                            self.block.outputs[0].removeSockets("Output")
+                                            self.block.outputs[0].removeSockets(
+                                                "Output"
+                                            )
                                         else:
                                             orientation = RIGHT
                                         # Recreate output sockets to the number provided
                                         self.block.outputsNum = num_sockets
-                                        self.block.makeOutputSockets(self.block.outputsNum, orientation)
+                                        self.block.makeOutputSockets(
+                                            self.block.outputsNum, orientation
+                                        )
 
                                 # If self.parameter relates to controlling the names of inport labels on subsystem blocks
                                 if self.parameters[i][0] == "inport labels":
@@ -527,22 +566,40 @@ class ParamWindow(QWidget):
                                                     break
                                             # Check if nin parameter was found, if not, return error as we need to know how many sockets to draw
                                             if found_nin == False:
-                                                print("Error: Cannot draw InPort labels as no 'nin' parameter was found to know how many sockets to draw.")
+                                                print(
+                                                    "Error: Cannot draw InPort labels as no 'nin' parameter was found to know how many sockets to draw."
+                                                )
                                             else:
                                                 # If nin parameter was found, check if number of given InPort labels matches number of sockets
                                                 if input_length != num_nin_sockets:
-                                                    bad_socket_labels.append([paramName, paramOptions])
+                                                    bad_socket_labels.append(
+                                                        [paramName, paramOptions]
+                                                    )
                                                 else:
                                                     # If parameter value hasn't changed, don't do anything
-                                                    if inputInCompatibleFormat == paramVal:
+                                                    if (
+                                                        inputInCompatibleFormat
+                                                        == paramVal
+                                                    ):
                                                         pass
                                                     else:
                                                         # If the block already has input sockets, grab their orientation (LEFT / RIGHT) then delete
                                                         # Else, draw input socket with default orientation (LEFT) and no need to delete as block has no input sockets
-                                                        self.block.input_names = [str(j) for j in self.parameters[i][2]]
+                                                        self.block.input_names = [
+                                                            str(j)
+                                                            for j in self.parameters[i][
+                                                                2
+                                                            ]
+                                                        ]
                                                         if self.block.inputs:
-                                                            for k, socket in enumerate(self.block.inputs):
-                                                                socket.updateSocketSign(self.block.input_names[k])
+                                                            for k, socket in enumerate(
+                                                                self.block.inputs
+                                                            ):
+                                                                socket.updateSocketSign(
+                                                                    self.block.input_names[
+                                                                        k
+                                                                    ]
+                                                                )
 
                                     # Otherwise if the parameter value is None or [], then remove all the socket labels for a block if there are any.
                                     elif not self.parameters[i][2]:
@@ -566,22 +623,40 @@ class ParamWindow(QWidget):
                                                     break
                                             # Check if nout parameter was found, if not, return error as we need to know how many sockets to draw
                                             if found_nout == False:
-                                                print("Error: Cannot draw OutPort labels as no 'nout' parameter was found to know how many sockets to draw.")
+                                                print(
+                                                    "Error: Cannot draw OutPort labels as no 'nout' parameter was found to know how many sockets to draw."
+                                                )
                                             else:
                                                 # If nout parameter was found, check if number of given OutPort labels matches number of sockets
                                                 if input_length != num_nout_sockets:
-                                                    bad_socket_labels.append([paramName, paramOptions])
+                                                    bad_socket_labels.append(
+                                                        [paramName, paramOptions]
+                                                    )
                                                 else:
                                                     # If parameter value hasn't changed, don't do anything
-                                                    if inputInCompatibleFormat == paramVal:
+                                                    if (
+                                                        inputInCompatibleFormat
+                                                        == paramVal
+                                                    ):
                                                         pass
                                                     else:
                                                         # If the block already has output sockets, grab their orientation (LEFT / RIGHT) then delete
                                                         # Else, draw output socket with default orientation (RIGHT) and no need to delete as block has no output sockets
-                                                        self.block.output_names = [str(j) for j in self.parameters[i][2]]
+                                                        self.block.output_names = [
+                                                            str(j)
+                                                            for j in self.parameters[i][
+                                                                2
+                                                            ]
+                                                        ]
                                                         if self.block.outputs:
-                                                            for k, socket in enumerate(self.block.outputs):
-                                                                socket.updateSocketSign(self.block.output_names[k])
+                                                            for k, socket in enumerate(
+                                                                self.block.outputs
+                                                            ):
+                                                                socket.updateSocketSign(
+                                                                    self.block.output_names[
+                                                                        k
+                                                                    ]
+                                                                )
 
                                     # Otherwise if the parameter value is None or [], then remove all the socket labels for a block if there are any.
                                     elif not self.parameters[i][2]:
@@ -605,7 +680,11 @@ class ParamWindow(QWidget):
         if duplicate_title:
             errorMessageText = ""
             errorMessageTitle = "Duplicate Block Title"
-            errorMessageText += "A block named '<font><b>" + duplicate_title[0] + "</font>' already exists, please choose another."
+            errorMessageText += (
+                "A block named '<font><b>"
+                + duplicate_title[0]
+                + "</font>' already exists, please choose another."
+            )
             self.displayPopUpMessage(errorMessageTitle, errorMessageText, "Error")
 
         # If any parameters have been returned with invalid types, display an invalid type error message
@@ -613,7 +692,14 @@ class ParamWindow(QWidget):
             errorMessageText = ""
             errorMessageTitle = "Input Types Not Compatible"
             for incompatibleInputs in invalid_input:
-                errorMessageText += "Expected '" + "<font><b>" + incompatibleInputs[0] + "</font>' to be type <font><b>" + incompatibleInputs[1].__name__ + "</font>"
+                errorMessageText += (
+                    "Expected '"
+                    + "<font><b>"
+                    + incompatibleInputs[0]
+                    + "</font>' to be type <font><b>"
+                    + incompatibleInputs[1].__name__
+                    + "</font>"
+                )
                 errorMessageText += "<br>"
             self.displayPopUpMessage(errorMessageTitle, errorMessageText, "Error")
 
@@ -623,7 +709,9 @@ class ParamWindow(QWidget):
             errorMessageTitle = "Input Value Not Allowed"
             for badInput in bad_inputs:
                 # Different error message based on type of option
-                errorMessageText += "Parameter '" + "<font><b>" + badInput[0] + "</font>' must be "
+                errorMessageText += (
+                    "Parameter '" + "<font><b>" + badInput[0] + "</font>' must be "
+                )
                 errorMessageText += makeBadInputErrorMsg(badInput[1])
                 errorMessageText += "<br>"
             self.displayPopUpMessage(errorMessageTitle, errorMessageText, "Error")
@@ -634,7 +722,12 @@ class ParamWindow(QWidget):
             errorMessageTitle = "Inconsistent Number of Given Socket Labels"
             for badSocketLabel in bad_socket_labels:
                 # Different error message based on type of option
-                errorMessageText += "Parameter '" + "<font><b>" + badSocketLabel[0] + "</font>' must correspond to number of nin/nout sockets."
+                errorMessageText += (
+                    "Parameter '"
+                    + "<font><b>"
+                    + badSocketLabel[0]
+                    + "</font>' must correspond to number of nin/nout sockets."
+                )
             self.displayPopUpMessage(errorMessageTitle, errorMessageText, "Error")
 
         # Otherwise if there were no issues with updating the block parameters, display a success message, yay!
@@ -710,20 +803,22 @@ class ParamWindow(QWidget):
                     if option[0] == "keywords":
                         # Check if the given value matches one of those keywords
                         if value.lower() in option[1]:
-                            returnValue = value; break
+                            returnValue = value
+                            break
 
                     # If the placed restriction is a range of values
                     elif option[0] == "range":
                         # Check if given value is within that range
                         if option[1][0] <= value <= option[1][1]:
-                            returnValue = value; break
+                            returnValue = value
+                            break
 
                     # If the placed restriction are additional accepted types
                     elif option[0] == "type":
                         # Check if the None is one of the accepted types
                         if type(None) in option[1]:
                             # If the value given is None, return None
-                            if isinstance(value, str) and value.lower() in ['none']:
+                            if isinstance(value, str) and value.lower() in ["none"]:
                                 returnValue = None
                                 break
 
@@ -746,11 +841,13 @@ class ParamWindow(QWidget):
                                     num_of_wrong_symbols -= 1
                             # If all characters within the string match a set of allowable characters
                             if num_of_wrong_symbols == 0:
-                                returnValue = value; break
+                                returnValue = value
+                                break
 
                         # Otherwise return badformat
                         else:
-                            returnValue = "@BadFormat@"; break
+                            returnValue = "@BadFormat@"
+                            break
 
                     # If the placed restriction are to the number of elements the parameter can have
                     elif option[0] == "size":
@@ -841,7 +938,8 @@ class ParamWindow(QWidget):
             elif issubclass(requiredType, int):
                 # Try applying int() to the input value, if possible, check restrictions on value
                 try:
-                    requiredType(inputValue); return isValueInOption(requiredType(inputValue), requiredOptions)
+                    requiredType(inputValue)
+                    return isValueInOption(requiredType(inputValue), requiredOptions)
                 except ValueError:
                     # If applying int() doesn't work but value is None, check if this is an allowable type
                     if inputValue.lower() in ["none"]:
@@ -877,14 +975,20 @@ class ParamWindow(QWidget):
                     return "@InvalidType@"
 
             # If input must be a list, only list can be accepted
-            elif issubclass(requiredType, list) or issubclass(requiredType, tuple) or issubclass(requiredType, dict):
+            elif (
+                issubclass(requiredType, list)
+                or issubclass(requiredType, tuple)
+                or issubclass(requiredType, dict)
+            ):
                 try:
                     # If the input value can be evaluated as a list, tuple or dict, check restrictions on value
                     ast.literal_eval(inputValue)
                     if inputValue.lower() in ["none"]:
                         return isValueInOption(inputValue, requiredOptions)
                     else:
-                        return isValueInOption(ast.literal_eval(inputValue), requiredOptions)
+                        return isValueInOption(
+                            ast.literal_eval(inputValue), requiredOptions
+                        )
                 except ValueError:
                     return "@InvalidType@"
 
@@ -896,5 +1000,12 @@ class ParamWindow(QWidget):
 
         except Exception as e:
             print(e)
-            print("Fatal Error: Recent changes to a parameter have caused an unforseen error.\nKnown info about parameter causing the error: given value ->", inputValue, "expected type ->", requiredType, "parameter restrictions ->", requiredOptions)
+            print(
+                "Fatal Error: Recent changes to a parameter have caused an unforseen error.\nKnown info about parameter causing the error: given value ->",
+                inputValue,
+                "expected type ->",
+                requiredType,
+                "parameter restrictions ->",
+                requiredOptions,
+            )
             return "@InvalidType@"

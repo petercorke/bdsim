@@ -14,8 +14,12 @@ class GraphicsLabel(QGraphicsItem):
 
         # Label related outline settings
         self.edge_size = 6.0
-        self._selected_line_thickness = 5.0     # Thickness of the label outline on selection
-        self._pen_selected = QPen(QColorConstants.Svg.orange, self._selected_line_thickness)
+        self._selected_line_thickness = (
+            5.0  # Thickness of the label outline on selection
+        )
+        self._pen_selected = QPen(
+            QColorConstants.Svg.orange, self._selected_line_thickness
+        )
         self.outline_brush = QBrush(QColorConstants.Svg.white)
 
         self.initUI()
@@ -28,7 +32,9 @@ class GraphicsLabel(QGraphicsItem):
         self.setAcceptHoverEvents(True)
 
         self.grText = QGraphicsProxyWidget(self)
-        self.content.setGeometry(0, 0, self.floating_label.width, self.floating_label.height)
+        self.content.setGeometry(
+            0, 0, self.floating_label.width, self.floating_label.height
+        )
         self.grText.setWidget(self.content)
         self.setZValue(-3)
 
@@ -37,7 +43,7 @@ class GraphicsLabel(QGraphicsItem):
             -self.edge_size,
             -self.edge_size,
             2 * self.edge_size + self.floating_label.width,
-            2 * self.edge_size + self.floating_label.height
+            2 * self.edge_size + self.floating_label.height,
         ).normalized()
 
     def paint(self, painter, style, widget=None):
@@ -55,7 +61,9 @@ class GraphicsLabel(QGraphicsItem):
         color_for_highlighting = copy.copy(self.floating_label.content.backgroundColor)
         color_for_highlighting.setAlpha(0)
         self.floating_label.content.setTextHighlighting(color_for_highlighting)
-        self.floating_label.content.text_edit.setTextInteractionFlags(Qt.NoTextInteraction)
+        self.floating_label.content.text_edit.setTextInteractionFlags(
+            Qt.NoTextInteraction
+        )
 
         # If floating label has been edited, update the variable within the model, to then update the
         # title of the model, to indicate that there is unsaved progress
@@ -66,7 +74,9 @@ class GraphicsLabel(QGraphicsItem):
 
     def setLabelFocus(self):
         self.floating_label.content.setTextHighlighting(QColor(225, 225, 225, 127))
-        self.floating_label.content.text_edit.setTextInteractionFlags(Qt.TextEditorInteraction)
+        self.floating_label.content.text_edit.setTextInteractionFlags(
+            Qt.TextEditorInteraction
+        )
 
     def setLabelSizeBox(self):
         self.floating_label.interfaceManager.updateToolbarValues()
@@ -89,11 +99,16 @@ class GraphicsLabel(QGraphicsItem):
 
                 # Update the copy of background color
                 self.floating_label.content.backgroundColor = chosen_color
-                palette.setColor(self.floating_label.content.text_edit.viewport().backgroundRole(), chosen_color)
+                palette.setColor(
+                    self.floating_label.content.text_edit.viewport().backgroundRole(),
+                    chosen_color,
+                )
                 self.floating_label.content.text_edit.viewport().setPalette(palette)
 
                 # Update the text highlighting color
-                color_for_highlighting = copy.copy(self.floating_label.content.backgroundColor)
+                color_for_highlighting = copy.copy(
+                    self.floating_label.content.backgroundColor
+                )
                 color_for_highlighting.setAlpha(0)
                 self.floating_label.content.setTextHighlighting(color_for_highlighting)
 
@@ -101,7 +116,9 @@ class GraphicsLabel(QGraphicsItem):
                 self.outline_brush = QBrush(self.floating_label.content.backgroundColor)
 
                 self.floating_label.scene.has_been_modified = True
-                self.floating_label.scene.history.storeHistory("Grouping box color changed")
+                self.floating_label.scene.history.storeHistory(
+                    "Grouping box color changed"
+                )
 
         super().mousePressEvent(event)
         self.setLabelUnfocus()
@@ -117,7 +134,9 @@ class GraphicsLabel(QGraphicsItem):
             # to update the background color of the floating label
             colorDialog = QColorDialog()
             colorDialog.setOption(QColorDialog.ShowAlphaChannel, on=True)
-            colorDialog.currentColorChanged.connect(lambda checked: updateColor(colorDialog.currentColor()))
+            colorDialog.currentColorChanged.connect(
+                lambda checked: updateColor(colorDialog.currentColor())
+            )
 
             # If user selects okay, this finalizes the color selection
             if colorDialog.exec_() == QDialog.Accepted:

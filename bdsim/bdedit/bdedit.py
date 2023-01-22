@@ -21,27 +21,54 @@ from bdsim.bdedit.interface_manager import InterfaceWindow
 # Executable code to launch the BdEdit application window
 def main():
     # handle command line options, bdedit -h for details
-    parser = argparse.ArgumentParser(description='Interactive edit for bdsim models')
-    parser.add_argument('file', type=str, nargs='?',
-        help='Load this model into interactive session')
-    parser.add_argument('--print', '-p', 
-        nargs='?', action='store', const='', default=None,
-        help='Save model to screenshot and exit, can optionally specify a filename, PDF extension is default')
-    parser.add_argument('--debug', '-d', 
-        action='store_const', const=True, default=False,
-        help='Enable debugging')
-    parser.add_argument('--pdb', 
-        action='store_const', const=True, default=False,
-        help='Enable pdb for spawned python subprocess')
-    parser.add_argument('--background', '-b', type=str, default='grey',
-        choices=['white', 'grey'],
-        help='Set background color')
-    parser.add_argument('--fontsize', '-s', type=int, default='12',
-        help='Set font size of block names')
-    parser.add_argument('--format', '-f', type=str, nargs='?',
-        help='Specify screenshot extension type; PDF (default) or PNG')
+    parser = argparse.ArgumentParser(description="Interactive edit for bdsim models")
+    parser.add_argument(
+        "file", type=str, nargs="?", help="Load this model into interactive session"
+    )
+    parser.add_argument(
+        "--print",
+        "-p",
+        nargs="?",
+        action="store",
+        const="",
+        default=None,
+        help="Save model to screenshot and exit, can optionally specify a filename, PDF extension is default",
+    )
+    parser.add_argument(
+        "--debug",
+        "-d",
+        action="store_const",
+        const=True,
+        default=False,
+        help="Enable debugging",
+    )
+    parser.add_argument(
+        "--pdb",
+        action="store_const",
+        const=True,
+        default=False,
+        help="Enable pdb for spawned python subprocess",
+    )
+    parser.add_argument(
+        "--background",
+        "-b",
+        type=str,
+        default="grey",
+        choices=["white", "grey"],
+        help="Set background color",
+    )
+    parser.add_argument(
+        "--fontsize", "-s", type=int, default="12", help="Set font size of block names"
+    )
+    parser.add_argument(
+        "--format",
+        "-f",
+        type=str,
+        nargs="?",
+        help="Specify screenshot extension type; PDF (default) or PNG",
+    )
     args, unparsed_args = parser.parse_known_args()
-    
+
     # args holds all the command line info:
     #  args.file file name if given, else None
     #  args.debug True if -d option given
@@ -60,14 +87,14 @@ def main():
     screen_resolution = app.desktop().screenGeometry()
 
     # Set the desktop toolbar icon for this application
-    icon = Path(__file__).parent.parent / 'bdedit' / 'Icons' / 'bdsim_logo.png'
+    icon = Path(__file__).parent.parent / "bdedit" / "Icons" / "bdsim_logo.png"
     app.setWindowIcon(QIcon(str(icon)))
 
-    myappid = u'bdsim.bdsim.bin.bdedit.application'  # arbitrary string for application
+    myappid = "bdsim.bdsim.bin.bdedit.application"  # arbitrary string for application
     try:
-        if platform == 'win32':
+        if platform == "win32":
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-        elif platform == 'darwin':
+        elif platform == "darwin":
             ctypes.cdll.kernel32.SetCurrentProcessExplicitAppUserModelID(myappid)
     except Exception as e:
         # Toolbar icon for application could not be set.
@@ -97,12 +124,14 @@ def main():
 
         # fire up the GUI
         window.centralWidget().scene.grScene.updateBackgroundMode(args.background, True)
-        
+
         if args.print is not None:
             # render a screenshot to file
             def screenshot(model_path, screenshot_name):
                 # Set the background mode to white, no grid lines
-                window.centralWidget().scene.grScene.updateBackgroundMode('white', False)
+                window.centralWidget().scene.grScene.updateBackgroundMode(
+                    "white", False
+                )
                 window.centralWidget().scene.grScene.checkMode()
 
                 # Hide and then unselect all connector blocks present in the model
@@ -116,34 +145,36 @@ def main():
                 if window.centralWidget().scene.wires:
                     window.centralWidget().scene.wires[0].checkIntersections()
 
-                window.centralWidget().save_image(model_path, screenshot_name)  # in interface.py
+                window.centralWidget().save_image(
+                    model_path, screenshot_name
+                )  # in interface.py
                 sys.exit(0)
 
             # figure out the filename to save it as
             file = Path(args.print)
 
-            if args.print == '':
+            if args.print == "":
                 # no filename given on command line
                 # use the model file name, drop the path, and set extension pdf if none given
-                
+
                 # wait till python 3.9 for the next line to work
                 # path = Path(args.file).with_stem(filename.stem + "-screenshot").with_suffix('.pdf').name
 
-                if args.format == 'png':
-                    path = Path(args.file).with_suffix('.png')
+                if args.format == "png":
+                    path = Path(args.file).with_suffix(".png")
                 else:
-                    path = Path(args.file).with_suffix('.pdf')
+                    path = Path(args.file).with_suffix(".pdf")
 
                 path = path.stem + path.suffix
-                
+
             else:
                 # filename was given on command line
                 path = Path(args.print)
-                if path.suffix == '':
-                    if args.format == 'png':
-                        path = path.with_suffix('.png')
+                if path.suffix == "":
+                    if args.format == "png":
+                        path = path.with_suffix(".png")
                     else:
-                        path = path.with_suffix('.pdf')
+                        path = path.with_suffix(".pdf")
 
             # After 100ms non-blocking delay, screenshot the model
             QTimer.singleShot(100, lambda: screenshot(args.file, str(path)))
@@ -151,5 +182,6 @@ def main():
     # run the GUI until it exits
     sys.exit(app.exec_())
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

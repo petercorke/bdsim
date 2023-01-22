@@ -10,7 +10,13 @@ from bdsim.bdedit.grouping_box_graphics import GraphicsGBox
 from bdsim.bdedit.block_graphics_socket import GraphicsSocket
 from bdsim.bdedit.floating_label_graphics import GraphicsLabel
 from bdsim.bdedit.block_graphics_block import GraphicsBlock, GraphicsConnectorBlock
-from bdsim.bdedit.block_wire import Wire, WIRE_TYPE_STEP, WIRE_TYPE_DIRECT, WIRE_TYPE_BEZIER
+from bdsim.bdedit.block_wire import (
+    Wire,
+    WIRE_TYPE_STEP,
+    WIRE_TYPE_DIRECT,
+    WIRE_TYPE_BEZIER,
+)
+
 # =============================================================================
 #
 #   Defining and setting global variables
@@ -30,7 +36,7 @@ DEBUG = False
 #   Defining the GraphicsView Class, which handles most auto detected
 #   press/scroll/click/scroll/key events, and assigns logic to those actions as
 #   needed.
-# 
+#
 # =============================================================================
 class GraphicsView(QGraphicsView):
     """
@@ -87,7 +93,12 @@ class GraphicsView(QGraphicsView):
         This method initializes the GraphicsScene with additional settings
         to make things draw smoother
         """
-        self.setRenderHints(QPainter.Antialiasing | QPainter.HighQualityAntialiasing | QPainter.TextAntialiasing | QPainter.SmoothPixmapTransform)
+        self.setRenderHints(
+            QPainter.Antialiasing
+            | QPainter.HighQualityAntialiasing
+            | QPainter.TextAntialiasing
+            | QPainter.SmoothPixmapTransform
+        )
         self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
         self.setDragMode(QGraphicsView.RubberBandDrag)
         self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
@@ -124,7 +135,9 @@ class GraphicsView(QGraphicsView):
                     self.grScene.scene.has_been_modified = True
                     self.grScene.scene.history.storeHistory("Deleted selected wire")
                 # Or if the item is a Block or Connector Block, remove it
-                elif isinstance(item, GraphicsBlock) or isinstance(item, GraphicsConnectorBlock):
+                elif isinstance(item, GraphicsBlock) or isinstance(
+                    item, GraphicsConnectorBlock
+                ):
                     item.block.remove()
                     self.grScene.scene.has_been_modified = True
                     self.grScene.scene.history.storeHistory("Deleted selected block")
@@ -133,12 +146,16 @@ class GraphicsView(QGraphicsView):
                     item.floating_label.remove()
                     self.interfaceManager.updateToolbarValues()
                     self.grScene.scene.has_been_modified = True
-                    self.grScene.scene.history.storeHistory("Deleted selected floating label")
+                    self.grScene.scene.history.storeHistory(
+                        "Deleted selected floating label"
+                    )
                 # Or if item is a Grouping Box, remove it
                 elif isinstance(item, GraphicsGBox):
                     item.grouping_box.remove()
                     self.grScene.scene.has_been_modified = True
-                    self.grScene.scene.history.storeHistory("Deleted selected grouping box")
+                    self.grScene.scene.history.storeHistory(
+                        "Deleted selected grouping box"
+                    )
 
     # -----------------------------------------------------------------------------
     def flipBlockSockets(self):
@@ -150,7 +167,9 @@ class GraphicsView(QGraphicsView):
         # For each selected item within the GraphicsScene
         for item in self.grScene.selectedItems():
             # If the item is a Block or Connector Block, flip its sockets
-            if isinstance(item, GraphicsBlock) or isinstance(item, GraphicsConnectorBlock):
+            if isinstance(item, GraphicsBlock) or isinstance(
+                item, GraphicsConnectorBlock
+            ):
                 item.block.updateSocketPositions()
                 item.block.updateWireRoutingLogic()
                 item.block.flipped = not (item.block.flipped)
@@ -179,7 +198,9 @@ class GraphicsView(QGraphicsView):
         mouseMoved = click_release_poss - self.last_click_poss
         edgeThreshSqr = EDGE_DRAG_LIM * EDGE_DRAG_LIM
 
-        return (mouseMoved.x() * mouseMoved.x() + mouseMoved.y() * mouseMoved.y()) > edgeThreshSqr
+        return (
+            mouseMoved.x() * mouseMoved.x() + mouseMoved.y() * mouseMoved.y()
+        ) > edgeThreshSqr
 
     # -----------------------------------------------------------------------------
     def getItemAtClick(self, event):
@@ -232,8 +253,10 @@ class GraphicsView(QGraphicsView):
         """
         # If in DEBUG mode, the follow code will print the start and end
         # sockets that have been recognized, as being relevant to this wire.
-        if DEBUG: print("socket is input socket:", item.socket.isInputSocket())
-        if DEBUG: print("socket is output socket:", item.socket.isOutputSocket())
+        if DEBUG:
+            print("socket is input socket:", item.socket.isInputSocket())
+        if DEBUG:
+            print("socket is output socket:", item.socket.isOutputSocket())
 
         # The start socket is extracted from the provided item
         self.drag_start_socket = item.socket
@@ -242,7 +265,8 @@ class GraphicsView(QGraphicsView):
 
         # If in DEBUG mode, the following code will print the wire that has
         # just been created
-        if DEBUG: print('View::wireDragStart ~   dragwire:', self.drag_wire)
+        if DEBUG:
+            print("View::wireDragStart ~   dragwire:", self.drag_wire)
 
     # -----------------------------------------------------------------------------
     def edgeDragEnd(self, item):
@@ -275,7 +299,8 @@ class GraphicsView(QGraphicsView):
         # The dragging mode of the wire is initially set to being None
         self.mode = MODE_NONE
 
-        if DEBUG: print('View::edgeDragEnd ~ End dragging edge')
+        if DEBUG:
+            print("View::edgeDragEnd ~ End dragging edge")
         # The previous wire (drag_wire) is removed
         self.drag_wire.remove()
         self.drag_wire = None
@@ -284,7 +309,7 @@ class GraphicsView(QGraphicsView):
         if type(item) is GraphicsSocket:
             # And the clicked socket is not the same socket the original wire started from
             if item.socket != self.drag_start_socket:
-                
+
                 # If we released dragging on a socket (other then the beginning socket)
                 # We want to keep all the wires coming from target socket
                 if not item.socket.is_multi_wire:
@@ -298,28 +323,51 @@ class GraphicsView(QGraphicsView):
                 # wire that ends in the socket block before connecting an end block,
                 # so that 2 outputs or 2 inputs are not connected through the
                 # Socket block
-                
+
                 if self.drag_start_socket.socket_type == 3:
                     if len(self.drag_start_socket.wires) > 0:
-                        if self.drag_start_socket.wires[0].start_socket.socket_type != item.socket.socket_type:
+                        if (
+                            self.drag_start_socket.wires[0].start_socket.socket_type
+                            != item.socket.socket_type
+                        ):
                             if item.socket.socket_type == 1:
                                 if len(item.socket.wires) == 0:
-                                    new_wire = Wire(self.grScene.scene, self.drag_start_socket, item.socket, WIRE_TYPE_STEP)
+                                    new_wire = Wire(
+                                        self.grScene.scene,
+                                        self.drag_start_socket,
+                                        item.socket,
+                                        WIRE_TYPE_STEP,
+                                    )
                             else:
-                                new_wire = Wire(self.grScene.scene, self.drag_start_socket, item.socket, WIRE_TYPE_STEP)
-                
+                                new_wire = Wire(
+                                    self.grScene.scene,
+                                    self.drag_start_socket,
+                                    item.socket,
+                                    WIRE_TYPE_STEP,
+                                )
+
                 # Socket block can have multi outputs only and not multi inputs
                 elif item.socket.socket_type == 3:
                     if len(item.socket.wires) > 0:
                         i = len(self.drag_start_socket.wires)
                         if i >= 1:
-                            self.drag_start_socket.wires[i-1].remove()
+                            self.drag_start_socket.wires[i - 1].remove()
                     else:
                         if item.socket.socket_type == 1:
                             if len(item.socket.wires) == 0:
-                                new_wire = Wire(self.grScene.scene, self.drag_start_socket, item.socket, WIRE_TYPE_STEP)
+                                new_wire = Wire(
+                                    self.grScene.scene,
+                                    self.drag_start_socket,
+                                    item.socket,
+                                    WIRE_TYPE_STEP,
+                                )
                         else:
-                            new_wire = Wire(self.grScene.scene, self.drag_start_socket, item.socket, WIRE_TYPE_STEP)
+                            new_wire = Wire(
+                                self.grScene.scene,
+                                self.drag_start_socket,
+                                item.socket,
+                                WIRE_TYPE_STEP,
+                            )
 
                 # Cannot connect a input to a input or a output to a output
                 # Input sockets can not have multiple wires
@@ -329,21 +377,38 @@ class GraphicsView(QGraphicsView):
                     # wire coming into it
                     if item.socket.socket_type == 1:
                         if len(item.socket.wires) == 0:
-                            new_wire = Wire(self.grScene.scene, self.drag_start_socket, item.socket, WIRE_TYPE_STEP)
+                            new_wire = Wire(
+                                self.grScene.scene,
+                                self.drag_start_socket,
+                                item.socket,
+                                WIRE_TYPE_STEP,
+                            )
 
                     elif self.drag_start_socket.socket_type == 1:
                         if len(self.drag_start_socket.wires) == 0:
-                            new_wire = Wire(self.grScene.scene, self.drag_start_socket, item.socket, WIRE_TYPE_STEP)
+                            new_wire = Wire(
+                                self.grScene.scene,
+                                self.drag_start_socket,
+                                item.socket,
+                                WIRE_TYPE_STEP,
+                            )
 
                     # Otherwise draw a wire between the two sockets
                     else:
-                        new_wire = Wire(self.grScene.scene, self.drag_start_socket, item.socket, WIRE_TYPE_STEP)
+                        new_wire = Wire(
+                            self.grScene.scene,
+                            self.drag_start_socket,
+                            item.socket,
+                            WIRE_TYPE_STEP,
+                        )
 
                 self.grScene.scene.has_been_modified = True
                 self.grScene.scene.history.storeHistory("Created new wire by dragging")
 
-                if DEBUG: print("created wire")
-                if DEBUG: print('View::edgeDragEnd ~ everything done.')
+                if DEBUG:
+                    print("created wire")
+                if DEBUG:
+                    print("View::edgeDragEnd ~ everything done.")
 
                 # Call for the intersection code to be run
                 # print("edge drag end - before true")
@@ -496,7 +561,10 @@ class GraphicsView(QGraphicsView):
         self.last_click_poss = self.mapToScene(event.pos())
 
         # if isinstance(item, GraphicsBlock) or isinstance(item, GraphicsWire) or isinstance(item, GraphicsConnectorBlock) or item is None:
-        if isinstance(item, (GraphicsBlock, GraphicsWire, GraphicsConnectorBlock)) or item is None:
+        if (
+            isinstance(item, (GraphicsBlock, GraphicsWire, GraphicsConnectorBlock))
+            or item is None
+        ):
             if self.grScene.scene.floating_labels:
                 # If floating labels are present and an open space is clicked, bring cursor out of focus from the labels
                 for label in self.grScene.scene.floating_labels:
@@ -507,12 +575,16 @@ class GraphicsView(QGraphicsView):
 
             if event.modifiers() & Qt.ShiftModifier:
                 event.ignore()
-                fakeEvent = QMouseEvent(QEvent.MouseButtonPress, event.localPos(), event.screenPos(),
-                                        Qt.LeftButton, event.buttons() | Qt.LeftButton,
-                                        event.modifiers() | Qt.ControlModifier)
+                fakeEvent = QMouseEvent(
+                    QEvent.MouseButtonPress,
+                    event.localPos(),
+                    event.screenPos(),
+                    Qt.LeftButton,
+                    event.buttons() | Qt.LeftButton,
+                    event.modifiers() | Qt.ControlModifier,
+                )
                 super().mousePressEvent(fakeEvent)
                 return
-
 
         if type(item) is GraphicsSocket:
 
@@ -570,16 +642,24 @@ class GraphicsView(QGraphicsView):
         item = self.getItemAtClick(event)
 
         # if isinstance(item, GraphicsBlock) or isinstance(item, GraphicsWire) or isinstance(item, GraphicsConnectorBlock) or item is None:
-        if isinstance(item, (GraphicsBlock, GraphicsWire, GraphicsConnectorBlock)) or item is None:
+        if (
+            isinstance(item, (GraphicsBlock, GraphicsWire, GraphicsConnectorBlock))
+            or item is None
+        ):
             if self.grScene.scene.floating_labels:
                 # Update font size box to display correct font size value of selected floating text
                 self.interfaceManager.updateToolbarValues()
 
             if event.modifiers() & Qt.ShiftModifier:
                 event.ignore()
-                fakeEvent = QMouseEvent(event.type(), event.localPos(), event.screenPos(),
-                                        Qt.LeftButton, Qt.NoButton,
-                                        event.modifiers() | Qt.ControlModifier)
+                fakeEvent = QMouseEvent(
+                    event.type(),
+                    event.localPos(),
+                    event.screenPos(),
+                    Qt.LeftButton,
+                    Qt.NoButton,
+                    event.modifiers() | Qt.ControlModifier,
+                )
                 super().mouseReleaseEvent(fakeEvent)
                 return
 
@@ -633,10 +713,24 @@ class GraphicsView(QGraphicsView):
         :type event: QMousePressEvent, required
         """
 
-        releaseEvent = QMouseEvent(QEvent.MouseButtonRelease, event.localPos(), event.screenPos(), Qt.LeftButton, Qt.NoButton, event.modifiers())
+        releaseEvent = QMouseEvent(
+            QEvent.MouseButtonRelease,
+            event.localPos(),
+            event.screenPos(),
+            Qt.LeftButton,
+            Qt.NoButton,
+            event.modifiers(),
+        )
         super().mouseReleaseEvent(releaseEvent)
         self.setDragMode(QGraphicsView.ScrollHandDrag)
-        fakeEvent = QMouseEvent(event.type(), event.localPos(), event.screenPos(), Qt.LeftButton, event.buttons() | Qt.LeftButton, event.modifiers())
+        fakeEvent = QMouseEvent(
+            event.type(),
+            event.localPos(),
+            event.screenPos(),
+            Qt.LeftButton,
+            event.buttons() | Qt.LeftButton,
+            event.modifiers(),
+        )
         super().mousePressEvent(fakeEvent)
 
     # -----------------------------------------------------------------------------
@@ -650,7 +744,14 @@ class GraphicsView(QGraphicsView):
         :param event: the detected middle mouse release event
         :type event: QMouseReleaseEvent, required
         """
-        fakeEvent = QMouseEvent(event.type(), event.localPos(), event.screenPos(), Qt.LeftButton, event.buttons() & ~Qt.LeftButton, event.modifiers())
+        fakeEvent = QMouseEvent(
+            event.type(),
+            event.localPos(),
+            event.screenPos(),
+            Qt.LeftButton,
+            event.buttons() & ~Qt.LeftButton,
+            event.modifiers(),
+        )
         super().mouseReleaseEvent(fakeEvent)
         self.setDragMode(QGraphicsView.NoDrag)
 
@@ -683,12 +784,12 @@ class GraphicsView(QGraphicsView):
 
         # If the current zoom is within the allowable zoom levels (0 to 10)
         # Scale the Scene (in the x and y) by the above-set zoomFactor
-        if self.zoomRange[0]-1 <= self.zoom <= self.zoomRange[1]:
+        if self.zoomRange[0] - 1 <= self.zoom <= self.zoomRange[1]:
             self.scale(zoomFactor, zoomFactor)
         # Otherwise if the current zoom is below the lowest allowable zoom level (0)
         # Force the zoom level to the lowest allowable level
-        elif self.zoom < self.zoomRange[0]-1:
-            self.zoom = self.zoomRange[0]-1
+        elif self.zoom < self.zoomRange[0] - 1:
+            self.zoom = self.zoomRange[0] - 1
         # Otherwise if the current zoom is above the highest allowable zoom level (10)
         # Force the zoom level to the highest allowable level
         elif self.zoom > self.zoomRange[1]:
@@ -714,11 +815,11 @@ class GraphicsView(QGraphicsView):
         try:
             # If the wire is in dragging mode
             if self.mode == MODE_WIRE_DRAG:
-                    # Grab the on-screen position of the mouse cursor
-                    pos = self.mapToScene(event.pos())
-                    # Set the point that the wire draws to, as the current x,y position of the mouse cursor
-                    self.drag_wire.grWire.setDestination(pos.x(), pos.y())
-                    # Call for the wire to be redrawn/updated accordingly
-                    self.drag_wire.grWire.update()
+                # Grab the on-screen position of the mouse cursor
+                pos = self.mapToScene(event.pos())
+                # Set the point that the wire draws to, as the current x,y position of the mouse cursor
+                self.drag_wire.grWire.setDestination(pos.x(), pos.y())
+                # Call for the wire to be redrawn/updated accordingly
+                self.drag_wire.grWire.update()
         except AttributeError:
             self.mode = MODE_NONE

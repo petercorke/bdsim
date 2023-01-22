@@ -88,7 +88,7 @@ from bdsim.run_sim import BDSim, TimeQ, blockname
 #             # self.clocks = clocks
 #             # self.sem.release()
 #             callback(t, clocks)
-            
+
 #             sys.stdout.flush()
 
 #         print(fg('yellow'))
@@ -120,11 +120,12 @@ class BDRealTimeState:
     :ivar graphics: enable graphics
     :vartype graphics: bool
     """
+
     def __init__(self):
 
-        self.x = None           # continuous state vector numpy.ndarray
-        self.T = None           # maximum.BlockDiagram time
-        self.t = None           # current time
+        self.x = None  # continuous state vector numpy.ndarray
+        self.T = None  # maximum.BlockDiagram time
+        self.t = None  # current time
         self.fignum = 0
         self.stop = None
         self.checkfinite = True
@@ -138,13 +139,18 @@ class BDRealTimeState:
 
 
 class BDRealTime(BDSim):
-
-    def run(self, bd, T=5, dt=None,
-            block=None, checkfinite=True, watch=[],
-            ):
+    def run(
+        self,
+        bd,
+        T=5,
+        dt=None,
+        block=None,
+        checkfinite=True,
+        watch=[],
+    ):
         """
         Run the block diagram
-        
+
         :param T: maximum integration time, defaults to 10.0
         :type T: float, optional
         :param dt: maximum time step
@@ -163,7 +169,7 @@ class BDRealTime(BDSim):
         :type solver_args: dict
         :return: time history of signals and states
         :rtype: Sim class
-        
+
         Assumes that the network has been compiled.
 
         The system is simulated from time 0 to ``T``.
@@ -174,17 +180,17 @@ class BDRealTime(BDSim):
         ``solver_args`` parameter.
 
         Results are returned in a class with attributes:
-            
+
         - ``t`` the time vector: ndarray, shape=(M,)
         - ``x`` is the state vector: ndarray, shape=(M,N)
         - ``xnames`` is a list of the names of the states corresponding to columns of `x`, eg. "plant.x0",
             defined for the block using the ``snames`` argument
         - ``yN`` for a watched input where N is the index of the port mentioned in the ``watch`` argument
         - ``ynames`` is a list of the names of the input ports being watched, same order as in ``watch`` argument
-        
+
         If there are no dynamic elements in the diagram, ie. no states, then ``x`` and ``xnames`` are not
         present.
-        
+
         The ``watch`` argument is a list of one or more input ports whose value during simulation
         will be recorded.  The elements of the list can be:
             - a ``Block`` reference, which is interpretted as input port 0
@@ -192,17 +198,17 @@ class BDRealTime(BDSim):
             - a string of the form "block[i]" which is port i of the block named block.
 
         The debug string comprises single letter flags:
-                
+
                 - 'p' debug network value propagation
                 - 's' debug state vector
-                - 'd' debug state derivative 
-        
+                - 'd' debug state derivative
+
         .. note:: Simulation stops if the step time falls below ``minsteplength``
             which typically indicates that the solver is struggling with a very
             harsh non-linearity.
         """
-        
-        assert bd.compiled, 'Network has not been compiled'
+
+        assert bd.compiled, "Network has not been compiled"
 
         state = BDRealTimeState()
         self.state = state
@@ -213,15 +219,15 @@ class BDRealTime(BDSim):
         #   - str in the form BLOCKNAME[PORT]
         watchlist = []
         watchnamelist = []
-        re_block = re.compile(r'(?P<name>[^[]+)(\[(?P<port>[0-9]+)\])')
+        re_block = re.compile(r"(?P<name>[^[]+)(\[(?P<port>[0-9]+)\])")
         for w in watch:
             if isinstance(w, str):
                 # a name was given, with optional port number
                 m = re_block.match(w)
                 if m is None:
-                    raise ValueError('watch block[port] not found: ' + w)
-                name = m.group('name')
-                port = int(m.group('port'))
+                    raise ValueError("watch block[port] not found: " + w)
+                name = m.group("name")
+                port = int(m.group("port"))
                 b = bd.blocknames[name]
                 plug = b[port]
             elif isinstance(w, Block):
@@ -242,7 +248,7 @@ class BDRealTime(BDSim):
         state.xlist = []
         state.plist = [[] for p in state.watchlist]
 
-        print('run')
+        print("run")
         t0 = time.time()
         stop = t0
         tmax = 0
@@ -257,7 +263,7 @@ class BDRealTime(BDSim):
             tnext, sources = self.state.eventq.pop()
 
             if tnext is None:
-                print('E', end='')
+                print("E", end="")
                 time.sleep(0.02)
                 continue
 
@@ -271,14 +277,14 @@ class BDRealTime(BDSim):
             if sleep_time > 0:
                 # print('sleeping for', sleep_time)
                 time.sleep(sleep_time)
-                tmax = max(tmax, time.time()-ts)
+                tmax = max(tmax, time.time() - ts)
                 # if tmax > 0.2:
                 #     print(tmax, sleep_time)
-                print('.', end='')
+                print(".", end="")
                 nok += 1
             else:
                 # print('timer overrun')
-                print('x', end='')
+                print("x", end="")
                 noverrun += 1
 
             # self.t = t
@@ -293,7 +299,7 @@ class BDRealTime(BDSim):
             dt = te_1 - te_0
             n += 1
             tsum += dt
-            tsum2 += dt*dt
+            tsum2 += dt * dt
             tmax = max(tmax, dt)
 
             # visit all the blocks and clocks that have an event now
@@ -315,22 +321,22 @@ class BDRealTime(BDSim):
 
             # stash the results
             state.tlist.append(tnext)
-            
+
             # record the ports on the watchlist
             for i, p in enumerate(state.watchlist):
                 state.plist[i].append(p.block.output(tnext)[p.port])
-            
+
             sys.stdout.flush()
 
         # save buffered data in a Struct
-        out = BDStruct(name='results')
+        out = BDStruct(name="results")
         # out.t = np.array(state.tlist)
         # out.x = np.array(state.xlist)
         # out.xnames = bd.statenames
 
         # save clocked states
         for c in bd.clocklist:
-            name = c.name.replace('.', '')
+            name = c.name.replace(".", "")
             clockdata = BDStruct(name)
             clockdata.t = np.array(c.t)
             clockdata.x = np.array(c.x)
@@ -338,16 +344,16 @@ class BDRealTime(BDSim):
 
         # save the watchlist into variables named y0, y1 etc.
         for i, p in enumerate(watchlist):
-            out['y'+str(i)] = np.array(state.plist[i])
+            out["y" + str(i)] = np.array(state.plist[i])
         out.ynames = watchnamelist
 
-        print(fg('yellow'))
-        print(f'tmax {tmax}')
-        print(f'n ok      {nok} ({nok/(nok+noverrun)*100:.1f}%)')
-        print(f'n overrun {noverrun} ({noverrun/(nok+noverrun)*100:.1f}%)')
-        print(f't mean {tsum/n*1000:.1f} ms')
-        print(f't sdev {math.sqrt((tsum2 - tsum**2/n)/(n-1)*1000):.1f} ms')
-        print(f't max {tmax*1000:.1f} ms')
+        print(fg("yellow"))
+        print(f"tmax {tmax}")
+        print(f"n ok      {nok} ({nok/(nok+noverrun)*100:.1f}%)")
+        print(f"n overrun {noverrun} ({noverrun/(nok+noverrun)*100:.1f}%)")
+        print(f"t mean {tsum/n*1000:.1f} ms")
+        print(f"t sdev {math.sqrt((tsum2 - tsum**2/n)/(n-1)*1000):.1f} ms")
+        print(f"t max {tmax*1000:.1f} ms")
         print(attr(0))
 
         return out
@@ -357,7 +363,6 @@ class BDRealTime(BDSim):
         # tsum = 0
         # tsum2 = 0
         # tmax = 0
-
 
         # while True:
         #     t, clocks = self.state.eventq.wait()
@@ -393,4 +398,3 @@ class BDRealTime(BDSim):
         # print(f't sdev {math.sqrt((tsum2 - tsum**2/n)/(n-1)*1000):.1f} ms')
         # print(f't max {tmax*1000:.1f} ms')
         # print(attr(0))
-

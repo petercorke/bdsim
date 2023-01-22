@@ -14,19 +14,20 @@ import math
 
 from bdsim.components import FunctionBlock
 
+
 class Inverse(FunctionBlock):
     """
     :blockname:`INVERSE`
-    
+
     .. table::
        :align: left
-    
+
     +----------+---------+---------+
     | inputs   | outputs |  states |
     +----------+---------+---------+
     | 1        | 2       | 0       |
     +----------+---------+---------+
-    | A(M,N)   | A(N,M)  |         | 
+    | A(M,N)   | A(N,M)  |         |
     |          | float   |         |
     +----------+---------+---------+
     """
@@ -34,7 +35,7 @@ class Inverse(FunctionBlock):
     nin = 1
     nout = 2
 
-    onames = ('inv', 'cond')
+    onames = ("inv", "cond")
 
     def __init__(self, pinv=False, **blockargs):
         """
@@ -46,7 +47,7 @@ class Inverse(FunctionBlock):
         :type blockargs: dict
         :return: An INVERSE block
         :rtype: Inverse instance
-        
+
         Compute inverse of the 2D-array input signal.  If the matrix is square
         the inverse is computed unless the ``pinv`` flag is True.  For a
         non-square matrix the pseudo-inverse is used.  The condition number is
@@ -57,10 +58,10 @@ class Inverse(FunctionBlock):
             `numpy.linalg.cond <https://numpy.org/doc/stable/reference/generated/numpy.linalg.cond.html>`_
         """
         super().__init__(**blockargs)
-        self.type = 'inverse'
+        self.type = "inverse"
 
         self.pinv = pinv
-        
+
     def output(self, t=None):
 
         mat = self.inputs[0]
@@ -76,29 +77,30 @@ class Inverse(FunctionBlock):
                 try:
                     out = np.linalg.inv(mat)
                 except np.linalg.LinAlgError:
-                    raise RuntimeError('matrix is singular')
+                    raise RuntimeError("matrix is singular")
             return [out, np.linalg.cond(mat)]
 
-        elif hasattr(mat, 'inv'):
+        elif hasattr(mat, "inv"):
             # ask the object to invert itself
             return [mat.inv(), None]
         else:
-            raise RuntimeError('object cannot be inverted')
+            raise RuntimeError("object cannot be inverted")
+
 
 # ------------------------------------------------------------------------ #
 class Transpose(FunctionBlock):
     """
     :blockname:`TRANSPOSE`
-    
+
     .. table::
        :align: left
-    
+
     +------------+---------+---------+
     | inputs     | outputs |  states |
     +------------+---------+---------+
     | 1          | 1       | 0       |
     +------------+---------+---------+
-    | A(M,N)     | A(N,M)  |         | 
+    | A(M,N)     | A(N,M)  |         |
     +------------+---------+---------+
     """
 
@@ -125,7 +127,7 @@ class Transpose(FunctionBlock):
         :seealso: `numpy.linalg.transpose <https://numpy.org/doc/stable/reference/generated/numpy.linalg.transpose.html>`_
         """
         super().__init__(**blockargs)
-        self.type = 'transpose'
+        self.type = "transpose"
 
     def output(self, t=None):
         mat = self.inputs[0]
@@ -137,21 +139,23 @@ class Transpose(FunctionBlock):
 
         return [out]
 
+
 # ------------------------------------------------------------------------ #
+
 
 class Norm(FunctionBlock):
     """
     :blockname:`NORM`
-    
+
     .. table::
        :align: left
-    
+
     +------------+---------+---------+
     | inputs     | outputs |  states |
     +------------+---------+---------+
     | 1          | 1       | 0       |
     +------------+---------+---------+
-    | A(N,)      | float   |         | 
+    | A(N,)      | float   |         |
     | A(N,M)     |         |         |
     +------------+---------+---------+
     """
@@ -177,7 +181,7 @@ class Norm(FunctionBlock):
         :seealso: `numpy.linalg.norm <https://numpy.org/doc/stable/reference/generated/numpy.linalg.norm.html>`_
         """
         super().__init__(**blockargs)
-        self.type = 'norm'
+        self.type = "norm"
         self.args = dict(ord=ord, axis=axis)
 
     def output(self, t=None):
@@ -185,28 +189,30 @@ class Norm(FunctionBlock):
         out = np.linalg.norm(vec, **self.args)
         return [out]
 
+
 # ------------------------------------------------------------------------ #
+
 
 class Flatten(FunctionBlock):
     """
     :blockname:`FLATTEN`
-    
+
     .. table::
        :align: left
-    
+
     +------------+---------+---------+
     | inputs     | outputs |  states |
     +------------+---------+---------+
     | 1          | 1       | 0       |
     +------------+---------+---------+
-    | A(N,M )    | A(NM,)  |         | 
+    | A(N,M )    | A(NM,)  |         |
     +------------+---------+---------+
     """
 
     nin = 1
     nout = 1
 
-    def __init__(self, order='C', **blockargs):
+    def __init__(self, order="C", **blockargs):
         """
         Flatten a multi-dimensional array.
 
@@ -218,11 +224,11 @@ class Flatten(FunctionBlock):
         :rtype: Flatten instance
 
         Flattens the incoming array in either row major ('C') or column major ('F') order.
-        
+
         :seealso: `numpy.flatten <https://numpy.org/doc/stable/reference/generated/numpy.flatten.html>`_
         """
         super().__init__(**blockargs)
-        self.type = 'flatten'
+        self.type = "flatten"
         self.order = order
 
     def output(self, t=None):
@@ -230,21 +236,23 @@ class Flatten(FunctionBlock):
         out = vec.flatten(self.order)
         return [out]
 
+
 # ------------------------------------------------------------------------ #
+
 
 class Slice2(FunctionBlock):
     """
     :blockname:`SLICE2`
-    
+
     .. table::
        :align: left
-    
+
     +------------+---------+---------+
     | inputs     | outputs |  states |
     +------------+---------+---------+
     | 1          | 1       | 0       |
     +------------+---------+---------+
-    | A(N,M)     | A(K,L)  |         | 
+    | A(N,M)     | A(K,L)  |         |
     +------------+---------+---------+
     """
 
@@ -263,7 +271,7 @@ class Slice2(FunctionBlock):
         :type blockargs: dict
         :return: A SLICE2 block
         :rtype: Slice2 instance
-        
+
         Compute a 2D slice of input 2D array.
 
         If ``rows`` or ``cols`` is ``None`` it means all rows or columns
@@ -279,7 +287,7 @@ class Slice2(FunctionBlock):
             SLICE2(rows=[2,3], cols=[4,1]) # return elements [2,4] and [3,1] as a 1D array
 
         If a single row or column is selected, the result will be a 1D array
-        
+
         If ``rows`` or ``cols`` is a tuple, it must have three elements.  It
         describes a Python slice ``(start, stop, step)`` where any element can be ``None``
 
@@ -296,52 +304,53 @@ class Slice2(FunctionBlock):
 
         The list and tuple notation can be mixed, for example, one for rows
         and one for columns.
-        
+
         :seealso: :class:`Slice1` :class:`Index`
         """
         super().__init__(**blockargs)
-        self.type = 'slice2'
+        self.type = "slice2"
 
         if rows is None:
             self.rows = slice(None, None, None)
         elif isinstance(rows, list):
-            self.rows =  rows
+            self.rows = rows
         elif isinstance(rows, tuple) and len(rows) == 3:
             self.rows = slice(*rows)
         else:
-            raise ValueError('bad rows specifier')
-            
+            raise ValueError("bad rows specifier")
+
         if cols is None:
             self.cols = slice(None, None, None)
         elif isinstance(cols, list):
-            self.cols =  cols
+            self.cols = cols
         elif isinstance(cols, tuple) and len(cols) == 3:
             self.cols = slice(*cols)
         else:
-            raise ValueError('bad columns specifier')
-
+            raise ValueError("bad columns specifier")
 
     def output(self, t=None):
         array = self.inputs[0]
         if array.ndim != 2:
-            raise RuntimeError('Slice2 block expecting 2d array')
+            raise RuntimeError("Slice2 block expecting 2d array")
         return [array[self.rows, self.cols]]
 
+
 # ------------------------------------------------------------------------ #
+
 
 class Slice1(FunctionBlock):
     """
     :blockname:`SLICE1`
-    
+
     .. table::
        :align: left
-    
+
     +------------+---------+---------+
     | inputs     | outputs |  states |
     +------------+---------+---------+
     | 1          | 1       | 0       |
     +------------+---------+---------+
-    | A(N)       | A(M)    |         | 
+    | A(N)       | A(M)    |         |
     +------------+---------+---------+
     """
 
@@ -358,7 +367,7 @@ class Slice1(FunctionBlock):
         :type blockargs: dict
         :return: A SLICE1 block
         :rtype: Slice1 instance
-        
+
         Compute a 1D slice of input 1D array.
 
         If ``index`` is ``None`` it means all elements.
@@ -371,7 +380,7 @@ class Slice1(FunctionBlock):
             SLICE1(index=[2,3]) # return elements 2 and 3 as a 1D array
             SLICE1(index=[2])   # return element 2 as a 1D array
             SLICE1(index=2)     # return element 2 as a NumPy scalar
-        
+
         If ``index`` is a tuple, it must have three elements.  It
         describes a Python slice ``(start, stop, step)`` where any element can be ``None``
 
@@ -385,41 +394,42 @@ class Slice1(FunctionBlock):
 
             SLICE1(index=(None,None,2))  # return every second element
             SLICE1(index=(None,None,-1)) # reverse the elements
-        
+
         :seealso: :class:`Slice1`
         """
         super().__init__(**blockargs)
-        self.type = 'slice1'
+        self.type = "slice1"
 
         if index is None:
             self.index = slice(None, None, None)
         elif isinstance(index, list):
-            self.index =  index
+            self.index = index
         elif isinstance(index, tuple) and len(index) == 3:
             self.index = slice(*index)
         else:
-            raise ValueError('bad index specifier')
+            raise ValueError("bad index specifier")
 
     def output(self, t=None):
         array = self.inputs[0]
         if array.ndim != 1:
-            raise RuntimeError('Slice1 block expecting 1d array')
+            raise RuntimeError("Slice1 block expecting 1d array")
         return [array[self.index]]
+
 
 # ------------------------------------------------------------------------ #
 class Det(FunctionBlock):
     """
     :blockname:`DET`
-    
+
     .. table::
        :align: left
-    
+
     +------------+---------+---------+
     | inputs     | outputs |  states |
     +------------+---------+---------+
     | 1          | 1       | 0       |
     +------------+---------+---------+
-    | A(N,N)     | float   |         | 
+    | A(N,N)     | float   |         |
     +------------+---------+---------+
     """
 
@@ -434,32 +444,34 @@ class Det(FunctionBlock):
         :type blockargs: dict
         :return: A DET block
         :rtype: Det instance
-        
+
         Compute the matrix determinant.
 
         :seealso: `numpy.linalg.det <https://numpy.org/doc/stable/reference/generated/numpy.linalg.det.html>`_
         """
         super().__init__(**blockargs)
-        self.type = 'det'
+        self.type = "det"
 
     def output(self, t=None):
         mat = self.inputs[0]
         out = np.linalg.det(mat)
         return [out]
+
+
 # ------------------------------------------------------------------------ #
 class Cond(FunctionBlock):
     """
     :blockname:`COND`
-    
+
     .. table::
        :align: left
-    
+
     +------------+---------+---------+
     | inputs     | outputs |  states |
     +------------+---------+---------+
     | 1          | 1       | 0       |
     +------------+---------+---------+
-    | A(N,M)     | float   |         | 
+    | A(N,M)     | float   |         |
     +------------+---------+---------+
     """
 
@@ -474,16 +486,17 @@ class Cond(FunctionBlock):
         :type blockargs: dict
         :return: A COND block
         :rtype: Cond instance
-        
+
         :seealso: `numpy.linalg.cond <https://numpy.org/doc/stable/reference/generated/numpy.linalg.cond.html>`_
         """
         super().__init__(**blockargs)
-        self.type = 'cond'
+        self.type = "cond"
 
     def output(self, t=None):
         mat = self.inputs[0]
         out = np.linalg.cond(mat)
         return [out]
+
 
 if __name__ == "__main__":  # pragma: no cover
 

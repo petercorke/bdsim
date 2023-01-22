@@ -95,7 +95,6 @@ class Scene(Serializable):
     def has_been_modified(self):
         return self._has_been_modified
 
-
     # Todo - add doc for this method
     # -----------------------------------------------------------------------------
     @has_been_modified.setter
@@ -141,12 +140,12 @@ class Scene(Serializable):
         on startup, the font is accessed whenever the scene is created.
         """
         try:
-            self._system_font = ImageFont.truetype('arial.ttf', 14)
+            self._system_font = ImageFont.truetype("arial.ttf", 14)
         except OSError:
-            self._system_font = ImageFont.truetype('Arial.ttf', 14)
+            self._system_font = ImageFont.truetype("Arial.ttf", 14)
 
     # -----------------------------------------------------------------------------
-    def addHasBeenModifiedListener(self, callback: 'function'):
+    def addHasBeenModifiedListener(self, callback: "function"):
         self._has_been_modified_listeners.append(callback)
 
     # -----------------------------------------------------------------------------
@@ -364,21 +363,26 @@ class Scene(Serializable):
             #     if block.parameterWindow.isVisible():
             #         block.closeParamWindow()
 
-        for wire in self.wires: wires.append(wire.serialize())
-        for label in self.floating_labels: labels.append(label.serialize())
-        for gbox in self.grouping_boxes: gboxes.append(gbox.serialize())
-        return OrderedDict([
-            ('id', self.id),
-            ('created_by', self.created_by),
-            ('creation_time', self.creation_time),
-            ('simulation_time', self.sim_time),
-            ('scene_width', self.scene_width),
-            ('scene_height', self.scene_height),
-            ('blocks', blocks),
-            ('wires', wires),
-            ('labels', labels),
-            ('grouping_boxes', gboxes),
-        ])
+        for wire in self.wires:
+            wires.append(wire.serialize())
+        for label in self.floating_labels:
+            labels.append(label.serialize())
+        for gbox in self.grouping_boxes:
+            gboxes.append(gbox.serialize())
+        return OrderedDict(
+            [
+                ("id", self.id),
+                ("created_by", self.created_by),
+                ("creation_time", self.creation_time),
+                ("simulation_time", self.sim_time),
+                ("scene_width", self.scene_width),
+                ("scene_height", self.scene_height),
+                ("blocks", blocks),
+                ("wires", wires),
+                ("labels", labels),
+                ("grouping_boxes", gboxes),
+            ]
+        )
 
     # -----------------------------------------------------------------------------
     def deserialize(self, data, hashmap={}):
@@ -409,7 +413,7 @@ class Scene(Serializable):
 
         # If sim_time parameter exists in model, load it
         try:
-            self.sim_time = data['simulation_time']
+            self.sim_time = data["simulation_time"]
         # Otherwise, ignore as model will be updated on save
         except:
             pass
@@ -437,7 +441,10 @@ class Scene(Serializable):
                     # by the blockname(block_class) in the first place, and this will never change.
                     # The block_class.__name__ supports older files which would of used self.__class__.__name__
                     # to define the block type
-                    if block_type == blockname(block_class) or block_type == block_class.__name__:
+                    if (
+                        block_type == blockname(block_class)
+                        or block_type == block_class.__name__
+                    ):
                         block_class().deserialize(block_data, hashmap)
                         break
 
@@ -451,7 +458,9 @@ class Scene(Serializable):
                 # If the data for the labels is not null, then create the labels
                 for label_data in data["labels"]:
                     if label_data is not None:
-                        Floating_Label(self, self.window, self.main_window).deserialize(label_data, hashmap)
+                        Floating_Label(self, self.window, self.main_window).deserialize(
+                            label_data, hashmap
+                        )
         except KeyError:
             # If model data doesn't contain 'labels' then none were saved, so don't create any.
             pass
@@ -463,12 +472,31 @@ class Scene(Serializable):
                 for gbox_data in data["grouping_boxes"]:
                     if gbox_data is not None:
                         # Ensure essnetial Grouping Box info exists; if it does not, we cannot fully reconstruct Grouping Box, so ignore
-                        if gbox_data['width'] and gbox_data['height'] and gbox_data['color']:
-                            if (gbox_data['pos_x'] is not None) and (gbox_data['pos_y'] is not None):
-                                pos = (gbox_data['pos_x'], gbox_data['pos_y'])
-                                Grouping_Box(self, self.window, gbox_data['width'], gbox_data['height'], gbox_data['color'], pos).deserialize(gbox_data, hashmap)
+                        if (
+                            gbox_data["width"]
+                            and gbox_data["height"]
+                            and gbox_data["color"]
+                        ):
+                            if (gbox_data["pos_x"] is not None) and (
+                                gbox_data["pos_y"] is not None
+                            ):
+                                pos = (gbox_data["pos_x"], gbox_data["pos_y"])
+                                Grouping_Box(
+                                    self,
+                                    self.window,
+                                    gbox_data["width"],
+                                    gbox_data["height"],
+                                    gbox_data["color"],
+                                    pos,
+                                ).deserialize(gbox_data, hashmap)
                             else:
-                                Grouping_Box(self, self.window, gbox_data['width'], gbox_data['height'], gbox_data['color']).deserialize(gbox_data, hashmap)
+                                Grouping_Box(
+                                    self,
+                                    self.window,
+                                    gbox_data["width"],
+                                    gbox_data["height"],
+                                    gbox_data["color"],
+                                ).deserialize(gbox_data, hashmap)
         except KeyError:
             # If model data doesn't contain 'grouping_boxes' then none were saved, so don't create any.
             pass

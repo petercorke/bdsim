@@ -12,14 +12,11 @@ from bdsim.bdedit.block_graphics_block import *
 # =============================================================================
 # Todo - update doc string
 class Main(Block):
-    """
+    """ """
 
-    """
     # -----------------------------------------------------------------------------
     def __init__(self, scene, window, file_name=None, name="Main Block", pos=(0, 0)):
-        """
-
-        """
+        """ """
 
         super().__init__(scene, window)
 
@@ -35,10 +32,12 @@ class Main(Block):
 
         self.parameters = [["file name", str, file_name, []]]
 
-        self.block_url = ''
+        self.block_url = ""
         self.icon = ":/Icons_Reference/Icons/main.png"
         self.flipped = False
-        self.flipped_icon = os.path.join(os.path.splitext(self.icon)[0] + "_flipped.png")
+        self.flipped_icon = os.path.join(
+            os.path.splitext(self.icon)[0] + "_flipped.png"
+        )
 
         self.inputsNum = 0
         self.outputsNum = 0

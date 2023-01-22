@@ -4,6 +4,7 @@ class Serializable:
     amongst necessary data (1), saving (2) and loading (3) of this data that is needed
     for the reconstruction of a Block Diagram.
     """
+
     def __init__(self):
         """
         This method extracts the unique identification number of the class instance

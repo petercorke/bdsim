@@ -20,16 +20,16 @@ from bdsim.components import TransferBlock
 class Integrator(TransferBlock):
     """
     :blockname:`INTEGRATOR`
-    
+
     .. table::
        :align: left
-    
+
        +------------+---------+---------+
        | inputs     | outputs |  states |
        +------------+---------+---------+
        | 1          | 1       | N       |
        +------------+---------+---------+
-       | float,     | float,  |         | 
+       | float,     | float,  |         |
        | A(N,)      | A(N,)   |         |
        +------------+---------+---------+
     """
@@ -60,7 +60,7 @@ class Integrator(TransferBlock):
 
         The minimum and maximum values can be:
 
-            - a scalar, in which case the same value applies to every element of 
+            - a scalar, in which case the same value applies to every element of
               the state vector, or
             - a vector, of the same shape as ``x0`` that applies elementwise to
               the state.
@@ -72,12 +72,12 @@ class Integrator(TransferBlock):
 
         if isinstance(x0, (int, float)):
             x0 = np.r_[x0]
-                
+
         elif isinstance(x0, np.ndarray):
-                if x0.ndim > 1:
-                    raise ValueError('state must be a 1D vector')
+            if x0.ndim > 1:
+                raise ValueError("state must be a 1D vector")
         else:
-                x0 = base.getvector(x0)
+            x0 = base.getvector(x0)
 
         self.nstates = x0.shape[0]
 
@@ -94,7 +94,7 @@ class Integrator(TransferBlock):
         self._x0 = x0
         self.min = min
         self.max = max
-        print('nstates', self.nstates)
+        print("nstates", self.nstates)
 
     def output(self, t=None):
         return [self._x]
@@ -108,13 +108,14 @@ class Integrator(TransferBlock):
 
         return self.gain * xd
 
+
 class PoseIntegrator(TransferBlock):
     """
     :blockname:`POSEINTEGRATOR`
-    
+
     .. table::
        :align: left
-    
+
        +------------+---------+---------+
        | inputs     | outputs |  states |
        +------------+---------+---------+
@@ -163,21 +164,23 @@ class PoseIntegrator(TransferBlock):
 
         return self.inputs[0]
 
+
 # ------------------------------------------------------------------------ #
+
 
 class LTI_SS(TransferBlock):
     """
     :blockname:`LTI_SS`
-    
+
     .. table::
        :align: left
-    
+
        +------------+---------+---------+
        | inputs     | outputs |  states |
        +------------+---------+---------+
        | 1          | 1       | nc      |
        +------------+---------+---------+
-       | float,     | float,  |         | 
+       | float,     | float,  |         |
        | A(nb,)     | A(nc,)  |         |
        +------------+---------+---------+
     """
@@ -204,7 +207,7 @@ class LTI_SS(TransferBlock):
         time invariant (LTI) system described by numerator and denominator
         polynomial coefficients.
 
-        Coefficients are given in the order from highest order to zeroth 
+        Coefficients are given in the order from highest order to zeroth
         order, ie. :math:`2s^2 - 4s +3` is ``[2, -4, 3]``.
 
         Only proper transfer functions, where order of numerator is less
@@ -219,23 +222,23 @@ class LTI_SS(TransferBlock):
 
         is the transfer function :math:`\frac{s+2}{2s^2+3s-4}`.
         """
-        #print('in SS constructor')
-        assert A.shape[0] == A.shape[1], 'A must be square'
+        # print('in SS constructor')
+        assert A.shape[0] == A.shape[1], "A must be square"
         n = A.shape[0]
         if len(B.shape) == 1:
             nin = 1
             B = B.reshape((n, 1))
         else:
             nin = B.shape[1]
-        assert B.shape[0] == n, 'B must have same number of rows as A'
+        assert B.shape[0] == n, "B must have same number of rows as A"
 
         if len(C.shape) == 1:
             nout = 1
-            assert C.shape[0] == n, 'C must have same number of columns as A'
+            assert C.shape[0] == n, "C must have same number of columns as A"
             C = C.reshape((1, n))
         else:
             nout = C.shape[0]
-            assert C.shape[1] == n, 'C must have same number of columns as A'
+            assert C.shape[1] == n, "C must have same number of columns as A"
 
         super().__init__(**blockargs)
 
@@ -255,24 +258,26 @@ class LTI_SS(TransferBlock):
 
     def deriv(self):
         return self.A @ self._x + self.B @ np.array(self.inputs)
+
+
 # ------------------------------------------------------------------------ #
 
 
 class LTI_SISO(LTI_SS):
     """
     :blockname:`LTI_SISO`
-    
+
     .. table::
        :align: left
-    
+
        +------------+---------+---------+
        | inputs     | outputs |  states |
        +------------+---------+---------+
        | 1          | 1       | n       |
        +------------+---------+---------+
-       | float      | float   |         | 
+       | float      | float   |         |
        +------------+---------+---------+
-     
+
     """
 
     nin = 1
@@ -297,7 +302,7 @@ class LTI_SISO(LTI_SS):
         time invariant (LTI) system described by numerator and denominator
         polynomial coefficients.
 
-        Coefficients are given in the order from highest order to zeroth 
+        Coefficients are given in the order from highest order to zeroth
         order, ie. :math:`2s^2 - 4s +3` is ``[2, -4, 3]``.
 
         Only proper transfer functions, where order of numerator is less
@@ -312,7 +317,7 @@ class LTI_SISO(LTI_SS):
 
         is the transfer function :math:`\frac{s+2}{2s^2+3s-4}`.
         """
-        #print('in SISO constscutor')
+        # print('in SISO constscutor')
 
         if not isinstance(N, list):
             N = [N]
@@ -324,7 +329,7 @@ class LTI_SISO(LTI_SS):
         nn = len(N)
         if x0 is None:
             x0 = np.zeros((n,))
-        assert nn <= n, 'direct pass through is not supported'
+        assert nn <= n, "direct pass through is not supported"
 
         # convert to numpy arrays
         N = np.r_[np.zeros((len(D) - len(N),)), np.array(N)]
@@ -355,31 +360,30 @@ class LTI_SISO(LTI_SS):
         self.den = D
 
         if len(np.flatnonzero(D)) > 0:
-            raise ValueError('D matrix is not zero')
+            raise ValueError("D matrix is not zero")
 
         super().__init__(A=A, B=B, C=C, x0=x0, **blockargs)
 
         if self.verbose:
-            print('A=', A)
-            print('B=', B)
-            print('C=', C)
-
+            print("A=", A)
+            print("B=", B)
+            print("C=", C)
 
         def change_param(self, param, newvalue):
-            if param == 'num':
+            if param == "num":
                 self.num = newvalue
-            elif param == 'den':
+            elif param == "den":
                 self.den = newvalue
             self.A, self.B, self.C, self.D = scipy.signal.tf2ss(self.num, self.den)
-            
-        self.add_param('num', change_param)
-        self.add_param('den', change_param)
 
+        self.add_param("num", change_param)
+        self.add_param("den", change_param)
 
 
 if __name__ == "__main__":
 
     from pathlib import Path
 
-    exec(open(Path(__file__).parent.parent.parent / "tests" / "test_transfers.py").read())
-
+    exec(
+        open(Path(__file__).parent.parent.parent / "tests" / "test_transfers.py").read()
+    )

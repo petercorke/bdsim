@@ -97,10 +97,12 @@ class Interface(QWidget):
 
         # _______________________________ Initial Setup _______________________________
         # Sets interface's (application window's) resolution. Several options available:
-        #self.setGeometry(100, 100, resolution.width() - 200, resolution.height() - 200)  # Interface will be same size as desktop screen, minus 100 pixels from all sides
-        #self.setGeometry(resolution.width() / 4, resolution.height() / 4, resolution.width() / 2, resolution.height() / 2)  # Interface will be half the size of the desktop screen, and centered in the screen
-        #self.setGeometry(100, 100, resolution.width() / 2, resolution.height() / 2)  # Interface will be half the size of the desktop screen, and displayed 100 pixels down and right from top left corner of the screen
-        main_window.setGeometry(100, 100, int(resolution.width() / 2), int(resolution.height() / 2))  # Interface will be half the size of the desktop screen, and displayed 100 pixels down and right from top left corner of the screen
+        # self.setGeometry(100, 100, resolution.width() - 200, resolution.height() - 200)  # Interface will be same size as desktop screen, minus 100 pixels from all sides
+        # self.setGeometry(resolution.width() / 4, resolution.height() / 4, resolution.width() / 2, resolution.height() / 2)  # Interface will be half the size of the desktop screen, and centered in the screen
+        # self.setGeometry(100, 100, resolution.width() / 2, resolution.height() / 2)  # Interface will be half the size of the desktop screen, and displayed 100 pixels down and right from top left corner of the screen
+        main_window.setGeometry(
+            100, 100, int(resolution.width() / 2), int(resolution.height() / 2)
+        )  # Interface will be half the size of the desktop screen, and displayed 100 pixels down and right from top left corner of the screen
 
         # Layout manager is defined and set for the application layout. This will handle
         # the positioning of each application component.
@@ -151,10 +153,16 @@ class Interface(QWidget):
 
         # Adding icon for the tool above the library browser
         self.tool_logo = QLabel()
-        self.tool_logo.setPixmap(QPixmap(":/Icons_Reference/Icons/bdsim_logo2.png").scaledToWidth(230 * self.layout.scale))
+        self.tool_logo.setPixmap(
+            QPixmap(":/Icons_Reference/Icons/bdsim_logo2.png").scaledToWidth(
+                230 * self.layout.scale
+            )
+        )
         # self.tool_logo.setPixmap(QPixmap(":/Icons_Reference/Icons/bdsim_logo2.png").scaledToHeight(40 * self.layout.scale))
         self.libraryBrowser.layout.addWidget(self.tool_logo)
-        self.libraryBrowser.layout.setAlignment(self.tool_logo, Qt.AlignmentFlag.AlignHCenter)
+        self.libraryBrowser.layout.setAlignment(
+            self.tool_logo, Qt.AlignmentFlag.AlignHCenter
+        )
 
         # The follow label is added to the library browser, naming it
         # self.libraryBrowser.layout.addWidget(QLabel('<font size=8><b>Library Browser</font>'))
@@ -170,7 +178,7 @@ class Interface(QWidget):
 
         # Make a button for canvas items. These items are like the auto-imported blocks,
         # but are created from definitions in bdedit, rather than from external libraries
-        self.canvasItems_button = QPushButton(' + Canvas Items')
+        self.canvasItems_button = QPushButton(" + Canvas Items")
         self.canvasItems_button.setStyleSheet("QPushButton { text-align: left }")
         self.canvasItems_button.clicked.connect(self.toggleCanvasItems)
         self.canvas_items_hidden = True
@@ -194,16 +202,40 @@ class Interface(QWidget):
         self.grouping_box_button.setVisible(False)
 
         # These buttons are then connected to creating their respective instances within the Scene
-        self.connector_block_button.clicked.connect(lambda checked: Connector(self.scene, self.layout, "Connector Block"))
-        self.main_block_button.clicked.connect(lambda checked: Main(self.scene, self.layout))
-        self.text_item_button.clicked.connect(lambda checked: Floating_Label(self.scene, self.layout, main_window))
-        self.grouping_box_button.clicked.connect(lambda checked: Grouping_Box(self.scene, self.layout))
+        self.connector_block_button.clicked.connect(
+            lambda checked: Connector(self.scene, self.layout, "Connector Block")
+        )
+        self.main_block_button.clicked.connect(
+            lambda checked: Main(self.scene, self.layout)
+        )
+        self.text_item_button.clicked.connect(
+            lambda checked: Floating_Label(self.scene, self.layout, main_window)
+        )
+        self.grouping_box_button.clicked.connect(
+            lambda checked: Grouping_Box(self.scene, self.layout)
+        )
 
         # Set up secondary connection to these buttons, to update scene history when they are added to the scene
-        self.connector_block_button.clicked.connect(lambda checked, desc='Added connector block to scene': self.scene.history.storeHistory(desc))
-        self.main_block_button.clicked.connect(lambda checked, desc='Added main block to scene': self.scene.history.storeHistory(desc))
-        self.text_item_button.clicked.connect(lambda checked, desc='Added text label to scene': self.scene.history.storeHistory(desc))
-        self.grouping_box_button.clicked.connect(lambda checked, desc='Added grouping box to scene': self.scene.history.storeHistory(desc))
+        self.connector_block_button.clicked.connect(
+            lambda checked, desc="Added connector block to scene": self.scene.history.storeHistory(
+                desc
+            )
+        )
+        self.main_block_button.clicked.connect(
+            lambda checked, desc="Added main block to scene": self.scene.history.storeHistory(
+                desc
+            )
+        )
+        self.text_item_button.clicked.connect(
+            lambda checked, desc="Added text label to scene": self.scene.history.storeHistory(
+                desc
+            )
+        )
+        self.grouping_box_button.clicked.connect(
+            lambda checked, desc="Added grouping box to scene": self.scene.history.storeHistory(
+                desc
+            )
+        )
 
         # Adding the buttons to the library browser's layout manager
         self.libraryBrowserBox.layout.addWidget(self.text_item_button)
@@ -218,8 +250,14 @@ class Interface(QWidget):
             group_of_buttons = []
 
             # Grab each group that blocks belong to, and create a library panel button for those groups
-            cleaned_class_group = sub_class_group[0][:-1] if sub_class_group[0].endswith('s') else sub_class_group[0]
-            group_button = QPushButton(" + " + cleaned_class_group.capitalize() + " Blocks")
+            cleaned_class_group = (
+                sub_class_group[0][:-1]
+                if sub_class_group[0].endswith("s")
+                else sub_class_group[0]
+            )
+            group_button = QPushButton(
+                " + " + cleaned_class_group.capitalize() + " Blocks"
+            )
 
             # Buttons' text alignment is set to be left-aligned
             group_button.setStyleSheet("QPushButton { text-align: left }")
@@ -246,8 +284,14 @@ class Interface(QWidget):
                 # Set the button to be invisible by default (for the list's to be hidden)
                 button.setVisible(False)
                 # Connect button to calling a new instance of the block type class
-                button.clicked.connect(lambda checked, blockClass=class_block[1]: blockClass())
-                button.clicked.connect(lambda checked, desc='Added imported block to scene': self.scene.history.storeHistory(desc))
+                button.clicked.connect(
+                    lambda checked, blockClass=class_block[1]: blockClass()
+                )
+                button.clicked.connect(
+                    lambda checked, desc="Added imported block to scene": self.scene.history.storeHistory(
+                        desc
+                    )
+                )
                 # Add button to list of scrollbar buttons for reference of what buttons should be
                 # affected when expanding/hiding the list sections
                 list_of_sub_buttons.append((button, class_block[1]))
@@ -277,7 +321,6 @@ class Interface(QWidget):
         self.libraryBrowser.layout.addWidget(self.scroll)
         self.libraryBrowser.layout.setAlignment(Qt.AlignTop)
         self.libraryBrowser.setLayout(self.libraryBrowser.layout)
-
 
         # _________ Application components added to application layout manager ___________
         # Refer to technical documentation for visualising how these components are
@@ -311,7 +354,12 @@ class Interface(QWidget):
         # And a wire is made between those two points. When the wire is being dragged
         # from a Socket to another socket, the endSocket (and endBlock) are considered
         # as the location of the mouse pointer.
-        Wire(scene, scene.blocks[startBlock].outputs[startSocket], scene.blocks[endBlock].inputs[endSocket], wire_type=3)
+        Wire(
+            scene,
+            scene.blocks[startBlock].outputs[startSocket],
+            scene.blocks[endBlock].inputs[endSocket],
+            wire_type=3,
+        )
 
     # Todo - add doc comment for this
     # -----------------------------------------------------------------------------
@@ -351,9 +399,9 @@ class Interface(QWidget):
         # If the list section button is set to be hidden, the associated sign
         # will be displayed as '-', otherwise it will be displayed as '+' if expanded
         if self.canvas_items_hidden:
-            self.canvasItems_button.setText(' -  Canvas Items')
+            self.canvasItems_button.setText(" -  Canvas Items")
         else:
-            self.canvasItems_button.setText(' + Canvas Items')
+            self.canvasItems_button.setText(" + Canvas Items")
 
         # When toggling, the variable that represents the current hidden/expanded
         # state of the list section, is flipped to the opposite boolean value of itself
@@ -361,7 +409,9 @@ class Interface(QWidget):
         self.canvas_items_hidden = not self.canvas_items_hidden
         # And the associated buttons are set to being visible/invisible depending
         # on that variable.
-        self.connector_block_button.setVisible(not self.connector_block_button.isVisible())
+        self.connector_block_button.setVisible(
+            not self.connector_block_button.isVisible()
+        )
         self.main_block_button.setVisible(not self.main_block_button.isVisible())
         self.text_item_button.setVisible(not self.text_item_button.isVisible())
         self.grouping_box_button.setVisible(not self.grouping_box_button.isVisible())
@@ -398,21 +448,24 @@ class Interface(QWidget):
         #     for item in group[1]:
         #         print("\titem:", item[1], "\t", item[0])
         #     print("___________________________")
-    
+
     # Todo, update documentation of this function
     # -----------------------------------------------------------------------------
     def grab_screenshot_dimensions(self):
-
         def find_boundaries(L, T, R, B, left, top, right, btm):
-            if L < left: left = L
-            if T < top: top = T
-            if R > right: right = R
-            if B > btm: btm = B
+            if L < left:
+                left = L
+            if T < top:
+                top = T
+            if R > right:
+                right = R
+            if B > btm:
+                btm = B
             return [left, top, right, btm]
 
         # Define initial dimensions of screenshot (if no blocks in scene)
         top, btm, left, right = 0, 0, 0, 0
-        spacer = 50 # half a typical block's width
+        spacer = 50  # half a typical block's width
 
         # Go through each block in scene, to find the top/bottom/left/right-most blocks
         for block in self.scene.blocks:
@@ -421,7 +474,9 @@ class Interface(QWidget):
             b_right = b_left + block.width
             b_btm = b_top + block.height
 
-            [left, top, right, btm] = find_boundaries(b_left, b_top, b_right, b_btm, left, top, right, btm)
+            [left, top, right, btm] = find_boundaries(
+                b_left, b_top, b_right, b_btm, left, top, right, btm
+            )
 
             # if b_left < left: left = b_left
             # if b_top < top: top = b_top
@@ -436,7 +491,9 @@ class Interface(QWidget):
             f_right = f_left + f_rect.width()
             f_btm = f_top + f_rect.height()
 
-            [left, top, right, btm] = find_boundaries(f_left, f_top, f_right, f_btm, left, top, right, btm)
+            [left, top, right, btm] = find_boundaries(
+                f_left, f_top, f_right, f_btm, left, top, right, btm
+            )
             # print("floating label - rect, left, top, right, btm:", [f_rect, f_left, f_top, f_right, f_btm])
 
         for gbox in self.scene.grouping_boxes:
@@ -446,7 +503,9 @@ class Interface(QWidget):
             g_right = g_left + g_rect.width()
             g_btm = g_top + g_rect.height()
 
-            [left, top, right, btm] = find_boundaries(g_left, g_top, g_right, g_btm, left, top, right, btm)
+            [left, top, right, btm] = find_boundaries(
+                g_left, g_top, g_right, g_btm, left, top, right, btm
+            )
 
             # print("grouping box - rect, left, top, right, btm:", [g_rect, g_left, g_top, g_right, g_btm])
 
@@ -457,12 +516,23 @@ class Interface(QWidget):
             w_right = w_left + w_rect.width()
             w_btm = w_top + w_rect.height()
 
-            [left, top, right, btm] = find_boundaries(w_left, w_top, w_right, w_btm, left, top, right, btm)
+            [left, top, right, btm] = find_boundaries(
+                w_left, w_top, w_right, w_btm, left, top, right, btm
+            )
 
             # print("wire - rect, left, top, right, btm:", [w_rect, w_left, w_top, w_right, w_btm])
 
-
-        if DEBUG: print("Left most:", left, " | Top most:", top, " | Right most:", right, " | Bottom most:", btm)
+        if DEBUG:
+            print(
+                "Left most:",
+                left,
+                " | Top most:",
+                top,
+                " | Right most:",
+                right,
+                " | Bottom most:",
+                btm,
+            )
 
         # Return the rect (x,y, width, height) that all these blocks occupy
         width = (right + spacer) - (left - spacer)
@@ -486,7 +556,11 @@ class Interface(QWidget):
 
         # Creates an image, of defined resolution quality
         ratio = 3
-        output_image = QImage(int(self.scene.scene_width * ratio), int(self.scene.scene_height * ratio), QImage.Format_RGBA64)
+        output_image = QImage(
+            int(self.scene.scene_width * ratio),
+            int(self.scene.scene_height * ratio),
+            QImage.Format_RGBA64,
+        )
 
         # Then a painter is initialized to that image
         painter = QPainter(output_image)
@@ -502,7 +576,12 @@ class Interface(QWidget):
         # ensure number of bytes in row (width*3) is a multiple of 4
         width += (width * 3) % 4
         # Scale the dimensions from above, to the image
-        rect = QRect(int(output_image.width()/2 + (x * ratio)), int(output_image.height()/2 + (y * ratio)), int(width * ratio), int(height * ratio))
+        rect = QRect(
+            int(output_image.width() / 2 + (x * ratio)),
+            int(output_image.height() / 2 + (y * ratio)),
+            int(width * ratio),
+            int(height * ratio),
+        )
 
         # Crop the image to area of interest
         output_image = output_image.copy(rect)
@@ -515,26 +594,47 @@ class Interface(QWidget):
 
         # use PIL to do the PDF printing
         from PIL import Image
+
         bytes = output_image.bits().asstring(output_image.sizeInBytes())
-        img_PIL = Image.frombuffer('RGB', (output_image.width(), output_image.height()), bytes, 'raw', 'RGB', 0, 1)
+        img_PIL = Image.frombuffer(
+            "RGB",
+            (output_image.width(), output_image.height()),
+            bytes,
+            "raw",
+            "RGB",
+            0,
+            1,
+        )
         img_PIL.save(save_path)
         # # And the image is saved under the given file name, as a PDF
         print("Screenshot saved --> ", save_path)
 
     # -----------------------------------------------------------------------------
     def getScreenshotName(self, picture_path, picture_name, picture_format=None):
-        """
-
-        """
+        """ """
 
         # If picture_name is None, save screenshot under same name as model file.
         # Extract directory of model file and save screenshot in same place, suffixed with .pdf by default
         # If picture_format is given, this overrides the default file type. This can only happen if user selects file type when exporting image from menubar
         if picture_name is None:
-            name_to_save = os.path.join(os.path.splitext(os.path.basename(picture_path))[0] + ".pdf") if picture_format is None else os.path.join(os.path.splitext(os.path.basename(picture_path))[0] + "." + picture_format)
+            name_to_save = (
+                os.path.join(
+                    os.path.splitext(os.path.basename(picture_path))[0] + ".pdf"
+                )
+                if picture_format is None
+                else os.path.join(
+                    os.path.splitext(os.path.basename(picture_path))[0]
+                    + "."
+                    + picture_format
+                )
+            )
         # If picture name is given, use this name when saving screenshot
         else:
-            name_to_save = os.path.join(picture_name) if picture_format is None else os.path.join(picture_name + "." + picture_format)
+            name_to_save = (
+                os.path.join(picture_name)
+                if picture_format is None
+                else os.path.join(picture_name + "." + picture_format)
+            )
 
         # Find all other images in the current directory (files ending with .png)
         # as bdedit only saves images with .png extensions
@@ -550,14 +650,16 @@ class Interface(QWidget):
             if name_to_save == image:
                 no_duplicates = False
                 break
-        #HACK
+        # HACK
         # no_duplicates = True
 
         # If no duplicates are found, save screenshot under current model name
         if no_duplicates:
             return os.path.join(os.path.dirname(picture_path), name_to_save)
         else:
-            print("Handle not yet implemented. Saving screenshot would override existing screenshot with same name.")
+            print(
+                "Handle not yet implemented. Saving screenshot would override existing screenshot with same name."
+            )
 
     # def getScreenshotName(self, picture_path, increment=None):
     #     """
@@ -613,11 +715,16 @@ class Interface(QWidget):
         # The largest size the scene can be is:
         # the difference between the max zoom out level (zoomRange[max_zoom_out, max_zoom_in]) and default zoom
         # multiplied by the zoom out factor
-        multiplier = abs(self.canvasView.zoomRange[0] - self.canvasView._default_zoom_level) * 0.8
+        multiplier = (
+            abs(self.canvasView.zoomRange[0] - self.canvasView._default_zoom_level)
+            * 0.8
+        )
 
         # Only update if canvas dimensions have changed from what they were previously set to
-        if self.width() * multiplier != self.scene.getSceneWidth() * multiplier or \
-           self.height() * multiplier != self.scene.getSceneHeight() * multiplier:
+        if (
+            self.width() * multiplier != self.scene.getSceneWidth() * multiplier
+            or self.height() * multiplier != self.scene.getSceneHeight() * multiplier
+        ):
             self.scene.setSceneWidth((self.width()) * multiplier)
             self.scene.setSceneHeight((self.height()) * multiplier)
             self.scene.updateSceneDimensions()

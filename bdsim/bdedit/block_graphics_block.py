@@ -66,16 +66,26 @@ class GraphicsBlock(QGraphicsItem):
         self._default_height = self.block.height
 
         # Pen thickness and block-related spacings are defined
-        self.edge_size = 10.0           # How rounded the rectangle corners are
-        self.title_height = 25.0        # How many pixels underneath the block the title is displayed at
-        self._padding = 5.0             # Minimum distance inside the block that things should be displayed at
-        self._line_thickness = 3.0              # Thickness of the block outline by default
-        self._selected_line_thickness = 5.0     # Thickness of the block outline on selection
+        self.edge_size = 10.0  # How rounded the rectangle corners are
+        self.title_height = (
+            25.0  # How many pixels underneath the block the title is displayed at
+        )
+        self._padding = (
+            5.0  # Minimum distance inside the block that things should be displayed at
+        )
+        self._line_thickness = 3.0  # Thickness of the block outline by default
+        self._selected_line_thickness = (
+            5.0  # Thickness of the block outline on selection
+        )
 
         # Colours for pens are defined, and the text font is set
-        self._default_title_color = Qt.black    # Title colour (set to Light mode by default)
+        self._default_title_color = (
+            Qt.black
+        )  # Title colour (set to Light mode by default)
         # self._pen_selected = QPen(QColor("#FFFFA637"), self._selected_line_thickness)
-        self._pen_selected = QPen(QColorConstants.Svg.orange, self._selected_line_thickness)   # Orange
+        self._pen_selected = QPen(
+            QColorConstants.Svg.orange, self._selected_line_thickness
+        )  # Orange
         self._title_font = QFont("Arial", self.block.scene.block_name_fontsize)
 
         # Internal variable for catching fatal errors, and allowing user to save work before crashing
@@ -157,7 +167,10 @@ class GraphicsBlock(QGraphicsItem):
         self.title_item.setPlainText(self.block.title)
 
         # Title length is found (using self.titleLength()), and centered under the block
-        self.title_item.setPos((self.width - self._padding - self.titleLength()) / 2, self.height + self._padding)
+        self.title_item.setPos(
+            (self.width - self._padding - self.titleLength()) / 2,
+            self.height + self._padding,
+        )
 
         # The GraphicsBlock instance is called to be updated
         self.update()
@@ -254,9 +267,9 @@ class GraphicsBlock(QGraphicsItem):
         :type event: QGraphicsSceneHoverEvent
         """
 
-        #QToolTip.setFont(QFont("Ubuntu", 10))
+        # QToolTip.setFont(QFont("Ubuntu", 10))
         self.setToolTip("<b>" + self.block.block_type + "</b> block")
-        #self.setToolTip("<b>" + self.block.block_type + "</b>")
+        # self.setToolTip("<b>" + self.block.block_type + "</b>")
 
     # -----------------------------------------------------------------------------
     def boundingRect(self):
@@ -271,12 +284,7 @@ class GraphicsBlock(QGraphicsItem):
         :rtype: QRectF
         """
 
-        return QRectF(
-            0,
-            0,
-            self.width,
-            self.height
-        )
+        return QRectF(0, 0, self.width, self.height)
 
     # -----------------------------------------------------------------------------
     def paint(self, painter, style, widget=None):
@@ -313,18 +321,28 @@ class GraphicsBlock(QGraphicsItem):
             # Background (fill) of the block is drawn
             path_content = QPainterPath()
             path_content.setFillRule(Qt.WindingFill)
-            path_content.addRoundedRect(0, 0, self.width, self.height, self.edge_size,
-                                        self.edge_size)
+            path_content.addRoundedRect(
+                0, 0, self.width, self.height, self.edge_size, self.edge_size
+            )
             path_content.addRect(0, self.title_height, self.edge_size, self.edge_size)
-            path_content.addRect(self.width - self.edge_size, self.title_height, self.edge_size, self.edge_size)
+            path_content.addRect(
+                self.width - self.edge_size,
+                self.title_height,
+                self.edge_size,
+                self.edge_size,
+            )
             painter.setPen(Qt.NoPen)
             painter.setBrush(self._brush_background)
             painter.drawPath(path_content.simplified())
 
             # Outline of the block is drawn
             path_outline = QPainterPath()
-            path_outline.addRoundedRect(0, 0, self.width, self.height, self.edge_size, self.edge_size)
-            painter.setPen(self._pen_default if not self.isSelected() else self._pen_selected)
+            path_outline.addRoundedRect(
+                0, 0, self.width, self.height, self.edge_size, self.edge_size
+            )
+            painter.setPen(
+                self._pen_default if not self.isSelected() else self._pen_selected
+            )
             painter.setBrush(Qt.NoBrush)
             painter.drawPath(path_outline.simplified())
 
@@ -338,14 +356,28 @@ class GraphicsBlock(QGraphicsItem):
                     # icon_item = QPixmap(self.icon).scaledToWidth(50) if self.icon else QPixmap(self.icon)
                 # target = QRect((self.width - icon_item.width()) / 2, (self.height - icon_item.height()) / 2, self.width, self.height)
                 # source = QRect(0, 0, self.width, self.height)
-                painter.drawImage(QRectF((self.width - (icon_image.width())/5) / 2, (self.height - (icon_image.height())/5) / 2, 50, 50), icon_image)
+                painter.drawImage(
+                    QRectF(
+                        (self.width - (icon_image.width()) / 5) / 2,
+                        (self.height - (icon_image.height()) / 5) / 2,
+                        50,
+                        50,
+                    ),
+                    icon_image,
+                )
                 # painter.drawPixmap(target, icon_item, source)
 
         except Exception as e:
             if self.FATAL_ERROR == False:
-                print("--------------------------------------------------------------------------")
-                print("Caught fatal exception while trying to draw blocks. Please save your work.")
-                print("--------------------------------------------------------------------------")
+                print(
+                    "--------------------------------------------------------------------------"
+                )
+                print(
+                    "Caught fatal exception while trying to draw blocks. Please save your work."
+                )
+                print(
+                    "--------------------------------------------------------------------------"
+                )
                 traceback.print_exc(file=sys.stderr)
                 self.FATAL_ERROR = True
 
@@ -390,6 +422,7 @@ class GraphicsBlock(QGraphicsItem):
             self.wasMoved = False
             self.block.scene.has_been_modified = True
             self.block.scene.history.storeHistory("Block moved")
+
 
 class GraphicsConnectorBlock(QGraphicsItem):
     """
@@ -436,7 +469,9 @@ class GraphicsConnectorBlock(QGraphicsItem):
 
         # Color of the selected line is set
         # self._pen_selected = QPen(QColor("#FFFFA637"), self._selected_line_thickness)   # Orange
-        self._pen_selected = QPen(QColorConstants.Svg.orange, self._selected_line_thickness)   # Orange
+        self._pen_selected = QPen(
+            QColorConstants.Svg.orange, self._selected_line_thickness
+        )  # Orange
         # Color of wire to be drawn between sockets, when connector block is hidden (to make solid line)
         self._color = QColor("#000000")
 
@@ -487,10 +522,7 @@ class GraphicsConnectorBlock(QGraphicsItem):
         # one grid block step above the connector block, when the connector block is
         # selected.
         return QRectF(
-            1 - 1.5 * W - P,
-            1 - 1.5 * W - P,
-            4 * W + P,
-            3 * W + P
+            1 - 1.5 * W - P, 1 - 1.5 * W - P, 4 * W + P, 3 * W + P
         ).normalized()
 
     # -----------------------------------------------------------------------------
@@ -516,7 +548,9 @@ class GraphicsConnectorBlock(QGraphicsItem):
                 # Draws orange outline around the Connector Block when it is selected
                 path_outline = QPainterPath()
                 # The size of the rectangle drawn, is dictated by the boundingRect (interactive area)
-                path_outline.addRoundedRect(self.boundingRect(), self._corner_rounding, self._corner_rounding)
+                path_outline.addRoundedRect(
+                    self.boundingRect(), self._corner_rounding, self._corner_rounding
+                )
                 painter.setPen(self._pen_selected)
                 painter.setBrush(Qt.NoBrush)
                 painter.drawPath(path_outline.simplified())
@@ -534,7 +568,9 @@ class GraphicsConnectorBlock(QGraphicsItem):
                 if self.block.inputs[0].position == RIGHT:
                     multi = -1
 
-                wire_path = QPainterPath(QPointF(input_pos[0] + (multi * 4.5), input_pos[1]))
+                wire_path = QPainterPath(
+                    QPointF(input_pos[0] + (multi * 4.5), input_pos[1])
+                )
                 wire_path.lineTo(output_pos[0] - (multi * 4.5), output_pos[1])
 
                 # Set the paint brush width and colour
@@ -545,9 +581,15 @@ class GraphicsConnectorBlock(QGraphicsItem):
 
         except Exception as e:
             if self.FATAL_ERROR == False:
-                print("------------------------------------------------------------------------------------")
-                print("Caught fatal exception while trying to draw connector blocks. Please save your work.")
-                print("------------------------------------------------------------------------------------")
+                print(
+                    "------------------------------------------------------------------------------------"
+                )
+                print(
+                    "Caught fatal exception while trying to draw connector blocks. Please save your work."
+                )
+                print(
+                    "------------------------------------------------------------------------------------"
+                )
                 traceback.print_exc(file=sys.stderr)
                 self.FATAL_ERROR = True
 
