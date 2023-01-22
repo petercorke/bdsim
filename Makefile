@@ -14,10 +14,10 @@ help:
 	@echo " make help - this message$(BLACK)"
 
 test:
-	python -m unittest
+	pytest
 
 coverage:
-	coverage run --include=bdsim/\*.py --omit=bdsim/bdedit/\* -m unittest
+	pytest --cov=bdsim
 	coverage report
 
 docs: .FORCE
