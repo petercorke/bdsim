@@ -982,20 +982,23 @@ class Block:
         return self._graphics
 
     # for use in unit testing
-    def _output(self, *inputs, t=0.0):
+
+    # TODO: should redo this, eliminate the monkey patch
+    # TODO: make T_step(), dummpy out the state object 
+
+    def T_output(self, *inputs, t=0.0):
         """
         Evaluate a block for unit testing.
         
-        :param *inputs: List of input port values
-        :type *inputs: list
+        :param *inputs: Input port values
         :param t: Simulation time, defaults to 0.0
         :type t: float, optional
         :return: Block output port values
         :rtype: list
         
         The output ports of the block are evaluated for a given simulation time
-        and set of input port values. Input and output port values are treated
-        as lists.
+        and set of input port values. Input ports are assigned to consecutive inputs,
+        output port values are a list.
         
         Mostly used for making concise unit tests.
 
@@ -1003,17 +1006,9 @@ class Block:
             diagram subsequently.
 
         """
-        def _input(self, port):
-            return self._eval_inputs[port]
-        
-        # monkey patch the instance so that input comes from an attribute
-        # rather than the source block.  for testing we don't have a source
-        # block
-        self.input = types.MethodType(_input, self)
-
         # check inputs and assign to attribute
         assert len(inputs) == self.nin, 'wrong number of inputs provided'
-        self._eval_inputs = inputs
+        self._T_inputs = inputs
         
         # evaluate the block
         out = self.output(t=t)
@@ -1023,21 +1018,80 @@ class Block:
         assert len(out) == self.nout, 'result list is wrong length'
         return out
 
-    def _step(self, *inputs, state=None):
-        def _input(self, port):
-            return self._eval_inputs[port]
+
+    def T_deriv(self, *inputs):
+        """
+        Evaluate a block for unit testing.
         
-        # monkey patch the instance so that input comes from an attribute
-        # rather than the source block.  for testing we don't have a source
-        # block
-        self.input = types.MethodType(_input, self)
+        :param inputs: input port values
+        :type inputs: list
+        :return: Block derivative value
+        :rtype: ndarray
+        
+        The derivative of the block is evaluated for a given set of input port
+        values. Input port values are treated as lists.
+        
+        Mostly used for making concise unit tests.
+
+        .. warning:: the instance is monkey patched, not useable in a block
+            diagram subsequently.
+
+        """
 
         # check inputs and assign to attribute
         assert len(inputs) == self.nin, 'wrong number of inputs provided'
-        self._eval_inputs = inputs
+        self._T_inputs = inputs
+        
+        # evaluate the block
+        out = self.deriv()
+
+        # sanity check the output
+        assert isinstance(out, np.ndarray), 'result must be a list'
+        assert out.shape == (self.nstates,), 'result array is wrong length'
+        return out
+
+    def T_step(self, *inputs, state=None):
+
+        from bdsim.run_sim import BDSimState
+
+        if state is None:
+            state = BDSimState()
+
+        # check inputs and assign to attribute
+        assert len(inputs) == self.nin, 'wrong number of inputs provided'
+        self._T_inputs = inputs
         
         # step the block
         self.step(state=state)
+
+    def T_start(self, state=None):
+
+        from bdsim.run_sim import BDSimState, Options
+
+        if state is None:
+            class RunTime:
+                def DEBUG(*args):
+                    pass
+
+            class BlockDiagram:
+                pass
+
+            self.bd = BlockDiagram()
+            self.bd.runtime = RunTime()
+            self.bd.runtime.options = Options()
+            state = BDSimState()
+            state.options = self.bd.runtime.options
+            state.t = 0.0
+
+        # step the block
+        self.start(state=state)
+        return state
+
+    def _output(self, *inputs, t=0.0):
+        return block.T_output(*inputs, t=t)
+
+    def _step(self, *inputs, state=None):
+        return block.T_step(*inputs, t=t)
 
     def input(self, port):
         """
@@ -1063,7 +1117,7 @@ class Block:
         except:
             # for unit testing a block may not have its input ports connected,
             # take the value from this list instead
-            return self.test_inputs[port]
+            return self._T_inputs[port]
 
     @property
     def inputs(self):
