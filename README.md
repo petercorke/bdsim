@@ -7,7 +7,6 @@
 
 [![Build Status](https://github.com/petercorke/bdsim/workflows/build/badge.svg?branch=master)](https://github.com/petercorke/bdsim/actions?query=workflow%3Abuild)
 [![Coverage](https://codecov.io/gh/petercorke/bdsim/branch/master/graph/badge.svg)](https://codecov.io/gh/petercorke/bdsim)
-[![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/petercorke/bdsim.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/petercorke/bdsim/context:python)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/bdsim)](https://pypistats.org/packages/bdsim)
 [![GitHub stars](https://img.shields.io/github/stars/petercorke/bdsim.svg?style=social&label=Star)](https://GitHub.com/petercorke/bdsim/stargazers/)
 
