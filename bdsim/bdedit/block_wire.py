@@ -52,6 +52,7 @@ class Wire(Serializable):
     - intersection points with other wires (has been disabled).
 
     """
+
     # -----------------------------------------------------------------------------
     def __init__(self, scene, start_socket=None, end_socket=None, wire_type=3):
         """
@@ -68,9 +69,9 @@ class Wire(Serializable):
         """
 
         super().__init__()
-        
+
         self.scene = scene
-        
+
         # By default the Wire starts with no sockets, these are automatically
         # set by decorators when a Wire instance is created
         self._start_socket = None
@@ -183,7 +184,7 @@ class Wire(Serializable):
         """
 
         # If this was already previously assigned, remove its GraphicsWire
-        if hasattr(self, 'grWire') and self.grWire is not None:
+        if hasattr(self, "grWire") and self.grWire is not None:
             self.scene.grScene.removeItem(self.grWire)
 
         # Assign a new wire type for this wire
@@ -276,30 +277,38 @@ class Wire(Serializable):
         """
 
         if self in self.scene.wires:
-            if DEBUG: print("# Removing Wire", self)
-            if DEBUG: print(" - hiding grWire")
+            if DEBUG:
+                print("# Removing Wire", self)
+            if DEBUG:
+                print(" - hiding grWire")
             self.grWire.hide()
 
-            if DEBUG: print(" - removing grWire")
+            if DEBUG:
+                print(" - removing grWire")
             self.scene.grScene.removeItem(self.grWire)
 
-            if DEBUG: print(" - removing wire from all sockets", self)
+            if DEBUG:
+                print(" - removing wire from all sockets", self)
             self.remove_from_sockets()
 
-            if DEBUG: print(" - removing wire from scene")
+            if DEBUG:
+                print(" - removing wire from scene")
             try:
                 self.scene.removeWire(self)
             except ValueError as e:
                 print("Error removing wire:", e)
                 pass
 
-            if DEBUG: print(" - updating wire intersection points")
+            if DEBUG:
+                print(" - updating wire intersection points")
             if self.scene.wires:
                 self.scene.wires[0].checkIntersections()
 
-            if DEBUG: print(" - everything is done.")
+            if DEBUG:
+                print(" - everything is done.")
         else:
-            if DEBUG: print("# Wire already removed")
+            if DEBUG:
+                print("# Wire already removed")
 
     # -----------------------------------------------------------------------------
     def serialize(self):
@@ -318,14 +327,16 @@ class Wire(Serializable):
         else:
             wire_coords = []
 
-        return OrderedDict([
-            ('id', self.id),
-            ('start_socket', self.start_socket.id),
-            ('end_socket', self.end_socket.id),
-            ('wire_type', self.wire_type),
-            ('custom_routing', self.grWire.customlogicOverride),
-            ('wire_coordinates', wire_coords),
-        ])
+        return OrderedDict(
+            [
+                ("id", self.id),
+                ("start_socket", self.start_socket.id),
+                ("end_socket", self.end_socket.id),
+                ("wire_type", self.wire_type),
+                ("custom_routing", self.grWire.customlogicOverride),
+                ("wire_coordinates", wire_coords),
+            ]
+        )
 
     # -----------------------------------------------------------------------------
     def deserialize(self, data, hashmap={}):
@@ -345,12 +356,12 @@ class Wire(Serializable):
 
         # The id, and other variables of this Wire are set to whatever was stored
         # as its id and other variables in the JSON file.
-        self.id = data['id']
+        self.id = data["id"]
         # self.start_socket = data['start_socket']
         # self.end_socket = data['end_socket']
-        self.start_socket = hashmap[data['start_socket']]
-        self.end_socket = hashmap[data['end_socket']]
-        self.wire_type = data['wire_type']
+        self.start_socket = hashmap[data["start_socket"]]
+        self.end_socket = hashmap[data["end_socket"]]
+        self.wire_type = data["wire_type"]
 
         # For newer custom routing logic. If custom_routing exists within the saved JSON
         # data, and that variable is true, override the current wire_coordiantes of the wire
@@ -421,12 +432,17 @@ class Wire(Serializable):
                             if j == i:
                                 pass
                             # Or if wire 'j' starts from the same socket as 'i', ignore this wire
-                            elif self.scene.wires[j].start_socket == self.scene.wires[i].start_socket:
+                            elif (
+                                self.scene.wires[j].start_socket
+                                == self.scene.wires[i].start_socket
+                            ):
                                 pass
                             else:
 
                                 # Iterate through each horizontal segments of the wire being checked
-                                for horizontal_segment in self.scene.wires[j].horizontal_segments:
+                                for horizontal_segment in self.scene.wires[
+                                    j
+                                ].horizontal_segments:
 
                                     # In a vertical wire with points [(a1,b1), (a2,b2)], the horizontal coordinates will be
                                     # equal, hence the wire is essentially [(a,b1), (a,b2)]
@@ -437,17 +453,35 @@ class Wire(Serializable):
                                     # If vertical points of wire with a vertical segment, are intersecting the y coordinate
                                     # of a horizontal segment of the wire being checked against
                                     # Essentially checking if b1 <= y <= b2 (if y is between b1 and b2)
-                                    if vertical_segment[0][1] <= horizontal_segment[0][1] <= vertical_segment[1][1] or \
-                                       vertical_segment[0][1] >= horizontal_segment[0][1] >= vertical_segment[1][1]:
-                                        if DEBUG_OVERLAP: print("y coords of vert segment within y coord of horizontal seg")
+                                    if (
+                                        vertical_segment[0][1]
+                                        <= horizontal_segment[0][1]
+                                        <= vertical_segment[1][1]
+                                        or vertical_segment[0][1]
+                                        >= horizontal_segment[0][1]
+                                        >= vertical_segment[1][1]
+                                    ):
+                                        if DEBUG_OVERLAP:
+                                            print(
+                                                "y coords of vert segment within y coord of horizontal seg"
+                                            )
 
                                         # There may be a possible intersection, so now
                                         # check if the horizontal points of wire with a vertical segment, intersects through
                                         # the x coordinate of a horizontal segment of the wire being checked against
                                         # Essentially checking if x1 <= a <= x2 (if a is between x1 and x2)
-                                        if horizontal_segment[0][0] <= vertical_segment[0][0] <= horizontal_segment[1][0] or \
-                                           horizontal_segment[0][0] >= vertical_segment[0][0] >= horizontal_segment[1][0]:
-                                            if DEBUG_OVERLAP: print("x coord of vert segment within x coords of horizontal seg")
+                                        if (
+                                            horizontal_segment[0][0]
+                                            <= vertical_segment[0][0]
+                                            <= horizontal_segment[1][0]
+                                            or horizontal_segment[0][0]
+                                            >= vertical_segment[0][0]
+                                            >= horizontal_segment[1][0]
+                                        ):
+                                            if DEBUG_OVERLAP:
+                                                print(
+                                                    "x coord of vert segment within x coords of horizontal seg"
+                                                )
 
                                             # The intersection point is (a, y)
                                             # (a -> x coord from vertical segment, y -> y coord from horizontal segment)
@@ -456,5 +490,13 @@ class Wire(Serializable):
                                             # self.intersections.append((vertical_segment[0][0], horizontal_segment[0][1]))
 
                                             # Append intersection point into list of intersection points (stored within the scene)
-                                            if (vertical_segment[0][0], horizontal_segment[0][1]) not in self.scene.intersection_list:
-                                                self.scene.intersection_list.append((vertical_segment[0][0], horizontal_segment[0][1]))
+                                            if (
+                                                vertical_segment[0][0],
+                                                horizontal_segment[0][1],
+                                            ) not in self.scene.intersection_list:
+                                                self.scene.intersection_list.append(
+                                                    (
+                                                        vertical_segment[0][0],
+                                                        horizontal_segment[0][1],
+                                                    )
+                                                )

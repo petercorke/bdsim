@@ -23,6 +23,7 @@ class GraphicsScene(QGraphicsScene):
     and controls the basic appearance of the ``Scene`` it belongs to. The things
     it controls include its background, and foreground.
     """
+
     # -----------------------------------------------------------------------------
     def __init__(self, scene, parent=None):
         """
@@ -58,7 +59,9 @@ class GraphicsScene(QGraphicsScene):
         self._default_background_color = QColor("#FFFFFF")
 
         # Set the image used for separating wires at points of overlap
-        self.overlap_image_renderer = QSvgRenderer(":/Icons_Reference/Icons/overlap.svg")
+        self.overlap_image_renderer = QSvgRenderer(
+            ":/Icons_Reference/Icons/overlap.svg"
+        )
 
     # -----------------------------------------------------------------------------
     def setGrScene(self, width, height):
@@ -73,11 +76,11 @@ class GraphicsScene(QGraphicsScene):
 
         # Set this way so that the (0,0) coordinate would be in the center
         # of the scene.
-        self.setSceneRect(-width//2, -height//2, width, height)
+        self.setSceneRect(-width // 2, -height // 2, width, height)
 
     # -----------------------------------------------------------------------------
     def updateBackgroundMode(self, bgcolor, grid):
-        """        Set the background color and grid status for the GraphicsScene.
+        """Set the background color and grid status for the GraphicsScene.
 
         :param bgcolor: the background color
         :type bgcolor: str, required
@@ -95,10 +98,10 @@ class GraphicsScene(QGraphicsScene):
         """
         This method updates the colors used for painting the background of the ``GraphicsScene``.
         """
-        if self.bgcolor == 'white':
+        if self.bgcolor == "white":
             self._color_background = QColorConstants.Svg.white
-        elif self.bgcolor == 'grey':
-            self._color_background = QColor("#E0E0E0")    # Light gray
+        elif self.bgcolor == "grey":
+            self._color_background = QColor("#E0E0E0")  # Light gray
         else:
             raise ValueError(f"bad color {self.bgcolor}")
 
@@ -139,50 +142,51 @@ class GraphicsScene(QGraphicsScene):
     # -----------------------------------------------------------------------------
     def mouseMoveEvent(self, event):
         """
-            This is an inbuilt method of QGraphicsScene, that is overwritten by ``GraphicsScene``.
-            It handles the movement related logic for items selected within the ``GraphicsScene``.
+        This is an inbuilt method of QGraphicsScene, that is overwritten by ``GraphicsScene``.
+        It handles the movement related logic for items selected within the ``GraphicsScene``.
 
-            Currently, generic movement logic is applied to instances of the following classes:
-            blocks, floating labels, and grouping boxes
+        Currently, generic movement logic is applied to instances of the following classes:
+        blocks, floating labels, and grouping boxes
 
-            This genermic movement logic consists of the following being applied on mouse movement:
+        This genermic movement logic consists of the following being applied on mouse movement:
 
-            - a detected mouse move event on selected item will enforce grid-snapping (making it
-              move only in increments matching the size of the smaller grid squares in the background).
+        - a detected mouse move event on selected item will enforce grid-snapping (making it
+          move only in increments matching the size of the smaller grid squares in the background).
 
-            - the selected item will be prevented from moving outside the maximum zoomed out border
-              of the work area (the GraphicsScene).
+        - the selected item will be prevented from moving outside the maximum zoomed out border
+          of the work area (the GraphicsScene).
 
-            - additioanlly only applies if the selected item is a block:
-              * the locations of its sockets, and that of other connected blocks,
-                are updated as the block moves around.
-              * Additionally, block movements can be relevant to wire routing when they are
-                in custom routing mode, so this logic is checked as blocks are moved.
-              * Finally, moving a block will affect where wires may overlap,
-                so this logic is updated as the blocks are moved.
+        - additioanlly only applies if the selected item is a block:
+          * the locations of its sockets, and that of other connected blocks,
+            are updated as the block moves around.
+          * Additionally, block movements can be relevant to wire routing when they are
+            in custom routing mode, so this logic is checked as blocks are moved.
+          * Finally, moving a block will affect where wires may overlap,
+            so this logic is updated as the blocks are moved.
 
-            - additionally only applies if the selected item is a floating text label:
-              * floating labels have the ability of being moved closer to wires and blocks,
-                so their grid-snapping is enforced to 5 pixels instead of the typical 20 pixels
-                like for all other items.
+        - additionally only applies if the selected item is a floating text label:
+          * floating labels have the ability of being moved closer to wires and blocks,
+            so their grid-snapping is enforced to 5 pixels instead of the typical 20 pixels
+            like for all other items.
 
-            - finally, if an item's position within the ``GraphicsScene`` has visually been updated,
-              an internal will reflect that the item has moved, to then indicate unsaved changes and
-              record a new snapshop of the scene's history.
+        - finally, if an item's position within the ``GraphicsScene`` has visually been updated,
+          an internal will reflect that the item has moved, to then indicate unsaved changes and
+          record a new snapshop of the scene's history.
 
-            :param event: a mouse movement event that has occurred with this GraphicsScene
-            :type event: QMouseEvent, automatically recognized by the inbuilt function
+        :param event: a mouse movement event that has occurred with this GraphicsScene
+        :type event: QMouseEvent, automatically recognized by the inbuilt function
         """
+
         def borderRestriction(item, padding):
-            if hasattr(item, 'block'):
+            if hasattr(item, "block"):
                 item_width = item.width
                 item_height = item.height
                 item_title = item.title_height
-            elif hasattr(item, 'floating_label'):
+            elif hasattr(item, "floating_label"):
                 item_width = item.floating_label.width
                 item_height = item.floating_label.height
                 item_title = 0
-            elif hasattr(item, 'grouping_box'):
+            elif hasattr(item, "grouping_box"):
                 item_width = item.grouping_box.width
                 item_height = item.grouping_box.height
                 item_title = 0
@@ -196,12 +200,36 @@ class GraphicsScene(QGraphicsScene):
                 item.setPos(item.pos().x(), item.scene().sceneRect().y() + padding)
 
             # right
-            if item.pos().x() > (item.scene().sceneRect().x() + item.scene().sceneRect().width() - item_width - padding):
-                item.setPos(item.scene().sceneRect().x() + item.scene().sceneRect().width() - item_width - padding, item.pos().y())
+            if item.pos().x() > (
+                item.scene().sceneRect().x()
+                + item.scene().sceneRect().width()
+                - item_width
+                - padding
+            ):
+                item.setPos(
+                    item.scene().sceneRect().x()
+                    + item.scene().sceneRect().width()
+                    - item_width
+                    - padding,
+                    item.pos().y(),
+                )
 
             # bottom
-            if item.pos().y() > (item.scene().sceneRect().y() + item.scene().sceneRect().height() - item_height - item_title - padding):
-                item.setPos(item.pos().x(),item.scene().sceneRect().y() + item.scene().sceneRect().height() - item_height - item_title - padding)
+            if item.pos().y() > (
+                item.scene().sceneRect().y()
+                + item.scene().sceneRect().height()
+                - item_height
+                - item_title
+                - padding
+            ):
+                item.setPos(
+                    item.pos().x(),
+                    item.scene().sceneRect().y()
+                    + item.scene().sceneRect().height()
+                    - item_height
+                    - item_title
+                    - padding,
+                )
 
         super().mouseMoveEvent(event)
 
@@ -220,7 +248,7 @@ class GraphicsScene(QGraphicsScene):
                 pos = QPointF(x, y)
 
                 # For blocks:
-                if hasattr(item, 'block'):
+                if hasattr(item, "block"):
                     # The position of this GraphicsBlock is set to the restricted position of the mouse cursor
                     item.setPos(pos)
 
@@ -242,7 +270,7 @@ class GraphicsScene(QGraphicsScene):
                         self.scene.wires[0].checkIntersections()
 
                 # For floating text labels:
-                elif hasattr(item, 'floating_label'):
+                elif hasattr(item, "floating_label"):
                     padding = 5
                     x = round(item.pos().x() / padding) * padding
                     y = round(item.pos().y() / padding) * padding
@@ -253,13 +281,17 @@ class GraphicsScene(QGraphicsScene):
                     borderRestriction(item, padding)
 
                 # For grouping boxes:
-                elif hasattr(item, 'grouping_box'):
+                elif hasattr(item, "grouping_box"):
                     # The position of this GraphicsGroupingBox is set to the restricted position of the mouse cursor
                     item.setPos(pos)
                     borderRestriction(item, padding)
 
                 # If selected item is of any block type, floating text label or grouping box, and
-                if hasattr(item, 'block') or hasattr(item, 'floating_label') or hasattr(item, 'grouping_box'):
+                if (
+                    hasattr(item, "block")
+                    or hasattr(item, "floating_label")
+                    or hasattr(item, "grouping_box")
+                ):
                     # If the above rounding has rounded to a new value, and the block has actually "moved" in the scene, updated variable to reflect that
                     if pos != item.lastPos:
                         item.lastPos = item.pos()
@@ -317,7 +349,9 @@ class GraphicsScene(QGraphicsScene):
                                 gbox_location = box.grGBox.mapToScene(box.grGBox.rect())
 
                                 # Find the intersecting area between the overlapping rect and this grouping box, if there is one
-                                intersecting = self.findIntersectingAreaPoints(gbox_location.boundingRect(), rect)
+                                intersecting = self.findIntersectingAreaPoints(
+                                    gbox_location.boundingRect(), rect
+                                )
 
                                 # If an overlap was found, an intersecting rect will be provided, else False
                                 if intersecting:
@@ -325,7 +359,9 @@ class GraphicsScene(QGraphicsScene):
                                     painter.drawRect(intersecting)
 
                         # Paint an image over the intersection point
-                        self.overlap_image_renderer.render(painter, QRectF(x - 7.2, y - 8, 17, 16))
+                        self.overlap_image_renderer.render(
+                            painter, QRectF(x - 7.2, y - 8, 17, 16)
+                        )
 
             # Else, if no wires in scene, clear intersection_list
             else:
@@ -379,13 +415,17 @@ class GraphicsScene(QGraphicsScene):
 
             # Draw lines for the smaller grid squares
             painter.setPen(self._pen_light)
-            try: painter.drawLines(*lines_light)
-            except TypeError: painter.drawLines(lines_light)
+            try:
+                painter.drawLines(*lines_light)
+            except TypeError:
+                painter.drawLines(lines_light)
 
             # Draw lines for the larger grid squares
             painter.setPen(self._pen_dark)
-            try: painter.drawLines(*lines_dark)
-            except TypeError: painter.drawLines(lines_dark)
+            try:
+                painter.drawLines(*lines_dark)
+            except TypeError:
+                painter.drawLines(lines_dark)
 
     # -----------------------------------------------------------------------------
     def findIntersectingAreaPoints(self, rectA, rectB):
@@ -399,9 +439,9 @@ class GraphicsScene(QGraphicsScene):
         :return: a rectangle representing the intersection between the two given rectangles
         :rtype: QRectF
         """
-        x1 = max(rectA.left(),   rectB.left())
-        y1 = max(rectA.top(),    rectB.top())
-        x2 = min(rectA.right(),  rectB.right())
+        x1 = max(rectA.left(), rectB.left())
+        y1 = max(rectA.top(), rectB.top())
+        x2 = min(rectA.right(), rectB.right())
         y2 = min(rectA.bottom(), rectB.bottom())
 
         # If the area of the intersecting rectangle is greater than 0

@@ -19,19 +19,20 @@ from bdsim.components import SinkBlock
 
 # ------------------------------------------------------------------------ #
 
+
 class Print(SinkBlock):
-    """    
+    """
     :blockname:`PRINT`
-    
+
     .. table::
        :align: left
-    
+
     +--------+---------+---------+
     | inputs | outputs |  states |
     +--------+---------+---------+
     | 1      | 0       | 0       |
     +--------+---------+---------+
-    | any    |         |         | 
+    | any    |         |         |
     +--------+---------+---------+
     """
 
@@ -50,8 +51,8 @@ class Print(SinkBlock):
         :type blockargs: dict
         :return: A PRINT block
         :rtype: Print instance
-        
-        Creates a console print block which displays the value of a signal 
+
+        Creates a console print block which displays the value of a signal
         at each simulation time step. The display format is like::
 
             PRINT(print.0 @ t=0.100) [-1.0 0.2]
@@ -77,7 +78,7 @@ class Print(SinkBlock):
 
             bd.PRINT(x, fmt="{:.1f}") # print with explicit format
 
-        .. note:: 
+        .. note::
             - By default writes to stdout
             - The output is cleaner if progress bar printing is disabled.
 
@@ -85,17 +86,15 @@ class Print(SinkBlock):
         super().__init__(**blockargs)
         self.format = fmt
         self.file = file
-        
+
         # TODO format can be a string or function
 
     def step(self, state=None):
-        prefix = '{:12s}'.format(
-            'PRINT({:s} (t={:.3f})'.format(self.name, state.t)
-            )
+        prefix = "{:12s}".format("PRINT({:s} (t={:.3f})".format(self.name, state.t))
         value = self.inputs[0]
         if self.format is None:
             # no format string
-            if hasattr(value, 'strline'):
+            if hasattr(value, "strline"):
                 print(prefix, value.strline(), file=self.file)
             else:
                 print(prefix, str(value), file=self.file)
@@ -105,27 +104,30 @@ class Print(SinkBlock):
                 print(prefix, self.format.format(value), file=self.file)
 
             elif isinstance(value, np.ndarray):
-                with np.printoptions(formatter={'all':lambda x: self.format.format(x)}):
+                with np.printoptions(
+                    formatter={"all": lambda x: self.format.format(x)}
+                ):
                     print(prefix, value, file=self.file)
             else:
                 print(prefix, str(value), file=self.file)
 
+
 # ------------------------------------------------------------------------ #
-            
+
 
 class Stop(SinkBlock):
     """
     :blockname:`STOP`
-    
+
     .. table::
        :align: left
-    
+
     +--------+---------+---------+
     | inputs | outputs |  states |
     +--------+---------+---------+
     | 1      | 0       | 0       |
     +--------+---------+---------+
-    | any    |         |         | 
+    | any    |         |         |
     +--------+---------+---------+
     """
 
@@ -154,8 +156,8 @@ class Stop(SinkBlock):
         super().__init__(**blockargs)
 
         if func is not None and not callable(func):
-            raise TypeError('argument must be a callable')
-        self.stopfunc  = func
+            raise TypeError("argument must be a callable")
+        self.stopfunc = func
 
     def step(self, state=None):
         value = self.inputs[0]
@@ -169,28 +171,30 @@ class Stop(SinkBlock):
             try:
                 stop = value > 0
             except:
-                raise RuntimeError('bad input type to stop block')
+                raise RuntimeError("bad input type to stop block")
 
         # we signal stop condition by setting state.stop to the block calling
         # the stop
         if stop:
             state.stop = self
 
+
 # ------------------------------------------------------------------------ #
 
+
 class Null(SinkBlock):
-    """    
+    """
     :blockname:`NULL`
-    
+
     .. table::
        :align: left
-    
+
     +--------+---------+---------+
     | inputs | outputs |  states |
     +--------+---------+---------+
     | N      | 0       | 0       |
     +--------+---------+---------+
-    | any    |         |         | 
+    | any    |         |         |
     +--------+---------+---------+
     """
 
@@ -207,28 +211,30 @@ class Null(SinkBlock):
         :type blockargs: dict
         :return: A NULL block
         :rtype: Null instance
-        
+
         Create a sink block with arbitrary number of input ports that discards
         all data.  Useful for testing.
 
         """
         super().__init__(nin=nin, **blockargs)
-        
+
+
 # ------------------------------------------------------------------------ #
 
+
 class Watch(SinkBlock):
-    """    
+    """
     :blockname:`WATCH`
-    
+
     .. table::
        :align: left
-    
+
     +--------+---------+---------+
     | inputs | outputs |  states |
     +--------+---------+---------+
     | N      | 0       | 0       |
     +--------+---------+---------+
-    | 1      |         |         | 
+    | 1      |         |         |
     +--------+---------+---------+
     """
 
@@ -243,7 +249,7 @@ class Watch(SinkBlock):
         :type blockargs: dict
         :return: A NULL block
         :rtype: Null instance
-        
+
         Causes the input signal to be logged during the
         simulation run.  Equivalent to adding it as the ``watch=`` argument
         to ``bdsim.run``.
@@ -259,7 +265,7 @@ class Watch(SinkBlock):
         # append to the watchlist, bdsim.run() will do the rest
         state.watchlist.append(plug)
         state.watchnamelist.append(str(plug))
-        
+
 
 if __name__ == "__main__":  # pragma: no cover
 

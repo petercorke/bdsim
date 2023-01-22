@@ -1,0 +1,79 @@
+[project]
+name = "bdsim"
+version = "0.9.2"
+authors = [
+  { name="Peter Corke", email="rvc@petercorke.com" },
+]
+
+dependencies = [
+    "numpy>=1.17.4",
+    "scipy", 
+    "matplotlib", 
+    "spatialmath-python",
+    "ansitable",
+    "progress",
+]
+license = { file = "LICENSE" }
+
+description = "Simulate dynamic systems expressed in block diagram form using Python"
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3 :: Only",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+keywords = [
+    "python",
+    "block diagram",
+    "dynamic simulation",
+]
+
+[project.urls]
+homepage = "https://github.com/petercorke/bdsim"
+documentation = "https://petercorke.github.io/bdsim/"
+repository = "https://github.com/petercorke/bdsim"
+
+[project.optional-dependencies]
+
+dev = [
+    "sympy",
+    "pytest",
+    "pytest-cov",
+    "coverage",
+    "codecov",
+    "recommonmark",
+    "flake8"
+]
+
+docs = [
+    "sphinx", 
+    "sphinx_rtd_theme", 
+    "sphinx-autorun", 
+    "sphinxcontrib-jsmath", 
+    "sphinx_markdown_tables",
+]
+
+[project.scripts]
+
+bdedit = "bdsim.bdedit:main"
+bdrun = "bdsim:bdrun"
+
+[build-system]
+
+requires = ["setuptools", "oldest-supported-numpy"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+
+packages = [
+    "bdsim",
+    "bdsim.blocks",
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py37']
+
+[tool.coverage.run]
+omit = ["tex2icon.py", "io.py", "vision.py"]

@@ -15,9 +15,9 @@ from collections import UserDict
 class BDStruct(UserDict):
     """
     A dict-like object that allows items to be added by attribute or by key.
-    
+
     For example::
-        
+
         >>> d = Struct('thing')
         >>> d.a = 1
         >>> d['b'] = 2
@@ -30,8 +30,8 @@ class BDStruct(UserDict):
         >>> str(d)
         "thing {'a': 1, 'b': 2}"
     """
-    
-    def __init__(self, name='BDStruct', **kwargs):
+
+    def __init__(self, name="BDStruct", **kwargs):
         super().__init__()
         self.name = name
         for key, value in kwargs.items():
@@ -39,11 +39,11 @@ class BDStruct(UserDict):
 
     def __setattr__(self, name, value):
         # invoked by struct[name] = value
-        if name in ['data', 'name']:
+        if name in ["data", "name"]:
             super().__setattr__(name, value)
         else:
             self.data[name] = value
-    
+
     def add(self, name, value):
         self.data[name] = value
 
@@ -55,11 +55,11 @@ class BDStruct(UserDict):
         try:
             return self.data[name]
         except AttributeError:
-            raise AttributeError('unknown attribute ' + name)
-        
+            raise AttributeError("unknown attribute " + name)
+
     def __repr__(self):
         return str(self)
-    
+
     def __str__(self):
         """
         Display struct as a string
@@ -73,68 +73,87 @@ class BDStruct(UserDict):
         rows = []
 
         if len(self) == 0:
-            return ''
+            return ""
         maxwidth = max([len(key) for key in self.keys()])
         # if self.name is not None:
         #     rows.append(self.name + '::')
         for k, v in sorted(self.items(), key=lambda x: x[0]):
             if isinstance(v, BDStruct):
                 rows.append("{:s}.{:s}::".format(k.ljust(maxwidth), v.name))
-                rows.append('\n'.join([' ' * (maxwidth + 3) + line for line in str(v).split('\n')]))
+                rows.append(
+                    "\n".join(
+                        [" " * (maxwidth + 3) + line for line in str(v).split("\n")]
+                    )
+                )
             elif isinstance(v, str):
-                rows.append('{:s} = "{:s}" ({:s})'.format(k.ljust(maxwidth), str(v), type(v).__name__))
+                rows.append(
+                    '{:s} = "{:s}" ({:s})'.format(
+                        k.ljust(maxwidth), str(v), type(v).__name__
+                    )
+                )
             elif isinstance(v, np.ndarray):
-                rows.append('{:s} = ndarray:{:s} {:s}'.format(k.ljust(maxwidth), v.dtype.type.__name__, str(v.shape)))
+                rows.append(
+                    "{:s} = ndarray:{:s} {:s}".format(
+                        k.ljust(maxwidth), v.dtype.type.__name__, str(v.shape)
+                    )
+                )
             else:
-                rows.append("{:s} = {:s} ({:s})".format(k.ljust(maxwidth), str(v), type(v).__name__))
+                rows.append(
+                    "{:s} = {:s} ({:s})".format(
+                        k.ljust(maxwidth), str(v), type(v).__name__
+                    )
+                )
 
-        return '\n'.join(rows)
+        return "\n".join(rows)
 
-class OptionsBase():
 
-    def __init__(self, args={}, defaults={}):
-        self._priority = list(args)
-        self._dict = {**defaults, **args}
+class OptionsBase:
+    """A struct like object for option handling
+
+    Maintains an internal dict to keep options and their values.  Some of these
+    values, names in the ``_priority`` list are read-only and cannot be changed.
+
+    Values can be read/written as attributes, or the ``set`` method can take
+    a sequence of ``option=value`` arguments.
+    """
+
+    def __init__(self, readonly={}, args={}):
+        self._readonly = list(readonly)
+        self._dict = {**args, **readonly}
+
+    def items(self):
+        return self._dict.items()
 
     def __getattr__(self, name):
         try:
-            if name.startswith('_'):
+            if name.startswith("_"):
                 return self.__dict__[name]
             else:
-                return self.__dict__['_dict'][name]
+                return self.__dict__["_dict"][name]
         except KeyError:
             raise AttributeError(name)
 
     def __setattr__(self, name, value):
-        if name.startswith('_'):
+        if name.startswith("_"):
             self.__dict__[name] = value
         else:
-            dict = self.__dict__['_dict']
-            if name not in self._priority:
+            dict = self.__dict__["_dict"]
+            if name not in self._readonly:
                 dict[name] = value
-                self.__dict__['_dict'] = self.sanity(dict)
-
-    # def __getattr__(self, name):
-    #     if name in self.__dict__['dict']:
-    #         return self.__dict__['dict'][name]
-    #     else:
-    #         try:
-    #             return self.__dict__[name]
-    #         except KeyError:
-    #             raise AttributeError(name)
-
-    # def __setattr__(self, name, value):
-    #     dict = self.__dict__['dict']
-    #     if name not in self.priority:
-    #         dict[name] = value
-    #         self.__dict__['dict'] = self.sanity(dict)
+                self.__dict__["_dict"] = self.sanity(dict)
 
     def set(self, **changes):
+        changes = self.sanity(changes)
         dict = self._dict
         for name, value in changes.items():
-            if name not in self._priority:
+            if name not in self._readonly:
                 dict[name] = value
-        self._dict = self.sanity(dict)
+            elif dict[name] != value:
+                print(
+                    f"attempt to programmatically set option {name}={value} is overriden by command line option {name}={dict[name]}, ignored"
+                )
+
+        self._dict = dict
 
     def sanity(self, options):
         return options
@@ -143,15 +162,18 @@ class OptionsBase():
         dict = self._dict
         maxwidth = max([len(option) for option in dict.keys()])
         options = sorted(dict.keys())
-        return '\n'.join([f"{option.ljust(maxwidth)}: {dict[option]}" for option in options])
+        return "\n".join(
+            [f"{option.ljust(maxwidth)}: {dict[option]}" for option in options]
+        )
 
     def __repr__(self):
-        return str(self)  
+        return str(self)
+
 
 class Wire:
     """
     Create a wire.
-    
+
     :param start: Plug at the start of a wire, defaults to None
     :type start: Plug, optional
     :param end: Plug at the end of a wire, defaults to None
@@ -166,12 +188,12 @@ class Wire:
 
     A wire records all the connections defined by the user.  At compile time
     wires are used to build inter-block references.
-    
+
     Between two blocks, a wire can connect one or more ports, ie. it can connect
-    a set of output ports on one block to a same sized set of input ports on 
+    a set of output ports on one block to a same sized set of input ports on
     another block.
-    """      
-                
+    """
+
     def __init__(self, start=None, end=None, name=None):
 
         self.name = name
@@ -186,54 +208,56 @@ class Wire:
     def info(self):
         """
         Interactive display of wire properties.
-        
+
         Displays all attributes of the wire for debugging purposes.
 
         """
         print("wire:")
-        for k,v in self.__dict__.items():
-            print("  {:8s}{:s}".format(k+":", str(v)))
-            
+        for k, v in self.__dict__.items():
+            print("  {:8s}{:s}".format(k + ":", str(v)))
+
     def __repr__(self):
         """
         Display wire with name and connection details.
-        
+
         :return: Long-form wire description
         :rtype: str
-        
+
         String format::
-            
+
             wire.5: d2goal[0] --> Kv[0]
 
         """
         return str(self) + ": " + self.fullname
-    
+
     @property
     def fullname(self):
         """
         Display wire connection details.
-        
+
         :return: Wire name
         :rtype: str
 
         String format::
-            
+
             d2goal[0] --> Kv[0]
-            
+
         """
-        return "{:s}[{:d}] --> {:s}[{:d}]".format(str(self.start.block), self.start.port, str(self.end.block), self.end.port)
-    
+        return "{:s}[{:d}] --> {:s}[{:d}]".format(
+            str(self.start.block), self.start.port, str(self.end.block), self.end.port
+        )
+
     def __str__(self):
         """
         Display wire name.
-        
+
         :return: Wire name
         :rtype: str
 
         String format::
-            
+
             wire.5
-            
+
         """
         s = "wire."
         if self.name is not None:
@@ -241,16 +265,17 @@ class Wire:
         elif self.id is not None:
             s += str(self.id)
         else:
-            s += '??'
+            s += "??"
         return s
 
-        
-# ------------------------------------------------------------------------- # 
+
+# ------------------------------------------------------------------------- #
+
 
 class Plug:
     """
     Create a plug.
-    
+
     :param block: The block being plugged into
     :type block: Block
     :param port: The port on the block, defaults to 0
@@ -259,15 +284,15 @@ class Plug:
     :type type: str, optional
     :return: Plug object
     :rtype: Plug
-    
+
     Plugs are the interface between a wire and block and have information
-    about port number and wire end. Plugs are on the end of each wire, and connect a 
+    about port number and wire end. Plugs are on the end of each wire, and connect a
     Wire to a specific port on a Block.
-    
+
     The ``type`` argument indicates if the ``Plug`` is at:
         - the start of a wire, ie. the port is an output port
         - the end of a wire, ie. the port is an input port
-        
+
     A plug can specify a set of ports on a block.
 
     """
@@ -279,13 +304,12 @@ class Plug:
         self.block = block
         self.port = port
         self.type = type  # start
-        
-    
+
     @property
     def isslice(self):
         """
         Test if port number is a slice.
-        
+
         :return: Whether the port is a slice
         :rtype: bool
 
@@ -293,17 +317,17 @@ class Plug:
         for a simple index, eg. ``[2]``.
         """
         return isinstance(self.port, slice)
-    
+
     @property
     def portlist(self):
         """
         Return port numbers.
-        
+
         :return: Port numbers
         :rtype: iterable of int
-        
+
         If the port is a simple index, eg. ``[2]`` returns [2].
-        
+
         If the port is a slice, eg. ``[0:3]``, returns [0, 1, 2].
         For the case ``[2:]`` the upper bound is the maximum number of input
         or output ports of the block.
@@ -317,7 +341,7 @@ class Plug:
             start = self.port.start or 0
             step = self.port.step or 1
             if self.port.stop is None:
-                if self.type == 'start':
+                if self.type == "start":
                     stop = self.block.nout
                 else:
                     stop = self.block.nin
@@ -326,7 +350,7 @@ class Plug:
 
             return range(start, stop, step)
         else:
-            return ValueError('bad plug index')
+            return ValueError("bad plug index")
 
     def __getitem__(self, i):
         return self.__class__(self.block, self.portlist[i])
@@ -382,32 +406,32 @@ class Plug:
         # block * block
         # block * plug
         s = left.block.bd
-        #assert isinstance(right, Block), 'arguments to * must be blocks not ports (for now)'
+        # assert isinstance(right, Block), 'arguments to * must be blocks not ports (for now)'
         w = s.connect(left, right)  # add a wire
-        #print('plug * ' + str(w))
+        # print('plug * ' + str(w))
         return right
 
     def __add__(self, other):
         """
         Overloaded + operator for implicit block creation.
 
-        :param self: A signal (plug) to be added 
-        :type self: Plug 
+        :param self: A signal (plug) to be added
+        :type self: Plug
         :param other: A signal (block or plug) to be added
-        :type other: Block or Plug 
+        :type other: Block or Plug
         :return: SUM block
         :rtype: Block subclass
 
         This method is implicitly invoked by the + operator when the left operand is a ``Plug``
         and the right operand is a ``Plug``, ``Block`` or constant::
-        
+
             result = X[i] + Y
             result = X[i] + Y[j]
             result = X[i] + C
 
         where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.
 
-        Create a ``SUM("++")`` block named ``_sum.N`` whose inputs are the 
+        Create a ``SUM("++")`` block named ``_sum.N`` whose inputs are the
         left and right operands.  For the third case, a new ``CONSTANT(C)`` block
         named ``_const.N`` is also created.
 
@@ -416,29 +440,29 @@ class Plug:
         if isinstance(other, (int, float, np.ndarray)):
             # plug + constant, create a CONSTANT block
             other = self.block.bd.CONSTANT(other)
-        return self.block.bd.SUM('++', inputs=(self, other))
+        return self.block.bd.SUM("++", inputs=(self, other))
 
     def __radd__(self, other):
         """
         Overloaded + operator for implicit block creation.
 
-        :param self: A signal (plug) to be added 
-        :type self: Plug 
+        :param self: A signal (plug) to be added
+        :type self: Plug
         :param other: A signal (block or plug) to be added
-        :type other: Block or Plug 
+        :type other: Block or Plug
         :return: SUM block
         :rtype: Block subclass
 
         This method is implicitly invoked by the + operator when the right operand is a ``Plug``
         and the left operand is a ``Plug``, ``Block`` or constant::
-        
+
             result = X + Y[j]
             result = X[i] + Y[j]
             result = C + Y[j]
 
         where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.
 
-        Create a ``SUM("++") block named ``_sum.N`` whose inputs are the 
+        Create a ``SUM("++") block named ``_sum.N`` whose inputs are the
         left and right operands.  For the third case, a new ``CONSTANT(C)`` block
         named ``_const.N`` is also created.
 
@@ -449,29 +473,29 @@ class Plug:
         if isinstance(other, (int, float, np.ndarray)):
             # constant + plug, create a CONSTANT block
             other = self.block.bd.CONSTANT(other)
-        return self.block.bd.SUM('++', inputs=(other, self))
+        return self.block.bd.SUM("++", inputs=(other, self))
 
     def __sub__(self, other):
         """
         Overloaded - operator for implicit block creation.
 
         :param self: A signal (plug) to be added (minuend)
-        :type self: Plug 
+        :type self: Plug
         :param other: A signal (block or plug) to be subtracted (subtrahend)
-        :type other: Block or Plug 
+        :type other: Block or Plug
         :return: SUM block
         :rtype: Block subclass
 
         This method is implicitly invoked by the - operator when the left operand is a ``Plug``
         and the right operand is a ``Plug``, ``Block`` or constant::
-        
+
             result = X[i] - Y
             result = X[i] - Y[j]
             result = X[i] - C
 
         where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.
 
-        Create a ``SUM("+-")`` block named ``_sum.N`` whose inputs are the 
+        Create a ``SUM("+-")`` block named ``_sum.N`` whose inputs are the
         left and right operands.  For the third case, a new ``CONSTANT(C)`` block
         named ``_const.N`` is also created.
 
@@ -483,29 +507,29 @@ class Plug:
         if isinstance(other, (int, float, np.ndarray)):
             # plug - constant, create a CONSTANT block
             other = self.block.bd.CONSTANT(other)
-        return self.block.bd.SUM('+-', inputs=(self, other))
+        return self.block.bd.SUM("+-", inputs=(self, other))
 
     def __rsub__(self, other):
         """
         Overloaded - operator for implicit block creation.
 
         :param self: A signal (plug) to be added (minuend)
-        :type self: Plug 
+        :type self: Plug
         :param other: A signal (block or plug) to be subtracted (subtrahend)
-        :type other: Block or Plug 
+        :type other: Block or Plug
         :return: SUM block
         :rtype: Block subclass
 
         This method is implicitly invoked by the - operator when the left operand is a ``Plug``
         and the right operand is a ``Plug``, ``Block`` or constant::
-        
+
             result = X - Y[j]
             result = X[i] - Y[j]
             result = C - Y[j]
 
         where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.
 
-        Create a ``SUM("+-")`` block named ``_sum.N`` whose inputs are the 
+        Create a ``SUM("+-")`` block named ``_sum.N`` whose inputs are the
         left and right operands.  For the third case, a new ``CONSTANT(C)`` block
         named ``_const.N`` is also created.
 
@@ -517,24 +541,24 @@ class Plug:
         if isinstance(other, (int, float, np.ndarray)):
             # constant - plug, create a CONSTANT block
             other = self.block.bd.CONSTANT(other)
-        return self.block.bd.SUM('+-', inputs=(other, self))
+        return self.block.bd.SUM("+-", inputs=(other, self))
 
     def __neg__(self):
         """
         Overloaded unary minus operator for implicit block creation.
 
         :param self: A signal (plug) to be negated
-        :type self: Plug 
+        :type self: Plug
         :return: GAIN block
         :rtype: Block subclass
 
         This method is implicitly invoked by the - operator for unary minus when the operand is a ``Plug``::
-        
+
             result = -X[i]
 
         where ``X`` is a block.
 
-        Create a ``GAIN(-1)`` block named ``_gain.N`` whose input is the 
+        Create a ``GAIN(-1)`` block named ``_gain.N`` whose input is the
         operand.
 
         :seealso: :meth:`Block.__neg__`
@@ -545,23 +569,23 @@ class Plug:
         """
         Overloaded * operator for implicit block creation.
 
-        :param self: A signal (plug) to be multiplied 
-        :type self: Plug 
+        :param self: A signal (plug) to be multiplied
+        :type self: Plug
         :param other: A signal (block or plug) to be multiplied
-        :type other: Block or Plug 
+        :type other: Block or Plug
         :return: PROD or GAIN block
         :rtype: Block subclass
 
         This method is implicitly invoked by the * operator when the left operand is a ``Plug``
         and the right operand is a ``Plug``, ``Block`` or constant::
-        
+
             result = X[i] * Y
             result = X[i] * Y[j]
             result = X[i] * C
 
         where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.
 
-        Create a ``PROD("**")`` block named ``_prod.N`` whose inputs are the 
+        Create a ``PROD("**")`` block named ``_prod.N`` whose inputs are the
         left and right operands.
 
         For the third case, create a ``GAIN(C)`` block named ``_gain.N``.
@@ -573,21 +597,23 @@ class Plug:
         """
         if isinstance(other, (int, float, np.ndarray)):
             # plug * constant, create a GAIN block
-            return self.block._autogain(other, premul=matrix, inputs=[self])
+            return self.block._autogain(other, inputs=[self])
         else:
             # value * value, create a PROD block
             name = "_prod.{:d}".format(self.bd.n_auto_prod)
             self.bd.n_auto_prod += 1
-            return self.block.bd.PROD('**', matrix=True, name=name, inputs=[self, other])
+            return self.block.bd.PROD(
+                "**", matrix=True, name=name, inputs=[self, other]
+            )
 
     def __rmul__(self, other):
         """
         Overloaded * operator for implicit block creation.
 
         :param self: A signal (plug) to be multiplied
-        :type self: Plug 
+        :type self: Plug
         :param other: A signal (block or plug) to be multiplied
-        :type other: Block or Plug 
+        :type other: Block or Plug
         :return: PROD or GAIN block
         :rtype: Block subclass
 
@@ -600,9 +626,9 @@ class Plug:
 
         where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.
 
-        For the first two cases, a ``PROD("**")`` block named ``_prod.N`` whose inputs are the 
-        left and right operands.  
-        
+        For the first two cases, a ``PROD("**")`` block named ``_prod.N`` whose inputs are the
+        left and right operands.
+
         For the third case, create a ``GAIN(C)`` block named ``_gain.N``.
 
         .. note:: Signals are assumed to be scalars, but if ``C`` is a NumPy
@@ -620,22 +646,22 @@ class Plug:
         Overloaded / operator for implicit block creation.
 
         :param self: A signal (plug) to be multiplied (dividend)
-        :type self: Plug 
+        :type self: Plug
         :param other: A signal (block or plug) to be divided (divisor)
-        :type other: Block or Plug 
+        :type other: Block or Plug
         :return: PROD or GAIN block
         :rtype: Block subclass
 
         This method is implicitly invoked by the / operator when the left operand is a ``Plug``
         and the right operand is a ``Plug``, ``Block`` or constant::
-        
+
             result = X[i] / Y
             result = X[i] / Y[j]
             result = X[i] / C
 
         where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.
 
-        Create a ``PROD("**")`` block named ``_prod.N`` whose inputs are the 
+        Create a ``PROD("**")`` block named ``_prod.N`` whose inputs are the
         left and right operands.
 
         For the third case, create a ``GAIN(1/C)`` block named ``_gain.N``.
@@ -648,16 +674,16 @@ class Plug:
         if isinstance(other, (int, float, np.ndarray)):
             # plug / constant , create a CONSTANT block
             other = self.block.bd.CONSTANT(other)
-        return self.block.bd.PROD('*/', inputs=(self, other))
+        return self.block.bd.PROD("*/", inputs=(self, other))
 
     def __rtruediv__(self, other):
         """
         Overloaded / operator for implicit block creation.
 
         :param self: A signal (plug) to be multiplied (dividend)
-        :type self: Plug 
+        :type self: Plug
         :param other: A signal (block or plug) to be divided (divisor)
-        :type other: Block or Plug 
+        :type other: Block or Plug
         :return: PROD block
         :rtype: Block subclass
 
@@ -670,7 +696,7 @@ class Plug:
 
         where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.
 
-        For the first two cases, a ``PROD("*/")`` block named ``_prod.N`` whose inputs are the 
+        For the first two cases, a ``PROD("*/")`` block named ``_prod.N`` whose inputs are the
         left and right operands.  For the third case, a new CONSTANT block
         named ``_const.N`` is also created.
 
@@ -682,8 +708,7 @@ class Plug:
         if isinstance(other, (int, float, np.ndarray)):
             # constant / plug, create a CONSTANT block
             other = self.block.bd.CONSTANT(other)
-        return self.block.bd.PROD('*/', inputs=(other, self))
-
+        return self.block.bd.PROD("*/", inputs=(other, self))
 
     def __repr__(self):
         """
@@ -699,35 +724,33 @@ class Plug:
         """
         return str(self.block) + "[" + str(self.port) + "]"
 
-class StartPlug(Plug):
 
+class StartPlug(Plug):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, type='start', **kwargs)
+        super().__init__(*args, type="start", **kwargs)
+
 
 class EndPlug(Plug):
-
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, type='end', **kwargs)
-
-
+        super().__init__(*args, type="end", **kwargs)
 
 
 # ------------------------------------------------------------------------- #
 
 clocklist = []
 
-class Clock:
 
-    def __init__(self, arg, unit='s', offset=0, name=None):
+class Clock:
+    def __init__(self, arg, unit="s", offset=0, name=None):
         global clocklist
-        if unit == 's':
+        if unit == "s":
             self.T = arg
-        elif unit == 'ms':
+        elif unit == "ms":
             self.T = arg / 1000
-        elif unit == 'Hz':
+        elif unit == "Hz":
             self.T = 1 / arg
         else:
-            raise ValueError('unknown clock unit', unit)
+            raise ValueError("unknown clock unit", unit)
 
         self.offset = offset
 
@@ -736,6 +759,7 @@ class Clock:
         self.x = []  # discrete state vector numpy.ndarray
         self.t = []
         self.tick = 0
+        self.timer = None
 
         if name is None:
             self.name = "clock." + str(len(clocklist))
@@ -764,7 +788,7 @@ class Clock:
         x0 = np.array([])
         for b in self.blocklist:
             x0 = np.r_[x0, b.getstate0()]
-            #print('x0', x0)
+            # print('x0', x0)
         return x0
 
     def getstate(self):
@@ -779,7 +803,7 @@ class Clock:
     def setstate(self):
         x = self._x
         for b in self.blocklist:
-            x = b.setstate(x)  # send it to blocks        
+            x = b.setstate(x)  # send it to blocks
 
     def start(self, state=None):
         self.i = 1
@@ -799,11 +823,13 @@ class Clock:
         # save clock state at time t
         self.t.append(t)
         self.x.append(self.getstate())
+
+
 # ------------------------------------------------------------------------- #
+
 
 class Block:
 
- 
     varinputs = False
     varoutputs = False
 
@@ -827,7 +853,7 @@ class Block:
 
         # we overload setattr, so need to know whether it is being passed a port
         # name.  Add this attribute now to allow proper operation.
-        block.__dict__['portnames'] = []  # must be first, see __setattr__
+        block.__dict__["portnames"] = []  # must be first, see __setattr__
 
         block.bd = bd
         block.nstates = 0
@@ -836,11 +862,24 @@ class Block:
 
         return block
 
-    _latex_remove = str.maketrans({'$':'', '\\':'', '{':'', '}':'', '^':''})
+    _latex_remove = str.maketrans({"$": "", "\\": "", "{": "", "}": "", "^": ""})
 
-    def __init__(self, name=None, nin=None, nout=None, inputs=None, type=None,  
-        inames=None, onames=None, snames=None, 
-        pos=None, bd=None, blockclass=None, verbose=False, **kwargs):
+    def __init__(
+        self,
+        name=None,
+        nin=None,
+        nout=None,
+        inputs=None,
+        type=None,
+        inames=None,
+        onames=None,
+        snames=None,
+        pos=None,
+        bd=None,
+        blockclass=None,
+        verbose=False,
+        **kwargs,
+    ):
 
         """
         Construct a new block object.
@@ -891,7 +930,7 @@ class Block:
         self.out = []
         self.inputs = None
         self.updated = False
-        self.shape = 'block'  # for box
+        self.shape = "block"  # for box
         self._inport_names = None
         self._outport_names = None
         self._state_names = None
@@ -924,19 +963,20 @@ class Block:
         if isinstance(inputs, Block):
             inputs = (inputs,)
         if inputs is not None and len(inputs) > 0:
-            #assert len(inputs) == self.nin, 'Number of input connections must match number of inputs'
+            # assert len(inputs) == self.nin, 'Number of input connections must match number of inputs'
             for i, input in enumerate(inputs):
                 self.bd.connect(input, Plug(self, port=i))
 
         if len(kwargs) > 0:
-            print('WARNING: unused arguments', kwargs.keys())
+            print("WARNING: unused arguments", kwargs.keys())
 
     def add_param(self, param, handler=None):
         if handler == None:
+
             def handler(self, name, newvalue):
                 setattr(self, name, newvalue)
 
-        self.__dict__['_parameters'][param] = handler
+        self.__dict__["_parameters"][param] = handler
 
     def set_param(self, name, newvalue):
         print(f"setting parameter {name} of block {self.name} to {newvalue}")
@@ -951,9 +991,9 @@ class Block:
 
         """
         print("block: " + type(self).__name__)
-        for k,v in self.__dict__.items():
-            if k != 'sim':
-                print("  {:11s}{:s}".format(k+":", str(v)))
+        for k, v in self.__dict__.items():
+            if k != "sim":
+                print("  {:11s}{:s}".format(k + ":", str(v)))
 
     @property
     def isclocked(self):
@@ -978,62 +1018,158 @@ class Block:
         return self._graphics
 
     # for use in unit testing
-    def _output(self, *inputs, t=0.0):
+
+    # TODO: should redo this, eliminate the monkey patch
+    # TODO: make T_step(), dummpy out the state object
+
+    def T_output(self, *inputs, t=0.0, x=None):
         """
         Evaluate a block for unit testing.
-        
-        :param *inputs: List of input port values
-        :type *inputs: list
+
+        :param *inputs: Input port values
         :param t: Simulation time, defaults to 0.0
         :type t: float, optional
         :return: Block output port values
         :rtype: list
-        
+
         The output ports of the block are evaluated for a given simulation time
-        and set of input port values. Input and output port values are treated
-        as lists.
-        
+        and set of input port values. Input ports are assigned to consecutive inputs,
+        output port values are a list.
+
         Mostly used for making concise unit tests.
 
         .. warning:: the instance is monkey patched, not useable in a block
             diagram subsequently.
 
         """
-        def _input(self, port):
-            return self._eval_inputs[port]
-        
-        # monkey patch the instance so that input comes from an attribute
-        # rather than the source block.  for testing we don't have a source
-        # block
-        self.input = types.MethodType(_input, self)
-
         # check inputs and assign to attribute
-        assert len(inputs) == self.nin, 'wrong number of inputs provided'
-        self._eval_inputs = inputs
-        
+        assert len(inputs) == self.nin, "wrong number of inputs provided"
+        self._T_inputs = inputs
+
+        if x is not None:
+            self._x = x
+
         # evaluate the block
         out = self.output(t=t)
 
         # sanity check the output
-        assert isinstance(out, list), 'result must be a list'
-        assert len(out) == self.nout, 'result list is wrong length'
+        assert isinstance(out, list), "result must be a list"
+        assert len(out) == self.nout, "result list is wrong length"
         return out
 
-    def _step(self, *inputs, state=None):
-        def _input(self, port):
-            return self._eval_inputs[port]
-        
-        # monkey patch the instance so that input comes from an attribute
-        # rather than the source block.  for testing we don't have a source
-        # block
-        self.input = types.MethodType(_input, self)
+    def T_deriv(self, *inputs, x=None):
+        """
+        Evaluate a block for unit testing.
+
+        :param inputs: input port values
+        :type inputs: list
+        :return: Block derivative value
+        :rtype: ndarray
+
+        The derivative of the block is evaluated for a given set of input port
+        values. Input port values are treated as lists.
+
+        Mostly used for making concise unit tests.
+
+        .. warning:: the instance is monkey patched, not useable in a block
+            diagram subsequently.
+
+        """
 
         # check inputs and assign to attribute
-        assert len(inputs) == self.nin, 'wrong number of inputs provided'
-        self._eval_inputs = inputs
-        
+        assert len(inputs) == self.nin, "wrong number of inputs provided"
+        self._T_inputs = inputs
+
+        if x is not None:
+            assert len(x) == self.nstates, "passed state is wrong length"
+            self._x = x
+
+        # evaluate the block
+        out = self.deriv()
+
+        # sanity check the output
+        assert isinstance(out, np.ndarray), "result must be an ndarray"
+        assert out.shape == (self.nstates,), "result array is wrong length"
+        return out
+
+    def T_next(self, *inputs, x=None):
+        """
+        Evaluate a block for unit testing.
+
+        :param inputs: input port values
+        :type inputs: list
+        :return: Block derivative value
+        :rtype: ndarray
+
+        The next value of a discrete time block is evaluated for a given set of input port
+        values. Input port values are treated as lists.
+
+        Mostly used for making concise unit tests.
+
+        .. warning:: the instance is monkey patched, not useable in a block
+            diagram subsequently.
+
+        """
+
+        # check inputs and assign to attribute
+        assert len(inputs) == self.nin, "wrong number of inputs provided"
+        self._T_inputs = inputs
+
+        if x is not None:
+            assert len(x) == self.ndstates, "passed state is wrong length"
+            self._x = x
+
+        # evaluate the block
+        out = self.next()
+
+        # sanity check the output
+        assert isinstance(out, np.ndarray), "result must be an ndarray"
+        assert out.shape == (self.ndstates,), "result array is wrong length"
+        return out
+
+    def T_step(self, *inputs, state=None):
+
+        from bdsim.run_sim import BDSimState
+
+        if state is None:
+            state = BDSimState()
+
+        # check inputs and assign to attribute
+        assert len(inputs) == self.nin, "wrong number of inputs provided"
+        self._T_inputs = inputs
+
         # step the block
         self.step(state=state)
+
+    def T_start(self, state=None):
+
+        from bdsim.run_sim import BDSimState, Options
+
+        if state is None:
+
+            class RunTime:
+                def DEBUG(*args):
+                    pass
+
+            class BlockDiagram:
+                pass
+
+            self.bd = BlockDiagram()
+            self.bd.runtime = RunTime()
+            self.bd.runtime.options = Options()
+            state = BDSimState()
+            state.options = self.bd.runtime.options
+            state.t = 0.0
+
+        # step the block
+        self.start(state=state)
+        return state
+
+    def _output(self, *inputs, t=0.0):
+        return self.T_output(*inputs, t=t)
+
+    def _step(self, *inputs, state=None, t=None):
+        return self.T_step(*inputs, t=t)
 
     def input(self, port):
         """
@@ -1059,7 +1195,7 @@ class Block:
         except:
             # for unit testing a block may not have its input ports connected,
             # take the value from this list instead
-            return self.test_inputs[port]
+            return self._T_inputs[port]
 
     @property
     def inputs(self):
@@ -1094,7 +1230,7 @@ class Block:
         In both cases ``c[0]`` is converted to a ``Plug`` by this method.
         """
         # block[i] is a plug object
-        #print('getitem called', self, port)
+        # print('getitem called', self, port)
         return Plug(self, port)
 
     def __setitem__(self, port, src):
@@ -1118,7 +1254,7 @@ class Block:
         """
         # b[port] = src
         # src --> b[port]
-        #print('connecting', src, self, port)
+        # print('connecting', src, self, port)
         self.bd.connect(src, self[port])
 
     def __setattr__(self, name, value):
@@ -1152,7 +1288,7 @@ class Block:
 
         if name in self.portnames:
             # we're doing wiring
-            #print('in __setattr___', self, name, value)
+            # print('in __setattr___', self, name, value)
             self.bd.connect(value, getattr(self, name))
         else:
             # regular case, add attribute to the instance's dictionary
@@ -1197,9 +1333,9 @@ class Block:
         # block * block
         # block * plug
         s = left.bd
-        #assert isinstance(right, Block), 'arguments to * must be blocks not ports (for now)'
+        # assert isinstance(right, Block), 'arguments to * must be blocks not ports (for now)'
         w = s.connect(left, right)  # add a wire
-        #print('block * ' + str(w))
+        # print('block * ' + str(w))
         return right
 
         # make connection, return a plug
@@ -1224,32 +1360,32 @@ class Block:
         """
         Overloaded + operator for implicit block creation.
 
-        :param self: A signal (block) to be added 
-        :type self: Block 
+        :param self: A signal (block) to be added
+        :type self: Block
         :param other: A signal (block or plug) to be added
-        :type other: Block or Plug 
+        :type other: Block or Plug
         :return: SUM block
         :rtype: Block subclass
 
         This method is implicitly invoked by the + operator
         when the right operand is a ``Block``
         and the left operand is a ``Plug``, ``Block`` or constant::
-        
+
             result = X + Y
             result = X + Y[j]
             result = X + C
 
         where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.
 
-        Creates a ``SUM("++") block named ``_sum.N`` whose inputs are the 
+        Creates a ``SUM("++") block named ``_sum.N`` whose inputs are the
         left and right operands.  For the third case, a new ``CONSTANT(C)`` block
         named ``_const.N`` is also created.
 
-        .. note:: 
+        .. note::
             * The inputs to the summing junction are reversed: right then left operand.
             * The ``mode`` is None, regular addition
 
-        :seealso: :meth:`Block.__radd__` :meth:`Plug.__add__` 
+        :seealso: :meth:`Block.__radd__` :meth:`Plug.__add__`
         """
         # value + value, create a SUM block
         name = "_sum.{:d}".format(self.bd.n_auto_sum)
@@ -1257,34 +1393,34 @@ class Block:
         if isinstance(other, (int, float, np.ndarray)):
             # block + constant, create a CONSTANT block
             other = self._autoconstant(other)
-        return self.bd.SUM('++', inputs=(self, other), name=name)
+        return self.bd.SUM("++", inputs=(self, other), name=name)
 
     def __radd__(self, other):
         """
         Overloaded + operator for implicit block creation.
 
-        :param self: A signal (block) to be added 
-        :type self: Block 
+        :param self: A signal (block) to be added
+        :type self: Block
         :param other: A signal (block or plug) to be added
-        :type other: Block or Plug 
+        :type other: Block or Plug
         :return: SUM block
         :rtype: Block subclass
 
         This method is implicitly invoked by the + operator
         when the right operand is a ``Block``
         and the left operand is a ``Plug``, ``Block`` or constant::
-        
+
             result = X + Y[j]
             result = X[i] + Y[j]
             result = C + Y[j]
 
         where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.
 
-        Creates a ``SUM("++") block named ``_sum.N`` whose inputs are the 
+        Creates a ``SUM("++") block named ``_sum.N`` whose inputs are the
         left and right operands.  For the third case, a new ``CONSTANT(C)`` block
         named ``_const.N`` is also created.
 
-        .. note:: 
+        .. note::
             * The inputs to the summing junction are reversed: right then left operand.
             * The ``mode`` is None, regular addition
 
@@ -1296,29 +1432,29 @@ class Block:
         if isinstance(other, (int, float, np.ndarray)):
             # constant + block, create a CONSTANT block
             other = self._autoconstant(other)
-        return self.bd.SUM('++', inputs=(other, self), name=name)
+        return self.bd.SUM("++", inputs=(other, self), name=name)
 
     def __sub__(self, other):
         """
         Overloaded - operator for implicit block creation.
 
         :param self: A signal (block) to be added (minuend)
-        :type self: Block 
+        :type self: Block
         :param other: A signal (block or plug) to be subtracted (subtrahend)
-        :type other: Block or Plug 
+        :type other: Block or Plug
         :return: SUM block
         :rtype: Block subclass
 
         This method is implicitly invoked by the - operator when the left operand is a ``Block``
         and the right operand is a ``Plug``, ``Block`` or constant::
-        
+
             result = X - Y
             result = X - Y[j]
             result = X - C
 
         where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.
 
-        Creates a ``SUM("+-")`` block named ``_sum.N`` whose inputs are the 
+        Creates a ``SUM("+-")`` block named ``_sum.N`` whose inputs are the
         left and right operands.  For the third case, a new ``CONSTANT(C)`` block
         named ``_const.N`` is also created.
 
@@ -1330,33 +1466,33 @@ class Block:
         if isinstance(other, (int, float, np.ndarray)):
             # block - constant, create a CONSTANT block
             other = self._autoconstant(other)
-        return self.bd.SUM('+-', inputs=(self, other), name=name)
+        return self.bd.SUM("+-", inputs=(self, other), name=name)
 
     def __rsub__(self, other):
         """
         Overloaded - operator for implicit block creation.
 
         :param self: A signal (block) to be added (minuend)
-        :type self: Block 
+        :type self: Block
         :param other: A signal (block or plug) to be subtracted (subtrahend)
-        :type other: Block or Plug 
+        :type other: Block or Plug
         :return: SUM block
         :rtype: Block subclass
 
         This method is implicitly invoked by the - operator when the left operand is a ``Block``
         and the right operand is a ``Plug``, ``Block`` or constant::
-        
+
             result = X - Y
             result = X[i] - Y
             result = C - Y
 
         where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.
 
-        Creates a ``SUM("+-")`` block named ``_sum.N`` whose inputs are the 
+        Creates a ``SUM("+-")`` block named ``_sum.N`` whose inputs are the
         left and right operands.  For the third case, a new ``CONSTANT(C)`` block
         named ``_const.N`` is also created.
 
-        .. note:: 
+        .. note::
             * The inputs to the summing junction are reversed: right then left operand.
             * The ``mode`` is None, regular addition
 
@@ -1368,24 +1504,24 @@ class Block:
         if isinstance(other, (int, float, np.ndarray)):
             # constant - block, create a CONSTANT block
             other = self._autoconstant(other)
-        return self.bd.SUM('+-', inputs=(other, self), name=name)
+        return self.bd.SUM("+-", inputs=(other, self), name=name)
 
     def __neg__(self):
         """
         Overloaded unary minus operator for implicit block creation.
 
         :param self: A signal (block) to be negated
-        :type self: Block 
+        :type self: Block
         :return: GAIN block
         :rtype: Block subclass
 
         This method is implicitly invoked by the - operator for unary minus when the operand is a ``Block``::
-        
+
             result = -X
 
         where ``X`` is a block.
 
-        Creates a ``GAIN(-1)`` block named ``_gain.N`` whose input is the 
+        Creates a ``GAIN(-1)`` block named ``_gain.N`` whose input is the
         operand.
 
         :seealso: :meth:`Plug.__neg__`
@@ -1396,23 +1532,23 @@ class Block:
         """
         Overloaded * operator for implicit block creation.
 
-        :param self: A signal (block) to be multiplied 
-        :type self: Block 
+        :param self: A signal (block) to be multiplied
+        :type self: Block
         :param other: A signal (block or plug) to be multiplied
-        :type other: Block or Plug 
+        :type other: Block or Plug
         :return: PROD or GAIN block
         :rtype: Block subclass
 
         This method is implicitly invoked by the * operator when the left operand is a ``Block``
         and the right operand is a ``Plug``, ``Block`` or constant::
-        
+
             result = X * Y
             result = X * Y[j]
             result = X * C
 
         where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.
 
-        Create a ``PROD("**")`` block named ``_prod.N`` whose inputs are the 
+        Create a ``PROD("**")`` block named ``_prod.N`` whose inputs are the
         left and right operands.
 
         For the third case, create a ``GAIN(C)`` block named ``_gain.N``.
@@ -1431,16 +1567,16 @@ class Block:
             # value * value, create a PROD block
             name = "_prod.{:d}".format(self.bd.n_auto_prod)
             self.bd.n_auto_prod += 1
-            return self.bd.PROD('**', inputs=[self, other], matrix=matrix, name=name)
+            return self.bd.PROD("**", inputs=[self, other], matrix=matrix, name=name)
 
     def __rmul__(self, other):
         """
         Overloaded * operator for implicit block creation.
 
         :param self: A signal (block) to be multiplied
-        :type self: Block 
+        :type self: Block
         :param other: A signal (block or plug) to be multiplied
-        :type other: Block or Plug 
+        :type other: Block or Plug
         :return: PROD or GAIN block
         :rtype: Block subclass
 
@@ -1453,43 +1589,43 @@ class Block:
 
         where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.
 
-        For the first two cases, a ``PROD("**")`` block named ``_prod.N`` whose inputs are the 
-        left and right operands.  
-        
+        For the first two cases, a ``PROD("**")`` block named ``_prod.N`` whose inputs are the
+        left and right operands.
+
         For the third case, create a ``GAIN(C)`` block named ``_gain.N``.
 
         .. note:: Signals are assumed to be scalars, but if ``C`` is a NumPy
             array then the option ``matrix`` is set to True.
 
-        :seealso: :meth:`Block.__mul__` :meth:`Plug.__rmul__` 
+        :seealso: :meth:`Block.__mul__` :meth:`Plug.__rmul__`
         """
         matrix = False
         if isinstance(other, (int, float, np.ndarray)):
             # constant * block, create a GAIN block
             matrix = isinstance(other, np.ndarray)
             return self._autogain(other, premul=matrix, inputs=[self])
- 
+
     def __truediv__(self, other):
         """
         Overloaded / operator for implicit block creation.
 
         :param self: A signal (block) to be multiplied (dividend)
-        :type self: Block 
+        :type self: Block
         :param other: A signal (block or plug) to be divided (divisor)
-        :type other: Block or Plug 
+        :type other: Block or Plug
         :return: PROD or GAIN block
         :rtype: Block subclass
 
         This method is implicitly invoked by the / operator when the left operand is a ``Block``
         and the right operand is a ``Plug``, ``Block`` or constant::
-        
+
             result = X / Y
             result = X / Y[j]
             result = X / C
 
         where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.
 
-        Create a ``PROD("**")`` block named ``_prod.N`` whose inputs are the 
+        Create a ``PROD("**")`` block named ``_prod.N`` whose inputs are the
         left and right operands.
 
         For the third case, create a ``GAIN(1/C)`` block named ``_gain.N``.
@@ -1497,7 +1633,7 @@ class Block:
         .. note:: Signals are assumed to be scalars, but if ``C`` is a NumPy
             array then the option ``matrix`` is set to True.
 
-        :seealso: :meth:`Block.__rtruediv__` :meth:`Plug.__truediv__` 
+        :seealso: :meth:`Block.__rtruediv__` :meth:`Plug.__truediv__`
         """
         # value / value, create a PROD block
         name = "_prod.{:d}".format(self.bd.n_auto_prod)
@@ -1507,16 +1643,16 @@ class Block:
             # block / constant, create a CONSTANT block
             other = self._autoconstant(other)
             matrix = isinstance(other, np.ndarray)
-        return self.bd.PROD('*/', inputs=(self, other), matrix=matrix, name=name)
+        return self.bd.PROD("*/", inputs=(self, other), matrix=matrix, name=name)
 
     def __rtruediv__(self, other):
         """
         Overloaded / operator for implicit block creation.
 
         :param self: A signal (block) to be multiplied (dividend)
-        :type self: Block 
+        :type self: Block
         :param other: A signal (block or plug) to be divided (divisor)
-        :type other: Block or Plug 
+        :type other: Block or Plug
         :return: PROD block
         :rtype: Block subclass
 
@@ -1529,7 +1665,7 @@ class Block:
 
         where ``X`` and ``Y`` are blocks and ``C`` is a Python or NumPy constant.
 
-        For the first two cases, a ``PROD("*/")`` block named ``_prod.N`` whose inputs are the 
+        For the first two cases, a ``PROD("*/")`` block named ``_prod.N`` whose inputs are the
         left and right operands.  For the third case, a new CONSTANT block
         named ``_const.N`` is also created.
 
@@ -1546,17 +1682,15 @@ class Block:
             # constant / block, create a CONSTANT block
             other = self._autoconstant(other)
             matrix = isinstance(other, np.ndarray)
-        return self.bd.PROD('*/', inputs=(other, self), matrix=matrix, name=name)
-
-    
+        return self.bd.PROD("*/", inputs=(other, self), matrix=matrix, name=name)
 
     # TODO arithmetic with a constant, add a gain block or a constant block
 
     def __str__(self):
-        if hasattr(self, 'name') and self.name is not None:
+        if hasattr(self, "name") and self.name is not None:
             return self.name
         else:
-            return self.blockclass + '.??'
+            return self.blockclass + ".??"
 
     def __repr__(self):
         return self.__str__()
@@ -1650,12 +1784,14 @@ class Block:
 
     def add_output_wire(self, w):
         port = w.start.port
-        assert port < len(self.output_wires), 'port number too big'
+        assert port < len(self.output_wires), "port number too big"
         self.output_wires[port].append(w)
 
     def add_input_wire(self, w):
         port = w.end.port
-        assert self.input_wires[port] is None, 'attempting to connect second wire to an input'
+        assert (
+            self.input_wires[port] is None
+        ), "attempting to connect second wire to an input"
         self.input_wires[port] = w
         self.sources[port] = w.start
 
@@ -1673,7 +1809,6 @@ class Block:
     #     # stash it away
     #     self.inputs[port] = value
 
-
     # def setinputs(self, *pos):
     #     assert len(pos) == self.nin, 'mismatch in number of inputs'
     #     self.reset()
@@ -1684,11 +1819,15 @@ class Block:
         pass
 
     def check(self):  # check validity of block parameters at start
-        assert hasattr(self, 'nin'), f"block {self.name} has no nin specified"
-        assert hasattr(self, 'nout'), f"block {self.name} has no nout specified"
+        assert hasattr(self, "nin"), f"block {self.name} has no nin specified"
+        assert hasattr(self, "nout"), f"block {self.name} has no nout specified"
 
-        assert self.nin > 0 or self.nout > 0, f"block {self.name} no inputs or outputs specified"
-        assert hasattr(self, 'initd') and self.initd, 'Block superclass not initalized. was super().__init__ called?'
+        assert (
+            self.nin > 0 or self.nout > 0
+        ), f"block {self.name} no inputs or outputs specified"
+        assert (
+            hasattr(self, "initd") and self.initd
+        ), "Block superclass not initalized. was super().__init__ called?"
 
     def done(self, **kwargs):  # end of simulation
         pass
@@ -1699,13 +1838,15 @@ class Block:
     def savefig(self, *pos, **kwargs):
         pass
 
+
 class SinkBlock(Block):
     """
     A SinkBlock is a subclass of Block that represents a block that has inputs
-    but no outputs. Typically used to save data to a variable, file or 
+    but no outputs. Typically used to save data to a variable, file or
     graphics.
     """
-    blockclass='sink'
+
+    blockclass = "sink"
 
     def __init__(self, **blockargs):
         """
@@ -1723,12 +1864,14 @@ class SinkBlock(Block):
         self.nout = 0
         self.nstates = 0
 
+
 class SourceBlock(Block):
     """
     A SourceBlock is a subclass of Block that represents a block that has outputs
     but no inputs.  Its output is a function of parameters and time.
     """
-    blockclass = 'source'
+
+    blockclass = "source"
 
     def __init__(self, **blockargs):
         """
@@ -1746,13 +1889,15 @@ class SourceBlock(Block):
         self.nin = 0
         self.nstates = 0
 
+
 class TransferBlock(Block):
     """
     A TransferBlock is a subclass of Block that represents a block with inputs
     outputs and states. Typically used to describe a continuous time dynamic
     system, either linear or nonlinear.
     """
-    blockclass = 'transfer'
+
+    blockclass = "transfer"
 
     def __init__(self, nstates=1, **blockargs):
         """
@@ -1776,22 +1921,25 @@ class TransferBlock(Block):
 
     def setstate(self, x):
         x = np.array(x)
-        self._x = x[:self.nstates]  # take as much state vector as we need
-        return x[self.nstates:]     # return the rest
+        self._x = x[: self.nstates]  # take as much state vector as we need
+        return x[self.nstates :]  # return the rest
 
     def getstate0(self):
         return self._x0
 
     def check(self):
-        assert len(self._x0) == self.nstates, 'incorrect length for initial state'
-        assert self.nin > 0 or self.nout > 0, 'no inputs or outputs specified'
+        assert len(self._x0) == self.nstates, "incorrect length for initial state"
+        assert self.nin > 0 or self.nout > 0, "no inputs or outputs specified"
+
+
 class FunctionBlock(Block):
     """
     A FunctionBlock is a subclass of Block that represents a block that has inputs
     and outputs but no state variables.  Typically used to describe operations
     such as gain, summation or various mappings.
     """
-    blockclass = 'function'
+
+    blockclass = "function"
 
     def __init__(self, **blockargs):
         """
@@ -1815,7 +1963,8 @@ class SubsystemBlock(Block):
     and outputs but no state variables.  Typically used to describe operations
     such as gain, summation or various mappings.
     """
-    blockclass = 'subsystem'
+
+    blockclass = "subsystem"
 
     def __init__(self, **blockargs):
         """
@@ -1832,13 +1981,15 @@ class SubsystemBlock(Block):
         super().__init__(**blockargs)
         self.nstates = 0
 
+
 class ClockedBlock(Block):
     """
     A ClockedBlock is a subclass of Block that represents a block with inputs
     outputs and discrete states. Typically used to describe a discrete time dynamic
     system, either linear or nonlinear.
     """
-    blockclass = 'clocked'
+
+    blockclass = "clocked"
 
     def __init__(self, clock=None, **blockargs):
         """
@@ -1853,7 +2004,7 @@ class ClockedBlock(Block):
         """
         # print('Clocked constructor')
         super().__init__(**blockargs)
-        assert clock is not None, 'clocked block must have a clock'
+        assert clock is not None, "clocked block must have a clock"
         self._clocked = True
         self.clock = clock
         clock.add_block(self)
@@ -1864,21 +2015,23 @@ class ClockedBlock(Block):
         # return self._x
 
     def setstate(self, x):
-        self._x = x[:self.ndstates]  # take as much state vector as we need
+        self._x = x[: self.ndstates]  # take as much state vector as we need
         # print('** set block state to ', self._x)
-        return x[self.ndstates:]     # return the rest
+        return x[self.ndstates :]  # return the rest
 
     def getstate0(self):
         return self._x0
 
     def check(self):
-        assert len(self._x0) == self.ndstates, 'incorrect length for initial state'
+        assert len(self._x0) == self.ndstates, "incorrect length for initial state"
 
-        assert self.nin > 0 or self.nout > 0, 'no inputs or outputs specified'
+        assert self.nin > 0 or self.nout > 0, "no inputs or outputs specified"
         self._x = self._x0
+
 
 class EventSource:
     pass
+
 
 # c = Clock(5)
 # c1 = Clock(5, 2)
@@ -1886,3 +2039,18 @@ class EventSource:
 # print(c, c1)
 # print(c.next(0), c1.next(0))
 
+if __name__ == "__main__":
+    # opt = OptionsBase(dict(foo=1, bar='hello'))
+    # print(opt.foo)
+    # print(opt.bar)
+    # opt.set(foo=3)
+    # print(opt.foo)
+
+    # from bdsim.blocks.functions import Sum
+    # print(Sum.parameters())
+
+    import bdsim
+
+    sim = bdsim.BDSim()  # create simulator
+
+    print(sim.moduledicts)

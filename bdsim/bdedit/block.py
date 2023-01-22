@@ -160,7 +160,7 @@ class Block(Serializable):
         # [print(item) for item in self.__dict__.items()]
         # print("_______________________________________")
 
-        #self._createBlock(self.inputsNum, self.outputsNum)
+        # self._createBlock(self.inputsNum, self.outputsNum)
 
         # print("after block instance made:")
         # [print(item) for item in self.__dict__.items()]
@@ -206,12 +206,12 @@ class Block(Serializable):
     # -----------------------------------------------------------------------------
     def _createParamWindow(self):
         """
-            This private method takes no inputs, and should only be called once
-            when generating a parameter window for it's associated block.
+        This private method takes no inputs, and should only be called once
+        when generating a parameter window for it's associated block.
 
-            It creates an instance of the ``ParamWindow`` class relating to
-            this ``Block`` and references the 'self.window' variable stored within
-            the ``Block`` class to make the parameter window part of the bdedit window.
+        It creates an instance of the ``ParamWindow`` class relating to
+        this ``Block`` and references the 'self.window' variable stored within
+        the ``Block`` class to make the parameter window part of the bdedit window.
         """
 
         # Creates a parameter window variable associated to this Block instance, and sets its
@@ -250,11 +250,24 @@ class Block(Serializable):
         while counter < inputs:
             try:
                 if self.input_names:
-                    socket = Socket(node=self, index=counter, position=position, socket_type=socketType, socket_label=self.input_names[counter])
+                    socket = Socket(
+                        node=self,
+                        index=counter,
+                        position=position,
+                        socket_type=socketType,
+                        socket_label=self.input_names[counter],
+                    )
                 else:
-                    socket = Socket(node=self, index=counter, position=position, socket_type=socketType)
+                    socket = Socket(
+                        node=self,
+                        index=counter,
+                        position=position,
+                        socket_type=socketType,
+                    )
             except (AttributeError, IndexError):
-                socket = Socket(node=self, index=counter, position=position, socket_type=socketType)
+                socket = Socket(
+                    node=self, index=counter, position=position, socket_type=socketType
+                )
             counter += 1
             self.inputs.append(socket)
 
@@ -290,11 +303,24 @@ class Block(Serializable):
         while counter < outputs:
             try:
                 if self.output_names:
-                    socket = Socket(node=self, index=counter, position=position, socket_type=socketType, socket_label=self.output_names[counter])
+                    socket = Socket(
+                        node=self,
+                        index=counter,
+                        position=position,
+                        socket_type=socketType,
+                        socket_label=self.output_names[counter],
+                    )
                 else:
-                    socket = Socket(node=self, index=counter, position=position, socket_type=socketType)
+                    socket = Socket(
+                        node=self,
+                        index=counter,
+                        position=position,
+                        socket_type=socketType,
+                    )
             except (AttributeError, IndexError):
-                socket = Socket(node=self, index=counter, position=position, socket_type=socketType)
+                socket = Socket(
+                    node=self, index=counter, position=position, socket_type=socketType
+                )
             counter += 1
             self.outputs.append(socket)
 
@@ -331,7 +357,12 @@ class Block(Serializable):
         """
 
         # Checks if the block type is a Prod or Sum block
-        if self.block_type == "PROD" or self.block_type == "SUM" or self.block_type == "Prod" or self.block_type == "Sum":
+        if (
+            self.block_type == "PROD"
+            or self.block_type == "SUM"
+            or self.block_type == "Prod"
+            or self.block_type == "Sum"
+        ):
 
             # Iterates through user-editable parameters stored within the block and checks
             # if one by the name of 'Operations' or 'Signs' exists (these block types should
@@ -487,10 +518,12 @@ class Block(Serializable):
             else:
                 # If this is a second instance of this block type (hence the increment
                 # would be None), this method calls itself with the increment set to 1
-                if increment is None: self.setDefaultTitle(name, 1)
+                if increment is None:
+                    self.setDefaultTitle(name, 1)
                 # Else, this is more than a second instance of this block type, and
                 # the increment would of already been set, and internally incremented.
-                else: self.setDefaultTitle(name, increment)
+                else:
+                    self.setDefaultTitle(name, increment)
 
     # -----------------------------------------------------------------------------
     def getSocketPosition(self, index, position):
@@ -516,14 +549,24 @@ class Block(Serializable):
         # the thickness of this block's outline, and how curved its corners are.
         if position == LEFT:
             x = 0
-            y = self.grBlock._padding + self.grBlock.edge_size + self.grBlock.title_height + index * self.socket_spacing
+            y = (
+                self.grBlock._padding
+                + self.grBlock.edge_size
+                + self.grBlock.title_height
+                + index * self.socket_spacing
+            )
 
         # Else, the position of the Socket is given to be on the RIGHT of the block,
         # * x is returned as the width of block.
         # * y is returned as above.
         elif position == RIGHT:
             x = self.grBlock.width
-            y = self.grBlock._padding + self.grBlock.edge_size + self.grBlock.title_height + index * self.socket_spacing
+            y = (
+                self.grBlock._padding
+                + self.grBlock.edge_size
+                + self.grBlock.title_height
+                + index * self.socket_spacing
+            )
         return [x, y]
 
     # -----------------------------------------------------------------------------
@@ -539,8 +582,10 @@ class Block(Serializable):
         # Iterates through every input Socket this Block has
         for i in range(0, len(self.inputs)):
             # Flips the position of the input sockets (LEFT to RIGHT, or RIGHT to LEFT)
-            if self.inputs[i].position == LEFT: self.inputs[i].position = RIGHT
-            else: self.inputs[i].position = LEFT
+            if self.inputs[i].position == LEFT:
+                self.inputs[i].position = RIGHT
+            else:
+                self.inputs[i].position = LEFT
             # Grabs the coordinates for where this Socket should be drawn
             [x, y] = self.getSocketPosition(i, self.inputs[i].position)
             # And sets the position of the current socket to these coordinates
@@ -549,10 +594,12 @@ class Block(Serializable):
         # Iterates through every output Socket this Block has
         for i in range(0, len(self.outputs)):
             # Flips the position of the output sockets (RIGHT to LEFT, or LEFT to RIGHT)
-            if self.outputs[i].position == RIGHT: self.outputs[i].position = LEFT
-            else: self.outputs[i].position = RIGHT
+            if self.outputs[i].position == RIGHT:
+                self.outputs[i].position = LEFT
+            else:
+                self.outputs[i].position = RIGHT
             # Grabs the coordinates for where this Socket should be drawn
-            [x,y] = self.getSocketPosition(i, self.outputs[i].position)
+            [x, y] = self.getSocketPosition(i, self.outputs[i].position)
             # And sets the position of the current socket to these coordinates
             self.outputs[i].grSocket.setPos(*[float(x), float(y)])
 
@@ -582,7 +629,7 @@ class Block(Serializable):
         logic. This method updates which wires should be drawn following the automatic
         routing logic.
         """
-        for socket in (self.inputs + self.outputs):
+        for socket in self.inputs + self.outputs:
             for wire in socket.wires:
                 if wire:
                     # If both blocks connected by these wires are selected, don't do
@@ -592,7 +639,10 @@ class Block(Serializable):
                     start_block = wire.start_socket.node
                     end_block = wire.end_socket.node
 
-                    if start_block.grBlock.isSelected() and end_block.grBlock.isSelected():
+                    if (
+                        start_block.grBlock.isSelected()
+                        and end_block.grBlock.isSelected()
+                    ):
                         pass
                         # wire.grWire.customlogicOverride = True
                         # start_block.updateSocketPositions()
@@ -602,7 +652,6 @@ class Block(Serializable):
                     # to be displayed based on the automatic wire routing logic.
                     else:
                         wire.grWire.customlogicOverride = False
-
 
     # -----------------------------------------------------------------------------
     def removeSockets(self, type):
@@ -633,32 +682,39 @@ class Block(Serializable):
         """
 
         # For each socket associated with this block, remove the connected wires
-        if DEBUG: print("> Removing Block", self)
-        if DEBUG: print(" - removing all wires from sockets")
-        for socket in (self.inputs + self.outputs):
+        if DEBUG:
+            print("> Removing Block", self)
+        if DEBUG:
+            print(" - removing all wires from sockets")
+        for socket in self.inputs + self.outputs:
             for wire in socket.wires.copy():
-            # for wire in socket.wires:
-                if DEBUG: print("    - removing from socket:", socket, "wire:", wire)
+                # for wire in socket.wires:
+                if DEBUG:
+                    print("    - removing from socket:", socket, "wire:", wire)
                 wire.remove()
 
         # Remove the graphical representation of this block from the scene
         # This will also remove the associated graphical representation of the
         # blocks' sockets.
-        if DEBUG: print(" - removing grBlock")
+        if DEBUG:
+            print(" - removing grBlock")
         self.scene.grScene.removeItem(self.grBlock)
         self.grBlock = None
 
         # Remove the blocks' parameter window if one existed
-        if DEBUG: print(" - removing parameterWindow")
+        if DEBUG:
+            print(" - removing parameterWindow")
         if self.parameterWindow:
             self.window.removeWidget(self.parameterWindow)
             self.parameterWindow = None
 
         # Finally, call the removeBlock method from within the Scene, which
         # removes this block from the list of blocks stored in the Scene.
-        if DEBUG: print(" - removing block from the scene")
+        if DEBUG:
+            print(" - removing block from the scene")
         self.scene.removeBlock(self)
-        if DEBUG: print(" - everything was done.")
+        if DEBUG:
+            print(" - everything was done.")
 
     # -----------------------------------------------------------------------------
     def serialize(self):
@@ -687,37 +743,46 @@ class Block(Serializable):
         # their Class. (As a reminder, parameter = [name, type, value, special_conditions])
         if self.block_type in ["Connector", "CONNECTOR"]:
             inputs, outputs, parameters = [], [], []
-            for socket in self.inputs: inputs.append(socket.serialize())
-            for socket in self.outputs: outputs.append(socket.serialize())
-            return OrderedDict([
-                ('id', self.id),
-                ('block_type', self.block_type),
-                ('pos_x', self.grBlock.scenePos().x()),
-                ('pos_y', self.grBlock.scenePos().y()),
-                ('inputs', inputs),
-                ('outputs', outputs)
-            ])
+            for socket in self.inputs:
+                inputs.append(socket.serialize())
+            for socket in self.outputs:
+                outputs.append(socket.serialize())
+            return OrderedDict(
+                [
+                    ("id", self.id),
+                    ("block_type", self.block_type),
+                    ("pos_x", self.grBlock.scenePos().x()),
+                    ("pos_y", self.grBlock.scenePos().y()),
+                    ("inputs", inputs),
+                    ("outputs", outputs),
+                ]
+            )
         else:
             inputs, outputs, parameters = [], [], []
-            for socket in self.inputs: inputs.append(socket.serialize())
-            for socket in self.outputs: outputs.append(socket.serialize())
-            for parameter in self.parameters: parameters.append([parameter[0], parameter[2]])
+            for socket in self.inputs:
+                inputs.append(socket.serialize())
+            for socket in self.outputs:
+                outputs.append(socket.serialize())
+            for parameter in self.parameters:
+                parameters.append([parameter[0], parameter[2]])
 
-            return OrderedDict([
-                ('id', self.id),
-                ('block_type', self.block_type),
-                ('title', self.title),
-                ('pos_x', self.grBlock.scenePos().x()),
-                ('pos_y', self.grBlock.scenePos().y()),
-                ('width', self.width),
-                ('height', self.height),
-                ('flipped', self.flipped),
-                ('inputsNum', self.inputsNum),
-                ('outputsNum', self.outputsNum),
-                ('inputs', inputs),
-                ('outputs', outputs),
-                ('parameters', parameters)
-            ])
+            return OrderedDict(
+                [
+                    ("id", self.id),
+                    ("block_type", self.block_type),
+                    ("title", self.title),
+                    ("pos_x", self.grBlock.scenePos().x()),
+                    ("pos_y", self.grBlock.scenePos().y()),
+                    ("width", self.width),
+                    ("height", self.height),
+                    ("flipped", self.flipped),
+                    ("inputsNum", self.inputsNum),
+                    ("outputsNum", self.outputsNum),
+                    ("inputs", inputs),
+                    ("outputs", outputs),
+                    ("parameters", parameters),
+                ]
+            )
 
     # -----------------------------------------------------------------------------
     def deserialize(self, data, hashmap={}):
@@ -735,18 +800,18 @@ class Block(Serializable):
         :rtype: Boolean
         """
         # The id of this Block is set to whatever was stored as its id in the JSON file.
-        self.id = data['id']
+        self.id = data["id"]
 
         try:
             # The remaining parameters associated to this Block are mapped to itself
-            #hashmap[data['id']] = self
+            # hashmap[data['id']] = self
 
             if self.block_type not in ["Connector", "CONNECTOR"]:
-                self.title = data['title']
-                self.inputsNum = data['inputsNum']
-                self.outputsNum = data['outputsNum']
-                self.width = data['width']
-                self.height = data['height']
+                self.title = data["title"]
+                self.inputsNum = data["inputsNum"]
+                self.outputsNum = data["outputsNum"]
+                self.width = data["width"]
+                self.height = data["height"]
 
                 # If a model contains data on whether a block should be flipped, assign variable to that value
                 # If error occurs, model doesn't contain this variable, so ignore
@@ -757,7 +822,7 @@ class Block(Serializable):
                     pass
 
             # The position of the Block within the Scene, are set accordingly.
-            self.setPos(data['pos_x'], data['pos_y'])
+            self.setPos(data["pos_x"], data["pos_y"])
 
             # When block is drawn, by default it is created with its allocated number of input/output sockets.
             # When deserializing a block, we want the sockets to be in the locations where they were saved.
@@ -780,18 +845,32 @@ class Block(Serializable):
             if self.block_type not in ["Connector", "CONNECTOR"]:
                 i = 0
 
-                for paramName, paramVal in data['parameters']:
+                for paramName, paramVal in data["parameters"]:
                     # If debug mode is enabled, this code will print to console to validate that the
                     # parameters are being overwritten into the same location they were previously stored in.
-                    if DEBUG: print("----------------------")
-                    if DEBUG: print("Cautionary check")
-                    if DEBUG: print("current value:", [self.parameters[i][0], self.parameters[i][1], self.parameters[i][2]])
-                    if DEBUG: print("setting to value:", [paramName, self.parameters[i][1], paramVal])
+                    if DEBUG:
+                        print("----------------------")
+                    if DEBUG:
+                        print("Cautionary check")
+                    if DEBUG:
+                        print(
+                            "current value:",
+                            [
+                                self.parameters[i][0],
+                                self.parameters[i][1],
+                                self.parameters[i][2],
+                            ],
+                        )
+                    if DEBUG:
+                        print(
+                            "setting to value:",
+                            [paramName, self.parameters[i][1], paramVal],
+                        )
                     self.parameters[i][0] = paramName
                     self.parameters[i][2] = paramVal
 
                     # If there are subsystem, outport or inport blocks with labels for their sockets, extract that information into self.input_names and self.output_names as needed
-                    if self.block_type in ['SUBSYSTEM', 'OUTPORT', 'INPORT']:
+                    if self.block_type in ["SUBSYSTEM", "OUTPORT", "INPORT"]:
 
                         if paramName == "inport labels":
                             if paramVal:
@@ -805,27 +884,59 @@ class Block(Serializable):
 
             # And the saved (input and output) sockets are written into these lists respectively,
             # deserializing the socket-relevant information while doing so.
-            for i, socket_data in enumerate(data['inputs']):
+            for i, socket_data in enumerate(data["inputs"]):
                 try:
                     if self.input_names:
-                        new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'], socket_label=self.input_names[i])
+                        new_socket = Socket(
+                            node=self,
+                            index=socket_data["index"],
+                            position=socket_data["position"],
+                            socket_type=socket_data["socket_type"],
+                            socket_label=self.input_names[i],
+                        )
                     else:
-                        new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'])
+                        new_socket = Socket(
+                            node=self,
+                            index=socket_data["index"],
+                            position=socket_data["position"],
+                            socket_type=socket_data["socket_type"],
+                        )
                 except (AttributeError, IndexError):
-                        new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'])
+                    new_socket = Socket(
+                        node=self,
+                        index=socket_data["index"],
+                        position=socket_data["position"],
+                        socket_type=socket_data["socket_type"],
+                    )
                 new_socket.deserialize(socket_data, hashmap)
                 self.inputs.append(new_socket)
 
             self.updateSocketSigns()
 
-            for i, socket_data in enumerate(data['outputs']):
+            for i, socket_data in enumerate(data["outputs"]):
                 try:
                     if self.output_names:
-                        new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'], socket_label=self.output_names[i])
+                        new_socket = Socket(
+                            node=self,
+                            index=socket_data["index"],
+                            position=socket_data["position"],
+                            socket_type=socket_data["socket_type"],
+                            socket_label=self.output_names[i],
+                        )
                     else:
-                        new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'])
+                        new_socket = Socket(
+                            node=self,
+                            index=socket_data["index"],
+                            position=socket_data["position"],
+                            socket_type=socket_data["socket_type"],
+                        )
                 except (AttributeError, IndexError):
-                        new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'], socket_type=socket_data['socket_type'])
+                    new_socket = Socket(
+                        node=self,
+                        index=socket_data["index"],
+                        position=socket_data["position"],
+                        socket_type=socket_data["socket_type"],
+                    )
                 new_socket.deserialize(socket_data, hashmap)
                 self.outputs.append(new_socket)
 
@@ -847,7 +958,9 @@ class Block(Serializable):
 
             return True
         except (ValueError, NameError, IndexError):
-            print(f"error deserializing block [{self.block_type}::{self.title}] - maybe JSON file has old function parameters")
+            print(
+                f"error deserializing block [{self.block_type}::{self.title}] - maybe JSON file has old function parameters"
+            )
 
 
 # -----------------------------------------------------------------------------
@@ -883,4 +996,4 @@ def blockname(cls):
     :return: a reformatted string of the block's class name
     :rtype: str
     """
-    return cls.__name__.strip('_').upper()
+    return cls.__name__.strip("_").upper()

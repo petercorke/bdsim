@@ -17,7 +17,7 @@ DEBUG = False
 
 
 class Floating_Label(Serializable):
-    def __init__(self, scene, window, mainwindow, label_text="text", pos=(0,0)):
+    def __init__(self, scene, window, mainwindow, label_text="text", pos=(0, 0)):
         super().__init__()
         self.scene = scene
         self.window = window
@@ -58,61 +58,74 @@ class Floating_Label(Serializable):
     def remove(self):
 
         # For each socket associated with this block, remove the connected wires
-        if DEBUG: print("> Removing Floating Label", self)
+        if DEBUG:
+            print("> Removing Floating Label", self)
 
         # Remove the graphical representation of this block from the scene
         # This will also remove the associated graphical representation of the
         # blocks' sockets.
-        if DEBUG: print(" - removing grContent")
+        if DEBUG:
+            print(" - removing grContent")
         self.scene.grScene.removeItem(self.grContent)
         self.grContent = None
 
         # Finally, call the removeBlock method from within the Scene, which
         # removes this block from the list of blocks stored in the Scene.
-        if DEBUG: print(" - removing Floating Label from the scene")
+        if DEBUG:
+            print(" - removing Floating Label from the scene")
         self.scene.removeLabel(self)
-        if DEBUG: print(" - everything was done.")
+        if DEBUG:
+            print(" - everything was done.")
 
     # -----------------------------------------------------------------------------
     def serialize(self):
         font_info = self.content.text_edit.toHtml()
         fill_color = self.content.backgroundColor.getRgb()
 
-        return OrderedDict([
-            ('id', self.id),
-            ('text', self.label_text),
-            ('pos_x', self.grContent.scenePos().x()),
-            ('pos_y', self.grContent.scenePos().y()),
-            ('width', self.width),
-            ('height', self.height),
-            ('fill_color', fill_color),
-            ("styling", font_info),
-        ])
+        return OrderedDict(
+            [
+                ("id", self.id),
+                ("text", self.label_text),
+                ("pos_x", self.grContent.scenePos().x()),
+                ("pos_y", self.grContent.scenePos().y()),
+                ("width", self.width),
+                ("height", self.height),
+                ("fill_color", fill_color),
+                ("styling", font_info),
+            ]
+        )
 
     # -----------------------------------------------------------------------------
     def deserialize(self, data, hashmap={}):
         # The id of this floating label is set to whatever was stored as its id in the JSON file.
-        self.id = data['id']
-        self.label_text = data['text']
-        self.width = data['width']
-        self.height = data['height']
+        self.id = data["id"]
+        self.label_text = data["text"]
+        self.width = data["width"]
+        self.height = data["height"]
 
         # The position of the Floating Labels within the Scene, are set accordingly.
-        self.setPos(data['pos_x'], data['pos_y'])
+        self.setPos(data["pos_x"], data["pos_y"])
 
-        self.content.text_edit.document().setHtml(data['styling'])
+        self.content.text_edit.document().setHtml(data["styling"])
 
         try:
-            if data['fill_color']:
+            if data["fill_color"]:
                 # If fill color exists in json, convert rgba to QColor
-                color = QColor(data['fill_color'][0], data['fill_color'][1], data['fill_color'][2], data['fill_color'][3])
+                color = QColor(
+                    data["fill_color"][0],
+                    data["fill_color"][1],
+                    data["fill_color"][2],
+                    data["fill_color"][3],
+                )
 
                 # Grab copy of text edit's color palette, to change its background
                 palette = self.content.text_edit.viewport().palette()
 
                 # Update the copy of background color
                 self.content.backgroundColor = color
-                palette.setColor(self.content.text_edit.viewport().backgroundRole(), color)
+                palette.setColor(
+                    self.content.text_edit.viewport().backgroundRole(), color
+                )
                 self.content.text_edit.viewport().setPalette(palette)
 
                 # Update the text highlighting color
@@ -139,7 +152,7 @@ class ContentWidget(QWidget):
         self.floating_label = label
         self.text_edit = QTextEdit(self)
 
-        self.defaultFont = 'Arial'
+        self.defaultFont = "Arial"
         self.defaultFontSize = 14
         self.defaultWeight = QFont.Normal
         self.defaultItalics = False
@@ -223,4 +236,3 @@ class ContentWidget(QWidget):
         self.text_edit.setFontUnderline(self.defaultUnderline)
         self.text_edit.setAlignment(self.defaultAlignment)
         self.text_edit.setTextColor(self.defaultColor)
-

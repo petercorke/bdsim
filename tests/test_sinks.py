@@ -53,12 +53,11 @@ class SinkBlockTest(unittest.TestCase):
         import io
         f = io.StringIO()
 
-        # needed for time
-        s = State()
-        s.t = 1
-
         b = Print(name='print block', file=f)
-        b._step(1.23, state=s)
+
+        s = b.T_start()
+        s.t = 1.0
+        b.T_step(1.23, state=s)
         self.assertEqual(f.getvalue(), 
             'PRINT(print block (t=1.000) 1.23\n')
 
@@ -73,7 +72,7 @@ class SinkBlockTest(unittest.TestCase):
         # rewind the string buffer
         f.truncate(0)
         f.seek(0, 0)
-        b._step(to, state=s)
+        b.T_step(to, state=s)
         self.assertEqual(f.getvalue(), 
             'PRINT(print block (t=1.000) testObject=123\n')
 
@@ -81,7 +80,7 @@ class SinkBlockTest(unittest.TestCase):
         f = io.StringIO()
         b = Print(name='print block', file=f, fmt="{:.1f}")
 
-        b._step(1.23456, state=s)
+        b.T_step(1.23456, state=s)
         self.assertEqual(f.getvalue(), 
             'PRINT(print block (t=1.000) 1.2\n')
 
@@ -89,7 +88,7 @@ class SinkBlockTest(unittest.TestCase):
         f.truncate(0)
         f.seek(0, 0)
 
-        b._step(np.r_[1.23456, 4.5679], state=s)
+        b.T_step(np.r_[1.23456, 4.5679], state=s)
         self.assertEqual(f.getvalue(), 
             'PRINT(print block (t=1.000) [1.2 4.6]\n')
 
@@ -97,7 +96,7 @@ class SinkBlockTest(unittest.TestCase):
         f.truncate(0)
         f.seek(0, 0)
 
-        b._step("a string", state=s)
+        b.T_step("a string", state=s)
         self.assertEqual(f.getvalue(), 
             'PRINT(print block (t=1.000) a string\n')
 
@@ -111,28 +110,28 @@ class SinkBlockTest(unittest.TestCase):
         s = State()
         s.stop = None
 
-        b._step(0, state=s)
+        b.T_step(0, state=s)
         self.assertIsNone(s.stop)
 
-        b._step(10, state=s)
+        b.T_step(10, state=s)
         self.assertTrue(s.stop)
         self.assertIs(s.stop, b)
 
         b = Stop()
         s.stop = None
 
-        b._step(0, state=s)
+        b.T_step(0, state=s)
         self.assertIsNone(s.stop)
 
-        b._step(1, state=s)
+        b.T_step(1, state=s)
         self.assertTrue(s.stop)
         self.assertIs(s.stop, b)
 
         s.stop = None
-        b._step(False, state=s)
+        b.T_step(False, state=s)
         self.assertIsNone(s.stop)
 
-        b._step(True, state=s)
+        b.T_step(True, state=s)
         self.assertTrue(s.stop)
         self.assertIs(s.stop, b)
 
@@ -140,9 +139,9 @@ class SinkBlockTest(unittest.TestCase):
             b = Stop(func=3)
 
     def test_watch(self):
-        from bdsim import bdsim
+        from bdsim import BDSim
 
-        sim = bdsim.BDSim()  # create simulator
+        sim = BDSim()  # create simulator
         bd = sim.blockdiagram()
         b1 = bd.CONSTANT(2)
         b2 = bd.NULL()

@@ -28,6 +28,7 @@ class Connector(Block):
     - an input: can only have 1 Wire connecting into it
     - an output: can have n Wires connecting into it
     """
+
     # -----------------------------------------------------------------------------
     def __init__(self, scene, window, title="Unnamed Connector Block"):
         """
@@ -51,7 +52,7 @@ class Connector(Block):
 
         # No block title as the Connector Blocks have no name, as
         # this type of block is more of a tool than a Block
-        #self.position = pos
+        # self.position = pos
         # The Connector Block doesn't have its own subclass like the other Block types,
         # hence some of the variables are defined in this class level, these being:
         # * the block type
@@ -63,13 +64,13 @@ class Connector(Block):
         self.width = 13
         self.height = 12
 
-        self.title = ''
+        self.title = ""
         self.parameters = []
-        self.block_url = ''
+        self.block_url = ""
 
-        self.icon = ''
+        self.icon = ""
         self.flipped = False
-        self.flipped_icon = ''
+        self.flipped_icon = ""
 
         self.inputsNum = 1
         self.outputsNum = 1
