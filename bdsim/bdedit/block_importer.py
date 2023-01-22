@@ -62,7 +62,7 @@ def import_blocks(scene, window):
         # blocks is a dic of tuples
         # (block_type, {block_docstring_data})
 
-        print(f"reading definition of block {block_type}")
+        # print(f"reading definition of block {block_type}")
 
         # block_type = block[0].upper()   # Block type
         # block_ds = block[1]     # Block docstring

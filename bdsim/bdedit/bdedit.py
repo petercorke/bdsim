@@ -10,6 +10,8 @@ from pathlib import Path
 from sys import platform
 from pathlib import Path
 
+from colored import fg, attr
+
 # PyQt5 imports
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QTimer
@@ -20,6 +22,11 @@ from bdsim.bdedit.interface_manager import InterfaceWindow
 
 # Executable code to launch the BdEdit application window
 def main():
+
+    print(fg("red"))
+    print("bdedit is beta code and prone to random crashing, save your work often")
+    print(attr(0))
+
     # handle command line options, bdedit -h for details
     parser = argparse.ArgumentParser(description="Interactive edit for bdsim models")
     parser.add_argument(
