@@ -76,4 +76,4 @@ line-length = 88
 target-version = ['py37']
 
 [tool.coverage.run]
-omit = ["tex2icon.py", "io.py", "vision.py"]
+omit = ["tex2icon.py", "io.py", "vision.py", "bdsim/bdedit/*.py"]
