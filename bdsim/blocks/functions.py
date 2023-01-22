@@ -56,7 +56,7 @@ class Sum(FunctionBlock):
 
     is a 3-input summing junction which computes port0 - port1 + port2.
 
-    If some elements are angles then ``mode`` controls, per element, how
+    If some elements of the inputs are angles then ``mode`` controls, per element, how
     they are wrapped.  The elements of the string can be
 
     | character  | purpose                           |
@@ -109,6 +109,7 @@ class Sum(FunctionBlock):
 
         if self.mode is not None:
             if isinstance(sum, np.ndarray):
+                # sum is an array
                 if sum.ndim == 1:
                     if len(self.mode) != len(sum):
                         raise ValueError("length of mode string doesn't match")
@@ -129,8 +130,9 @@ class Sum(FunctionBlock):
 
                 else:
                     raise ValueError("expecting 1D or 2D array")
-            # else:
-            #     sum = self._modefuncs[self.mode[0]](sum)
+            else:
+                # sum is a scalar
+                sum = self._modefuncs[self.mode[0]](sum)
 
         return [sum]
 

@@ -44,35 +44,35 @@ class FunctionBlockTest(unittest.TestCase):
     def test_sum(self):
 
         block = Sum('++')
-        self.assertEqual(block._output(10, 5)[0], 15)
+        self.assertEqual(block.T_output(10, 5)[0], 15)
 
         block = Sum('+-')
-        self.assertEqual(block._output(10, 5)[0], 5)
+        self.assertEqual(block.T_output(10, 5)[0], 5)
 
         block = Sum('-+')
-        self.assertEqual(block._output(10, 5)[0], -5)
+        self.assertEqual(block.T_output(10, 5)[0], -5)
 
         block = Sum('-+', mode='r')
-        self.assertEqual(block._output(10, 5)[0], -5)
+        self.assertEqual(block.T_output(10, 5)[0], -5)
 
         block = Sum('+-', mode='c')
-        self.assertEqual(block._output(0, -5*math.pi)[0], -math.pi)
-        self.assertEqual(block._output(math.pi, -math.pi)[0], 0)
+        self.assertEqual(block.T_output(0, -5*math.pi)[0], -math.pi)
+        self.assertEqual(block.T_output(math.pi, -math.pi)[0], 0)
 
         block = Sum('+-', mode='C')
-        self.assertEqual(block._output(0, -5*math.pi)[0], math.pi)
-        self.assertEqual(block._output(math.pi, -math.pi)[0], 0)
+        self.assertEqual(block.T_output(0, -5*math.pi)[0], math.pi)
+        self.assertEqual(block.T_output(math.pi, -math.pi)[0], 0)
 
         block = Sum('++', mode='l')
-        self.assertEqual(block._output(math.pi/2, math.pi)[0], math.pi/2)
-        self.assertEqual(block._output(math.pi, -math.pi)[0], 0)
+        self.assertEqual(block.T_output(math.pi/2, math.pi)[0], math.pi/2)
+        self.assertEqual(block.T_output(math.pi, -math.pi)[0], 0)
 
         block = Sum('++', mode='rc')
         x = np.r_[math.pi, math.pi]
-        nt.assert_array_almost_equal(block._output(x, x)[0], [2*math.pi, 0])
+        nt.assert_array_almost_equal(block.T_output(x, x)[0], [2*math.pi, 0])
         x = np.ones((2, 4)) * math.pi
         y = np.vstack((np.ones((4,))*2*math.pi, np.zeros((4,))))
-        nt.assert_array_almost_equal(block._output(x, x)[0], y)
+        nt.assert_array_almost_equal(block.T_output(x, x)[0], y)
         
     def test_prod(self):
 

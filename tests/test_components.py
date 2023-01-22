@@ -2,7 +2,7 @@ import unittest
 import numpy.testing as nt
 from bdsim.components import *
 from bdsim.blocks import *
-from bdsim import bdsim, TimeQ
+from bdsim import BDSim, TimeQ
 
 class WireTest(unittest.TestCase):
 
@@ -194,8 +194,8 @@ class ClockTest(unittest.TestCase):
         c = Clock(2)
         block1 = ZOH(c, x0=3)
         block2 = ZOH(c, x0=4)
-        block1.test_inputs = [13]
-        block2.test_inputs = [14]
+        block1._T_inputs = [13]
+        block2._T_inputs = [14]
 
         self.assertEqual(len(c.blocklist), 2)
         nt.assert_almost_equal(c.getstate0(), np.r_[3, 4])

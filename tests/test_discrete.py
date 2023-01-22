@@ -24,12 +24,10 @@ class DiscreteTest(unittest.TestCase):
 
 
         x = 7
-        block.setstate(np.r_[x]) # set state to x
-        nt.assert_equal(block.output()[0], x)
+        nt.assert_equal(block.T_output(0, x=x)[0], x)
 
         u = 3
-        block.test_inputs = [u]
-        nt.assert_equal(block.next(), np.r_[u])
+        nt.assert_equal(block.T_next(u), np.r_[u])
     
     
     def test_dintegrator(self):
@@ -42,25 +40,18 @@ class DiscreteTest(unittest.TestCase):
         nt.assert_equal(block.getstate0(), np.r_[5])
 
         x = np.r_[10]
-        block.setstate(x) # set state to 10
         u = -2
-        block.test_inputs = [u]
-        nt.assert_equal(block.output()[0], x)
-
-        nt.assert_equal(block.next(), x + u *  clock.T)
+        nt.assert_equal(block.T_output(u, x=x)[0], x)
+        nt.assert_equal(block.T_next(u, x=x), x + u *  clock.T)
 
         block = DIntegrator(clock, x0=5, min=-10, max=10)  # state is scalar
         x = np.r_[10]
-        block.setstate(x) # set state to 10
         u = 2
-        block.test_inputs = [u]
-        nt.assert_equal(block.next(), x)
+        nt.assert_equal(block.T_next(u, x=x), x)
 
         x = np.r_[-10]
-        block.setstate(x) # set state to 10
         u = -2
-        block.test_inputs = [u]
-        nt.assert_equal(block.next(), x)
+        nt.assert_equal(block.T_next(u, x=x), x)
 
     def test_dintegrator_vec(self):
 
@@ -72,25 +63,19 @@ class DiscreteTest(unittest.TestCase):
         nt.assert_equal(block.getstate0(), np.r_[5, 6])
 
         x = np.r_[10, 11]
-        block.setstate(x) # set state to 10, 11
         u = np.r_[-2, 3]
-        block.test_inputs = [u]
-        nt.assert_equal(block.output()[0], x)
-        nt.assert_equal(block.next(), x + u * clock.T)
+        nt.assert_equal(block.T_output(u, x=x)[0], x)
+        nt.assert_equal(block.T_next(u, x=x), x + u * clock.T)
 
         # test with limits
         block = DIntegrator(clock, x0=[5, 6], min=[-5, -10], max=[5, 10])  # state is vector
         x = np.r_[-5, -10]
-        block.setstate(x) # set state to min
         u = np.r_[-2, -3]
-        block.test_inputs = [u]
-        nt.assert_equal(block.next(), x)
+        nt.assert_equal(block.T_next(u, x=x), x)
 
         x = np.r_[5, 10]
-        block.setstate(x) # set state to max
         u = np.r_[2, 3]
-        block.test_inputs = [u]
-        nt.assert_equal(block.next(), x)
+        nt.assert_equal(block.T_next(u, x=x), x)
 
     def test_pose_dintegrator(self):
 
@@ -103,14 +88,11 @@ class DiscreteTest(unittest.TestCase):
         self.assertEqual(block.nstates, 0)
 
         x = block.getstate0()
-        block.setstate(x)
-
-        nt.assert_equal(block.output()[0], T)
-
         u = np.r_[1,2,3,4,5,6]
-        block.test_inputs = [u]
 
-        nt.assert_almost_equal(block.next(), Twist3(T * SE3.Delta(u*clock.T)))
+        nt.assert_equal(block.T_output(u, x=x)[0], T)
+
+        nt.assert_almost_equal(block.T_next(u, x=x), Twist3(T * SE3.Delta(u*clock.T)))
 
 # ---------------------------------------------------------------------------------------#
 if __name__ == '__main__':

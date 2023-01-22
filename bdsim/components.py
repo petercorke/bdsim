@@ -143,7 +143,7 @@ class OptionsBase:
                 self.__dict__["_dict"] = self.sanity(dict)
 
     def set(self, **changes):
-        # changes = self.sanity(changes)
+        changes = self.sanity(changes)
         dict = self._dict
         for name, value in changes.items():
             if name not in self._readonly:
@@ -153,7 +153,7 @@ class OptionsBase:
                     f"attempt to programmatically set option {name}={value} is overriden by command line option {name}={dict[name]}, ignored"
                 )
 
-        self._dict = self.sanity(dict)
+        self._dict = dict
 
     def sanity(self, options):
         return options
@@ -1022,7 +1022,7 @@ class Block:
     # TODO: should redo this, eliminate the monkey patch
     # TODO: make T_step(), dummpy out the state object
 
-    def T_output(self, *inputs, t=0.0):
+    def T_output(self, *inputs, t=0.0, x=None):
         """
         Evaluate a block for unit testing.
 
@@ -1046,6 +1046,9 @@ class Block:
         assert len(inputs) == self.nin, "wrong number of inputs provided"
         self._T_inputs = inputs
 
+        if x is not None:
+            self._x = x
+
         # evaluate the block
         out = self.output(t=t)
 
@@ -1054,7 +1057,7 @@ class Block:
         assert len(out) == self.nout, "result list is wrong length"
         return out
 
-    def T_deriv(self, *inputs):
+    def T_deriv(self, *inputs, x=None):
         """
         Evaluate a block for unit testing.
 
@@ -1077,12 +1080,51 @@ class Block:
         assert len(inputs) == self.nin, "wrong number of inputs provided"
         self._T_inputs = inputs
 
+        if x is not None:
+            assert len(x) == self.nstates, "passed state is wrong length"
+            self._x = x
+
         # evaluate the block
         out = self.deriv()
 
         # sanity check the output
-        assert isinstance(out, np.ndarray), "result must be a list"
+        assert isinstance(out, np.ndarray), "result must be an ndarray"
         assert out.shape == (self.nstates,), "result array is wrong length"
+        return out
+
+    def T_next(self, *inputs, x=None):
+        """
+        Evaluate a block for unit testing.
+
+        :param inputs: input port values
+        :type inputs: list
+        :return: Block derivative value
+        :rtype: ndarray
+
+        The next value of a discrete time block is evaluated for a given set of input port
+        values. Input port values are treated as lists.
+
+        Mostly used for making concise unit tests.
+
+        .. warning:: the instance is monkey patched, not useable in a block
+            diagram subsequently.
+
+        """
+
+        # check inputs and assign to attribute
+        assert len(inputs) == self.nin, "wrong number of inputs provided"
+        self._T_inputs = inputs
+
+        if x is not None:
+            assert len(x) == self.ndstates, "passed state is wrong length"
+            self._x = x
+
+        # evaluate the block
+        out = self.next()
+
+        # sanity check the output
+        assert isinstance(out, np.ndarray), "result must be an ndarray"
+        assert out.shape == (self.ndstates,), "result array is wrong length"
         return out
 
     def T_step(self, *inputs, state=None):

@@ -51,11 +51,9 @@ class TransferTest(unittest.TestCase):
         C=np.array([7, 8])
         block = LTI_SS(A=A, B=B, C=C, x0=[30,40])
         x = np.r_[10, 11]
-        block.setstate(np.r_[x])
         u = -2
-        block.test_inputs = [u]
-        nt.assert_equal(block.deriv(), A@x  + B*u)
-        nt.assert_equal(block.output()[0], C@x)
+        nt.assert_equal(block.T_deriv(u, x=x), A@x  + B*u)
+        nt.assert_equal(block.T_output(u, x=x)[0], C@x)
         nt.assert_equal(block.getstate0(), np.r_[30, 40])
         
         A=np.array([[1, 2], [3, 4]])
@@ -63,11 +61,9 @@ class TransferTest(unittest.TestCase):
         C=np.array([[7, 8]])
         block = LTI_SS(A=A, B=B, C=C, x0=[30,40])
         x = np.r_[10, 11]
-        block._x = np.r_[x]
         u = -2
-        block.test_inputs = [u]
-        nt.assert_equal(block.deriv(), A@x  + B@np.r_[u])
-        nt.assert_equal(block.output()[0], C@x)
+        nt.assert_equal(block.T_deriv(u, x=x), A@x  + B@np.r_[u])
+        nt.assert_equal(block.T_output(u, x=x)[0], C@x)
         nt.assert_equal(block.getstate0(), np.r_[30, 40])
         
     def test_LTI_SISO(self):
@@ -82,24 +78,18 @@ class TransferTest(unittest.TestCase):
         self.assertEqual(block.nstates, 1)
         self.assertEqual(block.ndstates, 0)
         x = np.r_[10]
-        block._x = x
         u = -2
-        block.test_inputs = [u]
-        nt.assert_equal(block.deriv(), u)
+        nt.assert_equal(block.T_deriv(u, x=x), u)
         nt.assert_equal(block.getstate0(), np.r_[30])
 
         block = Integrator(x0=5, min=-10, max=10)  # state is scalar
         x = np.r_[11]
-        block.setstate(x) # set state to 10
         u = 2
-        block.test_inputs = [u]
-        nt.assert_equal(block.deriv(), 0)
+        nt.assert_equal(block.T_deriv(u, x=x), 0)
 
         x = np.r_[-11]
-        block.setstate(x) # set state to 10
         u = -2
-        block.test_inputs = [u]
-        nt.assert_equal(block.deriv(), 0)
+        nt.assert_equal(block.T_deriv(u, x=x), 0)
 
     def test_dintegrator_vec(self):
 
@@ -110,25 +100,19 @@ class TransferTest(unittest.TestCase):
         nt.assert_equal(block.getstate0(), np.r_[5, 6])
 
         x = np.r_[10, 11]
-        block.setstate(x) # set state to 10, 11
         u = np.r_[-2, 3]
-        block.test_inputs = [u]
-        nt.assert_equal(block.output()[0], x)
-        nt.assert_equal(block.deriv(), u)
+        nt.assert_equal(block.T_output(u, x=x)[0], x)
+        nt.assert_equal(block.T_deriv(u, x=x), u)
 
         # test with limits
         block = Integrator(x0=[5, 6], min=[-5, -10], max=[5, 10])  # state is vector
         x = np.r_[-6, -11]
-        block.setstate(x) # set state to min
         u = np.r_[-2, -3]
-        block.test_inputs = [u]
-        nt.assert_equal(block.deriv(), [0, 0])
+        nt.assert_equal(block.T_deriv(u, x=x), [0, 0])
 
         x = np.r_[6, 11]
-        block.setstate(x) # set state to max
         u = np.r_[2, 3]
-        block.test_inputs = [u]
-        nt.assert_equal(block.deriv(), [0, 0])
+        nt.assert_equal(block.T_deriv(u, x=x), [0, 0])
 
 
 # ---------------------------------------------------------------------------------------#

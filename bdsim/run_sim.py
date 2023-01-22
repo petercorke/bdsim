@@ -1363,9 +1363,13 @@ class Options(OptionsBase):
     def sanity(self, options):
         # ensure graphics is enabled if animation is requested
         # ensure animation is disabled if graphics is disabled
-        if not options["graphics"]:
+        if "graphics" in options and "animation" in options:
+            if options["animation"] and not options["graphics"]:
+                raise ValueError("cannot enable animation but disable graphics")
+        elif "graphics" in options and not options["graphics"]:
             options["animation"] = False
-        if options["animation"]:
+        elif "animation" in options and options["animation"]:
             options["graphics"] = True
+
 
         return options
