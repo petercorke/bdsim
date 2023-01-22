@@ -138,6 +138,7 @@ class GraphicsBlock(SinkBlock):
                         try:
                             import PyQt5
                             matplotlib.use('Qt5Agg')
+                            print('no graphics backend specified: Qt5Agg found, using instead of MacOSX')
                         except:
                             pass
             else:
@@ -192,6 +193,7 @@ class GraphicsBlock(SinkBlock):
                     # all other backends
                     f = plt.figure()
                     dpi = f.dpi
+                    dpiscale = 2
                     screen_width, screen_height = f.get_size_inches() * f.dpi
 
                 # compute fig size in inches (width, height)
