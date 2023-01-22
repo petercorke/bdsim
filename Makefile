@@ -21,8 +21,8 @@ coverage:
 	coverage report
 
 docs: .FORCE
-	(cd docsrc; make html)
-	open docsrc/build/html/index.html
+	(cd docs; make html)
+	open docs/build/html/index.html
 
 docupdate: docs
 	cp -r docsrc/build/html/. docs
@@ -32,12 +32,12 @@ docupdate: docs
 
 dist: .FORCE
 	#$(MAKE) test
-	python setup.py sdist
+	python -m build
 
 upload: .FORCE
 	twine upload dist/*
 
 clean: .FORCE
-	(cd docsrc; make clean)
+	# (cd docsrc; make clean)
 	-rm -r *.egg-info
-	-rm -r dist
+	-rm -r dist build
