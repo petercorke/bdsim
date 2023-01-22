@@ -237,7 +237,7 @@ class BDSim:
 
     _blocklibrary = None
 
-    def __init__(self, packages=None, **kwargs):
+    def __init__(self, packages=None, load=True, **kwargs):
         """
         :param sysargs: process options from sys.argv, defaults to True
         :type sysargs: bool, optional
@@ -294,7 +294,7 @@ class BDSim:
         # process command line and overall options
         self.options = Options(**kwargs)
         # load modules from the blocks folder
-        if BDSim._blocklibrary is None:
+        if BDSim._blocklibrary is None and load:
             BDSim._blocklibrary = self.load_blocks(self.options.verbose)
         if self.options.blocks:
             self.blocks()
@@ -728,7 +728,7 @@ class BDSim:
             print('unrecoverable error in evaluation: ', err)
             raise
 
-    def blockdiagram(self, name='main'):
+    def blockdiagram(self, name='main') -> BlockDiagram:
         """
         Instantiate a new block diagram object.
 
