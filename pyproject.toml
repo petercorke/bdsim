@@ -69,6 +69,8 @@ build-backend = "setuptools.build_meta"
 packages = [
     "bdsim",
     "bdsim.blocks",
+    "bdsim.bdedit",
+    "bdsim.bin",
 ]
 
 [tool.black]
