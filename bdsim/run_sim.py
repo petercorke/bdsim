@@ -1004,9 +1004,9 @@ class BDSim:
         packages = ["bdsim", "roboticstoolbox", "machinevisiontoolbox"]
         env = os.getenv("BDSIMPATH")
         if env is not None:
-            packages.append(env.split)
+            packages += env.split(":")
         if self.packages is not None:
-            packages.append(self.packages.split(":"))
+            packages += self.packages.split(":")
 
         blocks = {}
         moduledicts = {}
