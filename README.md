@@ -362,7 +362,7 @@ will create a display like that shown above.  Pushing the run button, top left (
 
 # Article
 
-I published [this article on LinkedIn](https://www.linkedin.com/in/petercorke/recent-activity/shares/), which describes the thouhgt process behind bdsim.
+I published [this article on LinkedIn](https://www.linkedin.com/pulse/journey-toward-open-source-block-diagram-simulation-peter-corke/?trackingId=wrJYinHUgAHDq63Nv65PnA%3D%3D), which describes the thought process behind bdsim.
 
 # Limitations
 
