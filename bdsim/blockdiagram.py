@@ -866,11 +866,17 @@ class BlockDiagram:
             else:
                 # source block, just list the name
                 table.row(name, "", "", "")
-        table.print()
+        if style == "ansi":
+            table.print()
+        elif tstylepe == "latex":
+            print(table.latex())
+        elif style == "markdown":
+            print(table.markdown())
+
         if legend:
             print(legend + "\n")
 
-    def report(self):
+    def report(self, style="ansi"):
         """
         Print a tabular report about the block diagram.
 
@@ -884,6 +890,15 @@ class BlockDiagram:
 
         if self.runtime.options.quiet:
             return
+
+        def tprint(table):
+            if style == "ansi":
+                table.print()
+            elif style == "latex":
+                print(table.latex())
+            elif style == "markdown":
+                print(table.markdown())
+
         # print all the blocks
         print("\nBlocks::\n")
         table = ANSITable(
@@ -898,7 +913,7 @@ class BlockDiagram:
         )
         for b in self.blocklist:
             table.row(b.id, str(b), b.nin, b.nout, b.nstates, b.ndstates, b.type)
-        table.print()
+        tprint(table)
 
         # print all the wires
         print("\nWires::\n")
@@ -922,7 +937,7 @@ class BlockDiagram:
             except:
                 typ = "??"
             table.row(w.id, start, end, w.fullname, typ)
-        table.print()
+        tprint(table)
 
         if len(self.clocklist) > 0:
             # print all the clocked blocks
@@ -939,7 +954,7 @@ class BlockDiagram:
                 if b.blockclass == "clocked":
                     c = b.clock
                     table.row(b.id, str(b), c.name, c.T, c.offset)
-            table.print()
+            tprint(table)
 
         print("\nContinuous state variables: {:d}".format(self.nstates))
         print("Discrete state variables:   {:d}".format(self.ndstates))
