@@ -14,7 +14,7 @@ from math import sin, cos, atan2, sqrt, pi
 import matplotlib.pyplot as plt
 from spatialmath import base
 
-from bdsim.components import TransferBlock
+from bdsim.components import TransferBlock, SubsystemBlock
 
 
 class Integrator(TransferBlock):
@@ -352,6 +352,36 @@ class LTI_SISO(LTI_SS):
 from bdsim.blocks.connections import SubSystem
 
 
+class Deriv(SubsystemBlock):
+
+    nin = 1
+    nout = 1
+
+    def __init__(self, alpha, **blockargs):
+
+        super().__init__(**blockargs)
+        self.type = "subsystem"
+
+        bd = self.bd.runtime.blockdiagram()
+
+        integrator = bd.INTEGRATOR()
+        inp = bd.INPORT(1)
+        outp = bd.OUTPORT(1)
+        sum = bd.SUM("+-")
+        gain = bd.GAIN(1.0 / alpha)
+        bd.connect(inp, sum[0])
+        bd.connect(sum[0], gain)
+        bd.connect(gain, outp, integrator)
+        bd.connect(integrator, sum[1])
+
+        # get references to the input and output port blocks
+        self.inport = inp
+        self.outport = outp
+        self.subsystem = bd
+
+        self.ssname = "derivative"
+
+
 class PID(SubSystem):
     """
     :blockname:`PID`
@@ -490,17 +520,35 @@ if __name__ == "__main__":
 
     from bdsim import BDSim
 
-    sim = BDSim()
+    sim = BDSim(hold=False)
     bd = sim.blockdiagram()
-    pid = bd.PID(P=2, D=0.01, verbose=True)
+    deriv = bd.DERIV(alpha=0.1, verbose=True)
 
-    c = bd.CONSTANT(1)
-    s = bd.SCOPE()
-    bd.connect(c, pid)
-    bd.connect(pid, s)
+    c = bd.WAVEFORM(wave="sine", freq=1)
+    s = bd.SCOPE(2)
+    bd.connect(c, deriv, s[0])
+    bd.connect(deriv, s[1])
 
-    bd.compile(report=True)
-    bd.report()
+    bd.compile()
+    bd.report_summary()
+    out = sim.run(bd, 10, dt=0.02)
+
+    import matplotlib.pyplot as plt
+
+    plt.plot(out.t, out.x)
+    sim.done(bd, block=True)
+
+    # sim = BDSim()
+    # bd = sim.blockdiagram()
+    # pid = bd.PID(P=2, D=0.01, verbose=True)
+
+    # c = bd.CONSTANT(1)
+    # s = bd.SCOPE()
+    # bd.connect(c, pid)
+    # bd.connect(pid, s)
+
+    # bd.compile(report=True)
+    # bd.report()
 
     # from pathlib import Path
 
