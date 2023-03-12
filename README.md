@@ -278,7 +278,7 @@ In the folder `bdsim/examples` you can find a few other runnable examples:
 - [`eg1.py`](https://github.com/petercorke/bdsim/blob/master/examples/eg1.py) the example given above
 - [`waveform.py`](https://github.com/petercorke/bdsim/blob/master/examples/waveform.py) two signal generators connected to two scopes
 
-Examples from Chapter four of _Robotics, Vision & Control (2017)_:
+Examples from Chapter four of _Robotics, Vision & Control 2e (2017)_:
 
 - [`rvc4_2.py`](https://github.com/petercorke/bdsim/blob/master/examples/rvc4_2.py) Fig 4.2 - a car-like vehicle with bicycle kinematics driven by a rectangular pulse steering signal
 - [`rvc4_4.py`](https://github.com/petercorke/bdsim/blob/master/examples/rvc4_4.py) Fig 4.4 - a car-like vehicle driving to a point
