@@ -22,13 +22,9 @@ coverage:
 
 docs: .FORCE
 	(cd docs; make html)
-	open docs/build/html/index.html
 
-docupdate: docs
-	cp -r docsrc/build/html/. docs
-	git add docs
-	git commit -m "rebuilt docs"
-	git push origin master
+view:
+	open docs/build/html/index.html
 
 dist: .FORCE
 	#$(MAKE) test
@@ -36,6 +32,9 @@ dist: .FORCE
 
 upload: .FORCE
 	twine upload dist/*
+
+install:
+	pip install -e .
 
 clean: .FORCE
 	# (cd docsrc; make clean)
