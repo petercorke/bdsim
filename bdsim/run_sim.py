@@ -13,6 +13,7 @@ from bdsim.components import OptionsBase, Block, Clock, BDStruct, Plug, clocklis
 import tempfile
 import subprocess
 import webbrowser
+import traceback
 
 import numpy as np
 import scipy.integrate as integrate
@@ -518,6 +519,9 @@ class BDSim:
             ndstates += nds
             print(clock.name, "initial dstate x0 = ", clock.getstate())
 
+        # update block parameters given on command line
+        self.set_parameters(bd)
+
         # tell all blocks we're starting a BlockDiagram
         self.bd.start(state=state, graphics=self.state.options.graphics)
 
@@ -600,11 +604,93 @@ class BDSim:
             out["y" + str(i)] = np.array(state.plist[i])
         out.ynames = watchnamelist
 
+        # the command line options -o or --out saves results as a pickle file
+        #  -o defaults to bd.out
+        #  --out FILE allows the filename to be specified
+        #
+        # we can visualize the output file by
+        #
+        #   % python -mpickle bd.out
+        #   t      = ndarray:float64 (123,)
+        #   x      = ndarray:float64 (123, 1)
+        #   xnames = ['plantx0'] (list)
+        #   ynames = [] (list)
+
+        if self.options.outfile is not None:
+
+            out.dump(self.options.outfile)
+
+            if not self.options.quiet:
+                print("simulation results pickled --> ", self.options.outfile)
+
         # pause until all graphics blocks close
         if self.options.graphics:
             self.done(self.bd, block=self.options.hold)
 
         return out
+
+    def set_parameters(self, bd):
+        """
+        Set value of parameters according to command line arguments
+
+        Command line arguments of the form:
+
+            ``-s block:param=value``
+            ``--set block:param=value``
+
+        are stored as list items in ``options.setparam``
+
+        ``block`` can be either:
+
+        - the block's name as a string, either user assigned or bdsim assigned
+        - the block ``id`` as displayed by the ``report`` method
+
+        ``param`` is the name of the parameter used in the constructor
+
+        ``value`` is the new value of the variable
+        """
+
+        re_set = re.compile(r"(?P<block>[\w\.]+):(?P<param>[\w]+)=(?P<value>.*)")
+        for s in self.options.setparam:
+            m = re_set.match(s)
+            if m is None:
+                raise ValueError("bad set parameter: " + s)
+
+            # get block reference
+            blockname = m["block"]
+            try:
+                blockname = int(blockname)
+            except ValueError:
+                pass
+            block = bd[blockname]
+
+            param = m["param"]
+            try:
+                prev_value = getattr(block, param)
+            except ValueError:
+                raise ValueError(f"block {block.name} has no parameter '{param}'")
+
+            # get the parameter
+            value = m["value"]
+            new_value = None
+
+            try:
+                if ";" in value:
+                    new_value = smb.str2array(value)
+                else:
+                    try:
+                        new_value = int(value)
+                    except ValueError:
+                        new_value = float(value)
+            except ValueError:
+                raise ValueError("cannot parse value " + value)
+
+            # change the value
+            setattr(block, param, new_value)
+            print(
+                f"changed value of {block.name}:{param} from {prev_value} ->"
+                f" {new_value}"
+            )
 
     def run_interval(self, bd, t0, T, x0, state):
         """
@@ -1185,6 +1271,9 @@ class Options(OptionsBase):
             "debug": "",
             "simtime": None,
             "blocks": False,
+            "outfile": None,
+            "quiet": False,
+            "setparam": [],
         }
 
         # modify defaults according to envariable BDSIM which is comma/semicolon
@@ -1331,6 +1420,34 @@ class Options(OptionsBase):
             parser.add_argument(
                 "--simtime", "-S", type=str, help="simulation time: T or T,dt"
             )
+            parser.add_argument(
+                "--quiet",
+                "-q",
+                action="store_const",
+                const=True,
+                help="suppress reports",
+            )
+            parser.add_argument(
+                "-o",
+                action="store_const",
+                const="bd.out",
+                dest="outfile",
+                help="output pickled simulation results to bd.out",
+            )
+            parser.add_argument(
+                "--out",
+                type=str,
+                dest="outfile",
+                help="file to save pickled simulation results",
+            )
+            parser.add_argument(
+                "--set",
+                "-s",
+                dest="setparam",
+                action="append",
+                type=str,
+                help="override block parameter using block.param=value",
+            )
 
             args, unknownargs = parser.parse_known_args()
             cmdline_options = vars(args)  # get args as a dictionary
@@ -1358,6 +1475,9 @@ class Options(OptionsBase):
         # now handle the passed options
         self.set(**options)
 
+        if self.verbose:
+            print(self)
+
         self._argv = unknownargs  # save non-bdsim arguments
 
     def sanity(self, options):
@@ -1370,6 +1490,5 @@ class Options(OptionsBase):
             options["animation"] = False
         elif "animation" in options and options["animation"]:
             options["graphics"] = True
-
 
         return options

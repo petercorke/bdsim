@@ -64,8 +64,15 @@ class BlockDiagram:
         self.n_auto_const = 0
         self.n_auto_gain = 0
 
-    def __getitem__(self, b):
-        return self.blocknames[b]
+    def __getitem__(self, id):
+        print(id)
+        if isinstance(id, str):
+            return self.blocknames[id]
+        else:
+            for b in self.blocklist:
+                if b.id == id:
+                    return b
+            raise ValueError(f"block {id} not found")
 
     def __len__(self):
         return len(self.blocklist)
@@ -810,6 +817,10 @@ class BlockDiagram:
 
         If the block is an event source, add a ``@`` suffix.
         """
+
+        if self.runtime.options.quiet:
+            return
+
         table = ANSITable(
             Column("block", headalign="^", colalign="<"),
             Column("inport", headalign="^", colalign="<"),
@@ -860,6 +871,9 @@ class BlockDiagram:
         * clock list, all discrete time clocks
 
         """
+
+        if self.runtime.options.quiet:
+            return
         # print all the blocks
         print("\nBlocks::\n")
         table = ANSITable(

@@ -12,53 +12,47 @@ from matplotlib import animation
 from collections import UserDict
 
 
-class BDStruct(UserDict):
+class BDStruct:
     """
-    A dict-like object that allows items to be added by attribute or by key.
+    A simple data container object that allows items to be added by attribute or by
+    index.
 
     For example::
 
-        >>> d = Struct('thing')
-        >>> d.a = 1
-        >>> d['b'] = 2
-        >>> d.a
+        >>> d = BDStruct('thing')
+        >>> d.foo = 1
+        >>> d.foo
         1
-        >>> d['a']
-        1
-        >>> d.b
-        2
-        >>> str(d)
-        "thing {'a': 1, 'b': 2}"
+        >>> d["foo"]
+        ]
+        >>> d["bar"] = 2
+        >>> d.bar
+        >>> d
+        bar   = 2 (int)
+        foo   = 1 (int)
     """
 
-    def __init__(self, name="BDStruct", **kwargs):
-        super().__init__()
-        self.name = name
+    def __init__(self, name="BDStruct2", **kwargs):
+        self._name = name
         for key, value in kwargs.items():
-            self[key] = value
-
-    def __setattr__(self, name, value):
-        # invoked by struct[name] = value
-        if name in ["data", "name"]:
-            super().__setattr__(name, value)
-        else:
-            self.data[name] = value
+            # self.__dict__[key] = value
+            setattr(self, key, value)
 
     def add(self, name, value):
-        self.data[name] = value
-
-    def __getattr__(self, name):
-        # return self.data[name]
-        # some tricks to make this deepcopy safe
-        # https://stackoverflow.com/questions/40583131/python-deepcopy-with-custom-getattr-and-setattr
-        # https://stackoverflow.com/questions/25977996/supporting-the-deep-copy-operation-on-a-custom-class
-        try:
-            return self.data[name]
-        except AttributeError:
-            raise AttributeError("unknown attribute " + name)
+        # self.__dict__[name] = value
+        setattr(self, name, value)
 
     def __repr__(self):
         return str(self)
+
+    def __len__(self):
+        return len(self.__dict__)
+
+    def __getitem__(self, key):
+        return getattr(self, key)
+
+    def __setitem__(self, key, value):
+        setattr(self, key, value)
 
     def __str__(self):
         """
@@ -74,12 +68,14 @@ class BDStruct(UserDict):
 
         if len(self) == 0:
             return ""
-        maxwidth = max([len(key) for key in self.keys()])
+        maxwidth = max([len(key) for key in self.__dict__.keys()])
         # if self.name is not None:
         #     rows.append(self.name + '::')
-        for k, v in sorted(self.items(), key=lambda x: x[0]):
+        for k, v in sorted(self.__dict__.items(), key=lambda x: x[0]):
+            if k.startswith("_"):
+                continue
             if isinstance(v, BDStruct):
-                rows.append("{:s}.{:s}::".format(k.ljust(maxwidth), v.name))
+                rows.append("{:s}.{:s}::".format(k.ljust(maxwidth), v._name))
                 rows.append(
                     "\n".join(
                         [" " * (maxwidth + 3) + line for line in str(v).split("\n")]
@@ -105,6 +101,12 @@ class BDStruct(UserDict):
                 )
 
         return "\n".join(rows)
+
+    def dump(self, outfile):
+        import pickle
+
+        with open(outfile, "wb") as f:
+            pickle.dump(self, f)
 
 
 class OptionsBase:
@@ -150,7 +152,8 @@ class OptionsBase:
                 dict[name] = value
             elif dict[name] != value:
                 print(
-                    f"attempt to programmatically set option {name}={value} is overriden by command line option {name}={dict[name]}, ignored"
+                    f"attempt to programmatically set option {name}={value} is"
+                    f" overriden by command line option {name}={dict[name]}, ignored"
                 )
 
         self._dict = dict
