@@ -10,6 +10,7 @@ import warnings
 
 from bdsim.blockdiagram import BlockDiagram
 from bdsim.components import OptionsBase, Block, Clock, BDStruct, Plug, clocklist
+import spatialmath.base as smb
 import tempfile
 import subprocess
 import webbrowser
@@ -523,7 +524,7 @@ class BDSim:
             print(clock.name, "initial dstate x0 = ", clock.getstate())
 
         # update block parameters given on command line
-        self.set_parameters(bd)
+        self.update_parameters(bd)
 
         # tell all blocks we're starting a BlockDiagram
         self.bd.start(state=state, graphics=self.state.options.graphics)
@@ -627,12 +628,11 @@ class BDSim:
                 print("simulation results pickled --> ", self.options.outfile)
 
         # pause until all graphics blocks close
-        if self.options.graphics:
+        if self.options.graphics and self.options.hold:
             self.done(self.bd, block=self.options.hold)
-
         return out
 
-    def set_parameters(self, bd):
+    def update_parameters(self, bd):
         """
         Set value of parameters according to command line arguments
 
@@ -783,9 +783,11 @@ class BDSim:
                         and integrator.step_size < state.minstepsize
                     ):
                         print(
-                            fg("red") + "\n--- stopping on minimum step size at"
+                            fg("red")
+                            + "\n--- stopping on minimum step size at"
                             f" t={state.t:.4f} with last stepsize"
-                            f" {integrator.step_size:g}" + attr(0)
+                            f" {integrator.step_size:g}"
+                            + attr(0)
                         )
                         break
 
@@ -850,8 +852,10 @@ class BDSim:
                 # has any block called a stop?
                 if state.stop is not None:
                     print(
-                        fg("red") + f"\n--- stop requested at t={bd.simstate.t:.4f} by"
-                        f" {bd.simstate.stop}" + attr(0)
+                        fg("red")
+                        + f"\n--- stop requested at t={bd.simstate.t:.4f} by"
+                        f" {bd.simstate.stop}"
+                        + attr(0)
                     )
 
                 if "i" in state.options.debug:
@@ -1462,7 +1466,7 @@ class Options(OptionsBase):
                 dest="setparam",
                 action="append",
                 type=str,
-                help="override block parameter using block.param=value",
+                help="override block parameter using block:param=value",
             )
 
             args, unknownargs = parser.parse_known_args()
