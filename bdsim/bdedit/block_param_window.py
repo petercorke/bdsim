@@ -274,7 +274,9 @@ class ParamWindow(QWidget):
                 self.row_x.layout = QHBoxLayout()
 
                 # Make a label of that parameters' name
-                self.label = QLabel("<font size=3><b>"+parameter[0]+": "+"</font>")
+                self.label = QLabel(
+                    "<font size=3><b>" + parameter[0] + ": " + "</font>"
+                )
                 try:
                     self.label.setToolTip(parameter[4])
                 except IndexError:
@@ -286,7 +288,8 @@ class ParamWindow(QWidget):
                     self.line = QLineEdit(str(parameter[2]))
                 else:
                     try:
-                        self.line = QCheckBox(); self.line.setChecked(parameter[2])
+                        self.line = QCheckBox()
+                        self.line.setChecked(parameter[2])
                     except TypeError:
                         print("bad thing")
 

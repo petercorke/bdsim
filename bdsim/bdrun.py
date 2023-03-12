@@ -201,7 +201,7 @@ def bdrun(filename=None, globals={}, **kwargs):
             filename = sys.argv[1]
         print("Usage:\n  bdrun file.bd <bdsim args>")
         return
-        
+
     sim = BDSim(**kwargs)  # create simulator
     bd = sim.blockdiagram()  # create diagram
 

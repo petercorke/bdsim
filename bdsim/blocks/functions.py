@@ -536,7 +536,7 @@ class Function(FunctionBlock):
 class Interpolate(FunctionBlock):
     """
     :blockname:`INTERPOLATE`
-    
+
     :inputs: 0 or 1 [float]
     :outputs: 1 [float, ndarray(1,)]
     :states: 0

@@ -161,9 +161,10 @@ class BlockDiagram:
                 if isinstance(end, Block):
                     # connect(X, Y)
                     # wires from all outport to all inports
-                    assert (
-                        start.nout == end.nin
-                    ), "can only connect blocks where number of input and output ports match"
+                    assert start.nout == end.nin, (
+                        "can only connect blocks where number of input and output ports"
+                        " match"
+                    )
                     for i in range(start.nout):
                         wire = Wire(StartPlug(start, i), EndPlug(end, i), name)
                         self.add_wire(wire)
@@ -179,9 +180,10 @@ class BlockDiagram:
 
                 elif isinstance(end, Plug) and end.isslice:
                     # connect(X, Y[m:n])
-                    assert (
-                        start.nout == end.width
-                    ), "can only connect single output block to an input port slice of width 1"
+                    assert start.nout == end.width, (
+                        "can only connect single output block to an input port slice of"
+                        " width 1"
+                    )
                     end.type = "end"
                     for i in range(start.nout):
                         wire = Wire(StartPlug(start, i), end[i], name)
@@ -223,9 +225,10 @@ class BlockDiagram:
 
                 if isinstance(end, Block):
                     # connect(X[i:j], Y)
-                    assert (
-                        start.width == end.nin
-                    ), "can only connect output slice to a block with matching number of input ports"
+                    assert start.width == end.nin, (
+                        "can only connect output slice to a block with matching number"
+                        " of input ports"
+                    )
                     for i in range(end.nin):
                         wire = Wire(start[i], EndPlug(end, i), name)
                         self.add_wire(wire)
@@ -303,7 +306,9 @@ class BlockDiagram:
         #     print('  importing subsystem', b.name)
         #     if b.ssvar is not None:
         #         print('-- Wiring in subsystem', b, 'from module local variable ', b.ssvar)
-        self.blocklist, self.wirelist = self._subsystem_import(self, None)
+        self.blocklist, self.wirelist = self._subsystem_import(
+            self, None, verbose=verbose
+        )
 
         # check that wires all point to valid blocks
         for w in self.wirelist:
@@ -600,7 +605,8 @@ class BlockDiagram:
                     )
                 if len(out) != b.nout:
                     raise AssertionError(
-                        f"block {b} output {b} has incorrect length: {len(out)} instead of {b.nout}"
+                        f"block {b} output {b} has incorrect length: {len(out)} instead"
+                        f" of {b.nout}"
                     )
 
                 # TODO check output validity once at the startq
@@ -976,7 +982,8 @@ class BlockDiagram:
 
         # print the traceback
         print(
-            f"[{where}]: exception {t.__name__} occurred in {block.type} block {block.name}  "
+            f"[{where}]: exception {t.__name__} occurred in {block.type} block"
+            f" {block.name}  "
         )
         print(f"  {v}\n")
         traceback.print_tb(tb)
@@ -986,7 +993,8 @@ class BlockDiagram:
         for i in range(block.nin):
             input = block.inputs[i]
             print(
-                f"input {i} from {block.sources[i].block.name} [{input.__class__.__name__}]"
+                f"input {i} from"
+                f" {block.sources[i].block.name} [{input.__class__.__name__}]"
             )
             print("  ", input)
 
@@ -1070,7 +1078,8 @@ class BlockDiagram:
                         raise AssertionError(f"deriv: block {b} did not return ndarray")
                     if yd.ndim != 1 or yd.shape[0] != b.nstates:
                         raise AssertionError(
-                            f"deriv: block {b} returns wrong shape {yd.shape}, should be ({b.nstates},)"
+                            f"deriv: block {b} returns wrong shape {yd.shape}, should"
+                            f" be ({b.nstates},)"
                         )
                     YD = np.r_[YD, yd]
                 except:

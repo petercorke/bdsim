@@ -355,7 +355,10 @@ class BDSim:
         return s
 
     def __repr__(self):
-        s = f"Block diagram simulation runtime, {len(self._blocklibrary)} blocks imported to library.\n"
+        s = (
+            f"Block diagram simulation runtime, {len(self._blocklibrary)} blocks"
+            " imported to library.\n"
+        )
         s += "simulation options:\n"
         for k, v in self.state.options.items():
             s += "  {:s}: {}\n".format(k, v)
@@ -780,9 +783,9 @@ class BDSim:
                         and integrator.step_size < state.minstepsize
                     ):
                         print(
-                            fg("red")
-                            + f"\n--- stopping on minimum step size at t={state.t:.4f} with last stepsize {integrator.step_size:g}"
-                            + attr(0)
+                            fg("red") + "\n--- stopping on minimum step size at"
+                            f" t={state.t:.4f} with last stepsize"
+                            f" {integrator.step_size:g}" + attr(0)
                         )
                         break
 
@@ -847,9 +850,8 @@ class BDSim:
                 # has any block called a stop?
                 if state.stop is not None:
                     print(
-                        fg("red")
-                        + f"\n--- stop requested at t={bd.simstate.t:.4f} by {bd.simstate.stop}"
-                        + attr(0)
+                        fg("red") + f"\n--- stop requested at t={bd.simstate.t:.4f} by"
+                        f" {bd.simstate.stop}" + attr(0)
                     )
 
                 if "i" in state.options.debug:
@@ -1013,7 +1015,8 @@ class BDSim:
 
             re_isfield = re.compile(r"\s*:[a-zA-Zα-ωΑ-Ω0-9_ ]+:")
             re_field = re.compile(
-                "^\s*:(?P<field>[a-zA-Z]+)(?: +(?P<var>[a-zA-Zα-ωΑ-Ω0-9_]+))?:(?P<body>.+)$"
+                "^\s*:(?P<field>[a-zA-Z]+)(?:"
+                " +(?P<var>[a-zA-Zα-ωΑ-Ω0-9_]+))?:(?P<body>.+)$"
             )
 
             # a-zA-Zα-ωΑ-Ω0-9_
@@ -1310,7 +1313,10 @@ class Options(OptionsBase):
                 prefix_chars="-+",
                 formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                 description="Block diagram simulation framework",
-                epilog="set defaults using environment variable BDSIM as a single string containing command line options",
+                epilog=(
+                    "set defaults using environment variable BDSIM as a single string"
+                    " containing command line options"
+                ),
             )
             parser.add_argument(
                 "--backend",

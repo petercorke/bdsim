@@ -346,9 +346,11 @@ class LTI_SISO(LTI_SS):
         self.add_param("num", change_param)
         self.add_param("den", change_param)
 
+
 # ------------------------------------------------------------------------ #
 
 from bdsim.blocks.connections import SubSystem
+
 
 class PID(SubSystem):
     """
@@ -360,17 +362,25 @@ class PID(SubSystem):
     """
 
     class ID(LTI_SS):
-        def __init__(self, D:float=0.0, I:float=0.0, D_pole=1, I_limit=None, I_band=0, **blockargs):
-            
+        def __init__(
+            self,
+            D: float = 0.0,
+            I: float = 0.0,
+            D_pole=1,
+            I_limit=None,
+            I_band=0,
+            **blockargs,
+        ):
+
             self.D = D
             self.I = I
             self.D_pole = D_pole
             self.I_limit = I_limit
             self.I_band = I_band
 
-            A = np.zeros((2,2))
-            B = np.zeros((2,1))
-            C = np.zeros((1,2))
+            A = np.zeros((2, 2))
+            B = np.zeros((2, 1))
+            C = np.zeros((1, 2))
 
             super().__init__(A=A, B=B, C=C, **blockargs)
 
@@ -378,7 +388,7 @@ class PID(SubSystem):
                 print("A=", A)
                 print("B=", B)
                 print("C=", C)
-    
+
         def output(self, t=None):
             e = self.inputs[1] - self.inputs[0]
             return list(self.C @ self._x)
@@ -389,7 +399,17 @@ class PID(SubSystem):
     nin = 1
     nout = 1
 
-    def __init__(self, P:float=0.0, D:float=0.0, I:float=0.0, D_pole=1, I_limit=None, I_band=0, name='PID', **blockargs):
+    def __init__(
+        self,
+        P: float = 0.0,
+        D: float = 0.0,
+        I: float = 0.0,
+        D_pole=1,
+        I_limit=None,
+        I_band=0,
+        name="PID",
+        **blockargs,
+    ):
         r"""
         PID controller.
 
@@ -444,8 +464,15 @@ class PID(SubSystem):
         bd = blockargs["bd"]
         blockargs.pop("bd")
         Pblock = subsystem.GAIN(P)
-        IDblock = self.ID(D=D, I=I, D_pole=D_pole, I_limit=I_limit, I_band=I_band, 
-            bd=subsystem, **blockargs)
+        IDblock = self.ID(
+            D=D,
+            I=I,
+            D_pole=D_pole,
+            I_limit=I_limit,
+            I_band=I_band,
+            bd=subsystem,
+            **blockargs,
+        )
         sum = subsystem.SUM("++")
         Input = subsystem.INPORT(1)
         Output = subsystem.OUTPORT(1)

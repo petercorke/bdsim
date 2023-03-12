@@ -4,8 +4,8 @@ import bdsim
 
 bd = bdsim.BlockDiagram()
 
-wave1 = bd.WAVEFORM(wave='triangle', freq=1, phase=0.25)
-wave2 = bd.WAVEFORM(wave='square', freq=1, min=0, max=1)
+wave1 = bd.WAVEFORM(wave="triangle", freq=1, phase=0.25)
+wave2 = bd.WAVEFORM(wave="square", freq=1, min=0, max=1)
 scope1 = bd.SCOPE()
 scope2 = bd.SCOPE()
 

@@ -8,21 +8,25 @@ import math
 sim = bdsim.BDSim(animation=True)
 bd = sim.blockdiagram()
 
+
 def background_graphics(ax):
-    ax.plot(5, 5, '*')
-    ax.plot(5, 2, 'o')
-    
+    ax.plot(5, 5, "*")
+    ax.plot(5, 2, "o")
+
+
 goal = bd.CONSTANT([5, 5])
-error = bd.SUM('+-', name='error')
-d2goal = bd.FUNCTION(lambda d: math.sqrt(d[0]**2 + d[1]**2))
+error = bd.SUM("+-", name="error")
+d2goal = bd.FUNCTION(lambda d: math.sqrt(d[0] ** 2 + d[1] ** 2))
 h2goal = bd.FUNCTION(lambda d: math.atan2(d[1], d[0]))
-heading_error = bd.SUM('+-', angles=True)
+heading_error = bd.SUM("+-", angles=True)
 Kv = bd.GAIN(0.5)
 Kh = bd.GAIN(4)
 bike = bd.BICYCLE(x0=[5, 2, 0])
-vplot = bd.VEHICLEPLOT(scale=[0, 10], size=0.7, shape='box', init=background_graphics, movie='rvc4_4.mp4')
-vscope = bd.SCOPE(name='velocity')
-hscope = bd.SCOPE(name='heading')
+vplot = bd.VEHICLEPLOT(
+    scale=[0, 10], size=0.7, shape="box", init=background_graphics, movie="rvc4_4.mp4"
+)
+vscope = bd.SCOPE(name="velocity")
+hscope = bd.SCOPE(name="heading")
 xy = bd.SLICE1([0, 1])
 theta = bd.SLICE1([2])
 
@@ -44,4 +48,4 @@ bd.report()
 
 out = sim.run(bd)
 
-#sim.done(bd, block=True)
+# sim.done(bd, block=True)
