@@ -2,7 +2,7 @@
 
 import bdsim
 
-sim = bdsim.BDSim(animation=True, hold=False)  # create simulator
+sim = bdsim.BDSim(animation=True)  # create simulator
 bd = sim.blockdiagram()  # create an empty block diagram
 
 # define the blocks
@@ -28,4 +28,4 @@ out = sim.run(bd)  # , watch=[demand, sum])  # simulate for 5s
 # out = sim.run(bd, watch=[plant, demand])  # simulate for 5s
 print(out)
 
-scope.savefig()  # save scope figure as scope0.pdf
+# scope.savefig()  # save scope figure as scope0.pdf, need to set hold=False
