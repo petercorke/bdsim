@@ -101,10 +101,8 @@ which we can express concisely with `bdsim` as (see [`bdsim/examples/eg1.py`](ht
     22	bd.report()    # list all blocks and wires
     23
     24  out = sim.run(bd, 5)   # simulate for 5s
-    25  sim.savefig(scope, 'scope0')
-    26  sim.done(bd, block=True)
 ```
-which is just 16 lines of executable code.
+which is just 15 lines of executable code.
 
 The red block annotations on the hand-drawn diagram are used as the names of the variables holding references to the block instance. The blocks can also have user-assigned names, see lines 8 and 11, which are used in diagnostics and as labels in plots.
 
@@ -172,31 +170,36 @@ using the default variable-step RK45 solver and saves output values at least eve
 
 ![bdsim output](https://github.com/petercorke/bdsim/raw/master/figs/Figure_1.png)
 
-The simulation results are in a container object
+The simulation results are in a container object (`BDStruct`)
 ```
 >>> out
-results:
-t           | ndarray (67,)
-x           | ndarray (67, 1)
-xnames      | list              
+t      = ndarray:float64 (123,)
+x      = ndarray:float64 (123, 1)
+xnames = ['plantx0'] (list)
+ynames = [] (list)            
 ```
-which contains an array of time values, an array of state values, and a list of the names of the state variables.
+which contains an array of time values, an array of state values, and a list of the
+names of the state variables.
 
-Line 25 saves the content of the scope to be saved in the file called `scope0.pdf`.
+By default the `.run()` method at line 24 blocks blocks the script until all figure
+windows are closed (by pressing the operating system close button or typing "q"), or the
+script is killed with SIGINT. If you want to continue the script with the figures still
+active then the `hold=False` option should be set.
 
-Line 26 blocks the script until all figure windows are closed, or the script is killed with SIGINT.
-
-The result `out` is effectively a structure with elements
-
+If we wished to also record additional outputs, we can add them as _watched_ signals
+```
+out = sim.run(bd, watch=[demand, sum])  # simulate for 5s
+```
+and now the output is
 ```
 >>> out
-results:
-t           | ndarray (67,)
-x           | ndarray (67, 1)
-xnames      | list        
-y0          | ndarray (67,)
-y1          | ndarray (67,)
-ynames      | list   
+t      = ndarray:float64 (123,)
+x      = ndarray:float64 (123, 1)
+xnames = ['plantx0'] (list)
+y0     = ndarray:float64 (123,)
+y1     = ndarray:int64 (123,)
+ynames = ['plant[0]', 'demand[0]'] (list)
+(dev) [130 ~...code/bdsim/examples]  % 
 ```
 where
 
@@ -208,16 +211,65 @@ The `watch` argument is a list of outputs to log, in this case `plant` defaults
 to output port 0.  This information is saved in additional variables `y0`, `y1`
 etc.  `ynames` is a list of the names of the watched variables.
 
-Line 29 saves the scope graphics as a PDF file.
+An alternative system report, created by `bd.report_summary` is more compact
+```
+┌────────┬────────┬────────┬─────────────┐
+│ block  │ inport │ source │ source type │
+├────────┼────────┼────────┼─────────────┤
+│demand@ │        │        │             │
+├────────┼────────┼────────┼─────────────┤
+│gain.0  │ 0      │ sum.0  │ float64     │
+├────────┼────────┼────────┼─────────────┤
+│plant   │ 0      │ gain.0 │ float64     │
+├────────┼────────┼────────┼─────────────┤
+│scope.0 │ 0      │ plant  │ float64     │
+│        │ 1      │ demand │ int         │
+├────────┼────────┼────────┼─────────────┤
+│sum.0   │ 0      │ demand │ int         │
+│        │ 1      │ plant  │ float64     │
+└────────┴────────┴────────┴─────────────┘
+```
 
-Line 30 blocks until the last figure is dismissed.
+To save figures we need to make two modifications, changing line 4 to
+```
+     4  sim = bdsim.BDSim(hold=False)  # create simulator
+```
+which prevents `.run()` from blocking and then deleting all the figures.
+Then, after the `.run()` we add 
+```
+     25 scope.savefig()  # save scope figure
+```
+If the filename is not given it defaults to the block name, in this case `scope.0.pdf`.
+
+
+The output can be pickled and written to a file
+
+```[shell]
+examples/eg1.py -o
+python -mpickle bd.out
+t      = ndarray:float64 (123,)
+x      = ndarray:float64 (123, 1)
+xnames = ['plantx0'] (list)
+y0     = ndarray:float64 (123,)
+y1     = ndarray:int64 (123,)
+ynames = ['plant[0]', 'demand[0]'] (list)
+```
+
+by default the results are written to `bd.out`, use the option `--out FILE` to set it
+to a specific value.
+
+The block parameters can also be overridden from the command line without having to 
+edit the code.  To increase the loop gain we could write:
+```[shell]
+examples/eg1.py --set gain.0:K=20
+```
 
 More details on this Wiki about:
 
-- [Adding blocks](Adding-blocks)
-- [Connecting blocks](Connecting-blocks)
-- [Running the simulation](Running)
-
+- [Adding blocks](https://github.com/petercorke/bdsim/wiki/Adding-blocks)
+- [Connecting blocks](https://github.com/petercorke/bdsim/wiki/Connecting-blocks)
+- [Running the simulation](https://github.com/petercorke/bdsim/wiki/Running)
+- [Command line options](https://github.com/petercorke/bdsim/wiki/Runtime-options)
 
 ## Other examples
 
