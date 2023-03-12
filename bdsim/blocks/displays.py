@@ -55,6 +55,7 @@ class Scope(GraphicsBlock):
         labels=None,
         grid=True,
         watch=False,
+        title=None,
         **blockargs,
     ):
         """
@@ -78,6 +79,8 @@ class Scope(GraphicsBlock):
         :type grid: bool or sequence
         :param watch: add these signals to the watchlist, defaults to False
         :type watch: bool, optional
+        :param title: title of plot
+        :type title: str
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         :return: A SCOPE block
@@ -207,6 +210,7 @@ class Scope(GraphicsBlock):
         self.scale = scale
 
         self.watch = watch
+        self.title = title
 
         # TODO, wire width
         # inherit names from wires, block needs to be able to introspect
@@ -221,6 +225,10 @@ class Scope(GraphicsBlock):
         # create the figures
         self.fig = self.create_figure(state)
         self.ax = self.fig.add_subplot(111)
+
+        # get labels if not provided
+        if self.labels is None:
+            self.labels = [self.sourcename(i) for i in range(self.nin)]
 
         if self.stairs:
             kwargs = {**dict(drawstyle="steps"), **kwargs}
@@ -242,7 +250,12 @@ class Scope(GraphicsBlock):
         if self.labels is not None:
             self.ax.set_ylabel(",".join(self.labels))
         self.ax.set_xlabel(self.xlabel)
-        self.ax.set_title(self.name_tex)
+
+        if self.title is not None:
+            name = self.title
+        else:
+            name = self.name_tex
+        self.ax.set_title(name)
 
         # grid control
         if self.grid is True:
@@ -256,7 +269,7 @@ class Scope(GraphicsBlock):
         if self.scale != "auto":
             self.ax.set_ylim(*self.scale)
         if self.labels is not None:
-            self.ax.legend(self.labels)
+            self.ax.legend(self.labels, loc="lower right")
 
         if self.watch:
             for wire in self.input_wires:
