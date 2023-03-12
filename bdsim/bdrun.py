@@ -197,8 +197,11 @@ def bdload(bd, filename, globalvars={}, verbose=False, **kwargs):
 def bdrun(filename=None, globals={}, **kwargs):
 
     if filename is None:
-        filename = sys.argv[1]
-
+        if len(sys.argv) > 1:
+            filename = sys.argv[1]
+        print("Usage:\n  bdrun file.bd <bdsim args>")
+        return
+        
     sim = BDSim(**kwargs)  # create simulator
     bd = sim.blockdiagram()  # create diagram
 
