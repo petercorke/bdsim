@@ -46,7 +46,7 @@ extensions = [
  'sphinx.ext.coverage',
  'sphinx.ext.inheritance_diagram',
  "sphinx_autodoc_typehints",
- "sphinx-favicon",
+ "sphinx_favicon",
  'blockname',
 ]
 
