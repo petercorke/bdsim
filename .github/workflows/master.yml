@@ -29,8 +29,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install .[dev]
-        pip install pytest-timeout
-        pip install pytest-xvfb
+
     - name: Test with pytest
       env:
         MPLBACKEND: TkAgg
@@ -54,10 +53,9 @@ jobs:
     - name: Run coverage
       run: |
         pip install .[dev]
-        pip install pytest-xvfb
-        pip install pytest-timeout
-        pytest --cov=bdsim --cov-report xml:coverage.xml
+        coverage run --omit='tests/*.py' -m pytest
         coverage report
+        coverage xml 
     - name: upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
