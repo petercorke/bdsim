@@ -13,6 +13,7 @@ from .bdrun import bdrun, bdload
 
 try:
     import importlib.metadata
+
     __version__ = importlib.metadata.version("bdsim")
 except:
     pass
