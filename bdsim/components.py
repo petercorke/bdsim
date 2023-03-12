@@ -46,7 +46,7 @@ class BDStruct:
         return str(self)
 
     def __len__(self):
-        return len(self.__dict__)
+        return len([k for k in self.__dict__.keys() if not k.startswith("_")])
 
     def __getitem__(self, key):
         return getattr(self, key)
