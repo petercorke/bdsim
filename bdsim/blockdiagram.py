@@ -470,7 +470,7 @@ class BlockDiagram:
 
         return self.compiled
 
-    def _subsystem_import(self, bd, sspath):
+    def _subsystem_import(self, bd, sspath, verbose=False):
 
         blocks = []
         wires = bd.wirelist
@@ -484,6 +484,8 @@ class BlockDiagram:
                 # deal with a subsystem
                 #  - recurse to import it
                 #  - add its blocks and wires to the set
+                if verbose:
+                    print("found subsystem ", b.name)
                 ssb, ssw = self._subsystem_import(b.subsystem, b.name)
                 blocks.extend(ssb)
                 wires.extend(ssw)
