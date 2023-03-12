@@ -1767,7 +1767,7 @@ class Block:
 
         """
 
-        w = self.inports[port]
+        w = self.input_wires[port]
         if w.name is not None:
             return w.name
         src = w.start.block
