@@ -795,6 +795,12 @@ class BlockDiagram:
                 break
             elif cmd[0] == "q":
                 sys.exit(1)
+            elif cmd[0] == "r":
+                self.report()
+            elif cmd == "pdb":
+                import pdb
+
+                pdb.runeval('print("type exit to leave Pdb")')
             elif cmd[0] in "h?":
                 print("p    print all outputs")
                 print("pI   print block id I output")
@@ -802,11 +808,13 @@ class BlockDiagram:
                 print("s    single step")
                 print("c    continue")
                 print("tT   stop at or after time T")
+                print("r    print block and wires")
+                print("pdb  enter PDB debugger")
                 print("q    quit")
 
     # ---------------------------------------------------------------------- #
 
-    def report_summary(self):
+    def report_summary(self, style="ansi"):
         """
         Print a summary of block diagram.
 
