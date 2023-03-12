@@ -1106,6 +1106,12 @@ class BDSim:
             except ModuleNotFoundError:
                 print(f"package {package} not found")
                 continue
+            except ImportError:
+                print(f"package {package} load error")
+                import textwrap
+
+                print(textwrap.indent(traceback.format_exc(), "    "))
+                continue
 
             moduledict = {}
 
