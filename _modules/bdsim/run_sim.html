@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>bdsim.run_sim &mdash; Block diagram simulation 0.7 documentation</title>
+  <title>bdsim.run_sim &mdash; Block diagram simulation  documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
@@ -32,6 +32,9 @@
             Block diagram simulation
               <img src="../../_static/BDSimLogo_NoBackgnd@2x.png" class="logo" alt="Logo"/>
           </a>
+              <div class="version">
+                1.0.0
+              </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -84,9 +87,11 @@
 
 <span class="kn">from</span> <span class="nn">bdsim.blockdiagram</span> <span class="kn">import</span> <span class="n">BlockDiagram</span>
 <span class="kn">from</span> <span class="nn">bdsim.components</span> <span class="kn">import</span> <span class="n">OptionsBase</span><span class="p">,</span> <span class="n">Block</span><span class="p">,</span> <span class="n">Clock</span><span class="p">,</span> <span class="n">BDStruct</span><span class="p">,</span> <span class="n">Plug</span><span class="p">,</span> <span class="n">clocklist</span>
+<span class="kn">import</span> <span class="nn">spatialmath.base</span> <span class="k">as</span> <span class="nn">smb</span>
 <span class="kn">import</span> <span class="nn">tempfile</span>
 <span class="kn">import</span> <span class="nn">subprocess</span>
 <span class="kn">import</span> <span class="nn">webbrowser</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">scipy.integrate</span> <span class="k">as</span> <span class="nn">integrate</span>
@@ -428,7 +433,10 @@
         <span class="k">return</span> <span class="n">s</span>
 
     <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">s</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Block diagram simulation runtime, </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_blocklibrary</span><span class="p">)</span><span class="si">}</span><span class="s2"> blocks imported to library.</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Block diagram simulation runtime, </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_blocklibrary</span><span class="p">)</span><span class="si">}</span><span class="s2"> blocks&quot;</span>
+            <span class="s2">&quot; imported to library.</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
         <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;simulation options:</span><span class="se">\n</span><span class="s2">&quot;</span>
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;  </span><span class="si">{:s}</span><span class="s2">: </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
@@ -592,6 +600,9 @@
             <span class="n">ndstates</span> <span class="o">+=</span> <span class="n">nds</span>
             <span class="nb">print</span><span class="p">(</span><span class="n">clock</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;initial dstate x0 = &quot;</span><span class="p">,</span> <span class="n">clock</span><span class="o">.</span><span class="n">getstate</span><span class="p">())</span>
 
+        <span class="c1"># update block parameters given on command line</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_parameters</span><span class="p">(</span><span class="n">bd</span><span class="p">)</span>
+
         <span class="c1"># tell all blocks we&#39;re starting a BlockDiagram</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span> <span class="n">graphics</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">graphics</span><span class="p">)</span>
 
@@ -674,11 +685,92 @@
             <span class="n">out</span><span class="p">[</span><span class="s2">&quot;y&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">plist</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
         <span class="n">out</span><span class="o">.</span><span class="n">ynames</span> <span class="o">=</span> <span class="n">watchnamelist</span>
 
-        <span class="c1"># pause until all graphics blocks close</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">graphics</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">done</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">hold</span><span class="p">)</span>
+        <span class="c1"># the command line options -o or --out saves results as a pickle file</span>
+        <span class="c1">#  -o defaults to bd.out</span>
+        <span class="c1">#  --out FILE allows the filename to be specified</span>
+        <span class="c1">#</span>
+        <span class="c1"># we can visualize the output file by</span>
+        <span class="c1">#</span>
+        <span class="c1">#   % python -mpickle bd.out</span>
+        <span class="c1">#   t      = ndarray:float64 (123,)</span>
+        <span class="c1">#   x      = ndarray:float64 (123, 1)</span>
+        <span class="c1">#   xnames = [&#39;plantx0&#39;] (list)</span>
+        <span class="c1">#   ynames = [] (list)</span>
 
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">outfile</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+
+            <span class="n">out</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">outfile</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">quiet</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;simulation results pickled --&gt; &quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">outfile</span><span class="p">)</span>
+
+        <span class="c1"># pause until all graphics blocks close</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">graphics</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">hold</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">done</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">hold</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">out</span></div>
+
+<div class="viewcode-block" id="BDSim.update_parameters"><a class="viewcode-back" href="../../internals.html#bdsim.BDSim.update_parameters">[docs]</a>    <span class="k">def</span> <span class="nf">update_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bd</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set value of parameters according to command line arguments</span>
+
+<span class="sd">        Command line arguments of the form:</span>
+
+<span class="sd">            ``-s block:param=value``</span>
+<span class="sd">            ``--set block:param=value``</span>
+
+<span class="sd">        are stored as list items in ``options.setparam``</span>
+
+<span class="sd">        ``block`` can be either:</span>
+
+<span class="sd">        - the block&#39;s name as a string, either user assigned or bdsim assigned</span>
+<span class="sd">        - the block ``id`` as displayed by the ``report`` method</span>
+
+<span class="sd">        ``param`` is the name of the parameter used in the constructor</span>
+
+<span class="sd">        ``value`` is the new value of the variable</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">re_set</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(?P&lt;block&gt;[\w\.]+):(?P&lt;param&gt;[\w]+)=(?P&lt;value&gt;.*)&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">setparam</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="n">re_set</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;bad set parameter: &quot;</span> <span class="o">+</span> <span class="n">s</span><span class="p">)</span>
+
+            <span class="c1"># get block reference</span>
+            <span class="n">blockname</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="s2">&quot;block&quot;</span><span class="p">]</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">blockname</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">blockname</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="k">pass</span>
+            <span class="n">block</span> <span class="o">=</span> <span class="n">bd</span><span class="p">[</span><span class="n">blockname</span><span class="p">]</span>
+
+            <span class="n">param</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="s2">&quot;param&quot;</span><span class="p">]</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">prev_value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="n">param</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;block </span><span class="si">{</span><span class="n">block</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> has no parameter &#39;</span><span class="si">{</span><span class="n">param</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+
+            <span class="c1"># get the parameter</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span>
+            <span class="n">new_value</span> <span class="o">=</span> <span class="kc">None</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s2">&quot;;&quot;</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+                    <span class="n">new_value</span> <span class="o">=</span> <span class="n">smb</span><span class="o">.</span><span class="n">str2array</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">new_value</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                        <span class="n">new_value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;cannot parse value &quot;</span> <span class="o">+</span> <span class="n">value</span><span class="p">)</span>
+
+            <span class="c1"># change the value</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">new_value</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;changed value of </span><span class="si">{</span><span class="n">block</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">param</span><span class="si">}</span><span class="s2"> from </span><span class="si">{</span><span class="n">prev_value</span><span class="si">}</span><span class="s2"> -&gt;&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">new_value</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span></div>
 
 <div class="viewcode-block" id="BDSim.run_interval"><a class="viewcode-back" href="../../internals.html#bdsim.BDSim.run_interval">[docs]</a>    <span class="k">def</span> <span class="nf">run_interval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bd</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -769,7 +861,9 @@
                     <span class="p">):</span>
                         <span class="nb">print</span><span class="p">(</span>
                             <span class="n">fg</span><span class="p">(</span><span class="s2">&quot;red&quot;</span><span class="p">)</span>
-                            <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">--- stopping on minimum step size at t=</span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">t</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> with last stepsize </span><span class="si">{</span><span class="n">integrator</span><span class="o">.</span><span class="n">step_size</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">&quot;</span>
+                            <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">--- stopping on minimum step size at&quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot; t=</span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">t</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> with last stepsize&quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">integrator</span><span class="o">.</span><span class="n">step_size</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">&quot;</span>
                             <span class="o">+</span> <span class="n">attr</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
                         <span class="p">)</span>
                         <span class="k">break</span>
@@ -836,7 +930,8 @@
                 <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">stop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="nb">print</span><span class="p">(</span>
                         <span class="n">fg</span><span class="p">(</span><span class="s2">&quot;red&quot;</span><span class="p">)</span>
-                        <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">--- stop requested at t=</span><span class="si">{</span><span class="n">bd</span><span class="o">.</span><span class="n">simstate</span><span class="o">.</span><span class="n">t</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> by </span><span class="si">{</span><span class="n">bd</span><span class="o">.</span><span class="n">simstate</span><span class="o">.</span><span class="n">stop</span><span class="si">}</span><span class="s2">&quot;</span>
+                        <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">--- stop requested at t=</span><span class="si">{</span><span class="n">bd</span><span class="o">.</span><span class="n">simstate</span><span class="o">.</span><span class="n">t</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> by&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">bd</span><span class="o">.</span><span class="n">simstate</span><span class="o">.</span><span class="n">stop</span><span class="si">}</span><span class="s2">&quot;</span>
                         <span class="o">+</span> <span class="n">attr</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
                     <span class="p">)</span>
 
@@ -918,8 +1013,12 @@
             <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="n">block</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;bdsim: closing all windows&quot;</span><span class="p">)</span>
-            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">bd</span><span class="o">.</span><span class="n">done</span><span class="p">(</span><span class="n">graphics</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">graphics</span><span class="p">)</span></div>
+            <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">)</span>
+            <span class="c1"># sys.exit(1)  # not sure why we have this</span>
+            <span class="k">return</span>
+        <span class="n">bd</span><span class="o">.</span><span class="n">done</span><span class="p">(</span><span class="n">graphics</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">graphics</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">pause</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>  <span class="c1"># let the event handler do its work</span></div>
 
 <div class="viewcode-block" id="BDSim.closefigs"><a class="viewcode-back" href="../../internals.html#bdsim.BDSim.closefigs">[docs]</a>    <span class="k">def</span> <span class="nf">closefigs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simstate</span><span class="o">.</span><span class="n">fignum</span><span class="p">):</span>
@@ -997,7 +1096,8 @@
 
             <span class="n">re_isfield</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\s*:[a-zA-Zα-ωΑ-Ω0-9_ ]+:&quot;</span><span class="p">)</span>
             <span class="n">re_field</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
-                <span class="s2">&quot;^\s*:(?P&lt;field&gt;[a-zA-Z]+)(?: +(?P&lt;var&gt;[a-zA-Zα-ωΑ-Ω0-9_]+))?:(?P&lt;body&gt;.+)$&quot;</span>
+                <span class="s2">&quot;^\s*:(?P&lt;field&gt;[a-zA-Z]+)(?:&quot;</span>
+                <span class="s2">&quot; +(?P&lt;var&gt;[a-zA-Zα-ωΑ-Ω0-9_]+))?:(?P&lt;body&gt;.+)$&quot;</span>
             <span class="p">)</span>
 
             <span class="c1"># a-zA-Zα-ωΑ-Ω0-9_</span>
@@ -1093,6 +1193,12 @@
                 <span class="n">pkg</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">loader</span><span class="o">.</span><span class="n">load_module</span><span class="p">()</span>
             <span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;package </span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s2"> not found&quot;</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;package </span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s2"> load error&quot;</span><span class="p">)</span>
+                <span class="kn">import</span> <span class="nn">textwrap</span>
+
+                <span class="nb">print</span><span class="p">(</span><span class="n">textwrap</span><span class="o">.</span><span class="n">indent</span><span class="p">(</span><span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">(),</span> <span class="s2">&quot;    &quot;</span><span class="p">))</span>
                 <span class="k">continue</span>
 
             <span class="n">moduledict</span> <span class="o">=</span> <span class="p">{}</span>
@@ -1259,6 +1365,9 @@
             <span class="s2">&quot;debug&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
             <span class="s2">&quot;simtime&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
             <span class="s2">&quot;blocks&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="s2">&quot;outfile&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">&quot;quiet&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="s2">&quot;setparam&quot;</span><span class="p">:</span> <span class="p">[],</span>
         <span class="p">}</span>
 
         <span class="c1"># modify defaults according to envariable BDSIM which is comma/semicolon</span>
@@ -1285,7 +1394,10 @@
                 <span class="n">prefix_chars</span><span class="o">=</span><span class="s2">&quot;-+&quot;</span><span class="p">,</span>
                 <span class="n">formatter_class</span><span class="o">=</span><span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentDefaultsHelpFormatter</span><span class="p">,</span>
                 <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Block diagram simulation framework&quot;</span><span class="p">,</span>
-                <span class="n">epilog</span><span class="o">=</span><span class="s2">&quot;set defaults using environment variable BDSIM as a single string containing command line options&quot;</span><span class="p">,</span>
+                <span class="n">epilog</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;set defaults using environment variable BDSIM as a single string&quot;</span>
+                    <span class="s2">&quot; containing command line options&quot;</span>
+                <span class="p">),</span>
             <span class="p">)</span>
             <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
                 <span class="s2">&quot;--backend&quot;</span><span class="p">,</span>
@@ -1405,6 +1517,34 @@
             <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
                 <span class="s2">&quot;--simtime&quot;</span><span class="p">,</span> <span class="s2">&quot;-S&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;simulation time: T or T,dt&quot;</span>
             <span class="p">)</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+                <span class="s2">&quot;--quiet&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;-q&quot;</span><span class="p">,</span>
+                <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_const&quot;</span><span class="p">,</span>
+                <span class="n">const</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">help</span><span class="o">=</span><span class="s2">&quot;suppress reports&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+                <span class="s2">&quot;-o&quot;</span><span class="p">,</span>
+                <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_const&quot;</span><span class="p">,</span>
+                <span class="n">const</span><span class="o">=</span><span class="s2">&quot;bd.out&quot;</span><span class="p">,</span>
+                <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;outfile&quot;</span><span class="p">,</span>
+                <span class="n">help</span><span class="o">=</span><span class="s2">&quot;output pickled simulation results to bd.out&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+                <span class="s2">&quot;--out&quot;</span><span class="p">,</span>
+                <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+                <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;outfile&quot;</span><span class="p">,</span>
+                <span class="n">help</span><span class="o">=</span><span class="s2">&quot;file to save pickled simulation results&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+                <span class="s2">&quot;--set&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;-s&quot;</span><span class="p">,</span>
+                <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;setparam&quot;</span><span class="p">,</span>
+                <span class="n">action</span><span class="o">=</span><span class="s2">&quot;append&quot;</span><span class="p">,</span>
+                <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+                <span class="n">help</span><span class="o">=</span><span class="s2">&quot;override block parameter using block:param=value&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
 
             <span class="n">args</span><span class="p">,</span> <span class="n">unknownargs</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_known_args</span><span class="p">()</span>
             <span class="n">cmdline_options</span> <span class="o">=</span> <span class="nb">vars</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>  <span class="c1"># get args as a dictionary</span>
@@ -1432,6 +1572,9 @@
         <span class="c1"># now handle the passed options</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="o">**</span><span class="n">options</span><span class="p">)</span>
 
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">_argv</span> <span class="o">=</span> <span class="n">unknownargs</span>  <span class="c1"># save non-bdsim arguments</span>
 
     <span class="k">def</span> <span class="nf">sanity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">options</span><span class="p">):</span>
@@ -1445,7 +1588,6 @@
         <span class="k">elif</span> <span class="s2">&quot;animation&quot;</span> <span class="ow">in</span> <span class="n">options</span> <span class="ow">and</span> <span class="n">options</span><span class="p">[</span><span class="s2">&quot;animation&quot;</span><span class="p">]:</span>
             <span class="n">options</span><span class="p">[</span><span class="s2">&quot;graphics&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
 
-
         <span class="k">return</span> <span class="n">options</span>
 </pre></div>
 
@@ -1456,8 +1598,8 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2020, Peter Corke.
-      <span class="lastupdated">Last updated on 21-Feb-2023.
+    <p>&#169; Copyright 2020-, Peter Corke..
+      <span class="lastupdated">Last updated on 12-Mar-2023.
       </span></p>
   </div>
 

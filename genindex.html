@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Index &mdash; Block diagram simulation 0.7 documentation</title>
+  <title>Index &mdash; Block diagram simulation  documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
@@ -32,6 +32,9 @@
             Block diagram simulation
               <img src="_static/BDSimLogo_NoBackgnd@2x.png" class="logo" alt="Logo"/>
           </a>
+              <div class="version">
+                1.0.0
+              </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -90,6 +93,7 @@
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
+ | <a href="#U"><strong>U</strong></a>
  | <a href="#V"><strong>V</strong></a>
  | <a href="#W"><strong>W</strong></a>
  | <a href="#Z"><strong>Z</strong></a>
@@ -187,11 +191,17 @@
 </li>
         <li><a href="bdsim.blocks.html#bdsim.blocks.sources.WaveForm.__init__">(bdsim.blocks.sources.WaveForm method)</a>
 </li>
+        <li><a href="bdsim.blocks.html#bdsim.blocks.transfers.Deriv.__init__">(bdsim.blocks.transfers.Deriv method)</a>
+</li>
         <li><a href="bdsim.blocks.html#bdsim.blocks.transfers.Integrator.__init__">(bdsim.blocks.transfers.Integrator method)</a>
 </li>
         <li><a href="bdsim.blocks.html#bdsim.blocks.transfers.LTI_SISO.__init__">(bdsim.blocks.transfers.LTI_SISO method)</a>
 </li>
         <li><a href="bdsim.blocks.html#bdsim.blocks.transfers.LTI_SS.__init__">(bdsim.blocks.transfers.LTI_SS method)</a>
+</li>
+        <li><a href="bdsim.blocks.html#bdsim.blocks.transfers.PID.__init__">(bdsim.blocks.transfers.PID method)</a>
+</li>
+        <li><a href="bdsim.blocks.html#bdsim.blocks.transfers.PID.ID.__init__">(bdsim.blocks.transfers.PID.ID method)</a>
 </li>
         <li><a href="bdsim.blocks.html#bdsim.blocks.transfers.PoseIntegrator.__init__">(bdsim.blocks.transfers.PoseIntegrator method)</a>
 </li>
@@ -443,12 +453,14 @@
 </li>
       <li><a href="bdsim.blocks.html#bdsim.blocks.connections.DeMux">DeMux (class in bdsim.blocks.connections)</a>
 </li>
-      <li><a href="bdsim.blocks.html#bdsim.blocks.linalg.Det">Det (class in bdsim.blocks.linalg)</a>
+      <li><a href="bdsim.blocks.html#bdsim.blocks.transfers.Deriv">Deriv (class in bdsim.blocks.transfers)</a>
 </li>
-      <li><a href="bdsim.blocks.html#bdsim.blocks.connections.Dict">Dict (class in bdsim.blocks.connections)</a>
+      <li><a href="bdsim.blocks.html#bdsim.blocks.linalg.Det">Det (class in bdsim.blocks.linalg)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="bdsim.blocks.html#bdsim.blocks.connections.Dict">Dict (class in bdsim.blocks.connections)</a>
+</li>
       <li><a href="bdsim.blocks.html#bdsim.blocks.discrete.DIntegrator">DIntegrator (class in bdsim.blocks.discrete)</a>
 </li>
       <li><a href="internals.html#bdsim.BDSim.done">done() (bdsim.BDSim method)</a>
@@ -624,14 +636,18 @@
 <h2 id="P">P</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="bdsim.blocks.html#bdsim.blocks.transfers.PID">PID (class in bdsim.blocks.transfers)</a>
+</li>
+      <li><a href="bdsim.blocks.html#bdsim.blocks.transfers.PID.ID">PID.ID (class in bdsim.blocks.transfers)</a>
+</li>
       <li><a href="bdsim.blocks.html#bdsim.blocks.sources.Piecewise">Piecewise (class in bdsim.blocks.sources)</a>
 </li>
       <li><a href="internals.html#bdsim.Plug">Plug (class in bdsim)</a>
 </li>
-      <li><a href="internals.html#bdsim.Plug.portlist">portlist (bdsim.Plug property)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="internals.html#bdsim.Plug.portlist">portlist (bdsim.Plug property)</a>
+</li>
       <li><a href="bdsim.blocks.html#bdsim.blocks.transfers.PoseIntegrator">PoseIntegrator (class in bdsim.blocks.transfers)</a>
 </li>
       <li><a href="bdsim.blocks.html#bdsim.blocks.sinks.Print">Print (class in bdsim.blocks.sinks)</a>
@@ -759,6 +775,14 @@
   </ul></td>
 </tr></table>
 
+<h2 id="U">U</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="internals.html#bdsim.BDSim.update_parameters">update_parameters() (bdsim.BDSim method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="V">V</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -804,8 +828,8 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2020, Peter Corke.
-      <span class="lastupdated">Last updated on 21-Feb-2023.
+    <p>&#169; Copyright 2020-, Peter Corke..
+      <span class="lastupdated">Last updated on 12-Mar-2023.
       </span></p>
   </div>
 

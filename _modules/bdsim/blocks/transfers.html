@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>bdsim.blocks.transfers &mdash; Block diagram simulation 0.7 documentation</title>
+  <title>bdsim.blocks.transfers &mdash; Block diagram simulation  documentation</title>
       <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
@@ -32,6 +32,9 @@
             Block diagram simulation
               <img src="../../../_static/BDSimLogo_NoBackgnd@2x.png" class="logo" alt="Logo"/>
           </a>
+              <div class="version">
+                1.0.0
+              </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -88,24 +91,16 @@
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">from</span> <span class="nn">spatialmath</span> <span class="kn">import</span> <span class="n">base</span>
 
-<span class="kn">from</span> <span class="nn">bdsim.components</span> <span class="kn">import</span> <span class="n">TransferBlock</span>
+<span class="kn">from</span> <span class="nn">bdsim.components</span> <span class="kn">import</span> <span class="n">TransferBlock</span><span class="p">,</span> <span class="n">SubsystemBlock</span>
 
 
 <div class="viewcode-block" id="Integrator"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.Integrator">[docs]</a><span class="k">class</span> <span class="nc">Integrator</span><span class="p">(</span><span class="n">TransferBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`INTEGRATOR`</span>
 
-<span class="sd">    .. table::</span>
-<span class="sd">       :align: left</span>
-
-<span class="sd">       +------------+---------+---------+</span>
-<span class="sd">       | inputs     | outputs |  states |</span>
-<span class="sd">       +------------+---------+---------+</span>
-<span class="sd">       | 1          | 1       | N       |</span>
-<span class="sd">       +------------+---------+---------+</span>
-<span class="sd">       | float,     | float,  |         |</span>
-<span class="sd">       | A(N,)      | A(N,)   |         |</span>
-<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">    :inputs: N [float, ndarray]</span>
+<span class="sd">    :outputs: 1 [float, ndarray]</span>
+<span class="sd">    :states: N</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
@@ -125,8 +120,8 @@
 <span class="sd">        :type max: float or array_like, optional</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
-<span class="sd">        :return: an INTEGRATOR block</span>
-<span class="sd">        :rtype: Integrator instance</span>
+<span class="sd">        :return: INTEGRATOR block</span>
+<span class="sd">        :rtype: ``Integrator`` instance</span>
 
 <span class="sd">        Output is the time integral of the input.  The state can be a scalar or a</span>
 <span class="sd">        vector. The initial state, and type, is given by ``x0``.  The shape of</span>
@@ -187,16 +182,9 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`POSEINTEGRATOR`</span>
 
-<span class="sd">    .. table::</span>
-<span class="sd">       :align: left</span>
-
-<span class="sd">       +------------+---------+---------+</span>
-<span class="sd">       | inputs     | outputs |  states |</span>
-<span class="sd">       +------------+---------+---------+</span>
-<span class="sd">       | 1          | 1       | N       |</span>
-<span class="sd">       +------------+---------+---------+</span>
-<span class="sd">       | A(N,)      | A(N,)   |         |</span>
-<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">    :inputs: 1 [ndarray(6,)]</span>
+<span class="sd">    :outputs: 1 [SE3]</span>
+<span class="sd">    :states: 6</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
@@ -210,8 +198,8 @@
 <span class="sd">        :type x0: SE3, Twist3, optional</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
-<span class="sd">        :return: an POSEINTEGRATOR block</span>
-<span class="sd">        :rtype: PoseIntegrator instance</span>
+<span class="sd">        :return: POSEINTEGRATOR block</span>
+<span class="sd">        :rtype: ``PoseIntegrator`` instance</span>
 
 <span class="sd">        This block integrates spatial velocity over time.</span>
 <span class="sd">        The block input is a spatial velocity as a 6-vector</span>
@@ -219,8 +207,6 @@
 <span class="sd">        is pose as an ``SE3`` instance.</span>
 
 <span class="sd">        .. note:: State is a velocity twist.</span>
-
-<span class="sd">        .. warning:: NOT WORKING YET</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
 
@@ -246,17 +232,9 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`LTI_SS`</span>
 
-<span class="sd">    .. table::</span>
-<span class="sd">       :align: left</span>
-
-<span class="sd">       +------------+---------+---------+</span>
-<span class="sd">       | inputs     | outputs |  states |</span>
-<span class="sd">       +------------+---------+---------+</span>
-<span class="sd">       | 1          | 1       | nc      |</span>
-<span class="sd">       +------------+---------+---------+</span>
-<span class="sd">       | float,     | float,  |         |</span>
-<span class="sd">       | A(nb,)     | A(nc,)  |         |</span>
-<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">    :inputs: 1 [float]</span>
+<span class="sd">    :outputs: 1 [float]</span>
+<span class="sd">    :states: N</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
@@ -274,8 +252,8 @@
 <span class="sd">        :type x0: array_like, optional</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
-<span class="sd">        :return: A SCOPE block</span>
-<span class="sd">        :rtype: LTI_SISO instance</span>
+<span class="sd">        :return: LTI_SS block</span>
+<span class="sd">        :rtype: ``LTI_SS`` instance</span>
 
 <span class="sd">        Implements the dynamics of a single-input single-output (SISO) linear</span>
 <span class="sd">        time invariant (LTI) system described by numerator and denominator</span>
@@ -292,7 +270,7 @@
 
 <span class="sd">        Examples::</span>
 
-<span class="sd">            LTI_SISO(N=[1,2], D=[2, 3, -4])</span>
+<span class="sd">            LTI_SS(N=[1,2], D=[2, 3, -4])</span>
 
 <span class="sd">        is the transfer function :math:`\frac{s+2}{2s^2+3s-4}`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -341,17 +319,9 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`LTI_SISO`</span>
 
-<span class="sd">    .. table::</span>
-<span class="sd">       :align: left</span>
-
-<span class="sd">       +------------+---------+---------+</span>
-<span class="sd">       | inputs     | outputs |  states |</span>
-<span class="sd">       +------------+---------+---------+</span>
-<span class="sd">       | 1          | 1       | n       |</span>
-<span class="sd">       +------------+---------+---------+</span>
-<span class="sd">       | float      | float   |         |</span>
-<span class="sd">       +------------+---------+---------+</span>
-
+<span class="sd">    :inputs: 1 [float]</span>
+<span class="sd">    :outputs: 1 [float]</span>
+<span class="sd">    :states: N</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
@@ -369,8 +339,8 @@
 <span class="sd">        :type x0: array_like, optional</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
-<span class="sd">        :return: A SCOPE block</span>
-<span class="sd">        :rtype: LTI_SISO instance</span>
+<span class="sd">        :return: LTI_SISO block</span>
+<span class="sd">        :rtype: ``LTI_SISO`` instance</span>
 
 <span class="sd">        Implements the dynamics of a single-input single-output (SISO) linear</span>
 <span class="sd">        time invariant (LTI) system described by numerator and denominator</span>
@@ -454,13 +424,214 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">add_param</span><span class="p">(</span><span class="s2">&quot;den&quot;</span><span class="p">,</span> <span class="n">change_param</span><span class="p">)</span></div></div>
 
 
+<span class="c1"># ------------------------------------------------------------------------ #</span>
+
+<span class="kn">from</span> <span class="nn">bdsim.blocks.connections</span> <span class="kn">import</span> <span class="n">SubSystem</span>
+
+
+<div class="viewcode-block" id="Deriv"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.Deriv">[docs]</a><span class="k">class</span> <span class="nc">Deriv</span><span class="p">(</span><span class="n">SubsystemBlock</span><span class="p">):</span>
+
+    <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
+
+<div class="viewcode-block" id="Deriv.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.Deriv.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s2">&quot;subsystem&quot;</span>
+
+        <span class="n">bd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">blockdiagram</span><span class="p">()</span>
+
+        <span class="n">integrator</span> <span class="o">=</span> <span class="n">bd</span><span class="o">.</span><span class="n">INTEGRATOR</span><span class="p">()</span>
+        <span class="n">inp</span> <span class="o">=</span> <span class="n">bd</span><span class="o">.</span><span class="n">INPORT</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">outp</span> <span class="o">=</span> <span class="n">bd</span><span class="o">.</span><span class="n">OUTPORT</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="nb">sum</span> <span class="o">=</span> <span class="n">bd</span><span class="o">.</span><span class="n">SUM</span><span class="p">(</span><span class="s2">&quot;+-&quot;</span><span class="p">)</span>
+        <span class="n">gain</span> <span class="o">=</span> <span class="n">bd</span><span class="o">.</span><span class="n">GAIN</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">alpha</span><span class="p">)</span>
+        <span class="n">bd</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">inp</span><span class="p">,</span> <span class="nb">sum</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">bd</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="nb">sum</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">gain</span><span class="p">)</span>
+        <span class="n">bd</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">gain</span><span class="p">,</span> <span class="n">outp</span><span class="p">,</span> <span class="n">integrator</span><span class="p">)</span>
+        <span class="n">bd</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">integrator</span><span class="p">,</span> <span class="nb">sum</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="c1"># get references to the input and output port blocks</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inport</span> <span class="o">=</span> <span class="n">inp</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outport</span> <span class="o">=</span> <span class="n">outp</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subsystem</span> <span class="o">=</span> <span class="n">bd</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">ssname</span> <span class="o">=</span> <span class="s2">&quot;derivative&quot;</span></div></div>
+
+
+<div class="viewcode-block" id="PID"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.PID">[docs]</a><span class="k">class</span> <span class="nc">PID</span><span class="p">(</span><span class="n">SubSystem</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :blockname:`PID`</span>
+
+<span class="sd">    :inputs: 1 [float]</span>
+<span class="sd">    :outputs: 1 [float]</span>
+<span class="sd">    :states: 2</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="PID.ID"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.PID.ID">[docs]</a>    <span class="k">class</span> <span class="nc">ID</span><span class="p">(</span><span class="n">LTI_SS</span><span class="p">):</span>
+<div class="viewcode-block" id="PID.ID.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.PID.ID.__init__">[docs]</a>        <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">D</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+            <span class="n">I</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+            <span class="n">D_pole</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">I_limit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">I_band</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">blockargs</span><span class="p">,</span>
+        <span class="p">):</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">D</span> <span class="o">=</span> <span class="n">D</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">I</span> <span class="o">=</span> <span class="n">I</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">D_pole</span> <span class="o">=</span> <span class="n">D_pole</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">I_limit</span> <span class="o">=</span> <span class="n">I_limit</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">I_band</span> <span class="o">=</span> <span class="n">I_band</span>
+
+            <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+            <span class="n">B</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">C</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">A</span><span class="o">=</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="o">=</span><span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="o">=</span><span class="n">C</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;A=&quot;</span><span class="p">,</span> <span class="n">A</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;B=&quot;</span><span class="p">,</span> <span class="n">B</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;C=&quot;</span><span class="p">,</span> <span class="n">C</span><span class="p">)</span></div>
+
+        <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">C</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">deriv</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">B</span> <span class="o">@</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">)</span></div>
+
+    <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
+
+<div class="viewcode-block" id="PID.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.PID.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">P</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">D</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">I</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">D_pole</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">I_limit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">I_band</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;PID&quot;</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">blockargs</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        PID controller.</span>
+
+<span class="sd">        :param P: proportional gain, defaults to 0</span>
+<span class="sd">        :param D: derivative gain, defaults to 0</span>
+<span class="sd">        :param I: integral gain, defaults to 0</span>
+<span class="sd">        :param D_pole: filter pole for derivative estimate, defaults to 1 rad/s</span>
+<span class="sd">        :param I_limit: integral limit</span>
+<span class="sd">        :param I_band: band within which integral action is active</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
+<span class="sd">        :type blockargs: dict</span>
+<span class="sd">        :return: A PID block</span>
+<span class="sd">        :rtype: PID instance</span>
+
+<span class="sd">        Implements the dynamics of a PID controller:</span>
+
+<span class="sd">        .. math::</span>
+
+<span class="sd">            e &amp;= x^* - x</span>
+
+<span class="sd">            x &amp;= Pe + D \frac{d}{dt} e + I \int e dt</span>
+
+<span class="sd">        To reduce noise the derivative is computed by a first-order system</span>
+
+<span class="sd">        .. math::</span>
+
+<span class="sd">            \frac{s}{s/a + 1}</span>
+
+<span class="sd">        where the pole :math:`a=` ``D_filt`` can be positioned appropriately.</span>
+
+<span class="sd">        If ``I_limit`` is provided it specifies the limits of the integrator</span>
+<span class="sd">        state, before multiplication by ``I``.  If ``I_limit`` is:</span>
+
+<span class="sd">        * a scalar :math:`s` the integrator state is clipped to the interval :math:`[-s, s]`</span>
+<span class="sd">        * a 2-tuple :math:`(a,b)` the integrator state is clipped to the interval :math:`[a, b]`</span>
+
+<span class="sd">        If ``I_band`` is provided the integrator is reset to zero whenever the</span>
+<span class="sd">        error :math:`e` is outside the band given by ``I_band`` which is:</span>
+
+<span class="sd">        * a scalar :math:`s` the band is the interval :math:`[-s, s]`</span>
+<span class="sd">        * a 2-tuple :math:`(a,b)` the band is the interval :math:`[a, b]`</span>
+
+
+<span class="sd">        Examples::</span>
+
+<span class="sd">            PID(P=3, D=2, I=1)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">subsystem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">blockdiagram</span><span class="p">()</span>
+
+        <span class="n">bd</span> <span class="o">=</span> <span class="n">blockargs</span><span class="p">[</span><span class="s2">&quot;bd&quot;</span><span class="p">]</span>
+        <span class="n">blockargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;bd&quot;</span><span class="p">)</span>
+        <span class="n">Pblock</span> <span class="o">=</span> <span class="n">subsystem</span><span class="o">.</span><span class="n">GAIN</span><span class="p">(</span><span class="n">P</span><span class="p">)</span>
+        <span class="n">IDblock</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ID</span><span class="p">(</span>
+            <span class="n">D</span><span class="o">=</span><span class="n">D</span><span class="p">,</span>
+            <span class="n">I</span><span class="o">=</span><span class="n">I</span><span class="p">,</span>
+            <span class="n">D_pole</span><span class="o">=</span><span class="n">D_pole</span><span class="p">,</span>
+            <span class="n">I_limit</span><span class="o">=</span><span class="n">I_limit</span><span class="p">,</span>
+            <span class="n">I_band</span><span class="o">=</span><span class="n">I_band</span><span class="p">,</span>
+            <span class="n">bd</span><span class="o">=</span><span class="n">subsystem</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">blockargs</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="nb">sum</span> <span class="o">=</span> <span class="n">subsystem</span><span class="o">.</span><span class="n">SUM</span><span class="p">(</span><span class="s2">&quot;++&quot;</span><span class="p">)</span>
+        <span class="n">Input</span> <span class="o">=</span> <span class="n">subsystem</span><span class="o">.</span><span class="n">INPORT</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">Output</span> <span class="o">=</span> <span class="n">subsystem</span><span class="o">.</span><span class="n">OUTPORT</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">subsystem</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">Input</span><span class="p">,</span> <span class="n">Pblock</span><span class="p">,</span> <span class="n">IDblock</span><span class="p">)</span>
+        <span class="n">subsystem</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">Pblock</span><span class="p">,</span> <span class="nb">sum</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">subsystem</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">IDblock</span><span class="p">,</span> <span class="nb">sum</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">subsystem</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="nb">sum</span><span class="p">,</span> <span class="n">Output</span><span class="p">)</span>
+
+        <span class="n">subsystem</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">subsystem</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">bd</span><span class="o">=</span><span class="n">bd</span><span class="p">)</span></div></div>
+
+
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
 
-    <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+    <span class="kn">from</span> <span class="nn">bdsim</span> <span class="kn">import</span> <span class="n">BDSim</span>
 
-    <span class="n">exec</span><span class="p">(</span>
-        <span class="nb">open</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;tests&quot;</span> <span class="o">/</span> <span class="s2">&quot;test_transfers.py&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-    <span class="p">)</span>
+    <span class="n">sim</span> <span class="o">=</span> <span class="n">BDSim</span><span class="p">(</span><span class="n">hold</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">bd</span> <span class="o">=</span> <span class="n">sim</span><span class="o">.</span><span class="n">blockdiagram</span><span class="p">()</span>
+    <span class="n">deriv</span> <span class="o">=</span> <span class="n">bd</span><span class="o">.</span><span class="n">DERIV</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">c</span> <span class="o">=</span> <span class="n">bd</span><span class="o">.</span><span class="n">WAVEFORM</span><span class="p">(</span><span class="n">wave</span><span class="o">=</span><span class="s2">&quot;sine&quot;</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">bd</span><span class="o">.</span><span class="n">SCOPE</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">bd</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">deriv</span><span class="p">,</span> <span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">bd</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">deriv</span><span class="p">,</span> <span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="n">bd</span><span class="o">.</span><span class="n">compile</span><span class="p">()</span>
+    <span class="n">bd</span><span class="o">.</span><span class="n">report_summary</span><span class="p">()</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">sim</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">bd</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="mf">0.02</span><span class="p">)</span>
+
+    <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">t</span><span class="p">,</span> <span class="n">out</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">done</span><span class="p">(</span><span class="n">bd</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># sim = BDSim()</span>
+    <span class="c1"># bd = sim.blockdiagram()</span>
+    <span class="c1"># pid = bd.PID(P=2, D=0.01, verbose=True)</span>
+
+    <span class="c1"># c = bd.CONSTANT(1)</span>
+    <span class="c1"># s = bd.SCOPE()</span>
+    <span class="c1"># bd.connect(c, pid)</span>
+    <span class="c1"># bd.connect(pid, s)</span>
+
+    <span class="c1"># bd.compile(report=True)</span>
+    <span class="c1"># bd.report()</span>
+
+    <span class="c1"># from pathlib import Path</span>
+
+    <span class="c1"># exec(</span>
+    <span class="c1">#     open(Path(__file__).parent.parent.parent / &quot;tests&quot; / &quot;test_transfers.py&quot;).read()</span>
+    <span class="c1"># )</span>
 </pre></div>
 
            </div>
@@ -470,8 +641,8 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2020, Peter Corke.
-      <span class="lastupdated">Last updated on 21-Feb-2023.
+    <p>&#169; Copyright 2020-, Peter Corke..
+      <span class="lastupdated">Last updated on 12-Mar-2023.
       </span></p>
   </div>
 

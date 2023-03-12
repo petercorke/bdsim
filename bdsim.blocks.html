@@ -2,9 +2,13 @@
 <html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
+    <link rel="icon" sizes="16x16" type="image/png" href="_static/favicon-16x16.png">
+    <link rel="icon" sizes="32x32" type="image/png" href="_static/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" type="image/png" href="_static/apple-touch-icon.png">
+    <link rel="android-chrome" sizes="192x192" type="image/png" href="_static/android-chrome-192x192.png ">
+    <link rel="android-chrome" sizes="512x512" type="image/png" href="_static/android-chrome-512x512.png ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Block library &mdash; Block diagram simulation 0.7 documentation</title>
+  <title>Block library &mdash; Block diagram simulation  documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
@@ -16,7 +20,8 @@
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
         <script src="_static/doctools.js"></script>
-        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+        <script>window.MathJax = {"tex": {"macros": {"presup": ["\\,{}^{\\scriptscriptstyle #1}\\!", 1], "SE": ["\\mathbf{SE}(#1)", 1], "SO": ["\\mathbf{SO}(#1)", 1], "se": ["\\mathbf{se}(#1)", 1], "so": ["\\mathbf{so}(#1)", 1], "vec": ["\\boldsymbol{#1}", 1], "dvec": ["\\dot{\\boldsymbol{#1}}", 1], "ddvec": ["\\ddot{\\boldsymbol{#1}}", 1], "fvec": ["\\presup{#1}\\boldsymbol{#2}", 2], "fdvec": ["\\presup{#1}\\dot{\\boldsymbol{#2}}", 2], "fddvec": ["\\presup{#1}\\ddot{\\boldsymbol{#2}}", 2], "norm": ["\\Vert #1 \\Vert", 1], "mat": ["\\mathbf{#1}", 1], "dmat": ["\\dot{\\mathbf{#1}}", 1], "fmat": ["\\presup{#1}\\mathbf{#2}", 2], "sk": ["\\left[#1\\right]", 1], "skx": ["\\left[#1\\right]_{\\times}", 1], "vex": ["\\vee\\left( #1\\right)", 1], "vexx": ["\\vee_{\\times}\\left( #1\\right)", 1], "q": "\\mathring{q}", "fq": ["\\presup{#1}\\mathring{q}", 1]}}}</script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -36,6 +41,9 @@
             Block diagram simulation
               <img src="_static/BDSimLogo_NoBackgnd@2x.png" class="logo" alt="Logo"/>
           </a>
+              <div class="version">
+                1.0.0
+              </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -907,7 +915,7 @@ to <code class="docutils literal notranslate"><span class="pre">bdsim.run</span>
 </ul>
 <dl class="py class">
 <dt class="sig sig-object py" id="bdsim.blocks.functions.Clip">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bdsim.blocks.functions.</span></span><span class="sig-name descname"><span class="pre">Clip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Clip"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.functions.Clip" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bdsim.blocks.functions.</span></span><span class="sig-name descname"><span class="pre">Clip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-</span> <span class="pre">inf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">inf</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Clip"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.functions.Clip" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
 <p>
     <table width="100%">
@@ -925,46 +933,34 @@ to <code class="docutils literal notranslate"><span class="pre">bdsim.run</span>
     </tr>
     </table>
     </p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 40%" />
-<col style="width: 30%" />
-<col style="width: 30%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>1</p></td>
-<td><p>1</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td><p>float,
-A(N,)</p></td>
-<td><p>float,
-A(N,)</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>1 [int, float, ndarray]</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>1 [int, float, ndarray]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.functions.Clip.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">min</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-</span> <span class="pre">inf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">inf</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Clip.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.functions.Clip.__init__" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-</span> <span class="pre">inf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">inf</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Clip.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.functions.Clip.__init__" title="Permalink to this definition"></a></dt>
 <dd><p>Signal clipping.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>min</strong> (<em>float</em><em> or </em><em>array_like</em><em>, </em><em>optional</em>) – Minimum value, defaults to -math.inf</p></li>
+<li><p><strong>min</strong> (<em>scalar</em><em> or </em><em>array_like</em><em>, </em><em>optional</em>) – Minimum value, defaults to -math.inf</p></li>
 <li><p><strong>max</strong> (<em>float</em><em> or </em><em>array_like</em><em>, </em><em>optional</em>) – Maximum value, defaults to math.inf</p></li>
 <li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A CLIP block</p>
+<dd class="field-even"><p>CLIP block</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>Clip instance</p>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">Clip</span></code> instance</p>
 </dd>
 </dl>
 <p>The input signal is clipped to the range from <code class="docutils literal notranslate"><span class="pre">minimum</span></code> to <code class="docutils literal notranslate"><span class="pre">maximum</span></code> inclusive.</p>
@@ -988,7 +984,7 @@ the input vector.</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="bdsim.blocks.functions.Function">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bdsim.blocks.functions.</span></span><span class="sig-name descname"><span class="pre">Function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.functions.Function" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bdsim.blocks.functions.</span></span><span class="sig-name descname"><span class="pre">Function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">persistent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fkwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.functions.Function" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
 <p>
     <table width="100%">
@@ -1006,35 +1002,25 @@ the input vector.</p></li>
     </tr>
     </table>
     </p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 40%" />
-<col style="width: 30%" />
-<col style="width: 30%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>nin</p></td>
-<td><p>nout</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td><p>any</p></td>
-<td><p>any</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>N [any]</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>M [any]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.functions.Function.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">persistent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fkwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Function.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.functions.Function.__init__" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">persistent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fkwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Function.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.functions.Function.__init__" title="Permalink to this definition"></a></dt>
 <dd><p>Python function.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>func</strong> (<em>callable</em><em> or </em><em>sequence of callables</em><em>, </em><em>optional</em>) – A function or lambda, or list thereof, defaults to None</p></li>
+<li><p><strong>func</strong> (<em>callable</em><em> or </em><em>sequence of callables</em><em>, </em><em>optional</em>) – function or lambda, or list thereof, defaults to None</p></li>
 <li><p><strong>nin</strong> (<em>int</em><em>, </em><em>optional</em>) – number of inputs, defaults to 1</p></li>
 <li><p><strong>nout</strong> (<em>int</em><em>, </em><em>optional</em>) – number of outputs, defaults to 1</p></li>
 <li><p><strong>persistent</strong> (<em>bool</em><em>, </em><em>optional</em>) – pass in a reference to a dictionary instance to hold persistent state, defaults to False</p></li>
@@ -1044,10 +1030,10 @@ the input vector.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A FUNCTION block</p>
+<dd class="field-even"><p>FUNCTION block</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>A Function instance</p>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">Function</span></code> instance</p>
 </dd>
 </dl>
 <p>Inputs to the block are passed as separate arguments to the function.
@@ -1112,7 +1098,7 @@ are assigned to sequential input ports:</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="bdsim.blocks.functions.Gain">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bdsim.blocks.functions.</span></span><span class="sig-name descname"><span class="pre">Gain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Gain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.functions.Gain" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bdsim.blocks.functions.</span></span><span class="sig-name descname"><span class="pre">Gain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">K</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">premul</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Gain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.functions.Gain" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
 <p>
     <table width="100%">
@@ -1130,48 +1116,34 @@ are assigned to sequential input ports:</p>
     </tr>
     </table>
     </p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 40%" />
-<col style="width: 30%" />
-<col style="width: 30%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>1</p></td>
-<td><p>1</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td><p>float,
-A(N,),
-A(N,M)</p></td>
-<td><p>float,
-A(N,),
-A(N,M)</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>1[int, float, ndarray]</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>1 [int, float, ndarray]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.functions.Gain.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">K</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">premul</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Gain.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.functions.Gain.__init__" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">K</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">premul</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Gain.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.functions.Gain.__init__" title="Permalink to this definition"></a></dt>
 <dd><p>Gain block.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>K</strong> (<em>array_like</em>) – The gain value, defaults to 1</p></li>
+<li><p><strong>K</strong> (<em>scalar</em><em>, </em><em>array_like</em>) – The gain value, defaults to 1</p></li>
 <li><p><strong>premul</strong> (<em>bool</em><em>, </em><em>optional</em>) – premultiply by constant, default is postmultiply, defaults to False</p></li>
 <li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A GAIN block</p>
+<dd class="field-even"><p>GAIN block</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>Gain instance</p>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">Gain</span></code> instance</p>
 </dd>
 </dl>
 <p>Scale the input signal. If the input is <span class="math notranslate nohighlight">\(u\)</span> the output is <span class="math notranslate nohighlight">\(u K\)</span>.</p>
@@ -1190,7 +1162,7 @@ to compute <span class="math notranslate nohighlight">\(K u\)</span> use the <co
 
 <dl class="py class">
 <dt class="sig sig-object py" id="bdsim.blocks.functions.Interpolate">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bdsim.blocks.functions.</span></span><span class="sig-name descname"><span class="pre">Interpolate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Interpolate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.functions.Interpolate" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bdsim.blocks.functions.</span></span><span class="sig-name descname"><span class="pre">Interpolate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kind</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'linear'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Interpolate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.functions.Interpolate" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
 <p>
     <table width="100%">
@@ -1208,30 +1180,20 @@ to compute <span class="math notranslate nohighlight">\(K u\)</span> use the <co
     </tr>
     </table>
     </p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 40%" />
-<col style="width: 30%" />
-<col style="width: 30%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>0 or 1</p></td>
-<td><p>1</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td><p>float</p></td>
-<td><p>any</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>0 or 1 [float]</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>1 [float, ndarray(1,)]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.functions.Interpolate.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'linear'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Interpolate.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.functions.Interpolate.__init__" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kind</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'linear'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Interpolate.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.functions.Interpolate.__init__" title="Permalink to this definition"></a></dt>
 <dd><p>Interpolate signal.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1245,10 +1207,10 @@ to compute <span class="math notranslate nohighlight">\(K u\)</span> use the <co
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>An INTERPOLATE block</p>
+<dd class="field-even"><p>INTERPOLATE block</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>An Interpolate instance</p>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">Interpolate</span></code> instance</p>
 </dd>
 </dl>
 <p>Interpolate the input signal using to a piecewise function.</p>
@@ -1277,7 +1239,7 @@ input ports and is a <code class="docutils literal notranslate"><span class="pre
 
 <dl class="py class">
 <dt class="sig sig-object py" id="bdsim.blocks.functions.Prod">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bdsim.blocks.functions.</span></span><span class="sig-name descname"><span class="pre">Prod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Prod"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.functions.Prod" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bdsim.blocks.functions.</span></span><span class="sig-name descname"><span class="pre">Prod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ops</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'**'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Prod"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.functions.Prod" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
 <p>Product junction.</p>
 <p>
@@ -1298,27 +1260,32 @@ input ports and is a <code class="docutils literal notranslate"><span class="pre
     </p>
 <dl class="field-list simple">
 <dt class="field-odd">Inputs</dt>
-<dd class="field-odd"><p>N [float, ndarray(N), ndarray(N,M)]</p>
+<dd class="field-odd"><p>N [int, float, ndarray]</p>
 </dd>
 <dt class="field-even">Outputs</dt>
-<dd class="field-even"><p>1 [float, ndarray(N), ndarray(N,M)]</p>
+<dd class="field-even"><p>1 [int, float, ndarray]</p>
 </dd>
 <dt class="field-odd">States</dt>
 <dd class="field-odd"><p>0</p>
 </dd>
-<dt class="field-even">Parameters</dt>
-<dd class="field-even"><ul class="simple">
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bdsim.blocks.functions.Prod.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ops</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'**'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Prod.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.functions.Prod.__init__" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
 <li><p><strong>ops</strong> (<em>str</em><em>, </em><em>optional</em>) – operations associated with input ports, accepted characters: * or /, defaults to ‘**’</p></li>
 <li><p><strong>inputs</strong> (<a class="reference internal" href="internals.html#bdsim.Block" title="bdsim.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="internals.html#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
 <li><p><strong>matrix</strong> (<em>bool</em><em>, </em><em>optional</em>) – Arguments are matrices, defaults to False</p></li>
 <li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A PROD block</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>PROD block</p>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>Prod instance</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">Prod</span></code> instance</p>
 </dd>
 </dl>
 <p>Multiply or divide input signals according to the <cite>ops</cite> string.  The
@@ -1330,44 +1297,25 @@ number of input ports is the length of this string.</p>
 <p>is a 3-input product junction which computes port0 / port 1 * port2.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Note</dt>
-<dd class="field-odd"><p>The inputs can be scalars or NumPy arrays.</p>
-</dd>
-<dt class="field-even">Note</dt>
-<dd class="field-even"><p>By default the <code class="docutils literal notranslate"><span class="pre">*</span></code> and <code class="docutils literal notranslate"><span class="pre">/</span></code> operators are used which perform element-wise
+<dd class="field-odd"><p>By default the <code class="docutils literal notranslate"><span class="pre">*</span></code> and <code class="docutils literal notranslate"><span class="pre">/</span></code> operators are used which perform element-wise
 operations.</p>
 </dd>
-<dt class="field-odd">Note</dt>
-<dd class="field-odd"><p>The option <code class="docutils literal notranslate"><span class="pre">matrix</span></code> will instead use <code class="docutils literal notranslate"><span class="pre">&#64;</span></code> and <code class="docutils literal notranslate"><span class="pre">&#64;</span> <span class="pre">np.linalg.inv()</span></code>. The
+<dt class="field-even">Note</dt>
+<dd class="field-even"><p>The option <code class="docutils literal notranslate"><span class="pre">matrix</span></code> will instead use <code class="docutils literal notranslate"><span class="pre">&#64;</span></code> and <code class="docutils literal notranslate"><span class="pre">&#64;</span> <span class="pre">np.linalg.inv()</span></code>. The
 shapes of matrices must conform.  A matrix on a <code class="docutils literal notranslate"><span class="pre">/</span></code> input must be square and
 non-singular.</p>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="bdsim.blocks.functions.Prod.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ops</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'**'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Prod.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.functions.Prod.__init__" title="Permalink to this definition"></a></dt>
-<dd><p>Create a function block.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>function block base class</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference internal" href="internals.html#bdsim.FunctionBlock" title="bdsim.FunctionBlock">FunctionBlock</a></p>
-</dd>
-</dl>
-<p>This is the parent class of all function blocks.</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="bdsim.blocks.functions.Sum">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bdsim.blocks.functions.</span></span><span class="sig-name descname"><span class="pre">Sum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Sum"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.functions.Sum" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bdsim.blocks.functions.</span></span><span class="sig-name descname"><span class="pre">Sum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'++'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Sum"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.functions.Sum" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
-<p>Summing junction.
-
+<p>Summing junction.</p>
+<p>
     <table width="100%">
     	<col style="width:80%">
 	    <col style="width:20%">
@@ -1385,27 +1333,31 @@ non-singular.</p>
     </p>
 <dl class="field-list simple">
 <dt class="field-odd">Inputs</dt>
-<dd class="field-odd"><p>N [float, ndarray(N), ndarray(N,M)]</p>
+<dd class="field-odd"><p>N [int, float, ndarray]</p>
 </dd>
 <dt class="field-even">Outputs</dt>
-<dd class="field-even"><p>1 [float, ndarray(N), ndarray(N,M)]</p>
+<dd class="field-even"><p>1 [int, float, ndarray]</p>
 </dd>
 <dt class="field-odd">States</dt>
 <dd class="field-odd"><p>0</p>
 </dd>
-<dt class="field-even">Parameters</dt>
-<dd class="field-even"><ul class="simple">
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bdsim.blocks.functions.Sum.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'++'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Sum.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.functions.Sum.__init__" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
 <li><p><strong>signs</strong> (<em>str</em><em>, </em><em>optional</em>) – signs associated with input ports, accepted characters: + or -, defaults to ‘++’</p></li>
-<li><p><strong>mode</strong> (<em>str</em><em>, </em><em>optional</em>) – controls angle wrapping per element, accepted characters r or c or C or L, defaults to None</p></li>
-<li><p><strong>inputs</strong> (<a class="reference internal" href="internals.html#bdsim.Block" title="bdsim.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="internals.html#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
+<li><p><strong>mode</strong> (<em>str</em><em>, </em><em>optional</em>) – controls addition mode, per element, string comprises <code class="docutils literal notranslate"><span class="pre">r</span></code> or <code class="docutils literal notranslate"><span class="pre">c</span></code> or <code class="docutils literal notranslate"><span class="pre">C</span></code> or <code class="docutils literal notranslate"><span class="pre">L</span></code>, defaults to None</p></li>
 <li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A SUM block</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>SUM block</p>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>Sum instance</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">Sum</span></code> instance</p>
 </dd>
 </dl>
 <p>Add or subtract input signals according to the <cite>signs</cite> string.  The
@@ -1415,40 +1367,43 @@ number of input ports is the length of this string.</p>
 </pre></div>
 </div>
 <p>is a 3-input summing junction which computes port0 - port1 + port2.</p>
-<p>If some elements of the inputs are angles then <code class="docutils literal notranslate"><span class="pre">mode</span></code> controls, per element, how
-they are wrapped.  The elements of the string can be</p>
-<div class="line-block">
-<div class="line">character  | purpose                           |</div>
-<div class="line">:——— | :——————————– |</div>
-<div class="line">r          | real number, don’t wrap (default) |</div>
-<div class="line">c          | angle on circle, wrap to [-π, π)  |</div>
-<div class="line">C          | angle on circle, wrap to [0, 2π)  |</div>
-<div class="line">L          | latitude angle, wrap to [0, π]    |</div>
-</div>
-<p>For example if <code class="docutils literal notranslate"><span class="pre">mode=&quot;rc&quot;</span></code> then a 2-element array would have its
-second element wrapped to the range [-π, π).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Note</dt>
-<dd class="field-odd"><p>The signals must be compatible, all scalars, or all arrays
-of the same shape.</p>
+<dd class="field-odd"><p>The signals must be compatible, all scalars, or all arrays</p>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="bdsim.blocks.functions.Sum.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'++'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Sum.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.functions.Sum.__init__" title="Permalink to this definition"></a></dt>
-<dd><p>Create a function block.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>function block base class</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference internal" href="internals.html#bdsim.FunctionBlock" title="bdsim.FunctionBlock">FunctionBlock</a></p>
-</dd>
-</dl>
-<p>This is the parent class of all function blocks.</p>
+<p>of the same shape.</p>
+<p><code class="docutils literal notranslate"><span class="pre">mode</span></code> controls how elements of the input vectors are added/subtracted.
+Elements which are angles must be treated specially, and this is indicated by
+the corresponding characters in <code class="docutils literal notranslate"><span class="pre">mode</span></code>.  The string’s length must equal the
+width of the input vectors. The characters of the string can be:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 24%" />
+<col style="width: 76%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>mode character</p></th>
+<th class="head"><p>purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>r</p></td>
+<td><p>real number, don’t wrap (default)</p></td>
+</tr>
+<tr class="row-odd"><td><p>c</p></td>
+<td><p>angle on circle, wrap to [-π, π)</p></td>
+</tr>
+<tr class="row-even"><td><p>C</p></td>
+<td><p>angle on circle, wrap to [0, 2π)</p></td>
+</tr>
+<tr class="row-odd"><td><p>L</p></td>
+<td><p>colatitude angle, wrap to [0, π]</p></td>
+</tr>
+</tbody>
+</table>
+<p>For example if <code class="docutils literal notranslate"><span class="pre">mode=&quot;rc&quot;</span></code> then a 2-element array would have its
+second element wrapped to the range [-π, π).</p>
 </dd></dl>
 
 </dd></dl>
@@ -1462,6 +1417,30 @@ of the same shape.</p>
 <li><p>have state variables</p></li>
 <li><p>are a subclass of <code class="docutils literal notranslate"><span class="pre">TransferBlock</span></code> → <code class="docutils literal notranslate"><span class="pre">Block</span></code></p></li>
 </ul>
+<dl class="py class">
+<dt class="sig sig-object py" id="bdsim.blocks.transfers.Deriv">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bdsim.blocks.transfers.</span></span><span class="sig-name descname"><span class="pre">Deriv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/transfers.html#Deriv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.transfers.Deriv" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.SubsystemBlock" title="bdsim.components.SubsystemBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SubsystemBlock</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="bdsim.blocks.transfers.Deriv.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/transfers.html#Deriv.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.transfers.Deriv.__init__" title="Permalink to this definition"></a></dt>
+<dd><p>Create a subsystem block.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>subsystem block base class</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="internals.html#bdsim.SubsystemBlock" title="bdsim.SubsystemBlock">SubsystemBlock</a></p>
+</dd>
+</dl>
+<p>This is the parent class of all subsystem blocks.</p>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py class">
 <dt class="sig sig-object py" id="bdsim.blocks.transfers.Integrator">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bdsim.blocks.transfers.</span></span><span class="sig-name descname"><span class="pre">Integrator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/transfers.html#Integrator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.transfers.Integrator" title="Permalink to this definition"></a></dt>
@@ -1482,29 +1461,17 @@ of the same shape.</p>
     </tr>
     </table>
     </p>
-<table class="docutils align-left">
-<colgroup>
-<col style="width: 40%" />
-<col style="width: 30%" />
-<col style="width: 30%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>1</p></td>
-<td><p>1</p></td>
-<td><p>N</p></td>
-</tr>
-<tr class="row-odd"><td><p>float,
-A(N,)</p></td>
-<td><p>float,
-A(N,)</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>N [float, ndarray]</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>1 [float, ndarray]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>N</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.transfers.Integrator.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gain</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/transfers.html#Integrator.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.transfers.Integrator.__init__" title="Permalink to this definition"></a></dt>
@@ -1520,10 +1487,10 @@ A(N,)</p></td>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>an INTEGRATOR block</p>
+<dd class="field-even"><p>INTEGRATOR block</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>Integrator instance</p>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">Integrator</span></code> instance</p>
 </dd>
 </dl>
 <p>Output is the time integral of the input.  The state can be a scalar or a
@@ -1567,27 +1534,17 @@ but assume that the initial state is within the limits.</p>
     </tr>
     </table>
     </p>
-<table class="docutils align-left">
-<colgroup>
-<col style="width: 40%" />
-<col style="width: 30%" />
-<col style="width: 30%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>1</p></td>
-<td><p>1</p></td>
-<td><p>n</p></td>
-</tr>
-<tr class="row-odd"><td><p>float</p></td>
-<td><p>float</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>1 [float]</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>1 [float]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>N</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.transfers.LTI_SISO.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">N</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">D</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[1,</span> <span class="pre">1]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/transfers.html#LTI_SISO.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.transfers.LTI_SISO.__init__" title="Permalink to this definition"></a></dt>
@@ -1602,10 +1559,10 @@ but assume that the initial state is within the limits.</p>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A SCOPE block</p>
+<dd class="field-even"><p>LTI_SISO block</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>LTI_SISO instance</p>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">LTI_SISO</span></code> instance</p>
 </dd>
 </dl>
 <p>Implements the dynamics of a single-input single-output (SISO) linear
@@ -1646,29 +1603,17 @@ form.</p>
     </tr>
     </table>
     </p>
-<table class="docutils align-left">
-<colgroup>
-<col style="width: 40%" />
-<col style="width: 30%" />
-<col style="width: 30%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>1</p></td>
-<td><p>1</p></td>
-<td><p>nc</p></td>
-</tr>
-<tr class="row-odd"><td><p>float,
-A(nb,)</p></td>
-<td><p>float,
-A(nc,)</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>1 [float]</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>1 [float]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>N</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.transfers.LTI_SS.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">C</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/transfers.html#LTI_SS.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.transfers.LTI_SS.__init__" title="Permalink to this definition"></a></dt>
@@ -1683,10 +1628,10 @@ A(nc,)</p></td>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A SCOPE block</p>
+<dd class="field-even"><p>LTI_SS block</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>LTI_SISO instance</p>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">LTI_SS</span></code> instance</p>
 </dd>
 </dl>
 <p>Implements the dynamics of a single-input single-output (SISO) linear
@@ -1699,10 +1644,133 @@ than denominator are allowed.</p>
 <p>The order of the states in <code class="docutils literal notranslate"><span class="pre">x0</span></code> is consistent with controller canonical
 form.</p>
 <p>Examples:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">LTI_SISO</span><span class="p">(</span><span class="n">N</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span> <span class="n">D</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="o">-</span><span class="mi">4</span><span class="p">])</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">LTI_SS</span><span class="p">(</span><span class="n">N</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span> <span class="n">D</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="o">-</span><span class="mi">4</span><span class="p">])</span>
 </pre></div>
 </div>
 <p>is the transfer function <span class="math notranslate nohighlight">\(\frac{s+2}{2s^2+3s-4}\)</span>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bdsim.blocks.transfers.PID">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bdsim.blocks.transfers.</span></span><span class="sig-name descname"><span class="pre">PID</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">P</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">D</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">I</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">D_pole</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">I_limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">I_band</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'PID'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/transfers.html#PID"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.transfers.PID" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bdsim.blocks.connections.SubSystem" title="bdsim.blocks.connections.SubSystem"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.blocks.connections.SubSystem</span></code></a></p>
+<p>
+    <table width="100%">
+    	<col style="width:80%">
+	    <col style="width:20%">
+    <tr>
+    <td>
+    <p style="border:10px; background-color:#000000; padding: 1em; color: white; font-size: 30px; font-weight: bold;">
+    PID
+    </p>
+    </td>
+    <td>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/pid.png" width=80 height=80>
+    </td>
+    </tr>
+    </table>
+    </p>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>1 [float]</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>1 [float]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>2</p>
+</dd>
+</dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="bdsim.blocks.transfers.PID.ID">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ID</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">D</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">I</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">D_pole</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">I_limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">I_band</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/transfers.html#PID.ID"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.transfers.PID.ID" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bdsim.blocks.transfers.LTI_SS" title="bdsim.blocks.transfers.LTI_SS"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.blocks.transfers.LTI_SS</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="bdsim.blocks.transfers.PID.ID.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">D</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">I</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">D_pole</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">I_limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">I_band</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/transfers.html#PID.ID.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.transfers.PID.ID.__init__" title="Permalink to this definition"></a></dt>
+<dd><p>State-space LTI dynamics.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>N</strong> (<em>array_like</em><em>, </em><em>optional</em>) – numerator coefficients, defaults to 1</p></li>
+<li><p><strong>D</strong> (<em>array_like</em><em>, </em><em>optional</em>) – denominator coefficients, defaults to [1,1]</p></li>
+<li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – initial states, defaults to None</p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>LTI_SS block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">LTI_SS</span></code> instance</p>
+</dd>
+</dl>
+<p>Implements the dynamics of a single-input single-output (SISO) linear
+time invariant (LTI) system described by numerator and denominator
+polynomial coefficients.</p>
+<p>Coefficients are given in the order from highest order to zeroth
+order, ie. <span class="math notranslate nohighlight">\(2s^2 - 4s +3\)</span> is <code class="docutils literal notranslate"><span class="pre">[2,</span> <span class="pre">-4,</span> <span class="pre">3]</span></code>.</p>
+<p>Only proper transfer functions, where order of numerator is less
+than denominator are allowed.</p>
+<p>The order of the states in <code class="docutils literal notranslate"><span class="pre">x0</span></code> is consistent with controller canonical
+form.</p>
+<p>Examples:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">LTI_SS</span><span class="p">(</span><span class="n">N</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span> <span class="n">D</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="o">-</span><span class="mi">4</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>is the transfer function <span class="math notranslate nohighlight">\(\frac{s+2}{2s^2+3s-4}\)</span>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdsim.blocks.transfers.PID.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">P</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">D</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">I</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">D_pole</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">I_limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">I_band</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'PID'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/transfers.html#PID.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.transfers.PID.__init__" title="Permalink to this definition"></a></dt>
+<dd><p>PID controller.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>P</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – proportional gain, defaults to 0</p></li>
+<li><p><strong>D</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – derivative gain, defaults to 0</p></li>
+<li><p><strong>I</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – integral gain, defaults to 0</p></li>
+<li><p><strong>D_pole</strong> – filter pole for derivative estimate, defaults to 1 rad/s</p></li>
+<li><p><strong>I_limit</strong> – integral limit</p></li>
+<li><p><strong>I_band</strong> – band within which integral action is active</p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A PID block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>PID instance</p>
+</dd>
+</dl>
+<p>Implements the dynamics of a PID controller:</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}e &amp;= x^* - x\\x &amp;= Pe + D \frac{d}{dt} e + I \int e dt\end{aligned}\end{align} \]</div>
+<p>To reduce noise the derivative is computed by a first-order system</p>
+<div class="math notranslate nohighlight">
+\[\frac{s}{s/a + 1}\]</div>
+<p>where the pole <span class="math notranslate nohighlight">\(a=\)</span> <code class="docutils literal notranslate"><span class="pre">D_filt</span></code> can be positioned appropriately.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">I_limit</span></code> is provided it specifies the limits of the integrator
+state, before multiplication by <code class="docutils literal notranslate"><span class="pre">I</span></code>.  If <code class="docutils literal notranslate"><span class="pre">I_limit</span></code> is:</p>
+<ul class="simple">
+<li><p>a scalar <span class="math notranslate nohighlight">\(s\)</span> the integrator state is clipped to the interval <span class="math notranslate nohighlight">\([-s, s]\)</span></p></li>
+<li><p>a 2-tuple <span class="math notranslate nohighlight">\((a,b)\)</span> the integrator state is clipped to the interval <span class="math notranslate nohighlight">\([a, b]\)</span></p></li>
+</ul>
+<p>If <code class="docutils literal notranslate"><span class="pre">I_band</span></code> is provided the integrator is reset to zero whenever the
+error <span class="math notranslate nohighlight">\(e\)</span> is outside the band given by <code class="docutils literal notranslate"><span class="pre">I_band</span></code> which is:</p>
+<ul class="simple">
+<li><p>a scalar <span class="math notranslate nohighlight">\(s\)</span> the band is the interval <span class="math notranslate nohighlight">\([-s, s]\)</span></p></li>
+<li><p>a 2-tuple <span class="math notranslate nohighlight">\((a,b)\)</span> the band is the interval <span class="math notranslate nohighlight">\([a, b]\)</span></p></li>
+</ul>
+<p>Examples:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">PID</span><span class="p">(</span><span class="n">P</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">D</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">I</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 </dd></dl>
@@ -1727,27 +1795,17 @@ form.</p>
     </tr>
     </table>
     </p>
-<table class="docutils align-left">
-<colgroup>
-<col style="width: 40%" />
-<col style="width: 30%" />
-<col style="width: 30%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>1</p></td>
-<td><p>1</p></td>
-<td><p>N</p></td>
-</tr>
-<tr class="row-odd"><td><p>A(N,)</p></td>
-<td><p>A(N,)</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>1 [ndarray(6,)]</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>1 [SE3]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>6</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.transfers.PoseIntegrator.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/transfers.html#PoseIntegrator.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.transfers.PoseIntegrator.__init__" title="Permalink to this definition"></a></dt>
@@ -1760,10 +1818,10 @@ form.</p>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>an POSEINTEGRATOR block</p>
+<dd class="field-even"><p>POSEINTEGRATOR block</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>PoseIntegrator instance</p>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">PoseIntegrator</span></code> instance</p>
 </dd>
 </dl>
 <p>This block integrates spatial velocity over time.
@@ -1773,10 +1831,6 @@ is pose as an <code class="docutils literal notranslate"><span class="pre">SE3</
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>State is a velocity twist.</p>
-</div>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>NOT WORKING YET</p>
 </div>
 </dd></dl>
 
@@ -3335,8 +3389,8 @@ subsystem.</p></li>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2020, Peter Corke.
-      <span class="lastupdated">Last updated on 21-Feb-2023.
+    <p>&#169; Copyright 2020-, Peter Corke..
+      <span class="lastupdated">Last updated on 12-Mar-2023.
       </span></p>
   </div>
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>bdsim.blocks.functions &mdash; Block diagram simulation 0.7 documentation</title>
+  <title>bdsim.blocks.functions &mdash; Block diagram simulation  documentation</title>
       <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
@@ -32,6 +32,9 @@
             Block diagram simulation
               <img src="../../../_static/BDSimLogo_NoBackgnd@2x.png" class="logo" alt="Logo"/>
           </a>
+              <div class="version">
+                1.0.0
+              </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -102,49 +105,13 @@
 
 <div class="viewcode-block" id="Sum"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Sum">[docs]</a><span class="k">class</span> <span class="nc">Sum</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Summing junction.</span>
+
 <span class="sd">    :blockname:`SUM`</span>
 
-<span class="sd">    :inputs: N [float, ndarray(N), ndarray(N,M)]</span>
-
-<span class="sd">    :outputs: 1 [float, ndarray(N), ndarray(N,M)]</span>
-
+<span class="sd">    :inputs: N [int, float, ndarray]</span>
+<span class="sd">    :outputs: 1 [int, float, ndarray]</span>
 <span class="sd">    :states: 0</span>
 
-<span class="sd">    :param signs: signs associated with input ports, accepted characters: + or -, defaults to &#39;++&#39;</span>
-<span class="sd">    :type signs: str, optional</span>
-<span class="sd">    :param mode: controls angle wrapping per element, accepted characters r or c or C or L, defaults to None</span>
-<span class="sd">    :type mode: str, optional</span>
-<span class="sd">    :param inputs: Optional incoming connections</span>
-<span class="sd">    :type inputs: Block or Plug</span>
-<span class="sd">    :param blockargs: |BlockOptions|</span>
-<span class="sd">    :type blockargs: dict</span>
-<span class="sd">    :return: A SUM block</span>
-<span class="sd">    :rtype: Sum instance</span>
-
-<span class="sd">    Add or subtract input signals according to the `signs` string.  The</span>
-<span class="sd">    number of input ports is the length of this string.</span>
-
-<span class="sd">    For example::</span>
-
-<span class="sd">        sum = bd.SUM(&#39;+-+&#39;)</span>
-
-<span class="sd">    is a 3-input summing junction which computes port0 - port1 + port2.</span>
-
-<span class="sd">    If some elements of the inputs are angles then ``mode`` controls, per element, how</span>
-<span class="sd">    they are wrapped.  The elements of the string can be</span>
-
-<span class="sd">    | character  | purpose                           |</span>
-<span class="sd">    | :--------- | :-------------------------------- |</span>
-<span class="sd">    | r          | real number, don&#39;t wrap (default) |</span>
-<span class="sd">    | c          | angle on circle, wrap to [-π, π)  |</span>
-<span class="sd">    | C          | angle on circle, wrap to [0, 2π)  |</span>
-<span class="sd">    | L          | latitude angle, wrap to [0, π]    |</span>
-
-<span class="sd">    For example if ``mode=&quot;rc&quot;`` then a 2-element array would have its</span>
-<span class="sd">    second element wrapped to the range [-π, π).</span>
-
-<span class="sd">    :note: The signals must be compatible, all scalars, or all arrays</span>
-<span class="sd">        of the same shape.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
@@ -159,6 +126,46 @@
     <span class="p">}</span>
 
 <div class="viewcode-block" id="Sum.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Sum.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;++&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param signs: signs associated with input ports, accepted characters: + or -, defaults to &#39;++&#39;</span>
+<span class="sd">        :type signs: str, optional</span>
+<span class="sd">        :param mode: controls addition mode, per element, string comprises ``r`` or ``c`` or ``C`` or ``L``, defaults to None</span>
+<span class="sd">        :type mode: str, optional</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
+<span class="sd">        :type blockargs: dict</span>
+<span class="sd">        :return: SUM block</span>
+<span class="sd">        :rtype: ``Sum`` instance</span>
+
+<span class="sd">        Add or subtract input signals according to the `signs` string.  The</span>
+<span class="sd">        number of input ports is the length of this string.</span>
+
+<span class="sd">        For example::</span>
+
+<span class="sd">            sum = bd.SUM(&#39;+-+&#39;)</span>
+
+<span class="sd">        is a 3-input summing junction which computes port0 - port1 + port2.</span>
+
+<span class="sd">        :note: The signals must be compatible, all scalars, or all arrays</span>
+<span class="sd">        of the same shape.</span>
+
+<span class="sd">        ``mode`` controls how elements of the input vectors are added/subtracted.</span>
+<span class="sd">        Elements which are angles must be treated specially, and this is indicated by</span>
+<span class="sd">        the corresponding characters in ``mode``.  The string&#39;s length must equal the</span>
+<span class="sd">        width of the input vectors. The characters of the string can be:</span>
+
+<span class="sd">        ==============  ============================================</span>
+<span class="sd">        mode character  purpose</span>
+<span class="sd">        ==============  ============================================</span>
+<span class="sd">        r               real number, don&#39;t wrap (default)</span>
+<span class="sd">        c               angle on circle, wrap to [-π, π)</span>
+<span class="sd">        C               angle on circle, wrap to [0, 2π)</span>
+<span class="sd">        L               colatitude angle, wrap to [0, π]</span>
+<span class="sd">        ==============  ============================================</span>
+
+<span class="sd">        For example if ``mode=&quot;rc&quot;`` then a 2-element array would have its</span>
+<span class="sd">        second element wrapped to the range [-π, π).</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">signs</span><span class="p">),</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">signs</span><span class="p">,</span> <span class="nb">str</span><span class="p">),</span> <span class="s2">&quot;first argument must be signs string&quot;</span>
         <span class="k">assert</span> <span class="nb">all</span><span class="p">([</span><span class="n">x</span> <span class="ow">in</span> <span class="s2">&quot;+-&quot;</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">signs</span><span class="p">]),</span> <span class="s2">&quot;invalid sign&quot;</span>
@@ -217,46 +224,43 @@
 
 <span class="sd">    :blockname:`PROD`</span>
 
-<span class="sd">    :inputs: N [float, ndarray(N), ndarray(N,M)]</span>
-
-<span class="sd">    :outputs: 1 [float, ndarray(N), ndarray(N,M)]</span>
-
+<span class="sd">    :inputs: N [int, float, ndarray]</span>
+<span class="sd">    :outputs: 1 [int, float, ndarray]</span>
 <span class="sd">    :states: 0</span>
-
-<span class="sd">    :param ops: operations associated with input ports, accepted characters: * or /, defaults to &#39;**&#39;</span>
-<span class="sd">    :type ops: str, optional</span>
-<span class="sd">    :param inputs: Optional incoming connections</span>
-<span class="sd">    :type inputs: Block or Plug</span>
-<span class="sd">    :param matrix: Arguments are matrices, defaults to False</span>
-<span class="sd">    :type matrix: bool, optional</span>
-<span class="sd">    :param blockargs: |BlockOptions|</span>
-<span class="sd">    :type blockargs: dict</span>
-<span class="sd">    :return: A PROD block</span>
-<span class="sd">    :rtype: Prod instance</span>
-
-<span class="sd">    Multiply or divide input signals according to the `ops` string.  The</span>
-<span class="sd">    number of input ports is the length of this string.</span>
-
-<span class="sd">    For example::</span>
-
-<span class="sd">        prod = PROD(&#39;*/*&#39;)</span>
-
-<span class="sd">    is a 3-input product junction which computes port0 / port 1 * port2.</span>
-
-<span class="sd">    :note: The inputs can be scalars or NumPy arrays.</span>
-
-<span class="sd">    :note: By default the ``*`` and ``/`` operators are used which perform element-wise</span>
-<span class="sd">        operations.</span>
-
-<span class="sd">    :note: The option ``matrix`` will instead use ``@`` and ``@ np.linalg.inv()``. The</span>
-<span class="sd">        shapes of matrices must conform.  A matrix on a ``/`` input must be square and</span>
-<span class="sd">        non-singular.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
 <div class="viewcode-block" id="Prod.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Prod.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ops</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;**&quot;</span><span class="p">,</span> <span class="n">matrix</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param ops: operations associated with input ports, accepted characters: * or /, defaults to &#39;**&#39;</span>
+<span class="sd">        :type ops: str, optional</span>
+<span class="sd">        :param inputs: Optional incoming connections</span>
+<span class="sd">        :type inputs: Block or Plug</span>
+<span class="sd">        :param matrix: Arguments are matrices, defaults to False</span>
+<span class="sd">        :type matrix: bool, optional</span>
+<span class="sd">        :param blockargs: |BlockOptions|</span>
+<span class="sd">        :type blockargs: dict</span>
+<span class="sd">        :return: PROD block</span>
+<span class="sd">        :rtype: ``Prod`` instance</span>
+
+<span class="sd">        Multiply or divide input signals according to the `ops` string.  The</span>
+<span class="sd">        number of input ports is the length of this string.</span>
+
+<span class="sd">        For example::</span>
+
+<span class="sd">            prod = PROD(&#39;*/*&#39;)</span>
+
+<span class="sd">        is a 3-input product junction which computes port0 / port 1 * port2.</span>
+
+<span class="sd">        :note: By default the ``*`` and ``/`` operators are used which perform element-wise</span>
+<span class="sd">            operations.</span>
+
+<span class="sd">        :note: The option ``matrix`` will instead use ``@`` and ``@ np.linalg.inv()``. The</span>
+<span class="sd">            shapes of matrices must conform.  A matrix on a ``/`` input must be square and</span>
+<span class="sd">            non-singular.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">ops</span><span class="p">),</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ops</span><span class="p">,</span> <span class="nb">str</span><span class="p">),</span> <span class="s2">&quot;first argument must be signs string&quot;</span>
         <span class="k">assert</span> <span class="nb">all</span><span class="p">([</span><span class="n">x</span> <span class="ow">in</span> <span class="s2">&quot;*/&quot;</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">ops</span><span class="p">]),</span> <span class="s2">&quot;invalid op&quot;</span>
@@ -294,18 +298,10 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`GAIN`</span>
 
-<span class="sd">    .. table::</span>
-<span class="sd">       :align: left</span>
+<span class="sd">    :inputs: 1[int, float, ndarray]</span>
+<span class="sd">    :outputs: 1 [int, float, ndarray]</span>
+<span class="sd">    :states: 0</span>
 
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | inputs     | outputs |  states |</span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | 1          | 1       | 0       |</span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | float,     | float,  |         |</span>
-<span class="sd">    | A(N,),     | A(N,),  |         |</span>
-<span class="sd">    | A(N,M)     | A(N,M)  |         |</span>
-<span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
@@ -318,13 +314,13 @@
 <span class="sd">        Gain block.</span>
 
 <span class="sd">        :param K: The gain value, defaults to 1</span>
-<span class="sd">        :type K: array_like</span>
+<span class="sd">        :type K: scalar, array_like</span>
 <span class="sd">        :param premul: premultiply by constant, default is postmultiply, defaults to False</span>
 <span class="sd">        :type premul: bool, optional</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
-<span class="sd">        :return: A GAIN block</span>
-<span class="sd">        :rtype: Gain instance</span>
+<span class="sd">        :return: GAIN block</span>
+<span class="sd">        :rtype: ``Gain`` instance</span>
 
 <span class="sd">        Scale the input signal. If the input is :math:`u` the output is :math:`u K`.</span>
 
@@ -367,18 +363,9 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`CLIP`</span>
 
-<span class="sd">    .. table::</span>
-<span class="sd">       :align: left</span>
-
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | inputs     | outputs |  states |</span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | 1          | 1       | 0       |</span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | float,     | float,  |         |</span>
-<span class="sd">    | A(N,)      | A(N,)   |         |</span>
-<span class="sd">    +------------+---------+---------+</span>
-
+<span class="sd">    :inputs: 1 [int, float, ndarray]</span>
+<span class="sd">    :outputs: 1 [int, float, ndarray]</span>
+<span class="sd">    :states: 0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
@@ -391,13 +378,13 @@
 <span class="sd">        Signal clipping.</span>
 
 <span class="sd">        :param min: Minimum value, defaults to -math.inf</span>
-<span class="sd">        :type min: float or array_like, optional</span>
+<span class="sd">        :type min: scalar or array_like, optional</span>
 <span class="sd">        :param max: Maximum value, defaults to math.inf</span>
 <span class="sd">        :type max: float or array_like, optional</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
-<span class="sd">        :return: A CLIP block</span>
-<span class="sd">        :rtype: Clip instance</span>
+<span class="sd">        :return: CLIP block</span>
+<span class="sd">        :rtype: ``Clip`` instance</span>
 
 <span class="sd">        The input signal is clipped to the range from ``minimum`` to ``maximum`` inclusive.</span>
 
@@ -435,17 +422,9 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`FUNCTION`</span>
 
-<span class="sd">    .. table::</span>
-<span class="sd">       :align: left</span>
-
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | inputs     | outputs |  states |</span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | nin        | nout    | 0       |</span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | any        | any     |         |</span>
-<span class="sd">    +------------+---------+---------+</span>
-
+<span class="sd">    :inputs: N [any]</span>
+<span class="sd">    :outputs: M [any]</span>
+<span class="sd">    :states: 0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
@@ -465,7 +444,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Python function.</span>
 
-<span class="sd">        :param func: A function or lambda, or list thereof, defaults to None</span>
+<span class="sd">        :param func: function or lambda, or list thereof, defaults to None</span>
 <span class="sd">        :type func: callable or sequence of callables, optional</span>
 <span class="sd">        :param nin: number of inputs, defaults to 1</span>
 <span class="sd">        :type nin: int, optional</span>
@@ -479,8 +458,8 @@
 <span class="sd">        :type fkwargs: dict, optional</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict, optional</span>
-<span class="sd">        :return: A FUNCTION block</span>
-<span class="sd">        :rtype: A Function instance</span>
+<span class="sd">        :return: FUNCTION block</span>
+<span class="sd">        :rtype: ``Function`` instance</span>
 
 <span class="sd">        Inputs to the block are passed as separate arguments to the function.</span>
 <span class="sd">        Programmatic ositional or keyword arguments can also be passed to the function.</span>
@@ -635,16 +614,9 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`INTERPOLATE`</span>
 
-<span class="sd">    .. table::</span>
-<span class="sd">       :align: left</span>
-
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | inputs     | outputs |  states |</span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | 0 or 1     | 1       | 0       |</span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | float      | any     |         |</span>
-<span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    :inputs: 0 or 1 [float]</span>
+<span class="sd">    :outputs: 1 [float, ndarray(1,)]</span>
+<span class="sd">    :states: 0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
@@ -674,8 +646,8 @@
 <span class="sd">        :type kind: str, optional</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
-<span class="sd">        :return: An INTERPOLATE block</span>
-<span class="sd">        :rtype: An Interpolate instance</span>
+<span class="sd">        :return: INTERPOLATE block</span>
+<span class="sd">        :rtype: ``Interpolate`` instance</span>
 
 <span class="sd">        Interpolate the input signal using to a piecewise function.</span>
 
@@ -757,8 +729,8 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2020, Peter Corke.
-      <span class="lastupdated">Last updated on 21-Feb-2023.
+    <p>&#169; Copyright 2020-, Peter Corke..
+      <span class="lastupdated">Last updated on 12-Mar-2023.
       </span></p>
   </div>
 

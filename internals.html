@@ -2,9 +2,13 @@
 <html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
+    <link rel="icon" sizes="16x16" type="image/png" href="_static/favicon-16x16.png">
+    <link rel="icon" sizes="32x32" type="image/png" href="_static/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" type="image/png" href="_static/apple-touch-icon.png">
+    <link rel="android-chrome" sizes="192x192" type="image/png" href="_static/android-chrome-192x192.png ">
+    <link rel="android-chrome" sizes="512x512" type="image/png" href="_static/android-chrome-512x512.png ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Supporting classes &mdash; Block diagram simulation 0.7 documentation</title>
+  <title>Supporting classes &mdash; Block diagram simulation  documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
@@ -34,6 +38,9 @@
             Block diagram simulation
               <img src="_static/BDSimLogo_NoBackgnd@2x.png" class="logo" alt="Logo"/>
           </a>
+              <div class="version">
+                1.0.0
+              </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -96,18 +103,18 @@
              
   <section id="supporting-classes">
 <h1>Supporting classes<a class="headerlink" href="#supporting-classes" title="Permalink to this headline"></a></h1>
-<div class="graphviz"><img src="_images/inheritance-4c623c026ba0f30f0834897c18097eb9671942c7.png" alt="Inheritance diagram of bdsim.components" usemap="#inheritancefad3a12bf5" class="inheritance graphviz" /></div>
+<div class="graphviz"><img src="_images/inheritance-e97b2c7ddcddda2698040dc8677a3e008c238ac1.png" alt="Inheritance diagram of bdsim.components" usemap="#inheritancefad3a12bf5" class="inheritance graphviz" /></div>
 <map id="inheritancefad3a12bf5" name="inheritancefad3a12bf5">
-<area shape="rect" id="node3" href="#bdsim.Block" target="_top" title="bdsim.components.Block" alt="" coords="14,178,109,191"/>
-<area shape="rect" id="node5" href="#bdsim.ClockedBlock" target="_top" title="A ClockedBlock is a subclass of Block that represents a block with inputs" alt="" coords="150,115,271,128"/>
-<area shape="rect" id="node9" href="#bdsim.FunctionBlock" target="_top" title="A FunctionBlock is a subclass of Block that represents a block that has inputs" alt="" coords="149,140,272,153"/>
-<area shape="rect" id="node11" href="#bdsim.SinkBlock" target="_top" title="A SinkBlock is a subclass of Block that represents a block that has inputs" alt="" coords="156,165,265,178"/>
-<area shape="rect" id="node12" href="#bdsim.SourceBlock" target="_top" title="A SourceBlock is a subclass of Block that represents a block that has outputs" alt="" coords="152,190,269,203"/>
-<area shape="rect" id="node14" href="#bdsim.SubsystemBlock" target="_top" title="A SubSystem &#160;s a subclass of Block that represents a block that has inputs" alt="" coords="145,216,277,228"/>
-<area shape="rect" id="node15" href="#bdsim.TransferBlock" target="_top" title="A TransferBlock is a subclass of Block that represents a block with inputs" alt="" coords="150,241,271,254"/>
-<area shape="rect" id="node4" href="#bdsim.Clock" target="_top" title="bdsim.components.Clock" alt="" coords="14,122,109,135"/>
-<area shape="rect" id="node7" href="#bdsim.Plug" target="_top" title="Create a plug." alt="" coords="16,78,107,91"/>
-<area shape="rect" id="node16" href="#bdsim.Wire" target="_top" title="Create a wire." alt="" coords="16,3,107,16"/>
+<area shape="rect" id="node2" href="#bdsim.Block" target="_top" title="bdsim.components.Block" alt="" coords="28,351,215,376"/>
+<area shape="rect" id="node4" href="#bdsim.ClockedBlock" target="_top" title="A ClockedBlock is a subclass of Block that represents a block with inputs" alt="" coords="296,227,533,252"/>
+<area shape="rect" id="node8" href="#bdsim.FunctionBlock" target="_top" title="A FunctionBlock is a subclass of Block that represents a block that has inputs" alt="" coords="294,276,535,301"/>
+<area shape="rect" id="node10" href="#bdsim.SinkBlock" target="_top" title="A SinkBlock is a subclass of Block that represents a block that has inputs" alt="" coords="307,325,522,351"/>
+<area shape="rect" id="node11" href="#bdsim.SourceBlock" target="_top" title="A SourceBlock is a subclass of Block that represents a block that has outputs" alt="" coords="299,375,530,400"/>
+<area shape="rect" id="node13" href="#bdsim.SubsystemBlock" target="_top" title="A SubSystem &#160;s a subclass of Block that represents a block that has inputs" alt="" coords="285,424,544,449"/>
+<area shape="rect" id="node14" href="#bdsim.TransferBlock" target="_top" title="A TransferBlock is a subclass of Block that represents a block with inputs" alt="" coords="295,473,534,499"/>
+<area shape="rect" id="node3" href="#bdsim.Clock" target="_top" title="bdsim.components.Clock" alt="" coords="28,240,215,265"/>
+<area shape="rect" id="node6" href="#bdsim.Plug" target="_top" title="Create a plug." alt="" coords="32,153,211,179"/>
+<area shape="rect" id="node15" href="#bdsim.Wire" target="_top" title="Create a wire." alt="" coords="31,5,211,31"/>
 </map><section id="bdsim-class">
 <h2>BDSim class<a class="headerlink" href="#bdsim-class" title="Permalink to this headline"></a></h2>
 <p>This class describes the run-time environment for executing a block diagram.</p>
@@ -252,7 +259,7 @@ during simulation.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.BDSim.blockdiagram">
-<span class="sig-name descname"><span class="pre">blockdiagram</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'main'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bdsim.blockdiagram.BlockDiagram</span></span></span><a class="reference internal" href="_modules/bdsim/run_sim.html#BDSim.blockdiagram"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.BDSim.blockdiagram" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">blockdiagram</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'main'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/run_sim.html#BDSim.blockdiagram"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.BDSim.blockdiagram" title="Permalink to this definition"></a></dt>
 <dd><p>Instantiate a new block diagram object.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -533,6 +540,25 @@ harsh non-linearity.</p>
 <dt class="sig sig-object py" id="bdsim.BDSim.showgraph">
 <span class="sig-name descname"><span class="pre">showgraph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bd</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/run_sim.html#BDSim.showgraph"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.BDSim.showgraph" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdsim.BDSim.update_parameters">
+<span class="sig-name descname"><span class="pre">update_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bd</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/run_sim.html#BDSim.update_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.BDSim.update_parameters" title="Permalink to this definition"></a></dt>
+<dd><p>Set value of parameters according to command line arguments</p>
+<p>Command line arguments of the form:</p>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">-s</span> <span class="pre">block:param=value</span></code>
+<code class="docutils literal notranslate"><span class="pre">--set</span> <span class="pre">block:param=value</span></code></p>
+</div></blockquote>
+<p>are stored as list items in <code class="docutils literal notranslate"><span class="pre">options.setparam</span></code></p>
+<p><code class="docutils literal notranslate"><span class="pre">block</span></code> can be either:</p>
+<ul class="simple">
+<li><p>the block’s name as a string, either user assigned or bdsim assigned</p></li>
+<li><p>the block <code class="docutils literal notranslate"><span class="pre">id</span></code> as displayed by the <code class="docutils literal notranslate"><span class="pre">report</span></code> method</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">param</span></code> is the name of the parameter used in the constructor</p>
+<p><code class="docutils literal notranslate"><span class="pre">value</span></code> is the new value of the variable</p>
+</dd></dl>
 
 </dd></dl>
 
@@ -2424,8 +2450,8 @@ system, either linear or nonlinear.</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2020, Peter Corke.
-      <span class="lastupdated">Last updated on 21-Feb-2023.
+    <p>&#169; Copyright 2020-, Peter Corke..
+      <span class="lastupdated">Last updated on 12-Mar-2023.
       </span></p>
   </div>
 

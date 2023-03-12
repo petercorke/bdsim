@@ -1,0 +1,14 @@
+<map id="inheritancefad3a12bf5" name="inheritancefad3a12bf5">
+<area shape="rect" id="node1" title="A simple data container object that allows items to be added by attribute or by" alt="" coords="18,400,225,425"/>
+<area shape="rect" id="node2" href="#bdsim.Block" target="_top" title="bdsim.components.Block" alt="" coords="28,351,215,376"/>
+<area shape="rect" id="node4" href="#bdsim.ClockedBlock" target="_top" title="A ClockedBlock is a subclass of Block that represents a block with inputs" alt="" coords="296,227,533,252"/>
+<area shape="rect" id="node8" href="#bdsim.FunctionBlock" target="_top" title="A FunctionBlock is a subclass of Block that represents a block that has inputs" alt="" coords="294,276,535,301"/>
+<area shape="rect" id="node10" href="#bdsim.SinkBlock" target="_top" title="A SinkBlock is a subclass of Block that represents a block that has inputs" alt="" coords="307,325,522,351"/>
+<area shape="rect" id="node11" href="#bdsim.SourceBlock" target="_top" title="A SourceBlock is a subclass of Block that represents a block that has outputs" alt="" coords="299,375,530,400"/>
+<area shape="rect" id="node13" href="#bdsim.SubsystemBlock" target="_top" title="A SubSystem &#160;s a subclass of Block that represents a block that has inputs" alt="" coords="285,424,544,449"/>
+<area shape="rect" id="node14" href="#bdsim.TransferBlock" target="_top" title="A TransferBlock is a subclass of Block that represents a block with inputs" alt="" coords="295,473,534,499"/>
+<area shape="rect" id="node3" href="#bdsim.Clock" target="_top" title="bdsim.components.Clock" alt="" coords="28,240,215,265"/>
+<area shape="rect" id="node6" href="#bdsim.Plug" target="_top" title="Create a plug." alt="" coords="32,153,211,179"/>
+<area shape="rect" id="node9" title="A struct like object for option handling" alt="" coords="5,55,237,80"/>
+<area shape="rect" id="node15" href="#bdsim.Wire" target="_top" title="Create a wire." alt="" coords="31,5,211,31"/>
+</map>
