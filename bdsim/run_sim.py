@@ -930,8 +930,12 @@ class BDSim:
             plt.show(block=block)
         except KeyboardInterrupt:
             print("bdsim: closing all windows")
-            sys.exit(1)
+            plt.close("all")
+            # sys.exit(1)  # not sure why we have this
+            return
         bd.done(graphics=self.options.graphics)
+        plt.close("all")
+        plt.pause(0.5)  # let the event handler do its work
 
     def closefigs(self):
         for i in range(self.simstate.fignum):
