@@ -12,6 +12,7 @@ dependencies = [
     "spatialmath-python",
     "ansitable",
     "progress",
+    "PyQt5",
 ]
 license = { file = "LICENSE" }
 
@@ -39,10 +40,9 @@ repository = "https://github.com/petercorke/bdsim"
 dev = [
     "sympy",
     "pytest",
-    "pytest-cov",
+    "pytest-timeout",
+    "pytest-xvfb",
     "coverage",
-    "codecov",
-    "recommonmark",
     "flake8"
 ]
 
@@ -58,6 +58,7 @@ docs = [
 
 bdedit = "bdsim.bdedit:main"
 bdrun = "bdsim:bdrun"
+bdtex2icon = "bdsim.tex2icon:main"
 
 [build-system]
 
@@ -70,7 +71,6 @@ packages = [
     "bdsim",
     "bdsim.blocks",
     "bdsim.bdedit",
-    "bdsim.bin",
 ]
 
 [tool.black]

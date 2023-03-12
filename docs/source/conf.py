@@ -21,12 +21,17 @@ sys.path.append(os.path.abspath('exts'))
 # -- Project information -----------------------------------------------------
 
 project = 'Block diagram simulation'
-copyright = '2020, Peter Corke'
+copyright = '2020-, Peter Corke.'
 author = 'Peter Corke'
 
-# The full version, including alpha/beta/rc tags
-release = '0.7'
-
+try:
+    import bdsim
+    version = bdsim.__version__
+except AttributeError:
+    import re
+    with open("../../pyproject.toml", "r") as f:
+        m = re.compile(r'version\s*=\s*"([0-9\.]+)"').search(f.read())
+        version = m[1]
 
 # -- General configuration ---------------------------------------------------
 
@@ -40,7 +45,9 @@ extensions = [
  'sphinx.ext.mathjax',
  'sphinx.ext.coverage',
  'sphinx.ext.inheritance_diagram',
- 'blockname'
+ "sphinx_autodoc_typehints",
+ "sphinx-favicon",
+ 'blockname',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -50,7 +57,6 @@ templates_path = ['_templates']
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['test_*']
-
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -81,7 +87,6 @@ html_theme_options = {
     'analytics_id': 'G-11Q6WJM565',
 
     }
-html_favicon = 'favicon.ico'
 
 html_logo = '../../figs/BDSimLogo_NoBackgnd@2x.png'
 html_last_updated_fmt = '%d-%b-%Y'
@@ -98,3 +103,79 @@ rst_epilog = """
    :format: html
 .. |BlockOptions| replace:: :raw-html:`<a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a>`
 """
+# -------- RVC maths notation -------------------------------------------------------#
+
+# see https://stackoverflow.com/questions/9728292/creating-latex-math-macros-within-sphinx
+mathjax3_config = {
+    'tex': {
+        'macros': {
+            # RVC Math notation
+            #  - not possible to do the if/then/else approach
+            #  - subset only
+            "presup": [r"\,{}^{\scriptscriptstyle #1}\!", 1],
+            # groups
+            "SE": [r"\mathbf{SE}(#1)", 1],
+            "SO": [r"\mathbf{SO}(#1)", 1],
+            "se": [r"\mathbf{se}(#1)", 1],
+            "so": [r"\mathbf{so}(#1)", 1],
+            # vectors
+            "vec": [r"\boldsymbol{#1}", 1],
+            "dvec": [r"\dot{\boldsymbol{#1}}", 1],
+            "ddvec": [r"\ddot{\boldsymbol{#1}}", 1],
+            "fvec": [r"\presup{#1}\boldsymbol{#2}", 2],
+            "fdvec": [r"\presup{#1}\dot{\boldsymbol{#2}}", 2],
+            "fddvec": [r"\presup{#1}\ddot{\boldsymbol{#2}}", 2],
+            "norm": [r"\Vert #1 \Vert", 1],
+            # matrices
+            "mat": [r"\mathbf{#1}", 1],
+            "dmat": [r"\dot{\mathbf{#1}}", 1],
+            "fmat": [r"\presup{#1}\mathbf{#2}", 2],
+            # skew matrices
+            "sk": [r"\left[#1\right]", 1],
+            "skx": [r"\left[#1\right]_{\times}", 1],
+            "vex": [r"\vee\left( #1\right)", 1],
+            "vexx": [r"\vee_{\times}\left( #1\right)", 1],
+            # quaternions
+            "q": r"\mathring{q}",
+            "fq": [r"\presup{#1}\mathring{q}", 1],
+
+        }
+   }
+}
+
+# -------- Options favicon -------------------------------------------------------#
+
+html_static_path = ["_static"]
+# create favicons online using https://favicon.io/favicon-converter/
+favicons = [
+    {
+        "rel": "icon",
+        "sizes": "16x16",
+        "static-file": "favicon-16x16.png",
+        "type": "image/png",
+    },
+    {
+        "rel": "icon",
+        "sizes": "32x32",
+        "static-file": "favicon-32x32.png",
+        "type": "image/png",
+    },
+    {
+        "rel": "apple-touch-icon",
+        "sizes": "180x180",
+        "static-file": "apple-touch-icon.png",
+        "type": "image/png",
+    },
+    {
+        "rel": "android-chrome",
+        "sizes": "192x192",
+        "static-file": "android-chrome-192x192.png ",
+        "type": "image/png",
+    },
+    {
+        "rel": "android-chrome",
+        "sizes": "512x512",
+        "static-file": "android-chrome-512x512.png ",
+        "type": "image/png",
+    },
+]
