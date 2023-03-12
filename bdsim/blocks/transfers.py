@@ -21,17 +21,9 @@ class Integrator(TransferBlock):
     """
     :blockname:`INTEGRATOR`
 
-    .. table::
-       :align: left
-
-       +------------+---------+---------+
-       | inputs     | outputs |  states |
-       +------------+---------+---------+
-       | 1          | 1       | N       |
-       +------------+---------+---------+
-       | float,     | float,  |         |
-       | A(N,)      | A(N,)   |         |
-       +------------+---------+---------+
+    :inputs: N [float, ndarray]
+    :outputs: 1 [float, ndarray]
+    :states: N
     """
 
     nin = 1
@@ -51,8 +43,8 @@ class Integrator(TransferBlock):
         :type max: float or array_like, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: an INTEGRATOR block
-        :rtype: Integrator instance
+        :return: INTEGRATOR block
+        :rtype: ``Integrator`` instance
 
         Output is the time integral of the input.  The state can be a scalar or a
         vector. The initial state, and type, is given by ``x0``.  The shape of
@@ -113,16 +105,9 @@ class PoseIntegrator(TransferBlock):
     """
     :blockname:`POSEINTEGRATOR`
 
-    .. table::
-       :align: left
-
-       +------------+---------+---------+
-       | inputs     | outputs |  states |
-       +------------+---------+---------+
-       | 1          | 1       | N       |
-       +------------+---------+---------+
-       | A(N,)      | A(N,)   |         |
-       +------------+---------+---------+
+    :inputs: 1 [ndarray(6,)]
+    :outputs: 1 [SE3]
+    :states: 6
     """
 
     nin = 1
@@ -136,8 +121,8 @@ class PoseIntegrator(TransferBlock):
         :type x0: SE3, Twist3, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: an POSEINTEGRATOR block
-        :rtype: PoseIntegrator instance
+        :return: POSEINTEGRATOR block
+        :rtype: ``PoseIntegrator`` instance
 
         This block integrates spatial velocity over time.
         The block input is a spatial velocity as a 6-vector
@@ -145,8 +130,6 @@ class PoseIntegrator(TransferBlock):
         is pose as an ``SE3`` instance.
 
         .. note:: State is a velocity twist.
-
-        .. warning:: NOT WORKING YET
         """
         super().__init__(**blockargs)
 
@@ -172,17 +155,9 @@ class LTI_SS(TransferBlock):
     """
     :blockname:`LTI_SS`
 
-    .. table::
-       :align: left
-
-       +------------+---------+---------+
-       | inputs     | outputs |  states |
-       +------------+---------+---------+
-       | 1          | 1       | nc      |
-       +------------+---------+---------+
-       | float,     | float,  |         |
-       | A(nb,)     | A(nc,)  |         |
-       +------------+---------+---------+
+    :inputs: 1 [float]
+    :outputs: 1 [float]
+    :states: N
     """
 
     nin = 1
@@ -200,8 +175,8 @@ class LTI_SS(TransferBlock):
         :type x0: array_like, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: A SCOPE block
-        :rtype: LTI_SISO instance
+        :return: LTI_SS block
+        :rtype: ``LTI_SS`` instance
 
         Implements the dynamics of a single-input single-output (SISO) linear
         time invariant (LTI) system described by numerator and denominator
@@ -218,7 +193,7 @@ class LTI_SS(TransferBlock):
 
         Examples::
 
-            LTI_SISO(N=[1,2], D=[2, 3, -4])
+            LTI_SS(N=[1,2], D=[2, 3, -4])
 
         is the transfer function :math:`\frac{s+2}{2s^2+3s-4}`.
         """
@@ -267,17 +242,9 @@ class LTI_SISO(LTI_SS):
     """
     :blockname:`LTI_SISO`
 
-    .. table::
-       :align: left
-
-       +------------+---------+---------+
-       | inputs     | outputs |  states |
-       +------------+---------+---------+
-       | 1          | 1       | n       |
-       +------------+---------+---------+
-       | float      | float   |         |
-       +------------+---------+---------+
-
+    :inputs: 1 [float]
+    :outputs: 1 [float]
+    :states: N
     """
 
     nin = 1
@@ -295,8 +262,8 @@ class LTI_SISO(LTI_SS):
         :type x0: array_like, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: A SCOPE block
-        :rtype: LTI_SISO instance
+        :return: LTI_SISO block
+        :rtype: ``LTI_SISO`` instance
 
         Implements the dynamics of a single-input single-output (SISO) linear
         time invariant (LTI) system described by numerator and denominator
@@ -379,11 +346,137 @@ class LTI_SISO(LTI_SS):
         self.add_param("num", change_param)
         self.add_param("den", change_param)
 
+# ------------------------------------------------------------------------ #
+
+from bdsim.blocks.connections import SubSystem
+
+class PID(SubSystem):
+    """
+    :blockname:`PID`
+
+    :inputs: 1 [float]
+    :outputs: 1 [float]
+    :states: 2
+    """
+
+    class ID(LTI_SS):
+        def __init__(self, D:float=0.0, I:float=0.0, D_pole=1, I_limit=None, I_band=0, **blockargs):
+            
+            self.D = D
+            self.I = I
+            self.D_pole = D_pole
+            self.I_limit = I_limit
+            self.I_band = I_band
+
+            A = np.zeros((2,2))
+            B = np.zeros((2,1))
+            C = np.zeros((1,2))
+
+            super().__init__(A=A, B=B, C=C, **blockargs)
+
+            if self.verbose:
+                print("A=", A)
+                print("B=", B)
+                print("C=", C)
+    
+        def output(self, t=None):
+            e = self.inputs[1] - self.inputs[0]
+            return list(self.C @ self._x)
+
+        def deriv(self):
+            return self.A @ self._x + self.B @ np.array(self.inputs)
+
+    nin = 1
+    nout = 1
+
+    def __init__(self, P:float=0.0, D:float=0.0, I:float=0.0, D_pole=1, I_limit=None, I_band=0, name='PID', **blockargs):
+        r"""
+        PID controller.
+
+        :param P: proportional gain, defaults to 0
+        :param D: derivative gain, defaults to 0
+        :param I: integral gain, defaults to 0
+        :param D_pole: filter pole for derivative estimate, defaults to 1 rad/s
+        :param I_limit: integral limit
+        :param I_band: band within which integral action is active
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        :return: A PID block
+        :rtype: PID instance
+
+        Implements the dynamics of a PID controller:
+
+        .. math::
+
+            e &= x^* - x
+
+            x &= Pe + D \frac{d}{dt} e + I \int e dt
+
+        To reduce noise the derivative is computed by a first-order system
+
+        .. math::
+
+            \frac{s}{s/a + 1}
+
+        where the pole :math:`a=` ``D_filt`` can be positioned appropriately.
+
+        If ``I_limit`` is provided it specifies the limits of the integrator
+        state, before multiplication by ``I``.  If ``I_limit`` is:
+
+        * a scalar :math:`s` the integrator state is clipped to the interval :math:`[-s, s]`
+        * a 2-tuple :math:`(a,b)` the integrator state is clipped to the interval :math:`[a, b]`
+
+        If ``I_band`` is provided the integrator is reset to zero whenever the
+        error :math:`e` is outside the band given by ``I_band`` which is:
+
+        * a scalar :math:`s` the band is the interval :math:`[-s, s]`
+        * a 2-tuple :math:`(a,b)` the band is the interval :math:`[a, b]`
+
+
+        Examples::
+
+            PID(P=3, D=2, I=1)
+
+        """
+
+        subsystem = self.bd.runtime.blockdiagram()
+
+        bd = blockargs["bd"]
+        blockargs.pop("bd")
+        Pblock = subsystem.GAIN(P)
+        IDblock = self.ID(D=D, I=I, D_pole=D_pole, I_limit=I_limit, I_band=I_band, 
+            bd=subsystem, **blockargs)
+        sum = subsystem.SUM("++")
+        Input = subsystem.INPORT(1)
+        Output = subsystem.OUTPORT(1)
+
+        subsystem.connect(Input, Pblock, IDblock)
+        subsystem.connect(Pblock, sum[0])
+        subsystem.connect(IDblock, sum[1])
+        subsystem.connect(sum, Output)
+
+        subsystem.report()
+        super().__init__(subsystem, name=name, bd=bd)
+
 
 if __name__ == "__main__":
 
-    from pathlib import Path
+    from bdsim import BDSim
 
-    exec(
-        open(Path(__file__).parent.parent.parent / "tests" / "test_transfers.py").read()
-    )
+    sim = BDSim()
+    bd = sim.blockdiagram()
+    pid = bd.PID(P=2, D=0.01, verbose=True)
+
+    c = bd.CONSTANT(1)
+    s = bd.SCOPE()
+    bd.connect(c, pid)
+    bd.connect(pid, s)
+
+    bd.compile(report=True)
+    bd.report()
+
+    # from pathlib import Path
+
+    # exec(
+    #     open(Path(__file__).parent.parent.parent / "tests" / "test_transfers.py").read()
+    # )

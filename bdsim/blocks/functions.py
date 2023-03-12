@@ -28,49 +28,13 @@ from bdsim.components import FunctionBlock
 
 class Sum(FunctionBlock):
     """Summing junction.
+
     :blockname:`SUM`
 
-    :inputs: N [float, ndarray(N), ndarray(N,M)]
-
-    :outputs: 1 [float, ndarray(N), ndarray(N,M)]
-
+    :inputs: N [int, float, ndarray]
+    :outputs: 1 [int, float, ndarray]
     :states: 0
 
-    :param signs: signs associated with input ports, accepted characters: + or -, defaults to '++'
-    :type signs: str, optional
-    :param mode: controls angle wrapping per element, accepted characters r or c or C or L, defaults to None
-    :type mode: str, optional
-    :param inputs: Optional incoming connections
-    :type inputs: Block or Plug
-    :param blockargs: |BlockOptions|
-    :type blockargs: dict
-    :return: A SUM block
-    :rtype: Sum instance
-
-    Add or subtract input signals according to the `signs` string.  The
-    number of input ports is the length of this string.
-
-    For example::
-
-        sum = bd.SUM('+-+')
-
-    is a 3-input summing junction which computes port0 - port1 + port2.
-
-    If some elements of the inputs are angles then ``mode`` controls, per element, how
-    they are wrapped.  The elements of the string can be
-
-    | character  | purpose                           |
-    | :--------- | :-------------------------------- |
-    | r          | real number, don't wrap (default) |
-    | c          | angle on circle, wrap to [-π, π)  |
-    | C          | angle on circle, wrap to [0, 2π)  |
-    | L          | latitude angle, wrap to [0, π]    |
-
-    For example if ``mode="rc"`` then a 2-element array would have its
-    second element wrapped to the range [-π, π).
-
-    :note: The signals must be compatible, all scalars, or all arrays
-        of the same shape.
     """
 
     nin = -1
@@ -85,6 +49,46 @@ class Sum(FunctionBlock):
     }
 
     def __init__(self, signs: str = "++", mode: str = None, **blockargs):
+        """
+        :param signs: signs associated with input ports, accepted characters: + or -, defaults to '++'
+        :type signs: str, optional
+        :param mode: controls addition mode, per element, string comprises ``r`` or ``c`` or ``C`` or ``L``, defaults to None
+        :type mode: str, optional
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        :return: SUM block
+        :rtype: ``Sum`` instance
+
+        Add or subtract input signals according to the `signs` string.  The
+        number of input ports is the length of this string.
+
+        For example::
+
+            sum = bd.SUM('+-+')
+
+        is a 3-input summing junction which computes port0 - port1 + port2.
+
+        :note: The signals must be compatible, all scalars, or all arrays
+        of the same shape.
+
+        ``mode`` controls how elements of the input vectors are added/subtracted.
+        Elements which are angles must be treated specially, and this is indicated by
+        the corresponding characters in ``mode``.  The string's length must equal the
+        width of the input vectors. The characters of the string can be:
+
+        ==============  ============================================
+        mode character  purpose
+        ==============  ============================================
+        r               real number, don't wrap (default)
+        c               angle on circle, wrap to [-π, π)
+        C               angle on circle, wrap to [0, 2π)
+        L               colatitude angle, wrap to [0, π]
+        ==============  ============================================
+
+        For example if ``mode="rc"`` then a 2-element array would have its
+        second element wrapped to the range [-π, π).
+
+        """
         super().__init__(nin=len(signs), **blockargs)
         assert isinstance(signs, str), "first argument must be signs string"
         assert all([x in "+-" for x in signs]), "invalid sign"
@@ -143,46 +147,43 @@ class Prod(FunctionBlock):
 
     :blockname:`PROD`
 
-    :inputs: N [float, ndarray(N), ndarray(N,M)]
-
-    :outputs: 1 [float, ndarray(N), ndarray(N,M)]
-
+    :inputs: N [int, float, ndarray]
+    :outputs: 1 [int, float, ndarray]
     :states: 0
-
-    :param ops: operations associated with input ports, accepted characters: * or /, defaults to '**'
-    :type ops: str, optional
-    :param inputs: Optional incoming connections
-    :type inputs: Block or Plug
-    :param matrix: Arguments are matrices, defaults to False
-    :type matrix: bool, optional
-    :param blockargs: |BlockOptions|
-    :type blockargs: dict
-    :return: A PROD block
-    :rtype: Prod instance
-
-    Multiply or divide input signals according to the `ops` string.  The
-    number of input ports is the length of this string.
-
-    For example::
-
-        prod = PROD('*/*')
-
-    is a 3-input product junction which computes port0 / port 1 * port2.
-
-    :note: The inputs can be scalars or NumPy arrays.
-
-    :note: By default the ``*`` and ``/`` operators are used which perform element-wise
-        operations.
-
-    :note: The option ``matrix`` will instead use ``@`` and ``@ np.linalg.inv()``. The
-        shapes of matrices must conform.  A matrix on a ``/`` input must be square and
-        non-singular.
     """
 
     nin = -1
     nout = 1
 
     def __init__(self, ops: str = "**", matrix: bool = False, **blockargs):
+        """
+        :param ops: operations associated with input ports, accepted characters: * or /, defaults to '**'
+        :type ops: str, optional
+        :param inputs: Optional incoming connections
+        :type inputs: Block or Plug
+        :param matrix: Arguments are matrices, defaults to False
+        :type matrix: bool, optional
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        :return: PROD block
+        :rtype: ``Prod`` instance
+
+        Multiply or divide input signals according to the `ops` string.  The
+        number of input ports is the length of this string.
+
+        For example::
+
+            prod = PROD('*/*')
+
+        is a 3-input product junction which computes port0 / port 1 * port2.
+
+        :note: By default the ``*`` and ``/`` operators are used which perform element-wise
+            operations.
+
+        :note: The option ``matrix`` will instead use ``@`` and ``@ np.linalg.inv()``. The
+            shapes of matrices must conform.  A matrix on a ``/`` input must be square and
+            non-singular.
+        """
         super().__init__(nin=len(ops), **blockargs)
         assert isinstance(ops, str), "first argument must be signs string"
         assert all([x in "*/" for x in ops]), "invalid op"
@@ -220,18 +221,10 @@ class Gain(FunctionBlock):
     """
     :blockname:`GAIN`
 
-    .. table::
-       :align: left
+    :inputs: 1[int, float, ndarray]
+    :outputs: 1 [int, float, ndarray]
+    :states: 0
 
-    +------------+---------+---------+
-    | inputs     | outputs |  states |
-    +------------+---------+---------+
-    | 1          | 1       | 0       |
-    +------------+---------+---------+
-    | float,     | float,  |         |
-    | A(N,),     | A(N,),  |         |
-    | A(N,M)     | A(N,M)  |         |
-    +------------+---------+---------+
     """
 
     nin = 1
@@ -244,13 +237,13 @@ class Gain(FunctionBlock):
         Gain block.
 
         :param K: The gain value, defaults to 1
-        :type K: array_like
+        :type K: scalar, array_like
         :param premul: premultiply by constant, default is postmultiply, defaults to False
         :type premul: bool, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: A GAIN block
-        :rtype: Gain instance
+        :return: GAIN block
+        :rtype: ``Gain`` instance
 
         Scale the input signal. If the input is :math:`u` the output is :math:`u K`.
 
@@ -293,18 +286,9 @@ class Clip(FunctionBlock):
     """
     :blockname:`CLIP`
 
-    .. table::
-       :align: left
-
-    +------------+---------+---------+
-    | inputs     | outputs |  states |
-    +------------+---------+---------+
-    | 1          | 1       | 0       |
-    +------------+---------+---------+
-    | float,     | float,  |         |
-    | A(N,)      | A(N,)   |         |
-    +------------+---------+---------+
-
+    :inputs: 1 [int, float, ndarray]
+    :outputs: 1 [int, float, ndarray]
+    :states: 0
     """
 
     nin = 1
@@ -317,13 +301,13 @@ class Clip(FunctionBlock):
         Signal clipping.
 
         :param min: Minimum value, defaults to -math.inf
-        :type min: float or array_like, optional
+        :type min: scalar or array_like, optional
         :param max: Maximum value, defaults to math.inf
         :type max: float or array_like, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: A CLIP block
-        :rtype: Clip instance
+        :return: CLIP block
+        :rtype: ``Clip`` instance
 
         The input signal is clipped to the range from ``minimum`` to ``maximum`` inclusive.
 
@@ -361,17 +345,9 @@ class Function(FunctionBlock):
     """
     :blockname:`FUNCTION`
 
-    .. table::
-       :align: left
-
-    +------------+---------+---------+
-    | inputs     | outputs |  states |
-    +------------+---------+---------+
-    | nin        | nout    | 0       |
-    +------------+---------+---------+
-    | any        | any     |         |
-    +------------+---------+---------+
-
+    :inputs: N [any]
+    :outputs: M [any]
+    :states: 0
     """
 
     nin = -1
@@ -391,7 +367,7 @@ class Function(FunctionBlock):
         """
         Python function.
 
-        :param func: A function or lambda, or list thereof, defaults to None
+        :param func: function or lambda, or list thereof, defaults to None
         :type func: callable or sequence of callables, optional
         :param nin: number of inputs, defaults to 1
         :type nin: int, optional
@@ -405,8 +381,8 @@ class Function(FunctionBlock):
         :type fkwargs: dict, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict, optional
-        :return: A FUNCTION block
-        :rtype: A Function instance
+        :return: FUNCTION block
+        :rtype: ``Function`` instance
 
         Inputs to the block are passed as separate arguments to the function.
         Programmatic ositional or keyword arguments can also be passed to the function.
@@ -560,17 +536,10 @@ class Function(FunctionBlock):
 class Interpolate(FunctionBlock):
     """
     :blockname:`INTERPOLATE`
-
-    .. table::
-       :align: left
-
-    +------------+---------+---------+
-    | inputs     | outputs |  states |
-    +------------+---------+---------+
-    | 0 or 1     | 1       | 0       |
-    +------------+---------+---------+
-    | float      | any     |         |
-    +------------+---------+---------+
+    
+    :inputs: 0 or 1 [float]
+    :outputs: 1 [float, ndarray(1,)]
+    :states: 0
     """
 
     nin = -1
@@ -600,8 +569,8 @@ class Interpolate(FunctionBlock):
         :type kind: str, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: An INTERPOLATE block
-        :rtype: An Interpolate instance
+        :return: INTERPOLATE block
+        :rtype: ``Interpolate`` instance
 
         Interpolate the input signal using to a piecewise function.
 
