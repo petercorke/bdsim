@@ -628,6 +628,7 @@ class BDSim:
                 print("simulation results pickled --> ", self.options.outfile)
 
         # pause until all graphics blocks close
+
         if self.options.graphics and self.options.hold:
             self.done(self.bd, block=self.options.hold)
         return out
@@ -1271,6 +1272,32 @@ class BDSim:
         self.options.set(**options)
         warnings.warn("use sim.options.OPT=VALUE instead", DeprecationWarning)
 
+    def set_globals(self, globs):
+        """
+        Set globals as specified by command line
+
+        :param globs: global variables
+        :type globs: dict
+
+        The command line option ``--global var=value`` can be used to request the change
+        of global variables.  However, actually changing them requires explicit code
+        in the user's program.
+
+        Example::
+
+            sim.set_globals(globals())
+
+        Messages are displayed by defaulting, indicating which variables are changed,
+        and their old and new values.
+        """
+        # handle the globals
+        for s in self.options.setglob:
+            var, value = s.split("=")
+
+            new_value = eval(value)
+            print(f"changed value of global {var} from {globs[var]} -> {new_value}")
+            globs[var] = new_value
+
 
 class Options(OptionsBase):
     def __init__(self, sysargs=True, **options):
@@ -1467,6 +1494,13 @@ class Options(OptionsBase):
                 action="append",
                 type=str,
                 help="override block parameter using block:param=value",
+            )
+            parser.add_argument(
+                "--global",
+                dest="setglob",
+                action="append",
+                type=str,
+                help="override global parameter using var=value",
             )
 
             args, unknownargs = parser.parse_known_args()
