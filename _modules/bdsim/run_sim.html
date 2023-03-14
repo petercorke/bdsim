@@ -705,6 +705,7 @@
                 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;simulation results pickled --&gt; &quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">outfile</span><span class="p">)</span>
 
         <span class="c1"># pause until all graphics blocks close</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">graphics</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">hold</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">done</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">hold</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">out</span></div>
@@ -1346,7 +1347,33 @@
 
 <div class="viewcode-block" id="BDSim.set_options"><a class="viewcode-back" href="../../internals.html#bdsim.BDSim.set_options">[docs]</a>    <span class="k">def</span> <span class="nf">set_options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="o">**</span><span class="n">options</span><span class="p">)</span>
-        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;use sim.options.OPT=VALUE instead&quot;</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">)</span></div></div>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;use sim.options.OPT=VALUE instead&quot;</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BDSim.set_globals"><a class="viewcode-back" href="../../internals.html#bdsim.BDSim.set_globals">[docs]</a>    <span class="k">def</span> <span class="nf">set_globals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">globs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set globals as specified by command line</span>
+
+<span class="sd">        :param globs: global variables</span>
+<span class="sd">        :type globs: dict</span>
+
+<span class="sd">        The command line option ``--global var=value`` can be used to request the change</span>
+<span class="sd">        of global variables.  However, actually changing them requires explicit code</span>
+<span class="sd">        in the user&#39;s program.</span>
+
+<span class="sd">        Example::</span>
+
+<span class="sd">            sim.set_globals(globals())</span>
+
+<span class="sd">        Messages are displayed by defaulting, indicating which variables are changed,</span>
+<span class="sd">        and their old and new values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># handle the globals</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">setglob</span><span class="p">:</span>
+            <span class="n">var</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="p">)</span>
+
+            <span class="n">new_value</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;changed value of global </span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s2"> from </span><span class="si">{</span><span class="n">globs</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">new_value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">globs</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_value</span></div></div>
 
 
 <span class="k">class</span> <span class="nc">Options</span><span class="p">(</span><span class="n">OptionsBase</span><span class="p">):</span>
@@ -1545,6 +1572,13 @@
                 <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
                 <span class="n">help</span><span class="o">=</span><span class="s2">&quot;override block parameter using block:param=value&quot;</span><span class="p">,</span>
             <span class="p">)</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+                <span class="s2">&quot;--global&quot;</span><span class="p">,</span>
+                <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;setglob&quot;</span><span class="p">,</span>
+                <span class="n">action</span><span class="o">=</span><span class="s2">&quot;append&quot;</span><span class="p">,</span>
+                <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+                <span class="n">help</span><span class="o">=</span><span class="s2">&quot;override global parameter using var=value&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
 
             <span class="n">args</span><span class="p">,</span> <span class="n">unknownargs</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_known_args</span><span class="p">()</span>
             <span class="n">cmdline_options</span> <span class="o">=</span> <span class="nb">vars</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>  <span class="c1"># get args as a dictionary</span>
@@ -1599,7 +1633,7 @@
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020-, Peter Corke..
-      <span class="lastupdated">Last updated on 12-Mar-2023.
+      <span class="lastupdated">Last updated on 14-Mar-2023.
       </span></p>
   </div>
 
