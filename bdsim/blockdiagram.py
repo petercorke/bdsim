@@ -21,10 +21,12 @@ from ansitable import ANSITable, Column
 
 from bdsim.components import *
 
+# from stubs import BlockDiagramMixin
 
 # ------------------------------------------------------------------------- #
 
 
+# class BlockDiagram(BlockDiagramMixin):
 class BlockDiagram:
     """
     Block diagram class.  This object is the parent of all blocks and wires in
@@ -579,9 +581,8 @@ class BlockDiagram:
                     # output method failed, report it
                     print(fg("red"))
                     print(
-                        "--Error at t={:f} when computing output of [{:s}::{:s}]".format(
-                            t, b.type, str(b)
-                        )
+                        "--Error at t={:f} when computing output of [{:s}::{:s}]"
+                        .format(t, b.type, str(b))
                     )
                     print()
                     # print('  {}'.format(err))
@@ -632,6 +633,11 @@ class BlockDiagram:
                 #         # TODO send return status no longer needed
                 #         # TODO use common error handler in all cases above
                 b.output_values = out
+
+        if sinks:
+            for b in self.blocklist:
+                if isinstance(b, SinkBlock):
+                    b.step(state=None)
 
         # gather the derivative
         YD = self.deriv()
