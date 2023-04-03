@@ -299,7 +299,9 @@ class LTI_SISO(LTI_SS):
         assert nn <= n, "direct pass through is not supported"
 
         # convert to numpy arrays
-        N = np.r_[np.zeros((len(D) - len(N),)), np.array(N)]
+        # N = np.r_[np.zeros((len(D) - len(N),)), np.array(N)]
+        N = np.array(N)
+
         D = np.array(D)
 
         # normalize the coefficients to obtain
