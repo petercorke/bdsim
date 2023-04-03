@@ -93,6 +93,9 @@ class Progress:
         if not self.enable:
             return
 
+        if not self.state.options.progress:
+            return
+
         if _FillingCirclesBar:
             self.bar.goto(round(t / self.T * 100))
         else:
@@ -800,7 +803,7 @@ class BDSim:
             elif len(clocklist) == 0:
                 # block diagram has no continuous or discrete states
 
-                assert dt is not None, "if no states must specify dt"
+                assert state.dt is not None, "if no states must specify dt"
 
                 for t in np.arange(t0, T, state.dt):  # step through the time range
                     # evaluate the block diagram
@@ -1318,6 +1321,7 @@ class Options(OptionsBase):
             "outfile": None,
             "quiet": False,
             "setparam": [],
+            "setglob": [],
         }
 
         # modify defaults according to envariable BDSIM which is comma/semicolon
