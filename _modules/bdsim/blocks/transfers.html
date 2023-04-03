@@ -376,7 +376,9 @@
         <span class="k">assert</span> <span class="n">nn</span> <span class="o">&lt;=</span> <span class="n">n</span><span class="p">,</span> <span class="s2">&quot;direct pass through is not supported&quot;</span>
 
         <span class="c1"># convert to numpy arrays</span>
-        <span class="n">N</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">D</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">N</span><span class="p">),)),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">N</span><span class="p">)]</span>
+        <span class="c1"># N = np.r_[np.zeros((len(D) - len(N),)), np.array(N)]</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+
         <span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">D</span><span class="p">)</span>
 
         <span class="c1"># normalize the coefficients to obtain</span>
@@ -642,7 +644,7 @@
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020-, Peter Corke..
-      <span class="lastupdated">Last updated on 14-Mar-2023.
+      <span class="lastupdated">Last updated on 03-Apr-2023.
       </span></p>
   </div>
 
