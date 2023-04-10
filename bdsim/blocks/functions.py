@@ -90,6 +90,7 @@ class Sum(FunctionBlock):
 
         """
         super().__init__(nin=len(signs), **blockargs)
+
         assert isinstance(signs, str), "first argument must be signs string"
         assert all([x in "+-" for x in signs]), "invalid sign"
         self.signs = signs
@@ -276,7 +277,7 @@ class Gain(FunctionBlock):
                 # postmultiply by gain
                 return [input @ self.K]
         else:
-            return [self.inputs[0] * self.K]
+            return [input * self.K]
 
 
 # ------------------------------------------------------------------------ #
@@ -466,7 +467,8 @@ class Function(FunctionBlock):
                         n -= 1  # discount dict if used
                     if nin + len(fargs) != n:
                         raise ValueError(
-                            f"argument count mismatch: function has {n} args, dict={dict}, nin={nin}"
+                            f"argument count mismatch: function has {n} args,"
+                            f" dict={dict}, nin={nin}"
                         )
         elif callable(func):
             if len(fkwargs) == 0:
@@ -476,7 +478,8 @@ class Function(FunctionBlock):
                     n -= 1  # discount dict if used
                 if nin + len(fargs) != n:
                     raise ValueError(
-                        f"argument count mismatch: function has {n} args, dict={dict}, nin={nin}"
+                        f"argument count mismatch: function has {n} args, dict={dict},"
+                        f" nin={nin}"
                     )
             # self.nout = nout
 
