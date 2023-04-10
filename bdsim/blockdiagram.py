@@ -638,7 +638,7 @@ class BlockDiagram:
         if sinks:
             for b in self.blocklist:
                 if isinstance(b, SinkBlock):
-                    b.step(state=None)
+                    b.step(state=self.runtime.state)
 
         # gather the derivative
         YD = self.deriv()

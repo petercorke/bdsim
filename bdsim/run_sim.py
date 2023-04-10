@@ -93,9 +93,6 @@ class Progress:
         if not self.enable:
             return
 
-        if not self.state.options.progress:
-            return
-
         if _FillingCirclesBar:
             self.bar.goto(round(t / self.T * 100))
         else:
