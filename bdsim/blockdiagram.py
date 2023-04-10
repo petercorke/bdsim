@@ -1173,28 +1173,11 @@ class BlockDiagram:
             file = filename
 
         header = r"""digraph G {
-
-    graph [splines=ortho, rankdir=LR]
-    node [shape=box]
-    
     """
         file.write(header)
         # add the blocks
         for b in self.blocklist:
             options = []
-            if b.blockclass == "source":
-                options.append("shape=box3d")
-            elif b.blockclass == "sink":
-                options.append("shape=folder")
-            elif b.blockclass == "function":
-                if b.type == "gain":
-                    options.append("shape=triangle")
-                    options.append("orientation=-90")
-                    options.append('label="{:g}"'.format(b.gain))
-                elif b.type == "sum":
-                    options.append("shape=point")
-            elif b.blockclass == "transfer":
-                options.append("shape=component")
             if b.pos is not None:
                 options.append('pos="{:g},{:g}!"'.format(b.pos[0], b.pos[1]))
             options.append(
@@ -1219,6 +1202,33 @@ class BlockDiagram:
             )
 
         file.write("}\n")
+
+    def showgraph(self):
+        """
+        Display diagram as a graph in browser
+
+        :seealso: :meth:`dotfile`
+        """
+
+        # Lazy import
+        try:
+            import tempfile
+            import subprocess
+            import webbrowser
+        except ModuleNotFoundError:
+            return
+
+        # create the temporary dotfile
+        dotfile = tempfile.TemporaryFile(mode="w")
+        self.dotfile(dotfile)
+
+        # rewind the dot file, create PDF file in the filesystem, run dot
+        dotfile.seek(0)
+        pdffile = tempfile.NamedTemporaryFile(suffix=".pdf", delete=False)
+        subprocess.run("dot -Tpdf", shell=True, stdin=dotfile, stdout=pdffile)
+
+        # open the PDF file in browser (hopefully portable), then cleanup
+        webbrowser.open(f"file://{pdffile.name}")
 
     def blockvalues(self):
         for b in self.blocklist:
