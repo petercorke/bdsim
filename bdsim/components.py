@@ -11,6 +11,15 @@ import matplotlib.pyplot as plt
 from matplotlib import animation
 from collections import UserDict
 
+# decorator for debugging implicit block creation with operator overloading
+def oodebug(func):
+    def wrapper(*args, **kwargs):
+        ret = func(*args, **kwargs)
+        # print(f"{func.__qualname__}{args} --> {ret}")
+        return ret
+
+    return wrapper
+
 
 class BDStruct:
     """
@@ -372,6 +381,7 @@ class Plug:
         """
         return len(self.portlist)
 
+    @oodebug
     def __rshift__(left, right):
         """
         Overloaded >> operator for implicit wiring.
@@ -414,6 +424,7 @@ class Plug:
         # print('plug * ' + str(w))
         return right
 
+    @oodebug
     def __add__(self, other):
         """
         Overloaded + operator for implicit block creation.
@@ -445,6 +456,7 @@ class Plug:
             other = self.block.bd.CONSTANT(other)
         return self.block.bd.SUM("++", inputs=(self, other))
 
+    @oodebug
     def __radd__(self, other):
         """
         Overloaded + operator for implicit block creation.
@@ -478,6 +490,7 @@ class Plug:
             other = self.block.bd.CONSTANT(other)
         return self.block.bd.SUM("++", inputs=(other, self))
 
+    @oodebug
     def __sub__(self, other):
         """
         Overloaded - operator for implicit block creation.
@@ -512,6 +525,7 @@ class Plug:
             other = self.block.bd.CONSTANT(other)
         return self.block.bd.SUM("+-", inputs=(self, other))
 
+    @oodebug
     def __rsub__(self, other):
         """
         Overloaded - operator for implicit block creation.
@@ -546,6 +560,7 @@ class Plug:
             other = self.block.bd.CONSTANT(other)
         return self.block.bd.SUM("+-", inputs=(other, self))
 
+    @oodebug
     def __neg__(self):
         """
         Overloaded unary minus operator for implicit block creation.
@@ -568,6 +583,7 @@ class Plug:
         """
         return self.block.bd.GAIN(-1, inputs=[self])
 
+    @oodebug
     def __mul__(self, other):
         """
         Overloaded * operator for implicit block creation.
@@ -609,6 +625,7 @@ class Plug:
                 "**", matrix=True, name=name, inputs=[self, other]
             )
 
+    @oodebug
     def __rmul__(self, other):
         """
         Overloaded * operator for implicit block creation.
@@ -644,6 +661,7 @@ class Plug:
             matrix = isinstance(other, np.ndarray)
             return self.block._autogain(other, premul=matrix, inputs=[self])
 
+    @oodebug
     def __truediv__(self, other):
         """
         Overloaded / operator for implicit block creation.
@@ -679,6 +697,7 @@ class Plug:
             other = self.block.bd.CONSTANT(other)
         return self.block.bd.PROD("*/", inputs=(self, other))
 
+    @oodebug
     def __rtruediv__(self, other):
         """
         Overloaded / operator for implicit block creation.
@@ -1297,6 +1316,7 @@ class Block:
             # regular case, add attribute to the instance's dictionary
             self.__dict__[name] = value
 
+    @oodebug
     def __rshift__(left, right):
         """
         Operator for implicit wiring.
@@ -1359,6 +1379,7 @@ class Block:
         self.bd.n_auto_gain += 1
         return self.bd.GAIN(value, name=name, **kwargs)
 
+    @oodebug
     def __add__(self, other):
         """
         Overloaded + operator for implicit block creation.
@@ -1398,6 +1419,7 @@ class Block:
             other = self._autoconstant(other)
         return self.bd.SUM("++", inputs=(self, other), name=name)
 
+    @oodebug
     def __radd__(self, other):
         """
         Overloaded + operator for implicit block creation.
@@ -1437,6 +1459,7 @@ class Block:
             other = self._autoconstant(other)
         return self.bd.SUM("++", inputs=(other, self), name=name)
 
+    @oodebug
     def __sub__(self, other):
         """
         Overloaded - operator for implicit block creation.
@@ -1471,6 +1494,7 @@ class Block:
             other = self._autoconstant(other)
         return self.bd.SUM("+-", inputs=(self, other), name=name)
 
+    @oodebug
     def __rsub__(self, other):
         """
         Overloaded - operator for implicit block creation.
@@ -1509,6 +1533,7 @@ class Block:
             other = self._autoconstant(other)
         return self.bd.SUM("+-", inputs=(other, self), name=name)
 
+    @oodebug
     def __neg__(self):
         """
         Overloaded unary minus operator for implicit block creation.
@@ -1531,6 +1556,7 @@ class Block:
         """
         return self._autogain(-1.0, inputs=[self])
 
+    @oodebug
     def __mul__(self, other):
         """
         Overloaded * operator for implicit block creation.
@@ -1572,6 +1598,7 @@ class Block:
             self.bd.n_auto_prod += 1
             return self.bd.PROD("**", inputs=[self, other], matrix=matrix, name=name)
 
+    @oodebug
     def __rmul__(self, other):
         """
         Overloaded * operator for implicit block creation.
@@ -1608,6 +1635,7 @@ class Block:
             matrix = isinstance(other, np.ndarray)
             return self._autogain(other, premul=matrix, inputs=[self])
 
+    @oodebug
     def __truediv__(self, other):
         """
         Overloaded / operator for implicit block creation.
@@ -1648,6 +1676,7 @@ class Block:
             matrix = isinstance(other, np.ndarray)
         return self.bd.PROD("*/", inputs=(self, other), matrix=matrix, name=name)
 
+    @oodebug
     def __rtruediv__(self, other):
         """
         Overloaded / operator for implicit block creation.
