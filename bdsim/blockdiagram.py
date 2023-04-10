@@ -65,6 +65,7 @@ class BlockDiagram:
         self.n_auto_prod = 0
         self.n_auto_const = 0
         self.n_auto_gain = 0
+        self.n_auto_pow = 0
 
     def __getitem__(self, id):
         print(id)

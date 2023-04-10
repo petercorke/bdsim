@@ -584,6 +584,29 @@ class Plug:
         return self.block.bd.GAIN(-1, inputs=[self])
 
     @oodebug
+    def __pow__(self, p):
+        """
+        Overloaded unary power operator for implicit block creation.
+
+        :param self: A signal (plug) to be exponentiated
+        :type self: Plug
+        :return: POW block
+        :rtype: Block subclass
+
+        This method is implicitly invoked by the ** operator for unary power when the operand is a ``Block``::
+
+            result = X**3
+
+        where ``X`` is a block.
+
+        Creates a ``POW(3)`` block named ``_pow.N`` whose input is the
+        operand.
+
+        :seealso: :meth:`Plug.__pow__`
+        """
+        return self.block.bd.POW(p, inputs=[self])
+
+    @oodebug
     def __mul__(self, other):
         """
         Overloaded * operator for implicit block creation.
@@ -1379,6 +1402,11 @@ class Block:
         self.bd.n_auto_gain += 1
         return self.bd.GAIN(value, name=name, **kwargs)
 
+    def _autopow(self, value, **kwargs):
+        name = "_pow.{:d}({})".format(self.bd.n_auto_pow, value)
+        self.bd.n_auto_pow += 1
+        return self.bd.POW(value, name=name, **kwargs)
+
     @oodebug
     def __add__(self, other):
         """
@@ -1555,6 +1583,29 @@ class Block:
         :seealso: :meth:`Plug.__neg__`
         """
         return self._autogain(-1.0, inputs=[self])
+
+    @oodebug
+    def __pow__(self, p):
+        """
+        Overloaded unary power operator for implicit block creation.
+
+        :param self: A signal (block) to be negated
+        :type self: Block
+        :return: POW block
+        :rtype: Block subclass
+
+        This method is implicitly invoked by the ** operator for unary power when the operand is a ``Block``::
+
+            result = X**3
+
+        where ``X`` is a block.
+
+        Creates a ``POW(3)`` block named ``_pow.N`` whose input is the
+        operand.
+
+        :seealso: :meth:`Plug.__pow__`
+        """
+        return self._autopow(p, inputs=[self])
 
     @oodebug
     def __mul__(self, other):

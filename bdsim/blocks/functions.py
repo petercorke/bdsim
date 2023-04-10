@@ -10,6 +10,7 @@ Function blocks:
 # The constructor of each class ``MyClass`` with a ``@block`` decorator becomes a method ``MYCLASS()`` of the BlockDiagram instance.
 
 import numpy as np
+from scipy import linalg
 import scipy.interpolate
 import math
 import inspect
@@ -278,6 +279,71 @@ class Gain(FunctionBlock):
                 return [input @ self.K]
         else:
             return [input * self.K]
+
+
+# ------------------------------------------------------------------------ #
+
+
+class Pow(FunctionBlock):
+    """
+    :blockname:`POW`
+
+    :inputs: 1[int, float, ndarray]
+    :outputs: 1 [int, float, ndarray]
+    :states: 0
+
+    """
+
+    nin = 1
+    nout = 1
+
+    def __init__(self, p: Union[int, float] = 1, matrix: bool = False, **blockargs):
+        """
+        Power block.
+
+        :param p: The exponent value, defaults to 1
+        :type p: scalar
+        :param matrix: premultiply by constant, default is postmultiply, defaults to False
+        :type matrix: bool, optional
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        :return: GAIN block
+        :rtype: ``Gain`` instance
+
+        Raise the input signal to the specified power. If the input is :math:`u` the output is :math:`u^p`.
+
+        The input can be Numpy arrays and Numpy will
+        compute the appropriate product :math:`u^p`.
+
+        .. note::  For the case where the input is a square matrix and ``p`` is not
+            an integer we use SciPy which involves an eigenvalue decomposition.
+
+        :seealso: :func:`numpy.matrix_power` :func:`scipy.linalg.fractional_matrix_power`
+        """
+        super().__init__(**blockargs)
+
+        self.p = p
+        self.matrix = matrix
+        self.add_param("p")
+
+    def output(self, t=None):
+        input = self.inputs[0]
+
+        if isinstance(input, np.ndarray):
+            # input is an array
+            if self.matrix:
+                # matrixwise exponentiation
+                if isinstance(self.p, int):
+                    # integer case
+                    return [np.linalg.matrix_power(input, self.p)]
+                else:
+                    # general fractional case
+                    return [linalg.fractional_matrix_power(input, self.p)]
+            else:
+                # elementwise exponentiation
+                return [input**self.p]
+        else:
+            return [input**self.p]
 
 
 # ------------------------------------------------------------------------ #
