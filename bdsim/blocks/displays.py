@@ -282,6 +282,10 @@ class Scope(GraphicsBlock):
         super().start()
 
     def step(self, state=None):
+
+        if not state.options.graphics:
+            return
+
         # inputs are set
         self.tdata = np.append(self.tdata, state.t)
 
