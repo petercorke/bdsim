@@ -1163,18 +1163,41 @@ class BlockDiagram:
             except:
                 self._error_handler("done", b)
 
-    def dotfile(self, filename):
+    def dotfile(self, filename, shapes=None):
         """
         Write a GraphViz dot file representing the network.
 
-        :param file: Name of file to write to
-        :type file: str
+        :param file: Name of file to write to, or file handle
+        :type file: str, file handle
+        :param shapes: block shapes
+        :type shapes: dict
 
-        The file can be processed using neato or dot::
+        Create a GraphViz format file for procesing by ``dot``.  The graph is:
+
+        * directed graph, drawn left to right
+        * source blocks are in the first column
+        * sink and graphics blocks are in the last column
+        * ``SUM`` and ``PROD`` blocks have the sign or operation of their input wires
+          labeled.
+
+        The file can be processed using ``dot``::
 
             % dot -Tpng -o out.png dotfile.dot
 
+        .. image:: ../../figs/eg1.png
+            :width: 600
+            :alt: Block diagram represented as a mathematical graph
+
+        .. note:: By default all blocks have the default shape, with source blocks shown
+            as a rectangle ("record"), and sink/graphics blocks as a rounded rectangle
+            ("Mrecord").  This can be overriden by provide a dictionary ``shapes`` that
+            maps block class (sink, source, graphics, function, transfer) to the names
+            of GraphViz shapes.
+
+        :seealso: :meth:`showgraph`
         """
+        if shapes is None:
+            shapes = dict(source="record", sink="Mrecord", graphics="Mrecord")
 
         if isinstance(filename, str):
             file = open(filename, "w")
@@ -1182,19 +1205,29 @@ class BlockDiagram:
             file = filename
 
         header = r"""digraph G {
-    """
+    rankdir = "LR"
+
+"""
         file.write(header)
         # add the blocks
         for b in self.blocklist:
             options = []
+            if b.blockclass in shapes:
+                options.append("shape={:s}".format(shapes[b.blockclass]))
+            if b.blockclass == "source":
+                options.append('rank="source"')
+            if b.blockclass in ("sink", "graphics"):
+                options.append('rank="sink"')
             if b.pos is not None:
                 options.append('pos="{:g},{:g}!"'.format(b.pos[0], b.pos[1]))
-            options.append(
-                'xlabel=<<BR/><FONT POINT-SIZE="8" COLOR="blue">{:s}</FONT>>'.format(
-                    b.type
-                )
-            )
-            file.write('\t"{:s}" [{:s}]\n'.format(b.name, ", ".join(options)))
+            # options.append(
+            #     'xlabel=<<BR/><FONT POINT-SIZE="8" COLOR="blue">{:s}</FONT>>'.format(
+            #         b.type
+            #     )
+            # )
+            if len(options) > 0:
+                file.write('\t"{:s}" [{:s}]\n'.format(b.name, ", ".join(options)))
+        file.write("\n")
 
         # add the wires
         for w in self.wirelist:
@@ -1214,7 +1247,7 @@ class BlockDiagram:
 
     def showgraph(self):
         """
-        Display diagram as a graph in browser
+        Display diagram as a graph in browser tab
 
         :seealso: :meth:`dotfile`
         """
