@@ -68,7 +68,7 @@ class Scope(GraphicsBlock):
         :type vector: int or list, optional
         :param styles: styles for each line to be plotted
         :type styles: str or dict, list of strings or dicts; one per line, optional
-        :param stairs: force staircase style plot, defaults to False
+        :param stairs: force staircase style plot for all lines, defaults to False
         :type stairs: bool, optional
         :param scale: fixed y-axis scale or defaults to 'auto'
         :type scale: str or array_like(2)
@@ -235,9 +235,6 @@ class Scope(GraphicsBlock):
         if self.labels is None:
             self.labels = [self.sourcename(i) for i in range(self.nin)]
 
-        if self.stairs:
-            kwargs = {**dict(drawstyle="steps"), **kwargs}
-
         # create empty lines with defined styles
         for i in range(0, self.nplots):
             args = []
@@ -247,8 +244,16 @@ class Scope(GraphicsBlock):
                 kwargs = style
             elif isinstance(style, str):
                 args = [style]
+            if self.stairs:
+                kwargs["drawstyle"] = "steps"  # force steppy plot
+
             (self.line[i],) = self.ax.plot(
-                self.tdata, self.ydata[i], *args, label=self.styles[i], linewidth=2
+                self.tdata,
+                self.ydata[i],
+                *args,
+                label=self.styles[i],
+                linewidth=2,
+                **kwargs,
             )
 
         # label the axes
@@ -421,7 +426,7 @@ class ScopeXY(GraphicsBlock):
             blockargs = style
         elif isinstance(style, str):
             args = [style]
-        (self.line,) = self.ax.plot(self.xdata, self.ydata, *args, **kwargs)
+        (self.line,) = self.ax.plot(self.xdata, self.ydata, *args)
 
         self.ax.grid(True)
         self.ax.set_xlabel(self.labels[0])
