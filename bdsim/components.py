@@ -836,12 +836,12 @@ class Clock:
             # print('x0', x0)
         return x0
 
-    def getstate(self):
+    def getstate(self, t):
 
         x = np.array([])
         for b in self.blocklist:
             # update dstate
-            x = np.r_[x, b.next().flatten()]
+            x = np.r_[x, b.next(t).flatten()]
 
         return x
 
@@ -850,13 +850,13 @@ class Clock:
         for b in self.blocklist:
             x = b.setstate(x)  # send it to blocks
 
-    def start(self, state=None):
+    def start(self, simstate=None):
         self.i = 1
-        state.declare_event(self, self.time(self.i))
+        simstate.declare_event(self, self.time(self.i))
         self.i += 1
 
-    def next_event(self, state=None):
-        state.declare_event(self, self.time(self.i))
+    def next_event(self, simstate=None):
+        simstate.declare_event(self, self.time(self.i))
         self.i += 1
 
     def time(self, i):
@@ -867,7 +867,7 @@ class Clock:
     def savestate(self, t):
         # save clock state at time t
         self.t.append(t)
-        self.x.append(self.getstate())
+        self.x.append(self.getstate(t))
 
 
 # ------------------------------------------------------------------------- #
@@ -1898,7 +1898,7 @@ class Block:
     #     for i, val in enumerate(pos):
     #         self.inputs[i] = val
 
-    def start(self, **kwargs):  # begin of a simulation
+    def start(self, simstate):  # begin a simulation
         pass
 
     def check(self):  # check validity of block parameters at start
@@ -1915,7 +1915,7 @@ class Block:
     def done(self, **kwargs):  # end of simulation
         pass
 
-    def step(self, **kwargs):  # valid
+    def step(self, t, **kwargs):  # valid
         pass
 
     def savefig(self, *pos, **kwargs):

@@ -455,30 +455,30 @@ class BDSim:
         # T = T or 5
         # dt = dt or 0.01
 
-        state = BDSimState()
-        self.state = state
-        state.T = T
+        simstate = BDSimState()
+        self.simstate = simstate
+        simstate.T = T
 
         if dt is None and not "max_step" in solver_args:
             dt = T / 100
-        state.dt = dt
-        state.count = 0
-        state.solver = solver
-        state.solver_args = solver_args
-        state.minstepsize = minstepsize
-        state.stop = None  # allow any block to stop.BlockDiagram by setting this to the block's name
-        state.checkfinite = checkfinite
+        simstate.dt = dt
+        simstate.count = 0
+        simstate.solver = solver
+        simstate.solver_args = solver_args
+        simstate.minstepsize = minstepsize
+        simstate.stop = None  # allow any block to stop.BlockDiagram by setting this to the block's name
+        simstate.checkfinite = checkfinite
         # state.options = copy.copy(self.options)
-        state.options = self.options
+        simstate.options = self.options
         self.bd = bd
-        state.t_stop = None
+        simstate.t_stop = None
         if debug:
             # append debug flags
-            if debug not in state.options.debug:
-                state.options.debug += debug
+            if debug not in simstate.options.debug:
+                simstate.options.debug += debug
 
         # turn off progress bar if any debug options are given
-        if len(state.options.debug) > 0:
+        if len(simstate.options.debug) > 0:
             self.options.progress = False
         if block is not None:
             self.options.hold = block
@@ -508,8 +508,8 @@ class BDSim:
                 plug = w
             watchlist.append(plug)
             watchnamelist.append(str(plug))
-        state.watchlist = watchlist
-        state.watchnamelist = watchnamelist
+        simstate.watchlist = watchlist
+        simstate.watchnamelist = watchnamelist
 
         x0 = bd.getstate0()
         print("initial state  x0 = ", x0)
@@ -521,33 +521,33 @@ class BDSim:
             for b in clock.blocklist:
                 nds += b.ndstates
             ndstates += nds
-            print(clock.name, "initial dstate x0 = ", clock.getstate())
+            print(clock.name, "initial dstate x0 = ", clock.getstate0())
 
         # update block parameters given on command line
         self.update_parameters(bd)
 
         # tell all blocks we're starting a BlockDiagram
-        self.bd.start(state=state, graphics=self.state.options.graphics)
+        self.bd.start(simstate)
 
         # initialize list of time and states
-        state.tlist = []
-        state.xlist = []
-        state.plist = [[] for p in state.watchlist]
+        simstate.tlist = []
+        simstate.xlist = []
+        simstate.plist = [[] for p in simstate.watchlist]
 
         self.progress = Progress(enable=self.options.progress)
         self.progress.start(T)
 
-        if len(self.state.eventq) == 0:
+        if len(simstate.eventq) == 0:
             # no simulation events, solve it in one go
-            self.run_interval(bd, 0, T, x0, state=state)
+            self.run_interval(bd, 0, T, x0, simstate=simstate)
             nintervals = 1
         else:
             # we have simulation events, solve it in chunks
-            self.state.declare_event(None, T)  # add an event at end of simulation
+            simstate.declare_event(None, T)  # add an event at end of simulation
 
             # ignore all the events at zero
             tprev = 0
-            self.state.eventq.pop_until(tprev)
+            simstate.eventq.pop_until(tprev)
 
             # get the state vector
             x = x0
@@ -556,11 +556,11 @@ class BDSim:
             while True:
                 # get next event from the queue and the list of blocks or
                 # clocks at that time
-                tnext, sources = self.state.eventq.pop(dt=1e-6)
+                tnext, sources = simstate.eventq.pop(dt=1e-6)
                 if tnext is None:
                     break
                 # run system until next event time
-                x = self.run_interval(bd, tprev, tnext, x, state=state)
+                x = self.run_interval(bd, tprev, tnext, x, simstate=simstate)
                 nintervals += 1
 
                 # visit all the blocks and clocks that have an event now
@@ -568,14 +568,14 @@ class BDSim:
                     if isinstance(source, Clock):
                         # clock ticked, save its state
                         clock.savestate(tnext)
-                        clock.next_event(self.state)
+                        clock.next_event(self.simstate)
 
                         # get the new state
-                        clock._x = clock.getstate()
+                        clock._x = clock.getstate(tnext)
                 tprev = tnext
 
                 # are we done?
-                if state.t is not None and state.t >= T:
+                if simstate.t is not None and simstate.t >= T:
                     break
 
         # finished integration
@@ -584,15 +584,15 @@ class BDSim:
 
         # print some info about the integration
         print(fg("yellow"))
-        print(f"integrator steps:      {state.count}")
-        print(f"time steps:            {len(state.tlist)}")
+        print(f"integrator steps:      {simstate.count}")
+        print(f"time steps:            {len(simstate.tlist)}")
         print(f"integration intervals: {nintervals}")
         print(attr(0))
 
         # save buffered data in a Struct
         out = BDStruct(name="results")
-        out.t = np.array(state.tlist)
-        out.x = np.array(state.xlist)
+        out.t = np.array(simstate.tlist)
+        out.x = np.array(simstate.xlist)
         out.xnames = bd.statenames
 
         # save clocked states
@@ -605,7 +605,7 @@ class BDSim:
 
         # save the watchlist into variables named y0, y1 etc.
         for i, p in enumerate(watchlist):
-            out["y" + str(i)] = np.array(state.plist[i])
+            out["y" + str(i)] = np.array(simstate.plist[i])
         out.ynames = watchnamelist
 
         # the command line options -o or --out saves results as a pickle file
@@ -696,7 +696,7 @@ class BDSim:
                 f" {new_value}"
             )
 
-    def run_interval(self, bd, t0, T, x0, state):
+    def run_interval(self, bd, t0, T, x0, simstate=None):
         """
         Integrate system over interval
 
@@ -724,20 +724,20 @@ class BDSim:
                 # block diagram contains states, solve it using numerical integration
 
                 scipy_integrator = integrate.__dict__[
-                    state.solver
+                    simstate.solver
                 ]  # get user specified integrator
 
                 def ydot(t, y):
-                    state.t = t
-                    state.count += 1
-                    return bd.evaluate_plan(y, t)
+                    simstate.t = t
+                    simstate.count += 1
+                    return bd.evaluate_plan(y, t, simstate=simstate)
 
-                if state.dt is not None:
-                    state.solver_args["max_step"] = state.dt
+                if simstate.dt is not None:
+                    simstate.solver_args["max_step"] = simstate.dt
 
                 # print(f"run interval: from {t0} to {t0+T}, args={state.solver_args}, x0={x0}")
                 integrator = scipy_integrator(
-                    ydot, t0=t0, y0=x0, t_bound=T, **state.solver_args
+                    ydot, t0=t0, y0=x0, t_bound=T, **simstate.solver_args
                 )
 
                 # integrate
@@ -755,44 +755,45 @@ class BDSim:
                         break
 
                     # stash the results
-                    state.tlist.append(integrator.t)
-                    state.xlist.append(integrator.y)
+                    simstate.tlist.append(integrator.t)
+                    simstate.xlist.append(integrator.y)
 
                     # record the ports on the watchlist
-                    for i, p in enumerate(state.watchlist):
-                        state.plist[i].append(p.block.output(integrator.t)[p.port])
+                    for i, p in enumerate(simstate.watchlist):
+                        simstate.plist[i].append(p.block.output(integrator.t)[p.port])
 
                     # # update all blocks that need to know
-                    bd.step(state=self.state)
+                    bd.step(integrator.t)
 
-                    self.progress.update(self.state.t)  # update the progress bar
+                    self.progress.update(simstate.t)  # update the progress bar
 
                     if integrator.status == "finished":
                         break
 
                     # has any block called a stop?
-                    if state.stop is not None:
+                    if simstate.stop is not None:
                         print(
                             fg("red")
-                            + f"\n--- stop requested at t={state.t:.4f} by {state.stop}"
+                            + f"\n--- stop requested at t={simstate.t.t:.4f} by"
+                            f" {simstate.stop}"
                             + attr(0)
                         )
                         break
 
                     if (
-                        state.minstepsize is not None
-                        and integrator.step_size < state.minstepsize
+                        simstate.minstepsize is not None
+                        and integrator.step_size < simstate.minstepsize
                     ):
                         print(
                             fg("red")
                             + "\n--- stopping on minimum step size at"
-                            f" t={state.t:.4f} with last stepsize"
+                            f" t={simstate.t:.4f} with last stepsize"
                             f" {integrator.step_size:g}"
                             + attr(0)
                         )
                         break
 
-                    if "i" in state.options.debug:
+                    if "i" in simstate.options.debug:
                         bd._debugger(integrator)
 
                 return integrator.y  # return final state vector
@@ -800,67 +801,68 @@ class BDSim:
             elif len(clocklist) == 0:
                 # block diagram has no continuous or discrete states
 
-                assert state.dt is not None, "if no states must specify dt"
+                assert simstate.dt is not None, "if no states must specify dt"
 
-                for t in np.arange(t0, T, state.dt):  # step through the time range
+                for t in np.arange(t0, T, simstate.dt):  # step through the time range
                     # evaluate the block diagram
-                    state.t = t
+                    simstate.t = t
                     bd.evaluate_plan([], t)
 
                     # stash the results
-                    state.tlist.append(t)
+                    simstate.tlist.append(t)
 
                     # record the ports on the watchlist
-                    for i, p in enumerate(state.watchlist):
-                        state.plist[i].append(p.block.output(t)[p.port])
+                    for i, p in enumerate(simstate.watchlist):
+                        simstate.plist[i].append(p.block.output(t)[p.port])
 
                     # update all blocks that need to know
-                    bd.step(state=state)
+                    bd.step(t)
 
-                    self.progress.update(self.state.t)  # update the progress bar
+                    self.progress.update(t)  # update the progress bar
 
                     # has any block called a stop?
-                    if state.stop is not None:
+                    if simstate.stop is not None:
                         print(
                             fg("red")
-                            + f"\n--- stop requested at t={state.t:.4f} by {state.stop}"
+                            + f"\n--- stop requested at t={simstate.t:.4f} by"
+                            f" {simstate.stop}"
                             + attr(0)
                         )
                         break
 
-                    if "i" in state.options.debug:
+                    if "i" in simstate.options.debug:
                         bd._debugger(integrator)
 
             else:
                 # block diagram has no continuous states
                 t = t0
-                state.t = t
+                simstate.t = t
                 # evaluate the block diagram
                 bd.evaluate_plan([], t)
 
                 # stash the results
-                state.tlist.append(t)
+                simstate.tlist.append(t)
 
                 # record the ports on the watchlist
-                for i, p in enumerate(state.watchlist):
-                    state.plist[i].append(p.block.output(t)[p.port])
+                for i, p in enumerate(simstate.watchlist):
+                    simstate.plist[i].append(p.block.output(t)[p.port])
 
                 # update all blocks that need to know
-                bd.step(state=state)
+                bd.step(t)
 
-                self.progress.update(self.state.t)  # update the progress bar
+                self.progress.update(simstate.t)  # update the progress bar
 
                 # has any block called a stop?
-                if state.stop is not None:
+                if simstate.stop is not None:
                     print(
                         fg("red")
-                        + f"\n--- stop requested at t={bd.simstate.t:.4f} by"
-                        f" {bd.simstate.stop}"
+                        + f"\n--- stop requested at t={simstate.t:.4f} by"
+                        f" {simstate.stop}"
                         + attr(0)
                     )
 
-                if "i" in state.options.debug:
-                    bd._debugger(state=state)
+                if "i" in simstate.options.debug:
+                    bd._debugger(simstate=simstate)
 
         except RuntimeError as err:
             # bad things happens, print a message and return no result
@@ -940,7 +942,7 @@ class BDSim:
             plt.close("all")
             # sys.exit(1)  # not sure why we have this
             return
-        bd.done(graphics=self.options.graphics)
+        bd.done()
         plt.close("all")
         plt.pause(0.5)  # let the event handler do its work
 

@@ -62,8 +62,7 @@ class Inverse(FunctionBlock):
 
         self.pinv = pinv
 
-    def output(self, t=None):
-
+    def output(self, t):
         mat = self.inputs[0]
         if isinstance(mat, np.ndarray):
             if mat.shape[0] != mat.shape[1]:
@@ -129,7 +128,7 @@ class Transpose(FunctionBlock):
         super().__init__(**blockargs)
         self.type = "transpose"
 
-    def output(self, t=None):
+    def output(self, t):
         mat = self.inputs[0]
 
         if mat.ndim == 1:
@@ -184,7 +183,7 @@ class Norm(FunctionBlock):
         self.type = "norm"
         self.args = dict(ord=ord, axis=axis)
 
-    def output(self, t=None):
+    def output(self, t):
         vec = self.inputs[0]
         out = np.linalg.norm(vec, **self.args)
         return [out]
@@ -231,7 +230,7 @@ class Flatten(FunctionBlock):
         self.type = "flatten"
         self.order = order
 
-    def output(self, t=None):
+    def output(self, t):
         vec = self.inputs[0]
         out = vec.flatten(self.order)
         return [out]
@@ -328,7 +327,7 @@ class Slice2(FunctionBlock):
         else:
             raise ValueError("bad columns specifier")
 
-    def output(self, t=None):
+    def output(self, t):
         array = self.inputs[0]
         if array.ndim != 2:
             raise RuntimeError("Slice2 block expecting 2d array")
@@ -409,7 +408,7 @@ class Slice1(FunctionBlock):
         else:
             raise ValueError("bad index specifier")
 
-    def output(self, t=None):
+    def output(self, t):
         array = self.inputs[0]
         if array.ndim != 1:
             raise RuntimeError("Slice1 block expecting 1d array")
@@ -452,7 +451,7 @@ class Det(FunctionBlock):
         super().__init__(**blockargs)
         self.type = "det"
 
-    def output(self, t=None):
+    def output(self, t):
         mat = self.inputs[0]
         out = np.linalg.det(mat)
         return [out]
@@ -492,7 +491,7 @@ class Cond(FunctionBlock):
         super().__init__(**blockargs)
         self.type = "cond"
 
-    def output(self, t=None):
+    def output(self, t):
         mat = self.inputs[0]
         out = np.linalg.cond(mat)
         return [out]

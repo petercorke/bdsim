@@ -215,7 +215,12 @@ class Scope(GraphicsBlock):
         # TODO, wire width
         # inherit names from wires, block needs to be able to introspect
 
-    def start(self, state=None):
+    def start(self, simstate):
+        super().start(simstate)
+
+        if not self._enabled:
+            return
+
         # init the arrays that hold the data
         self.tdata = np.array([])
         self.ydata = [
@@ -223,7 +228,7 @@ class Scope(GraphicsBlock):
         ] * self.nplots
 
         # create the figures
-        self.fig = self.create_figure(state)
+        self.fig = self.create_figure(simstate)
         self.ax = self.fig.add_subplot(111)
 
         # get labels if not provided
@@ -264,7 +269,7 @@ class Scope(GraphicsBlock):
             self.ax.grid(True, *self.grid)
 
         # set limits
-        self.ax.set_xlim(0, state.T)
+        self.ax.set_xlim(0, simstate.T)
 
         if self.scale != "auto":
             self.ax.set_ylim(*self.scale)
@@ -276,18 +281,17 @@ class Scope(GraphicsBlock):
                 plug = wire.start  # start plug for input wire
 
                 # append to the watchlist, bdsim.run() will do the rest
-                state.watchlist.append(plug)
-                state.watchnamelist.append(str(plug))
+                simstate.watchlist.append(plug)
+                simstate.watchnamelist.append(str(plug))
+        plt.draw()
+        plt.show(block=False)
 
-        super().start()
-
-    def step(self, state=None):
-
-        if not state.options.graphics:
+    def step(self, t):
+        if not self._enabled:
             return
 
         # inputs are set
-        self.tdata = np.append(self.tdata, state.t)
+        self.tdata = np.append(self.tdata, t)
 
         if self.vector is None:
             # take data from multiple inputs as a list
@@ -314,7 +318,8 @@ class Scope(GraphicsBlock):
         if self.scale == "auto":
             self.ax.relim()
             self.ax.autoscale_view(scalex=False, scaley=True)
-        super().step(state=state)
+
+        super().step(t=t)
 
 
 # ------------------------------------------------------------------------ #
@@ -397,11 +402,16 @@ class ScopeXY(GraphicsBlock):
         self.labels = labels
         self.inport_names(("x", "y"))
 
-    def start(self, state, **kwargs):
+    def start(self, simstate):
+        super().start(simstate)
+
+        if not self._enabled:
+            return
+
         # create the plot
         super().reset()
 
-        self.fig = self.create_figure(state)
+        self.fig = self.create_figure(simstate)
         self.ax = self.fig.gca()
 
         args = []
@@ -427,16 +437,15 @@ class ScopeXY(GraphicsBlock):
         plt.draw()
         plt.show(block=False)
 
-        super().start()
+    def step(self, t=None):
+        if not self._enabled:
+            return
+        self._step(self.inputs[0], self.inputs[1], t)
 
-    def step(self, state=None):
-        self._step(self.inputs[0], self.inputs[1], state)
-
-    def _step(self, x, y, state):
+    def _step(self, x, y, t):
         self.xdata.append(x)
         self.ydata.append(y)
 
-        # if self.bd.runtime.options.graphics:
         plt.figure(self.fig.number)
         self.line.set_data(self.xdata, self.ydata)
 
@@ -446,7 +455,7 @@ class ScopeXY(GraphicsBlock):
         if isinstance(self.scale, str) and self.scale == "auto":
             self.ax.relim()
             self.ax.autoscale_view()
-        super().step(state=state)
+        super().step(t)
 
     # def done(self, block=False, **blockargs):
     #     if self.bd.runtime.options.graphics:
@@ -512,12 +521,15 @@ class ScopeXY1(ScopeXY):
             raise ValueError("indices must have 2 elements")
         self.indices = [int(x) for x in indices]
 
-    def step(self, state=None):
+    def step(self, t):
+        if not self._enabled:
+            return
+
         # inputs are set
         x = self.inputs[0][self.indices[0]]
         y = self.inputs[0][self.indices[1]]
 
-        super()._step(x, y, state)
+        super()._step(x, y, t)
 
 
 # ------------------------------------------------------------------------ #

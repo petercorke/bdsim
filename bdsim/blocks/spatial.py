@@ -51,8 +51,8 @@ if sm:
             super().__init__(**blockargs)
             self.pose = pose
 
-        def output(self, t=None):
-            return [self.inputs[0] * self.pose]
+        def output(self, t):
+            return [self.input(0) * self.pose]
 
     # ------------------------------------------------------------------------ #
 
@@ -98,8 +98,8 @@ if sm:
             super().__init__(**blockargs)
             self.pose = pose
 
-        def output(self, t=None):
-            return [self.pose * self.inputs[0]]
+        def output(self, t):
+            return [self.pose * self.input(0)]
 
     # ------------------------------------------------------------------------ #
 
@@ -140,9 +140,8 @@ if sm:
             """
             super().__init__(nin=2, **blockargs)
 
-        def output(self, t=None):
-
-            pose = self.inputs[0]
+        def output(self, t):
+            pose = self.input(0)
             if not isinstance(pose, (SO2, SO3, SE2, SE3)):
                 raise ValueError("pose must be SO2, SE2, SO3 or SE3")
             return [pose * self.inputs[1]]
@@ -185,8 +184,8 @@ if sm:
             """
             super().__init__(**blockargs)
 
-        def output(self, t=None):
-            return [self.inputs[0].inv()]
+        def output(self, t):
+            return [self.input(0).inv()]
 
 
 # ------------------------------------------------------------------------ #

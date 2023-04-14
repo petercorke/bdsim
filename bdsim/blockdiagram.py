@@ -528,13 +528,21 @@ class BlockDiagram:
 
     # ---------------------------------------------------------------------- #
 
-    def evaluate_plan(self, x, t, checkfinite=True, debuglist=[], sinks=True):
+    def evaluate_plan(self, x, t, checkfinite=True, sinks=True, simstate=None):
         """
         Evaluate all blocks in the network
 
-        :param x: state :type x: numpy.ndarray :param t: current time :type t:
-        float :param checkfinite: check for Inf or Nan values in block outputs
-        :type checkfinite: bool :return: state derivative :rtype: numpy.ndarray
+        :param x: state
+        :type x: ndarray
+        :param t: current time
+        :type t: float
+        :param checkfinite: check for Inf or Nan values in block outputs
+        :type checkfinite: bool
+        :param sinks: evaluate sink blocks, defaults to Trye
+        :type sinks: bool, optional
+        :param simstate: simulation state
+        :return: state derivative
+        :rtype: numpy.ndarray
 
         Performs the following steps:
 
@@ -638,10 +646,10 @@ class BlockDiagram:
         if sinks:
             for b in self.blocklist:
                 if isinstance(b, SinkBlock):
-                    b.step(state=self.runtime.state)
+                    b.step(t)
 
         # gather the derivative
-        YD = self.deriv()
+        YD = self.deriv(t)
 
         self.runtime.DEBUG("deriv", YD)
         return YD
@@ -770,15 +778,16 @@ class BlockDiagram:
 
     # ---------------------------------------------------------------------- #
 
-    def _debugger(self, state=None, integrator=None):
+    def _debugger(self, simstate=None, integrator=None):
 
         if state.t_stop is not None and state.t < state.t_stop:
             return
 
-        state.t_stop = None
+        simstate.t_stop = None
         print("\n")
         while True:
-            cmd = input(f"(bdsim, t={state.t:.4f}) ")
+            t = simstate.t
+            cmd = input(f"(bdsim, t={t:.4f}) ")
 
             if len(cmd) == 0:
                 continue
@@ -788,11 +797,11 @@ class BlockDiagram:
                 if len(cmd) > 1:
                     id = int(cmd[1:])
                     b = self.blocklist[id]
-                    print(b.name, b.output(t=state.t))
+                    print(b.name, b.output(t))
                 else:
                     for b in self.blocklist:
                         if b.nout > 0:
-                            print(b.name, b.output(t=state.t))
+                            print(b.name, b.output(t))
             elif cmd[0] == "i":
                 print(integrator.status, integrator.step_size, integrator.nfev)
             elif cmd[0] == "s":
@@ -1043,14 +1052,12 @@ class BlockDiagram:
             except:
                 self._error_handler("reset", b)
 
-    def step(self, state=None):
+    def step(self, t):
         """
         Step all blocks
 
-        :param state: simulation state, defaults to None
-        :type state: SimState, optional
-        :param graphics: graphics enabled, defaults to False
-        :type graphics: bool, optional
+        :param t: simulation time, defaults to None
+        :type t: float
 
         Tell all blocks to take action on new inputs by invoking their
         ``step`` method and passing the ``state`` object.  Used to save
@@ -1065,22 +1072,25 @@ class BlockDiagram:
         # TODO could be done by output method, even if no outputs
 
         for b in self.blocklist:
-            if b.isgraphics and not state.options.graphics:
-                continue  # skip graphics blocks
             try:
-                b.step(state=state)
+                b.step(t)
             except:
                 self._error_handler("step", b)
 
-    def deriv(self):
+    def deriv(self, t):
         """
-        Harvest derivatives from all blocks .
+        Harvest derivatives from all blocks.
+
+        :param t: simulation time, defaults to None
+        :type t: float
+        :param simstate: simulation state, defaults to None
+        :type simstate: SimState, optional
         """
         YD = np.array([])
         for b in self.blocklist:
             if b.blockclass == "transfer":
                 try:
-                    yd = b.deriv().flatten()
+                    yd = b.deriv(t=t)
                     if not isinstance(yd, np.ndarray):
                         raise AssertionError(f"deriv: block {b} did not return ndarray")
                     if yd.ndim != 1 or yd.shape[0] != b.nstates:
@@ -1093,14 +1103,12 @@ class BlockDiagram:
                     self._error_handler("deriv", b)
         return YD
 
-    def start(self, graphics=False, state=None, **kwargs):
+    def start(self, simstate=None):
         """
         Start all blocks
 
-        :param state: simulation state, defaults to None
-        :type state: SimState, optional
-        :param graphics: graphics enabled, defaults to False
-        :type graphics: bool, optional
+        :param simstate: simulation state, defaults to None
+        :type simstate: SimState, optional
 
         Inform all blocks that BlockDiagram execution is about to start by
         invoking their ``start`` method and passing the ``state`` object.  Used
@@ -1112,26 +1120,24 @@ class BlockDiagram:
 
         for c in self.clocklist:
             try:
-                c.start(state=state, **kwargs)
+                c.start(simstate)
             except:
-                self._error_handler("start clock", c)
+                self._error_handler("start_clocked", c)
 
         # safe wrapper for block starting, does error handling
         for b in self.blocklist:
-            if b.isgraphics and not graphics:
-                continue
             # print('starting block', b)
             try:
-                b.start(state=state, **kwargs)
+                b.start(simstate)
             except:
-                self._error_handler("block.start", b)
+                self._error_handler("start", b)
 
     def initialstate(self):
         for b in self.blocklist:
             if b.blockclass in ("transfer", "clocked"):
                 b._x = b._x0
 
-    def done(self, block=False, graphics=False):
+    def done(self, block=False):
         """
         Finishup all blocks
 
@@ -1147,8 +1153,7 @@ class BlockDiagram:
         .. note:: if ``graphics`` is False, Graphics blocks are not called
         """
         for b in self.blocklist:
-            if b.isgraphics and not graphics:
-                continue
+
             try:
                 b.done(block=block)
             except:
@@ -1230,11 +1235,11 @@ class BlockDiagram:
         # open the PDF file in browser (hopefully portable), then cleanup
         webbrowser.open(f"file://{pdffile.name}")
 
-    def blockvalues(self):
+    def blockvalues(self, t=None, simstate=None):
         for b in self.blocklist:
             print("Block {:s}:".format(b.name))
             print("  inputs:  ", b.inputs)
-            print("  outputs: ", b.output(t=0))
+            print("  outputs: ", b.output(t))
 
 
 if __name__ == "__main__":  # pragma: no cover

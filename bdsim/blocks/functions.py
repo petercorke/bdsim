@@ -97,7 +97,7 @@ class Sum(FunctionBlock):
         self.signs = signs
         self.mode = mode
 
-    def output(self, t=None):
+    def output(self, t):
         for i, input in enumerate(self.inputs):
             # code makes no assumption about types of inputs
             # NOTE: use sum = sum =/- input rather than sum +/-= input since
@@ -192,7 +192,7 @@ class Prod(FunctionBlock):
         self.ops = ops
         self.matrix = matrix
 
-    def output(self, t=None):
+    def output(self, t):
         for i, input in enumerate(self.inputs):
             if i == 0:
                 if self.ops[i] == "*":
@@ -266,7 +266,7 @@ class Gain(FunctionBlock):
 
         self.add_param("K")
 
-    def output(self, t=None):
+    def output(self, t):
         input = self.inputs[0]
 
         if isinstance(input, np.ndarray) and isinstance(self.K, np.ndarray):
@@ -326,7 +326,7 @@ class Pow(FunctionBlock):
         self.matrix = matrix
         self.add_param("p")
 
-    def output(self, t=None):
+    def output(self, t):
         input = self.inputs[0]
 
         if isinstance(input, np.ndarray):
@@ -395,7 +395,7 @@ class Clip(FunctionBlock):
         self.min = min
         self.max = max
 
-    def output(self, t=None):
+    def output(self, t):
         input = self.inputs[0]
 
         if isinstance(input, np.ndarray):
@@ -558,13 +558,13 @@ class Function(FunctionBlock):
         self.args = fargs
         self.kwargs = fkwargs
 
-    def start(self, state=None):
-        super().start()
+    def start(self, simstate):
+        super().start(simstate)
         if self.userdata is not None:
             self.userdata.clear()
             print("clearing user data")
 
-    def output(self, t=None):
+    def output(self, t):
         if callable(self.func):
             # single function
             try:
@@ -690,14 +690,17 @@ class Interpolate(FunctionBlock):
         self.f = scipy.interpolate.interp1d(x=x, y=y, kind=kind, axis=0)
         self.x = x
 
-    def start(self, state, **blockargs):
-        if self.time:
-            assert self.x[0] >= 0, "interpolation not defined for t<0"
-            if self.x[-1] is np.inf:
-                self.x[-1] = state.T
-            assert self.x[-1] >= state.T, "interpolation not defined for t>T"
+    def start(self, simstate, **blockargs):
+        super().start(simstate)
 
-    def output(self, t=None):
+        if simstate is not None:
+            if self.time:
+                assert self.x[0] >= 0, "interpolation not defined for t<0"
+                if self.x[-1] is np.inf:
+                    self.x[-1] = simstate.T
+                assert self.x[-1] >= simstate.T, "interpolation not defined for t>T"
+
+    def output(self, t):
         if self.time:
             xnew = t
         else:

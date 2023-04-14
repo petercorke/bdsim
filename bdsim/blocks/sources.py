@@ -54,7 +54,7 @@ class Constant(SourceBlock):
 
         self.add_param("value")
 
-    def output(self, t=None):
+    def output(self, t):
         return [self.value]
 
 
@@ -94,7 +94,7 @@ class Time(SourceBlock):
         """
         super().__init__(**blockargs)
 
-    def output(self, t=None):
+    def output(self, t):
         return [t]
 
 
@@ -219,7 +219,9 @@ class WaveForm(SourceBlock, EventSource):
         self.amplitude = amplitude
         self.offset = offset
 
-    def start(self, state=None):
+    def start(self, simstate):
+        super().start(simstate)
+
         if self.wave == "square":
             t1 = self.phase / self.freq
             t2 = (self.duty + self.phase) / self.freq
@@ -231,13 +233,14 @@ class WaveForm(SourceBlock, EventSource):
 
         # t1 < t2
         T = 1.0 / self.freq
-        while t1 < self.bd.simstate.T:
-            self.bd.simstate.declare_event(self, t1)
-            self.bd.simstate.declare_event(self, t2)
-            t1 += T
-            t2 += T
+        if simstate is not None:
+            while t1 < simstate.T:
+                simstate.declare_event(self, t1)
+                simstate.declare_event(self, t2)
+                t1 += T
+                t2 += T
 
-    def output(self, t=None):
+    def output(self, t):
         T = 1.0 / self.freq
         phase = (t * self.freq - self.phase) % 1.0
 
@@ -317,9 +320,12 @@ class Piecewise(SourceBlock, EventSource):
         self.t = [x[0] for x in seq]
         self.y = [x[1] for x in seq]
 
-    def start(self, state=None):
-        for t in self.t:
-            state.declare_event(self, t)
+    def start(self, simstate):
+        super().start(simstate)
+
+        if simstate is not None:
+            for t in self.t:
+                simstate.declare_event(self, t)
 
     def output(self, t):
         i = sum([1 if t >= _t else 0 for _t in self.t]) - 1
@@ -378,10 +384,10 @@ class Step(SourceBlock, EventSource):
         self.off = off
         self.on = on
 
-    def start(self, state=None):
-        state.declare_event(self, self.T)
+    def start(self, simstate):
+        simstate.declare_event(self, self.T)
 
-    def output(self, t=None):
+    def output(self, t):
         if t >= self.T:
             out = self.on
         else:
@@ -442,10 +448,10 @@ class Ramp(SourceBlock, EventSource):
         self.off = off
         self.slope = slope
 
-    def start(self, state=None):
-        state.declare_event(self, self.T)
+    def start(self, simstate):
+        simstate.declare_event(self, self.T)
 
-    def output(self, t=None):
+    def output(self, t):
         if t >= self.T:
             out = self.off + self.slope * (t - self.T)
         else:

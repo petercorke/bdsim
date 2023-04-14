@@ -71,7 +71,7 @@ class Item(FunctionBlock):
         super().__init__(**blockargs)
         self.item = item
 
-    def output(self, t=None):
+    def output(self, t):
         # TODO, handle inputs that are vectors themselves
         assert isinstance(self.inputs[0], dict), "Input signal must be a dict"
         assert self.item in self.inputs[0], "Item is not in input dict"
@@ -129,7 +129,7 @@ class Dict(FunctionBlock):
         super().__init__(**blockargs)
         self.item = item
 
-    def output(self, t=None):
+    def output(self, t):
         # TODO, handle inputs that are vectors themselves
         assert isinstance(self.inputs[0], dict), "Input signal must be a dict"
         assert self.item in self.inputs[0], "Item is not in signal dict"
@@ -180,7 +180,7 @@ class Mux(FunctionBlock):
         """
         super().__init__(nin=nin, **blockargs)
 
-    def output(self, t=None):
+    def output(self, t):
         # TODO, handle inputs that are vectors themselves
         out = []
         for input in self.inputs:
@@ -230,7 +230,7 @@ class DeMux(FunctionBlock):
         """
         super().__init__(nout=nout, **blockargs)
 
-    def output(self, t=None):
+    def output(self, t):
         # TODO, handle inputs that are vectors themselves
         assert (
             len(self.inputs[0]) == self.nout
@@ -284,7 +284,7 @@ class Index(FunctionBlock):
             self.index = slice(*args)
         self.index = index
 
-    def output(self, t=None):
+    def output(self, t):
         if len(self.index) == 1:
             return [self.inputs[0][self.index[0]]]
         else:
@@ -464,7 +464,7 @@ class InPort(SubsystemBlock):
         """
         super().__init__(nout=nout, **blockargs)
 
-    def output(self, t=None):
+    def output(self, t):
         # signal feed through
 
         return self.inputs
@@ -513,7 +513,7 @@ class OutPort(SubsystemBlock):
         """
         super().__init__(nin=nin, **blockargs)
 
-    def output(self, t=None):
+    def output(self, t):
         # signal feed through
         return self.inputs
 

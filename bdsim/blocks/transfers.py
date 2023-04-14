@@ -88,10 +88,10 @@ class Integrator(TransferBlock):
         self.max = max
         print("nstates", self.nstates)
 
-    def output(self, t=None):
+    def output(self, t):
         return [self._x]
 
-    def deriv(self):
+    def deriv(self, t):
         xd = base.getvector(self.inputs[0])
         if self.min is not None:
             xd[self._x < self.min] = 0
@@ -140,12 +140,11 @@ class PoseIntegrator(TransferBlock):
 
         self._x0 = x0
 
-    def output(self, t=None):
+    def output(self, t):
         return [Twist3(self._x).SE3(1)]
 
-    def deriv(self):
-
-        return self.inputs[0]
+    def deriv(self, t):
+        return self.input(0)
 
 
 # ------------------------------------------------------------------------ #
@@ -228,10 +227,10 @@ class LTI_SS(TransferBlock):
         else:
             self._x0 = x0
 
-    def output(self, t=None):
+    def output(self, t):
         return list(self.C @ self._x)
 
-    def deriv(self):
+    def deriv(self, t):
         return self.A @ self._x + self.B @ np.array(self.inputs)
 
 
@@ -421,11 +420,11 @@ class PID(SubSystem):
                 print("B=", B)
                 print("C=", C)
 
-        def output(self, t=None):
+        def output(self, t):
             e = self.inputs[1] - self.inputs[0]
             return list(self.C @ self._x)
 
-        def deriv(self):
+        def deriv(self, t):
             return self.A @ self._x + self.B @ np.array(self.inputs)
 
     nin = 1

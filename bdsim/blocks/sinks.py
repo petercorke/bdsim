@@ -89,8 +89,8 @@ class Print(SinkBlock):
 
         # TODO format can be a string or function
 
-    def step(self, state=None):
-        prefix = "{:12s}".format("PRINT({:s} (t={:.3f})".format(self.name, state.t))
+    def step(self, t=None, simstate=None):
+        prefix = "{:12s}".format("PRINT({:s} (t={:.3f})".format(self.name, t))
         value = self.inputs[0]
         if self.format is None:
             # no format string
@@ -159,7 +159,7 @@ class Stop(SinkBlock):
             raise TypeError("argument must be a callable")
         self.stopfunc = func
 
-    def step(self, state=None):
+    def step(self, t=None, simstate=None):
         value = self.inputs[0]
         if self.stopfunc is not None:
             value = self.stopfunc(value)
@@ -173,10 +173,10 @@ class Stop(SinkBlock):
             except:
                 raise RuntimeError("bad input type to stop block")
 
-        # we signal stop condition by setting state.stop to the block calling
+        # we signal stop condition by setting simstate.stop to the block calling
         # the stop
         if stop:
-            state.stop = self
+            simstate.stop = self
 
 
 # ------------------------------------------------------------------------ #
@@ -258,13 +258,13 @@ class Watch(SinkBlock):
         """
         super().__init__(**blockargs)
 
-    def start(self, state=None):
+    def step(self, t=None, simstate=None):
         # called at start of simulation, add this block to the watchlist
         plug = self.sources[0]  # start plug for input wire
 
         # append to the watchlist, bdsim.run() will do the rest
-        state.watchlist.append(plug)
-        state.watchnamelist.append(str(plug))
+        simstate.watchlist.append(plug)
+        simstate.watchnamelist.append(str(plug))
 
 
 if __name__ == "__main__":  # pragma: no cover

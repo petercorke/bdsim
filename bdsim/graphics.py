@@ -32,16 +32,18 @@ class GraphicsBlock(SinkBlock):
 
         self.movie = movie
 
-    def start(self):
+    def start(self, simstate):
 
-        plt.draw()
-        plt.show(block=False)
+        # plt.draw()
+        # plt.show(block=False)
+        self._simstate = simstate
+        self._enabled = simstate.options.graphics
 
-        if self.movie is not None and not self.bd.runtime.options.animation:
+        if self.movie is not None and not simstate.options.animation:
             print(
                 "enabling global animation option to allow movie option on block", self
             )
-            if not self.bd.runtime.options.animation:
+            if not simstate.options.animation:
                 print("must enable animation to render a movie")
         if self.movie is not None:
             try:
@@ -53,16 +55,16 @@ class GraphicsBlock(SinkBlock):
             except FileNotFoundError:
                 self.fatal("cannot save movie, please install ffmpeg")
 
-    def step(self, state=None):
-        super().step()
+    def step(self, t):
+        super().step(t)
 
         # bring the figure up to date in a backend-specific way
-        if state.options.animation:
-            if state.backend == "TkAgg":
+        if self._simstate.options.animation:
+            if self._simstate.backend == "TkAgg":
                 self.fig.canvas.flush_events()
                 plt.show(block=False)
                 plt.show(block=False)
-            elif state.backend == "Qt5Agg":
+            elif self._simstate.backend == "Qt5Agg":
                 self.fig.canvas.flush_events()
                 self.fig.canvas.draw()
             else:
@@ -74,7 +76,7 @@ class GraphicsBlock(SinkBlock):
             except AttributeError:
                 self.fatal("cannot save movie, please install ffmpeg")
 
-    def done(self, state=None, block=False):
+    def done(self, block=False):
         if self.fig is not None:
             self.fig.canvas.start_event_loop(0.001)
             if self.movie is not None:
@@ -143,7 +145,8 @@ class GraphicsBlock(SinkBlock):
 
                             matplotlib.use("Qt5Agg")
                             print(
-                                "no graphics backend specified: Qt5Agg found, using instead of MacOSX"
+                                "no graphics backend specified: Qt5Agg found, using"
+                                " instead of MacOSX"
                             )
                         except:
                             pass
