@@ -1001,10 +1001,7 @@ class BlockDiagram:
         print(fg("red"))  # red text
 
         # print the traceback
-        print(
-            f"[{where}]: exception {t.__name__} occurred in {block.type} block"
-            f" {block.name}  "
-        )
+        print(f"[{block.type} block: {block.name}.{where}]: exception {t.__name__}")
         print(f"  {v}\n")
         traceback.print_tb(tb)
 
@@ -1164,7 +1161,7 @@ class BlockDiagram:
             try:
                 b.done(block=block)
             except:
-                self._error_handler("block.done", b)
+                self._error_handler("done", b)
 
     def dotfile(self, filename):
         """
