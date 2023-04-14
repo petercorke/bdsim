@@ -88,15 +88,15 @@ class Integrator(TransferBlock):
         self.max = max
         print("nstates", self.nstates)
 
-    def output(self, t):
-        return [self._x]
+    def output(self, t, u, x):
+        return [x]
 
-    def deriv(self, t):
-        xd = base.getvector(self.inputs[0])
+    def deriv(self, t, u, x):
+        xd = base.getvector(u[0])
         if self.min is not None:
-            xd[self._x < self.min] = 0
+            xd[x < self.min] = 0
         if self.max is not None:
-            xd[self._x > self.max] = 0
+            xd[x > self.max] = 0
 
         return self.gain * xd
 
@@ -140,11 +140,11 @@ class PoseIntegrator(TransferBlock):
 
         self._x0 = x0
 
-    def output(self, t):
-        return [Twist3(self._x).SE3(1)]
+    def output(self, t, u, x):
+        return [Twist3(x).SE3(1)]
 
-    def deriv(self, t):
-        return self.input(0)
+    def deriv(self, t, u, x):
+        return u[0]
 
 
 # ------------------------------------------------------------------------ #
@@ -227,11 +227,11 @@ class LTI_SS(TransferBlock):
         else:
             self._x0 = x0
 
-    def output(self, t):
-        return list(self.C @ self._x)
+    def output(self, t, u, x):
+        return list(self.C @ x)
 
-    def deriv(self, t):
-        return self.A @ self._x + self.B @ np.array(self.inputs)
+    def deriv(self, t, u, x):
+        return self.A @ x + self.B @ np.array(u)
 
 
 # ------------------------------------------------------------------------ #
@@ -420,12 +420,12 @@ class PID(SubSystem):
                 print("B=", B)
                 print("C=", C)
 
-        def output(self, t):
-            e = self.inputs[1] - self.inputs[0]
-            return list(self.C @ self._x)
+        def output(self, t, u, x):
+            e = u[1] - u[0]
+            return list(self.C @ x)
 
-        def deriv(self, t):
-            return self.A @ self._x + self.B @ np.array(self.inputs)
+        def deriv(self, t, u, x):
+            return self.A @ x + self.B @ np.array(u)
 
     nin = 1
     nout = 1

@@ -55,8 +55,8 @@ class GraphicsBlock(SinkBlock):
             except FileNotFoundError:
                 self.fatal("cannot save movie, please install ffmpeg")
 
-    def step(self, t):
-        super().step(t)
+    def step(self, t, inports):
+        super().step(t, inports)
 
         # bring the figure up to date in a backend-specific way
         if self._simstate.options.animation:

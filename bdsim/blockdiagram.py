@@ -585,7 +585,11 @@ class BlockDiagram:
             for b in group:
                 # ask the block for output, check for errors
                 try:
-                    out = b.output(t)
+                    if sequence == 0:
+                        # blocks called at step 0 have no inputs
+                        out = b.output(t, None, b._x)
+                    else:
+                        out = b.output(t, b.inputs, b._x)
                 except Exception as err:
                     # output method failed, report it
                     print(fg("red"))
@@ -646,7 +650,7 @@ class BlockDiagram:
         if sinks:
             for b in self.blocklist:
                 if isinstance(b, SinkBlock):
-                    b.step(t)
+                    b.step(t, b.inputs)
 
         # gather the derivative
         YD = self.deriv(t)
@@ -797,11 +801,11 @@ class BlockDiagram:
                 if len(cmd) > 1:
                     id = int(cmd[1:])
                     b = self.blocklist[id]
-                    print(b.name, b.output(t))
+                    print(b.name, b.output(t, b.inputs, b._x))
                 else:
                     for b in self.blocklist:
                         if b.nout > 0:
-                            print(b.name, b.output(t))
+                            print(b.name, b.output(t, b.inputs, b._x))
             elif cmd[0] == "i":
                 print(integrator.status, integrator.step_size, integrator.nfev)
             elif cmd[0] == "s":
@@ -1058,6 +1062,8 @@ class BlockDiagram:
 
         :param t: simulation time, defaults to None
         :type t: float
+        :param inports: block input port values
+        :type inports: list
 
         Tell all blocks to take action on new inputs by invoking their
         ``step`` method and passing the ``state`` object.  Used to save
@@ -1073,7 +1079,8 @@ class BlockDiagram:
 
         for b in self.blocklist:
             try:
-                b.step(t)
+                if isinstance(b, SinkBlock):
+                    b.step(t, b.inputs)
             except:
                 self._error_handler("step", b)
 
@@ -1090,7 +1097,7 @@ class BlockDiagram:
         for b in self.blocklist:
             if b.blockclass == "transfer":
                 try:
-                    yd = b.deriv(t=t)
+                    yd = b.deriv(t, b.inputs, b._x)
                     if not isinstance(yd, np.ndarray):
                         raise AssertionError(f"deriv: block {b} did not return ndarray")
                     if yd.ndim != 1 or yd.shape[0] != b.nstates:

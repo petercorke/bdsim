@@ -286,7 +286,7 @@ class Scope(GraphicsBlock):
         plt.draw()
         plt.show(block=False)
 
-    def step(self, t):
+    def step(self, t, inports):
         if not self._enabled:
             return
 
@@ -295,7 +295,7 @@ class Scope(GraphicsBlock):
 
         if self.vector is None:
             # take data from multiple inputs as a list
-            data = self.inputs
+            data = inports
             if len(data) != self.nplots:
                 raise RuntimeError(
                     "number of signals to plot doesnt match init parameters"
@@ -319,7 +319,7 @@ class Scope(GraphicsBlock):
             self.ax.relim()
             self.ax.autoscale_view(scalex=False, scaley=True)
 
-        super().step(t=t)
+        super().step(t, inports)
 
 
 # ------------------------------------------------------------------------ #
@@ -437,10 +437,10 @@ class ScopeXY(GraphicsBlock):
         plt.draw()
         plt.show(block=False)
 
-    def step(self, t=None):
+    def step(self, t, inports):
         if not self._enabled:
             return
-        self._step(self.inputs[0], self.inputs[1], t)
+        self._step(inports[0], inports[1], t)
 
     def _step(self, x, y, t):
         self.xdata.append(x)
@@ -455,7 +455,7 @@ class ScopeXY(GraphicsBlock):
         if isinstance(self.scale, str) and self.scale == "auto":
             self.ax.relim()
             self.ax.autoscale_view()
-        super().step(t)
+        super().step(t, None)
 
     # def done(self, block=False, **blockargs):
     #     if self.bd.runtime.options.graphics:
@@ -521,13 +521,13 @@ class ScopeXY1(ScopeXY):
             raise ValueError("indices must have 2 elements")
         self.indices = [int(x) for x in indices]
 
-    def step(self, t):
+    def step(self, t, inports):
         if not self._enabled:
             return
 
         # inputs are set
-        x = self.inputs[0][self.indices[0]]
-        y = self.inputs[0][self.indices[1]]
+        x = inports[0][self.indices[0]]
+        y = inports[0][self.indices[1]]
 
         super()._step(x, y, t)
 

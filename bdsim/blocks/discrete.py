@@ -68,13 +68,12 @@ class ZOH(ClockedBlock):
         self.ndstates = len(x0)
         # print('nstates', self.nstates)
 
-    def output(self, t):
+    def output(self, t, u, x):
         # print('* output, x is ', self._x)
-        return [self._x]
+        return [x]
 
-    def next(self, t):
-        xnext = np.array(self.inputs)
-        return xnext
+    def next(self, t, u, x):
+        return np.array(u)
 
 
 # ------------------------------------------------------------------------
@@ -154,11 +153,11 @@ class DIntegrator(ClockedBlock):
         self.max = max
         self.gain = gain
 
-    def output(self, t):
-        return [self._x]
+    def output(self, t, u, x):
+        return [x]
 
-    def next(self, t):
-        xnext = self._x + self.gain * self.clock.T * np.array(self.inputs[0])
+    def next(self, t, u, x):
+        xnext = x + self.gain * self.clock.T * np.array(u)
         if self.min is not None or self.max is not None:
             xnext = np.clip(xnext, self.min, self.max)
         return xnext
@@ -223,12 +222,12 @@ class DPoseIntegrator(ClockedBlock):
 
         print("nstates", self.nstates, x0)
 
-    def output(self, t):
-        return [Twist3(self._x).SE3()]
+    def output(self, t, u, x):
+        return [Twist3(x).SE3()]
 
-    def next(self, t):
-        T_delta = SE3.Delta(self.inputs[0] * self.clock.T)
-        pose = Twist3(self._x).SE3() * T_delta
+    def next(self, t, u, x):
+        T_delta = SE3.Delta(u[0] * self.clock.T)
+        pose = Twist3(x).SE3() * T_delta
         return Twist3(pose).A
 
 

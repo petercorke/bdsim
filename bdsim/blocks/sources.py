@@ -54,7 +54,7 @@ class Constant(SourceBlock):
 
         self.add_param("value")
 
-    def output(self, t):
+    def output(self, t, inports, x):
         return [self.value]
 
 
@@ -94,7 +94,7 @@ class Time(SourceBlock):
         """
         super().__init__(**blockargs)
 
-    def output(self, t):
+    def output(self, t, inports, x):
         return [t]
 
 
@@ -240,7 +240,7 @@ class WaveForm(SourceBlock, EventSource):
                 t1 += T
                 t2 += T
 
-    def output(self, t):
+    def output(self, t, inports, x):
         T = 1.0 / self.freq
         phase = (t * self.freq - self.phase) % 1.0
 
@@ -327,7 +327,7 @@ class Piecewise(SourceBlock, EventSource):
             for t in self.t:
                 simstate.declare_event(self, t)
 
-    def output(self, t):
+    def output(self, t, inports, x):
         i = sum([1 if t >= _t else 0 for _t in self.t]) - 1
         out = self.y[i]
         # print(out)
@@ -387,7 +387,7 @@ class Step(SourceBlock, EventSource):
     def start(self, simstate):
         simstate.declare_event(self, self.T)
 
-    def output(self, t):
+    def output(self, t, inports, x):
         if t >= self.T:
             out = self.on
         else:
@@ -451,7 +451,7 @@ class Ramp(SourceBlock, EventSource):
     def start(self, simstate):
         simstate.declare_event(self, self.T)
 
-    def output(self, t):
+    def output(self, t, inports, x):
         if t >= self.T:
             out = self.off + self.slope * (t - self.T)
         else:

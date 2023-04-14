@@ -1915,9 +1915,6 @@ class Block:
     def done(self, **kwargs):  # end of simulation
         pass
 
-    def step(self, t, **kwargs):  # valid
-        pass
-
     def savefig(self, *pos, **kwargs):
         pass
 
@@ -1946,6 +1943,9 @@ class SinkBlock(Block):
         super().__init__(**blockargs)
         self.nout = 0
         self.nstates = 0
+
+    def step(self, t, inports):  # valid
+        pass
 
 
 class SourceBlock(Block):

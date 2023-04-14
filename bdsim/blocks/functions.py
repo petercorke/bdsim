@@ -97,8 +97,8 @@ class Sum(FunctionBlock):
         self.signs = signs
         self.mode = mode
 
-    def output(self, t):
-        for i, input in enumerate(self.inputs):
+    def output(self, t, inports, x):
+        for i, input in enumerate(inports):
             # code makes no assumption about types of inputs
             # NOTE: use sum = sum =/- input rather than sum +/-= input since
             #       these are references
@@ -192,8 +192,8 @@ class Prod(FunctionBlock):
         self.ops = ops
         self.matrix = matrix
 
-    def output(self, t):
-        for i, input in enumerate(self.inputs):
+    def output(self, t, inports, x):
+        for i, input in enumerate(inports):
             if i == 0:
                 if self.ops[i] == "*":
                     prod = input
@@ -266,8 +266,8 @@ class Gain(FunctionBlock):
 
         self.add_param("K")
 
-    def output(self, t):
-        input = self.inputs[0]
+    def output(self, t, inports, x):
+        input = inports[0]
 
         if isinstance(input, np.ndarray) and isinstance(self.K, np.ndarray):
             # array x array case
@@ -326,8 +326,8 @@ class Pow(FunctionBlock):
         self.matrix = matrix
         self.add_param("p")
 
-    def output(self, t):
-        input = self.inputs[0]
+    def output(self, t, inports, x):
+        input = inports[0]
 
         if isinstance(input, np.ndarray):
             # input is an array
@@ -395,8 +395,8 @@ class Clip(FunctionBlock):
         self.min = min
         self.max = max
 
-    def output(self, t):
-        input = self.inputs[0]
+    def output(self, t, inports, x):
+        input = inports[0]
 
         if isinstance(input, np.ndarray):
             out = np.clip(input, self.min, self.max)
@@ -564,11 +564,12 @@ class Function(FunctionBlock):
             self.userdata.clear()
             print("clearing user data")
 
-    def output(self, t):
+    def output(self, t, inports, x):
+
         if callable(self.func):
             # single function
             try:
-                val = self.func(*self.inputs, *self.args, **self.kwargs)
+                val = self.func(*inports, *self.args, **self.kwargs)
             except TypeError:
                 raise RuntimeError(
                     "Function invocation failed, check number of arguments"
@@ -590,7 +591,7 @@ class Function(FunctionBlock):
             out = []
             for f in self.func:
                 try:
-                    val = f(*self.inputs, *self.args, **self.kwargs)
+                    val = f(*inports, *self.args, **self.kwargs)
                 except TypeError:
                     raise RuntimeError(
                         "Function invocation failed, check number of arguments"
@@ -700,11 +701,11 @@ class Interpolate(FunctionBlock):
                     self.x[-1] = simstate.T
                 assert self.x[-1] >= simstate.T, "interpolation not defined for t>T"
 
-    def output(self, t):
+    def output(self, t, inports, x):
         if self.time:
             xnew = t
         else:
-            xnew = self.inputs[0]
+            xnew = inports[0]
         return [self.f(xnew)]
 
 

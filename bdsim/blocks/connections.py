@@ -71,11 +71,12 @@ class Item(FunctionBlock):
         super().__init__(**blockargs)
         self.item = item
 
-    def output(self, t):
+    def output(self, t, inports, x):
+        input = inports[0]
         # TODO, handle inputs that are vectors themselves
-        assert isinstance(self.inputs[0], dict), "Input signal must be a dict"
-        assert self.item in self.inputs[0], "Item is not in input dict"
-        return [self.inputs[0][self.item]]
+        assert isinstance(input, dict), "Input signal must be a dict"
+        assert self.item in input, "Item is not in input dict"
+        return [input[self.item]]
 
 
 class Dict(FunctionBlock):
@@ -129,11 +130,12 @@ class Dict(FunctionBlock):
         super().__init__(**blockargs)
         self.item = item
 
-    def output(self, t):
+    def output(self, t, inports, x):
+        input = inports[0]
         # TODO, handle inputs that are vectors themselves
-        assert isinstance(self.inputs[0], dict), "Input signal must be a dict"
-        assert self.item in self.inputs[0], "Item is not in signal dict"
-        return [self.inputs[0][self.item]]
+        assert isinstance(input, dict), "Input signal must be a dict"
+        assert self.item in input, "Item is not in signal dict"
+        return [input[self.item]]
 
 
 # ------------------------------------------------------------------------ #
@@ -180,10 +182,10 @@ class Mux(FunctionBlock):
         """
         super().__init__(nin=nin, **blockargs)
 
-    def output(self, t):
+    def output(self, t, inports, x):
         # TODO, handle inputs that are vectors themselves
         out = []
-        for input in self.inputs:
+        for input in inports:
             if isinstance(input, (int, float, bool)):
                 out.append(input)
             elif isinstance(input, np.ndarray):
@@ -230,12 +232,13 @@ class DeMux(FunctionBlock):
         """
         super().__init__(nout=nout, **blockargs)
 
-    def output(self, t):
+    def output(self, t, inports, x):
+        input = inports[0]
         # TODO, handle inputs that are vectors themselves
         assert (
-            len(self.inputs[0]) == self.nout
+            len(inputs) == self.nout
         ), "Input width not equal to number of output ports"
-        return list(self.inputs[0])
+        return list(input)
 
 
 # ------------------------------------------------------------------------ #
@@ -284,11 +287,12 @@ class Index(FunctionBlock):
             self.index = slice(*args)
         self.index = index
 
-    def output(self, t):
+    def output(self, t, inports, x):
+        input = inports[0]
         if len(self.index) == 1:
-            return [self.inputs[0][self.index[0]]]
+            return [input[self.index[0]]]
         else:
-            return [np.r_[[self.inputs[0][i] for i in self.index]]]
+            return [np.r_[[inputs[i] for i in self.index]]]
 
 
 # ------------------------------------------------------------------------ #
@@ -464,10 +468,10 @@ class InPort(SubsystemBlock):
         """
         super().__init__(nout=nout, **blockargs)
 
-    def output(self, t):
+    def output(self, t, inports, x):
         # signal feed through
 
-        return self.inputs
+        return inports
 
 
 # ------------------------------------------------------------------------ #
@@ -513,9 +517,9 @@ class OutPort(SubsystemBlock):
         """
         super().__init__(nin=nin, **blockargs)
 
-    def output(self, t):
+    def output(self, t, inports, x):
         # signal feed through
-        return self.inputs
+        return inports
 
 
 if __name__ == "__main__":  # pragma: no cover
