@@ -89,9 +89,9 @@ class Print(SinkBlock):
 
         # TODO format can be a string or function
 
-    def step(self, t=None, simstate=None):
+    def step(self, t, inports):
         prefix = "{:12s}".format("PRINT({:s} (t={:.3f})".format(self.name, t))
-        value = self.inputs[0]
+        value = inports[0]
         if self.format is None:
             # no format string
             if hasattr(value, "strline"):
@@ -159,8 +159,12 @@ class Stop(SinkBlock):
             raise TypeError("argument must be a callable")
         self.stopfunc = func
 
-    def step(self, t=None, simstate=None):
-        value = self.inputs[0]
+    def start(self, simstate):
+        self._simstate = simstate
+
+    def step(self, t, inports):
+        value = inports[0]
+
         if self.stopfunc is not None:
             value = self.stopfunc(value)
 
@@ -176,7 +180,7 @@ class Stop(SinkBlock):
         # we signal stop condition by setting simstate.stop to the block calling
         # the stop
         if stop:
-            simstate.stop = self
+            self._simstate.stop = self
 
 
 # ------------------------------------------------------------------------ #
@@ -258,7 +262,7 @@ class Watch(SinkBlock):
         """
         super().__init__(**blockargs)
 
-    def step(self, t=None, simstate=None):
+    def start(self, simstate):
         # called at start of simulation, add this block to the watchlist
         plug = self.sources[0]  # start plug for input wire
 
