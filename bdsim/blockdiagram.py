@@ -1232,6 +1232,10 @@ class BlockDiagram:
                 options.append(
                     'headlabel="{:s} "'.format(w.end.block.signs[w.end.port])
                 )
+                options.append("labeldistance=1.5")
+            if w.end.block.type == "prod":
+                options.append('headlabel="{:s} "'.format(w.end.block.ops[w.end.port]))
+                options.append("labeldistance=1.5")
             file.write(
                 '\t"{:s}" -> "{:s}" [{:s}]\n'.format(
                     w.start.block.name, w.end.block.name, ", ".join(options)
