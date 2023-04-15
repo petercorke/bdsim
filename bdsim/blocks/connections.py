@@ -236,7 +236,7 @@ class DeMux(FunctionBlock):
         input = inports[0]
         # TODO, handle inputs that are vectors themselves
         assert (
-            len(inputs) == self.nout
+            len(input) == self.nout
         ), "Input width not equal to number of output ports"
         return list(input)
 

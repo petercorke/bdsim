@@ -841,7 +841,8 @@ class Clock:
         x = np.array([])
         for b in self.blocklist:
             # update dstate
-            x = np.r_[x, b.next(t).flatten()]
+            xb = b.next(t, b.inputs, b._x)
+            x = np.r_[x, xb.flatten()]
 
         return x
 
@@ -900,10 +901,10 @@ class Block:
         # name.  Add this attribute now to allow proper operation.
         block.__dict__["portnames"] = []  # must be first, see __setattr__
 
-        block.bd = bd
         block.nstates = 0
         block.ndstates = 0
         block._sequence = None
+        block._x = None  # state vector
 
         return block
 
@@ -1074,6 +1075,8 @@ class Block:
         :param *inputs: Input port values
         :param t: Simulation time, defaults to 0.0
         :type t: float, optional
+        :param x: state vector
+        :type x: ndarray
         :return: Block output port values
         :rtype: list
 
@@ -1089,25 +1092,25 @@ class Block:
         """
         # check inputs and assign to attribute
         assert len(inputs) == self.nin, "wrong number of inputs provided"
-        self._T_inputs = inputs
-
-        if x is not None:
-            self._x = x
 
         # evaluate the block
-        out = self.output(t=t)
+        out = self.output(t, inputs, x)
 
         # sanity check the output
         assert isinstance(out, list), "result must be a list"
         assert len(out) == self.nout, "result list is wrong length"
         return out
 
-    def T_deriv(self, *inputs, x=None):
+    def T_deriv(self, *inputs, t=0.0, x=None):
         """
         Evaluate a block for unit testing.
 
         :param inputs: input port values
         :type inputs: list
+        :param t: Simulation time, defaults to 0.0
+        :type t: float, optional
+        :param x: state vector
+        :type x: ndarray
         :return: Block derivative value
         :rtype: ndarray
 
@@ -1123,27 +1126,29 @@ class Block:
 
         # check inputs and assign to attribute
         assert len(inputs) == self.nin, "wrong number of inputs provided"
-        self._T_inputs = inputs
 
         if x is not None:
             assert len(x) == self.nstates, "passed state is wrong length"
-            self._x = x
 
         # evaluate the block
-        out = self.deriv()
+        out = self.deriv(t, inputs, x)
 
         # sanity check the output
         assert isinstance(out, np.ndarray), "result must be an ndarray"
         assert out.shape == (self.nstates,), "result array is wrong length"
         return out
 
-    def T_next(self, *inputs, x=None):
+    def T_next(self, *inputs, t=0.0, x=None):
         """
         Evaluate a block for unit testing.
 
         :param inputs: input port values
         :type inputs: list
-        :return: Block derivative value
+        :param t: Simulation time, defaults to 0.0
+        :type t: float, optional
+        :param x: state vector
+        :type x: ndarray
+        :return: Block next state value
         :rtype: ndarray
 
         The next value of a discrete time block is evaluated for a given set of input port
@@ -1151,46 +1156,49 @@ class Block:
 
         Mostly used for making concise unit tests.
 
-        .. warning:: the instance is monkey patched, not useable in a block
-            diagram subsequently.
-
         """
 
         # check inputs and assign to attribute
         assert len(inputs) == self.nin, "wrong number of inputs provided"
-        self._T_inputs = inputs
 
         if x is not None:
             assert len(x) == self.ndstates, "passed state is wrong length"
-            self._x = x
 
         # evaluate the block
-        out = self.next()
+        out = self.next(t, inputs, x)
 
         # sanity check the output
         assert isinstance(out, np.ndarray), "result must be an ndarray"
         assert out.shape == (self.ndstates,), "result array is wrong length"
         return out
 
-    def T_step(self, *inputs, state=None):
+    def T_step(self, *inputs, t=0.0):
+        """
+        Step a block for unit testing.
 
-        from bdsim.run_sim import BDSimState
+        :param inputs: input port values
+        :type inputs: list
+        :param t: Simulation time, defaults to 0.0
+        :type t: float, optional
 
-        if state is None:
-            state = BDSimState()
+        Step the block for a given set of input port
+        values. Input port values are treated as lists.
+
+        Mostly used for making concise unit tests.
+
+        """
 
         # check inputs and assign to attribute
         assert len(inputs) == self.nin, "wrong number of inputs provided"
-        self._T_inputs = inputs
 
         # step the block
-        self.step(state=state)
+        self.step(t, inputs)
 
-    def T_start(self, state=None):
+    def T_start(self, simstate=None):
 
         from bdsim.run_sim import BDSimState, Options
 
-        if state is None:
+        if simstate is None:
 
             class RunTime:
                 def DEBUG(*args):
@@ -1202,45 +1210,46 @@ class Block:
             self.bd = BlockDiagram()
             self.bd.runtime = RunTime()
             self.bd.runtime.options = Options()
-            state = BDSimState()
-            state.options = self.bd.runtime.options
-            state.t = 0.0
+            simstate = BDSimState()
+            simstate.options = self.bd.runtime.options
+            simstate.t = 0.0
 
         # step the block
-        self.start(state=state)
-        return state
+        self.start(simstate)
+        return simstate
 
-    def _output(self, *inputs, t=0.0):
-        return self.T_output(*inputs, t=t)
+    def _output(self, *inputs, t=0.0, x=None):
+        return self.T_output(*inputs, t=t, x=x)
 
-    def _step(self, *inputs, state=None, t=None):
+    def _step(self, *inputs, t=0.0):
         return self.T_step(*inputs, t=t)
 
-    def input(self, port):
-        """
-        Get input to block on specified port
+    # def input(self, port):
+    #     """
+    #     Get input to block on specified port
 
-        :param port: port number
-        :type port: int
-        :return: value applied to specified input port
-        :rtype: any
+    #     :param port: port number
+    #     :type port: int
+    #     :return: value applied to specified input port
+    #     :rtype: any
 
-        Return the value of the input applied to the input port numbered
-        ``port``.  The type depends on the source port connected to this input.
+    #     Return the value of the input applied to the input port numbered
+    #     ``port``.  The type depends on the source port connected to this input.
 
-        .. note:: For unit testing purposes, it the block is simply an instance
-            of the class, then setting its attribute ``test_inputs`` to a list
-            provides the input values to the block.
+    #     .. note:: When a block's ``output`` method is evaluated the resulting list is
+    #         saved as an attribute of that block.  The ``input`` method traces back
+    #         along the wire connected to the input port to obtain a reference to the
+    #         output value held by the predecessor block.
 
-        :seealso: :meth:`inputs`
-        """
-        try:
-            p = self.sources[port]  # get plug for source block output
-            return p.block.output_values[p.port]
-        except:
-            # for unit testing a block may not have its input ports connected,
-            # take the value from this list instead
-            return self._T_inputs[port]
+    #     .. note:: For unit testing purposes, it the block is simply an instance
+    #         of the class, then setting its attribute ``T_inputs`` to a list
+    #         provides the input values to the block.
+
+    #     :seealso: :meth:`inputs`
+    #     """
+    #     try:
+    #         p = self.sources[port]  # get plug for source block output
+    #         return p.block.output_values[p.port]
 
     @property
     def inputs(self):
@@ -1250,11 +1259,21 @@ class Block:
         :return: list of block inputs
         :rtype: list
 
-        Returns a list of values corresponding to the input ports of the block.
+        Returns a list of values corresponding to the input ports of the block.  The
+        types of the elements are dictated by the blocks connected to the input ports.
+
+        .. note:: When a block's ``output`` method is evaluated the resulting list is
+            saved as an attribute of that block.  The ``inputs`` method uses the
+            ``sources`` attribute which has references to the output values held by
+            the predecessor block.
 
         :seealso: :meth:`input`
         """
-        return [self.input(i) for i in range(self.nin)]
+        values = []
+        for port in range(self.nin):
+            plug = self.sources[port]  # get plug for source block output
+            values.append(plug.block.output_values[plug.port])
+        return values
 
     def __getitem__(self, port):
         """

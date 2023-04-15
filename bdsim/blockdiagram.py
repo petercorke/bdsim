@@ -556,11 +556,6 @@ class BlockDiagram:
         # TODO: don't copy outputs to inputs of next block, have inputs
         # pull the value from connected inputs
 
-        try:
-            self.state.t = t
-        except:
-            pass
-
         self.runtime.DEBUG("state", ">>>>>>>>> t={}, x={} >>>>>>>>>>>>>>>>", t, x)
 
         # reset all the blocks ready for the evalation
@@ -880,9 +875,10 @@ class BlockDiagram:
             # print the details
             if len(b.sources) > 0:
                 # non source block, list all its inputs, one per row
+                inputs = b.inputs
                 for (port, source) in enumerate(b.sources):  # every port
 
-                    value = b.input(port)
+                    value = inputs[port]
                     typ = type(value).__name__
                     if isinstance(value, np.ndarray):
                         typ += "{:s}.{:s}".format(str(value.shape), str(value.dtype))
@@ -1275,7 +1271,7 @@ class BlockDiagram:
         for b in self.blocklist:
             print("Block {:s}:".format(b.name))
             print("  inputs:  ", b.inputs)
-            print("  outputs: ", b.output(t))
+            print("  outputs: ", b.output(t, b.inputs, b._x))
 
 
 if __name__ == "__main__":  # pragma: no cover
