@@ -330,8 +330,7 @@ class BlockDiagram:
                 raise RuntimeError("block failed check " + str(b))
 
         # build a dictionary of all block names
-        for b in self.blocklist:
-            self.blocknames[b.name] = b
+        self.blocknames = {b.name: b for b in self.blocklist}
 
         # visit all stateful blocks
         for b in self.blocklist:
