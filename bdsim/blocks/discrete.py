@@ -157,7 +157,7 @@ class DIntegrator(ClockedBlock):
         return [x]
 
     def next(self, t, u, x):
-        xnext = x + self.gain * self.clock.T * np.array(u)
+        xnext = x + self.gain * self.clock.T * np.array(u[0])
         if self.min is not None or self.max is not None:
             xnext = np.clip(xnext, self.min, self.max)
         return xnext
