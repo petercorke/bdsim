@@ -1143,14 +1143,15 @@ class BDSim:
                     valid = (
                         hasattr(value, "output")
                         and callable(value.output)
-                        and len(inspect.signature(value.output).parameters) == 2
+                        and len(inspect.signature(value.output).parameters) == 4
                     )
                     if not valid:
-                        raise ImportError(
-                            "class {:s} has missing/improper output method".format(
-                                str(value)
+                        print(
+                            "block {:s} has missing/improper output method".format(
+                                value.__name__
                             )
                         )
+                        continue
 
                 if value.blockclass == "sink":
                     # must have a step function with at least one
@@ -1158,14 +1159,15 @@ class BDSim:
                     valid = (
                         hasattr(value, "step")
                         and callable(value.step)
-                        and len(inspect.signature(value.step).parameters) >= 1
+                        and len(inspect.signature(value.step).parameters) == 3
                     )
                     if not valid:
-                        raise ImportError(
-                            "class {:s} has missing/improper step method".format(
-                                str(value)
+                        print(
+                            "block {:s} has missing/improper step method".format(
+                                value.__name__
                             )
                         )
+                        continue
 
                 # add it to the dict of blocks indexed by module
                 if value.__module__ in moduledict:
