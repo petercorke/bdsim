@@ -317,6 +317,34 @@ class Plug:
         self.port = port
         self.type = type  # start
 
+    def __str__(self):
+        """
+        Display plug details.
+
+        :return: Plug description
+        :rtype: str
+
+        String format::
+
+            bicycle.0[1]
+
+        """
+        return str(self.block) + "[" + str(self.port) + "]"
+
+    def __repr__(self):
+        """
+        Display plug details.
+
+        :return: Plug description
+        :rtype: str
+
+        String format::
+
+            bicycle.0[1]
+
+        """
+        return "Plug/" + self.type + ":" + str(self)
+
     @property
     def isslice(self):
         """
@@ -754,20 +782,6 @@ class Plug:
             # constant / plug, create a CONSTANT block
             other = self.block.bd.CONSTANT(other)
         return self.block.bd.PROD("*/", inputs=(other, self))
-
-    def __repr__(self):
-        """
-        Display plug details.
-
-        :return: Plug description
-        :rtype: str
-
-        String format::
-
-            bicycle.0[1]
-
-        """
-        return str(self.block) + "[" + str(self.port) + "]"
 
 
 class StartPlug(Plug):
