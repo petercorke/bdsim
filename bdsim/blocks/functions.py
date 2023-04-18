@@ -184,7 +184,7 @@ class Prod(FunctionBlock):
 
         :note: The option ``matrix`` will instead use ``@`` and ``@ np.linalg.inv()``. The
             shapes of matrices must conform.  A matrix on a ``/`` input must be square and
-            non-singular.
+            non-singular.  Matrices are multiplied in ascending port order.
         """
         super().__init__(nin=len(ops), **blockargs)
         assert isinstance(ops, str), "first argument must be signs string"

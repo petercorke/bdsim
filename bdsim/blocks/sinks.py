@@ -206,7 +206,9 @@ class Null(SinkBlock):
         :rtype: Null instance
 
         Create a sink block with arbitrary number of input ports that discards
-        all data.  Useful for testing.
+        all data.  Useful for testing.  
+        
+        .. note:: ``bdsim`` issues a warning for unconnected outputs but execution can continue.
 
         """
         super().__init__(nin=nin, **blockargs)

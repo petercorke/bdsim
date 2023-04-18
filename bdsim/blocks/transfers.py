@@ -445,11 +445,17 @@ class PID(SubSystem):
         PID controller.
 
         :param P: proportional gain, defaults to 0
+        :type P: float
         :param D: derivative gain, defaults to 0
+        :type D: float
         :param I: integral gain, defaults to 0
+        :type I: float
         :param D_pole: filter pole for derivative estimate, defaults to 1 rad/s
+        :type D_pole: float
         :param I_limit: integral limit
+        :type I_limit: float
         :param I_band: band within which integral action is active
+        :type I_band: float
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         :return: A PID block
