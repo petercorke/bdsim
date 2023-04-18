@@ -6,18 +6,18 @@ import time
 sim = bdsim.BDSim()
 bd = sim.blockdiagram()
 
-clock = bd.clock(50, "Hz")
+clock = bd.clock(5, "Hz")
 
 # define the blocks
 
 sine = bd.WAVEFORM("sine", freq=0.2, unit="Hz")
 zoh = bd.ZOH(clock)
 
-scope = bd.SCOPE(stairs=True)
+scope = bd.SCOPE(styles=[dict(color="b"), dict(color="r", drawstyle="steps")])
 
 # connect the blocks
-bd.connect(sine, zoh)
-bd.connect(zoh, scope)
+bd.connect(sine, zoh, scope[0])
+bd.connect(zoh, scope[1])
 
 bd.compile()  # check the diagram
 bd.report()  # list all blocks and wires

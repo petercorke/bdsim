@@ -21,10 +21,13 @@ bd.connect(plant, scope[0])
 
 
 bd.compile()  # check the diagram
-bd.report()
-bd.report_summary()  # list all blocks and wires
+sim.report(bd)  # , format="latex")
+sim.report(bd, "lists")  # list all blocks and wires
+sim.report(bd, "schedule")
 
-out = sim.run(bd)  # , watch=[demand, sum])  # simulate for 5s
+# bd.dotfile("eg1a.dot")
+
+out = sim.run(bd, T=5)  # , watch=[demand, sum])  # simulate for 5s
 # out = sim.run(bd, watch=[plant, demand])  # simulate for 5s
 print(out)
 
