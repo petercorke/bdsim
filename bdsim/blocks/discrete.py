@@ -28,14 +28,9 @@ class ZOH(ClockedBlock):
     .. table::
        :align: left
 
-    +------------+---------+---------+
-    | inputs     | outputs |  states |
-    +------------+---------+---------+
-    | 1          | 1       | N       |
-    +------------+---------+---------+
-    | float,     | float,  |         |
-    | A(N,)      | A(N,)   |         |
-    +------------+---------+---------+
+    :inputs: 1 [float, ndarray]
+    :outputs: 1 [float, ndarray]
+    :states: N
     """
 
     nin = 1
@@ -86,14 +81,9 @@ class DIntegrator(ClockedBlock):
     .. table::
        :align: left
 
-    +------------+---------+---------+
-    | inputs     | outputs |  states |
-    +------------+---------+---------+
-    | 1          | 1       | N       |
-    +------------+---------+---------+
-    | float,     | float,  |         |
-    | A(N,)      | A(N,)   |         |
-    +------------+---------+---------+
+    :inputs: 1 [float, ndarray]
+    :outputs: 1 [float, ndarray]
+    :states: N
     """
 
     nin = 1
@@ -170,13 +160,9 @@ class DPoseIntegrator(ClockedBlock):
     .. table::
        :align: left
 
-       +------------+---------+---------+
-       | inputs     | outputs |  states |
-       +------------+---------+---------+
-       | 1          | 1       | N       |
-       +------------+---------+---------+
-       | A(6,)      | SE3     |         |
-       +------------+---------+---------+
+    :inputs: 1 [ndarray(6,)]
+    :outputs: 1 [SE3]
+    :states: 6
     """
 
     nin = 1

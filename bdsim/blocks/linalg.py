@@ -22,14 +22,9 @@ class Inverse(FunctionBlock):
     .. table::
        :align: left
 
-    +----------+---------+---------+
-    | inputs   | outputs |  states |
-    +----------+---------+---------+
-    | 1        | 2       | 0       |
-    +----------+---------+---------+
-    | A(M,N)   | A(N,M)  |         |
-    |          | float   |         |
-    +----------+---------+---------+
+    :inputs: 1 [ndarray]
+    :outputs: 2 [ndarray, float]
+    :states: 0
     """
 
     nin = 1
@@ -94,13 +89,9 @@ class Transpose(FunctionBlock):
     .. table::
        :align: left
 
-    +------------+---------+---------+
-    | inputs     | outputs |  states |
-    +------------+---------+---------+
-    | 1          | 1       | 0       |
-    +------------+---------+---------+
-    | A(M,N)     | A(N,M)  |         |
-    +------------+---------+---------+
+    :inputs: 1 [ndarray]
+    :outputs: 1 [ndarray]
+    :states: 0
     """
 
     nin = 1
@@ -149,14 +140,9 @@ class Norm(FunctionBlock):
     .. table::
        :align: left
 
-    +------------+---------+---------+
-    | inputs     | outputs |  states |
-    +------------+---------+---------+
-    | 1          | 1       | 0       |
-    +------------+---------+---------+
-    | A(N,)      | float   |         |
-    | A(N,M)     |         |         |
-    +------------+---------+---------+
+    :inputs: 1 [ndarray]
+    :outputs: 1 [float]
+    :states: 0
     """
 
     nin = 1
@@ -199,13 +185,9 @@ class Flatten(FunctionBlock):
     .. table::
        :align: left
 
-    +------------+---------+---------+
-    | inputs     | outputs |  states |
-    +------------+---------+---------+
-    | 1          | 1       | 0       |
-    +------------+---------+---------+
-    | A(N,M )    | A(NM,)  |         |
-    +------------+---------+---------+
+    :inputs: 1 [ndarray]
+    :outputs: 1 [ndarray]
+    :states: 0
     """
 
     nin = 1
@@ -246,13 +228,9 @@ class Slice2(FunctionBlock):
     .. table::
        :align: left
 
-    +------------+---------+---------+
-    | inputs     | outputs |  states |
-    +------------+---------+---------+
-    | 1          | 1       | 0       |
-    +------------+---------+---------+
-    | A(N,M)     | A(K,L)  |         |
-    +------------+---------+---------+
+    :inputs: 1 [ndarray]
+    :outputs: 1 [ndarray]
+    :states: 0
     """
 
     nin = 1
@@ -344,13 +322,9 @@ class Slice1(FunctionBlock):
     .. table::
        :align: left
 
-    +------------+---------+---------+
-    | inputs     | outputs |  states |
-    +------------+---------+---------+
-    | 1          | 1       | 0       |
-    +------------+---------+---------+
-    | A(N)       | A(M)    |         |
-    +------------+---------+---------+
+    :inputs: 1 [ndarray]
+    :outputs: 1 [ndarray]
+    :states: 0
     """
 
     nin = 1
@@ -423,13 +397,9 @@ class Det(FunctionBlock):
     .. table::
        :align: left
 
-    +------------+---------+---------+
-    | inputs     | outputs |  states |
-    +------------+---------+---------+
-    | 1          | 1       | 0       |
-    +------------+---------+---------+
-    | A(N,N)     | float   |         |
-    +------------+---------+---------+
+    :inputs: 1 [ndarray]
+    :outputs: 1 [float]
+    :states: 0
     """
 
     nin = 1
@@ -465,13 +435,9 @@ class Cond(FunctionBlock):
     .. table::
        :align: left
 
-    +------------+---------+---------+
-    | inputs     | outputs |  states |
-    +------------+---------+---------+
-    | 1          | 1       | 0       |
-    +------------+---------+---------+
-    | A(N,M)     | float   |         |
-    +------------+---------+---------+
+    :inputs: 1 [ndarray]
+    :outputs: 1 [float]
+    :states: 0
     """
 
     nin = 1

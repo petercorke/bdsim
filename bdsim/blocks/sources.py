@@ -19,14 +19,9 @@ class Constant(SourceBlock):
     .. table::
        :align: left
 
-    +--------+---------+---------+
-    | inputs | outputs |  states |
-    +--------+---------+---------+
-    | 0      | 1       | 0       |
-    +--------+---------+---------+
-    |        | float,  |         |
-    |        | A(N,)   |         |
-    +--------+---------+---------+
+    :inputs: 0
+    :outputs: 1 [any]
+    :states: 0
     """
 
     nin = 0
@@ -68,13 +63,9 @@ class Time(SourceBlock):
     .. table::
        :align: left
 
-    +--------+---------+---------+
-    | inputs | outputs |  states |
-    +--------+---------+---------+
-    | 0      | 1       | 0       |
-    +--------+---------+---------+
-    |        | float   |         |
-    +--------+---------+---------+
+    :inputs: 0
+    :outputs: 1 [float]
+    :states: 0
     """
 
     nin = 0
@@ -108,13 +99,9 @@ class WaveForm(SourceBlock, EventSource):
     .. table::
        :align: left
 
-    +--------+---------+---------+
-    | inputs | outputs |  states |
-    +--------+---------+---------+
-    | 0      | 1       | 0       |
-    +--------+---------+---------+
-    |        | float   |         |
-    +--------+---------+---------+
+    :inputs: 0
+    :outputs: 1 [float]
+    :states: 0
     """
 
     nin = 0
@@ -278,13 +265,9 @@ class Piecewise(SourceBlock, EventSource):
     .. table::
        :align: left
 
-    +--------+---------+---------+
-    | inputs | outputs |  states |
-    +--------+---------+---------+
-    | 0      | 1       | 0       |
-    +--------+---------+---------+
-    |        | float   |         |
-    +--------+---------+---------+
+    :inputs: 0
+    :outputs: 1 [float]
+    :states: 0
     """
 
     nin = 0
@@ -344,13 +327,9 @@ class Step(SourceBlock, EventSource):
     .. table::
        :align: left
 
-    +--------+---------+---------+
-    | inputs | outputs |  states |
-    +--------+---------+---------+
-    | 0      | 1       | 0       |
-    +--------+---------+---------+
-    |        | float   |         |
-    +--------+---------+---------+
+    :inputs: 0
+    :outputs: 1 [float]
+    :states: 0
     """
 
     nin = 0
@@ -407,13 +386,9 @@ class Ramp(SourceBlock, EventSource):
     .. table::
        :align: left
 
-    +--------+---------+---------+
-    | inputs | outputs |  states |
-    +--------+---------+---------+
-    | 0      | 1       | 0       |
-    +--------+---------+---------+
-    |        | float   |         |
-    +--------+---------+---------+
+    :inputs: 0
+    :outputs: 1 [float]
+    :states: 0
     """
 
     nin = 0

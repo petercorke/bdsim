@@ -32,14 +32,9 @@ class Scope(GraphicsBlock):
     .. table::
        :align: left
 
-       +--------+---------+---------+
-       | inputs | outputs |  states |
-       +--------+---------+---------+
-       | 1      | 0       | 0       |
-       +--------+---------+---------+
-       | float, |         |         |
-       | A(N,)  |         |         |
-       +--------+---------+---------+
+    :inputs: 1 [float, ndarray]
+    :outputs: 0
+    :states: 0
     """
 
     nin = -1
@@ -337,13 +332,9 @@ class ScopeXY(GraphicsBlock):
     .. table::
        :align: left
 
-    +--------+---------+---------+
-    | inputs | outputs |  states |
-    +--------+---------+---------+
-    | 2      | 0       | 0       |
-    +--------+---------+---------+
-    | float  |         |         |
-    +--------+---------+---------+
+    :inputs: 2 [float]
+    :outputs: 0
+    :states: 0
     """
 
     nin = 2

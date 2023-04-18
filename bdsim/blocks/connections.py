@@ -30,13 +30,9 @@ class Item(FunctionBlock):
     .. table::
        :align: left
 
-    +------------+---------+---------+
-    | inputs     | outputs |  states |
-    +------------+---------+---------+
-    | 1          | 1       | 0       |
-    +------------+---------+---------+
-    | dict       | any     |         |
-    +------------+---------+---------+
+    :inputs: 1 [dict]
+    :outputs: 1 [any]
+    :states: 0
     """
 
     nin = 1
@@ -87,13 +83,9 @@ class Dict(FunctionBlock):
     .. table::
        :align: left
 
-    +------------+---------+---------+
-    | inputs     | outputs |  states |
-    +------------+---------+---------+
-    | N          | 1       | 0       |
-    +------------+---------+---------+
-    | any        | dict    |         |
-    +------------+---------+---------+
+    :inputs: N [any]
+    :outputs: 1 [dict]
+    :states: 0
     """
 
     nin = 1
@@ -146,14 +138,9 @@ class Mux(FunctionBlock):
     .. table::
        :align: left
 
-    +------------+---------+---------+
-    | inputs     | outputs |  states |
-    +------------+---------+---------+
-    | nin        | 1       | 0       |
-    +------------+---------+---------+
-    | float,     | A(M,)   |         |
-    | A(N,)      | A(M,)   |         |
-    +------------+---------+---------+
+    :inputs: N [float, ndarray]
+    :outputs: 1 [ndarray]
+    :states: 0
     """
 
     nin = -1
@@ -201,14 +188,9 @@ class DeMux(FunctionBlock):
     .. table::
        :align: left
 
-    +------------+---------+---------+
-    | inputs     | outputs |  states |
-    +------------+---------+---------+
-    | 1          | nout    | 0       |
-    +------------+---------+---------+
-    | float,     | float   |         |
-    | A(nout,)   |         |         |
-    +------------+---------+---------+
+    :inputs: 1 [ndarray]
+    :outputs: N [float]
+    :states: 0
     """
 
     nin = 1
@@ -258,6 +240,9 @@ class Index(FunctionBlock):
     +------------+---------+---------+
     | ndarray    | ndarray |         |
     +------------+---------+---------+
+    :inputs: 1 [iterable]
+    :outputs: 1 [iterable]
+    :states: 0
     """
 
     nin = 1
@@ -305,13 +290,9 @@ class SubSystem(SubsystemBlock):
     .. table::
        :align: left
 
-    +------------+------------+---------+
-    | inputs     | outputs    |  states |
-    +------------+------------+---------+
-    | ss.in.nout | ss.out.nin | 0       |
-    +------------+------------+---------+
-    | any        | any        |         |
-    +------------+------------+---------+
+    :inputs: N [any]
+    :outputs: M [any]
+    :states: 0
     """
 
     nin = -1
@@ -436,13 +417,9 @@ class InPort(SubsystemBlock):
     .. table::
        :align: left
 
-    +------------+---------+---------+
-    | inputs     | outputs |  states |
-    +------------+---------+---------+
-    | 0          | nout    | 0       |
-    +------------+---------+---------+
-    |            | any     |         |
-    +------------+---------+---------+
+    :inputs: 0
+    :outputs: N [any]
+    :states: 0
     """
 
     nin = 0
@@ -484,13 +461,9 @@ class OutPort(SubsystemBlock):
     .. table::
        :align: left
 
-    +------------+---------+---------+
-    | inputs     | outputs |  states |
-    +------------+---------+---------+
-    | nin        | 0       | 0       |
-    +------------+---------+---------+
-    | any        |         |         |
-    +------------+---------+---------+
+    :inputs: N [any]
+    :outputs: 0
+    :states: 0
     """
 
     nin = -1
