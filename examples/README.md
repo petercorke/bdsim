@@ -18,8 +18,9 @@ Examples provided in this folder include:
 
 - `eg1.py` the example given above
 - `waveform.py` two signal generators connected to two scopes
--  `vanderpol.py` a classic non-linear oscillator
+- `vanderpol.py` a classic non-linear oscillator
 - `sine+sampler.py` a sine wave generator connected to a scope via a ZOH
+- `subsys.py` a block diagram with a subystem
 
 - `RVC2` is a folder holding some examples from Chapter four of [_Robotics, Vision & Control (2017)_](https://petercorke.com/rvc/home):
 
