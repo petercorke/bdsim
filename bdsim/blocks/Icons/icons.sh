@@ -19,7 +19,7 @@ bdtex2icon -r 150 -o dict.png -t '\mathbf{\{\cdots\}}'
 bdtex2icon -r 150 -o index.png -t '\mathbf{[}k\mathrm{]}'
 bdtex2icon -r 150 -o item.png -t '\mathbf{\{\}[}k\mathrm{]}'
 
-bdtex2icon -r 180 -o transpose.png -t '\mat{A}^{\!T}'
+bdtex2icon -r 180 -o transpose.png -t '\mat{A}^{\!\top}'
 bdtex2icon -r 180 -o inverse.png -t '\mat{A}^{\!-\!1}'
 
 bdtex2icon -r 250 -o integrator.png -t '\frac{1}{s}'
@@ -44,3 +44,4 @@ bdtex2icon -r 180 -o pose_postmul.png -t '\mathbf{\oplus\\!\pose[x]_y}'
 bdtex2icon -r 180 -o pose_premul.png -t '\mathbf{\pose[x]_y\\!\oplus}'
 bdtex2icon -r 170 -o pose_inverse.png -t '\mathbf{\ominus}'
 bdtex2icon -r 150 -o transform_vector.png -t '\mathbf{\pose[x]_y}\\!\sbullet\\!\vec{p}'
+bdtex2icon -r 140 -o poseintegerator.png -t "\int\! \nu\, dt"
