@@ -1302,6 +1302,31 @@ class BDSim:
             print(f"changed value of global {var} from {globs[var]} -> {new_value}")
             globs[var] = new_value
 
+    def report(self, bd, type="summary", **kwargs):
+        """Print block diagram report
+
+        :param bd: the block diagram to be reported
+        :type bd: :class:`BlockDiagram`
+        :param type: report type, one of: "summary" (default), "lists", "schedule"
+        :type type: str, optional
+        :param style: table style, one of: ansi (default), markdown, latex
+        :type style: str
+
+        Single method wrapper for various block diagram reports.  Obeys the ``-q``
+        option to suppress all reports at runtime.
+
+        :seealso: :meth:`BlockDiagram.report_summary` :meth:`BlockDiagram.report_lists` :meth:`BlockDiagram.report_schedule`
+        """
+        if self.options.quiet:
+            return
+
+        if type == "lists":
+            bd.report_lists(**kwargs)
+        elif type == "summary":
+            bd.report_summary(**kwargs)
+        elif type == "schedule":
+            bd.report_schedule(**kwargs)
+
 
 class Options(OptionsBase):
     def __init__(self, sysargs=True, **options):

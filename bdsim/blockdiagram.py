@@ -15,6 +15,7 @@ from collections import Counter, namedtuple
 from copy import deepcopy
 import numpy as np
 from colored import fg, attr
+import warnings
 
 
 from ansitable import ANSITable, Column
@@ -824,9 +825,12 @@ class BlockDiagram:
 
     # ---------------------------------------------------------------------- #
 
-    def report_summary(self, style="ansi"):
+    def report_summary(self, **kwargs):
         """
         Print a summary of block diagram.
+
+        :param style: table style, one of: ansi (default), markdown, latex
+        :type style: str
 
         Print a table with 4 columns:
 
@@ -837,9 +841,6 @@ class BlockDiagram:
 
         If the block is an event source, add a ``@`` suffix.
         """
-
-        if self.runtime.options.quiet:
-            return
 
         table = ANSITable(
             Column("block", headalign="^", colalign="<"),
@@ -877,19 +878,21 @@ class BlockDiagram:
             else:
                 # source block, just list the name
                 table.row(name, "", "", "")
-        if style == "ansi":
-            table.print()
-        elif tstylepe == "latex":
-            print(table.latex())
-        elif style == "markdown":
-            print(table.markdown())
+        table.print(**kwargs)
 
         if legend:
             print(legend + "\n")
 
-    def report(self, style="ansi"):
+    def report(self, **kwargs):
+
+        warnings.warn("use reports_lists() method instead", DeprecationWarning)
+        self.report_lists(**kwargs)
+
+    def report_lists(self, **kwargs):
         """
         Print a tabular report about the block diagram.
+
+        :param kwargs: options passed to :meth:`ansitable.ANSITable.print`
 
         Print the important lists in pretty format.
 
@@ -898,18 +901,6 @@ class BlockDiagram:
         * clock list, all discrete time clocks
 
         """
-
-        if self.runtime.options.quiet:
-            return
-
-        def tprint(table):
-            if style == "ansi":
-                table.print()
-            elif style == "latex":
-                print(table.latex())
-            elif style == "markdown":
-                print(table.markdown())
-
         # print all the blocks
         print("\nBlocks::\n")
         table = ANSITable(
@@ -924,7 +915,7 @@ class BlockDiagram:
         )
         for b in self.blocklist:
             table.row(b.id, str(b), b.nin, b.nout, b.nstates, b.ndstates, b.type)
-        tprint(table)
+        table.print(**kwargs)
 
         # print all the wires
         print("\nWires::\n")
@@ -948,7 +939,7 @@ class BlockDiagram:
             except:
                 typ = "??"
             table.row(w.id, start, end, w.fullname, typ)
-        tprint(table)
+        table.print(**kwargs)
 
         if len(self.clocklist) > 0:
             # print all the clocked blocks
@@ -965,7 +956,7 @@ class BlockDiagram:
                 if b.blockclass == "clocked":
                     c = b.clock
                     table.row(b.id, str(b), c.name, c.T, c.offset)
-            tprint(table)
+            table.print(**kwargs)
 
         print("\nContinuous state variables: {:d}".format(self.nstates))
         print("Discrete state variables:   {:d}".format(self.ndstates))
