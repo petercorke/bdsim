@@ -12,11 +12,12 @@ import numpy.testing as nt
 class BlockTest(unittest.TestCase):
     pass
 
+
 class BlockDiagramTest(unittest.TestCase):
     pass
 
-class WiringTest(unittest.TestCase):
 
+class WiringTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.sim = bdsim.BDSim(animation=False)  # create simulator
@@ -43,7 +44,7 @@ class WiringTest(unittest.TestCase):
         dst = bd.NULL(1)  # 1 port
         bd.connect(src, dst)
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs[0], 2)
 
     def test_connect_2(self):
@@ -55,7 +56,7 @@ class WiringTest(unittest.TestCase):
         bd.connect(src, dst1)
         bd.connect(src, dst2)
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst1.inputs[0], 2)
         self.assertEqual(dst2.inputs[0], 2)
 
@@ -67,7 +68,7 @@ class WiringTest(unittest.TestCase):
         dst2 = bd.NULL(1)  # 1 port
         bd.connect(src, dst1, dst2)
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst1.inputs[0], 2)
         self.assertEqual(dst2.inputs[0], 2)
 
@@ -81,7 +82,7 @@ class WiringTest(unittest.TestCase):
         bd.connect(const1, dst[0])
         bd.connect(const2, dst[1])
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [2, 3])
 
     def test_ports2(self):
@@ -97,7 +98,7 @@ class WiringTest(unittest.TestCase):
         bd.connect(src[0], dst1)
         bd.connect(src[1], dst2)
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst1.inputs, [2])
         self.assertEqual(dst2.inputs, [3])
 
@@ -115,7 +116,7 @@ class WiringTest(unittest.TestCase):
         bd.connect(src[2], dst[2])
         bd.connect(src[3], dst[3])
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [2, 3, 4, 5])
 
     def test_slice1(self):
@@ -127,7 +128,7 @@ class WiringTest(unittest.TestCase):
         bd.connect(src, dst[0])
         bd.connect(src, dst[1])
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [2, 2])
 
     def test_slice2(self):
@@ -141,7 +142,7 @@ class WiringTest(unittest.TestCase):
         dst = bd.NULL(4)  # 4 ports
         bd.connect(src[0:4], dst[0:4])
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [2, 3, 4, 5])
 
     def test_slice3(self):
@@ -155,7 +156,7 @@ class WiringTest(unittest.TestCase):
         dst = bd.NULL(4)  # 4 ports
         bd.connect(src[0:4], dst[3:-1:-1])
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [5, 4, 3, 2])
 
     def test_slice4(self):
@@ -169,7 +170,7 @@ class WiringTest(unittest.TestCase):
         dst = bd.NULL(4)  # 4 ports
         bd.connect(src[3:-1:-1], dst[0:4])
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [5, 4, 3, 2])
 
     def test_slice5(self):
@@ -184,7 +185,7 @@ class WiringTest(unittest.TestCase):
         bd.connect(src[0:4:2], dst[0:4:2])  # 0, 2
         bd.connect(src[1:4:2], dst[1:4:2])  # 1, 3
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [2, 3, 4, 5])
 
     def test_slice5a(self):
@@ -199,7 +200,7 @@ class WiringTest(unittest.TestCase):
         bd.connect(src[0:4:2], dst[0:2])  # 0, 2
         bd.connect(src[1:4:2], dst[2:4])  # 1, 3
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [2, 4, 3, 5])
 
     def test_slice6(self):
@@ -213,25 +214,24 @@ class WiringTest(unittest.TestCase):
         dst = bd.NULL(4)  # 4 ports
         bd.connect(src[3:-1:-1], dst[3:-1:-1])
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [2, 3, 4, 5])
 
-        
     def test_assignment11(self):
 
         bd = self.sim.blockdiagram()
 
         src = bd.CONSTANT(2)
         dst = bd.NULL(1)  # 1 port
-        
+
         dst[0] = src
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs[0], 2)
 
     def test_assignment2(self):
-        
+
         bd = self.sim.blockdiagram()
 
         const1 = bd.CONSTANT(2)
@@ -243,9 +243,8 @@ class WiringTest(unittest.TestCase):
         dst[1] = const2
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [2, 3])
-
 
     def test_assignment3(self):
         bd = self.sim.blockdiagram()
@@ -259,7 +258,7 @@ class WiringTest(unittest.TestCase):
         dst[3:-1:-1] = src[0:4]
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [5, 4, 3, 2])
 
     def test_chain1(self):
@@ -270,7 +269,7 @@ class WiringTest(unittest.TestCase):
         dst[0] = bd.CONSTANT(2) >> bd.GAIN(3)
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [6])
 
     def test_chain2(self):
@@ -281,7 +280,7 @@ class WiringTest(unittest.TestCase):
         dst[0] = bd.CONSTANT(2) >> bd.GAIN(3) >> bd.GAIN(4)
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [24])
 
     def test_chain3(self):
@@ -297,7 +296,7 @@ class WiringTest(unittest.TestCase):
         dst[1] = src[1] >> bd.GAIN(3)
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [4, 9])
 
     def test_inline1(self):
@@ -307,10 +306,10 @@ class WiringTest(unittest.TestCase):
         const1 = bd.CONSTANT(2)
         const2 = bd.CONSTANT(3)
 
-        dst[0] = bd.SUM('++', inputs=(const1, const2))
+        dst[0] = bd.SUM("++", inputs=(const1, const2))
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [5])
 
     def test_inline2(self):
@@ -320,10 +319,10 @@ class WiringTest(unittest.TestCase):
         const1 = bd.CONSTANT(2)
         const2 = bd.CONSTANT(3)
 
-        dst[0] = bd.SUM('++', inputs=(const1, const2)) >> bd.GAIN(2)
+        dst[0] = bd.SUM("++", inputs=(const1, const2)) >> bd.GAIN(2)
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [10])
 
     def test_autosum1(self):
@@ -338,7 +337,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [5])
 
     def test_autosum2a(self):
@@ -353,7 +352,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [5])
 
     def test_autosum2b(self):
@@ -368,7 +367,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [5])
 
     def test_autosum2c(self):
@@ -383,7 +382,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [5])
 
     def test_autosum3a(self):
@@ -397,7 +396,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [5])
 
     def test_autosum3b(self):
@@ -411,7 +410,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [5])
 
     # ----------------------------------------------
@@ -427,7 +426,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [-1])
 
     def test_autosub2a(self):
@@ -442,7 +441,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [-1])
 
     def test_autosub2b(self):
@@ -457,7 +456,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [-1])
 
     def test_autosub2c(self):
@@ -472,7 +471,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [-1])
 
     def test_autosub3a(self):
@@ -486,7 +485,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [-1])
 
     def test_autosub3b(self):
@@ -500,7 +499,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [-1])
 
     # ----------------------------------------------
@@ -516,7 +515,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 3)
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [-2])
 
     def test_autoneg2(self):
@@ -530,7 +529,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 3)
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [-2])
 
     # ----------------------------------------------
@@ -547,7 +546,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [6])
 
     def test_autoprod2a(self):
@@ -562,7 +561,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [1.5])
 
     def test_autoprod2b(self):
@@ -577,7 +576,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [1.5])
 
     def test_autoprod2c(self):
@@ -592,7 +591,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [1.5])
 
     def test_autoprod3a(self):
@@ -607,7 +606,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 3)
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [6])
 
     def test_autoprod3b(self):
@@ -622,7 +621,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 3)
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [6])
 
     # ----------------------------------------------
@@ -639,7 +638,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [1.5])
 
     def test_autodiv2a(self):
@@ -654,7 +653,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [1.5])
 
     def test_autodiv2b(self):
@@ -669,7 +668,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [1.5])
 
     def test_autodiv2c(self):
@@ -684,7 +683,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [1.5])
 
     def test_autodiv3a(self):
@@ -699,10 +698,10 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [1.5])
 
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [1.5])
 
     def test_autodiv3b(self):
@@ -717,71 +716,71 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate_plan(x=[], t=0)
+        bd.schedule_evaluate(x=[], t=0)
         self.assertEqual(dst.inputs, [1.5])
 
-class ImportTest(unittest.TestCase):
 
+class ImportTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.sim = bdsim.BDSim(animation=False)  # create simulator
 
     def test_import1(self):
         # create a subsystem
-        ss = self.sim.blockdiagram(name='subsystem1')
+        ss = self.sim.blockdiagram(name="subsystem1")
 
         f = ss.FUNCTION(lambda x: x)
         inp = ss.INPORT(1)
         outp = ss.OUTPORT(1)
-        
+
         ss.connect(inp, f)
         ss.connect(f, outp)
-    
+
         # create main system
         bd = self.sim.blockdiagram()
-    
+
         const = bd.CONSTANT(1)
         scope = bd.SCOPE()
-        
-        ff = bd.SUBSYSTEM(ss, name='subsys')
-        
+
+        ff = bd.SUBSYSTEM(ss, name="subsys")
+
         bd.connect(const, ff)
         bd.connect(ff, scope)
-        
+
         bd.compile(verbose=False)
-        
+
         self.assertEqual(len(bd.blocklist), 5)
         self.assertEqual(len(bd.wirelist), 4)
+
 
 #     def test_import2(self):
 #         # create a subsystem
 #         ss = bdsim.BlockDiagram(name='subsystem1')
-    
+
 #         f = ss.FUNCTION(lambda x: x)
 #         inp = ss.INPORT(1)
 #         outp = ss.NULL(1)
-        
+
 #         ss.connect(inp, f)
 #         ss.connect(f, outp)
-    
+
 #         # create main system
 #         bd = bdsim.BlockDiagram()
-    
+
 #         const = bd.CONSTANT(1)
 #         scope1 = bd.SCOPE()
 #         scope2 = bd.SCOPE()
-        
+
 #         f1 = bd.SUBSYSTEM(ss, name='subsys1')
 #         f2 = bd.SUBSYSTEM(ss, name='subsys2')
-        
+
 #         bd.connect(const, f1, f2)
 #         bd.connect(f1, scope1)
 #         bd.connect(f2, scope2)
-        
+
 #         bd.compile(verbose=False)
 
 # ---------------------------------------------------------------------------------------#
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     unittest.main()
-    

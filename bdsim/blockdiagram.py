@@ -445,7 +445,7 @@ class BlockDiagram:
                 raise RuntimeError("could not compile system")
 
         # create the execution plan/schedule
-        self.execution_plan()
+        self.schedule_generate()
 
         ## evaluate the network once to check out wire types
         x = self.getstate0()
@@ -455,12 +455,12 @@ class BlockDiagram:
 
         if report:
             self.report()
-            self.plan_print()
+            self.schedule_report()
 
         if not subsystem and evaluate:
             # run all the blocks for one step
             try:
-                self.evaluate_plan(x, 0.0, sinks=False)
+                self.schedule_evaluate(x, 0.0, sinks=False)
             except RuntimeError as err:
                 print("\nFrom compile: unrecoverable error in value propagation:", err)
                 traceback.print_exc(file=sys.stderr)
@@ -527,7 +527,7 @@ class BlockDiagram:
 
     # ---------------------------------------------------------------------- #
 
-    def evaluate_plan(self, x, t, checkfinite=True, sinks=True, simstate=None):
+    def schedule_evaluate(self, x, t, checkfinite=True, sinks=True, simstate=None):
         """
         Evaluate all blocks in the network
 
@@ -652,7 +652,7 @@ class BlockDiagram:
         self.runtime.DEBUG("deriv", YD)
         return YD
 
-    def execution_plan(self):
+    def schedule_generate(self):
         """
         Create execution plan
 
@@ -672,7 +672,7 @@ class BlockDiagram:
             - The block attribute ``_sequence`` is ``i`` and indicates its
               execution order
 
-        :seealso: :func:`plan_print`, :func:`plan_dotfile`
+        :seealso: :func:`schedule_report`, :func:`schedule_dotfile`
         """
 
         plan = []
@@ -710,24 +710,7 @@ class BlockDiagram:
 
         self.plan = plan
 
-    def plan_print(self):
-        """
-        Display execution plan in tabular form
-
-        :seealso: :func:`execution_plan`, :func:`plan_dotfile`
-        """
-        table = ANSITable(
-            Column("Sequence"),
-            Column("Blocks", colalign="<", headalign="^"),
-            border="thin",
-        )
-
-        for sequence, group in enumerate(self.plan):
-            table.row(sequence, ", ".join([str(b) for b in group]))
-
-        table.print()
-
-    def plan_dotfile(self, filename):
+    def schdule_dotfile(self, filename):
         """
         Write a GraphViz dot file representing the execution schedule
 
@@ -740,7 +723,7 @@ class BlockDiagram:
 
         Display execution plan as a dataflow graph.
 
-        :seealso: :func:`execution_plan`, :func:`plan_print`
+        :seealso: :func:`schedule_plan`, :func:`schedule_print`
         """
 
         if isinstance(filename, str):
@@ -982,6 +965,25 @@ class BlockDiagram:
 
         if not self.compiled:
             print("** System has not been compiled, or had a compile time error")
+
+    def report_schedule(self, **kwargs):
+        """
+        Display execution schedule in tabular form
+
+        :param kwargs: options passed to :meth:`ansitable.ANSITable.print`
+
+        :seealso: :func:`schedule_plan`, :func:`schedule_dotfile`
+        """
+        table = ANSITable(
+            Column("Step"),
+            Column("Blocks", colalign="<", headalign="^"),
+            border="thin",
+        )
+
+        for sequence, group in enumerate(self.plan):
+            table.row(sequence, ", ".join([str(b) for b in group]))
+
+        table.print(**kwargs)
 
     # ---------------------------------------------------------------------- #
 
