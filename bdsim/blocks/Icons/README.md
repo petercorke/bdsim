@@ -33,3 +33,7 @@ Add the line to the file `icons.sh` which is a shell script that builds all icon
 
 **Note that you must have a working LaTeX installation that includes `pdflatex`, `pdfcrop`
 and `gs`**
+
+# Drawing icons by hand
+
+See [details here](https://github.com/petercorke/bdsim/blob/master/bdsim/bdedit/docstring.md).
