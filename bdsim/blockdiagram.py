@@ -28,7 +28,7 @@ from bdsim.components import *
 
 # class BlockDiagram(BlockDiagramMixin):
 class BlockDiagram:
-    """
+    r"""
     Block diagram class.  This object is the parent of all blocks and wires in
     the system.
 
@@ -46,6 +46,13 @@ class BlockDiagram:
     :vartype blockdict: dict of lists
     :ivar name: name of this diagram
     :vartype name: str
+
+    This object:
+
+    * holds all the blocks and wires that comprise the system
+    * manages continuous- and discrete-time state vector for the whole system, splitting
+      it across blocks as required
+    * evaluates the entire diagram as a function to compute :meth:`\dot{x} = f(x, t)`
     """
 
     def __init__(self, name="main", **kwargs):
