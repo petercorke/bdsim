@@ -276,8 +276,10 @@ class Index(FunctionBlock):
         input = inports[0]
         if len(self.index) == 1:
             return [input[self.index[0]]]
+        elif isinstance(input, np.ndarray):
+            return [np.array([input[i] for i in self.index])]
         else:
-            return [np.r_[[inputs[i] for i in self.index]]]
+            return [[input[i] for i in self.index]]
 
 
 # ------------------------------------------------------------------------ #
