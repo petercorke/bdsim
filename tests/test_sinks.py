@@ -43,23 +43,19 @@ from bdsim.blocks.sinks import *
 
 
 class SinkBlockTest(unittest.TestCase):
-
     def test_print(self):
-
         class State:
             pass
 
         # print to a string so we can check result
         import io
+
         f = io.StringIO()
 
-        b = Print(name='print block', file=f)
+        b = Print(name="print block", file=f)
 
-        s = b.T_start()
-        s.t = 1.0
-        b.T_step(1.23, state=s)
-        self.assertEqual(f.getvalue(), 
-            'PRINT(print block (t=1.000) 1.23\n')
+        b.T_step(1.23, t=1.0)
+        self.assertEqual(f.getvalue(), "PRINT(print block (t=1.000) 1.23\n")
 
         # test print of object
         class testObject:
@@ -72,66 +68,63 @@ class SinkBlockTest(unittest.TestCase):
         # rewind the string buffer
         f.truncate(0)
         f.seek(0, 0)
-        b.T_step(to, state=s)
-        self.assertEqual(f.getvalue(), 
-            'PRINT(print block (t=1.000) testObject=123\n')
+        b.T_step(to, t=1.0)
+        self.assertEqual(f.getvalue(), "PRINT(print block (t=1.000) testObject=123\n")
 
         ## test with format string
         f = io.StringIO()
-        b = Print(name='print block', file=f, fmt="{:.1f}")
+        b = Print(name="print block", file=f, fmt="{:.1f}")
 
-        b.T_step(1.23456, state=s)
-        self.assertEqual(f.getvalue(), 
-            'PRINT(print block (t=1.000) 1.2\n')
-
-        # rewind the string buffer
-        f.truncate(0)
-        f.seek(0, 0)
-
-        b.T_step(np.r_[1.23456, 4.5679], state=s)
-        self.assertEqual(f.getvalue(), 
-            'PRINT(print block (t=1.000) [1.2 4.6]\n')
+        b.T_step(1.23456, t=1.0)
+        self.assertEqual(f.getvalue(), "PRINT(print block (t=1.000) 1.2\n")
 
         # rewind the string buffer
         f.truncate(0)
         f.seek(0, 0)
 
-        b.T_step("a string", state=s)
-        self.assertEqual(f.getvalue(), 
-            'PRINT(print block (t=1.000) a string\n')
+        b.T_step(np.r_[1.23456, 4.5679], t=1.0)
+        self.assertEqual(f.getvalue(), "PRINT(print block (t=1.000) [1.2 4.6]\n")
 
+        # rewind the string buffer
+        f.truncate(0)
+        f.seek(0, 0)
+
+        b.T_step("a string", t=1.0)
+        self.assertEqual(f.getvalue(), "PRINT(print block (t=1.000) a string\n")
 
     def test_stop(self):
+        class State:
+            def __init__(self):
+                self.stop = None
+
+        s = State()
 
         b = Stop(lambda x: x > 5)
-        b.start()
-        class State:
-            pass
-        s = State()
-        s.stop = None
+        b.start(s)
 
-        b.T_step(0, state=s)
+        b.T_step(0)
         self.assertIsNone(s.stop)
 
-        b.T_step(10, state=s)
+        b.T_step(10)
         self.assertTrue(s.stop)
         self.assertIs(s.stop, b)
 
         b = Stop()
         s.stop = None
+        b.start(s)
 
-        b.T_step(0, state=s)
+        b.T_step(0)
         self.assertIsNone(s.stop)
 
-        b.T_step(1, state=s)
+        b.T_step(1)
         self.assertTrue(s.stop)
         self.assertIs(s.stop, b)
 
         s.stop = None
-        b.T_step(False, state=s)
+        b.T_step(False)
         self.assertIsNone(s.stop)
 
-        b.T_step(True, state=s)
+        b.T_step(True)
         self.assertTrue(s.stop)
         self.assertIs(s.stop, b)
 
@@ -149,11 +142,12 @@ class SinkBlockTest(unittest.TestCase):
         bd.connect(b1, b2, b3)
         bd.compile()
 
-        #bd.start()
+        # bd.start()
         # state is not yet setup
-        #bd.state.watchlist
+        # bd.state.watchlist
+
 
 # --------------------------------------------------------------------------------------#
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     unittest.main()

@@ -6,9 +6,10 @@ import math
 import bdsim
 import unittest
 import numpy.testing as nt
+from pathlib import Path
+
 
 class BDSimTest(unittest.TestCase):
-
     def test_options(self):
         sim = bdsim.BDSim()
 
@@ -16,7 +17,7 @@ class BDSimTest(unittest.TestCase):
         self.assertTrue(sim.options.graphics)
         self.assertFalse(sim.options.animation)
 
-        sim.options.verbose=True
+        sim.options.verbose = True
         self.assertTrue(sim.options.verbose)
 
         sim.options.set(verbose=False)
@@ -25,8 +26,8 @@ class BDSimTest(unittest.TestCase):
         sim.set_options(verbose=True)
         self.assertTrue(sim.options.verbose)
 
-        sim.options.graphics=False
-        sim.options.animation=False
+        sim.options.graphics = False
+        sim.options.animation = False
 
         self.assertFalse(sim.options.graphics)
         self.assertFalse(sim.options.animation)
@@ -41,6 +42,19 @@ class BDSimTest(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             sim.options.set(graphics=False, animation=True)
+
+    def test_bdrun(self):
+
+        file = Path(__file__).parent.parent / "examples" / "eg1.bd"
+
+        sim = bdsim.BDSim(graphics=None, progress=False)
+        bd = sim.blockdiagram()
+
+        bd = bdsim.bdload(bd, file)
+        self.assertEqual(len(bd.blocklist), 5)
+        self.assertEqual(len(bd.wirelist), 6)
+        bd.compile()
+        sim.run(bd, T=2)
 
     def test_sim(self):
         # all up test
@@ -66,7 +80,7 @@ class BDSimTest(unittest.TestCase):
 
         self.assertTrue(hasattr(out, "x"))
         self.assertIsInstance(out.x, np.ndarray)
-        self.assertEqual(out.x.shape, (n,1))
+        self.assertEqual(out.x.shape, (n, 1))
 
         self.assertTrue(hasattr(out, "xnames"))
         self.assertIsInstance(out.xnames, list)
@@ -101,7 +115,7 @@ class BDSimTest(unittest.TestCase):
 
         self.assertTrue(hasattr(out, "x"))
         self.assertIsInstance(out.x, np.ndarray)
-        self.assertEqual(out.x.shape, (n,1))
+        self.assertEqual(out.x.shape, (n, 1))
 
         self.assertTrue(hasattr(out, "xnames"))
         self.assertIsInstance(out.xnames, list)
@@ -111,8 +125,9 @@ class BDSimTest(unittest.TestCase):
         self.assertTrue(hasattr(out, "ynames"))
         self.assertIsInstance(out.ynames, list)
         self.assertEqual(len(out.ynames), 0)
+
+
 # ---------------------------------------------------------------------------------------#
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     unittest.main()
-    
