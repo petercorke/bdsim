@@ -730,7 +730,7 @@ class BDSim:
                 def ydot(t, y):
                     simstate.t = t
                     simstate.count += 1
-                    return bd.evaluate_plan(y, t, simstate=simstate)
+                    return bd.schedule_evaluate(y, t, simstate=simstate)
 
                 if simstate.dt is not None:
                     simstate.solver_args["max_step"] = simstate.dt
@@ -755,6 +755,7 @@ class BDSim:
                         break
 
                     # stash the results
+                    simstate.t = integrator.t
                     simstate.tlist.append(integrator.t)
                     simstate.xlist.append(integrator.y)
 
@@ -774,7 +775,7 @@ class BDSim:
                     if simstate.stop is not None:
                         print(
                             fg("red")
-                            + f"\n--- stop requested at t={simstate.t.t:.4f} by"
+                            + f"\n--- stop requested at t={simstate.t:.4f} by"
                             f" {simstate.stop}"
                             + attr(0)
                         )
@@ -806,7 +807,7 @@ class BDSim:
                 for t in np.arange(t0, T, simstate.dt):  # step through the time range
                     # evaluate the block diagram
                     simstate.t = t
-                    bd.evaluate_plan([], t)
+                    bd.schedule_evaluate([], t)
 
                     # stash the results
                     simstate.tlist.append(t)
@@ -838,7 +839,7 @@ class BDSim:
                 t = t0
                 simstate.t = t
                 # evaluate the block diagram
-                bd.evaluate_plan([], t)
+                bd.schedule_evaluate([], t)
 
                 # stash the results
                 simstate.tlist.append(t)
@@ -1022,8 +1023,8 @@ class BDSim:
 
             re_isfield = re.compile(r"\s*:[a-zA-Zα-ωΑ-Ω0-9_ ]+:")
             re_field = re.compile(
-                "^\s*:(?P<field>[a-zA-Z]+)(?:"
-                " +(?P<var>[a-zA-Zα-ωΑ-Ω0-9_]+))?:(?P<body>.+)$"
+                r"^\s*:(?P<field>[a-zA-Z]+)(?:"
+                r" +(?P<var>[a-zA-Zα-ωΑ-Ω0-9_]+))?:(?P<body>.+)$"
             )
 
             # a-zA-Zα-ωΑ-Ω0-9_
@@ -1121,7 +1122,7 @@ class BDSim:
                 print(f"package {package} not found")
                 continue
             except ImportError:
-                print(f"package {package} load error")
+                print(f"package {package} load error, continuing")
                 import textwrap
 
                 print(textwrap.indent(traceback.format_exc(), "    "))
