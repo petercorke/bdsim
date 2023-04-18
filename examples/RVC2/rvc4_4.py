@@ -22,9 +22,8 @@ heading_error = bd.SUM("+-", angles=True)
 Kv = bd.GAIN(0.5)
 Kh = bd.GAIN(4)
 bike = bd.BICYCLE(x0=[5, 2, 0])
-vplot = bd.VEHICLEPLOT(
-    scale=[0, 10], size=0.7, shape="box", init=background_graphics, movie="rvc4_4.mp4"
-)
+vplot = bd.VEHICLEPLOT(scale=[0, 10], size=0.7, init=background_graphics)
+# movie="rvc4_4.mp4")
 vscope = bd.SCOPE(name="velocity")
 hscope = bd.SCOPE(name="heading")
 xy = bd.SLICE1([0, 1])
@@ -47,5 +46,3 @@ bd.compile()
 bd.report()
 
 out = sim.run(bd)
-
-# sim.done(bd, block=True)

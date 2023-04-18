@@ -26,5 +26,3 @@ bd.compile()
 bd.report()
 
 out = sim.run(bd, 10, dt=0.05)
-
-# sim.done(bd, block=True)

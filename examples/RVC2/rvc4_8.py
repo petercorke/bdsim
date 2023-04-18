@@ -83,5 +83,3 @@ bd.report_summary()
 print("\nSimulating for ", total_time, " seconds")
 
 out = sim.run(bd, T=total_time)
-
-bd.done(block=True)

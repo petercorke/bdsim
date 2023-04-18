@@ -27,7 +27,6 @@ def background_graphics(ax):
     plot_homline(ax, L, "r--", xlim=np.r_[0, 10], ylim=np.r_[0, 10])
     ax.plot(x0[0], x0[1], "o")
 
-
 speed = bd.CONSTANT(0.5)
 slope = bd.CONSTANT(math.atan2(-L[0], L[1]))
 d2line = bd.FUNCTION(
@@ -38,9 +37,8 @@ steer_sum = bd.SUM("+-")
 Kd = bd.GAIN(0.5)
 Kh = bd.GAIN(1)
 bike = bd.BICYCLE(x0=x0)
-vplot = bd.VEHICLEPLOT(
-    scale=[0, 10], size=0.7, shape="box", init=background_graphics, movie="rvc4_6.mp4"
-)
+vplot = bd.VEHICLEPLOT(scale=[0, 10], size=0.7, shape="box", init=background_graphics)
+# , movie="rvc4_6.mp4")
 hscope = bd.SCOPE(name="heading")
 xy = bd.INDEX([0, 1], name="xy")
 theta = bd.INDEX([2], name="theta")
@@ -65,5 +63,3 @@ bd.compile()
 bd.report_summary()
 
 out = sim.run(bd, 20)
-
-bd.done(block=True)

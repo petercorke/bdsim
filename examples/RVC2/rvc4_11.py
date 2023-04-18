@@ -89,9 +89,8 @@ heading_sum = bd.SUM("++")
 gsum = bd.SUM("++")
 
 # displays
-vplot = bd.VEHICLEPLOT(
-    scale=[0, 10], size=0.7, shape="box", init=background_graphics, movie="rvc4_11.mp4"
-)
+vplot = bd.VEHICLEPLOT(scale=[0, 10], size=0.7, shape="box", init=background_graphics)
+# , movie="rvc4_11.mp4")
 ascope = bd.SCOPE(name=r"$\alpha$")
 bscope = bd.SCOPE(name=r"$\beta$")
 
@@ -121,8 +120,5 @@ bd.connect(gsum, wprod[0])
 
 bd.compile()
 
-
 bd.report_summary()
 out = sim.run(bd, T=10)
-
-bd.done(block=True)
