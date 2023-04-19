@@ -102,12 +102,33 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`ZOH`</span>
 
-<span class="sd">    .. table::</span>
-<span class="sd">       :align: left</span>
+<span class="sd">    Zero-order hold.</span>
 
-<span class="sd">    :inputs: 1 [float, ndarray]</span>
-<span class="sd">    :outputs: 1 [float, ndarray]</span>
+<span class="sd">    :inputs: 1</span>
+<span class="sd">    :outputs: 1</span>
 <span class="sd">    :states: N</span>
+
+<span class="sd">    .. list-table::</span>
+<span class="sd">        :header-rows: 1</span>
+
+<span class="sd">        *   - Port type</span>
+<span class="sd">            - Port number</span>
+<span class="sd">            - Types</span>
+<span class="sd">            - Description</span>
+<span class="sd">        *   - Input</span>
+<span class="sd">            - 0</span>
+<span class="sd">            - float, ndarray</span>
+<span class="sd">            - :math:`x`</span>
+<span class="sd">        *   - Output</span>
+<span class="sd">            - 0</span>
+<span class="sd">            - float, ndarray</span>
+<span class="sd">            - :math:`y`</span>
+
+<span class="sd">    Output is the input at the previous clock time $y_{k} = x_{k-1}.  The state can be a</span>
+<span class="sd">    scalar or a vector, this is given by the type of ``x0``.</span>
+
+<span class="sd">    .. note:: If input is not a scalar, ``x0`` must have the shape of the</span>
+<span class="sd">        input signal.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
@@ -115,22 +136,12 @@
 
 <div class="viewcode-block" id="ZOH.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.discrete.ZOH.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clock</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Zero-order hold.</span>
-
 <span class="sd">        :param clock: clock source</span>
 <span class="sd">        :type clock: Clock</span>
 <span class="sd">        :param x0: Initial value of the hold, defaults to 0</span>
 <span class="sd">        :type x0: array_like, optional</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
-<span class="sd">        :return: a ZOH block</span>
-<span class="sd">        :rtype: Integrator instance</span>
-
-<span class="sd">        Output is the input at the previous clock time.  The state can be a scalar or a</span>
-<span class="sd">        vector, this is given by the type of ``x0``.</span>
-
-<span class="sd">        .. note:: If input is not a scalar, ``x0`` must have the shape of the</span>
-<span class="sd">            input signal.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s2">&quot;sampler&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">clock</span><span class="o">=</span><span class="n">clock</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
@@ -155,12 +166,39 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`DINTEGRATOR`</span>
 
-<span class="sd">    .. table::</span>
-<span class="sd">       :align: left</span>
+<span class="sd">    Discrete-time integrator.</span>
 
-<span class="sd">    :inputs: 1 [float, ndarray]</span>
-<span class="sd">    :outputs: 1 [float, ndarray]</span>
+<span class="sd">    :inputs: 1</span>
+<span class="sd">    :outputs: 1</span>
 <span class="sd">    :states: N</span>
+
+<span class="sd">    .. list-table::</span>
+<span class="sd">        :header-rows: 1</span>
+
+<span class="sd">        *   - Port type</span>
+<span class="sd">            - Port number</span>
+<span class="sd">            - Types</span>
+<span class="sd">            - Description</span>
+<span class="sd">        *   - Input</span>
+<span class="sd">            - 0</span>
+<span class="sd">            - float, ndarray</span>
+<span class="sd">            - :math:`x`</span>
+<span class="sd">        *   - Output</span>
+<span class="sd">            - 0</span>
+<span class="sd">            - float, ndarray</span>
+<span class="sd">            - :math:`y`</span>
+
+<span class="sd">    Create a discrete-time integrator block.</span>
+
+<span class="sd">    Output is the time integral of the input.  The state can be a scalar or a</span>
+<span class="sd">    vector, this is given by the type of ``x0``.</span>
+
+<span class="sd">    The minimum and maximum values can be:</span>
+
+<span class="sd">        - a scalar, in which case the same value applies to every element of</span>
+<span class="sd">          the state vector, or</span>
+<span class="sd">        - a vector, of the same shape as ``x0`` that applies elementwise to</span>
+<span class="sd">          the state.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
@@ -168,8 +206,6 @@
 
 <div class="viewcode-block" id="DIntegrator.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.discrete.DIntegrator.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clock</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Discrete-time integrator.</span>
-
 <span class="sd">        :param clock: clock source</span>
 <span class="sd">        :type clock: Clock</span>
 <span class="sd">        :param x0: Initial state, defaults to 0</span>
@@ -182,20 +218,6 @@
 <span class="sd">        :type max: float or array_like, optional</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
-<span class="sd">        :return: an INTEGRATOR block</span>
-<span class="sd">        :rtype: Integrator instance</span>
-
-<span class="sd">        Create a discrete-time integrator block.</span>
-
-<span class="sd">        Output is the time integral of the input.  The state can be a scalar or a</span>
-<span class="sd">        vector, this is given by the type of ``x0``.</span>
-
-<span class="sd">        The minimum and maximum values can be:</span>
-
-<span class="sd">            - a scalar, in which case the same value applies to every element of</span>
-<span class="sd">              the state vector, or</span>
-<span class="sd">            - a vector, of the same shape as ``x0`` that applies elementwise to</span>
-<span class="sd">              the state.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">clock</span><span class="o">=</span><span class="n">clock</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
 
@@ -234,12 +256,34 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`DPOSEINTEGRATOR`</span>
 
-<span class="sd">    .. table::</span>
-<span class="sd">       :align: left</span>
+<span class="sd">    Discrete-time spatial velocity integrator.</span>
 
-<span class="sd">    :inputs: 1 [ndarray(6,)]</span>
-<span class="sd">    :outputs: 1 [SE3]</span>
+<span class="sd">    :inputs: 1</span>
+<span class="sd">    :outputs: 1</span>
 <span class="sd">    :states: 6</span>
+
+<span class="sd">    .. list-table::</span>
+<span class="sd">        :header-rows: 1</span>
+
+<span class="sd">        *   - Port type</span>
+<span class="sd">            - Port number</span>
+<span class="sd">            - Types</span>
+<span class="sd">            - Description</span>
+<span class="sd">        *   - Input</span>
+<span class="sd">            - 0</span>
+<span class="sd">            - ndarray(6,)</span>
+<span class="sd">            - :math:`x`</span>
+<span class="sd">        *   - Output</span>
+<span class="sd">            - 0</span>
+<span class="sd">            - SE3</span>
+<span class="sd">            - :math:`y`</span>
+
+<span class="sd">    This block integrates spatial velocity over time.</span>
+<span class="sd">    The block input is a spatial velocity as a 6-vector</span>
+<span class="sd">    :math:`(v_x, v_y, v_z, \omega_x, \omega_y, \omega_z)` and the output</span>
+<span class="sd">    is pose as an ``SE3`` instance.</span>
+
+<span class="sd">    .. note:: State is a velocity twist.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
@@ -249,24 +293,12 @@
 
 <div class="viewcode-block" id="DPoseIntegrator.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.discrete.DPoseIntegrator.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clock</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Discrete-time spatial velocity integrator.</span>
-
 <span class="sd">        :param clock: clock source</span>
 <span class="sd">        :type clock: Clock</span>
 <span class="sd">        :param x0: Initial pose, defaults to null</span>
 <span class="sd">        :type x0: SE3, optional</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
-<span class="sd">        :return: an DPOSEINTEGRATOR block</span>
-<span class="sd">        :rtype: Integrator instance</span>
-
-<span class="sd">        This block integrates spatial velocity over time.</span>
-<span class="sd">        The block input is a spatial velocity as a 6-vector</span>
-<span class="sd">        :math:`(v_x, v_y, v_z, \omega_x, \omega_y, \omega_z)` and the output</span>
-<span class="sd">        is pose as an ``SE3`` instance.</span>
-
-<span class="sd">        .. note:: State is a velocity twist.</span>
-
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">clock</span><span class="o">=</span><span class="n">clock</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
 

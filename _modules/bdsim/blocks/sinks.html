@@ -101,12 +101,49 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`PRINT`</span>
 
-<span class="sd">    .. table::</span>
-<span class="sd">       :align: left</span>
+<span class="sd">    Print signal.</span>
 
-<span class="sd">    :inputs: 1 [any]</span>
+<span class="sd">    :inputs: 1</span>
 <span class="sd">    :outputs: 0</span>
 <span class="sd">    :states: 0</span>
+
+<span class="sd">    .. list-table::</span>
+<span class="sd">        :header-rows: 1</span>
+
+<span class="sd">        *   - Port type</span>
+<span class="sd">            - Port number</span>
+<span class="sd">            - Types</span>
+<span class="sd">            - Description</span>
+<span class="sd">        *   - Input</span>
+<span class="sd">            - 0</span>
+<span class="sd">            - any</span>
+<span class="sd">            - :math:`x`</span>
+
+<span class="sd">    Creates a console print block which displays the value of the input signal</span>
+<span class="sd">    at each simulation time step. The display format is like::</span>
+
+<span class="sd">        PRINT(print.0 @ t=0.100) [-1.0 0.2]</span>
+
+<span class="sd">    and includes the block name, time, and the formatted value.</span>
+
+<span class="sd">    The numerical formatting of the signal is controlled by ``fmt``:</span>
+
+<span class="sd">    - if not provided, ``str()`` is used to format the signal</span>
+<span class="sd">    - if provided:</span>
+
+<span class="sd">        - a scalar is formatted by the ``fmt.format()``</span>
+<span class="sd">        - a NumPy array is formatted by ``fmt.format()`` applied to every</span>
+<span class="sd">          element</span>
+
+<span class="sd">    Examples::</span>
+
+<span class="sd">        bd.PRINT(name=&quot;X&quot;)  # block name appears in the printed text</span>
+<span class="sd">        bd.PRINT(fmt=&quot;{:.1f}&quot;) # print with explicit format</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        - By default writes to stdout</span>
+<span class="sd">        - The output is cleaner if progress bar printing is disabled using the</span>
+<span class="sd">          ``-p`` command line option.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
@@ -114,8 +151,6 @@
 
 <div class="viewcode-block" id="Print.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sinks.Print.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Print signal.</span>
-
 <span class="sd">        :param fmt: Format string, defaults to None</span>
 <span class="sd">        :type fmt: str, optional</span>
 <span class="sd">        :param file: file to write data to, defaults to None</span>
@@ -124,37 +159,6 @@
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :return: A PRINT block</span>
 <span class="sd">        :rtype: Print instance</span>
-
-<span class="sd">        Creates a console print block which displays the value of a signal</span>
-<span class="sd">        at each simulation time step. The display format is like::</span>
-
-<span class="sd">            PRINT(print.0 @ t=0.100) [-1.0 0.2]</span>
-
-<span class="sd">        and includes the block name, time, and the formatted value.</span>
-
-<span class="sd">        The numerical formatting of the signal is controlled by ``fmt``:</span>
-
-<span class="sd">        - if not provided, ``str()`` is used to format the signal</span>
-<span class="sd">        - if provided:</span>
-<span class="sd">            - a scalar is formatted by the ``fmt.format()``</span>
-<span class="sd">            - a NumPy array is formatted by ``fmt.format()`` applied to every</span>
-<span class="sd">              element</span>
-
-<span class="sd">        Examples::</span>
-
-<span class="sd">            pr = bd.PRINT()     # create PRINT block</span>
-<span class="sd">            bd.connect(x, inputs=pr)   # its input comes from x</span>
-
-<span class="sd">            bd.PRINT(x)         # create PRINT block with input from x</span>
-
-<span class="sd">            bd.PRINT(x, name=&#39;X&#39;)  # block name appears in the printed text</span>
-
-<span class="sd">            bd.PRINT(x, fmt=&quot;{:.1f}&quot;) # print with explicit format</span>
-
-<span class="sd">        .. note::</span>
-<span class="sd">            - By default writes to stdout</span>
-<span class="sd">            - The output is cleaner if progress bar printing is disabled.</span>
-
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">format</span> <span class="o">=</span> <span class="n">fmt</span>
@@ -192,12 +196,31 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`STOP`</span>
 
-<span class="sd">    .. table::</span>
-<span class="sd">       :align: left</span>
+<span class="sd">    Conditionally stop simulation.</span>
 
-<span class="sd">    :inputs: 1 [any]</span>
+<span class="sd">    :inputs: 1</span>
 <span class="sd">    :outputs: 0</span>
 <span class="sd">    :states: 0</span>
+
+<span class="sd">    .. list-table::</span>
+<span class="sd">        :header-rows: 1</span>
+
+<span class="sd">        *   - Port type</span>
+<span class="sd">            - Port number</span>
+<span class="sd">            - Types</span>
+<span class="sd">            - Description</span>
+<span class="sd">        *   - Input</span>
+<span class="sd">            - 0</span>
+<span class="sd">            - any</span>
+<span class="sd">            - :math:`x`</span>
+
+<span class="sd">    Conditionally stop the simulation if the input :math:`x` is:</span>
+
+<span class="sd">    - bool type and True</span>
+<span class="sd">    - numeric type and &gt; 0</span>
+
+<span class="sd">    If ``func`` is provided, then it is applied to the block input</span>
+<span class="sd">    and if it returns True the simulation is stopped.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
@@ -205,22 +228,10 @@
 
 <div class="viewcode-block" id="Stop.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sinks.Stop.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Conditional simulation stop.</span>
-
 <span class="sd">        :param func: evaluate stop condition, defaults to None</span>
 <span class="sd">        :type func: callable, optional</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
-<span class="sd">        :return: A STOP block</span>
-<span class="sd">        :rtype: Stop instance</span>
-
-<span class="sd">        Conditionally stop the simulation if the input is:</span>
-
-<span class="sd">        - bool type and True</span>
-<span class="sd">        - numeric type and &gt; 0</span>
-
-<span class="sd">        If ``func`` is provided, then it is applied to the block input</span>
-<span class="sd">        and if it returns True the simulation is stopped.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
 
@@ -259,13 +270,28 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`NULL`</span>
 
-<span class="sd">    .. table::</span>
-<span class="sd">       :align: left</span>
+<span class="sd">    Discard signal.</span>
 
-
-<span class="sd">    :inputs: N [any]</span>
+<span class="sd">    :inputs: N</span>
 <span class="sd">    :outputs: 0</span>
 <span class="sd">    :states: 0</span>
+
+<span class="sd">    .. list-table::</span>
+<span class="sd">        :header-rows: 1</span>
+
+<span class="sd">        *   - Port type</span>
+<span class="sd">            - Port number</span>
+<span class="sd">            - Types</span>
+<span class="sd">            - Description</span>
+<span class="sd">        *   - Input</span>
+<span class="sd">            - i</span>
+<span class="sd">            - any</span>
+<span class="sd">            - :math:`x_i`</span>
+
+<span class="sd">    Create a sink block with arbitrary number of input ports that discards</span>
+<span class="sd">    all data, like ``/dev/null``. Useful for testing.</span>
+
+<span class="sd">    .. note:: ``bdsim`` issues a warning for unconnected outputs but execution can continue.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
@@ -273,20 +299,10 @@
 
 <div class="viewcode-block" id="Null.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sinks.Null.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Discard signal.</span>
-
 <span class="sd">        :param nin: number of input ports, defaults to 1</span>
 <span class="sd">        :type nin: int, optional</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
-<span class="sd">        :return: A NULL block</span>
-<span class="sd">        :rtype: Null instance</span>
-
-<span class="sd">        Create a sink block with arbitrary number of input ports that discards</span>
-<span class="sd">        all data.  Useful for testing.  </span>
-<span class="sd">        </span>
-<span class="sd">        .. note:: ``bdsim`` issues a warning for unconnected outputs but execution can continue.</span>
-
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="n">nin</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span></div></div>
 
@@ -298,12 +314,37 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`WATCH`</span>
 
-<span class="sd">    .. table::</span>
-<span class="sd">       :align: left</span>
+<span class="sd">    Watch a signal.</span>
 
-<span class="sd">    :inputs: N [any]</span>
+<span class="sd">    :inputs: N</span>
 <span class="sd">    :outputs: 0</span>
 <span class="sd">    :states: 0</span>
+
+<span class="sd">    .. list-table::</span>
+<span class="sd">        :header-rows: 1</span>
+
+<span class="sd">        *   - Port type</span>
+<span class="sd">            - Port number</span>
+<span class="sd">            - Types</span>
+<span class="sd">            - Description</span>
+<span class="sd">        *   - Input</span>
+<span class="sd">            - i</span>
+<span class="sd">            - any</span>
+<span class="sd">            - :math:`x_i`</span>
+
+<span class="sd">    Causes the output ports connected to this block&#39;s input ports :math:`x_i` to be</span>
+<span class="sd">    logged during the simulation run. Equivalent to adding it as the ``watch=`` argument</span>
+<span class="sd">    to ``bdsim.run``.</span>
+
+<span class="sd">    For example::</span>
+
+<span class="sd">        step = bd.STEP(5)</span>
+<span class="sd">        ramp = bd.RAMP()</span>
+<span class="sd">        watch = bd.WATCH(2) # watch 2 ports</span>
+<span class="sd">        watch[0] = step</span>
+<span class="sd">        watch[1] = ramp</span>
+
+<span class="sd">    :seealso: :method:`BDSim.run`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
@@ -311,18 +352,10 @@
 
 <div class="viewcode-block" id="Watch.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.sinks.Watch.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Watch a signal.</span>
-
+<span class="sd">        :param nin: number of input ports, defaults to 1</span>
+<span class="sd">        :type nin: int, optional</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
-<span class="sd">        :return: A NULL block</span>
-<span class="sd">        :rtype: Null instance</span>
-
-<span class="sd">        Causes the input signal to be logged during the</span>
-<span class="sd">        simulation run.  Equivalent to adding it as the ``watch=`` argument</span>
-<span class="sd">        to ``bdsim.run``.</span>
-
-<span class="sd">        :seealso: :method:`BDSim.run`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span></div>
 

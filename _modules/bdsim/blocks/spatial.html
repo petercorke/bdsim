@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bdsim.blocks.spatial &mdash; Block diagram simulation  documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Block diagram simulation
+              <img src="../../../_static/BDSimLogo_NoBackgnd@2x.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                1.0.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Code documentation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../bdsim.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../bdsim.blocks.html">Block library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../internals.html">Supporting classes</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Block diagram simulation</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bdsim.blocks.spatial</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bdsim.blocks.spatial</h1><div class="highlight"><pre>
+<span></span><span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">spatialmath</span> <span class="kn">import</span> <span class="n">SE2</span><span class="p">,</span> <span class="n">SE3</span><span class="p">,</span> <span class="n">SO2</span><span class="p">,</span> <span class="n">SO3</span>
+
+    <span class="n">sm</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="n">sm</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="kn">from</span> <span class="nn">bdsim.components</span> <span class="kn">import</span> <span class="n">FunctionBlock</span>
+
+<span class="k">if</span> <span class="n">sm</span><span class="p">:</span>
+
+<div class="viewcode-block" id="Pose_postmul"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.spatial.Pose_postmul">[docs]</a>    <span class="k">class</span> <span class="nc">Pose_postmul</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :blockname:`POSE_POSTMUL`</span>
+
+<span class="sd">        Post multiply pose.</span>
+
+<span class="sd">        :inputs: 1</span>
+<span class="sd">        :outputs: 1</span>
+<span class="sd">        :states: 0</span>
+
+<span class="sd">        .. list-table::</span>
+<span class="sd">            :header-rows: 1</span>
+
+<span class="sd">            *   - Port type</span>
+<span class="sd">                - Port number</span>
+<span class="sd">                - Types</span>
+<span class="sd">                - Description</span>
+<span class="sd">            *   - Input</span>
+<span class="sd">                - 0</span>
+<span class="sd">                - SEn, SOn</span>
+<span class="sd">                - :math:`\xi`</span>
+<span class="sd">            *   - Output</span>
+<span class="sd">                - 0</span>
+<span class="sd">                - SEn, SOn</span>
+<span class="sd">                - :math:`\xi \oplus \xi_c`</span>
+
+<span class="sd">        Postmultiply the input pose by a constant pose.</span>
+
+<span class="sd">        .. note:: Pose objects must be of the same type.</span>
+
+<span class="sd">        :seealso: :class:`Pose_premul`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
+
+<div class="viewcode-block" id="Pose_postmul.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.spatial.Pose_postmul.__init__">[docs]</a>        <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pose</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            :param pose: pose to apply</span>
+<span class="sd">            :type pose: SO2, SE2, SO3 or SE3</span>
+<span class="sd">            :param blockargs: |BlockOptions|</span>
+<span class="sd">            :type blockargs: dict</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pose</span><span class="p">,</span> <span class="p">(</span><span class="n">SO2</span><span class="p">,</span> <span class="n">SO3</span><span class="p">,</span> <span class="n">SE2</span><span class="p">,</span> <span class="n">SE3</span><span class="p">)):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;pose must be SO2, SE2, SO3 or SE3&quot;</span><span class="p">)</span>
+
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pose</span> <span class="o">=</span> <span class="n">pose</span></div>
+
+        <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+            <span class="nb">input</span> <span class="o">=</span> <span class="n">inports</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">return</span> <span class="p">[</span><span class="nb">input</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">pose</span><span class="p">]</span></div>
+
+    <span class="c1"># ------------------------------------------------------------------------ #</span>
+
+<div class="viewcode-block" id="Pose_premul"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.spatial.Pose_premul">[docs]</a>    <span class="k">class</span> <span class="nc">Pose_premul</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :blockname:`POSE_PREMUL`</span>
+
+<span class="sd">        Pre multiply pose.</span>
+
+<span class="sd">        :inputs: 1</span>
+<span class="sd">        :outputs: 1</span>
+<span class="sd">        :states: 0</span>
+
+<span class="sd">        .. list-table::</span>
+<span class="sd">            :header-rows: 1</span>
+
+<span class="sd">            *   - Port type</span>
+<span class="sd">                - Port number</span>
+<span class="sd">                - Types</span>
+<span class="sd">                - Description</span>
+<span class="sd">            *   - Input</span>
+<span class="sd">                - 0</span>
+<span class="sd">                - SEn, SOn</span>
+<span class="sd">                - :math:`\xi`</span>
+<span class="sd">            *   - Output</span>
+<span class="sd">                - 0</span>
+<span class="sd">                - SEn, SOn</span>
+<span class="sd">                - :math:`\xi_c \oplus \xi`</span>
+
+<span class="sd">        Premultiply the input pose by a constant pose.</span>
+
+<span class="sd">        .. note:: Pose objects must be of the same type.</span>
+
+<span class="sd">        :seealso: :class:`Pose_postmul`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
+
+<div class="viewcode-block" id="Pose_premul.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.spatial.Pose_premul.__init__">[docs]</a>        <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pose</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            :param pose: pose to apply</span>
+<span class="sd">            :type pose: SO2, SE2, SO3 or SE3</span>
+<span class="sd">            :param blockargs: |BlockOptions|</span>
+<span class="sd">            :type blockargs: dict</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pose</span><span class="p">,</span> <span class="p">(</span><span class="n">SO2</span><span class="p">,</span> <span class="n">SO3</span><span class="p">,</span> <span class="n">SE2</span><span class="p">,</span> <span class="n">SE3</span><span class="p">)):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;pose must be SO2, SE2, SO3 or SE3&quot;</span><span class="p">)</span>
+
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pose</span> <span class="o">=</span> <span class="n">pose</span></div>
+
+        <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+            <span class="nb">input</span> <span class="o">=</span> <span class="n">inports</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">pose</span> <span class="o">*</span> <span class="nb">input</span><span class="p">]</span></div>
+
+    <span class="c1"># ------------------------------------------------------------------------ #</span>
+
+<div class="viewcode-block" id="Transform_vector"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.spatial.Transform_vector">[docs]</a>    <span class="k">class</span> <span class="nc">Transform_vector</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :blockname:`TRANSFORM_VECTOR`</span>
+
+<span class="sd">        Transform a vector.</span>
+
+<span class="sd">        :inputs: 2</span>
+<span class="sd">        :outputs: 1</span>
+<span class="sd">        :states: 0</span>
+
+<span class="sd">        .. list-table::</span>
+<span class="sd">            :header-rows: 1</span>
+
+<span class="sd">            *   - Port type</span>
+<span class="sd">                - Port number</span>
+<span class="sd">                - Types</span>
+<span class="sd">                - Description</span>
+<span class="sd">            *   - Input</span>
+<span class="sd">                - 0</span>
+<span class="sd">                - SEn, SOn</span>
+<span class="sd">                - :math:`\xi`</span>
+<span class="sd">            *   - Input</span>
+<span class="sd">                - 1</span>
+<span class="sd">                - ndarray</span>
+<span class="sd">                - :math:`v`, Euclidean 2D or 3D</span>
+<span class="sd">            *   - Output</span>
+<span class="sd">                - 0</span>
+<span class="sd">                - ndarray</span>
+<span class="sd">                - :math:`\xi \bullet v`</span>
+
+<span class="sd">        Linearly transform the input vector by the input pose.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">nin</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
+
+<div class="viewcode-block" id="Transform_vector.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.spatial.Transform_vector.__init__">[docs]</a>        <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            :param blockargs: |BlockOptions|</span>
+<span class="sd">            :type blockargs: dict</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span></div>
+
+        <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+            <span class="n">pose</span> <span class="o">=</span> <span class="n">inports</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pose</span><span class="p">,</span> <span class="p">(</span><span class="n">SO2</span><span class="p">,</span> <span class="n">SO3</span><span class="p">,</span> <span class="n">SE2</span><span class="p">,</span> <span class="n">SE3</span><span class="p">)):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;pose must be SO2, SE2, SO3 or SE3&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">pose</span> <span class="o">*</span> <span class="n">inports</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span></div>
+
+    <span class="c1"># ------------------------------------------------------------------------ #</span>
+
+<div class="viewcode-block" id="Pose_inverse"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.spatial.Pose_inverse">[docs]</a>    <span class="k">class</span> <span class="nc">Pose_inverse</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :blockname:`POSE_INVERSE`</span>
+
+<span class="sd">        Pose inverse.</span>
+
+<span class="sd">        :inputs: 1</span>
+<span class="sd">        :outputs: 1</span>
+<span class="sd">        :states: 0</span>
+
+<span class="sd">        .. list-table::</span>
+<span class="sd">            :header-rows: 1</span>
+
+<span class="sd">            *   - Port type</span>
+<span class="sd">                - Port number</span>
+<span class="sd">                - Types</span>
+<span class="sd">                - Description</span>
+<span class="sd">            *   - Input</span>
+<span class="sd">                - 0</span>
+<span class="sd">                - SEn, SOn</span>
+<span class="sd">                - :math:`\xi`</span>
+<span class="sd">            *   - Output</span>
+<span class="sd">                - 0</span>
+<span class="sd">                - SEn, SOn</span>
+<span class="sd">                - :math:`\ominus \xi`</span>
+
+<span class="sd">        Invert the pose on the input port.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
+
+<div class="viewcode-block" id="Pose_inverse.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.spatial.Pose_inverse.__init__">[docs]</a>        <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            :param blockargs: |BlockOptions|</span>
+<span class="sd">            :type blockargs: dict</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span></div>
+
+        <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+            <span class="nb">input</span> <span class="o">=</span> <span class="n">inports</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">return</span> <span class="p">[</span><span class="nb">input</span><span class="o">.</span><span class="n">inv</span><span class="p">()]</span></div>
+
+
+<span class="c1"># ------------------------------------------------------------------------ #</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+    <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+
+    <span class="n">exec</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;tests&quot;</span> <span class="o">/</span> <span class="s2">&quot;test_spatial.py&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020-, Peter Corke..
+      <span class="lastupdated">Last updated on 19-Apr-2023.
+      </span></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+    <!-- Theme Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-11Q6WJM565"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-11Q6WJM565', {
+          'anonymize_ip': false,
+      });
+    </script> 
+
+</body>
+</html>

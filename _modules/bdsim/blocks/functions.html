@@ -105,14 +105,42 @@
 
 
 <div class="viewcode-block" id="Sum"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Sum">[docs]</a><span class="k">class</span> <span class="nc">Sum</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Summing junction.</span>
-
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`SUM`</span>
 
-<span class="sd">    :inputs: N [int, float, ndarray]</span>
-<span class="sd">    :outputs: 1 [int, float, ndarray]</span>
+<span class="sd">    Summing junction.</span>
+
+<span class="sd">    :inputs: N</span>
+<span class="sd">    :outputs: 1</span>
 <span class="sd">    :states: 0</span>
 
+<span class="sd">    .. list-table::</span>
+<span class="sd">        :header-rows: 1</span>
+
+<span class="sd">        * - Port type</span>
+<span class="sd">          - Port number</span>
+<span class="sd">          - Types</span>
+<span class="sd">          - Description</span>
+<span class="sd">        * - Input</span>
+<span class="sd">          - i</span>
+<span class="sd">          - int, float, ndarray</span>
+<span class="sd">          - :math:`x_i`</span>
+<span class="sd">        * - Output</span>
+<span class="sd">          - 0</span>
+<span class="sd">          - int, float, ndarray</span>
+<span class="sd">          - :math:`\sum_i \pm x_i`</span>
+
+<span class="sd">    Add or subtract input signals according to the ``signs`` string.  The</span>
+<span class="sd">    number of input ports is the length of this string.</span>
+
+<span class="sd">    For example::</span>
+
+<span class="sd">        sum = bd.SUM(&#39;+-+&#39;)</span>
+
+<span class="sd">    is a 3-input summing junction which computes ``in[0] - in[1] + in[2]``.</span>
+
+<span class="sd">    :note: The signals must be compatible for addition, and if some are</span>
+<span class="sd">        arrays they must be broadcastable.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
@@ -128,26 +156,12 @@
 
 <div class="viewcode-block" id="Sum.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Sum.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;++&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :param signs: signs associated with input ports, accepted characters: + or -, defaults to &#39;++&#39;</span>
+<span class="sd">        :param signs: signs associated with input ports, accepted characters: + or -, defaults to &quot;++&quot;</span>
 <span class="sd">        :type signs: str, optional</span>
 <span class="sd">        :param mode: controls addition mode, per element, string comprises ``r`` or ``c`` or ``C`` or ``L``, defaults to None</span>
 <span class="sd">        :type mode: str, optional</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
-<span class="sd">        :return: SUM block</span>
-<span class="sd">        :rtype: ``Sum`` instance</span>
-
-<span class="sd">        Add or subtract input signals according to the `signs` string.  The</span>
-<span class="sd">        number of input ports is the length of this string.</span>
-
-<span class="sd">        For example::</span>
-
-<span class="sd">            sum = bd.SUM(&#39;+-+&#39;)</span>
-
-<span class="sd">        is a 3-input summing junction which computes port0 - port1 + port2.</span>
-
-<span class="sd">        :note: The signals must be compatible, all scalars, or all arrays</span>
-<span class="sd">        of the same shape.</span>
 
 <span class="sd">        ``mode`` controls how elements of the input vectors are added/subtracted.</span>
 <span class="sd">        Elements which are angles must be treated specially, and this is indicated by</span>
@@ -222,13 +236,46 @@
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 <div class="viewcode-block" id="Prod"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Prod">[docs]</a><span class="k">class</span> <span class="nc">Prod</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Product junction.</span>
-
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`PROD`</span>
 
-<span class="sd">    :inputs: N [int, float, ndarray]</span>
-<span class="sd">    :outputs: 1 [int, float, ndarray]</span>
+<span class="sd">    Product junction.</span>
+
+<span class="sd">    :inputs: N</span>
+<span class="sd">    :outputs: 1</span>
 <span class="sd">    :states: 0</span>
+
+<span class="sd">    .. list-table::</span>
+<span class="sd">        :header-rows: 1</span>
+
+<span class="sd">        * - Port type</span>
+<span class="sd">          - Port number</span>
+<span class="sd">          - Types</span>
+<span class="sd">          - Description</span>
+<span class="sd">        * - Input</span>
+<span class="sd">          - i</span>
+<span class="sd">          - int, float, ndarray</span>
+<span class="sd">          - :math:`x_i`</span>
+<span class="sd">        * - Output</span>
+<span class="sd">          - 0</span>
+<span class="sd">          - int, float, ndarray</span>
+<span class="sd">          - :math:`\prod_i \{x_i | \frac{1}{x_i}\}`</span>
+
+<span class="sd">    Multiply or divide input signals according to the ``ops`` string.  The</span>
+<span class="sd">    number of input ports is the length of this string.</span>
+
+<span class="sd">    For example::</span>
+
+<span class="sd">        prod = PROD(&#39;*/*&#39;)</span>
+
+<span class="sd">    is a 3-input product junction which computes ``in[0] / in[1] * in[2]``.</span>
+
+<span class="sd">    :note: By default the ``*`` and ``/`` operators are used which perform element-wise</span>
+<span class="sd">        operations.</span>
+
+<span class="sd">    :note: The option ``matrix`` will instead use ``@`` and ``@ np.linalg.inv()``. The</span>
+<span class="sd">        shapes of matrices must conform.  A matrix on a ``/`` input must be square and</span>
+<span class="sd">        non-singular.  Matrices are multiplied in ascending port order.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
@@ -244,24 +291,7 @@
 <span class="sd">        :type matrix: bool, optional</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
-<span class="sd">        :return: PROD block</span>
-<span class="sd">        :rtype: ``Prod`` instance</span>
 
-<span class="sd">        Multiply or divide input signals according to the `ops` string.  The</span>
-<span class="sd">        number of input ports is the length of this string.</span>
-
-<span class="sd">        For example::</span>
-
-<span class="sd">            prod = PROD(&#39;*/*&#39;)</span>
-
-<span class="sd">        is a 3-input product junction which computes port0 / port 1 * port2.</span>
-
-<span class="sd">        :note: By default the ``*`` and ``/`` operators are used which perform element-wise</span>
-<span class="sd">            operations.</span>
-
-<span class="sd">        :note: The option ``matrix`` will instead use ``@`` and ``@ np.linalg.inv()``. The</span>
-<span class="sd">            shapes of matrices must conform.  A matrix on a ``/`` input must be square and</span>
-<span class="sd">            non-singular.  Matrices are multiplied in ascending port order.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">ops</span><span class="p">),</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ops</span><span class="p">,</span> <span class="nb">str</span><span class="p">),</span> <span class="s2">&quot;first argument must be signs string&quot;</span>
@@ -300,10 +330,38 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`GAIN`</span>
 
-<span class="sd">    :inputs: 1[int, float, ndarray]</span>
-<span class="sd">    :outputs: 1 [int, float, ndarray]</span>
+<span class="sd">    Gain block.</span>
+
+<span class="sd">    :inputs: 1</span>
+<span class="sd">    :outputs: 1</span>
 <span class="sd">    :states: 0</span>
 
+<span class="sd">    .. list-table::</span>
+<span class="sd">        :header-rows: 1</span>
+
+<span class="sd">        * - Port type</span>
+<span class="sd">          - Port number</span>
+<span class="sd">          - Types</span>
+<span class="sd">          - Description</span>
+<span class="sd">        * - Input</span>
+<span class="sd">          - 0</span>
+<span class="sd">          - int, float, ndarray</span>
+<span class="sd">          - :math:`x`</span>
+<span class="sd">        * - Output</span>
+<span class="sd">          - 0</span>
+<span class="sd">          - int, float, ndarray</span>
+<span class="sd">          - :math:`K x`</span>
+
+<span class="sd">    Either or both the input and gain can be Numpy arrays and Numpy will</span>
+<span class="sd">    compute the appropriate product :math:`u K`.</span>
+
+<span class="sd">    If :math:`u` and ``K`` are both NumPy arrays the ``@`` operator is used</span>
+<span class="sd">    and :math:`u` is postmultiplied by the gain. To premultiply by the gain,</span>
+<span class="sd">    to compute :math:`K u` use the ``premul`` option.</span>
+
+<span class="sd">    For example::</span>
+
+<span class="sd">        gain = bd.GAIN(2.5)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
@@ -313,29 +371,13 @@
         <span class="bp">self</span><span class="p">,</span> <span class="n">K</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">premul</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Gain block.</span>
-
 <span class="sd">        :param K: The gain value, defaults to 1</span>
 <span class="sd">        :type K: scalar, array_like</span>
 <span class="sd">        :param premul: premultiply by constant, default is postmultiply, defaults to False</span>
 <span class="sd">        :type premul: bool, optional</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
-<span class="sd">        :return: GAIN block</span>
-<span class="sd">        :rtype: ``Gain`` instance</span>
 
-<span class="sd">        Scale the input signal. If the input is :math:`u` the output is :math:`u K`.</span>
-
-<span class="sd">        Either or both the input and gain can be Numpy arrays and Numpy will</span>
-<span class="sd">        compute the appropriate product :math:`u K`.</span>
-
-<span class="sd">        If :math:`u` and ``K`` are both NumPy arrays the ``@`` operator is used</span>
-<span class="sd">        and :math:`u` is postmultiplied by the gain. To premultiply by the gain,</span>
-<span class="sd">        to compute :math:`K u` use the ``premul`` option.</span>
-
-<span class="sd">        For example::</span>
-
-<span class="sd">            gain = bd.GAIN(constant)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">K</span> <span class="o">=</span> <span class="n">K</span>
@@ -365,10 +407,42 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`POW`</span>
 
-<span class="sd">    :inputs: 1[int, float, ndarray]</span>
-<span class="sd">    :outputs: 1 [int, float, ndarray]</span>
+<span class="sd">    Power block.</span>
+
+<span class="sd">    :inputs: 1</span>
+<span class="sd">    :outputs: 1</span>
 <span class="sd">    :states: 0</span>
 
+<span class="sd">    .. list-table::</span>
+<span class="sd">        :header-rows: 1</span>
+
+<span class="sd">        * - Port type</span>
+<span class="sd">          - Port number</span>
+<span class="sd">          - Types</span>
+<span class="sd">          - Description</span>
+<span class="sd">        * - Input</span>
+<span class="sd">          - 0</span>
+<span class="sd">          - int, float, ndarray</span>
+<span class="sd">          - :math:`x`</span>
+<span class="sd">        * - Output</span>
+<span class="sd">          - 0</span>
+<span class="sd">          - int, float, ndarray</span>
+<span class="sd">          - :math:`x^p`</span>
+
+<span class="sd">    If the input is a Numpy array the result depends on ``matrix``.</span>
+<span class="sd">    If ``matrix`` is False the block performs an elementwise exponentiation and</span>
+<span class="sd">    the result is a Numpy array of the same size.</span>
+
+<span class="sd">    If ``matrix`` is True and the input is a square matrix and ``p`` is an integer</span>
+<span class="sd">    then matrixwise exponentiation is performedand using repeated matrix</span>
+<span class="sd">    multiplication and matrix inversion.  If ``p`` is not an integer it uses SciPy</span>
+<span class="sd">    to compute the power using an eigenvalue decomposition.</span>
+
+<span class="sd">    For example::</span>
+
+<span class="sd">        pow = bd.POW(2)</span>
+
+<span class="sd">    :seealso: :func:`numpy.matrix_power` :func:`scipy.linalg.fractional_matrix_power`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
@@ -376,26 +450,13 @@
 
 <div class="viewcode-block" id="Pow.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Pow.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">matrix</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Power block.</span>
-
 <span class="sd">        :param p: The exponent value, defaults to 1</span>
 <span class="sd">        :type p: scalar</span>
 <span class="sd">        :param matrix: premultiply by constant, default is postmultiply, defaults to False</span>
 <span class="sd">        :type matrix: bool, optional</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
-<span class="sd">        :return: GAIN block</span>
-<span class="sd">        :rtype: ``Gain`` instance</span>
 
-<span class="sd">        Raise the input signal to the specified power. If the input is :math:`u` the output is :math:`u^p`.</span>
-
-<span class="sd">        The input can be Numpy arrays and Numpy will</span>
-<span class="sd">        compute the appropriate product :math:`u^p`.</span>
-
-<span class="sd">        .. note::  For the case where the input is a square matrix and ``p`` is not</span>
-<span class="sd">            an integer we use SciPy which involves an eigenvalue decomposition.</span>
-
-<span class="sd">        :seealso: :func:`numpy.matrix_power` :func:`scipy.linalg.fractional_matrix_power`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
 
@@ -427,12 +488,44 @@
 
 
 <div class="viewcode-block" id="Clip"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Clip">[docs]</a><span class="k">class</span> <span class="nc">Clip</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`CLIP`</span>
 
-<span class="sd">    :inputs: 1 [int, float, ndarray]</span>
-<span class="sd">    :outputs: 1 [int, float, ndarray]</span>
+<span class="sd">    Signal clipping.</span>
+
+<span class="sd">    :inputs: 1</span>
+<span class="sd">    :outputs: 1</span>
 <span class="sd">    :states: 0</span>
+
+<span class="sd">    .. list-table::</span>
+<span class="sd">        :header-rows: 1</span>
+
+<span class="sd">        *   - Port type</span>
+<span class="sd">            - Port number</span>
+<span class="sd">            - Types</span>
+<span class="sd">            - Description</span>
+<span class="sd">        *   - Input</span>
+<span class="sd">            - 0</span>
+<span class="sd">            - int, float, ndarray</span>
+<span class="sd">            - :math:`x`</span>
+<span class="sd">        *   - Output</span>
+<span class="sd">            - 0</span>
+<span class="sd">            - int, float, ndarray</span>
+<span class="sd">            - :math:`\min(\max(x,a), b)`</span>
+
+<span class="sd">    The input signal is clipped to the range from ``minimum`` to ``maximum`` inclusive.</span>
+
+<span class="sd">    The signal can be a 1D-array in which case each element is clipped.  The</span>
+<span class="sd">    minimum and maximum values can be:</span>
+
+<span class="sd">        - a scalar, in which case the same value applies to every element of</span>
+<span class="sd">            the input vector , or</span>
+<span class="sd">        - a 1D-array, of the same shape as the input vector that applies elementwise to</span>
+<span class="sd">            the input vector.</span>
+
+<span class="sd">    For example::</span>
+
+<span class="sd">        clip = bd.CLIP(-1, 1)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
@@ -442,31 +535,12 @@
         <span class="bp">self</span><span class="p">,</span> <span class="nb">min</span><span class="p">:</span> <span class="n">ArrayLike</span> <span class="o">=</span> <span class="o">-</span><span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="nb">max</span><span class="p">:</span> <span class="n">ArrayLike</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Signal clipping.</span>
-
 <span class="sd">        :param min: Minimum value, defaults to -math.inf</span>
 <span class="sd">        :type min: scalar or array_like, optional</span>
 <span class="sd">        :param max: Maximum value, defaults to math.inf</span>
 <span class="sd">        :type max: float or array_like, optional</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
-<span class="sd">        :return: CLIP block</span>
-<span class="sd">        :rtype: ``Clip`` instance</span>
-
-<span class="sd">        The input signal is clipped to the range from ``minimum`` to ``maximum`` inclusive.</span>
-
-<span class="sd">        The signal can be a 1D-array in which case each element is clipped.  The</span>
-<span class="sd">        minimum and maximum values can be:</span>
-
-<span class="sd">            - a scalar, in which case the same value applies to every element of</span>
-<span class="sd">              the input vector , or</span>
-<span class="sd">            - a 1D-array, of the same shape as the input vector that applies elementwise to</span>
-<span class="sd">              the input vector.</span>
-
-<span class="sd">        For example::</span>
-
-<span class="sd">            clip = bd.CLIP()</span>
-
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">min</span> <span class="o">=</span> <span class="nb">min</span>
@@ -486,12 +560,73 @@
 
 <span class="c1"># TODO can have multiple outputs: pass in a tuple of functions, return a tuple</span>
 <div class="viewcode-block" id="Function"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.functions.Function">[docs]</a><span class="k">class</span> <span class="nc">Function</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`FUNCTION`</span>
 
-<span class="sd">    :inputs: N [any]</span>
-<span class="sd">    :outputs: M [any]</span>
+<span class="sd">    Python function.</span>
+
+<span class="sd">    :inputs: N</span>
+<span class="sd">    :outputs: M</span>
 <span class="sd">    :states: 0</span>
+
+<span class="sd">    .. list-table::</span>
+<span class="sd">        :header-rows: 1</span>
+
+<span class="sd">        *   - Port type</span>
+<span class="sd">            - Port number</span>
+<span class="sd">            - Types</span>
+<span class="sd">            - Description</span>
+<span class="sd">        *   - Input</span>
+<span class="sd">            - i</span>
+<span class="sd">            - any</span>
+<span class="sd">            - :math:`x_i`</span>
+<span class="sd">        *   - Output</span>
+<span class="sd">            - j</span>
+<span class="sd">            - any</span>
+<span class="sd">            - :math:`f_j(x_0, \ldots, x_{N-1})`</span>
+
+<span class="sd">    Inputs to the block are passed as separate arguments to the function.</span>
+<span class="sd">    Programmatic ositional or keyword arguments can also be passed to the function.</span>
+
+<span class="sd">    A block with one output port that sums its two input ports is::</span>
+
+<span class="sd">        func = bd.FUNCTION(lambda u1, u2: u1+u2, nin=2)</span>
+
+<span class="sd">    A block with a function that takes two inputs and has two additional arguments::</span>
+
+<span class="sd">        def myfun(u1, u2, param1, param2):</span>
+<span class="sd">            pass</span>
+
+<span class="sd">        FUNCTION(myfun, nin=2, args=(p1,p2))</span>
+
+<span class="sd">    If we need access to persistent (static) data, to keep some state::</span>
+
+<span class="sd">        def myfun(u1, u2, param1, param2, state):</span>
+<span class="sd">            pass</span>
+
+<span class="sd">        func = bd.FUNCTION(myfun, nin=2, args=(p1,p2), persistent=True)</span>
+
+<span class="sd">    where a dictionary is passed in as the last argument and which is kept from call to call.</span>
+
+<span class="sd">    A block with a function that takes two inputs and additional keyword arguments::</span>
+
+<span class="sd">        def myfun(u1, u2, param1=1, param2=2, param3=3, param4=4):</span>
+<span class="sd">            pass</span>
+
+<span class="sd">        func = bd.FUNCTION(myfun, nin=2, kwargs=dict(param2=7, param3=8))</span>
+
+<span class="sd">    A block with two inputs and two outputs, the outputs are defined by two lambda</span>
+<span class="sd">    functions with the same inputs::</span>
+
+<span class="sd">        FUNCTION( [ lambda x, y: x_t, lambda x, y: x* y])</span>
+
+<span class="sd">    A block with two inputs and two outputs, the outputs are defined by a</span>
+<span class="sd">    single function which returns a list::</span>
+
+<span class="sd">        def myfun(u1, u2):</span>
+<span class="sd">            return [ u1+u2, u1*u2 ]</span>
+
+<span class="sd">        func = bd.FUNCTION( myfun, nin=2, nout=2)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
@@ -509,8 +644,6 @@
     <span class="p">):</span>
 
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Python function.</span>
-
 <span class="sd">        :param func: function or lambda, or list thereof, defaults to None</span>
 <span class="sd">        :type func: callable or sequence of callables, optional</span>
 <span class="sd">        :param nin: number of inputs, defaults to 1</span>
@@ -525,66 +658,8 @@
 <span class="sd">        :type fkwargs: dict, optional</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict, optional</span>
-<span class="sd">        :return: FUNCTION block</span>
-<span class="sd">        :rtype: ``Function`` instance</span>
 
-<span class="sd">        Inputs to the block are passed as separate arguments to the function.</span>
-<span class="sd">        Programmatic ositional or keyword arguments can also be passed to the function.</span>
 
-<span class="sd">        A block with one output port that sums its two input ports is::</span>
-
-<span class="sd">            FUNCTION(lambda u1, u2: u1+u2, nin=2)</span>
-
-<span class="sd">        A block with a function that takes two inputs and has two additional arguments::</span>
-
-<span class="sd">            def myfun(u1, u2, param1, param2):</span>
-<span class="sd">                pass</span>
-
-<span class="sd">            FUNCTION(myfun, nin=2, args=(p1,p2))</span>
-
-<span class="sd">        If we need access to persistent (static) data, to keep some state::</span>
-
-<span class="sd">            def myfun(u1, u2, param1, param2, state):</span>
-<span class="sd">                pass</span>
-
-<span class="sd">            FUNCTION(myfun, nin=2, args=(p1,p2), persistent=True)</span>
-
-<span class="sd">        where a dictionary is passed in as the last argument and which is kept from call to call.</span>
-
-<span class="sd">        A block with a function that takes two inputs and additional keyword arguments::</span>
-
-<span class="sd">            def myfun(u1, u2, param1=1, param2=2, param3=3, param4=4):</span>
-<span class="sd">                pass</span>
-
-<span class="sd">            FUNCTION(myfun, nin=2, kwargs=dict(param2=7, param3=8))</span>
-
-<span class="sd">        A block with two inputs and two outputs, the outputs are defined by two lambda</span>
-<span class="sd">        functions with the same inputs::</span>
-
-<span class="sd">            FUNCTION( [ lambda x, y: x_t, lambda x, y: x* y])</span>
-
-<span class="sd">        A block with two inputs and two outputs, the outputs are defined by a</span>
-<span class="sd">        single function which returns a list::</span>
-
-<span class="sd">            def myfun(u1, u2):</span>
-<span class="sd">                return [ u1+u2, u1*u2 ]</span>
-
-<span class="sd">            FUNCTION( myfun, nin=2, nout=2)</span>
-
-<span class="sd">        For example::</span>
-
-<span class="sd">            func = bd.FUNCTION(myfun, args)</span>
-
-<span class="sd">        If inputs are specified then connections are automatically made and</span>
-<span class="sd">        are assigned to sequential input ports::</span>
-
-<span class="sd">            func = bd.FUNCTION(myfun, block1, block2, args)</span>
-
-<span class="sd">        is equivalent to::</span>
-
-<span class="sd">            func = bd.FUNCTION(myfun, args)</span>
-<span class="sd">            bd.connect(block1, func[0])</span>
-<span class="sd">            bd.connect(block2, func[1])</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">func</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;function is not defined&quot;</span><span class="p">)</span>
@@ -684,9 +759,46 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`INTERPOLATE`</span>
 
-<span class="sd">    :inputs: 0 or 1 [float]</span>
-<span class="sd">    :outputs: 1 [float, ndarray(1,)]</span>
+<span class="sd">    Interpolate signal.</span>
+
+<span class="sd">    :inputs: 1</span>
+<span class="sd">    :outputs: 1</span>
 <span class="sd">    :states: 0</span>
+
+<span class="sd">    .. list-table::</span>
+<span class="sd">        :header-rows: 1</span>
+
+<span class="sd">        *   - Port type</span>
+<span class="sd">            - Port number</span>
+<span class="sd">            - Types</span>
+<span class="sd">            - Description</span>
+<span class="sd">        *   - Input</span>
+<span class="sd">            - 0</span>
+<span class="sd">            - int, float</span>
+<span class="sd">            - :math:`x`</span>
+<span class="sd">        *   - Output</span>
+<span class="sd">            - 0</span>
+<span class="sd">            - float</span>
+<span class="sd">            - :math:`f(x)`</span>
+
+<span class="sd">    Interpolate a scalar function of a scalar.</span>
+
+<span class="sd">    A simple triangle function with domain [0,10] and range [0,1] can be</span>
+<span class="sd">    defined by::</span>
+
+<span class="sd">        interp = bd.INTERPOLATE(x=(0,5,10), y=(0,1,0))</span>
+
+<span class="sd">    We might also express this as a list of 2D-coordinats::</span>
+
+<span class="sd">        interp = bd.INTERPOLATE(xy=[(0,0), (5,1), (10,0)])</span>
+
+<span class="sd">    The data can also be expressed as Numpy arrays.  If that is the case,</span>
+<span class="sd">    the interpolation function can be vector valued. ``x`` has a shape of</span>
+<span class="sd">    (N,1) and ``y`` has a shape of (N,M).  Alternatively ``xy`` has a shape</span>
+<span class="sd">    of (N,M+1) and the first column is the x-data.</span>
+
+<span class="sd">    :note: if ``time=True``.  In this case the block has no</span>
+<span class="sd">        input ports and is a ``Source`` not a ``Function`` block.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
@@ -702,8 +814,6 @@
         <span class="o">**</span><span class="n">blockargs</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Interpolate signal.</span>
-
 <span class="sd">        :param x: x-values of function, defaults to None</span>
 <span class="sd">        :type x: array_like, shape (N,) optional</span>
 <span class="sd">        :param y: y-values of function, defaults to None</span>
@@ -716,30 +826,6 @@
 <span class="sd">        :type kind: str, optional</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
-<span class="sd">        :return: INTERPOLATE block</span>
-<span class="sd">        :rtype: ``Interpolate`` instance</span>
-
-<span class="sd">        Interpolate the input signal using to a piecewise function.</span>
-
-<span class="sd">        A simple triangle function with domain [0,10] and range [0,1] can be</span>
-<span class="sd">        defined by::</span>
-
-<span class="sd">            INTERPOLATE(x=(0,5,10), y=(0,1,0))</span>
-
-<span class="sd">        We might also express this as a list of 2D-coordinats::</span>
-
-<span class="sd">            INTERPOLATE(xy=[(0,0), (5,1), (10,0)])</span>
-
-<span class="sd">        The data can also be expressed as Numpy arrays.  If that is the case,</span>
-<span class="sd">        the interpolation function can be vector valued. ``x`` has a shape of</span>
-<span class="sd">        (N,1) and ``y`` has a shape of (N,M).  Alternatively ``xy`` has a shape</span>
-<span class="sd">        of (N,M+1) and the first column is the x-data.</span>
-
-<span class="sd">        The input to the interpolator comes from:</span>
-
-<span class="sd">        - Input port 0</span>
-<span class="sd">        - Simulation time, if ``time=True``.  In this case the block has no</span>
-<span class="sd">          input ports and is a ``Source`` not a ``Function``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">=</span> <span class="n">time</span>
         <span class="k">if</span> <span class="n">time</span><span class="p">:</span>
