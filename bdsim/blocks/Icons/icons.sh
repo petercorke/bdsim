@@ -45,3 +45,7 @@ bdtex2icon -r 180 -o pose_premul.png -t '\mathbf{\pose[x]_y\\!\oplus}'
 bdtex2icon -r 170 -o pose_inverse.png -t '\mathbf{\ominus}'
 bdtex2icon -r 150 -o transform_vector.png -t '\mathbf{\pose[x]_y}\\!\sbullet\\!\vec{p}'
 bdtex2icon -r 140 -o poseintegerator.png -t "\int\! \nu\, dt"
+
+bdtex2icon -r 190 -o PID.png -t '\mbox{PID}'
+bdtex2icon -r 190 -o deriv.png -t 's'
+bdtex2icon -r 300 -o deriv.png -t 's'
