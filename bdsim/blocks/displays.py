@@ -29,12 +29,65 @@ class Scope(GraphicsBlock):
     """
     :blockname:`SCOPE`
 
-    .. table::
-       :align: left
+    Plot input signals against time.
 
-    :inputs: 1 [float, ndarray]
+    :inputs: N
     :outputs: 0
     :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - i
+            - float
+            - :math:`x_i` is the i'th line
+
+    Create a scope block that plots:
+
+    * scalar input ports against time, ``vector=None``
+    * selected elements of a NumPy array on a single input port. If ``vector`` is an
+      int this is the expected width of the array. If ``vector`` is a list of ints these
+      are the indices of the array to display.
+
+    Each line can have its own color or style which is specified by:
+
+        - a dict of options for `Line2D <https://matplotlib.org/3.2.2/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D>`_ or
+        - a  MATLAB-style linestyle like 'k--'
+
+    The number of lines to plot will be inferred from:
+    * the length of the ``labels`` list if specified
+    * the length of the ``styles`` list if specified
+    * ``nin`` if specified
+    * ``vector`` if specified
+
+    If multiple lines are plotted then a heterogeneous list of styles, dicts or strings,
+    one per line must be given.
+
+    The vertical scale factor defaults to auto-scaling but can be fixed by
+    providing a 2-tuple [ymin, ymax]. All lines are plotted against the
+    same vertical scale.
+
+    Examples::
+
+        scope = bd.SCOPE()
+        scope = bd.SCOPE(nin=2)
+        scope = bd.SCOPE(nin=2, scale=[-1,2])
+        scope = bd.SCOPE(styles='k--')
+        scope = bd.SCOPE(styles=[{'color': 'blue'}, {'color': 'red', 'linestyle': '--'}])
+        scope = bd.SCOPE(styles=['k', 'r--'])
+        scope = bd.SCOPE(vector=[0,1,2]) # display elements 0, 1, 2 of array on port 0
+
+
+    .. figure:: ../../figs/Figure_1.png
+        :width: 500px
+        :alt: example of generated graphic
+
+        Example of scope display.
     """
 
     nin = -1
@@ -54,8 +107,6 @@ class Scope(GraphicsBlock):
         **blockargs,
     ):
         """
-        Plots input signals against time.
-
         :param nin: number of inputs, defaults to 1 or if given, the length of
                     style vector
         :type nin: int, optional
@@ -78,50 +129,6 @@ class Scope(GraphicsBlock):
         :type title: str
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: A SCOPE block
-        :rtype: Scope instance
-
-        Create a block that plots:
-
-        * scalar input ports against time, ``vector=None``
-        * selected elements of a NumPy array on a single input port. If ``vector`` is an
-          int this is the expected width of the array. If ``vector`` is a list of ints these
-          are the indices of the array to display.
-
-        Each line can have its own color or style which is specified by:
-
-            - a dict of options for `Line2D <https://matplotlib.org/3.2.2/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D>`_ or
-            - a  MATLAB-style linestyle like 'k--'
-
-        The number of lines to plot will be inferred from:
-        * the length of the ``labels`` list if specified
-        * the length of the ``styles`` list if specified
-        * ``nin`` if specified
-        * ``vector`` if specified
-
-        If multiple lines are plotted then a heterogeneous list of styles, dicts or strings,
-        one per line must be given.
-
-        The vertical scale factor defaults to auto-scaling but can be fixed by
-        providing a 2-tuple [ymin, ymax]. All lines are plotted against the
-        same vertical scale.
-
-        Examples::
-
-            SCOPE()
-            SCOPE(nin=2)
-            SCOPE(nin=2, scale=[-1,2])
-            SCOPE(styles='k--')
-            SCOPE(styles=[{'color': 'blue'}, {'color': 'red', 'linestyle': '--'}])
-            SCOPE(styles=['k', 'r--'])
-            SCOPE(vector=[0,1,2]) # display elements 0, 1, 2 of array on port 0
-
-
-        .. figure:: ../../figs/Figure_1.png
-           :width: 500px
-           :alt: example of generated graphic
-
-           Example of scope display.
         """
 
         def listify(s):
@@ -329,12 +336,41 @@ class ScopeXY(GraphicsBlock):
     """
     :blockname:`SCOPEXY`
 
-    .. table::
-       :align: left
+    Plot X against Y.
 
-    :inputs: 2 [float]
+    :inputs: 2
     :outputs: 0
     :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - float
+            - :math:`x`
+        *   - Input
+            - 1
+            - float
+            - :math:`y`
+
+    Create an XY scope where input :math:`y` (vertical axis) is plotted against :math:`x`
+    (horizontal axis).
+
+    The line style is given by either:
+
+        - a dict of options for ``plot``, or
+        - as a simple MATLAB-style linestyle like ``'k--'``.
+
+    The scale factor defaults to auto-scaling but can be fixed by
+    providing either:
+
+        - a 2-tuple [min, max] which is used for the x- and y-axes
+        - a 4-tuple [xmin, xmax, ymin, ymax]
     """
 
     nin = 2
@@ -361,27 +397,6 @@ class ScopeXY(GraphicsBlock):
         :type init: callable
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: A SCOPEXY block
-        :rtype: ScopeXY instance
-
-        Create an XY scope.
-
-        This block has two inputs which are plotted against each other. Port 0
-        is the horizontal axis, and port 1 is the vertical axis.
-
-        The line style is given by either:
-
-            - a dict of options for ``plot``, or
-            - as a simple MATLAB-style linestyle like ``'k--'``.
-
-        The scale factor defaults to auto-scaling but can be fixed by
-        providing either:
-
-            - a 2-tuple [min, max] which is used for the x- and y-axes
-            - a 4-tuple [xmin, xmax, ymin, ymax]
-
-        :input x: signal plotted on horizontal axis
-        :input y: signal plotted on vertical axis
         """
         super().__init__(**blockargs)
         self.xdata = []
@@ -463,16 +478,38 @@ class ScopeXY1(ScopeXY):
     """
     :blockname:`SCOPEXY1`
 
-    .. table::
-       :align: left
+    Plot X[0] against X[1].
 
-    +-------------+---------+---------+
-    | inputs      | outputs |  states |
-    +-------------+---------+---------+
-    | 1           | 0       | 0       |
-    +-------------+---------+---------+
-    | ndarray(2)  |         |         |
-    +-------------+---------+---------+
+    :inputs: 1
+    :outputs: 0
+    :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - ndarray
+            - :math:`x`
+
+    Create an XY scope where input :math:`x_j` (vertical axis) is plotted against
+    :math:`x_i` (horizontal axis). This block has one vector input and the elements to
+    be plotted are given by a 2-element iterable :math:`(i, j)`.
+
+    The line style is given by either:
+
+        - a dict of options for ``plot``, or
+        - as a simple MATLAB-style linestyle like ``'k--'``.
+
+    The scale factor defaults to auto-scaling but can be fixed by
+    providing either:
+
+        - a 2-tuple [min, max] which is used for the x- and y-axes
+        - a 4-tuple [xmin, xmax, ymin, ymax]
     """
 
     nin = 1
@@ -492,24 +529,6 @@ class ScopeXY1(ScopeXY):
         :type init: callable
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: A SCOPEXY block
-        :rtype: ScopeXY instance
-
-        Create an XY scope with vector input
-
-        This block has one vector input and two elemetns are plotted against each other. The first
-        selected element is the horizontal axis, and second is the vertical axis.
-
-        The line style is given by either:
-
-            - a dict of options for ``plot``, or
-            - as a simple MATLAB-style linestyle like ``'k--'``.
-
-        The scale factor defaults to auto-scaling but can be fixed by
-        providing either:
-
-            - a 2-tuple [min, max] which is used for the x- and y-axes
-            - a 4-tuple [xmin, xmax, ymin, ymax]
         """
         super().__init__(**blockargs)
         self.inport_names(("xy",))

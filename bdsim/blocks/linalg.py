@@ -16,15 +16,43 @@ from bdsim.components import FunctionBlock
 
 
 class Inverse(FunctionBlock):
-    """
+    r"""
     :blockname:`INVERSE`
 
-    .. table::
-       :align: left
+    Matrix inverse.
 
-    :inputs: 1 [ndarray]
-    :outputs: 2 [ndarray, float]
+    :inputs: 1
+    :outputs: 2
     :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - ndarray
+            - :math:`\mathbf{A}`
+        *   - Output
+            - 0
+            - ndarray
+            - :math:`\mathbf{A}^{-1}`
+        *   - Output
+            - 1
+            - float
+            - :math:`\mbox{cond}(\mathbf{A})`
+
+    Compute inverse of the 2D-array input signal.  If the matrix is square
+    the inverse is computed unless the ``pinv`` flag is True.  For a
+    non-square matrix the pseudo-inverse is used.  The condition number is
+    output on the second port.
+
+    :seealso: `numpy.linalg.inv <https://numpy.org/doc/stable/reference/generated/numpy.linalg.inv.html>`_,
+        `numpy.linalg.pinv <https://numpy.org/doc/stable/reference/generated/numpy.linalg.pinv.html>`_,
+        `numpy.linalg.cond <https://numpy.org/doc/stable/reference/generated/numpy.linalg.cond.html>`_
     """
 
     nin = 1
@@ -34,23 +62,10 @@ class Inverse(FunctionBlock):
 
     def __init__(self, pinv=False, **blockargs):
         """
-        Matrix inverse.
-
         :param pinv: force pseudo inverse, defaults to False
         :type pinv: bool, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: An INVERSE block
-        :rtype: Inverse instance
-
-        Compute inverse of the 2D-array input signal.  If the matrix is square
-        the inverse is computed unless the ``pinv`` flag is True.  For a
-        non-square matrix the pseudo-inverse is used.  The condition number is
-        output on the second port.
-
-        :seealso: `numpy.linalg.inv <https://numpy.org/doc/stable/reference/generated/numpy.linalg.inv.html>`_,
-            `numpy.linalg.pinv <https://numpy.org/doc/stable/reference/generated/numpy.linalg.pinv.html>`_,
-            `numpy.linalg.cond <https://numpy.org/doc/stable/reference/generated/numpy.linalg.cond.html>`_
         """
         super().__init__(**blockargs)
         self.type = "inverse"
@@ -83,15 +98,40 @@ class Inverse(FunctionBlock):
 
 # ------------------------------------------------------------------------ #
 class Transpose(FunctionBlock):
-    """
+    r"""
     :blockname:`TRANSPOSE`
 
-    .. table::
-       :align: left
+    Matrix transpose.
 
-    :inputs: 1 [ndarray]
-    :outputs: 1 [ndarray]
+    :inputs: 1
+    :outputs: 2
     :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - ndarray
+            - :math:`\mathbf{A}`
+        *   - Output
+            - 0
+            - ndarray
+            - :math:`\mathbf{A}^{\top}`
+
+    Compute transpose of the 2D-array input signal.
+
+    .. note::
+        - An input 1D-array of shape (N,) is turned into a 2D-array column vector
+          with shape (N,1).
+        - An input 2D-array column vector of shape (N,1) becomes a 2D-array
+          row vector with shape (1,N).
+
+    :seealso: `numpy.linalg.transpose <https://numpy.org/doc/stable/reference/generated/numpy.linalg.transpose.html>`_
     """
 
     nin = 1
@@ -99,22 +139,8 @@ class Transpose(FunctionBlock):
 
     def __init__(self, **blockargs):
         """
-        Matrix transpose.
-
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: A TRANSPOSE block
-        :rtype: Transpose instance
-
-        Compute transpose of the 2D-array input signal.
-
-        .. note::
-            - An input 1D-array of shape (N,) is turned into a 2D-array column vector
-              with shape (N,1).
-            - An input 2D-array column vector of shape (N,1) becomes a 2D-array
-             row vector with shape (1,N).
-
-        :seealso: `numpy.linalg.transpose <https://numpy.org/doc/stable/reference/generated/numpy.linalg.transpose.html>`_
         """
         super().__init__(**blockargs)
         self.type = "transpose"
@@ -134,15 +160,34 @@ class Transpose(FunctionBlock):
 
 
 class Norm(FunctionBlock):
-    """
+    r"""
     :blockname:`NORM`
 
-    .. table::
-       :align: left
+    Array norm.
 
-    :inputs: 1 [ndarray]
-    :outputs: 1 [float]
+    :inputs: 1
+    :outputs: 1
     :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - ndarray
+            - :math:`\mathbf{A}`
+        *   - Output
+            - 0
+            - ndarray
+            - :math:`\|\mathbf{A}\|`
+
+    Computes the specified norm for a 1D- or 2D-array.
+
+    :seealso: `numpy.linalg.norm <https://numpy.org/doc/stable/reference/generated/numpy.linalg.norm.html>`_
     """
 
     nin = 1
@@ -150,20 +195,12 @@ class Norm(FunctionBlock):
 
     def __init__(self, ord=None, axis=None, **blockargs):
         """
-        Array norm.
-
         :param axis: specifies the axis along which to compute the vector norms, defaults to None.
         :type axis: int, optional
         :param ord: Order of the norm, default to None.
         :type ord: int or str
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: A NORM block
-        :rtype: Norm instance
-
-        Computes the specified norm for a 1D- or 2D-array.
-
-        :seealso: `numpy.linalg.norm <https://numpy.org/doc/stable/reference/generated/numpy.linalg.norm.html>`_
         """
         super().__init__(**blockargs)
         self.type = "norm"
@@ -179,15 +216,34 @@ class Norm(FunctionBlock):
 
 
 class Flatten(FunctionBlock):
-    """
+    r"""
     :blockname:`FLATTEN`
 
-    .. table::
-       :align: left
+    Flatten a multi-dimensional array.
 
-    :inputs: 1 [ndarray]
-    :outputs: 1 [ndarray]
+    :inputs: 1
+    :outputs: 1
     :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - ndarray
+            - :math:`\mathbf{A}`
+        *   - Output
+            - 0
+            - ndarray
+            - :math:`\mbox{vec}(\mathbf{A})`
+
+    Flattens the incoming array in either row major ('C') or column major ('F') order.
+
+    :seealso: `numpy.flatten <https://numpy.org/doc/stable/reference/generated/numpy.flatten.html>`_
     """
 
     nin = 1
@@ -195,18 +251,10 @@ class Flatten(FunctionBlock):
 
     def __init__(self, order="C", **blockargs):
         """
-        Flatten a multi-dimensional array.
-
         :param order: flattening order, either "C" or "F", defaults to "C"
         :type order: str
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: A FLATTEN block
-        :rtype: Flatten instance
-
-        Flattens the incoming array in either row major ('C') or column major ('F') order.
-
-        :seealso: `numpy.flatten <https://numpy.org/doc/stable/reference/generated/numpy.flatten.html>`_
         """
         super().__init__(**blockargs)
         self.type = "flatten"
@@ -222,15 +270,65 @@ class Flatten(FunctionBlock):
 
 
 class Slice2(FunctionBlock):
-    """
+    r"""
     :blockname:`SLICE2`
 
-    .. table::
-       :align: left
+    Slice out subarray of 2D-array.
 
-    :inputs: 1 [ndarray]
-    :outputs: 1 [ndarray]
+    :inputs: 1
+    :outputs: 1
     :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - ndarray
+            - :math:`\mathbf{A}`
+        *   - Output
+            - 0
+            - ndarray
+            - :math:`\mathbf{A}_{i\ldots j, m\ldots n}`
+
+    Compute a 2D slice of input 2D array.
+
+    If ``rows`` or ``cols`` is ``None`` it means all rows or columns
+    respectively.
+
+    If ``rows`` or ``cols`` is a list, perform NumPy fancy indexing, returning
+    the specified rows or columns
+
+    Example::
+
+        slice = bd.SLICE2(rows=[2,3])  # return rows 2 and 3, all columns
+        slice = bd.SLICE2(cols=[4,1])  # return columns 4 and 1, all rows
+        slice = bd.SLICE2(rows=[2,3], cols=[4,1]) # return elements [2,4] and [3,1] as a 1D array
+
+    If a single row or column is selected, the result will be a 1D array
+
+    If ``rows`` or ``cols`` is a tuple, it must have three elements.  It
+    describes a Python slice ``(start, stop, step)`` where any element can be ``None``
+
+        * ``start=None`` means start at first element
+        * ``stop=None`` means finish at last element
+        * ``step=None`` means step by one
+
+    ``rows=None`` is equivalent to ``rows=(None, None, None)``.
+
+    Example::
+
+        slice = bd.SLICE2(rows=(None,None,2))  # return every second row
+        slice = bd.SLICE2(cols=(None,None,-1)) # reverse the columns
+
+    The list and tuple notation can be mixed, for example, one for rows
+    and one for columns.
+
+    :seealso: :class:`Slice1` :class:`Index`
     """
 
     nin = 1
@@ -238,51 +336,12 @@ class Slice2(FunctionBlock):
 
     def __init__(self, rows=None, cols=None, **blockargs):
         """
-        Slice out subarray of 2D-array.
-
         :param rows: row selection, defaults to None
         :type rows: tuple(3) or list
         :param cols: column selection, defaults to None
         :type cols: tuple(3) or list
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: A SLICE2 block
-        :rtype: Slice2 instance
-
-        Compute a 2D slice of input 2D array.
-
-        If ``rows`` or ``cols`` is ``None`` it means all rows or columns
-        respectively.
-
-        If ``rows`` or ``cols`` is a list, perform NumPy fancy indexing, returning
-        the specified rows or columns
-
-        Example::
-
-            SLICE2(rows=[2,3])  # return rows 2 and 3, all columns
-            SLICE2(cols=[4,1])  # return columns 4 and 1, all rows
-            SLICE2(rows=[2,3], cols=[4,1]) # return elements [2,4] and [3,1] as a 1D array
-
-        If a single row or column is selected, the result will be a 1D array
-
-        If ``rows`` or ``cols`` is a tuple, it must have three elements.  It
-        describes a Python slice ``(start, stop, step)`` where any element can be ``None``
-
-            * ``start=None`` means start at first element
-            * ``stop=None`` means finish at last element
-            * ``step=None`` means step by one
-
-        ``rows=None`` is equivalent to ``rows=(None, None, None)``.
-
-        Example::
-
-            SLICE2(rows=(None,None,2))  # return every second row
-            SLICE2(cols=(None,None,-1)) # reverse the columns
-
-        The list and tuple notation can be mixed, for example, one for rows
-        and one for columns.
-
-        :seealso: :class:`Slice1` :class:`Index`
         """
         super().__init__(**blockargs)
         self.type = "slice2"
@@ -316,15 +375,59 @@ class Slice2(FunctionBlock):
 
 
 class Slice1(FunctionBlock):
-    """
+    r"""
     :blockname:`SLICE1`
 
-    .. table::
-       :align: left
+    Slice out subarray of 1D-array.
 
-    :inputs: 1 [ndarray]
-    :outputs: 1 [ndarray]
+    :inputs: 1
+    :outputs: 1
     :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - ndarray
+            - :math:`v`
+        *   - Output
+            - 0
+            - ndarray
+            - :math:`v_{i\dots j}`
+
+    Compute a 1D slice of input 1D array.
+
+    If ``index`` is ``None`` it means all elements.
+
+    If ``index`` is a list, perform NumPy fancy indexing, returning
+    the specified elements
+
+    Example::
+
+        slice = bd.SLICE1(index=[2,3]) # return elements 2 and 3 as a 1D array
+        slice = bd.SLICE1(index=[2])   # return element 2 as a 1D array
+        slice = bd.SLICE1(index=2)     # return element 2 as a NumPy scalar
+
+    If ``index`` is a tuple, it must have three elements.  It
+    describes a Python slice ``(start, stop, step)`` where any element can be ``None``
+
+        * ``start=None`` means start at first element
+        * ``stop=None`` means finish at last element
+        * ``step=None`` means step by one
+
+    ``rows=None`` is equivalent to ``rows=(None, None, None)``.
+
+    Example::
+
+        slice = bd.SLICE1(index=(None,None,2))  # return every second element
+        slice = bd.SLICE1(index=(None,None,-1)) # reverse the elements
+
+    :seealso: :class:`Slice1`
     """
 
     nin = 1
@@ -332,43 +435,10 @@ class Slice1(FunctionBlock):
 
     def __init__(self, index, **blockargs):
         """
-        Slice out subarray of 1D-array.
-
         :param index: slice, defaults to None
         :type index: tuple(3)
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: A SLICE1 block
-        :rtype: Slice1 instance
-
-        Compute a 1D slice of input 1D array.
-
-        If ``index`` is ``None`` it means all elements.
-
-        If ``index`` is a list, perform NumPy fancy indexing, returning
-        the specified elements
-
-        Example::
-
-            SLICE1(index=[2,3]) # return elements 2 and 3 as a 1D array
-            SLICE1(index=[2])   # return element 2 as a 1D array
-            SLICE1(index=2)     # return element 2 as a NumPy scalar
-
-        If ``index`` is a tuple, it must have three elements.  It
-        describes a Python slice ``(start, stop, step)`` where any element can be ``None``
-
-            * ``start=None`` means start at first element
-            * ``stop=None`` means finish at last element
-            * ``step=None`` means step by one
-
-        ``rows=None`` is equivalent to ``rows=(None, None, None)``.
-
-        Example::
-
-            SLICE1(index=(None,None,2))  # return every second element
-            SLICE1(index=(None,None,-1)) # reverse the elements
-
-        :seealso: :class:`Slice1`
         """
         super().__init__(**blockargs)
         self.type = "slice1"
@@ -391,15 +461,34 @@ class Slice1(FunctionBlock):
 
 # ------------------------------------------------------------------------ #
 class Det(FunctionBlock):
-    """
+    r"""
     :blockname:`DET`
 
-    .. table::
-       :align: left
+    Matrix determinant.
 
-    :inputs: 1 [ndarray]
-    :outputs: 1 [float]
+    :inputs: 1
+    :outputs: 1
     :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - ndarray
+            - :math:`\mathbf{A}`
+        *   - Output
+            - 0
+            - ndarray
+            - :math:`\mbox{det}(\mathbf{A})`
+
+    Compute the matrix determinant.
+
+    :seealso: `numpy.linalg.det <https://numpy.org/doc/stable/reference/generated/numpy.linalg.det.html>`_
     """
 
     nin = 1
@@ -407,16 +496,8 @@ class Det(FunctionBlock):
 
     def __init__(self, **blockargs):
         """
-        Matrix determinant
-
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: A DET block
-        :rtype: Det instance
-
-        Compute the matrix determinant.
-
-        :seealso: `numpy.linalg.det <https://numpy.org/doc/stable/reference/generated/numpy.linalg.det.html>`_
         """
         super().__init__(**blockargs)
         self.type = "det"
@@ -429,15 +510,32 @@ class Det(FunctionBlock):
 
 # ------------------------------------------------------------------------ #
 class Cond(FunctionBlock):
-    """
+    r"""
     :blockname:`COND`
 
-    .. table::
-       :align: left
+    Matrix condition number.
 
-    :inputs: 1 [ndarray]
-    :outputs: 1 [float]
+    :inputs: 1
+    :outputs: 1
     :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - ndarray
+            - :math:`\mathbf{A}`
+        *   - Output
+            - 0
+            - ndarray
+            - :math:`\mbox{cond}(\mathbf{A})`
+
+    :seealso: `numpy.linalg.cond <https://numpy.org/doc/stable/reference/generated/numpy.linalg.cond.html>`_
     """
 
     nin = 1
@@ -445,14 +543,8 @@ class Cond(FunctionBlock):
 
     def __init__(self, **blockargs):
         """
-        Compute the matrix condition number.
-
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: A COND block
-        :rtype: Cond instance
-
-        :seealso: `numpy.linalg.cond <https://numpy.org/doc/stable/reference/generated/numpy.linalg.cond.html>`_
         """
         super().__init__(**blockargs)
         self.type = "cond"

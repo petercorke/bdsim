@@ -16,12 +16,26 @@ class Constant(SourceBlock):
     """
     :blockname:`CONSTANT`
 
-    .. table::
-       :align: left
+    Constant value.
 
     :inputs: 0
-    :outputs: 1 [any]
+    :outputs: 1
     :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Output
+            - 0
+            - any
+            - constant ``value``
+
+    The output value is a constant and can be any
+    Python type, for example float, list or Numpy ndarray.
     """
 
     nin = 0
@@ -29,17 +43,10 @@ class Constant(SourceBlock):
 
     def __init__(self, value=0, **blockargs):
         """
-        Constant value.
-
         :param value: the constant, defaults to 0
         :type value: any, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: a CONSTANT block
-        :rtype: Constant instance
-
-        This block has only one output port, but the value can be any
-        Python type, for example float, list or Numpy ndarray.
         """
         super().__init__(**blockargs)
 
@@ -60,12 +67,29 @@ class Time(SourceBlock):
     """
     :blockname:`TIME`
 
-    .. table::
-       :align: left
+    Simulation time.
 
     :inputs: 0
-    :outputs: 1 [float]
+    :outputs: 1
     :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Output
+            - 0
+            - float
+            - :math:`t`
+
+    Outputs the current simulation time.
+
+    For example::
+
+        time = bd.TIME()
     """
 
     nin = 0
@@ -73,15 +97,8 @@ class Time(SourceBlock):
 
     def __init__(self, value=None, **blockargs):
         """
-        Simulation time.
-
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: a TIME block
-        :rtype: Time instance
-
-        The block has only one output port which is the current simulation time.
-
         """
         super().__init__(**blockargs)
 
@@ -96,12 +113,51 @@ class WaveForm(SourceBlock, EventSource):
     """
     :blockname:`WAVEFORM`
 
-    .. table::
-       :align: left
+    Waveform generator.
 
     :inputs: 0
-    :outputs: 1 [float]
+    :outputs: 1
     :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Output
+            - 0
+            - float
+            - :math:`y(t)`
+
+    A general waveform generator.  For example::
+
+        wave = bd.WAVEFORM(wave='sine', freq=2)   # 2Hz sine wave varying from -1 to 1
+        wave = bd.WAVEFORM(wave='square', freq=2, unit='rad/s') # 2rad/s square wave varying from -1 to 1
+
+    The minimum and maximum values of the waveform are given by default in
+    terms of amplitude and offset. The signals are symmetric about the offset
+    value. For example::
+
+        wave = bd.WAVEFORM(wave='sine') # varies between -1 and +1
+        wave = bd.WAVEFORM(wave='sine', amplitude=2) # varies between -2 and +2
+        wave = bd.WAVEFORM(wave='sine', offset=1) # varies between 0 and +2
+        wave = bd.WAVEFORM(wave='sine', amplitude=2, offset=1) # varies between -1 and +3
+
+    Alternatively we can specify the minimum and maximum values which override
+    amplitude and offset::
+
+        wave = bd.WAVEFORM(wave='triangle', min=0, max=5) # varies between 0 and +5
+
+    At time 0 the sine and triangle wave are zero and increasing, and the
+    square wave has its first rise.  We can specify a phase shift with
+    a number in the range [0,1] where 1 corresponds to one cycle.
+
+    .. note:: For discontinuous signals (square, triangle) the block declares
+        events for every discontinuity.
+
+    :seealso: :meth:`declare_events`
     """
 
     nin = 0
@@ -121,8 +177,6 @@ class WaveForm(SourceBlock, EventSource):
         **blockargs,
     ):
         """
-        Waveform as function of time.
-
         :param wave: type of waveform to generate, one of: 'sine', 'square' [default], 'triangle'
         :type wave: str, optional
         :param freq: frequency, defaults to 1
@@ -143,38 +197,7 @@ class WaveForm(SourceBlock, EventSource):
         :type duty: float, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: a WAVEFORM block
-        :rtype: WaveForm instance
 
-        Create a waveform generator block.
-
-        Examples::
-
-            WAVEFORM(wave='sine', freq=2)   # 2Hz sine wave varying from -1 to 1
-            WAVEFORM(wave='square', freq=2, unit='rad/s') # 2rad/s square wave varying from -1 to 1
-
-        The minimum and maximum values of the waveform are given by default in
-        terms of amplitude and offset. The signals are symmetric about the offset
-        value. For example::
-
-            WAVEFORM(wave='sine') varies between -1 and +1
-            WAVEFORM(wave='sine', amplitude=2) varies between -2 and +2
-            WAVEFORM(wave='sine', offset=1) varies between 0 and +2
-            WAVEFORM(wave='sine', amplitude=2, offset=1) varies between -1 and +3
-
-        Alternatively we can specify the minimum and maximum values which override
-        amplitude and offset::
-
-            WAVEFORM(wave='triangle', min=0, max=5) varies between 0 and +5
-
-        At time 0 the sine and triangle wave are zero and increasing, and the
-        square wave has its first rise.  We can specify a phase shift with
-        a number in the range [0,1] where 1 corresponds to one cycle.
-
-        .. note:: For discontinuous signals (square, triangle) the block declares
-            events for every discontinuity.
-
-        :seealso :meth:`declare_events`
         """
         super().__init__(**blockargs)
 
@@ -262,43 +285,65 @@ class Piecewise(SourceBlock, EventSource):
     """
     :blockname:`PIECEWISE`
 
-    .. table::
-       :align: left
+    Piecewise constant signal.
 
     :inputs: 0
-    :outputs: 1 [float]
+    :outputs: 1
     :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Output
+            - 0
+            - float
+            - :math:`y(t)`
+
+    Generate a signal that is a piecewise constant function of time.  This is described
+    as a series of 2-tuples (time, value).  The output value is taken from the active
+    tuple, that is, the latest one in the list whose time is no greater than simulation
+    time.
+
+    The tuples can be provided in two different ways.  Firstly, a form convenient for
+    Python programming::
+
+        steering = bd.PIECEWISE((0,0), (3, 0.5), (4,0), (5,-0.5), (6,0))
+
+    Secondly, in a form that can be used from ``bdsim`` where we explicitly pass
+    in a list in a way that can be represented in a JSON file::
+
+        steering = bd.PIECEWISE(seq=[(0,0), (3, 0.5), (4,0), (5,-0.5), (6,0)])
+
+    .. note::
+        - The tuples must be order by monotonically increasing time.
+        - There is no default initial value, the list should contain
+            a tuple with time zero otherwise the output will be undefined.
+        - The 2-tuples can
+
+    .. note:: The block declares an event for the start of each segment.
+
+    :seealso: :meth:`declare_events`
     """
 
     nin = 0
     nout = 1
 
-    def __init__(self, *seq, **blockargs):
+    def __init__(self, *args, seq=None, **blockargs):
         """
-        Piecewise constant signal.
-
         :param seq: sequence of time, value pairs
-        :type seq: list of 2-tuples
+        :type seq: list of 2-element iterables
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: a PIECEWISE block
-        :rtype: Piecewise instance
 
-        Outputs a piecewise constant function of time.  This is described as
-        a series of 2-tuples (time, value).  The output value is taken from the
-        active tuple, that is, the latest one in the list whose time is no greater
-        than simulation time.
-
-        .. note::
-            - The tuples must be order by monotonically increasing time.
-            - There is no default initial value, the list should contain
-              a tuple with time zero otherwise the output will be undefined.
-
-        .. note:: The block declares an event for the start of each segment.
-
-        :seealso: :meth:`declare_events`
         """
         super().__init__(**blockargs)
+
+        if len(args) > 0:
+            seq = args
 
         self.t = [x[0] for x in seq]
         self.y = [x[1] for x in seq]
@@ -324,12 +369,30 @@ class Step(SourceBlock, EventSource):
     """
     :blockname:`STEP`
 
-    .. table::
-       :align: left
+    Step signal.
 
     :inputs: 0
-    :outputs: 1 [float]
+    :outputs: 1
     :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Output
+            - 0
+            - float
+            - :math:`y(t)`
+
+    Generate a step signal that transitions from the value ``off`` to ``on`` when time
+    equals ``T``.
+
+    .. note:: The block declares an event for the step time.
+
+    :seealso: :meth:`declare_events`
     """
 
     nin = 0
@@ -337,8 +400,6 @@ class Step(SourceBlock, EventSource):
 
     def __init__(self, T=1, off=0, on=1, **blockargs):
         """
-        Step signal.
-
         :param T: time of step, defaults to 1
         :type T: float, optional
         :param off: initial value, defaults to 0
@@ -347,15 +408,6 @@ class Step(SourceBlock, EventSource):
         :type on: float, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: a STEP block
-        :rtype: Step
-
-        Output a step signal that transitions from the value ``off`` to ``on``
-        when time equals ``T``.
-
-        .. note:: The block declares an event for the step time.
-
-        :seealso: :meth:`declare_events`
         """
         super().__init__(**blockargs)
 
@@ -383,12 +435,30 @@ class Ramp(SourceBlock, EventSource):
     """
     :blockname:`RAMP`
 
-    .. table::
-       :align: left
+    Ramp signal.
 
     :inputs: 0
-    :outputs: 1 [float]
+    :outputs: 1
     :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Output
+            - 0
+            - float
+            - :math:`y(t)`
+
+    Generate a signal that starts increasing from the value ``off`` when time equals
+    ``T`` linearly with time, with a gradient of ``slope``.
+
+    .. note:: The block declares an event for the ramp start time.
+
+    :seealso: :meth:`declare_event`
     """
 
     nin = 0
@@ -397,8 +467,6 @@ class Ramp(SourceBlock, EventSource):
     def __init__(self, T=1, off=0, slope=1, **blockargs):
 
         """
-        Ramp signal.
-
         :param T: time of ramp start, defaults to 1
         :type T: float, optional
         :param off: initial value, defaults to 0
@@ -407,15 +475,6 @@ class Ramp(SourceBlock, EventSource):
         :type slope: float, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: a RAMP block
-        :rtype: Ramp
-
-        Output a ramp signal that starts increasing from the value ``off``
-        when time equals ``T`` linearly with time, with a gradient of ``slope``.
-
-        .. note:: The block declares an event for the ramp start time.
-
-        :seealso: :method:`declare_event`
         """
         super().__init__(**blockargs)
 

@@ -24,12 +24,49 @@ class Print(SinkBlock):
     """
     :blockname:`PRINT`
 
-    .. table::
-       :align: left
+    Print signal.
 
-    :inputs: 1 [any]
+    :inputs: 1
     :outputs: 0
     :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - any
+            - :math:`x`
+
+    Creates a console print block which displays the value of the input signal
+    at each simulation time step. The display format is like::
+
+        PRINT(print.0 @ t=0.100) [-1.0 0.2]
+
+    and includes the block name, time, and the formatted value.
+
+    The numerical formatting of the signal is controlled by ``fmt``:
+
+    - if not provided, ``str()`` is used to format the signal
+    - if provided:
+
+        - a scalar is formatted by the ``fmt.format()``
+        - a NumPy array is formatted by ``fmt.format()`` applied to every
+          element
+
+    Examples::
+
+        bd.PRINT(name="X")  # block name appears in the printed text
+        bd.PRINT(fmt="{:.1f}") # print with explicit format
+
+    .. note::
+        - By default writes to stdout
+        - The output is cleaner if progress bar printing is disabled using the
+          ``-p`` command line option.
     """
 
     nin = 1
@@ -37,8 +74,6 @@ class Print(SinkBlock):
 
     def __init__(self, fmt=None, file=None, **blockargs):
         """
-        Print signal.
-
         :param fmt: Format string, defaults to None
         :type fmt: str, optional
         :param file: file to write data to, defaults to None
@@ -47,37 +82,6 @@ class Print(SinkBlock):
         :type blockargs: dict
         :return: A PRINT block
         :rtype: Print instance
-
-        Creates a console print block which displays the value of a signal
-        at each simulation time step. The display format is like::
-
-            PRINT(print.0 @ t=0.100) [-1.0 0.2]
-
-        and includes the block name, time, and the formatted value.
-
-        The numerical formatting of the signal is controlled by ``fmt``:
-
-        - if not provided, ``str()`` is used to format the signal
-        - if provided:
-            - a scalar is formatted by the ``fmt.format()``
-            - a NumPy array is formatted by ``fmt.format()`` applied to every
-              element
-
-        Examples::
-
-            pr = bd.PRINT()     # create PRINT block
-            bd.connect(x, inputs=pr)   # its input comes from x
-
-            bd.PRINT(x)         # create PRINT block with input from x
-
-            bd.PRINT(x, name='X')  # block name appears in the printed text
-
-            bd.PRINT(x, fmt="{:.1f}") # print with explicit format
-
-        .. note::
-            - By default writes to stdout
-            - The output is cleaner if progress bar printing is disabled.
-
         """
         super().__init__(**blockargs)
         self.format = fmt
@@ -115,12 +119,31 @@ class Stop(SinkBlock):
     """
     :blockname:`STOP`
 
-    .. table::
-       :align: left
+    Conditionally stop simulation.
 
-    :inputs: 1 [any]
+    :inputs: 1
     :outputs: 0
     :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - any
+            - :math:`x`
+
+    Conditionally stop the simulation if the input :math:`x` is:
+
+    - bool type and True
+    - numeric type and > 0
+
+    If ``func`` is provided, then it is applied to the block input
+    and if it returns True the simulation is stopped.
     """
 
     nin = 1
@@ -128,22 +151,10 @@ class Stop(SinkBlock):
 
     def __init__(self, func=None, **blockargs):
         """
-        Conditional simulation stop.
-
         :param func: evaluate stop condition, defaults to None
         :type func: callable, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: A STOP block
-        :rtype: Stop instance
-
-        Conditionally stop the simulation if the input is:
-
-        - bool type and True
-        - numeric type and > 0
-
-        If ``func`` is provided, then it is applied to the block input
-        and if it returns True the simulation is stopped.
         """
         super().__init__(**blockargs)
 
@@ -182,13 +193,28 @@ class Null(SinkBlock):
     """
     :blockname:`NULL`
 
-    .. table::
-       :align: left
+    Discard signal.
 
-
-    :inputs: N [any]
+    :inputs: N
     :outputs: 0
     :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - i
+            - any
+            - :math:`x_i`
+
+    Create a sink block with arbitrary number of input ports that discards
+    all data, like ``/dev/null``. Useful for testing.
+
+    .. note:: ``bdsim`` issues a warning for unconnected outputs but execution can continue.
     """
 
     nin = -1
@@ -196,20 +222,10 @@ class Null(SinkBlock):
 
     def __init__(self, nin=1, **blockargs):
         """
-        Discard signal.
-
         :param nin: number of input ports, defaults to 1
         :type nin: int, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: A NULL block
-        :rtype: Null instance
-
-        Create a sink block with arbitrary number of input ports that discards
-        all data.  Useful for testing.  
-        
-        .. note:: ``bdsim`` issues a warning for unconnected outputs but execution can continue.
-
         """
         super().__init__(nin=nin, **blockargs)
 
@@ -221,12 +237,37 @@ class Watch(SinkBlock):
     """
     :blockname:`WATCH`
 
-    .. table::
-       :align: left
+    Watch a signal.
 
-    :inputs: N [any]
+    :inputs: N
     :outputs: 0
     :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - i
+            - any
+            - :math:`x_i`
+
+    Causes the output ports connected to this block's input ports :math:`x_i` to be
+    logged during the simulation run. Equivalent to adding it as the ``watch=`` argument
+    to ``bdsim.run``.
+
+    For example::
+
+        step = bd.STEP(5)
+        ramp = bd.RAMP()
+        watch = bd.WATCH(2) # watch 2 ports
+        watch[0] = step
+        watch[1] = ramp
+
+    :seealso: :method:`BDSim.run`
     """
 
     nin = 1
@@ -234,18 +275,10 @@ class Watch(SinkBlock):
 
     def __init__(self, **blockargs):
         """
-        Watch a signal.
-
+        :param nin: number of input ports, defaults to 1
+        :type nin: int, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: A NULL block
-        :rtype: Null instance
-
-        Causes the input signal to be logged during the
-        simulation run.  Equivalent to adding it as the ``watch=`` argument
-        to ``bdsim.run``.
-
-        :seealso: :method:`BDSim.run`
         """
         super().__init__(**blockargs)
 

@@ -25,12 +25,33 @@ class ZOH(ClockedBlock):
     """
     :blockname:`ZOH`
 
-    .. table::
-       :align: left
+    Zero-order hold.
 
-    :inputs: 1 [float, ndarray]
-    :outputs: 1 [float, ndarray]
+    :inputs: 1
+    :outputs: 1
     :states: N
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - float, ndarray
+            - :math:`x`
+        *   - Output
+            - 0
+            - float, ndarray
+            - :math:`y`
+
+    Output is the input at the previous clock time $y_{k} = x_{k-1}.  The state can be a
+    scalar or a vector, this is given by the type of ``x0``.
+
+    .. note:: If input is not a scalar, ``x0`` must have the shape of the
+        input signal.
     """
 
     nin = 1
@@ -38,22 +59,12 @@ class ZOH(ClockedBlock):
 
     def __init__(self, clock, x0=0, **blockargs):
         """
-        Zero-order hold.
-
         :param clock: clock source
         :type clock: Clock
         :param x0: Initial value of the hold, defaults to 0
         :type x0: array_like, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: a ZOH block
-        :rtype: Integrator instance
-
-        Output is the input at the previous clock time.  The state can be a scalar or a
-        vector, this is given by the type of ``x0``.
-
-        .. note:: If input is not a scalar, ``x0`` must have the shape of the
-            input signal.
         """
         self.type = "sampler"
         super().__init__(nin=1, nout=1, clock=clock, **blockargs)
@@ -78,12 +89,39 @@ class DIntegrator(ClockedBlock):
     """
     :blockname:`DINTEGRATOR`
 
-    .. table::
-       :align: left
+    Discrete-time integrator.
 
-    :inputs: 1 [float, ndarray]
-    :outputs: 1 [float, ndarray]
+    :inputs: 1
+    :outputs: 1
     :states: N
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - float, ndarray
+            - :math:`x`
+        *   - Output
+            - 0
+            - float, ndarray
+            - :math:`y`
+
+    Create a discrete-time integrator block.
+
+    Output is the time integral of the input.  The state can be a scalar or a
+    vector, this is given by the type of ``x0``.
+
+    The minimum and maximum values can be:
+
+        - a scalar, in which case the same value applies to every element of
+          the state vector, or
+        - a vector, of the same shape as ``x0`` that applies elementwise to
+          the state.
     """
 
     nin = 1
@@ -91,8 +129,6 @@ class DIntegrator(ClockedBlock):
 
     def __init__(self, clock, x0=0, gain=1.0, min=None, max=None, **blockargs):
         """
-        Discrete-time integrator.
-
         :param clock: clock source
         :type clock: Clock
         :param x0: Initial state, defaults to 0
@@ -105,20 +141,6 @@ class DIntegrator(ClockedBlock):
         :type max: float or array_like, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: an INTEGRATOR block
-        :rtype: Integrator instance
-
-        Create a discrete-time integrator block.
-
-        Output is the time integral of the input.  The state can be a scalar or a
-        vector, this is given by the type of ``x0``.
-
-        The minimum and maximum values can be:
-
-            - a scalar, in which case the same value applies to every element of
-              the state vector, or
-            - a vector, of the same shape as ``x0`` that applies elementwise to
-              the state.
         """
         super().__init__(clock=clock, **blockargs)
 
@@ -157,12 +179,34 @@ class DPoseIntegrator(ClockedBlock):
     """
     :blockname:`DPOSEINTEGRATOR`
 
-    .. table::
-       :align: left
+    Discrete-time spatial velocity integrator.
 
-    :inputs: 1 [ndarray(6,)]
-    :outputs: 1 [SE3]
+    :inputs: 1
+    :outputs: 1
     :states: 6
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - ndarray(6,)
+            - :math:`x`
+        *   - Output
+            - 0
+            - SE3
+            - :math:`y`
+
+    This block integrates spatial velocity over time.
+    The block input is a spatial velocity as a 6-vector
+    :math:`(v_x, v_y, v_z, \omega_x, \omega_y, \omega_z)` and the output
+    is pose as an ``SE3`` instance.
+
+    .. note:: State is a velocity twist.
     """
 
     nin = 1
@@ -172,24 +216,12 @@ class DPoseIntegrator(ClockedBlock):
 
     def __init__(self, clock, x0=None, **blockargs):
         r"""
-        Discrete-time spatial velocity integrator.
-
         :param clock: clock source
         :type clock: Clock
         :param x0: Initial pose, defaults to null
         :type x0: SE3, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: an DPOSEINTEGRATOR block
-        :rtype: Integrator instance
-
-        This block integrates spatial velocity over time.
-        The block input is a spatial velocity as a 6-vector
-        :math:`(v_x, v_y, v_z, \omega_x, \omega_y, \omega_z)` and the output
-        is pose as an ``SE3`` instance.
-
-        .. note:: State is a velocity twist.
-
         """
         super().__init__(clock=clock, **blockargs)
 

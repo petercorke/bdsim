@@ -28,14 +28,42 @@ from bdsim.components import FunctionBlock
 
 
 class Sum(FunctionBlock):
-    """Summing junction.
-
+    """
     :blockname:`SUM`
 
-    :inputs: N [int, float, ndarray]
-    :outputs: 1 [int, float, ndarray]
+    Summing junction.
+
+    :inputs: N
+    :outputs: 1
     :states: 0
 
+    .. list-table::
+        :header-rows: 1
+
+        * - Port type
+          - Port number
+          - Types
+          - Description
+        * - Input
+          - i
+          - int, float, ndarray
+          - :math:`x_i`
+        * - Output
+          - 0
+          - int, float, ndarray
+          - :math:`\sum_i \pm x_i`
+
+    Add or subtract input signals according to the ``signs`` string.  The
+    number of input ports is the length of this string.
+
+    For example::
+
+        sum = bd.SUM('+-+')
+
+    is a 3-input summing junction which computes ``in[0] - in[1] + in[2]``.
+
+    :note: The signals must be compatible for addition, and if some are
+        arrays they must be broadcastable.
     """
 
     nin = -1
@@ -51,26 +79,12 @@ class Sum(FunctionBlock):
 
     def __init__(self, signs: str = "++", mode: str = None, **blockargs):
         """
-        :param signs: signs associated with input ports, accepted characters: + or -, defaults to '++'
+        :param signs: signs associated with input ports, accepted characters: + or -, defaults to "++"
         :type signs: str, optional
         :param mode: controls addition mode, per element, string comprises ``r`` or ``c`` or ``C`` or ``L``, defaults to None
         :type mode: str, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: SUM block
-        :rtype: ``Sum`` instance
-
-        Add or subtract input signals according to the `signs` string.  The
-        number of input ports is the length of this string.
-
-        For example::
-
-            sum = bd.SUM('+-+')
-
-        is a 3-input summing junction which computes port0 - port1 + port2.
-
-        :note: The signals must be compatible, all scalars, or all arrays
-        of the same shape.
 
         ``mode`` controls how elements of the input vectors are added/subtracted.
         Elements which are angles must be treated specially, and this is indicated by
@@ -145,13 +159,46 @@ class Sum(FunctionBlock):
 
 # ------------------------------------------------------------------------ #
 class Prod(FunctionBlock):
-    """Product junction.
-
+    r"""
     :blockname:`PROD`
 
-    :inputs: N [int, float, ndarray]
-    :outputs: 1 [int, float, ndarray]
+    Product junction.
+
+    :inputs: N
+    :outputs: 1
     :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Port type
+          - Port number
+          - Types
+          - Description
+        * - Input
+          - i
+          - int, float, ndarray
+          - :math:`x_i`
+        * - Output
+          - 0
+          - int, float, ndarray
+          - :math:`\prod_i \{x_i | \frac{1}{x_i}\}`
+
+    Multiply or divide input signals according to the ``ops`` string.  The
+    number of input ports is the length of this string.
+
+    For example::
+
+        prod = PROD('*/*')
+
+    is a 3-input product junction which computes ``in[0] / in[1] * in[2]``.
+
+    :note: By default the ``*`` and ``/`` operators are used which perform element-wise
+        operations.
+
+    :note: The option ``matrix`` will instead use ``@`` and ``@ np.linalg.inv()``. The
+        shapes of matrices must conform.  A matrix on a ``/`` input must be square and
+        non-singular.  Matrices are multiplied in ascending port order.
     """
 
     nin = -1
@@ -167,24 +214,7 @@ class Prod(FunctionBlock):
         :type matrix: bool, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: PROD block
-        :rtype: ``Prod`` instance
 
-        Multiply or divide input signals according to the `ops` string.  The
-        number of input ports is the length of this string.
-
-        For example::
-
-            prod = PROD('*/*')
-
-        is a 3-input product junction which computes port0 / port 1 * port2.
-
-        :note: By default the ``*`` and ``/`` operators are used which perform element-wise
-            operations.
-
-        :note: The option ``matrix`` will instead use ``@`` and ``@ np.linalg.inv()``. The
-            shapes of matrices must conform.  A matrix on a ``/`` input must be square and
-            non-singular.  Matrices are multiplied in ascending port order.
         """
         super().__init__(nin=len(ops), **blockargs)
         assert isinstance(ops, str), "first argument must be signs string"
@@ -223,10 +253,38 @@ class Gain(FunctionBlock):
     """
     :blockname:`GAIN`
 
-    :inputs: 1[int, float, ndarray]
-    :outputs: 1 [int, float, ndarray]
+    Gain block.
+
+    :inputs: 1
+    :outputs: 1
     :states: 0
 
+    .. list-table::
+        :header-rows: 1
+
+        * - Port type
+          - Port number
+          - Types
+          - Description
+        * - Input
+          - 0
+          - int, float, ndarray
+          - :math:`x`
+        * - Output
+          - 0
+          - int, float, ndarray
+          - :math:`K x`
+
+    Either or both the input and gain can be Numpy arrays and Numpy will
+    compute the appropriate product :math:`u K`.
+
+    If :math:`u` and ``K`` are both NumPy arrays the ``@`` operator is used
+    and :math:`u` is postmultiplied by the gain. To premultiply by the gain,
+    to compute :math:`K u` use the ``premul`` option.
+
+    For example::
+
+        gain = bd.GAIN(2.5)
     """
 
     nin = 1
@@ -236,29 +294,13 @@ class Gain(FunctionBlock):
         self, K: Union[int, float, np.ndarray] = 1, premul: bool = False, **blockargs
     ):
         """
-        Gain block.
-
         :param K: The gain value, defaults to 1
         :type K: scalar, array_like
         :param premul: premultiply by constant, default is postmultiply, defaults to False
         :type premul: bool, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: GAIN block
-        :rtype: ``Gain`` instance
 
-        Scale the input signal. If the input is :math:`u` the output is :math:`u K`.
-
-        Either or both the input and gain can be Numpy arrays and Numpy will
-        compute the appropriate product :math:`u K`.
-
-        If :math:`u` and ``K`` are both NumPy arrays the ``@`` operator is used
-        and :math:`u` is postmultiplied by the gain. To premultiply by the gain,
-        to compute :math:`K u` use the ``premul`` option.
-
-        For example::
-
-            gain = bd.GAIN(constant)
         """
         super().__init__(**blockargs)
         self.K = K
@@ -288,10 +330,42 @@ class Pow(FunctionBlock):
     """
     :blockname:`POW`
 
-    :inputs: 1[int, float, ndarray]
-    :outputs: 1 [int, float, ndarray]
+    Power block.
+
+    :inputs: 1
+    :outputs: 1
     :states: 0
 
+    .. list-table::
+        :header-rows: 1
+
+        * - Port type
+          - Port number
+          - Types
+          - Description
+        * - Input
+          - 0
+          - int, float, ndarray
+          - :math:`x`
+        * - Output
+          - 0
+          - int, float, ndarray
+          - :math:`x^p`
+
+    If the input is a Numpy array the result depends on ``matrix``.
+    If ``matrix`` is False the block performs an elementwise exponentiation and
+    the result is a Numpy array of the same size.
+
+    If ``matrix`` is True and the input is a square matrix and ``p`` is an integer
+    then matrixwise exponentiation is performedand using repeated matrix
+    multiplication and matrix inversion.  If ``p`` is not an integer it uses SciPy
+    to compute the power using an eigenvalue decomposition.
+
+    For example::
+
+        pow = bd.POW(2)
+
+    :seealso: :func:`numpy.matrix_power` :func:`scipy.linalg.fractional_matrix_power`
     """
 
     nin = 1
@@ -299,26 +373,13 @@ class Pow(FunctionBlock):
 
     def __init__(self, p: Union[int, float] = 1, matrix: bool = False, **blockargs):
         """
-        Power block.
-
         :param p: The exponent value, defaults to 1
         :type p: scalar
         :param matrix: premultiply by constant, default is postmultiply, defaults to False
         :type matrix: bool, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: GAIN block
-        :rtype: ``Gain`` instance
 
-        Raise the input signal to the specified power. If the input is :math:`u` the output is :math:`u^p`.
-
-        The input can be Numpy arrays and Numpy will
-        compute the appropriate product :math:`u^p`.
-
-        .. note::  For the case where the input is a square matrix and ``p`` is not
-            an integer we use SciPy which involves an eigenvalue decomposition.
-
-        :seealso: :func:`numpy.matrix_power` :func:`scipy.linalg.fractional_matrix_power`
         """
         super().__init__(**blockargs)
 
@@ -350,12 +411,44 @@ class Pow(FunctionBlock):
 
 
 class Clip(FunctionBlock):
-    """
+    r"""
     :blockname:`CLIP`
 
-    :inputs: 1 [int, float, ndarray]
-    :outputs: 1 [int, float, ndarray]
+    Signal clipping.
+
+    :inputs: 1
+    :outputs: 1
     :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - int, float, ndarray
+            - :math:`x`
+        *   - Output
+            - 0
+            - int, float, ndarray
+            - :math:`\min(\max(x,a), b)`
+
+    The input signal is clipped to the range from ``minimum`` to ``maximum`` inclusive.
+
+    The signal can be a 1D-array in which case each element is clipped.  The
+    minimum and maximum values can be:
+
+        - a scalar, in which case the same value applies to every element of
+            the input vector , or
+        - a 1D-array, of the same shape as the input vector that applies elementwise to
+            the input vector.
+
+    For example::
+
+        clip = bd.CLIP(-1, 1)
     """
 
     nin = 1
@@ -365,31 +458,12 @@ class Clip(FunctionBlock):
         self, min: ArrayLike = -math.inf, max: ArrayLike = math.inf, **blockargs
     ):
         """
-        Signal clipping.
-
         :param min: Minimum value, defaults to -math.inf
         :type min: scalar or array_like, optional
         :param max: Maximum value, defaults to math.inf
         :type max: float or array_like, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: CLIP block
-        :rtype: ``Clip`` instance
-
-        The input signal is clipped to the range from ``minimum`` to ``maximum`` inclusive.
-
-        The signal can be a 1D-array in which case each element is clipped.  The
-        minimum and maximum values can be:
-
-            - a scalar, in which case the same value applies to every element of
-              the input vector , or
-            - a 1D-array, of the same shape as the input vector that applies elementwise to
-              the input vector.
-
-        For example::
-
-            clip = bd.CLIP()
-
         """
         super().__init__(**blockargs)
         self.min = min
@@ -409,12 +483,73 @@ class Clip(FunctionBlock):
 
 # TODO can have multiple outputs: pass in a tuple of functions, return a tuple
 class Function(FunctionBlock):
-    """
+    r"""
     :blockname:`FUNCTION`
 
-    :inputs: N [any]
-    :outputs: M [any]
+    Python function.
+
+    :inputs: N
+    :outputs: M
     :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - i
+            - any
+            - :math:`x_i`
+        *   - Output
+            - j
+            - any
+            - :math:`f_j(x_0, \ldots, x_{N-1})`
+
+    Inputs to the block are passed as separate arguments to the function.
+    Programmatic ositional or keyword arguments can also be passed to the function.
+
+    A block with one output port that sums its two input ports is::
+
+        func = bd.FUNCTION(lambda u1, u2: u1+u2, nin=2)
+
+    A block with a function that takes two inputs and has two additional arguments::
+
+        def myfun(u1, u2, param1, param2):
+            pass
+
+        FUNCTION(myfun, nin=2, args=(p1,p2))
+
+    If we need access to persistent (static) data, to keep some state::
+
+        def myfun(u1, u2, param1, param2, state):
+            pass
+
+        func = bd.FUNCTION(myfun, nin=2, args=(p1,p2), persistent=True)
+
+    where a dictionary is passed in as the last argument and which is kept from call to call.
+
+    A block with a function that takes two inputs and additional keyword arguments::
+
+        def myfun(u1, u2, param1=1, param2=2, param3=3, param4=4):
+            pass
+
+        func = bd.FUNCTION(myfun, nin=2, kwargs=dict(param2=7, param3=8))
+
+    A block with two inputs and two outputs, the outputs are defined by two lambda
+    functions with the same inputs::
+
+        FUNCTION( [ lambda x, y: x_t, lambda x, y: x* y])
+
+    A block with two inputs and two outputs, the outputs are defined by a
+    single function which returns a list::
+
+        def myfun(u1, u2):
+            return [ u1+u2, u1*u2 ]
+
+        func = bd.FUNCTION( myfun, nin=2, nout=2)
     """
 
     nin = -1
@@ -432,8 +567,6 @@ class Function(FunctionBlock):
     ):
 
         """
-        Python function.
-
         :param func: function or lambda, or list thereof, defaults to None
         :type func: callable or sequence of callables, optional
         :param nin: number of inputs, defaults to 1
@@ -448,66 +581,8 @@ class Function(FunctionBlock):
         :type fkwargs: dict, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict, optional
-        :return: FUNCTION block
-        :rtype: ``Function`` instance
 
-        Inputs to the block are passed as separate arguments to the function.
-        Programmatic ositional or keyword arguments can also be passed to the function.
 
-        A block with one output port that sums its two input ports is::
-
-            FUNCTION(lambda u1, u2: u1+u2, nin=2)
-
-        A block with a function that takes two inputs and has two additional arguments::
-
-            def myfun(u1, u2, param1, param2):
-                pass
-
-            FUNCTION(myfun, nin=2, args=(p1,p2))
-
-        If we need access to persistent (static) data, to keep some state::
-
-            def myfun(u1, u2, param1, param2, state):
-                pass
-
-            FUNCTION(myfun, nin=2, args=(p1,p2), persistent=True)
-
-        where a dictionary is passed in as the last argument and which is kept from call to call.
-
-        A block with a function that takes two inputs and additional keyword arguments::
-
-            def myfun(u1, u2, param1=1, param2=2, param3=3, param4=4):
-                pass
-
-            FUNCTION(myfun, nin=2, kwargs=dict(param2=7, param3=8))
-
-        A block with two inputs and two outputs, the outputs are defined by two lambda
-        functions with the same inputs::
-
-            FUNCTION( [ lambda x, y: x_t, lambda x, y: x* y])
-
-        A block with two inputs and two outputs, the outputs are defined by a
-        single function which returns a list::
-
-            def myfun(u1, u2):
-                return [ u1+u2, u1*u2 ]
-
-            FUNCTION( myfun, nin=2, nout=2)
-
-        For example::
-
-            func = bd.FUNCTION(myfun, args)
-
-        If inputs are specified then connections are automatically made and
-        are assigned to sequential input ports::
-
-            func = bd.FUNCTION(myfun, block1, block2, args)
-
-        is equivalent to::
-
-            func = bd.FUNCTION(myfun, args)
-            bd.connect(block1, func[0])
-            bd.connect(block2, func[1])
         """
         if func is None:
             raise ValueError("function is not defined")
@@ -607,9 +682,46 @@ class Interpolate(FunctionBlock):
     """
     :blockname:`INTERPOLATE`
 
-    :inputs: 0 or 1 [float]
-    :outputs: 1 [float, ndarray(1,)]
+    Interpolate signal.
+
+    :inputs: 1
+    :outputs: 1
     :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - int, float
+            - :math:`x`
+        *   - Output
+            - 0
+            - float
+            - :math:`f(x)`
+
+    Interpolate a scalar function of a scalar.
+
+    A simple triangle function with domain [0,10] and range [0,1] can be
+    defined by::
+
+        interp = bd.INTERPOLATE(x=(0,5,10), y=(0,1,0))
+
+    We might also express this as a list of 2D-coordinats::
+
+        interp = bd.INTERPOLATE(xy=[(0,0), (5,1), (10,0)])
+
+    The data can also be expressed as Numpy arrays.  If that is the case,
+    the interpolation function can be vector valued. ``x`` has a shape of
+    (N,1) and ``y`` has a shape of (N,M).  Alternatively ``xy`` has a shape
+    of (N,M+1) and the first column is the x-data.
+
+    :note: if ``time=True``.  In this case the block has no
+        input ports and is a ``Source`` not a ``Function`` block.
     """
 
     nin = -1
@@ -625,8 +737,6 @@ class Interpolate(FunctionBlock):
         **blockargs,
     ):
         """
-        Interpolate signal.
-
         :param x: x-values of function, defaults to None
         :type x: array_like, shape (N,) optional
         :param y: y-values of function, defaults to None
@@ -639,30 +749,6 @@ class Interpolate(FunctionBlock):
         :type kind: str, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: INTERPOLATE block
-        :rtype: ``Interpolate`` instance
-
-        Interpolate the input signal using to a piecewise function.
-
-        A simple triangle function with domain [0,10] and range [0,1] can be
-        defined by::
-
-            INTERPOLATE(x=(0,5,10), y=(0,1,0))
-
-        We might also express this as a list of 2D-coordinats::
-
-            INTERPOLATE(xy=[(0,0), (5,1), (10,0)])
-
-        The data can also be expressed as Numpy arrays.  If that is the case,
-        the interpolation function can be vector valued. ``x`` has a shape of
-        (N,1) and ``y`` has a shape of (N,M).  Alternatively ``xy`` has a shape
-        of (N,M+1) and the first column is the x-data.
-
-        The input to the interpolator comes from:
-
-        - Input port 0
-        - Simulation time, if ``time=True``.  In this case the block has no
-          input ports and is a ``Source`` not a ``Function``.
         """
         self.time = time
         if time:

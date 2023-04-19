@@ -18,12 +18,47 @@ from bdsim.components import TransferBlock, SubsystemBlock
 
 
 class Integrator(TransferBlock):
-    """
+    r"""
     :blockname:`INTEGRATOR`
 
-    :inputs: N [float, ndarray]
-    :outputs: 1 [float, ndarray]
+    Continuous-time integrator.
+
+    :inputs: 1
+    :outputs: 1
     :states: N
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - float, ndarray
+            - :math:`x`
+        *   - Output
+            - 0
+            - any
+            - :math:`y`
+
+    Output is the time integral of the input :math:`y(t) = \int_0^T x(t) dt`.
+
+    The state can be a scalar or a vector. The initial state, and type, is given by
+    ``x0``.  The shape of the input signal must match ``x0``.
+
+    The minimum and maximum values can be:
+
+        - a scalar, in which case the same value applies to every element of
+          the state vector, or
+        - a vector, of the same shape as ``x0`` that applies elementwise to
+          the state.
+
+    .. note:: The minimum and maximum prevent integration outside the limits,
+        but assume that the initial state is within the limits.
+
+    :seealso: :class:`Deriv`
     """
 
     nin = 1
@@ -31,8 +66,6 @@ class Integrator(TransferBlock):
 
     def __init__(self, x0=0, gain=1.0, min=None, max=None, **blockargs):
         """
-        Integrator.
-
         :param x0: Initial state, defaults to 0
         :type x0: array_like, optional
         :param gain: gain or scaling factor, defaults to 1
@@ -43,22 +76,6 @@ class Integrator(TransferBlock):
         :type max: float or array_like, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: INTEGRATOR block
-        :rtype: ``Integrator`` instance
-
-        Output is the time integral of the input.  The state can be a scalar or a
-        vector. The initial state, and type, is given by ``x0``.  The shape of
-        the input signal must match ``x0``.
-
-        The minimum and maximum values can be:
-
-            - a scalar, in which case the same value applies to every element of
-              the state vector, or
-            - a vector, of the same shape as ``x0`` that applies elementwise to
-              the state.
-
-        .. note:: The minimum and maximum prevent integration outside the limits,
-            but assume that the initial state is within the limits.
         """
         super().__init__(**blockargs)
 
@@ -102,12 +119,36 @@ class Integrator(TransferBlock):
 
 
 class PoseIntegrator(TransferBlock):
-    """
+    r"""
     :blockname:`POSEINTEGRATOR`
 
-    :inputs: 1 [ndarray(6,)]
-    :outputs: 1 [SE3]
+    Continuous-time pose integrator
+
+    :inputs: 1
+    :outputs: 1
     :states: 6
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - ndarray(6,)
+            - :math:`x`
+        *   - Output
+            - 0
+            - SE3
+            - :math:`y`
+
+    This block integrates spatial velocity over time. The block input is a spatial
+    velocity as a 6-vector :math:`(v_x, v_y, v_z, \omega_x, \omega_y, \omega_z)` and the
+    output is pose as an ``SE3`` instance.
+
+    .. note:: The state vector is a velocity twist.
     """
 
     nin = 1
@@ -115,21 +156,10 @@ class PoseIntegrator(TransferBlock):
 
     def __init__(self, x0=None, **blockargs):
         r"""
-        Pose integrator
-
         :param x0: Initial pose, defaults to null
         :type x0: SE3, Twist3, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: POSEINTEGRATOR block
-        :rtype: ``PoseIntegrator`` instance
-
-        This block integrates spatial velocity over time.
-        The block input is a spatial velocity as a 6-vector
-        :math:`(v_x, v_y, v_z, \omega_x, \omega_y, \omega_z)` and the output
-        is pose as an ``SE3`` instance.
-
-        .. note:: State is a velocity twist.
         """
         super().__init__(**blockargs)
 
@@ -151,12 +181,49 @@ class PoseIntegrator(TransferBlock):
 
 
 class LTI_SS(TransferBlock):
-    """
+    r"""
     :blockname:`LTI_SS`
 
-    :inputs: 1 [float]
-    :outputs: 1 [float]
+    Continuous-time state-space LTI dynamics
+
+    :inputs: 1
+    :outputs: 1
     :states: N
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - float, ndarray
+            - :math:`u`
+        *   - Output
+            - 0
+            - float, ndarray
+            - :math:`y`
+
+    Implements the dynamics of a multi-input multi-output (MIMO) linear
+    time invariant (LTI) system described in statespace form.  The dynamics are given by
+
+    .. math::
+
+        \dot{x} &= A x + B u
+
+        y &= C x
+
+    The order of the states in ``x0`` is consistent with controller canonical
+    form.  A direct passthrough component, typically :math:`D`, is not allowed in order
+    to avoid algebraic loops.
+
+    Examples::
+
+        lti = bd.LTI_SS(A=-2, B=1, C=-1)
+
+    is the system :math:`\dot{x}=-2x+u, y=-x`.
     """
 
     nin = 1
@@ -164,8 +231,6 @@ class LTI_SS(TransferBlock):
 
     def __init__(self, A=None, B=None, C=None, x0=None, **blockargs):
         r"""
-        State-space LTI dynamics.
-
         :param N: numerator coefficients, defaults to 1
         :type N: array_like, optional
         :param D: denominator coefficients, defaults to [1,1]
@@ -174,27 +239,6 @@ class LTI_SS(TransferBlock):
         :type x0: array_like, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: LTI_SS block
-        :rtype: ``LTI_SS`` instance
-
-        Implements the dynamics of a single-input single-output (SISO) linear
-        time invariant (LTI) system described by numerator and denominator
-        polynomial coefficients.
-
-        Coefficients are given in the order from highest order to zeroth
-        order, ie. :math:`2s^2 - 4s +3` is ``[2, -4, 3]``.
-
-        Only proper transfer functions, where order of numerator is less
-        than denominator are allowed.
-
-        The order of the states in ``x0`` is consistent with controller canonical
-        form.
-
-        Examples::
-
-            LTI_SS(N=[1,2], D=[2, 3, -4])
-
-        is the transfer function :math:`\frac{s+2}{2s^2+3s-4}`.
         """
         # print('in SS constructor')
         assert A.shape[0] == A.shape[1], "A must be square"
@@ -238,12 +282,53 @@ class LTI_SS(TransferBlock):
 
 
 class LTI_SISO(LTI_SS):
-    """
+    r"""
     :blockname:`LTI_SISO`
 
-    :inputs: 1 [float]
-    :outputs: 1 [float]
+    Continuous-time SISO LTI dynamics.
+
+    :inputs: 1
+    :outputs: 1
     :states: N
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - float
+            - :math:`u`
+        *   - Output
+            - 0
+            - float
+            - :math:`y`
+
+    Implements the dynamics of a single-input single-output (SISO) linear
+    time invariant (LTI) system described by numerator and denominator
+    polynomial coefficients.  The dynamics are given by
+
+    .. math::
+
+        \frac{Y(s)}{U(s)} = \frac{N(s)}{D(s)}
+
+    Coefficients are given in the order from highest order to zeroth
+    order, ie. :math:`2s^2 - 4s +3` is ``[2, -4, 3]``.
+
+    Only proper transfer functions, where order of numerator is less
+    than denominator are allowed.
+
+    The order of the states in ``x0`` is consistent with controller canonical
+    form.
+
+    Examples::
+
+        lti = bd.LTI_SISO(N=[1, 2], D=[2, 3, -4])
+
+    is the transfer function :math:`\frac{s+2}{2s^2+3s-4}`.
     """
 
     nin = 1
@@ -251,8 +336,6 @@ class LTI_SISO(LTI_SS):
 
     def __init__(self, N=1, D=[1, 1], x0=None, **blockargs):
         r"""
-        SISO LTI dynamics.
-
         :param N: numerator coefficients, defaults to 1
         :type N: array_like, optional
         :param D: denominator coefficients, defaults to [1,1]
@@ -263,25 +346,6 @@ class LTI_SISO(LTI_SS):
         :type blockargs: dict
         :return: LTI_SISO block
         :rtype: ``LTI_SISO`` instance
-
-        Implements the dynamics of a single-input single-output (SISO) linear
-        time invariant (LTI) system described by numerator and denominator
-        polynomial coefficients.
-
-        Coefficients are given in the order from highest order to zeroth
-        order, ie. :math:`2s^2 - 4s +3` is ``[2, -4, 3]``.
-
-        Only proper transfer functions, where order of numerator is less
-        than denominator are allowed.
-
-        The order of the states in ``x0`` is consistent with controller canonical
-        form.
-
-        Examples::
-
-            LTI_SISO(N=[1, 2], D=[2, 3, -4])
-
-        is the transfer function :math:`\frac{s+2}{2s^2+3s-4}`.
         """
         # print('in SISO constscutor')
 
@@ -354,18 +418,60 @@ from bdsim.blocks.connections import SubSystem
 
 
 class Deriv(SubsystemBlock):
+    r"""
+    :blockname:`DERIV`
+
+    Continuous-time derivative.
+
+    :inputs: 1
+    :outputs: 1
+    :states: N
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - float
+            - :math:`x`
+        *   - Output
+            - 0
+            - float
+            - :math:`y`
+
+    Implements the dynamics of a derivative filter, but to be causal it has a single
+    pole given by ``alpha``.  The dynamics is
+
+    .. math:: \frac{s}{\frac{s}{\alpha} + 1}
+
+    It is implemented as a subsystem with an integrator and a feedback loop.  The
+    initial state of the integrator is ``x0``.
+
+    :seealso: :class:`Integrator`
+    """
 
     nin = 1
     nout = 1
 
-    def __init__(self, alpha, **blockargs):
-
+    def __init__(self, alpha, x0=0, **blockargs):
+        r"""
+        :param alpha: filter pole
+        :type alpha: float
+        :param x0: initial states, defaults to 0
+        :type x0: float, optional
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        """
         super().__init__(**blockargs)
         self.type = "subsystem"
 
         bd = self.bd.runtime.blockdiagram()
 
-        integrator = bd.INTEGRATOR()
+        integrator = bd.INTEGRATOR(x0=x0)
         inp = bd.INPORT(1)
         outp = bd.OUTPORT(1)
         sum = bd.SUM("+-")
@@ -384,15 +490,72 @@ class Deriv(SubsystemBlock):
 
 
 class PID(SubSystem):
-    """
+    r"""
     :blockname:`PID`
 
-    :inputs: 1 [float]
-    :outputs: 1 [float]
+    Continuous-time PID control.
+
+    :inputs: 2
+    :outputs: 1
     :states: 2
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - float
+            - :math:`x`, plant output
+        *   - Input
+            - 1
+            - float
+            - :math:`x^*`, demanded output
+        *   - Output
+            - 0
+            - any
+            - :math:`u`, control to plant
+
+    Implements the dynamics of a PID controller:
+
+    .. math::
+
+        e &= x^* - x
+
+        u &= Pe + D \frac{d}{dt} e + I \int e dt
+
+    To reduce noise the derivative is computed by a first-order system
+
+    .. math::
+
+        \frac{s}{s/a + 1}
+
+    where the pole :math:`a=` ``D_filt`` can be positioned appropriately.
+
+    If ``I_limit`` is provided it specifies the limits of the integrator
+    state, before multiplication by ``I``.  If ``I_limit`` is:
+
+    * a scalar :math:`a` the integrator state is clipped to the interval :math:`[-a, a]`
+    * a 2-tuple :math:`(a,b)` the integrator state is clipped to the interval :math:`[a, b]`
+
+    If ``I_band`` is provided the integrator is reset to zero whenever the
+    error :math:`e` is outside the band given by ``I_band`` which is:
+
+    * a scalar :math:`s` the band is the interval :math:`[-s, s]`
+    * a 2-tuple :math:`(a,b)` the band is the interval :math:`[a, b]`
+
+
+    Examples::
+
+        pid = bd.PID(P=3, D=2, I=1)
+
+    :seealso: :class:`Deriv`
     """
 
-    class ID(LTI_SS):
+    class _ID(LTI_SS):
         def __init__(
             self,
             D: float = 0.0,
@@ -442,8 +605,6 @@ class PID(SubSystem):
         **blockargs,
     ):
         r"""
-        PID controller.
-
         :param P: proportional gain, defaults to 0
         :type P: float
         :param D: derivative gain, defaults to 0
@@ -458,42 +619,6 @@ class PID(SubSystem):
         :type I_band: float
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: A PID block
-        :rtype: PID instance
-
-        Implements the dynamics of a PID controller:
-
-        .. math::
-
-            e &= x^* - x
-
-            x &= Pe + D \frac{d}{dt} e + I \int e dt
-
-        To reduce noise the derivative is computed by a first-order system
-
-        .. math::
-
-            \frac{s}{s/a + 1}
-
-        where the pole :math:`a=` ``D_filt`` can be positioned appropriately.
-
-        If ``I_limit`` is provided it specifies the limits of the integrator
-        state, before multiplication by ``I``.  If ``I_limit`` is:
-
-        * a scalar :math:`s` the integrator state is clipped to the interval :math:`[-s, s]`
-        * a 2-tuple :math:`(a,b)` the integrator state is clipped to the interval :math:`[a, b]`
-
-        If ``I_band`` is provided the integrator is reset to zero whenever the
-        error :math:`e` is outside the band given by ``I_band`` which is:
-
-        * a scalar :math:`s` the band is the interval :math:`[-s, s]`
-        * a 2-tuple :math:`(a,b)` the band is the interval :math:`[a, b]`
-
-
-        Examples::
-
-            PID(P=3, D=2, I=1)
-
         """
 
         subsystem = self.bd.runtime.blockdiagram()
@@ -501,7 +626,7 @@ class PID(SubSystem):
         bd = blockargs["bd"]
         blockargs.pop("bd")
         Pblock = subsystem.GAIN(P)
-        IDblock = self.ID(
+        IDblock = self._ID(
             D=D,
             I=I,
             D_pole=D_pole,

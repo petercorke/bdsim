@@ -10,15 +10,36 @@ from bdsim.components import FunctionBlock
 if sm:
 
     class Pose_postmul(FunctionBlock):
-        """
+        r"""
         :blockname:`POSE_POSTMUL`
 
-        .. table::
-        :align: left
-    
-        :inputs: 1 [SEn, SOn]
-        :outputs: 1 [SEn, SOn]
+        Post multiply pose.
+
+        :inputs: 1
+        :outputs: 1
         :states: 0
+
+        .. list-table::
+            :header-rows: 1
+
+            *   - Port type
+                - Port number
+                - Types
+                - Description
+            *   - Input
+                - 0
+                - SEn, SOn
+                - :math:`\xi`
+            *   - Output
+                - 0
+                - SEn, SOn
+                - :math:`\xi \oplus \xi_c`
+
+        Postmultiply the input pose by a constant pose.
+
+        .. note:: Pose objects must be of the same type.
+
+        :seealso: :class:`Pose_premul`
         """
 
         nin = 1
@@ -26,20 +47,10 @@ if sm:
 
         def __init__(self, pose=None, **blockargs):
             """
-            Post multiply pose.
-
             :param pose: pose to apply
             :type pose: SO2, SE2, SO3 or SE3
             :param blockargs: |BlockOptions|
             :type blockargs: dict
-            :return: A POSE_POSTMUL block
-            :rtype: Pose_postmul instance
-
-            Transform the pose on the input signal by post multiplication.
-
-            For example::
-
-                pose_mul = bd.POSE_POSTMUL(SE3())
             """
             if not isinstance(pose, (SO2, SO3, SE2, SE3)):
                 raise ValueError("pose must be SO2, SE2, SO3 or SE3")
@@ -54,15 +65,36 @@ if sm:
     # ------------------------------------------------------------------------ #
 
     class Pose_premul(FunctionBlock):
-        """
+        r"""
         :blockname:`POSE_PREMUL`
 
-        .. table::
-        :align: left
+        Pre multiply pose.
 
-        :inputs: 1 [SEn, SOn]
-        :outputs: 1 [SEn, SOn]
+        :inputs: 1
+        :outputs: 1
         :states: 0
+
+        .. list-table::
+            :header-rows: 1
+
+            *   - Port type
+                - Port number
+                - Types
+                - Description
+            *   - Input
+                - 0
+                - SEn, SOn
+                - :math:`\xi`
+            *   - Output
+                - 0
+                - SEn, SOn
+                - :math:`\xi_c \oplus \xi`
+
+        Premultiply the input pose by a constant pose.
+
+        .. note:: Pose objects must be of the same type.
+
+        :seealso: :class:`Pose_postmul`
         """
 
         nin = 1
@@ -70,20 +102,10 @@ if sm:
 
         def __init__(self, pose=None, **blockargs):
             """
-            Pre multiply pose.
-
             :param pose: pose to apply
             :type pose: SO2, SE2, SO3 or SE3
             :param blockargs: |BlockOptions|
             :type blockargs: dict
-            :return: A POSE_PREMUL block
-            :rtype: Pose_premul instance
-
-            Transform the pose on the input signal by premultiplication.
-
-            For example::
-
-                pose_mul = bd.POSE_PREMUL(SE3())
             """
             if not isinstance(pose, (SO2, SO3, SE2, SE3)):
                 raise ValueError("pose must be SO2, SE2, SO3 or SE3")
@@ -98,15 +120,36 @@ if sm:
     # ------------------------------------------------------------------------ #
 
     class Transform_vector(FunctionBlock):
-        """
+        r"""
         :blockname:`TRANSFORM_VECTOR`
 
-        .. table::
-        :align: left
+        Transform a vector.
 
-        :inputs: 2 [SEn, SOn; ndarray]
-        :outputs: 1 [ndarray]
+        :inputs: 2
+        :outputs: 1
         :states: 0
+
+        .. list-table::
+            :header-rows: 1
+
+            *   - Port type
+                - Port number
+                - Types
+                - Description
+            *   - Input
+                - 0
+                - SEn, SOn
+                - :math:`\xi`
+            *   - Input
+                - 1
+                - ndarray
+                - :math:`v`, Euclidean 2D or 3D
+            *   - Output
+                - 0
+                - ndarray
+                - :math:`\xi \bullet v`
+
+        Linearly transform the input vector by the input pose.
         """
 
         nin = 2
@@ -114,18 +157,8 @@ if sm:
 
         def __init__(self, **blockargs):
             """
-            Transform a vector.
-
             :param blockargs: |BlockOptions|
             :type blockargs: dict
-            :return: A TRANSFORM_VECTOR block
-            :rtype: Transform_vector instance
-
-            Transform the vector on the input signal by the pose.
-
-            For example::
-
-                vec_xform = bd.TRANSFORM_VECTOR()
             """
             super().__init__(nin=2, **blockargs)
 
@@ -138,15 +171,33 @@ if sm:
     # ------------------------------------------------------------------------ #
 
     class Pose_inverse(FunctionBlock):
-        """
+        r"""
         :blockname:`POSE_INVERSE`
 
-        .. table::
-        :align: left
+        Pose inverse.
 
-        :inputs: 1 [SEn, SOn]
-        :outputs: 1 [SEn, SOn]
+        :inputs: 1
+        :outputs: 1
         :states: 0
+
+        .. list-table::
+            :header-rows: 1
+
+            *   - Port type
+                - Port number
+                - Types
+                - Description
+            *   - Input
+                - 0
+                - SEn, SOn
+                - :math:`\xi`
+            *   - Output
+                - 0
+                - SEn, SOn
+                - :math:`\ominus \xi`
+
+        Invert the pose on the input port.
+
         """
 
         nin = 1
@@ -154,18 +205,8 @@ if sm:
 
         def __init__(self, **blockargs):
             """
-            Pose inverse.
-
             :param blockargs: |BlockOptions|
             :type blockargs: dict
-            :return: A POSE_INVERSE block
-            :rtype: Pose_inverse instance
-
-            Invert the pose on the input signal.
-
-            For example::
-
-                gain = bd.POSE_INVERSE()
             """
             super().__init__(**blockargs)
 
