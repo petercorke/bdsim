@@ -104,13 +104,9 @@
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
 
-<span class="sd">    +--------+---------+---------+</span>
-<span class="sd">    | inputs | outputs |  states |</span>
-<span class="sd">    +--------+---------+---------+</span>
-<span class="sd">    | 1      | 0       | 0       |</span>
-<span class="sd">    +--------+---------+---------+</span>
-<span class="sd">    | any    |         |         |</span>
-<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    :inputs: 1 [any]</span>
+<span class="sd">    :outputs: 0</span>
+<span class="sd">    :states: 0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
@@ -166,9 +162,9 @@
 
         <span class="c1"># TODO format can be a string or function</span>
 
-    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="n">prefix</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{:12s}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;PRINT(</span><span class="si">{:s}</span><span class="s2"> (t=</span><span class="si">{:.3f}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">t</span><span class="p">))</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">):</span>
+        <span class="n">prefix</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{:12s}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;PRINT(</span><span class="si">{:s}</span><span class="s2"> (t=</span><span class="si">{:.3f}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">t</span><span class="p">))</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">inports</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">format</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># no format string</span>
             <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;strline&quot;</span><span class="p">):</span>
@@ -199,13 +195,9 @@
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
 
-<span class="sd">    +--------+---------+---------+</span>
-<span class="sd">    | inputs | outputs |  states |</span>
-<span class="sd">    +--------+---------+---------+</span>
-<span class="sd">    | 1      | 0       | 0       |</span>
-<span class="sd">    +--------+---------+---------+</span>
-<span class="sd">    | any    |         |         |</span>
-<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    :inputs: 1 [any]</span>
+<span class="sd">    :outputs: 0</span>
+<span class="sd">    :states: 0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
@@ -232,12 +224,16 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">callable</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;argument must be a callable&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">stopfunc</span> <span class="o">=</span> <span class="n">func</span></div>
 
-    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simstate</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_simstate</span> <span class="o">=</span> <span class="n">simstate</span>
+
+    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">inports</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stopfunc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stopfunc</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
@@ -250,10 +246,10 @@
             <span class="k">except</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;bad input type to stop block&quot;</span><span class="p">)</span>
 
-        <span class="c1"># we signal stop condition by setting state.stop to the block calling</span>
+        <span class="c1"># we signal stop condition by setting simstate.stop to the block calling</span>
         <span class="c1"># the stop</span>
         <span class="k">if</span> <span class="n">stop</span><span class="p">:</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">stop</span> <span class="o">=</span> <span class="bp">self</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_simstate</span><span class="o">.</span><span class="n">stop</span> <span class="o">=</span> <span class="bp">self</span></div>
 
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
@@ -266,13 +262,10 @@
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
 
-<span class="sd">    +--------+---------+---------+</span>
-<span class="sd">    | inputs | outputs |  states |</span>
-<span class="sd">    +--------+---------+---------+</span>
-<span class="sd">    | N      | 0       | 0       |</span>
-<span class="sd">    +--------+---------+---------+</span>
-<span class="sd">    | any    |         |         |</span>
-<span class="sd">    +--------+---------+---------+</span>
+
+<span class="sd">    :inputs: N [any]</span>
+<span class="sd">    :outputs: 0</span>
+<span class="sd">    :states: 0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
@@ -290,7 +283,9 @@
 <span class="sd">        :rtype: Null instance</span>
 
 <span class="sd">        Create a sink block with arbitrary number of input ports that discards</span>
-<span class="sd">        all data.  Useful for testing.</span>
+<span class="sd">        all data.  Useful for testing.  </span>
+<span class="sd">        </span>
+<span class="sd">        .. note:: ``bdsim`` issues a warning for unconnected outputs but execution can continue.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="n">nin</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span></div></div>
@@ -306,13 +301,9 @@
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
 
-<span class="sd">    +--------+---------+---------+</span>
-<span class="sd">    | inputs | outputs |  states |</span>
-<span class="sd">    +--------+---------+---------+</span>
-<span class="sd">    | N      | 0       | 0       |</span>
-<span class="sd">    +--------+---------+---------+</span>
-<span class="sd">    | 1      |         |         |</span>
-<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    :inputs: N [any]</span>
+<span class="sd">    :outputs: 0</span>
+<span class="sd">    :states: 0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
@@ -335,13 +326,13 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simstate</span><span class="p">):</span>
         <span class="c1"># called at start of simulation, add this block to the watchlist</span>
         <span class="n">plug</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># start plug for input wire</span>
 
         <span class="c1"># append to the watchlist, bdsim.run() will do the rest</span>
-        <span class="n">state</span><span class="o">.</span><span class="n">watchlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">plug</span><span class="p">)</span>
-        <span class="n">state</span><span class="o">.</span><span class="n">watchnamelist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">plug</span><span class="p">))</span></div>
+        <span class="n">simstate</span><span class="o">.</span><span class="n">watchlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">plug</span><span class="p">)</span>
+        <span class="n">simstate</span><span class="o">.</span><span class="n">watchnamelist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">plug</span><span class="p">))</span></div>
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
@@ -359,7 +350,7 @@
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020-, Peter Corke..
-      <span class="lastupdated">Last updated on 03-Apr-2023.
+      <span class="lastupdated">Last updated on 19-Apr-2023.
       </span></p>
   </div>
 

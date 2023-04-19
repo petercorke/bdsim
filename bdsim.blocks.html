@@ -133,7 +133,8 @@ the package <code class="docutils literal notranslate"><span class="pre">bdsim.b
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.SourceBlock" title="bdsim.components.SourceBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SourceBlock</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -141,34 +142,24 @@ the package <code class="docutils literal notranslate"><span class="pre">bdsim.b
     CONSTANT
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/constant.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/constant.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
     </p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 31%" />
-<col style="width: 35%" />
-<col style="width: 35%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>0</p></td>
-<td><p>1</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td></td>
-<td><p>float,
-A(N,)</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>1 [any]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.sources.Constant.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sources.html#Constant.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.sources.Constant.__init__" title="Permalink to this definition"></a></dt>
@@ -199,7 +190,8 @@ Python type, for example float, list or Numpy ndarray.</p>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.SourceBlock" title="bdsim.components.SourceBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SourceBlock</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.EventSource</span></code></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -207,33 +199,24 @@ Python type, for example float, list or Numpy ndarray.</p>
     PIECEWISE
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/piecewise.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/piecewise.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
     </p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 31%" />
-<col style="width: 35%" />
-<col style="width: 35%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>0</p></td>
-<td><p>1</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td></td>
-<td><p>float</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>1 [float]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.sources.Piecewise.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">seq</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sources.html#Piecewise.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.sources.Piecewise.__init__" title="Permalink to this definition"></a></dt>
@@ -283,7 +266,8 @@ a tuple with time zero otherwise the output will be undefined.</p></li>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.SourceBlock" title="bdsim.components.SourceBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SourceBlock</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.EventSource</span></code></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -291,33 +275,24 @@ a tuple with time zero otherwise the output will be undefined.</p></li>
     RAMP
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/ramp.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/ramp.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
     </p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 31%" />
-<col style="width: 35%" />
-<col style="width: 35%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>0</p></td>
-<td><p>1</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td></td>
-<td><p>float</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>1 [float]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.sources.Ramp.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">T</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">off</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slope</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sources.html#Ramp.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.sources.Ramp.__init__" title="Permalink to this definition"></a></dt>
@@ -359,7 +334,8 @@ when time equals <code class="docutils literal notranslate"><span class="pre">T<
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.SourceBlock" title="bdsim.components.SourceBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SourceBlock</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.EventSource</span></code></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -367,33 +343,24 @@ when time equals <code class="docutils literal notranslate"><span class="pre">T<
     STEP
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/step.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/step.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
     </p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 31%" />
-<col style="width: 35%" />
-<col style="width: 35%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>0</p></td>
-<td><p>1</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td></td>
-<td><p>float</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>1 [float]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.sources.Step.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">T</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">off</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sources.html#Step.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.sources.Step.__init__" title="Permalink to this definition"></a></dt>
@@ -435,7 +402,8 @@ when time equals <code class="docutils literal notranslate"><span class="pre">T<
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.SourceBlock" title="bdsim.components.SourceBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SourceBlock</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -443,33 +411,24 @@ when time equals <code class="docutils literal notranslate"><span class="pre">T<
     TIME
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/time.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/time.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
     </p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 31%" />
-<col style="width: 35%" />
-<col style="width: 35%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>0</p></td>
-<td><p>1</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td></td>
-<td><p>float</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>1 [float]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.sources.Time.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sources.html#Time.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.sources.Time.__init__" title="Permalink to this definition"></a></dt>
@@ -496,7 +455,8 @@ when time equals <code class="docutils literal notranslate"><span class="pre">T<
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.SourceBlock" title="bdsim.components.SourceBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SourceBlock</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.EventSource</span></code></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -504,33 +464,24 @@ when time equals <code class="docutils literal notranslate"><span class="pre">T<
     WAVEFORM
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/waveform.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/waveform.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
     </p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 31%" />
-<col style="width: 35%" />
-<col style="width: 35%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>0</p></td>
-<td><p>1</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td></td>
-<td><p>float</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>1 [float]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.sources.WaveForm.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wave</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'square'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Hz'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phase</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amplitude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duty</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sources.html#WaveForm.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.sources.WaveForm.__init__" title="Permalink to this definition"></a></dt>
@@ -606,7 +557,8 @@ events for every discontinuity.</p>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.SinkBlock" title="bdsim.components.SinkBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SinkBlock</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -614,33 +566,24 @@ events for every discontinuity.</p>
     NULL
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/null.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/null.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
     </p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 31%" />
-<col style="width: 35%" />
-<col style="width: 35%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>N</p></td>
-<td><p>0</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td><p>any</p></td>
-<td></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>N [any]</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>0</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.sinks.Null.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#Null.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.sinks.Null.__init__" title="Permalink to this definition"></a></dt>
@@ -661,6 +604,10 @@ events for every discontinuity.</p>
 </dl>
 <p>Create a sink block with arbitrary number of input ports that discards
 all data.  Useful for testing.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">bdsim</span></code> issues a warning for unconnected outputs but execution can continue.</p>
+</div>
 </dd></dl>
 
 </dd></dl>
@@ -671,7 +618,8 @@ all data.  Useful for testing.</p>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.SinkBlock" title="bdsim.components.SinkBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SinkBlock</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -679,33 +627,24 @@ all data.  Useful for testing.</p>
     PRINT
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/print.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/print.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
     </p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 31%" />
-<col style="width: 35%" />
-<col style="width: 35%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>1</p></td>
-<td><p>0</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td><p>any</p></td>
-<td></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>1 [any]</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>0</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.sinks.Print.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fmt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#Print.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.sinks.Print.__init__" title="Permalink to this definition"></a></dt>
@@ -772,7 +711,8 @@ element</p></li>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.SinkBlock" title="bdsim.components.SinkBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SinkBlock</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -780,33 +720,24 @@ element</p></li>
     STOP
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/stop.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/stop.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
     </p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 31%" />
-<col style="width: 35%" />
-<col style="width: 35%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>1</p></td>
-<td><p>0</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td><p>any</p></td>
-<td></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>1 [any]</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>0</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.sinks.Stop.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#Stop.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.sinks.Stop.__init__" title="Permalink to this definition"></a></dt>
@@ -842,7 +773,8 @@ and if it returns True the simulation is stopped.</p>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.SinkBlock" title="bdsim.components.SinkBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SinkBlock</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -850,33 +782,24 @@ and if it returns True the simulation is stopped.</p>
     WATCH
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/watch.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/watch.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
     </p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 31%" />
-<col style="width: 35%" />
-<col style="width: 35%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>N</p></td>
-<td><p>0</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td><p>1</p></td>
-<td></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>N [any]</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>0</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.sinks.Watch.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sinks.html#Watch.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.sinks.Watch.__init__" title="Permalink to this definition"></a></dt>
@@ -919,7 +842,8 @@ to <code class="docutils literal notranslate"><span class="pre">bdsim.run</span>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -927,8 +851,9 @@ to <code class="docutils literal notranslate"><span class="pre">bdsim.run</span>
     CLIP
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/clip.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/clip.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
@@ -988,7 +913,8 @@ the input vector.</p></li>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -996,8 +922,9 @@ the input vector.</p></li>
     FUNCTION
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/function.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/function.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
@@ -1102,7 +1029,8 @@ are assigned to sequential input ports:</p>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -1110,8 +1038,9 @@ are assigned to sequential input ports:</p>
     GAIN
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/gain.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/gain.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
@@ -1166,7 +1095,8 @@ to compute <span class="math notranslate nohighlight">\(K u\)</span> use the <co
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -1174,8 +1104,9 @@ to compute <span class="math notranslate nohighlight">\(K u\)</span> use the <co
     INTERPOLATE
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/interpolate.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/interpolate.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
@@ -1238,13 +1169,83 @@ input ports and is a <code class="docutils literal notranslate"><span class="pre
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="bdsim.blocks.functions.Pow">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bdsim.blocks.functions.</span></span><span class="sig-name descname"><span class="pre">Pow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Pow"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.functions.Pow" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
+<p>
+    <table width="100%">
+    	<col style="width:75%">
+        <col style="width:5%;">
+	    <col style="width:20%">
+    <tr>
+    <td>
+    <p style="border:10px; background-color:#000000; padding: 1em; color: white; font-size: 30px; font-weight: bold;">
+    POW
+    </p>
+    </td>
+    <td></td>
+    <td>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/pow.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
+    </td>
+    </tr>
+    </table>
+    </p>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>1[int, float, ndarray]</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>1 [int, float, ndarray]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bdsim.blocks.functions.Pow.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Pow.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.functions.Pow.__init__" title="Permalink to this definition"></a></dt>
+<dd><p>Power block.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<em>scalar</em>) – The exponent value, defaults to 1</p></li>
+<li><p><strong>matrix</strong> (<em>bool</em><em>, </em><em>optional</em>) – premultiply by constant, default is postmultiply, defaults to False</p></li>
+<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>GAIN block</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">Gain</span></code> instance</p>
+</dd>
+</dl>
+<p>Raise the input signal to the specified power. If the input is <span class="math notranslate nohighlight">\(u\)</span> the output is <span class="math notranslate nohighlight">\(u^p\)</span>.</p>
+<p>The input can be Numpy arrays and Numpy will
+compute the appropriate product <span class="math notranslate nohighlight">\(u^p\)</span>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For the case where the input is a square matrix and <code class="docutils literal notranslate"><span class="pre">p</span></code> is not
+an integer we use SciPy which involves an eigenvalue decomposition.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Seealso</dt>
+<dd class="field-odd"><p><code class="xref py py-func docutils literal notranslate"><span class="pre">numpy.matrix_power()</span></code> <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.linalg.fractional_matrix_power()</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="bdsim.blocks.functions.Prod">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bdsim.blocks.functions.</span></span><span class="sig-name descname"><span class="pre">Prod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ops</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'**'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/functions.html#Prod"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.functions.Prod" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
 <p>Product junction.</p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -1252,8 +1253,9 @@ input ports and is a <code class="docutils literal notranslate"><span class="pre
     PROD
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/prod.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/prod.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
@@ -1303,7 +1305,7 @@ operations.</p>
 <dt class="field-even">Note</dt>
 <dd class="field-even"><p>The option <code class="docutils literal notranslate"><span class="pre">matrix</span></code> will instead use <code class="docutils literal notranslate"><span class="pre">&#64;</span></code> and <code class="docutils literal notranslate"><span class="pre">&#64;</span> <span class="pre">np.linalg.inv()</span></code>. The
 shapes of matrices must conform.  A matrix on a <code class="docutils literal notranslate"><span class="pre">/</span></code> input must be square and
-non-singular.</p>
+non-singular.  Matrices are multiplied in ascending port order.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1317,7 +1319,8 @@ non-singular.</p>
 <p>Summing junction.</p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -1325,8 +1328,9 @@ non-singular.</p>
     SUM
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/sum.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/sum.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
@@ -1447,7 +1451,8 @@ second element wrapped to the range [-π, π).</p>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.TransferBlock" title="bdsim.components.TransferBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -1455,8 +1460,9 @@ second element wrapped to the range [-π, π).</p>
     INTEGRATOR
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/integrator.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/integrator.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
@@ -1520,7 +1526,8 @@ but assume that the initial state is within the limits.</p>
 <dd><p>Bases: <a class="reference internal" href="#bdsim.blocks.transfers.LTI_SS" title="bdsim.blocks.transfers.LTI_SS"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.blocks.transfers.LTI_SS</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -1528,8 +1535,9 @@ but assume that the initial state is within the limits.</p>
     LTI_SISO
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/lti_siso.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/lti_siso.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
@@ -1589,7 +1597,8 @@ form.</p>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.TransferBlock" title="bdsim.components.TransferBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -1597,8 +1606,9 @@ form.</p>
     LTI_SS
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/lti_ss.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/lti_ss.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
@@ -1658,7 +1668,8 @@ form.</p>
 <dd><p>Bases: <a class="reference internal" href="#bdsim.blocks.connections.SubSystem" title="bdsim.blocks.connections.SubSystem"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.blocks.connections.SubSystem</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -1666,8 +1677,9 @@ form.</p>
     PID
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/pid.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/pid.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
@@ -1732,12 +1744,12 @@ form.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>P</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – proportional gain, defaults to 0</p></li>
-<li><p><strong>D</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – derivative gain, defaults to 0</p></li>
-<li><p><strong>I</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – integral gain, defaults to 0</p></li>
-<li><p><strong>D_pole</strong> – filter pole for derivative estimate, defaults to 1 rad/s</p></li>
-<li><p><strong>I_limit</strong> – integral limit</p></li>
-<li><p><strong>I_band</strong> – band within which integral action is active</p></li>
+<li><p><strong>P</strong> (<em>float</em>) – proportional gain, defaults to 0</p></li>
+<li><p><strong>D</strong> (<em>float</em>) – derivative gain, defaults to 0</p></li>
+<li><p><strong>I</strong> (<em>float</em>) – integral gain, defaults to 0</p></li>
+<li><p><strong>D_pole</strong> (<em>float</em>) – filter pole for derivative estimate, defaults to 1 rad/s</p></li>
+<li><p><strong>I_limit</strong> (<em>float</em>) – integral limit</p></li>
+<li><p><strong>I_band</strong> (<em>float</em>) – band within which integral action is active</p></li>
 <li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
@@ -1781,7 +1793,8 @@ error <span class="math notranslate nohighlight">\(e\)</span> is outside the ban
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.TransferBlock" title="bdsim.components.TransferBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.TransferBlock</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -1789,8 +1802,9 @@ error <span class="math notranslate nohighlight">\(e\)</span> is outside the ban
     POSEINTEGRATOR
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/poseintegrator.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/poseintegrator.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
@@ -1852,7 +1866,8 @@ specified by the associated clock</p></li>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.ClockedBlock" title="bdsim.components.ClockedBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.ClockedBlock</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -1860,35 +1875,24 @@ specified by the associated clock</p></li>
     DINTEGRATOR
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/dintegrator.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/dintegrator.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
     </p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 40%" />
-<col style="width: 30%" />
-<col style="width: 30%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>1</p></td>
-<td><p>1</p></td>
-<td><p>N</p></td>
-</tr>
-<tr class="row-odd"><td><p>float,
-A(N,)</p></td>
-<td><p>float,
-A(N,)</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>1 [float, ndarray]</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>1 [float, ndarray]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>N</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.discrete.DIntegrator.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">clock</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gain</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/discrete.html#DIntegrator.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.discrete.DIntegrator.__init__" title="Permalink to this definition"></a></dt>
@@ -1927,7 +1931,7 @@ the state.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.discrete.DIntegrator.next">
-<span class="sig-name descname"><span class="pre">next</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/discrete.html#DIntegrator.next"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.discrete.DIntegrator.next" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">next</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/discrete.html#DIntegrator.next"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.discrete.DIntegrator.next" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -1938,7 +1942,8 @@ the state.</p></li>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.ClockedBlock" title="bdsim.components.ClockedBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.ClockedBlock</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -1946,33 +1951,24 @@ the state.</p></li>
     DPOSEINTEGRATOR
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/dposeintegrator.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/dposeintegrator.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
     </p>
-<table class="docutils align-left">
-<colgroup>
-<col style="width: 40%" />
-<col style="width: 30%" />
-<col style="width: 30%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>1</p></td>
-<td><p>1</p></td>
-<td><p>N</p></td>
-</tr>
-<tr class="row-odd"><td><p>A(6,)</p></td>
-<td><p>SE3</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>1 [ndarray(6,)]</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>1 [SE3]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>6</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.discrete.DPoseIntegrator.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">clock</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/discrete.html#DPoseIntegrator.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.discrete.DPoseIntegrator.__init__" title="Permalink to this definition"></a></dt>
@@ -2004,7 +2000,7 @@ is pose as an <code class="docutils literal notranslate"><span class="pre">SE3</
 
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.discrete.DPoseIntegrator.next">
-<span class="sig-name descname"><span class="pre">next</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/discrete.html#DPoseIntegrator.next"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.discrete.DPoseIntegrator.next" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">next</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/discrete.html#DPoseIntegrator.next"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.discrete.DPoseIntegrator.next" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -2015,7 +2011,8 @@ is pose as an <code class="docutils literal notranslate"><span class="pre">SE3</
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.ClockedBlock" title="bdsim.components.ClockedBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.ClockedBlock</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -2023,35 +2020,24 @@ is pose as an <code class="docutils literal notranslate"><span class="pre">SE3</
     ZOH
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/zoh.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/zoh.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
     </p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 40%" />
-<col style="width: 30%" />
-<col style="width: 30%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>1</p></td>
-<td><p>1</p></td>
-<td><p>N</p></td>
-</tr>
-<tr class="row-odd"><td><p>float,
-A(N,)</p></td>
-<td><p>float,
-A(N,)</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>1 [float, ndarray]</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>1 [float, ndarray]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>N</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.discrete.ZOH.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">clock</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/discrete.html#ZOH.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.discrete.ZOH.__init__" title="Permalink to this definition"></a></dt>
@@ -2082,7 +2068,7 @@ input signal.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.discrete.ZOH.next">
-<span class="sig-name descname"><span class="pre">next</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/discrete.html#ZOH.next"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.discrete.ZOH.next" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">next</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/discrete.html#ZOH.next"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.discrete.ZOH.next" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -2102,7 +2088,8 @@ input signal.</p>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -2110,33 +2097,24 @@ input signal.</p>
     COND
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/cond.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/cond.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
     </p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 40%" />
-<col style="width: 30%" />
-<col style="width: 30%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>1</p></td>
-<td><p>1</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td><p>A(N,M)</p></td>
-<td><p>float</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>1 [ndarray]</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>1 [float]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.linalg.Cond.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/linalg.html#Cond.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.linalg.Cond.__init__" title="Permalink to this definition"></a></dt>
@@ -2165,7 +2143,8 @@ input signal.</p>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -2173,33 +2152,24 @@ input signal.</p>
     DET
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/det.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/det.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
     </p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 40%" />
-<col style="width: 30%" />
-<col style="width: 30%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>1</p></td>
-<td><p>1</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td><p>A(N,N)</p></td>
-<td><p>float</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>1 [ndarray]</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>1 [float]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.linalg.Det.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/linalg.html#Det.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.linalg.Det.__init__" title="Permalink to this definition"></a></dt>
@@ -2231,7 +2201,8 @@ input signal.</p>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -2239,33 +2210,24 @@ input signal.</p>
     FLATTEN
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/flatten.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/flatten.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
     </p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 40%" />
-<col style="width: 30%" />
-<col style="width: 30%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>1</p></td>
-<td><p>1</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td><p>A(N,M )</p></td>
-<td><p>A(NM,)</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>1 [ndarray]</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>1 [ndarray]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.linalg.Flatten.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'C'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/linalg.html#Flatten.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.linalg.Flatten.__init__" title="Permalink to this definition"></a></dt>
@@ -2300,7 +2262,8 @@ input signal.</p>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -2308,34 +2271,24 @@ input signal.</p>
     INVERSE
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/inverse.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/inverse.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
     </p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 36%" />
-<col style="width: 32%" />
-<col style="width: 32%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>1</p></td>
-<td><p>2</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td><p>A(M,N)</p></td>
-<td><p>A(N,M)
-float</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>1 [ndarray]</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>2 [ndarray, float]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.linalg.Inverse.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pinv</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/linalg.html#Inverse.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.linalg.Inverse.__init__" title="Permalink to this definition"></a></dt>
@@ -2380,7 +2333,8 @@ output on the second port.</p>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -2388,34 +2342,24 @@ output on the second port.</p>
     NORM
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/norm.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/norm.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
     </p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 40%" />
-<col style="width: 30%" />
-<col style="width: 30%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>1</p></td>
-<td><p>1</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td><p>A(N,)
-A(N,M)</p></td>
-<td><p>float</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>1 [ndarray]</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>1 [float]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.linalg.Norm.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ord</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/linalg.html#Norm.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.linalg.Norm.__init__" title="Permalink to this definition"></a></dt>
@@ -2451,7 +2395,8 @@ A(N,M)</p></td>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -2459,33 +2404,24 @@ A(N,M)</p></td>
     SLICE1
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/slice1.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/slice1.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
     </p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 40%" />
-<col style="width: 30%" />
-<col style="width: 30%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>1</p></td>
-<td><p>1</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td><p>A(N)</p></td>
-<td><p>A(M)</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>1 [ndarray]</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>1 [ndarray]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.linalg.Slice1.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/linalg.html#Slice1.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.linalg.Slice1.__init__" title="Permalink to this definition"></a></dt>
@@ -2544,7 +2480,8 @@ describes a Python slice <code class="docutils literal notranslate"><span class=
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -2552,33 +2489,24 @@ describes a Python slice <code class="docutils literal notranslate"><span class=
     SLICE2
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/slice2.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/slice2.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
     </p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 40%" />
-<col style="width: 30%" />
-<col style="width: 30%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>1</p></td>
-<td><p>1</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td><p>A(N,M)</p></td>
-<td><p>A(K,L)</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>1 [ndarray]</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>1 [ndarray]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.linalg.Slice2.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rows</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/linalg.html#Slice2.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.linalg.Slice2.__init__" title="Permalink to this definition"></a></dt>
@@ -2642,7 +2570,8 @@ and one for columns.</p>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -2650,33 +2579,24 @@ and one for columns.</p>
     TRANSPOSE
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/transpose.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/transpose.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
     </p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 40%" />
-<col style="width: 30%" />
-<col style="width: 30%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>1</p></td>
-<td><p>1</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td><p>A(M,N)</p></td>
-<td><p>A(N,M)</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>1 [ndarray]</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>1 [ndarray]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.linalg.Transpose.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/linalg.html#Transpose.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.linalg.Transpose.__init__" title="Permalink to this definition"></a></dt>
@@ -2743,7 +2663,8 @@ with shape (N,1).</p></li>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -2751,34 +2672,24 @@ with shape (N,1).</p></li>
     DEMUX
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/demux.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/demux.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
     </p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 40%" />
-<col style="width: 30%" />
-<col style="width: 30%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>1</p></td>
-<td><p>nout</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td><p>float,
-A(nout,)</p></td>
-<td><p>float</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>1 [ndarray]</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>N [float]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.connections.DeMux.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#DeMux.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.connections.DeMux.__init__" title="Permalink to this definition"></a></dt>
@@ -2810,7 +2721,8 @@ scalar output ports.</p>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -2818,33 +2730,24 @@ scalar output ports.</p>
     DICT
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/dict.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/dict.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
     </p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 40%" />
-<col style="width: 30%" />
-<col style="width: 30%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>N</p></td>
-<td><p>1</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td><p>any</p></td>
-<td><p>dict</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>N [any]</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>1 [dict]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.connections.Dict.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#Dict.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.connections.Dict.__init__" title="Permalink to this definition"></a></dt>
@@ -2889,7 +2792,8 @@ named heterogeneous data.</p>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.SubsystemBlock" title="bdsim.components.SubsystemBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SubsystemBlock</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -2897,33 +2801,24 @@ named heterogeneous data.</p>
     INPORT
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/inport.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/inport.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
     </p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 40%" />
-<col style="width: 30%" />
-<col style="width: 30%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>0</p></td>
-<td><p>nout</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td></td>
-<td><p>any</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>N [any]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.connections.InPort.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#InPort.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.connections.InPort.__init__" title="Permalink to this definition"></a></dt>
@@ -2960,7 +2855,8 @@ would require multiple single-port input blocks.</p>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -2968,8 +2864,9 @@ would require multiple single-port input blocks.</p>
     INDEX
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/index.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/index.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
@@ -2995,6 +2892,17 @@ would require multiple single-port input blocks.</p>
 </tr>
 </tbody>
 </table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>1 [iterable]</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>1 [iterable]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.connections.Index.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#Index.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.connections.Index.__init__" title="Permalink to this definition"></a></dt>
@@ -3031,7 +2939,8 @@ object, or a string with Python slice notation, eg. <code class="docutils litera
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -3039,33 +2948,24 @@ object, or a string with Python slice notation, eg. <code class="docutils litera
     ITEM
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/item.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/item.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
     </p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 40%" />
-<col style="width: 30%" />
-<col style="width: 30%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>1</p></td>
-<td><p>1</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td><p>dict</p></td>
-<td><p>any</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>1 [dict]</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>1 [any]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.connections.Item.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#Item.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.connections.Item.__init__" title="Permalink to this definition"></a></dt>
@@ -3108,7 +3008,8 @@ named heterogeneous data.</p>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.FunctionBlock" title="bdsim.components.FunctionBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.FunctionBlock</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -3116,35 +3017,24 @@ named heterogeneous data.</p>
     MUX
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/mux.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/mux.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
     </p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 40%" />
-<col style="width: 30%" />
-<col style="width: 30%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>nin</p></td>
-<td><p>1</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td><p>float,
-A(N,)</p></td>
-<td><p>A(M,)
-A(M,)</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>N [float, ndarray]</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>1 [ndarray]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.connections.Mux.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#Mux.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.connections.Mux.__init__" title="Permalink to this definition"></a></dt>
@@ -3185,7 +3075,8 @@ single output vector as a 1D-array.</p>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.SubsystemBlock" title="bdsim.components.SubsystemBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SubsystemBlock</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -3193,33 +3084,24 @@ single output vector as a 1D-array.</p>
     OUTPORT
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/outport.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/outport.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
     </p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 40%" />
-<col style="width: 30%" />
-<col style="width: 30%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>nin</p></td>
-<td><p>0</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td><p>any</p></td>
-<td></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>N [any]</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>0</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.connections.OutPort.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#OutPort.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.connections.OutPort.__init__" title="Permalink to this definition"></a></dt>
@@ -3257,7 +3139,8 @@ would require multiple single-port output blocks.</p>
 <dd><p>Bases: <a class="reference internal" href="internals.html#bdsim.SubsystemBlock" title="bdsim.components.SubsystemBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">bdsim.components.SubsystemBlock</span></code></a></p>
 <p>
     <table width="100%">
-    	<col style="width:80%">
+    	<col style="width:75%">
+        <col style="width:5%;">
 	    <col style="width:20%">
     <tr>
     <td>
@@ -3265,33 +3148,24 @@ would require multiple single-port output blocks.</p>
     SUBSYSTEM
     </p>
     </td>
+    <td></td>
     <td>
-    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/subsystem.png" width=80 height=80>
+    <img src="https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/subsystem.png" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
     </td>
     </tr>
     </table>
     </p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 36%" />
-<col style="width: 36%" />
-<col style="width: 27%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>ss.in.nout</p></td>
-<td><p>ss.out.nin</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td><p>any</p></td>
-<td><p>any</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Inputs</dt>
+<dd class="field-odd"><p>N [any]</p>
+</dd>
+<dt class="field-even">Outputs</dt>
+<dd class="field-even"><p>M [any]</p>
+</dd>
+<dt class="field-odd">States</dt>
+<dd class="field-odd"><p>0</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.connections.SubSystem.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subsys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#SubSystem.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.connections.SubSystem.__init__" title="Permalink to this definition"></a></dt>
@@ -3299,7 +3173,7 @@ would require multiple single-port output blocks.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>subsys</strong> (<em>str</em><em> or </em><em>BlockDiagram</em>) – Subsystem as either a filename or a <code class="docutils literal notranslate"><span class="pre">BlockDiagram</span></code> instance</p></li>
+<li><p><strong>subsys</strong> (<em>str</em><em> or </em><a class="reference internal" href="internals.html#bdsim.BlockDiagram" title="bdsim.BlockDiagram"><em>BlockDiagram</em></a>) – Subsystem as either a filename or a <code class="docutils literal notranslate"><span class="pre">BlockDiagram</span></code> instance</p></li>
 <li><p><strong>nin</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of input ports, defaults to 1</p></li>
 <li><p><strong>nout</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of output ports, defaults to 1</p></li>
 <li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
@@ -3390,7 +3264,7 @@ subsystem.</p></li>
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020-, Peter Corke..
-      <span class="lastupdated">Last updated on 03-Apr-2023.
+      <span class="lastupdated">Last updated on 19-Apr-2023.
       </span></p>
   </div>
 

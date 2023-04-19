@@ -107,13 +107,9 @@
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
 
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | inputs     | outputs |  states |</span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | 1          | 1       | 0       |</span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | dict       | any     |         |</span>
-<span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    :inputs: 1 [dict]</span>
+<span class="sd">    :outputs: 1 [any]</span>
+<span class="sd">    :states: 0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
@@ -148,11 +144,12 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">item</span> <span class="o">=</span> <span class="n">item</span></div>
 
-    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="nb">input</span> <span class="o">=</span> <span class="n">inports</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="c1"># TODO, handle inputs that are vectors themselves</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">dict</span><span class="p">),</span> <span class="s2">&quot;Input signal must be a dict&quot;</span>
-        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;Item is not in input dict&quot;</span>
-        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">item</span><span class="p">]]</span></div>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="nb">dict</span><span class="p">),</span> <span class="s2">&quot;Input signal must be a dict&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">item</span> <span class="ow">in</span> <span class="nb">input</span><span class="p">,</span> <span class="s2">&quot;Item is not in input dict&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="nb">input</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">item</span><span class="p">]]</span></div>
 
 
 <div class="viewcode-block" id="Dict"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Dict">[docs]</a><span class="k">class</span> <span class="nc">Dict</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
@@ -163,13 +160,9 @@
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
 
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | inputs     | outputs |  states |</span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | N          | 1       | 0       |</span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | any        | dict    |         |</span>
-<span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    :inputs: N [any]</span>
+<span class="sd">    :outputs: 1 [dict]</span>
+<span class="sd">    :states: 0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
@@ -206,11 +199,12 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">item</span> <span class="o">=</span> <span class="n">item</span></div>
 
-    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="nb">input</span> <span class="o">=</span> <span class="n">inports</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="c1"># TODO, handle inputs that are vectors themselves</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">dict</span><span class="p">),</span> <span class="s2">&quot;Input signal must be a dict&quot;</span>
-        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;Item is not in signal dict&quot;</span>
-        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">item</span><span class="p">]]</span></div>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="nb">dict</span><span class="p">),</span> <span class="s2">&quot;Input signal must be a dict&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">item</span> <span class="ow">in</span> <span class="nb">input</span><span class="p">,</span> <span class="s2">&quot;Item is not in signal dict&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="nb">input</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">item</span><span class="p">]]</span></div>
 
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
@@ -221,14 +215,9 @@
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
 
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | inputs     | outputs |  states |</span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | nin        | 1       | 0       |</span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | float,     | A(M,)   |         |</span>
-<span class="sd">    | A(N,)      | A(M,)   |         |</span>
-<span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    :inputs: N [float, ndarray]</span>
+<span class="sd">    :outputs: 1 [ndarray]</span>
+<span class="sd">    :states: 0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
@@ -257,10 +246,10 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="n">nin</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="c1"># TODO, handle inputs that are vectors themselves</span>
         <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="nb">input</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">:</span>
+        <span class="k">for</span> <span class="nb">input</span> <span class="ow">in</span> <span class="n">inports</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)):</span>
                 <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
@@ -276,14 +265,9 @@
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
 
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | inputs     | outputs |  states |</span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | 1          | nout    | 0       |</span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | float,     | float   |         |</span>
-<span class="sd">    | A(nout,)   |         |         |</span>
-<span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    :inputs: 1 [ndarray]</span>
+<span class="sd">    :outputs: N [float]</span>
+<span class="sd">    :states: 0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
@@ -307,12 +291,13 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nout</span><span class="o">=</span><span class="n">nout</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="nb">input</span> <span class="o">=</span> <span class="n">inports</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="c1"># TODO, handle inputs that are vectors themselves</span>
         <span class="k">assert</span> <span class="p">(</span>
-            <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">nout</span>
+            <span class="nb">len</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">nout</span>
         <span class="p">),</span> <span class="s2">&quot;Input width not equal to number of output ports&quot;</span>
-        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span></div>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span></div>
 
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
@@ -332,6 +317,9 @@
 <span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    | ndarray    | ndarray |         |</span>
 <span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    :inputs: 1 [iterable]</span>
+<span class="sd">    :outputs: 1 [iterable]</span>
+<span class="sd">    :states: 0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
@@ -361,11 +349,14 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">index</span></div>
 
-    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="nb">input</span> <span class="o">=</span> <span class="n">inports</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]]]</span>
+            <span class="k">return</span> <span class="p">[</span><span class="nb">input</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]]]</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">input</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">])]</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[[</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">]]]</span></div>
+            <span class="k">return</span> <span class="p">[[</span><span class="nb">input</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">]]</span></div>
 
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
@@ -378,13 +369,9 @@
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
 
-<span class="sd">    +------------+------------+---------+</span>
-<span class="sd">    | inputs     | outputs    |  states |</span>
-<span class="sd">    +------------+------------+---------+</span>
-<span class="sd">    | ss.in.nout | ss.out.nin | 0       |</span>
-<span class="sd">    +------------+------------+---------+</span>
-<span class="sd">    | any        | any        |         |</span>
-<span class="sd">    +------------+------------+---------+</span>
+<span class="sd">    :inputs: N [any]</span>
+<span class="sd">    :outputs: M [any]</span>
+<span class="sd">    :states: 0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
@@ -509,13 +496,9 @@
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
 
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | inputs     | outputs |  states |</span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | 0          | nout    | 0       |</span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    |            | any     |         |</span>
-<span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    :inputs: 0</span>
+<span class="sd">    :outputs: N [any]</span>
+<span class="sd">    :states: 0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">0</span>
@@ -541,10 +524,10 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nout</span><span class="o">=</span><span class="n">nout</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="c1"># signal feed through</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span></div>
+        <span class="k">return</span> <span class="n">inports</span></div>
 
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
@@ -557,13 +540,9 @@
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
 
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | inputs     | outputs |  states |</span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | nin        | 0       | 0       |</span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | any        |         |         |</span>
-<span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    :inputs: N [any]</span>
+<span class="sd">    :outputs: 0</span>
+<span class="sd">    :states: 0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
@@ -590,9 +569,9 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="n">nin</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="c1"># signal feed through</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span></div>
+        <span class="k">return</span> <span class="n">inports</span></div>
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
@@ -614,7 +593,7 @@
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020-, Peter Corke..
-      <span class="lastupdated">Last updated on 03-Apr-2023.
+      <span class="lastupdated">Last updated on 19-Apr-2023.
       </span></p>
   </div>
 

@@ -170,9 +170,6 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">enable</span><span class="p">:</span>
             <span class="k">return</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">progress</span><span class="p">:</span>
-            <span class="k">return</span>
-
         <span class="k">if</span> <span class="n">_FillingCirclesBar</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">bar</span><span class="o">.</span><span class="n">goto</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">t</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span> <span class="o">*</span> <span class="mi">100</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
@@ -535,30 +532,30 @@
         <span class="c1"># T = T or 5</span>
         <span class="c1"># dt = dt or 0.01</span>
 
-        <span class="n">state</span> <span class="o">=</span> <span class="n">BDSimState</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">state</span>
-        <span class="n">state</span><span class="o">.</span><span class="n">T</span> <span class="o">=</span> <span class="n">T</span>
+        <span class="n">simstate</span> <span class="o">=</span> <span class="n">BDSimState</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simstate</span> <span class="o">=</span> <span class="n">simstate</span>
+        <span class="n">simstate</span><span class="o">.</span><span class="n">T</span> <span class="o">=</span> <span class="n">T</span>
 
         <span class="k">if</span> <span class="n">dt</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="s2">&quot;max_step&quot;</span> <span class="ow">in</span> <span class="n">solver_args</span><span class="p">:</span>
             <span class="n">dt</span> <span class="o">=</span> <span class="n">T</span> <span class="o">/</span> <span class="mi">100</span>
-        <span class="n">state</span><span class="o">.</span><span class="n">dt</span> <span class="o">=</span> <span class="n">dt</span>
-        <span class="n">state</span><span class="o">.</span><span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">state</span><span class="o">.</span><span class="n">solver</span> <span class="o">=</span> <span class="n">solver</span>
-        <span class="n">state</span><span class="o">.</span><span class="n">solver_args</span> <span class="o">=</span> <span class="n">solver_args</span>
-        <span class="n">state</span><span class="o">.</span><span class="n">minstepsize</span> <span class="o">=</span> <span class="n">minstepsize</span>
-        <span class="n">state</span><span class="o">.</span><span class="n">stop</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># allow any block to stop.BlockDiagram by setting this to the block&#39;s name</span>
-        <span class="n">state</span><span class="o">.</span><span class="n">checkfinite</span> <span class="o">=</span> <span class="n">checkfinite</span>
+        <span class="n">simstate</span><span class="o">.</span><span class="n">dt</span> <span class="o">=</span> <span class="n">dt</span>
+        <span class="n">simstate</span><span class="o">.</span><span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">simstate</span><span class="o">.</span><span class="n">solver</span> <span class="o">=</span> <span class="n">solver</span>
+        <span class="n">simstate</span><span class="o">.</span><span class="n">solver_args</span> <span class="o">=</span> <span class="n">solver_args</span>
+        <span class="n">simstate</span><span class="o">.</span><span class="n">minstepsize</span> <span class="o">=</span> <span class="n">minstepsize</span>
+        <span class="n">simstate</span><span class="o">.</span><span class="n">stop</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># allow any block to stop.BlockDiagram by setting this to the block&#39;s name</span>
+        <span class="n">simstate</span><span class="o">.</span><span class="n">checkfinite</span> <span class="o">=</span> <span class="n">checkfinite</span>
         <span class="c1"># state.options = copy.copy(self.options)</span>
-        <span class="n">state</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span>
+        <span class="n">simstate</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bd</span> <span class="o">=</span> <span class="n">bd</span>
-        <span class="n">state</span><span class="o">.</span><span class="n">t_stop</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">simstate</span><span class="o">.</span><span class="n">t_stop</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
             <span class="c1"># append debug flags</span>
-            <span class="k">if</span> <span class="n">debug</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
-                <span class="n">state</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">debug</span> <span class="o">+=</span> <span class="n">debug</span>
+            <span class="k">if</span> <span class="n">debug</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">simstate</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
+                <span class="n">simstate</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">debug</span> <span class="o">+=</span> <span class="n">debug</span>
 
         <span class="c1"># turn off progress bar if any debug options are given</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">debug</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">simstate</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">debug</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">progress</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">if</span> <span class="n">block</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">hold</span> <span class="o">=</span> <span class="n">block</span>
@@ -588,8 +585,8 @@
                 <span class="n">plug</span> <span class="o">=</span> <span class="n">w</span>
             <span class="n">watchlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">plug</span><span class="p">)</span>
             <span class="n">watchnamelist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">plug</span><span class="p">))</span>
-        <span class="n">state</span><span class="o">.</span><span class="n">watchlist</span> <span class="o">=</span> <span class="n">watchlist</span>
-        <span class="n">state</span><span class="o">.</span><span class="n">watchnamelist</span> <span class="o">=</span> <span class="n">watchnamelist</span>
+        <span class="n">simstate</span><span class="o">.</span><span class="n">watchlist</span> <span class="o">=</span> <span class="n">watchlist</span>
+        <span class="n">simstate</span><span class="o">.</span><span class="n">watchnamelist</span> <span class="o">=</span> <span class="n">watchnamelist</span>
 
         <span class="n">x0</span> <span class="o">=</span> <span class="n">bd</span><span class="o">.</span><span class="n">getstate0</span><span class="p">()</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;initial state  x0 = &quot;</span><span class="p">,</span> <span class="n">x0</span><span class="p">)</span>
@@ -601,33 +598,33 @@
             <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">clock</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
                 <span class="n">nds</span> <span class="o">+=</span> <span class="n">b</span><span class="o">.</span><span class="n">ndstates</span>
             <span class="n">ndstates</span> <span class="o">+=</span> <span class="n">nds</span>
-            <span class="nb">print</span><span class="p">(</span><span class="n">clock</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;initial dstate x0 = &quot;</span><span class="p">,</span> <span class="n">clock</span><span class="o">.</span><span class="n">getstate</span><span class="p">())</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">clock</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;initial dstate x0 = &quot;</span><span class="p">,</span> <span class="n">clock</span><span class="o">.</span><span class="n">getstate0</span><span class="p">())</span>
 
         <span class="c1"># update block parameters given on command line</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">update_parameters</span><span class="p">(</span><span class="n">bd</span><span class="p">)</span>
 
         <span class="c1"># tell all blocks we&#39;re starting a BlockDiagram</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span> <span class="n">graphics</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">graphics</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">simstate</span><span class="p">)</span>
 
         <span class="c1"># initialize list of time and states</span>
-        <span class="n">state</span><span class="o">.</span><span class="n">tlist</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">state</span><span class="o">.</span><span class="n">xlist</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">state</span><span class="o">.</span><span class="n">plist</span> <span class="o">=</span> <span class="p">[[]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">watchlist</span><span class="p">]</span>
+        <span class="n">simstate</span><span class="o">.</span><span class="n">tlist</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">simstate</span><span class="o">.</span><span class="n">xlist</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">simstate</span><span class="o">.</span><span class="n">plist</span> <span class="o">=</span> <span class="p">[[]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">simstate</span><span class="o">.</span><span class="n">watchlist</span><span class="p">]</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">progress</span> <span class="o">=</span> <span class="n">Progress</span><span class="p">(</span><span class="n">enable</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">progress</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">progress</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">T</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">eventq</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">simstate</span><span class="o">.</span><span class="n">eventq</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="c1"># no simulation events, solve it in one go</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">run_interval</span><span class="p">(</span><span class="n">bd</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">run_interval</span><span class="p">(</span><span class="n">bd</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">simstate</span><span class="o">=</span><span class="n">simstate</span><span class="p">)</span>
             <span class="n">nintervals</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># we have simulation events, solve it in chunks</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">declare_event</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">T</span><span class="p">)</span>  <span class="c1"># add an event at end of simulation</span>
+            <span class="n">simstate</span><span class="o">.</span><span class="n">declare_event</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">T</span><span class="p">)</span>  <span class="c1"># add an event at end of simulation</span>
 
             <span class="c1"># ignore all the events at zero</span>
             <span class="n">tprev</span> <span class="o">=</span> <span class="mi">0</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">eventq</span><span class="o">.</span><span class="n">pop_until</span><span class="p">(</span><span class="n">tprev</span><span class="p">)</span>
+            <span class="n">simstate</span><span class="o">.</span><span class="n">eventq</span><span class="o">.</span><span class="n">pop_until</span><span class="p">(</span><span class="n">tprev</span><span class="p">)</span>
 
             <span class="c1"># get the state vector</span>
             <span class="n">x</span> <span class="o">=</span> <span class="n">x0</span>
@@ -636,11 +633,11 @@
             <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
                 <span class="c1"># get next event from the queue and the list of blocks or</span>
                 <span class="c1"># clocks at that time</span>
-                <span class="n">tnext</span><span class="p">,</span> <span class="n">sources</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">eventq</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">dt</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">)</span>
+                <span class="n">tnext</span><span class="p">,</span> <span class="n">sources</span> <span class="o">=</span> <span class="n">simstate</span><span class="o">.</span><span class="n">eventq</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">dt</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">tnext</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="k">break</span>
                 <span class="c1"># run system until next event time</span>
-                <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_interval</span><span class="p">(</span><span class="n">bd</span><span class="p">,</span> <span class="n">tprev</span><span class="p">,</span> <span class="n">tnext</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">)</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_interval</span><span class="p">(</span><span class="n">bd</span><span class="p">,</span> <span class="n">tprev</span><span class="p">,</span> <span class="n">tnext</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">simstate</span><span class="o">=</span><span class="n">simstate</span><span class="p">)</span>
                 <span class="n">nintervals</span> <span class="o">+=</span> <span class="mi">1</span>
 
                 <span class="c1"># visit all the blocks and clocks that have an event now</span>
@@ -648,14 +645,14 @@
                     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">Clock</span><span class="p">):</span>
                         <span class="c1"># clock ticked, save its state</span>
                         <span class="n">clock</span><span class="o">.</span><span class="n">savestate</span><span class="p">(</span><span class="n">tnext</span><span class="p">)</span>
-                        <span class="n">clock</span><span class="o">.</span><span class="n">next_event</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">)</span>
+                        <span class="n">clock</span><span class="o">.</span><span class="n">next_event</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simstate</span><span class="p">)</span>
 
                         <span class="c1"># get the new state</span>
-                        <span class="n">clock</span><span class="o">.</span><span class="n">_x</span> <span class="o">=</span> <span class="n">clock</span><span class="o">.</span><span class="n">getstate</span><span class="p">()</span>
+                        <span class="n">clock</span><span class="o">.</span><span class="n">_x</span> <span class="o">=</span> <span class="n">clock</span><span class="o">.</span><span class="n">getstate</span><span class="p">(</span><span class="n">tnext</span><span class="p">)</span>
                 <span class="n">tprev</span> <span class="o">=</span> <span class="n">tnext</span>
 
                 <span class="c1"># are we done?</span>
-                <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">t</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">state</span><span class="o">.</span><span class="n">t</span> <span class="o">&gt;=</span> <span class="n">T</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">simstate</span><span class="o">.</span><span class="n">t</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">simstate</span><span class="o">.</span><span class="n">t</span> <span class="o">&gt;=</span> <span class="n">T</span><span class="p">:</span>
                     <span class="k">break</span>
 
         <span class="c1"># finished integration</span>
@@ -664,15 +661,15 @@
 
         <span class="c1"># print some info about the integration</span>
         <span class="nb">print</span><span class="p">(</span><span class="n">fg</span><span class="p">(</span><span class="s2">&quot;yellow&quot;</span><span class="p">))</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;integrator steps:      </span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">count</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;time steps:            </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">tlist</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;integrator steps:      </span><span class="si">{</span><span class="n">simstate</span><span class="o">.</span><span class="n">count</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;time steps:            </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">simstate</span><span class="o">.</span><span class="n">tlist</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;integration intervals: </span><span class="si">{</span><span class="n">nintervals</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="n">attr</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
 
         <span class="c1"># save buffered data in a Struct</span>
         <span class="n">out</span> <span class="o">=</span> <span class="n">BDStruct</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;results&quot;</span><span class="p">)</span>
-        <span class="n">out</span><span class="o">.</span><span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">tlist</span><span class="p">)</span>
-        <span class="n">out</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">xlist</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">simstate</span><span class="o">.</span><span class="n">tlist</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">simstate</span><span class="o">.</span><span class="n">xlist</span><span class="p">)</span>
         <span class="n">out</span><span class="o">.</span><span class="n">xnames</span> <span class="o">=</span> <span class="n">bd</span><span class="o">.</span><span class="n">statenames</span>
 
         <span class="c1"># save clocked states</span>
@@ -685,7 +682,7 @@
 
         <span class="c1"># save the watchlist into variables named y0, y1 etc.</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">watchlist</span><span class="p">):</span>
-            <span class="n">out</span><span class="p">[</span><span class="s2">&quot;y&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">plist</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="n">out</span><span class="p">[</span><span class="s2">&quot;y&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">simstate</span><span class="o">.</span><span class="n">plist</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
         <span class="n">out</span><span class="o">.</span><span class="n">ynames</span> <span class="o">=</span> <span class="n">watchnamelist</span>
 
         <span class="c1"># the command line options -o or --out saves results as a pickle file</span>
@@ -776,7 +773,7 @@
                 <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">new_value</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="p">)</span></div>
 
-<div class="viewcode-block" id="BDSim.run_interval"><a class="viewcode-back" href="../../internals.html#bdsim.BDSim.run_interval">[docs]</a>    <span class="k">def</span> <span class="nf">run_interval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bd</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+<div class="viewcode-block" id="BDSim.run_interval"><a class="viewcode-back" href="../../internals.html#bdsim.BDSim.run_interval">[docs]</a>    <span class="k">def</span> <span class="nf">run_interval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bd</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">simstate</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Integrate system over interval</span>
 
@@ -804,20 +801,20 @@
                 <span class="c1"># block diagram contains states, solve it using numerical integration</span>
 
                 <span class="n">scipy_integrator</span> <span class="o">=</span> <span class="n">integrate</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span>
-                    <span class="n">state</span><span class="o">.</span><span class="n">solver</span>
+                    <span class="n">simstate</span><span class="o">.</span><span class="n">solver</span>
                 <span class="p">]</span>  <span class="c1"># get user specified integrator</span>
 
                 <span class="k">def</span> <span class="nf">ydot</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
-                    <span class="n">state</span><span class="o">.</span><span class="n">t</span> <span class="o">=</span> <span class="n">t</span>
-                    <span class="n">state</span><span class="o">.</span><span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
-                    <span class="k">return</span> <span class="n">bd</span><span class="o">.</span><span class="n">evaluate_plan</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+                    <span class="n">simstate</span><span class="o">.</span><span class="n">t</span> <span class="o">=</span> <span class="n">t</span>
+                    <span class="n">simstate</span><span class="o">.</span><span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">return</span> <span class="n">bd</span><span class="o">.</span><span class="n">schedule_evaluate</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">simstate</span><span class="o">=</span><span class="n">simstate</span><span class="p">)</span>
 
-                <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">dt</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="n">state</span><span class="o">.</span><span class="n">solver_args</span><span class="p">[</span><span class="s2">&quot;max_step&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">dt</span>
+                <span class="k">if</span> <span class="n">simstate</span><span class="o">.</span><span class="n">dt</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">simstate</span><span class="o">.</span><span class="n">solver_args</span><span class="p">[</span><span class="s2">&quot;max_step&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">simstate</span><span class="o">.</span><span class="n">dt</span>
 
                 <span class="c1"># print(f&quot;run interval: from {t0} to {t0+T}, args={state.solver_args}, x0={x0}&quot;)</span>
                 <span class="n">integrator</span> <span class="o">=</span> <span class="n">scipy_integrator</span><span class="p">(</span>
-                    <span class="n">ydot</span><span class="p">,</span> <span class="n">t0</span><span class="o">=</span><span class="n">t0</span><span class="p">,</span> <span class="n">y0</span><span class="o">=</span><span class="n">x0</span><span class="p">,</span> <span class="n">t_bound</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="o">**</span><span class="n">state</span><span class="o">.</span><span class="n">solver_args</span>
+                    <span class="n">ydot</span><span class="p">,</span> <span class="n">t0</span><span class="o">=</span><span class="n">t0</span><span class="p">,</span> <span class="n">y0</span><span class="o">=</span><span class="n">x0</span><span class="p">,</span> <span class="n">t_bound</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="o">**</span><span class="n">simstate</span><span class="o">.</span><span class="n">solver_args</span>
                 <span class="p">)</span>
 
                 <span class="c1"># integrate</span>
@@ -835,44 +832,46 @@
                         <span class="k">break</span>
 
                     <span class="c1"># stash the results</span>
-                    <span class="n">state</span><span class="o">.</span><span class="n">tlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">integrator</span><span class="o">.</span><span class="n">t</span><span class="p">)</span>
-                    <span class="n">state</span><span class="o">.</span><span class="n">xlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">integrator</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+                    <span class="n">simstate</span><span class="o">.</span><span class="n">t</span> <span class="o">=</span> <span class="n">integrator</span><span class="o">.</span><span class="n">t</span>
+                    <span class="n">simstate</span><span class="o">.</span><span class="n">tlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">integrator</span><span class="o">.</span><span class="n">t</span><span class="p">)</span>
+                    <span class="n">simstate</span><span class="o">.</span><span class="n">xlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">integrator</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
 
                     <span class="c1"># record the ports on the watchlist</span>
-                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">watchlist</span><span class="p">):</span>
-                        <span class="n">state</span><span class="o">.</span><span class="n">plist</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">integrator</span><span class="o">.</span><span class="n">t</span><span class="p">)[</span><span class="n">p</span><span class="o">.</span><span class="n">port</span><span class="p">])</span>
+                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">simstate</span><span class="o">.</span><span class="n">watchlist</span><span class="p">):</span>
+                        <span class="n">simstate</span><span class="o">.</span><span class="n">plist</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">integrator</span><span class="o">.</span><span class="n">t</span><span class="p">)[</span><span class="n">p</span><span class="o">.</span><span class="n">port</span><span class="p">])</span>
 
                     <span class="c1"># # update all blocks that need to know</span>
-                    <span class="n">bd</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">)</span>
+                    <span class="n">bd</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">integrator</span><span class="o">.</span><span class="n">t</span><span class="p">)</span>
 
-                    <span class="bp">self</span><span class="o">.</span><span class="n">progress</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">t</span><span class="p">)</span>  <span class="c1"># update the progress bar</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">progress</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">simstate</span><span class="o">.</span><span class="n">t</span><span class="p">)</span>  <span class="c1"># update the progress bar</span>
 
                     <span class="k">if</span> <span class="n">integrator</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s2">&quot;finished&quot;</span><span class="p">:</span>
                         <span class="k">break</span>
 
                     <span class="c1"># has any block called a stop?</span>
-                    <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">stop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">simstate</span><span class="o">.</span><span class="n">stop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                         <span class="nb">print</span><span class="p">(</span>
                             <span class="n">fg</span><span class="p">(</span><span class="s2">&quot;red&quot;</span><span class="p">)</span>
-                            <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">--- stop requested at t=</span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">t</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> by </span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">stop</span><span class="si">}</span><span class="s2">&quot;</span>
+                            <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">--- stop requested at t=</span><span class="si">{</span><span class="n">simstate</span><span class="o">.</span><span class="n">t</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> by&quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">simstate</span><span class="o">.</span><span class="n">stop</span><span class="si">}</span><span class="s2">&quot;</span>
                             <span class="o">+</span> <span class="n">attr</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
                         <span class="p">)</span>
                         <span class="k">break</span>
 
                     <span class="k">if</span> <span class="p">(</span>
-                        <span class="n">state</span><span class="o">.</span><span class="n">minstepsize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                        <span class="ow">and</span> <span class="n">integrator</span><span class="o">.</span><span class="n">step_size</span> <span class="o">&lt;</span> <span class="n">state</span><span class="o">.</span><span class="n">minstepsize</span>
+                        <span class="n">simstate</span><span class="o">.</span><span class="n">minstepsize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                        <span class="ow">and</span> <span class="n">integrator</span><span class="o">.</span><span class="n">step_size</span> <span class="o">&lt;</span> <span class="n">simstate</span><span class="o">.</span><span class="n">minstepsize</span>
                     <span class="p">):</span>
                         <span class="nb">print</span><span class="p">(</span>
                             <span class="n">fg</span><span class="p">(</span><span class="s2">&quot;red&quot;</span><span class="p">)</span>
                             <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">--- stopping on minimum step size at&quot;</span>
-                            <span class="sa">f</span><span class="s2">&quot; t=</span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">t</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> with last stepsize&quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot; t=</span><span class="si">{</span><span class="n">simstate</span><span class="o">.</span><span class="n">t</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> with last stepsize&quot;</span>
                             <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">integrator</span><span class="o">.</span><span class="n">step_size</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">&quot;</span>
                             <span class="o">+</span> <span class="n">attr</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
                         <span class="p">)</span>
                         <span class="k">break</span>
 
-                    <span class="k">if</span> <span class="s2">&quot;i&quot;</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="s2">&quot;i&quot;</span> <span class="ow">in</span> <span class="n">simstate</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
                         <span class="n">bd</span><span class="o">.</span><span class="n">_debugger</span><span class="p">(</span><span class="n">integrator</span><span class="p">)</span>
 
                 <span class="k">return</span> <span class="n">integrator</span><span class="o">.</span><span class="n">y</span>  <span class="c1"># return final state vector</span>
@@ -880,67 +879,68 @@
             <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">clocklist</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="c1"># block diagram has no continuous or discrete states</span>
 
-                <span class="k">assert</span> <span class="n">state</span><span class="o">.</span><span class="n">dt</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;if no states must specify dt&quot;</span>
+                <span class="k">assert</span> <span class="n">simstate</span><span class="o">.</span><span class="n">dt</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;if no states must specify dt&quot;</span>
 
-                <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">t0</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">dt</span><span class="p">):</span>  <span class="c1"># step through the time range</span>
+                <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">t0</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">simstate</span><span class="o">.</span><span class="n">dt</span><span class="p">):</span>  <span class="c1"># step through the time range</span>
                     <span class="c1"># evaluate the block diagram</span>
-                    <span class="n">state</span><span class="o">.</span><span class="n">t</span> <span class="o">=</span> <span class="n">t</span>
-                    <span class="n">bd</span><span class="o">.</span><span class="n">evaluate_plan</span><span class="p">([],</span> <span class="n">t</span><span class="p">)</span>
+                    <span class="n">simstate</span><span class="o">.</span><span class="n">t</span> <span class="o">=</span> <span class="n">t</span>
+                    <span class="n">bd</span><span class="o">.</span><span class="n">schedule_evaluate</span><span class="p">([],</span> <span class="n">t</span><span class="p">)</span>
 
                     <span class="c1"># stash the results</span>
-                    <span class="n">state</span><span class="o">.</span><span class="n">tlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+                    <span class="n">simstate</span><span class="o">.</span><span class="n">tlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
 
                     <span class="c1"># record the ports on the watchlist</span>
-                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">watchlist</span><span class="p">):</span>
-                        <span class="n">state</span><span class="o">.</span><span class="n">plist</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">t</span><span class="p">)[</span><span class="n">p</span><span class="o">.</span><span class="n">port</span><span class="p">])</span>
+                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">simstate</span><span class="o">.</span><span class="n">watchlist</span><span class="p">):</span>
+                        <span class="n">simstate</span><span class="o">.</span><span class="n">plist</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">t</span><span class="p">)[</span><span class="n">p</span><span class="o">.</span><span class="n">port</span><span class="p">])</span>
 
                     <span class="c1"># update all blocks that need to know</span>
-                    <span class="n">bd</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">)</span>
+                    <span class="n">bd</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
 
-                    <span class="bp">self</span><span class="o">.</span><span class="n">progress</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">t</span><span class="p">)</span>  <span class="c1"># update the progress bar</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">progress</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>  <span class="c1"># update the progress bar</span>
 
                     <span class="c1"># has any block called a stop?</span>
-                    <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">stop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">simstate</span><span class="o">.</span><span class="n">stop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                         <span class="nb">print</span><span class="p">(</span>
                             <span class="n">fg</span><span class="p">(</span><span class="s2">&quot;red&quot;</span><span class="p">)</span>
-                            <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">--- stop requested at t=</span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">t</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> by </span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">stop</span><span class="si">}</span><span class="s2">&quot;</span>
+                            <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">--- stop requested at t=</span><span class="si">{</span><span class="n">simstate</span><span class="o">.</span><span class="n">t</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> by&quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">simstate</span><span class="o">.</span><span class="n">stop</span><span class="si">}</span><span class="s2">&quot;</span>
                             <span class="o">+</span> <span class="n">attr</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
                         <span class="p">)</span>
                         <span class="k">break</span>
 
-                    <span class="k">if</span> <span class="s2">&quot;i&quot;</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="s2">&quot;i&quot;</span> <span class="ow">in</span> <span class="n">simstate</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
                         <span class="n">bd</span><span class="o">.</span><span class="n">_debugger</span><span class="p">(</span><span class="n">integrator</span><span class="p">)</span>
 
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># block diagram has no continuous states</span>
                 <span class="n">t</span> <span class="o">=</span> <span class="n">t0</span>
-                <span class="n">state</span><span class="o">.</span><span class="n">t</span> <span class="o">=</span> <span class="n">t</span>
+                <span class="n">simstate</span><span class="o">.</span><span class="n">t</span> <span class="o">=</span> <span class="n">t</span>
                 <span class="c1"># evaluate the block diagram</span>
-                <span class="n">bd</span><span class="o">.</span><span class="n">evaluate_plan</span><span class="p">([],</span> <span class="n">t</span><span class="p">)</span>
+                <span class="n">bd</span><span class="o">.</span><span class="n">schedule_evaluate</span><span class="p">([],</span> <span class="n">t</span><span class="p">)</span>
 
                 <span class="c1"># stash the results</span>
-                <span class="n">state</span><span class="o">.</span><span class="n">tlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+                <span class="n">simstate</span><span class="o">.</span><span class="n">tlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
 
                 <span class="c1"># record the ports on the watchlist</span>
-                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">watchlist</span><span class="p">):</span>
-                    <span class="n">state</span><span class="o">.</span><span class="n">plist</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">t</span><span class="p">)[</span><span class="n">p</span><span class="o">.</span><span class="n">port</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">simstate</span><span class="o">.</span><span class="n">watchlist</span><span class="p">):</span>
+                    <span class="n">simstate</span><span class="o">.</span><span class="n">plist</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">t</span><span class="p">)[</span><span class="n">p</span><span class="o">.</span><span class="n">port</span><span class="p">])</span>
 
                 <span class="c1"># update all blocks that need to know</span>
-                <span class="n">bd</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">)</span>
+                <span class="n">bd</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
 
-                <span class="bp">self</span><span class="o">.</span><span class="n">progress</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">t</span><span class="p">)</span>  <span class="c1"># update the progress bar</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">progress</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">simstate</span><span class="o">.</span><span class="n">t</span><span class="p">)</span>  <span class="c1"># update the progress bar</span>
 
                 <span class="c1"># has any block called a stop?</span>
-                <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">stop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">simstate</span><span class="o">.</span><span class="n">stop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="nb">print</span><span class="p">(</span>
                         <span class="n">fg</span><span class="p">(</span><span class="s2">&quot;red&quot;</span><span class="p">)</span>
-                        <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">--- stop requested at t=</span><span class="si">{</span><span class="n">bd</span><span class="o">.</span><span class="n">simstate</span><span class="o">.</span><span class="n">t</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> by&quot;</span>
-                        <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">bd</span><span class="o">.</span><span class="n">simstate</span><span class="o">.</span><span class="n">stop</span><span class="si">}</span><span class="s2">&quot;</span>
+                        <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">--- stop requested at t=</span><span class="si">{</span><span class="n">simstate</span><span class="o">.</span><span class="n">t</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> by&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">simstate</span><span class="o">.</span><span class="n">stop</span><span class="si">}</span><span class="s2">&quot;</span>
                         <span class="o">+</span> <span class="n">attr</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
                     <span class="p">)</span>
 
-                <span class="k">if</span> <span class="s2">&quot;i&quot;</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
-                    <span class="n">bd</span><span class="o">.</span><span class="n">_debugger</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">)</span>
+                <span class="k">if</span> <span class="s2">&quot;i&quot;</span> <span class="ow">in</span> <span class="n">simstate</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
+                    <span class="n">bd</span><span class="o">.</span><span class="n">_debugger</span><span class="p">(</span><span class="n">simstate</span><span class="o">=</span><span class="n">simstate</span><span class="p">)</span>
 
         <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
             <span class="c1"># bad things happens, print a message and return no result</span>
@@ -1020,7 +1020,7 @@
             <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">)</span>
             <span class="c1"># sys.exit(1)  # not sure why we have this</span>
             <span class="k">return</span>
-        <span class="n">bd</span><span class="o">.</span><span class="n">done</span><span class="p">(</span><span class="n">graphics</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">graphics</span><span class="p">)</span>
+        <span class="n">bd</span><span class="o">.</span><span class="n">done</span><span class="p">()</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">)</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">pause</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>  <span class="c1"># let the event handler do its work</span></div>
 
@@ -1100,8 +1100,8 @@
 
             <span class="n">re_isfield</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\s*:[a-zA-Zα-ωΑ-Ω0-9_ ]+:&quot;</span><span class="p">)</span>
             <span class="n">re_field</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
-                <span class="s2">&quot;^\s*:(?P&lt;field&gt;[a-zA-Z]+)(?:&quot;</span>
-                <span class="s2">&quot; +(?P&lt;var&gt;[a-zA-Zα-ωΑ-Ω0-9_]+))?:(?P&lt;body&gt;.+)$&quot;</span>
+                <span class="sa">r</span><span class="s2">&quot;^\s*:(?P&lt;field&gt;[a-zA-Z]+)(?:&quot;</span>
+                <span class="sa">r</span><span class="s2">&quot; +(?P&lt;var&gt;[a-zA-Zα-ωΑ-Ω0-9_]+))?:(?P&lt;body&gt;.+)$&quot;</span>
             <span class="p">)</span>
 
             <span class="c1"># a-zA-Zα-ωΑ-Ω0-9_</span>
@@ -1199,7 +1199,7 @@
                 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;package </span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s2"> not found&quot;</span><span class="p">)</span>
                 <span class="k">continue</span>
             <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;package </span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s2"> load error&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;package </span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s2"> load error, continuing&quot;</span><span class="p">)</span>
                 <span class="kn">import</span> <span class="nn">textwrap</span>
 
                 <span class="nb">print</span><span class="p">(</span><span class="n">textwrap</span><span class="o">.</span><span class="n">indent</span><span class="p">(</span><span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">(),</span> <span class="s2">&quot;    &quot;</span><span class="p">))</span>
@@ -1220,30 +1220,32 @@
                     <span class="c1"># must have an output function</span>
                     <span class="n">valid</span> <span class="o">=</span> <span class="p">(</span>
                         <span class="nb">hasattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;output&quot;</span><span class="p">)</span>
-                        <span class="ow">and</span> <span class="n">callable</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
-                        <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">output</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
+                        <span class="ow">and</span> <span class="nb">callable</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
+                        <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">output</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span> <span class="o">==</span> <span class="mi">4</span>
                     <span class="p">)</span>
                     <span class="k">if</span> <span class="ow">not</span> <span class="n">valid</span><span class="p">:</span>
-                        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
-                            <span class="s2">&quot;class </span><span class="si">{:s}</span><span class="s2"> has missing/improper output method&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                                <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                        <span class="nb">print</span><span class="p">(</span>
+                            <span class="s2">&quot;block </span><span class="si">{:s}</span><span class="s2"> has missing/improper output method&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                                <span class="n">value</span><span class="o">.</span><span class="vm">__name__</span>
                             <span class="p">)</span>
                         <span class="p">)</span>
+                        <span class="k">continue</span>
 
                 <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">blockclass</span> <span class="o">==</span> <span class="s2">&quot;sink&quot;</span><span class="p">:</span>
                     <span class="c1"># must have a step function with at least one</span>
                     <span class="c1"># parameter: step(self [,state])</span>
                     <span class="n">valid</span> <span class="o">=</span> <span class="p">(</span>
                         <span class="nb">hasattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;step&quot;</span><span class="p">)</span>
-                        <span class="ow">and</span> <span class="n">callable</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
-                        <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">step</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">1</span>
+                        <span class="ow">and</span> <span class="nb">callable</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
+                        <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">step</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span>
                     <span class="p">)</span>
                     <span class="k">if</span> <span class="ow">not</span> <span class="n">valid</span><span class="p">:</span>
-                        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
-                            <span class="s2">&quot;class </span><span class="si">{:s}</span><span class="s2"> has missing/improper step method&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                                <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                        <span class="nb">print</span><span class="p">(</span>
+                            <span class="s2">&quot;block </span><span class="si">{:s}</span><span class="s2"> has missing/improper step method&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                                <span class="n">value</span><span class="o">.</span><span class="vm">__name__</span>
                             <span class="p">)</span>
                         <span class="p">)</span>
+                        <span class="k">continue</span>
 
                 <span class="c1"># add it to the dict of blocks indexed by module</span>
                 <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="vm">__module__</span> <span class="ow">in</span> <span class="n">moduledict</span><span class="p">:</span>
@@ -1376,7 +1378,32 @@
 
             <span class="n">new_value</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;changed value of global </span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s2"> from </span><span class="si">{</span><span class="n">globs</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">new_value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="n">globs</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_value</span></div></div>
+            <span class="n">globs</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_value</span></div>
+
+<div class="viewcode-block" id="BDSim.report"><a class="viewcode-back" href="../../internals.html#bdsim.BDSim.report">[docs]</a>    <span class="k">def</span> <span class="nf">report</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bd</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;summary&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Print block diagram report</span>
+
+<span class="sd">        :param bd: the block diagram to be reported</span>
+<span class="sd">        :type bd: :class:`BlockDiagram`</span>
+<span class="sd">        :param type: report type, one of: &quot;summary&quot; (default), &quot;lists&quot;, &quot;schedule&quot;</span>
+<span class="sd">        :type type: str, optional</span>
+<span class="sd">        :param style: table style, one of: ansi (default), markdown, latex</span>
+<span class="sd">        :type style: str</span>
+
+<span class="sd">        Single method wrapper for various block diagram reports.  Obeys the ``-q``</span>
+<span class="sd">        option to suppress all reports at runtime.</span>
+
+<span class="sd">        :seealso: :meth:`BlockDiagram.report_summary` :meth:`BlockDiagram.report_lists` :meth:`BlockDiagram.report_schedule`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">quiet</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s2">&quot;lists&quot;</span><span class="p">:</span>
+            <span class="n">bd</span><span class="o">.</span><span class="n">report_lists</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">type</span> <span class="o">==</span> <span class="s2">&quot;summary&quot;</span><span class="p">:</span>
+            <span class="n">bd</span><span class="o">.</span><span class="n">report_summary</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">type</span> <span class="o">==</span> <span class="s2">&quot;schedule&quot;</span><span class="p">:</span>
+            <span class="n">bd</span><span class="o">.</span><span class="n">report_schedule</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div></div>
 
 
 <span class="k">class</span> <span class="nc">Options</span><span class="p">(</span><span class="n">OptionsBase</span><span class="p">):</span>
@@ -1637,7 +1664,7 @@
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020-, Peter Corke..
-      <span class="lastupdated">Last updated on 03-Apr-2023.
+      <span class="lastupdated">Last updated on 19-Apr-2023.
       </span></p>
   </div>
 

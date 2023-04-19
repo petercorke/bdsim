@@ -1,0 +1,1428 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bdsim.blockdiagram &mdash; Block diagram simulation  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Block diagram simulation
+              <img src="../../_static/BDSimLogo_NoBackgnd@2x.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                1.0.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Code documentation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../bdsim.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bdsim.blocks.html">Block library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../internals.html">Supporting classes</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Block diagram simulation</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bdsim.blockdiagram</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bdsim.blockdiagram</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Mon May 18 21:43:18 2020</span>
+
+<span class="sd">@author: corkep</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">importlib</span>
+<span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">Counter</span><span class="p">,</span> <span class="n">namedtuple</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">colored</span> <span class="kn">import</span> <span class="n">fg</span><span class="p">,</span> <span class="n">attr</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+
+<span class="kn">from</span> <span class="nn">ansitable</span> <span class="kn">import</span> <span class="n">ANSITable</span><span class="p">,</span> <span class="n">Column</span>
+
+<span class="kn">from</span> <span class="nn">bdsim.components</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="c1"># from stubs import BlockDiagramMixin</span>
+
+<span class="c1"># ------------------------------------------------------------------------- #</span>
+
+
+<span class="c1"># class BlockDiagram(BlockDiagramMixin):</span>
+<div class="viewcode-block" id="BlockDiagram"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram">[docs]</a><span class="k">class</span> <span class="nc">BlockDiagram</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Block diagram class.  This object is the parent of all blocks and wires in</span>
+<span class="sd">    the system.</span>
+
+<span class="sd">    :ivar wirelist: all wires in the diagram</span>
+<span class="sd">    :vartype wirelist: list of Wire instances</span>
+<span class="sd">    :ivar blocklist: all blocks in the diagram</span>
+<span class="sd">    :vartype blocklist: list of Block subclass instances</span>
+<span class="sd">    :ivar x: state vector</span>
+<span class="sd">    :vartype x: np.ndarray</span>
+<span class="sd">    :ivar compiled: diagram has successfully compiled</span>
+<span class="sd">    :vartype compiled: bool</span>
+<span class="sd">    :ivar blockcounter: unique counter for each block type</span>
+<span class="sd">    :vartype blockcounter: collections.Counter</span>
+<span class="sd">    :ivar blockdict: index of all blocks by category</span>
+<span class="sd">    :vartype blockdict: dict of lists</span>
+<span class="sd">    :ivar name: name of this diagram</span>
+<span class="sd">    :vartype name: str</span>
+
+<span class="sd">    This object:</span>
+
+<span class="sd">    * holds all the blocks and wires that comprise the system</span>
+<span class="sd">    * manages continuous- and discrete-time state vector for the whole system, splitting</span>
+<span class="sd">      it across blocks as required</span>
+<span class="sd">    * evaluates the entire diagram as a function to compute :meth:`\dot{x} = f(x, t)`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;main&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">wirelist</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># list of all wires</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># list of all blocks</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clocklist</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># list of all clock sources</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compiled</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># network has been compiled</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">blockcounter</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ndstates</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_issubsystem</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">blocknames</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_auto_sum</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_auto_prod</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_auto_const</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_auto_gain</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_auto_pow</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocknames</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="nb">id</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">b</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;block </span><span class="si">{</span><span class="nb">id</span><span class="si">}</span><span class="s2"> not found&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__deepcopy__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">memo</span><span class="p">):</span>
+        <span class="c1"># deep copy a block diagram</span>
+        <span class="c1"># retain references (don&#39;t copy) to blocks and the runtime</span>
+        <span class="bp">cls</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+        <span class="n">memo</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">)]</span> <span class="o">=</span> <span class="n">result</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;method&quot;</span><span class="p">:</span>
+                <span class="c1"># it&#39;s a block factory method</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">k</span> <span class="o">==</span> <span class="s2">&quot;runtime&quot;</span><span class="p">:</span>
+                <span class="c1"># it&#39;s a reference to the runtime</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># otherwise, do a deepcopy</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">memo</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">issubsystem</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_issubsystem</span>
+
+<div class="viewcode-block" id="BlockDiagram.clock"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.clock">[docs]</a>    <span class="k">def</span> <span class="nf">clock</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">clock</span> <span class="o">=</span> <span class="n">Clock</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">clock</span><span class="o">.</span><span class="n">bd</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clocklist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">clock</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">clock</span></div>
+
+<div class="viewcode-block" id="BlockDiagram.add_block"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.add_block">[docs]</a>    <span class="k">def</span> <span class="nf">add_block</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">block</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocknames</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;block </span><span class="si">{}</span><span class="s2"> already added&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+        <span class="n">block</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">block</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">blockcounter</span><span class="p">[</span><span class="n">block</span><span class="o">.</span><span class="n">type</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">blockcounter</span><span class="p">[</span><span class="n">block</span><span class="o">.</span><span class="n">type</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">block</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{:s}</span><span class="s2">.</span><span class="si">{:d}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+        <span class="n">block</span><span class="o">.</span><span class="n">bd</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>  <span class="c1"># add to the list of available blocks</span>
+        <span class="k">if</span> <span class="n">block</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocknames</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;block name </span><span class="si">{</span><span class="n">block</span><span class="si">}</span><span class="s2"> is not unique&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">blocknames</span><span class="p">[</span><span class="n">block</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">block</span></div>
+
+<div class="viewcode-block" id="BlockDiagram.add_wire"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.add_wire">[docs]</a>    <span class="k">def</span> <span class="nf">add_wire</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wire</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">wire</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wirelist</span><span class="p">)</span>
+        <span class="n">wire</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="c1"># just add wire to the list, gets instantiated at compile time</span>
+        <span class="c1"># when add_output_wire and add_input_wire are called on the blocks</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">wirelist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">wire</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;BlockDiagram: </span><span class="si">{:s}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; with </span><span class="si">{:d}</span><span class="s2"> blocks and </span><span class="si">{:d}</span><span class="s2"> wires&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wirelist</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="c1"># for block in self.blocklist:</span>
+        <span class="c1">#     s += str(block) + &quot;\n&quot;</span>
+        <span class="c1"># s += &quot;\n&quot;</span>
+        <span class="c1"># for wire in self.wirelist:</span>
+        <span class="c1">#     s += str(wire) + &quot;\n&quot;</span>
+        <span class="c1"># return s.lstrip(&quot;\n&quot;)</span>
+
+<div class="viewcode-block" id="BlockDiagram.ls"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.ls">[docs]</a>    <span class="k">def</span> <span class="nf">ls</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blockdict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{:12s}</span><span class="s2">: &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">v</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="BlockDiagram.connect"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.connect">[docs]</a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="o">*</span><span class="n">ends</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        TODO:</span>
+<span class="sd">            s.connect(out[3], in1[2], in2[3])  # one to many</span>
+<span class="sd">            block[1] = SigGen()  # use setitem</span>
+<span class="sd">            block[1] = SumJunction(block2[3], block3[4]) * Gain(value=2)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># start.type = &#39;start&#39;</span>
+
+        <span class="k">for</span> <span class="n">end</span> <span class="ow">in</span> <span class="n">ends</span><span class="p">:</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">Block</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="n">Block</span><span class="p">):</span>
+                    <span class="c1"># connect(X, Y)</span>
+                    <span class="c1"># wires from all outport to all inports</span>
+                    <span class="k">assert</span> <span class="n">start</span><span class="o">.</span><span class="n">nout</span> <span class="o">==</span> <span class="n">end</span><span class="o">.</span><span class="n">nin</span><span class="p">,</span> <span class="p">(</span>
+                        <span class="s2">&quot;can only connect blocks where number of input and output ports&quot;</span>
+                        <span class="s2">&quot; match&quot;</span>
+                    <span class="p">)</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">start</span><span class="o">.</span><span class="n">nout</span><span class="p">):</span>
+                        <span class="n">wire</span> <span class="o">=</span> <span class="n">Wire</span><span class="p">(</span><span class="n">StartPlug</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">i</span><span class="p">),</span> <span class="n">EndPlug</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="n">i</span><span class="p">),</span> <span class="n">name</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">add_wire</span><span class="p">(</span><span class="n">wire</span><span class="p">)</span>
+
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="n">Plug</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">end</span><span class="o">.</span><span class="n">isslice</span><span class="p">:</span>
+                    <span class="c1"># connect(X, Y[i])</span>
+                    <span class="k">assert</span> <span class="p">(</span>
+                        <span class="n">start</span><span class="o">.</span><span class="n">nout</span> <span class="o">==</span> <span class="mi">1</span>
+                    <span class="p">),</span> <span class="s2">&quot;can only connect single output block to a port&quot;</span>
+                    <span class="n">end</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s2">&quot;end&quot;</span>
+                    <span class="n">wire</span> <span class="o">=</span> <span class="n">Wire</span><span class="p">(</span><span class="n">StartPlug</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">end</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">add_wire</span><span class="p">(</span><span class="n">wire</span><span class="p">)</span>
+
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="n">Plug</span><span class="p">)</span> <span class="ow">and</span> <span class="n">end</span><span class="o">.</span><span class="n">isslice</span><span class="p">:</span>
+                    <span class="c1"># connect(X, Y[m:n])</span>
+                    <span class="k">assert</span> <span class="n">start</span><span class="o">.</span><span class="n">nout</span> <span class="o">==</span> <span class="n">end</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="p">(</span>
+                        <span class="s2">&quot;can only connect single output block to an input port slice of&quot;</span>
+                        <span class="s2">&quot; width 1&quot;</span>
+                    <span class="p">)</span>
+                    <span class="n">end</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s2">&quot;end&quot;</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">start</span><span class="o">.</span><span class="n">nout</span><span class="p">):</span>
+                        <span class="n">wire</span> <span class="o">=</span> <span class="n">Wire</span><span class="p">(</span><span class="n">StartPlug</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">i</span><span class="p">),</span> <span class="n">end</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">name</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">add_wire</span><span class="p">(</span><span class="n">wire</span><span class="p">)</span>
+
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;bad end type&quot;</span><span class="p">)</span>
+
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">Plug</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">start</span><span class="o">.</span><span class="n">isslice</span><span class="p">:</span>
+
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="n">Block</span><span class="p">):</span>
+                    <span class="c1"># connect(X[i], Y)</span>
+                    <span class="c1"># wires from all outport to all inports</span>
+                    <span class="k">assert</span> <span class="p">(</span>
+                        <span class="n">end</span><span class="o">.</span><span class="n">nin</span> <span class="o">==</span> <span class="mi">1</span>
+                    <span class="p">),</span> <span class="s2">&quot;can only connect a port to a block with single input port&quot;</span>
+                    <span class="n">wire</span> <span class="o">=</span> <span class="n">Wire</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">EndPlug</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">name</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">add_wire</span><span class="p">(</span><span class="n">wire</span><span class="p">)</span>
+
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="n">Plug</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">end</span><span class="o">.</span><span class="n">isslice</span><span class="p">:</span>
+                    <span class="c1"># connect(X[i], Y[i])</span>
+                    <span class="n">end</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s2">&quot;end&quot;</span>
+                    <span class="n">wire</span> <span class="o">=</span> <span class="n">Wire</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">add_wire</span><span class="p">(</span><span class="n">wire</span><span class="p">)</span>
+
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="n">Plug</span><span class="p">)</span> <span class="ow">and</span> <span class="n">end</span><span class="o">.</span><span class="n">isslice</span><span class="p">:</span>
+                    <span class="c1"># connect(X[i], Y[m:n])</span>
+                    <span class="k">assert</span> <span class="p">(</span>
+                        <span class="n">end</span><span class="o">.</span><span class="n">width</span> <span class="o">==</span> <span class="mi">1</span>
+                    <span class="p">),</span> <span class="s2">&quot;can only connect output port to an input port slice of width 1&quot;</span>
+                    <span class="n">end</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s2">&quot;end&quot;</span>
+                    <span class="n">wire</span> <span class="o">=</span> <span class="n">Wire</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">name</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">add_wire</span><span class="p">(</span><span class="n">wire</span><span class="p">)</span>
+
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;bad end type&quot;</span><span class="p">)</span>
+
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">Plug</span><span class="p">)</span> <span class="ow">and</span> <span class="n">start</span><span class="o">.</span><span class="n">isslice</span><span class="p">:</span>
+
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="n">Block</span><span class="p">):</span>
+                    <span class="c1"># connect(X[i:j], Y)</span>
+                    <span class="k">assert</span> <span class="n">start</span><span class="o">.</span><span class="n">width</span> <span class="o">==</span> <span class="n">end</span><span class="o">.</span><span class="n">nin</span><span class="p">,</span> <span class="p">(</span>
+                        <span class="s2">&quot;can only connect output slice to a block with matching number&quot;</span>
+                        <span class="s2">&quot; of input ports&quot;</span>
+                    <span class="p">)</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">end</span><span class="o">.</span><span class="n">nin</span><span class="p">):</span>
+                        <span class="n">wire</span> <span class="o">=</span> <span class="n">Wire</span><span class="p">(</span><span class="n">start</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">EndPlug</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="n">i</span><span class="p">),</span> <span class="n">name</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">add_wire</span><span class="p">(</span><span class="n">wire</span><span class="p">)</span>
+
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="n">Plug</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">end</span><span class="o">.</span><span class="n">isslice</span><span class="p">:</span>
+                    <span class="c1"># connect(X[i:j], Y[m])</span>
+                    <span class="k">assert</span> <span class="p">(</span>
+                        <span class="n">start</span><span class="o">.</span><span class="n">width</span> <span class="o">==</span> <span class="mi">1</span>
+                    <span class="p">),</span> <span class="s2">&quot;can only connect output slice of width 1 to a port&quot;</span>
+                    <span class="n">wire</span> <span class="o">=</span> <span class="n">Wire</span><span class="p">(</span><span class="n">start</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">end</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">add_wire</span><span class="p">(</span><span class="n">wire</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="n">Plug</span><span class="p">)</span> <span class="ow">and</span> <span class="n">end</span><span class="o">.</span><span class="n">isslice</span><span class="p">:</span>
+                    <span class="c1"># connect(X[i:j], Y[m:n])</span>
+                    <span class="k">assert</span> <span class="p">(</span>
+                        <span class="n">start</span><span class="o">.</span><span class="n">width</span> <span class="o">==</span> <span class="n">end</span><span class="o">.</span><span class="n">width</span>
+                    <span class="p">),</span> <span class="s2">&quot;can only connect port slices of same width&quot;</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">start</span><span class="o">.</span><span class="n">width</span><span class="p">):</span>
+                        <span class="n">wire</span> <span class="o">=</span> <span class="n">Wire</span><span class="p">(</span><span class="n">start</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">end</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">name</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">add_wire</span><span class="p">(</span><span class="n">wire</span><span class="p">)</span>
+
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;bad end type&quot;</span><span class="p">)</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;bad start type&quot;</span><span class="p">)</span></div>
+
+    <span class="c1"># ---------------------------------------------------------------------- #</span>
+
+<div class="viewcode-block" id="BlockDiagram.compile"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.compile">[docs]</a>    <span class="k">def</span> <span class="nf">compile</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">subsystem</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">doimport</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">evaluate</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">report</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compile the block diagram</span>
+
+<span class="sd">        :param subsystem: importing a subsystems, defaults to False</span>
+<span class="sd">        :type subsystem: bool, optional</span>
+<span class="sd">        :param doimport: import subsystems, defaults to True</span>
+<span class="sd">        :type doimport: bool, optional</span>
+<span class="sd">        :raises RuntimeError: various block diagram errors</span>
+<span class="sd">        :return: Compile status</span>
+<span class="sd">        :rtype: bool</span>
+
+<span class="sd">        Performs a number of operations:</span>
+
+<span class="sd">            - Check sanity of block parameters</span>
+<span class="sd">            - Recursively clone and import subsystems</span>
+<span class="sd">            - Check for loops without dynamics</span>
+<span class="sd">            - Check for inputs driven by more than one wire</span>
+<span class="sd">            - Check for unconnected inputs and outputs</span>
+<span class="sd">            - Link all output ports to outgoing wires</span>
+<span class="sd">            - Link all input ports to incoming wires</span>
+<span class="sd">            - Evaluate all blocks in the network</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># name the elements</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nblocks</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nwires</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wirelist</span><span class="p">)</span>
+
+        <span class="n">error</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ndstates</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">statenames</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dstatenames</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">blocknames</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">subsystem</span> <span class="ow">and</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Compiling:&quot;</span><span class="p">)</span>
+
+        <span class="c1"># process all subsystem imports</span>
+        <span class="c1"># ssblocks = [b for b in self.blocklist if b.type == &#39;subsystem&#39;]</span>
+        <span class="c1"># for b in ssblocks:</span>
+        <span class="c1">#     print(&#39;  importing subsystem&#39;, b.name)</span>
+        <span class="c1">#     if b.ssvar is not None:</span>
+        <span class="c1">#         print(&#39;-- Wiring in subsystem&#39;, b, &#39;from module local variable &#39;, b.ssvar)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">wirelist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subsystem_import</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span>
+        <span class="p">)</span>
+
+        <span class="c1"># check that wires all point to valid blocks</span>
+        <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">wirelist</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">w</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">block</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;wire </span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2"> starts at unreferenced block </span><span class="si">{</span><span class="n">w</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">block</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">w</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">block</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;wire </span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2"> ends at unreferenced block </span><span class="si">{</span><span class="n">w</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">block</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># run block specific checks</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">b</span><span class="o">.</span><span class="n">check</span><span class="p">()</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;block failed check &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">b</span><span class="p">))</span>
+
+        <span class="c1"># build a dictionary of all block names</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">blocknames</span> <span class="o">=</span> <span class="p">{</span><span class="n">b</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">b</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">}</span>
+
+        <span class="c1"># visit all stateful blocks</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">blockclass</span> <span class="o">==</span> <span class="s2">&quot;transfer&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span> <span class="o">+=</span> <span class="n">b</span><span class="o">.</span><span class="n">nstates</span>
+                <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">_state_names</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">assert</span> <span class="p">(</span>
+                        <span class="nb">len</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">_state_names</span><span class="p">)</span> <span class="o">==</span> <span class="n">b</span><span class="o">.</span><span class="n">nstates</span>
+                    <span class="p">),</span> <span class="s2">&quot;number of state names not consistent with number of states&quot;</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">statenames</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">_state_names</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># create default state names</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">statenames</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                        <span class="p">[</span><span class="n">b</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;x&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">nstates</span><span class="p">)]</span>
+                    <span class="p">)</span>
+            <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">blockclass</span> <span class="o">==</span> <span class="s2">&quot;clocked&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ndstates</span> <span class="o">+=</span> <span class="n">b</span><span class="o">.</span><span class="n">ndstates</span>
+                <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">_state_names</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">assert</span> <span class="p">(</span>
+                        <span class="nb">len</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">_state_names</span><span class="p">)</span> <span class="o">==</span> <span class="n">b</span><span class="o">.</span><span class="n">nstates</span>
+                    <span class="p">),</span> <span class="s2">&quot;number of state names not consistent with number of states&quot;</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">dstatenames</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">_state_names</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># create default state names</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">statenames</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                        <span class="p">[</span><span class="n">b</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;X&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">nstates</span><span class="p">)]</span>
+                    <span class="p">)</span>
+
+        <span class="c1"># initialize lists of input and output ports</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
+            <span class="n">b</span><span class="o">.</span><span class="n">output_wires</span> <span class="o">=</span> <span class="p">[[]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">nout</span><span class="p">)]</span>
+            <span class="n">b</span><span class="o">.</span><span class="n">input_wires</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">nin</span><span class="p">)]</span>
+            <span class="n">b</span><span class="o">.</span><span class="n">sources</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">nin</span><span class="p">)]</span>
+
+            <span class="c1"># used to build execution plan</span>
+            <span class="c1"># TODO: might overlap with sources</span>
+            <span class="n">b</span><span class="o">.</span><span class="n">_parents</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">nin</span><span class="p">)]</span>
+
+        <span class="c1"># connect the source and destination blocks to each wire</span>
+        <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">wirelist</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">w</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">add_output_wire</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+                <span class="n">w</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">add_input_wire</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+                <span class="n">w</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">_parents</span><span class="p">[</span><span class="n">w</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">port</span><span class="p">]</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">block</span>
+
+            <span class="k">except</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">fg</span><span class="p">(</span><span class="s2">&quot;red&quot;</span><span class="p">))</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;error connecting wire &quot;</span><span class="p">,</span> <span class="n">w</span><span class="o">.</span><span class="n">fullname</span> <span class="o">+</span> <span class="s2">&quot;: &quot;</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">attr</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+                <span class="n">error</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="c1"># check connections every block</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
+            <span class="c1"># check all inputs are connected</span>
+            <span class="k">for</span> <span class="n">port</span><span class="p">,</span> <span class="n">connection</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">input_wires</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">connection</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span>
+                        <span class="s2">&quot;  ERROR: [</span><span class="si">{:s}</span><span class="s2">] input </span><span class="si">{:d}</span><span class="s2"> is not connected&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                            <span class="nb">str</span><span class="p">(</span><span class="n">b</span><span class="p">),</span> <span class="n">port</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="n">error</span> <span class="o">=</span> <span class="kc">True</span>
+
+            <span class="c1"># check all outputs are connected</span>
+            <span class="k">for</span> <span class="n">port</span><span class="p">,</span> <span class="n">connections</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">output_wires</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">connections</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span>
+                        <span class="s2">&quot;  INFORMATION: [</span><span class="si">{:s}</span><span class="s2">] output </span><span class="si">{:d}</span><span class="s2"> is not connected&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                            <span class="nb">str</span><span class="p">(</span><span class="n">b</span><span class="p">),</span> <span class="n">port</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">_inport_names</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="p">(</span>
+                    <span class="nb">len</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">_inport_names</span><span class="p">)</span> <span class="o">==</span> <span class="n">b</span><span class="o">.</span><span class="n">nin</span>
+                <span class="p">),</span> <span class="s2">&quot;incorrect number of input names given: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">_outport_names</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="p">(</span>
+                    <span class="nb">len</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">_outport_names</span><span class="p">)</span> <span class="o">==</span> <span class="n">b</span><span class="o">.</span><span class="n">nout</span>
+                <span class="p">),</span> <span class="s2">&quot;incorrect number of output names given: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">_state_names</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="p">(</span>
+                    <span class="nb">len</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">_state_names</span><span class="p">)</span> <span class="o">==</span> <span class="n">b</span><span class="o">.</span><span class="n">nstates</span>
+                <span class="p">),</span> <span class="s2">&quot;incorrect number of state names given: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+
+        <span class="c1"># check for cycles of function blocks</span>
+        <span class="k">def</span> <span class="nf">_DFS</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">tail</span> <span class="o">=</span> <span class="n">path</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">outgoing</span> <span class="ow">in</span> <span class="n">tail</span><span class="o">.</span><span class="n">output_wires</span><span class="p">:</span>
+                <span class="c1"># for every port on this block</span>
+                <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">outgoing</span><span class="p">:</span>
+                    <span class="n">dest</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">block</span>
+                    <span class="k">if</span> <span class="n">dest</span> <span class="o">==</span> <span class="n">start</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span>
+                            <span class="s2">&quot;  ERROR: cycle found: &quot;</span><span class="p">,</span>
+                            <span class="s2">&quot; - &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">path</span> <span class="o">+</span> <span class="p">[</span><span class="n">dest</span><span class="p">]]),</span>
+                        <span class="p">)</span>
+                        <span class="k">return</span> <span class="kc">True</span>
+                    <span class="k">if</span> <span class="n">dest</span><span class="o">.</span><span class="n">blockclass</span> <span class="o">==</span> <span class="s2">&quot;function&quot;</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="n">_DFS</span><span class="p">(</span><span class="n">path</span> <span class="o">+</span> <span class="p">[</span><span class="n">dest</span><span class="p">])</span>  <span class="c1"># recurse</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">blockclass</span> <span class="o">==</span> <span class="s2">&quot;function&quot;</span><span class="p">:</span>
+                <span class="c1"># do depth first search looking for a cycle</span>
+                <span class="k">if</span> <span class="n">_DFS</span><span class="p">([</span><span class="n">b</span><span class="p">]):</span>
+                    <span class="n">error</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">if</span> <span class="n">error</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">subsystem</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;could not compile system&quot;</span><span class="p">)</span>
+
+        <span class="c1"># create the execution plan/schedule</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">schedule_generate</span><span class="p">()</span>
+
+        <span class="c1">## evaluate the network once to check out wire types</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getstate0</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">clock</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">clocklist</span><span class="p">:</span>
+            <span class="n">clock</span><span class="o">.</span><span class="n">_x</span> <span class="o">=</span> <span class="n">clock</span><span class="o">.</span><span class="n">getstate0</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">report</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">schedule_report</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">subsystem</span> <span class="ow">and</span> <span class="n">evaluate</span><span class="p">:</span>
+            <span class="c1"># run all the blocks for one step</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">schedule_evaluate</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">sinks</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">From compile: unrecoverable error in value propagation:&quot;</span><span class="p">,</span> <span class="n">err</span><span class="p">)</span>
+                <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+                <span class="n">error</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">if</span> <span class="n">error</span><span class="p">:</span>
+            <span class="c1"># show report if there was an error</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">report</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">subsystem</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;could not compile system&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">compiled</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compiled</span></div>
+
+    <span class="k">def</span> <span class="nf">_subsystem_import</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bd</span><span class="p">,</span> <span class="n">sspath</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+        <span class="n">blocks</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">wires</span> <span class="o">=</span> <span class="n">bd</span><span class="o">.</span><span class="n">wirelist</span>
+
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">bd</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
+            <span class="c1"># rename the block to include subsystem path</span>
+            <span class="k">if</span> <span class="n">sspath</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">b</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">sspath</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">b</span><span class="o">.</span><span class="n">name</span>
+
+            <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">&quot;subsystem&quot;</span><span class="p">:</span>
+                <span class="c1"># deal with a subsystem</span>
+                <span class="c1">#  - recurse to import it</span>
+                <span class="c1">#  - add its blocks and wires to the set</span>
+                <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;found subsystem &quot;</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                <span class="n">ssb</span><span class="p">,</span> <span class="n">ssw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subsystem_import</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">subsystem</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                <span class="n">blocks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">ssb</span><span class="p">)</span>
+                <span class="n">wires</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">ssw</span><span class="p">)</span>
+
+                <span class="c1"># INPORT/OUTPORT blocks now become simple pass throughs</span>
+                <span class="c1"># same number of inputs and outputs</span>
+                <span class="n">b</span><span class="o">.</span><span class="n">inport</span><span class="o">.</span><span class="n">nin</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">inport</span><span class="o">.</span><span class="n">nout</span>
+                <span class="n">b</span><span class="o">.</span><span class="n">outport</span><span class="o">.</span><span class="n">nout</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">outport</span><span class="o">.</span><span class="n">nin</span>
+
+                <span class="c1"># modify the wiring, keep the INPORT/OUTPORT blocks but lose</span>
+                <span class="c1"># the SUBSYSTEM blocks</span>
+                <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">bd</span><span class="o">.</span><span class="n">wirelist</span><span class="p">:</span>
+                    <span class="c1"># for all wires at this level, find those that connect</span>
+                    <span class="c1"># to the subsystem and tweak them</span>
+                    <span class="k">if</span> <span class="n">w</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">block</span> <span class="o">==</span> <span class="n">b</span><span class="p">:</span>
+                        <span class="c1"># SS output</span>
+                        <span class="n">w</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">block</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">outport</span>
+                    <span class="k">if</span> <span class="n">w</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">block</span> <span class="o">==</span> <span class="n">b</span><span class="p">:</span>
+                        <span class="c1"># SS input</span>
+                        <span class="n">w</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">block</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">inport</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># not a subsystem, just add the block to the list</span>
+                <span class="n">blocks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+
+        <span class="c1"># systematically renumber all blocks and wires</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">blocks</span><span class="p">):</span>
+            <span class="n">b</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="n">i</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">w</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">wires</span><span class="p">):</span>
+            <span class="n">w</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="n">i</span>
+        <span class="k">return</span> <span class="n">blocks</span><span class="p">,</span> <span class="n">wires</span>
+
+    <span class="c1"># ---------------------------------------------------------------------- #</span>
+
+<div class="viewcode-block" id="BlockDiagram.schedule_evaluate"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.schedule_evaluate">[docs]</a>    <span class="k">def</span> <span class="nf">schedule_evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">checkfinite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sinks</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">simstate</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Evaluate all blocks in the network</span>
+
+<span class="sd">        :param x: state</span>
+<span class="sd">        :type x: ndarray</span>
+<span class="sd">        :param t: current time</span>
+<span class="sd">        :type t: float</span>
+<span class="sd">        :param checkfinite: check for Inf or Nan values in block outputs</span>
+<span class="sd">        :type checkfinite: bool</span>
+<span class="sd">        :param sinks: evaluate sink blocks, defaults to Trye</span>
+<span class="sd">        :type sinks: bool, optional</span>
+<span class="sd">        :param simstate: simulation state</span>
+<span class="sd">        :return: state derivative</span>
+<span class="sd">        :rtype: numpy.ndarray</span>
+
+<span class="sd">        Performs the following steps:</span>
+
+<span class="sd">        1. Partition the state vector ``x`` to all stateful blocks</span>
+<span class="sd">        2. Execute the blocks in the order given by the ``plan``. The block</span>
+<span class="sd">           outputs are &quot;sent&quot; to their connected inputs.</span>
+
+<span class="sd">        Sink blocks are not executed here, but after completion their inputs</span>
+<span class="sd">        will all be valid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># TODO: don&#39;t copy outputs to inputs of next block, have inputs</span>
+        <span class="c1"># pull the value from connected inputs</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">(</span><span class="s2">&quot;state&quot;</span><span class="p">,</span> <span class="s2">&quot;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; t=</span><span class="si">{}</span><span class="s2">, x=</span><span class="si">{}</span><span class="s2"> &gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&quot;</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+
+        <span class="c1"># reset all the blocks ready for the evalation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+
+        <span class="c1"># split the state vector to stateful blocks</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">blockclass</span> <span class="o">==</span> <span class="s2">&quot;transfer&quot;</span><span class="p">:</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">setstate</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="c1"># split the discrete state vector to clocked blocks</span>
+        <span class="k">for</span> <span class="n">clock</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">clocklist</span><span class="p">:</span>
+            <span class="n">clock</span><span class="o">.</span><span class="n">setstate</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">(</span><span class="s2">&quot;propagate&quot;</span><span class="p">,</span> <span class="s2">&quot;t=</span><span class="si">{:.3f}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">sequence</span><span class="p">,</span> <span class="n">group</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">):</span>
+
+            <span class="c1"># self.runtime.DEBUG(&#39;propagate&#39;, &#39;---- sequence = &#39;, sequence)</span>
+
+            <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">group</span><span class="p">:</span>
+                <span class="c1"># ask the block for output, check for errors</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">sequence</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="c1"># blocks called at step 0 have no inputs</span>
+                        <span class="n">out</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">_x</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">out</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">_x</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                    <span class="c1"># output method failed, report it</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="n">fg</span><span class="p">(</span><span class="s2">&quot;red&quot;</span><span class="p">))</span>
+                    <span class="nb">print</span><span class="p">(</span>
+                        <span class="s2">&quot;--Error at t=</span><span class="si">{:f}</span><span class="s2"> when computing output of [</span><span class="si">{:s}</span><span class="s2">::</span><span class="si">{:s}</span><span class="s2">]&quot;</span>
+                        <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">b</span><span class="p">))</span>
+                    <span class="p">)</span>
+                    <span class="nb">print</span><span class="p">()</span>
+                    <span class="c1"># print(&#39;  {}&#39;.format(err))</span>
+                    <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="n">limit</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+
+                    <span class="nb">print</span><span class="p">()</span>
+                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="nb">input</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">inputs</span><span class="p">):</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Input[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">] = </span><span class="si">{</span><span class="nb">input</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+                    <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">nstates</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Block state x = </span><span class="si">{</span><span class="n">b</span><span class="o">.</span><span class="n">_x</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="n">attr</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span> <span class="kn">from</span> <span class="kc">None</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">(</span><span class="s2">&quot;propagate&quot;</span><span class="p">,</span> <span class="s2">&quot;block </span><span class="si">{:s}</span><span class="s2">: output = </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span>
+
+                <span class="c1"># check that output is a list of correct length</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
+                    <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;block </span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2"> output </span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2"> must be a list: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">out</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">out</span><span class="p">)</span> <span class="o">!=</span> <span class="n">b</span><span class="o">.</span><span class="n">nout</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;block </span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2"> output </span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2"> has incorrect length: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">out</span><span class="p">)</span><span class="si">}</span><span class="s2"> instead&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot; of </span><span class="si">{</span><span class="n">b</span><span class="o">.</span><span class="n">nout</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+
+                <span class="c1"># TODO check output validity once at the startq</span>
+
+                <span class="c1"># check it has no nan or inf values</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="n">checkfinite</span>
+                    <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">))</span>
+                    <span class="ow">and</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">out</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>
+                <span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;block </span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2"> output contains NaN&quot;</span><span class="p">)</span>
+
+                <span class="c1"># # send block outputs to all downstream connected blocks</span>
+                <span class="c1"># for (port, outwires) in enumerate(b.outports): # every port</span>
+                <span class="c1">#     value = out[port]</span>
+                <span class="c1">#     for w in outwires:     # every wire</span>
+
+                <span class="c1">#         self.DEBUG(&#39;propagate&#39;, &#39;  [{}] = {} --&gt;  {}[{}]&#39;, port, value, w.end.block.name, w.end.port)</span>
+
+                <span class="c1">#         # send value to wire</span>
+                <span class="c1">#         w.send(value)</span>
+
+                <span class="c1">#         # TODO send return status no longer needed</span>
+                <span class="c1">#         # TODO use common error handler in all cases above</span>
+                <span class="n">b</span><span class="o">.</span><span class="n">output_values</span> <span class="o">=</span> <span class="n">out</span>
+
+        <span class="k">if</span> <span class="n">sinks</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">SinkBlock</span><span class="p">):</span>
+                    <span class="n">b</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">inputs</span><span class="p">)</span>
+
+        <span class="c1"># gather the derivative</span>
+        <span class="n">YD</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">deriv</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">(</span><span class="s2">&quot;deriv&quot;</span><span class="p">,</span> <span class="n">YD</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">YD</span></div>
+
+<div class="viewcode-block" id="BlockDiagram.schedule_generate"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.schedule_generate">[docs]</a>    <span class="k">def</span> <span class="nf">schedule_generate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create execution plan</span>
+
+<span class="sd">        The plan is saved in the attribute ``plan`` and is a list</span>
+<span class="sd">        ``[L0, L1, ... LN]`` where each ``Li`` is a list of blocks.  The blocks</span>
+<span class="sd">        in the lists are executed sequentially, ie. all the blocks in ``L0``</span>
+<span class="sd">        then all the blocks in ``L1`` etc.</span>
+
+<span class="sd">        The plan ensures that the inputs of all blocks in ``Li`` have been</span>
+<span class="sd">        previously computed.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            - The plan is essentially a dataflow graph.</span>
+<span class="sd">            - The blocks in list ``Li`` could potentially be executed in</span>
+<span class="sd">              parallel.</span>
+<span class="sd">            - Constant blocks and stateful blocks are all executed in ``L0``</span>
+<span class="sd">            - The block attribute ``_sequence`` is ``i`` and indicates its</span>
+<span class="sd">              execution order</span>
+
+<span class="sd">        :seealso: :func:`schedule_report`, :func:`schedule_dotfile`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">plan</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">group</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
+            <span class="n">b</span><span class="o">.</span><span class="n">_sequence</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">blockclass</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;source&quot;</span><span class="p">,</span> <span class="s2">&quot;transfer&quot;</span><span class="p">,</span> <span class="s2">&quot;clocked&quot;</span><span class="p">):</span>
+                <span class="n">b</span><span class="o">.</span><span class="n">_sequence</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">group</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+        <span class="n">plan</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">group</span><span class="p">)</span>
+        <span class="n">sequence</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">plan</span><span class="p">)</span>
+
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">group</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">_sequence</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">continue</span>  <span class="c1"># already has a sequence assigned</span>
+
+                <span class="k">if</span> <span class="nb">all</span><span class="p">(</span>
+                    <span class="p">[</span>
+                        <span class="n">p</span><span class="o">.</span><span class="n">_sequence</span> <span class="o">&lt;</span> <span class="n">sequence</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">_sequence</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">False</span>
+                        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">b</span><span class="o">.</span><span class="n">_parents</span>
+                    <span class="p">]</span>
+                <span class="p">):</span>
+                    <span class="n">group</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">group</span><span class="o">.</span><span class="n">copy</span><span class="p">():</span>
+                <span class="n">b</span><span class="o">.</span><span class="n">_sequence</span> <span class="o">=</span> <span class="n">sequence</span>
+                <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">blockclass</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;sink&quot;</span><span class="p">,</span> <span class="s2">&quot;graphics&quot;</span><span class="p">):</span>
+                    <span class="n">group</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">group</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="n">plan</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">group</span><span class="p">)</span>
+            <span class="n">sequence</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">plan</span> <span class="o">=</span> <span class="n">plan</span></div>
+
+<div class="viewcode-block" id="BlockDiagram.schdule_dotfile"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.schdule_dotfile">[docs]</a>    <span class="k">def</span> <span class="nf">schdule_dotfile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Write a GraphViz dot file representing the execution schedule</span>
+
+<span class="sd">        :param file: Name of file to write to</span>
+<span class="sd">        :type file: str</span>
+
+<span class="sd">        The file can be processed using neato or dot::</span>
+
+<span class="sd">            % dot -Tpng -o out.png dotfile.dot</span>
+
+<span class="sd">        Display execution plan as a dataflow graph.</span>
+
+<span class="sd">        :seealso: :func:`schedule_plan`, :func:`schedule_print`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">file</span> <span class="o">=</span> <span class="n">filename</span>
+
+        <span class="n">header</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;&quot;&quot;digraph G {</span>
+
+<span class="s2">    graph [splines=ortho, rankdir=LR, splines=spline]</span>
+<span class="s2">    node [shape=box]</span>
+<span class="s2">    </span>
+<span class="s2">    &quot;&quot;&quot;</span>
+        <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">header</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">sequence</span><span class="p">,</span> <span class="n">group</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">):</span>
+            <span class="c1"># for each execution group, place the blocks in a subgraph</span>
+            <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">subgraph step</span><span class="si">{:d}</span><span class="s2"> {{</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">sequence</span><span class="p">))</span>
+            <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\t\t</span><span class="s2">rank=same;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">group</span><span class="p">:</span>
+                <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t\t</span><span class="s1">&quot;</span><span class="si">{:s}</span><span class="s1">&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+
+            <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">}</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># connect them to their parents, except if a transfer block</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">b</span><span class="o">.</span><span class="n">blockclass</span> <span class="o">==</span> <span class="s2">&quot;transfer&quot;</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">b</span><span class="o">.</span><span class="n">_parents</span><span class="p">:</span>
+                    <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&quot;</span><span class="si">{:s}</span><span class="s1">&quot; -&gt; &quot;</span><span class="si">{:s}</span><span class="s1">&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+
+        <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+    <span class="c1"># ---------------------------------------------------------------------- #</span>
+
+    <span class="k">def</span> <span class="nf">_debugger</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simstate</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">integrator</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">t_stop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">state</span><span class="o">.</span><span class="n">t</span> <span class="o">&lt;</span> <span class="n">state</span><span class="o">.</span><span class="n">t_stop</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">simstate</span><span class="o">.</span><span class="n">t_stop</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="n">simstate</span><span class="o">.</span><span class="n">t</span>
+            <span class="n">cmd</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;(bdsim, t=</span><span class="si">{</span><span class="n">t</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">) &quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="n">cmd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;p&quot;</span><span class="p">:</span>
+                <span class="c1"># print variables</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="nb">id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">cmd</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+                    <span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">_x</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">nout</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                            <span class="nb">print</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">_x</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">cmd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;i&quot;</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">integrator</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="n">integrator</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span> <span class="n">integrator</span><span class="o">.</span><span class="n">nfev</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">cmd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;s&quot;</span><span class="p">:</span>
+                <span class="c1"># step</span>
+                <span class="k">break</span>
+            <span class="k">elif</span> <span class="n">cmd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;c&quot;</span><span class="p">:</span>
+                <span class="c1"># continue</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">debug_stop</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">t_stop</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">break</span>
+            <span class="k">elif</span> <span class="n">cmd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;t&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">t_stop</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">cmd</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+                <span class="k">break</span>
+            <span class="k">elif</span> <span class="n">cmd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;q&quot;</span><span class="p">:</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">cmd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;r&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="n">cmd</span> <span class="o">==</span> <span class="s2">&quot;pdb&quot;</span><span class="p">:</span>
+                <span class="kn">import</span> <span class="nn">pdb</span>
+
+                <span class="n">pdb</span><span class="o">.</span><span class="n">runeval</span><span class="p">(</span><span class="s1">&#39;print(&quot;type exit to leave Pdb&quot;)&#39;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">cmd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="s2">&quot;h?&quot;</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;p    print all outputs&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;pI   print block id I output&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;i    print integrator status&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;s    single step&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;c    continue&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;tT   stop at or after time T&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;r    print block and wires&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;pdb  enter PDB debugger&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;q    quit&quot;</span><span class="p">)</span>
+
+    <span class="c1"># ---------------------------------------------------------------------- #</span>
+
+<div class="viewcode-block" id="BlockDiagram.report_summary"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.report_summary">[docs]</a>    <span class="k">def</span> <span class="nf">report_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Print a summary of block diagram.</span>
+
+<span class="sd">        :param style: table style, one of: ansi (default), markdown, latex</span>
+<span class="sd">        :type style: str</span>
+
+<span class="sd">        Print a table with 4 columns:</span>
+
+<span class="sd">        1. Block name, sorted in alphabetical order</span>
+<span class="sd">        2. The input port (if not a source block)</span>
+<span class="sd">        3. The block driving this port (if not a source block)</span>
+<span class="sd">        4. The type of value driving this port (if not a source block)</span>
+
+<span class="sd">        If the block is an event source, add a ``@`` suffix.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">table</span> <span class="o">=</span> <span class="n">ANSITable</span><span class="p">(</span>
+            <span class="n">Column</span><span class="p">(</span><span class="s2">&quot;block&quot;</span><span class="p">,</span> <span class="n">headalign</span><span class="o">=</span><span class="s2">&quot;^&quot;</span><span class="p">,</span> <span class="n">colalign</span><span class="o">=</span><span class="s2">&quot;&lt;&quot;</span><span class="p">),</span>
+            <span class="n">Column</span><span class="p">(</span><span class="s2">&quot;inport&quot;</span><span class="p">,</span> <span class="n">headalign</span><span class="o">=</span><span class="s2">&quot;^&quot;</span><span class="p">,</span> <span class="n">colalign</span><span class="o">=</span><span class="s2">&quot;&lt;&quot;</span><span class="p">),</span>
+            <span class="n">Column</span><span class="p">(</span><span class="s2">&quot;source&quot;</span><span class="p">,</span> <span class="n">headalign</span><span class="o">=</span><span class="s2">&quot;^&quot;</span><span class="p">,</span> <span class="n">colalign</span><span class="o">=</span><span class="s2">&quot;&lt;&quot;</span><span class="p">),</span>
+            <span class="n">Column</span><span class="p">(</span><span class="s2">&quot;source type&quot;</span><span class="p">,</span> <span class="n">headalign</span><span class="o">=</span><span class="s2">&quot;^&quot;</span><span class="p">,</span> <span class="n">colalign</span><span class="o">=</span><span class="s2">&quot;&lt;&quot;</span><span class="p">),</span>
+            <span class="n">border</span><span class="o">=</span><span class="s2">&quot;thin&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">first</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">legend</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">name</span><span class="p">):</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">EventSource</span><span class="p">):</span>
+                <span class="n">name</span> <span class="o">+=</span> <span class="s2">&quot;@&quot;</span>
+                <span class="n">legend</span> <span class="o">=</span> <span class="s2">&quot;Note: @ = event source&quot;</span>
+            <span class="c1"># add a divider before each subsequent row</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">first</span><span class="p">:</span>
+                <span class="n">table</span><span class="o">.</span><span class="n">rule</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">first</span> <span class="o">=</span> <span class="kc">False</span>
+
+            <span class="c1"># print the details</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">sources</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># non source block, list all its inputs, one per row</span>
+                <span class="n">inputs</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">inputs</span>
+                <span class="k">for</span> <span class="p">(</span><span class="n">port</span><span class="p">,</span> <span class="n">source</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">sources</span><span class="p">):</span>  <span class="c1"># every port</span>
+
+                    <span class="n">value</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="n">port</span><span class="p">]</span>
+                    <span class="n">typ</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+                        <span class="n">typ</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="si">{:s}</span><span class="s2">.</span><span class="si">{:s}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">dtype</span><span class="p">))</span>
+
+                    <span class="n">table</span><span class="o">.</span><span class="n">row</span><span class="p">(</span><span class="n">name</span> <span class="k">if</span> <span class="n">port</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">typ</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># source block, just list the name</span>
+                <span class="n">table</span><span class="o">.</span><span class="n">row</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">table</span><span class="o">.</span><span class="n">print</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">legend</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">legend</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BlockDiagram.report"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.report">[docs]</a>    <span class="k">def</span> <span class="nf">report</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;use reports_lists() method instead&quot;</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">report_lists</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BlockDiagram.report_lists"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.report_lists">[docs]</a>    <span class="k">def</span> <span class="nf">report_lists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Print a tabular report about the block diagram.</span>
+
+<span class="sd">        :param kwargs: options passed to :meth:`ansitable.ANSITable.print`</span>
+
+<span class="sd">        Print the important lists in pretty format.</span>
+
+<span class="sd">        * block list, all blocks</span>
+<span class="sd">        * wire list, all wires</span>
+<span class="sd">        * clock list, all discrete time clocks</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># print all the blocks</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Blocks::</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">table</span> <span class="o">=</span> <span class="n">ANSITable</span><span class="p">(</span>
+            <span class="n">Column</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">),</span>
+            <span class="n">Column</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">),</span>
+            <span class="n">Column</span><span class="p">(</span><span class="s2">&quot;nin&quot;</span><span class="p">),</span>
+            <span class="n">Column</span><span class="p">(</span><span class="s2">&quot;nout&quot;</span><span class="p">),</span>
+            <span class="n">Column</span><span class="p">(</span><span class="s2">&quot;nstate&quot;</span><span class="p">),</span>
+            <span class="n">Column</span><span class="p">(</span><span class="s2">&quot;ndstate&quot;</span><span class="p">),</span>
+            <span class="n">Column</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="n">headalign</span><span class="o">=</span><span class="s2">&quot;^&quot;</span><span class="p">,</span> <span class="n">colalign</span><span class="o">=</span><span class="s2">&quot;&lt;&quot;</span><span class="p">),</span>
+            <span class="n">border</span><span class="o">=</span><span class="s2">&quot;thin&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
+            <span class="n">table</span><span class="o">.</span><span class="n">row</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">b</span><span class="p">),</span> <span class="n">b</span><span class="o">.</span><span class="n">nin</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">nout</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">nstates</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">ndstates</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">type</span><span class="p">)</span>
+        <span class="n">table</span><span class="o">.</span><span class="n">print</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c1"># print all the wires</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Wires::</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">table</span> <span class="o">=</span> <span class="n">ANSITable</span><span class="p">(</span>
+            <span class="n">Column</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">),</span>
+            <span class="n">Column</span><span class="p">(</span><span class="s2">&quot;from&quot;</span><span class="p">,</span> <span class="n">headalign</span><span class="o">=</span><span class="s2">&quot;^&quot;</span><span class="p">),</span>
+            <span class="n">Column</span><span class="p">(</span><span class="s2">&quot;to&quot;</span><span class="p">,</span> <span class="n">headalign</span><span class="o">=</span><span class="s2">&quot;^&quot;</span><span class="p">),</span>
+            <span class="n">Column</span><span class="p">(</span><span class="s2">&quot;description&quot;</span><span class="p">,</span> <span class="n">headalign</span><span class="o">=</span><span class="s2">&quot;^&quot;</span><span class="p">,</span> <span class="n">colalign</span><span class="o">=</span><span class="s2">&quot;&lt;&quot;</span><span class="p">),</span>
+            <span class="n">Column</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="n">headalign</span><span class="o">=</span><span class="s2">&quot;^&quot;</span><span class="p">,</span> <span class="n">colalign</span><span class="o">=</span><span class="s2">&quot;&lt;&quot;</span><span class="p">),</span>
+            <span class="n">border</span><span class="o">=</span><span class="s2">&quot;thin&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">wirelist</span><span class="p">:</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{:d}</span><span class="s2">[</span><span class="si">{:d}</span><span class="s2">]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">w</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">port</span><span class="p">)</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{:d}</span><span class="s2">[</span><span class="si">{:d}</span><span class="s2">]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">w</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">port</span><span class="p">)</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="n">w</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">port</span><span class="p">]</span>
+                <span class="n">typ</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+                    <span class="n">typ</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="si">{:s}</span><span class="s2">.</span><span class="si">{:s}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">dtype</span><span class="p">))</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="n">typ</span> <span class="o">=</span> <span class="s2">&quot;??&quot;</span>
+            <span class="n">table</span><span class="o">.</span><span class="n">row</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">w</span><span class="o">.</span><span class="n">fullname</span><span class="p">,</span> <span class="n">typ</span><span class="p">)</span>
+        <span class="n">table</span><span class="o">.</span><span class="n">print</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clocklist</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># print all the clocked blocks</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Clocked blocks::</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">table</span> <span class="o">=</span> <span class="n">ANSITable</span><span class="p">(</span>
+                <span class="n">Column</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">),</span>
+                <span class="n">Column</span><span class="p">(</span><span class="s2">&quot;block&quot;</span><span class="p">),</span>
+                <span class="n">Column</span><span class="p">(</span><span class="s2">&quot;clock&quot;</span><span class="p">),</span>
+                <span class="n">Column</span><span class="p">(</span><span class="s2">&quot;period&quot;</span><span class="p">),</span>
+                <span class="n">Column</span><span class="p">(</span><span class="s2">&quot;offset&quot;</span><span class="p">),</span>
+                <span class="n">border</span><span class="o">=</span><span class="s2">&quot;thin&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">blockclass</span> <span class="o">==</span> <span class="s2">&quot;clocked&quot;</span><span class="p">:</span>
+                    <span class="n">c</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">clock</span>
+                    <span class="n">table</span><span class="o">.</span><span class="n">row</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">b</span><span class="p">),</span> <span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">offset</span><span class="p">)</span>
+            <span class="n">table</span><span class="o">.</span><span class="n">print</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Continuous state variables: </span><span class="si">{:d}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nstates</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Discrete state variables:   </span><span class="si">{:d}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ndstates</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">compiled</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;** System has not been compiled, or had a compile time error&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BlockDiagram.report_schedule"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.report_schedule">[docs]</a>    <span class="k">def</span> <span class="nf">report_schedule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Display execution schedule in tabular form</span>
+
+<span class="sd">        :param kwargs: options passed to :meth:`ansitable.ANSITable.print`</span>
+
+<span class="sd">        :seealso: :func:`schedule_plan`, :func:`schedule_dotfile`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">table</span> <span class="o">=</span> <span class="n">ANSITable</span><span class="p">(</span>
+            <span class="n">Column</span><span class="p">(</span><span class="s2">&quot;Step&quot;</span><span class="p">),</span>
+            <span class="n">Column</span><span class="p">(</span><span class="s2">&quot;Blocks&quot;</span><span class="p">,</span> <span class="n">colalign</span><span class="o">=</span><span class="s2">&quot;&lt;&quot;</span><span class="p">,</span> <span class="n">headalign</span><span class="o">=</span><span class="s2">&quot;^&quot;</span><span class="p">),</span>
+            <span class="n">border</span><span class="o">=</span><span class="s2">&quot;thin&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">sequence</span><span class="p">,</span> <span class="n">group</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">):</span>
+            <span class="n">table</span><span class="o">.</span><span class="n">row</span><span class="p">(</span><span class="n">sequence</span><span class="p">,</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">group</span><span class="p">]))</span>
+
+        <span class="n">table</span><span class="o">.</span><span class="n">print</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+    <span class="c1"># ---------------------------------------------------------------------- #</span>
+
+    <span class="k">def</span> <span class="nf">_error_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">where</span><span class="p">,</span> <span class="n">block</span><span class="p">):</span>
+        <span class="c1"># called from except clause</span>
+
+        <span class="kn">import</span> <span class="nn">traceback</span>
+        <span class="kn">import</span> <span class="nn">types</span>
+
+        <span class="n">t</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">tb</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>  <span class="c1"># get the exception</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="n">fg</span><span class="p">(</span><span class="s2">&quot;red&quot;</span><span class="p">))</span>  <span class="c1"># red text</span>
+
+        <span class="c1"># print the traceback</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">block</span><span class="o">.</span><span class="n">type</span><span class="si">}</span><span class="s2"> block: </span><span class="si">{</span><span class="n">block</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">where</span><span class="si">}</span><span class="s2">]: exception </span><span class="si">{</span><span class="n">t</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">traceback</span><span class="o">.</span><span class="n">print_tb</span><span class="p">(</span><span class="n">tb</span><span class="p">)</span>
+
+        <span class="c1"># print all block inputs</span>
+        <span class="nb">print</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">nin</span><span class="p">):</span>
+            <span class="nb">input</span> <span class="o">=</span> <span class="n">block</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;input </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> from&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">block</span><span class="o">.</span><span class="n">sources</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> [</span><span class="si">{</span><span class="nb">input</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">]&quot;</span>
+            <span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  &quot;</span><span class="p">,</span> <span class="nb">input</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="n">attr</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>  <span class="c1"># default text</span>
+
+        <span class="c1"># traceback = err[2]</span>
+        <span class="c1"># back_frame = traceback.tb_frame.f_back</span>
+
+        <span class="c1"># back_tb = types.TracebackType(tb_next=None,</span>
+        <span class="c1">#                           tb_frame=back_frame,</span>
+        <span class="c1">#                           tb_lasti=back_frame.f_lasti,</span>
+        <span class="c1">#                           tb_lineno=back_frame.f_lineno)</span>
+        <span class="c1"># raise RuntimeError(&#39;Fatal failure&#39;).with_traceback(back_tb)</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Fatal failure&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="BlockDiagram.getstate0"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.getstate0">[docs]</a>    <span class="k">def</span> <span class="nf">getstate0</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># get the state from each stateful block</span>
+        <span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">blockclass</span> <span class="o">==</span> <span class="s2">&quot;transfer&quot;</span><span class="p">:</span>
+                    <span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="n">x0</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">getstate0</span><span class="p">()]</span>
+                <span class="c1"># print(&#39;x0&#39;, x0)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_error_handler</span><span class="p">(</span><span class="s2">&quot;getstate0&quot;</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x0</span></div>
+
+<div class="viewcode-block" id="BlockDiagram.reset"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.reset">[docs]</a>    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reset conditions within every active block.  Most importantly, all</span>
+<span class="sd">        inputs are marked as unknown.</span>
+
+<span class="sd">        Invokes the `reset` method on all blocks.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">b</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_error_handler</span><span class="p">(</span><span class="s2">&quot;reset&quot;</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BlockDiagram.step"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Step all blocks</span>
+
+<span class="sd">        :param t: simulation time, defaults to None</span>
+<span class="sd">        :type t: float</span>
+<span class="sd">        :param inports: block input port values</span>
+<span class="sd">        :type inports: list</span>
+
+<span class="sd">        Tell all blocks to take action on new inputs by invoking their</span>
+<span class="sd">        ``step`` method and passing the ``state`` object.  Used to save</span>
+<span class="sd">        results to a figure or file.</span>
+
+<span class="sd">        Called at the end of every integration interval.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            - if ``graphics`` is False, Graphics blocks are not called</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># TODO could be done by output method, even if no outputs</span>
+
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">SinkBlock</span><span class="p">):</span>
+                    <span class="n">b</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">inputs</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_error_handler</span><span class="p">(</span><span class="s2">&quot;step&quot;</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BlockDiagram.deriv"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.deriv">[docs]</a>    <span class="k">def</span> <span class="nf">deriv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Harvest derivatives from all blocks.</span>
+
+<span class="sd">        :param t: simulation time, defaults to None</span>
+<span class="sd">        :type t: float</span>
+<span class="sd">        :param simstate: simulation state, defaults to None</span>
+<span class="sd">        :type simstate: SimState, optional</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">YD</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">blockclass</span> <span class="o">==</span> <span class="s2">&quot;transfer&quot;</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">yd</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">deriv</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">_x</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">yd</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+                        <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;deriv: block </span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2"> did not return ndarray&quot;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">yd</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">yd</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">b</span><span class="o">.</span><span class="n">nstates</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;deriv: block </span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2"> returns wrong shape </span><span class="si">{</span><span class="n">yd</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">, should&quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot; be (</span><span class="si">{</span><span class="n">b</span><span class="o">.</span><span class="n">nstates</span><span class="si">}</span><span class="s2">,)&quot;</span>
+                        <span class="p">)</span>
+                    <span class="n">YD</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="n">YD</span><span class="p">,</span> <span class="n">yd</span><span class="p">]</span>
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_error_handler</span><span class="p">(</span><span class="s2">&quot;deriv&quot;</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">YD</span></div>
+
+<div class="viewcode-block" id="BlockDiagram.start"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simstate</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Start all blocks</span>
+
+<span class="sd">        :param simstate: simulation state, defaults to None</span>
+<span class="sd">        :type simstate: SimState, optional</span>
+
+<span class="sd">        Inform all blocks that BlockDiagram execution is about to start by</span>
+<span class="sd">        invoking their ``start`` method and passing the ``state`` object.  Used</span>
+<span class="sd">        to open files, create figures etc.</span>
+
+<span class="sd">        .. note:: if ``graphics`` is False, Graphics blocks are not called</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">clocklist</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">c</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">simstate</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_error_handler</span><span class="p">(</span><span class="s2">&quot;start_clocked&quot;</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+
+        <span class="c1"># safe wrapper for block starting, does error handling</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
+            <span class="c1"># print(&#39;starting block&#39;, b)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">b</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">simstate</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_error_handler</span><span class="p">(</span><span class="s2">&quot;start&quot;</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BlockDiagram.initialstate"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.initialstate">[docs]</a>    <span class="k">def</span> <span class="nf">initialstate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">blockclass</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;transfer&quot;</span><span class="p">,</span> <span class="s2">&quot;clocked&quot;</span><span class="p">):</span>
+                <span class="n">b</span><span class="o">.</span><span class="n">_x</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">_x0</span></div>
+
+<div class="viewcode-block" id="BlockDiagram.done"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.done">[docs]</a>    <span class="k">def</span> <span class="nf">done</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Finishup all blocks</span>
+
+<span class="sd">        :param state: simulation state, defaults to None</span>
+<span class="sd">        :type state: SimState, optional</span>
+<span class="sd">        :param graphics: graphics enabled, defaults to False</span>
+<span class="sd">        :type graphics: bool, optional</span>
+
+<span class="sd">        Inform all blocks that BlockDiagram execution is complete by invoking their</span>
+<span class="sd">        ``done`` method and passing options.  Used</span>
+<span class="sd">        to close files, display figures etc.</span>
+
+<span class="sd">        .. note:: if ``graphics`` is False, Graphics blocks are not called</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">b</span><span class="o">.</span><span class="n">done</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="n">block</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_error_handler</span><span class="p">(</span><span class="s2">&quot;done&quot;</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BlockDiagram.dotfile"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.dotfile">[docs]</a>    <span class="k">def</span> <span class="nf">dotfile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">shapes</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Write a GraphViz dot file representing the network.</span>
+
+<span class="sd">        :param file: Name of file to write to, or file handle</span>
+<span class="sd">        :type file: str, file handle</span>
+<span class="sd">        :param shapes: block shapes</span>
+<span class="sd">        :type shapes: dict</span>
+
+<span class="sd">        Create a GraphViz format file for procesing by ``dot``.  The graph is:</span>
+
+<span class="sd">        * directed graph, drawn left to right</span>
+<span class="sd">        * source blocks are in the first column</span>
+<span class="sd">        * sink and graphics blocks are in the last column</span>
+<span class="sd">        * ``SUM`` and ``PROD`` blocks have the sign or operation of their input wires</span>
+<span class="sd">          labeled.</span>
+
+<span class="sd">        The file can be processed using ``dot``::</span>
+
+<span class="sd">            % dot -Tpng -o out.png dotfile.dot</span>
+
+<span class="sd">        .. image:: ../../figs/eg1.png</span>
+<span class="sd">            :width: 600</span>
+<span class="sd">            :alt: Block diagram represented as a mathematical graph</span>
+
+<span class="sd">        .. note:: By default all blocks have the default shape, with source blocks shown</span>
+<span class="sd">            as a rectangle (&quot;record&quot;), and sink/graphics blocks as a rounded rectangle</span>
+<span class="sd">            (&quot;Mrecord&quot;).  This can be overriden by provide a dictionary ``shapes`` that</span>
+<span class="sd">            maps block class (sink, source, graphics, function, transfer) to the names</span>
+<span class="sd">            of GraphViz shapes.</span>
+
+<span class="sd">        :seealso: :meth:`showgraph`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">shapes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">shapes</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="s2">&quot;record&quot;</span><span class="p">,</span> <span class="n">sink</span><span class="o">=</span><span class="s2">&quot;Mrecord&quot;</span><span class="p">,</span> <span class="n">graphics</span><span class="o">=</span><span class="s2">&quot;Mrecord&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">file</span> <span class="o">=</span> <span class="n">filename</span>
+
+        <span class="n">header</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;&quot;&quot;digraph G {</span>
+<span class="s2">    rankdir = &quot;LR&quot;</span>
+
+<span class="s2">&quot;&quot;&quot;</span>
+        <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">header</span><span class="p">)</span>
+        <span class="c1"># add the blocks</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
+            <span class="n">options</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">blockclass</span> <span class="ow">in</span> <span class="n">shapes</span><span class="p">:</span>
+                <span class="n">options</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;shape=</span><span class="si">{:s}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">shapes</span><span class="p">[</span><span class="n">b</span><span class="o">.</span><span class="n">blockclass</span><span class="p">]))</span>
+            <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">blockclass</span> <span class="o">==</span> <span class="s2">&quot;source&quot;</span><span class="p">:</span>
+                <span class="n">options</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;rank=&quot;source&quot;&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">blockclass</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;sink&quot;</span><span class="p">,</span> <span class="s2">&quot;graphics&quot;</span><span class="p">):</span>
+                <span class="n">options</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;rank=&quot;sink&quot;&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">pos</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">options</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;pos=&quot;</span><span class="si">{:g}</span><span class="s1">,</span><span class="si">{:g}</span><span class="s1">!&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">pos</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">b</span><span class="o">.</span><span class="n">pos</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+            <span class="c1"># options.append(</span>
+            <span class="c1">#     &#39;xlabel=&lt;&lt;BR/&gt;&lt;FONT POINT-SIZE=&quot;8&quot; COLOR=&quot;blue&quot;&gt;{:s}&lt;/FONT&gt;&gt;&#39;.format(</span>
+            <span class="c1">#         b.type</span>
+            <span class="c1">#     )</span>
+            <span class="c1"># )</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">options</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&quot;</span><span class="si">{:s}</span><span class="s1">&quot; [</span><span class="si">{:s}</span><span class="s1">]</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">options</span><span class="p">)))</span>
+        <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># add the wires</span>
+        <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">wirelist</span><span class="p">:</span>
+            <span class="n">options</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="c1"># options.append(&#39;xlabel=&quot;{:s}&quot;&#39;.format(w.name))</span>
+            <span class="k">if</span> <span class="n">w</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">&quot;sum&quot;</span><span class="p">:</span>
+                <span class="n">options</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="s1">&#39;headlabel=&quot;</span><span class="si">{:s}</span><span class="s1"> &quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">signs</span><span class="p">[</span><span class="n">w</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">port</span><span class="p">])</span>
+                <span class="p">)</span>
+                <span class="n">options</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;labeldistance=1.5&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">w</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">&quot;prod&quot;</span><span class="p">:</span>
+                <span class="n">options</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;headlabel=&quot;</span><span class="si">{:s}</span><span class="s1"> &quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">ops</span><span class="p">[</span><span class="n">w</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">port</span><span class="p">]))</span>
+                <span class="n">options</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;labeldistance=1.5&quot;</span><span class="p">)</span>
+            <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+                <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&quot;</span><span class="si">{:s}</span><span class="s1">&quot; -&gt; &quot;</span><span class="si">{:s}</span><span class="s1">&quot; [</span><span class="si">{:s}</span><span class="s1">]</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">w</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">w</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BlockDiagram.showgraph"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.showgraph">[docs]</a>    <span class="k">def</span> <span class="nf">showgraph</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Display diagram as a graph in browser tab</span>
+
+<span class="sd">        :seealso: :meth:`dotfile`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Lazy import</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">import</span> <span class="nn">tempfile</span>
+            <span class="kn">import</span> <span class="nn">subprocess</span>
+            <span class="kn">import</span> <span class="nn">webbrowser</span>
+        <span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c1"># create the temporary dotfile</span>
+        <span class="n">dotfile</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryFile</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;w&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dotfile</span><span class="p">(</span><span class="n">dotfile</span><span class="p">)</span>
+
+        <span class="c1"># rewind the dot file, create PDF file in the filesystem, run dot</span>
+        <span class="n">dotfile</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">pdffile</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;.pdf&quot;</span><span class="p">,</span> <span class="n">delete</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">&quot;dot -Tpdf&quot;</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">stdin</span><span class="o">=</span><span class="n">dotfile</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">pdffile</span><span class="p">)</span>
+
+        <span class="c1"># open the PDF file in browser (hopefully portable), then cleanup</span>
+        <span class="n">webbrowser</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;file://</span><span class="si">{</span><span class="n">pdffile</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BlockDiagram.blockvalues"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.blockvalues">[docs]</a>    <span class="k">def</span> <span class="nf">blockvalues</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">simstate</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Block </span><span class="si">{:s}</span><span class="s2">:&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  inputs:  &quot;</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">inputs</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  outputs: &quot;</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">_x</span><span class="p">))</span></div></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+
+    <span class="kn">import</span> <span class="nn">bdsim</span>
+
+    <span class="n">bd</span> <span class="o">=</span> <span class="n">bdsim</span><span class="o">.</span><span class="n">BlockDiagram</span><span class="p">()</span>
+
+    <span class="c1"># define the blocks</span>
+    <span class="n">demand</span> <span class="o">=</span> <span class="n">bd</span><span class="o">.</span><span class="n">STEP</span><span class="p">(</span><span class="n">T</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;demand&quot;</span><span class="p">)</span>
+    <span class="nb">sum</span> <span class="o">=</span> <span class="n">bd</span><span class="o">.</span><span class="n">SUM</span><span class="p">(</span><span class="s2">&quot;+-&quot;</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="n">gain</span> <span class="o">=</span> <span class="n">bd</span><span class="o">.</span><span class="n">GAIN</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="p">(</span><span class="mf">1.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="n">plant</span> <span class="o">=</span> <span class="n">bd</span><span class="o">.</span><span class="n">LTI_SISO</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;plant&quot;</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="c1"># scope = bd.SCOPE(pos=(4,0), styles=[{&#39;color&#39;: &#39;blue&#39;}, {&#39;color&#39;: &#39;red&#39;, &#39;linestyle&#39;: &#39;--&#39;})</span>
+    <span class="n">scope</span> <span class="o">=</span> <span class="n">bd</span><span class="o">.</span><span class="n">SCOPE</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">styles</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="s2">&quot;r--&quot;</span><span class="p">],</span> <span class="n">pos</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+
+    <span class="c1"># connect the blocks</span>
+    <span class="n">bd</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">demand</span><span class="p">,</span> <span class="nb">sum</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">scope</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">bd</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">plant</span><span class="p">,</span> <span class="nb">sum</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">bd</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="nb">sum</span><span class="p">,</span> <span class="n">gain</span><span class="p">)</span>
+    <span class="n">bd</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">gain</span><span class="p">,</span> <span class="n">plant</span><span class="p">)</span>
+    <span class="n">bd</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">plant</span><span class="p">,</span> <span class="n">scope</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="n">bd</span><span class="o">.</span><span class="n">compile</span><span class="p">()</span>  <span class="c1"># check the diagram</span>
+    <span class="n">bd</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>  <span class="c1"># list all blocks and wires</span>
+    <span class="n">bd</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># from pathlib import Path</span>
+
+    <span class="c1"># exec(open(Path(__file__).parent.absolute() / &quot;test_blockdiagram.py&quot;).read())</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020-, Peter Corke..
+      <span class="lastupdated">Last updated on 19-Apr-2023.
+      </span></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+    <!-- Theme Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-11Q6WJM565"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-11Q6WJM565', {
+          'anonymize_ip': false,
+      });
+    </script> 
+
+</body>
+</html>

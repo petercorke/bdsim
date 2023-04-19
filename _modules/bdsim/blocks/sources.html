@@ -96,14 +96,9 @@
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
 
-<span class="sd">    +--------+---------+---------+</span>
-<span class="sd">    | inputs | outputs |  states |</span>
-<span class="sd">    +--------+---------+---------+</span>
-<span class="sd">    | 0      | 1       | 0       |</span>
-<span class="sd">    +--------+---------+---------+</span>
-<span class="sd">    |        | float,  |         |</span>
-<span class="sd">    |        | A(N,)   |         |</span>
-<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    :inputs: 0</span>
+<span class="sd">    :outputs: 1 [any]</span>
+<span class="sd">    :states: 0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">0</span>
@@ -131,7 +126,7 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">add_param</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">]</span></div>
 
 
@@ -145,13 +140,9 @@
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
 
-<span class="sd">    +--------+---------+---------+</span>
-<span class="sd">    | inputs | outputs |  states |</span>
-<span class="sd">    +--------+---------+---------+</span>
-<span class="sd">    | 0      | 1       | 0       |</span>
-<span class="sd">    +--------+---------+---------+</span>
-<span class="sd">    |        | float   |         |</span>
-<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    :inputs: 0</span>
+<span class="sd">    :outputs: 1 [float]</span>
+<span class="sd">    :states: 0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">0</span>
@@ -171,7 +162,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">t</span><span class="p">]</span></div>
 
 
@@ -185,13 +176,9 @@
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
 
-<span class="sd">    +--------+---------+---------+</span>
-<span class="sd">    | inputs | outputs |  states |</span>
-<span class="sd">    +--------+---------+---------+</span>
-<span class="sd">    | 0      | 1       | 0       |</span>
-<span class="sd">    +--------+---------+---------+</span>
-<span class="sd">    |        | float   |         |</span>
-<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    :inputs: 0</span>
+<span class="sd">    :outputs: 1 [float]</span>
+<span class="sd">    :states: 0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">0</span>
@@ -296,7 +283,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">amplitude</span> <span class="o">=</span> <span class="n">amplitude</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">offset</span> <span class="o">=</span> <span class="n">offset</span></div>
 
-    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simstate</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">simstate</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">wave</span> <span class="o">==</span> <span class="s2">&quot;square&quot;</span><span class="p">:</span>
             <span class="n">t1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">freq</span>
             <span class="n">t2</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">duty</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">freq</span>
@@ -308,13 +297,14 @@
 
         <span class="c1"># t1 &lt; t2</span>
         <span class="n">T</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">freq</span>
-        <span class="k">while</span> <span class="n">t1</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">simstate</span><span class="o">.</span><span class="n">T</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">simstate</span><span class="o">.</span><span class="n">declare_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t1</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">simstate</span><span class="o">.</span><span class="n">declare_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t2</span><span class="p">)</span>
-            <span class="n">t1</span> <span class="o">+=</span> <span class="n">T</span>
-            <span class="n">t2</span> <span class="o">+=</span> <span class="n">T</span>
+        <span class="k">if</span> <span class="n">simstate</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">while</span> <span class="n">t1</span> <span class="o">&lt;</span> <span class="n">simstate</span><span class="o">.</span><span class="n">T</span><span class="p">:</span>
+                <span class="n">simstate</span><span class="o">.</span><span class="n">declare_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t1</span><span class="p">)</span>
+                <span class="n">simstate</span><span class="o">.</span><span class="n">declare_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t2</span><span class="p">)</span>
+                <span class="n">t1</span> <span class="o">+=</span> <span class="n">T</span>
+                <span class="n">t2</span> <span class="o">+=</span> <span class="n">T</span>
 
-    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="n">T</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">freq</span>
         <span class="n">phase</span> <span class="o">=</span> <span class="p">(</span><span class="n">t</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">freq</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="p">)</span> <span class="o">%</span> <span class="mf">1.0</span>
 
@@ -352,13 +342,9 @@
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
 
-<span class="sd">    +--------+---------+---------+</span>
-<span class="sd">    | inputs | outputs |  states |</span>
-<span class="sd">    +--------+---------+---------+</span>
-<span class="sd">    | 0      | 1       | 0       |</span>
-<span class="sd">    +--------+---------+---------+</span>
-<span class="sd">    |        | float   |         |</span>
-<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    :inputs: 0</span>
+<span class="sd">    :outputs: 1 [float]</span>
+<span class="sd">    :states: 0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">0</span>
@@ -394,11 +380,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">t</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">seq</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">seq</span><span class="p">]</span></div>
 
-    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">t</span><span class="p">:</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">declare_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simstate</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">simstate</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">simstate</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">t</span><span class="p">:</span>
+                <span class="n">simstate</span><span class="o">.</span><span class="n">declare_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="n">i</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="mi">1</span> <span class="k">if</span> <span class="n">t</span> <span class="o">&gt;=</span> <span class="n">_t</span> <span class="k">else</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">_t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">t</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span>
         <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
         <span class="c1"># print(out)</span>
@@ -415,13 +404,9 @@
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
 
-<span class="sd">    +--------+---------+---------+</span>
-<span class="sd">    | inputs | outputs |  states |</span>
-<span class="sd">    +--------+---------+---------+</span>
-<span class="sd">    | 0      | 1       | 0       |</span>
-<span class="sd">    +--------+---------+---------+</span>
-<span class="sd">    |        | float   |         |</span>
-<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    :inputs: 0</span>
+<span class="sd">    :outputs: 1 [float]</span>
+<span class="sd">    :states: 0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">0</span>
@@ -455,10 +440,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">off</span> <span class="o">=</span> <span class="n">off</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">on</span> <span class="o">=</span> <span class="n">on</span></div>
 
-    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="n">state</span><span class="o">.</span><span class="n">declare_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simstate</span><span class="p">):</span>
+        <span class="n">simstate</span><span class="o">.</span><span class="n">declare_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">t</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">:</span>
             <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">on</span>
         <span class="k">else</span><span class="p">:</span>
@@ -478,13 +463,9 @@
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
 
-<span class="sd">    +--------+---------+---------+</span>
-<span class="sd">    | inputs | outputs |  states |</span>
-<span class="sd">    +--------+---------+---------+</span>
-<span class="sd">    | 0      | 1       | 0       |</span>
-<span class="sd">    +--------+---------+---------+</span>
-<span class="sd">    |        | float   |         |</span>
-<span class="sd">    +--------+---------+---------+</span>
+<span class="sd">    :inputs: 0</span>
+<span class="sd">    :outputs: 1 [float]</span>
+<span class="sd">    :states: 0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">0</span>
@@ -519,10 +500,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">off</span> <span class="o">=</span> <span class="n">off</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">slope</span> <span class="o">=</span> <span class="n">slope</span></div>
 
-    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="n">state</span><span class="o">.</span><span class="n">declare_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simstate</span><span class="p">):</span>
+        <span class="n">simstate</span><span class="o">.</span><span class="n">declare_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">t</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">:</span>
             <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">off</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">slope</span> <span class="o">*</span> <span class="p">(</span><span class="n">t</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -547,7 +528,7 @@
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020-, Peter Corke..
-      <span class="lastupdated">Last updated on 03-Apr-2023.
+      <span class="lastupdated">Last updated on 19-Apr-2023.
       </span></p>
   </div>
 

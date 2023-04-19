@@ -105,14 +105,9 @@
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
 
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | inputs     | outputs |  states |</span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | 1          | 1       | N       |</span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | float,     | float,  |         |</span>
-<span class="sd">    | A(N,)      | A(N,)   |         |</span>
-<span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    :inputs: 1 [float, ndarray]</span>
+<span class="sd">    :outputs: 1 [float, ndarray]</span>
+<span class="sd">    :states: N</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
@@ -145,13 +140,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">ndstates</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x0</span><span class="p">)</span></div>
         <span class="c1"># print(&#39;nstates&#39;, self.nstates)</span>
 
-    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="c1"># print(&#39;* output, x is &#39;, self._x)</span>
-        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">x</span><span class="p">]</span>
 
-<div class="viewcode-block" id="ZOH.next"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.discrete.ZOH.next">[docs]</a>    <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">xnext</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">xnext</span></div></div>
+<div class="viewcode-block" id="ZOH.next"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.discrete.ZOH.next">[docs]</a>    <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">u</span><span class="p">)</span></div></div>
 
 
 <span class="c1"># ------------------------------------------------------------------------</span>
@@ -164,14 +158,9 @@
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
 
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | inputs     | outputs |  states |</span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | 1          | 1       | N       |</span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | float,     | float,  |         |</span>
-<span class="sd">    | A(N,)      | A(N,)   |         |</span>
-<span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    :inputs: 1 [float, ndarray]</span>
+<span class="sd">    :outputs: 1 [float, ndarray]</span>
+<span class="sd">    :states: N</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
@@ -231,11 +220,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">max</span> <span class="o">=</span> <span class="nb">max</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">=</span> <span class="n">gain</span></div>
 
-    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">]</span>
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">x</span><span class="p">]</span>
 
-<div class="viewcode-block" id="DIntegrator.next"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.discrete.DIntegrator.next">[docs]</a>    <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">xnext</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">clock</span><span class="o">.</span><span class="n">T</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<div class="viewcode-block" id="DIntegrator.next"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.discrete.DIntegrator.next">[docs]</a>    <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">xnext</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">clock</span><span class="o">.</span><span class="n">T</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">u</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">min</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">xnext</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">xnext</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">min</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">xnext</span></div></div>
@@ -248,13 +237,9 @@
 <span class="sd">    .. table::</span>
 <span class="sd">       :align: left</span>
 
-<span class="sd">       +------------+---------+---------+</span>
-<span class="sd">       | inputs     | outputs |  states |</span>
-<span class="sd">       +------------+---------+---------+</span>
-<span class="sd">       | 1          | 1       | N       |</span>
-<span class="sd">       +------------+---------+---------+</span>
-<span class="sd">       | A(6,)      | SE3     |         |</span>
-<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">    :inputs: 1 [ndarray(6,)]</span>
+<span class="sd">    :outputs: 1 [SE3]</span>
+<span class="sd">    :states: 6</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
@@ -300,12 +285,12 @@
 
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;nstates&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span><span class="p">,</span> <span class="n">x0</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">Twist3</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">)</span><span class="o">.</span><span class="n">SE3</span><span class="p">()]</span>
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">Twist3</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">SE3</span><span class="p">()]</span>
 
-<div class="viewcode-block" id="DPoseIntegrator.next"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.discrete.DPoseIntegrator.next">[docs]</a>    <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">T_delta</span> <span class="o">=</span> <span class="n">SE3</span><span class="o">.</span><span class="n">Delta</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">clock</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
-        <span class="n">pose</span> <span class="o">=</span> <span class="n">Twist3</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">)</span><span class="o">.</span><span class="n">SE3</span><span class="p">()</span> <span class="o">*</span> <span class="n">T_delta</span>
+<div class="viewcode-block" id="DPoseIntegrator.next"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.discrete.DPoseIntegrator.next">[docs]</a>    <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">T_delta</span> <span class="o">=</span> <span class="n">SE3</span><span class="o">.</span><span class="n">Delta</span><span class="p">(</span><span class="n">u</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">clock</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        <span class="n">pose</span> <span class="o">=</span> <span class="n">Twist3</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">SE3</span><span class="p">()</span> <span class="o">*</span> <span class="n">T_delta</span>
         <span class="k">return</span> <span class="n">Twist3</span><span class="p">(</span><span class="n">pose</span><span class="p">)</span><span class="o">.</span><span class="n">A</span></div></div>
 
 
@@ -521,7 +506,7 @@
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020-, Peter Corke..
-      <span class="lastupdated">Last updated on 03-Apr-2023.
+      <span class="lastupdated">Last updated on 19-Apr-2023.
       </span></p>
   </div>
 
