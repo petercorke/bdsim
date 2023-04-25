@@ -17,8 +17,10 @@ test:
 	pytest
 
 coverage:
-	pytest --cov=bdsim
+	coverage run --source='bdsim' -m pytest
 	coverage report
+	coverage html
+	open htmlcov/index.html
 
 docs: .FORCE
 	(cd docs; make html)
