@@ -275,7 +275,8 @@ class LTI_SS(TransferBlock):
         return list(self.C @ x)
 
     def deriv(self, t, u, x):
-        return self.A @ x + self.B @ np.array(u)
+        xd = self.A @ x + self.B @ np.array(u)
+        return xd.flatten()
 
 
 # ------------------------------------------------------------------------ #
