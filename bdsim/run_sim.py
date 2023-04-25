@@ -7,6 +7,7 @@ from collections import Counter, namedtuple
 import argparse
 import types
 import warnings
+import time
 
 from bdsim.blockdiagram import BlockDiagram
 from bdsim.components import OptionsBase, Block, Clock, BDStruct, Plug, clocklist
@@ -442,14 +443,19 @@ class BDSim:
 
         # get simulation time
         #  --simtime=T  or --simtime=T,dt
-        try:
-            default_times = eval(self.option("simtime"))
-            if isinstance(default_times, (int, float)):
-                T = default_times
-            else:
-                T, dt = default_times
-        except:
-            pass
+        if self.options.simtime is not None:
+            try:
+                default_times = eval(self.options.simtime)
+                if isinstance(default_times, (int, float)):
+                    T = default_times
+                elif isinstance(default_times, tuple):
+                    T, dt = default_times
+                else:
+                    raise ValueError(
+                        "bad simtime option passed " + self.options.simtime
+                    )
+            except:
+                raise ValueError("bad simtime option passed " + self.options.simtime)
 
         # final default values
         # T = T or 5
@@ -463,6 +469,7 @@ class BDSim:
             dt = T / 100
         simstate.dt = dt
         simstate.count = 0
+        simstate.bdtime = 0.0
         simstate.solver = solver
         simstate.solver_args = solver_args
         simstate.minstepsize = minstepsize
@@ -512,7 +519,13 @@ class BDSim:
         simstate.watchnamelist = watchnamelist
 
         x0 = bd.getstate0()
-        print("initial state  x0 = ", x0)
+        if not self.options.quiet:
+            print(fg("yellow"))
+            print(f">>> Start simulation: T = {T:.2f}, dt = {dt:.3f}")
+            print(f"  Continuous state variables: {bd.nstates}")
+            print("     x0 = ", x0)
+
+            print(f"  Discrete state variables:   {bd.ndstates}")
 
         # get the number of discrete states from all clocks
         ndstates = 0
@@ -521,7 +534,11 @@ class BDSim:
             for b in clock.blocklist:
                 nds += b.ndstates
             ndstates += nds
-            print(clock.name, "initial dstate x0 = ", clock.getstate0())
+            if not self.options.quiet:
+                print(f"    {clock.name}: x0 = ", clock.getstate0())
+
+        if not self.options.quiet:
+            print(attr(0))
 
         # update block parameters given on command line
         self.update_parameters(bd)
@@ -583,11 +600,17 @@ class BDSim:
         self.progress.end()  # cleanup the progress bar
 
         # print some info about the integration
-        print(fg("yellow"))
-        print(f"integrator steps:      {simstate.count}")
-        print(f"time steps:            {len(simstate.tlist)}")
-        print(f"integration intervals: {nintervals}")
-        print(attr(0))
+        if not self.options.quiet:
+            print(fg("yellow"))
+            print("<<< Simulation complete")
+            print(f"  block diagram evaluations: {simstate.count}")
+            print(
+                "  block diagram exec time:  "
+                f" {simstate.bdtime / simstate.count * 1000.0:.3f} ms"
+            )
+            print(f"  time steps:                {len(simstate.tlist)}")
+            print(f"  integration intervals:     {nintervals}")
+            print(attr(0))
 
         # save buffered data in a Struct
         out = BDStruct(name="results")
@@ -730,7 +753,11 @@ class BDSim:
                 def ydot(t, y):
                     simstate.t = t
                     simstate.count += 1
-                    return bd.schedule_evaluate(y, t, simstate=simstate)
+                    t0 = time.time()
+                    yd = bd.schedule_evaluate(y, t, sinks=False, simstate=simstate)
+                    t1 = time.time()
+                    simstate.bdtime += t1 - t0
+                    return yd
 
                 if simstate.dt is not None:
                     simstate.solver_args["max_step"] = simstate.dt
@@ -807,7 +834,12 @@ class BDSim:
                 for t in np.arange(t0, T, simstate.dt):  # step through the time range
                     # evaluate the block diagram
                     simstate.t = t
+
+                    simstate.count += 1
+                    t0 = time.time()
                     bd.schedule_evaluate([], t)
+                    t1 = time.time()
+                    simstate.bdtime += t1 - t0
 
                     # stash the results
                     simstate.tlist.append(t)
@@ -839,7 +871,12 @@ class BDSim:
                 t = t0
                 simstate.t = t
                 # evaluate the block diagram
+
+                simstate.count += 1
+                t0 = time.time()
                 bd.schedule_evaluate([], t)
+                t1 = time.time()
+                simstate.bdtime += t1 - t0
 
                 # stash the results
                 simstate.tlist.append(t)
