@@ -442,9 +442,9 @@ class Clip(FunctionBlock):
     minimum and maximum values can be:
 
         - a scalar, in which case the same value applies to every element of
-            the input vector , or
+          the input vector , or
         - a 1D-array, of the same shape as the input vector that applies elementwise to
-            the input vector.
+          the input vector.
 
     For example::
 
@@ -581,8 +581,6 @@ class Function(FunctionBlock):
         :type fkwargs: dict, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict, optional
-
-
         """
         if func is None:
             raise ValueError("function is not defined")

@@ -321,7 +321,7 @@ class Piecewise(SourceBlock, EventSource):
     .. note::
         - The tuples must be order by monotonically increasing time.
         - There is no default initial value, the list should contain
-            a tuple with time zero otherwise the output will be undefined.
+          a tuple with time zero otherwise the output will be undefined.
         - The 2-tuples can
 
     .. note:: The block declares an event for the start of each segment.

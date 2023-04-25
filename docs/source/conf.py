@@ -13,22 +13,25 @@
 #
 import os
 import sys
-#sys.path.insert(0, os.path.abspath('.'))
+
+# sys.path.insert(0, os.path.abspath('.'))
 # defined relative to configuration directory which is where this file conf.py lives
-sys.path.append(os.path.abspath('exts'))
+sys.path.append(os.path.abspath("exts"))
 
 
 # -- Project information -----------------------------------------------------
 
-project = 'Block diagram simulation'
-copyright = '2020-, Peter Corke.'
-author = 'Peter Corke'
+project = "Block diagram simulation"
+copyright = "2020-, Peter Corke."
+author = "Peter Corke"
 
 try:
     import bdsim
+
     version = bdsim.__version__
 except AttributeError:
     import re
+
     with open("../../pyproject.toml", "r") as f:
         m = re.compile(r'version\s*=\s*"([0-9\.]+)"').search(f.read())
         version = m[1]
@@ -39,57 +42,56 @@ except AttributeError:
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
- 'sphinx.ext.autodoc',
- 'sphinx.ext.todo',
- 'sphinx.ext.viewcode',
- 'sphinx.ext.mathjax',
- 'sphinx.ext.coverage',
- 'sphinx.ext.inheritance_diagram',
- "sphinx_autodoc_typehints",
- "sphinx_favicon",
- 'blockname',
+    "sphinx.ext.autodoc",
+    "sphinx.ext.todo",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.coverage",
+    "sphinx.ext.inheritance_diagram",
+    "sphinx_autodoc_typehints",
+    "sphinx_favicon",
+    "blockname",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['test_*']
+exclude_patterns = ["test_*"]
 
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+html_theme = "alabaster"
 html_show_sourcelink = True
 
-html_theme = 'sphinx_rtd_theme'
-#html_theme = 'alabaster'
-#html_theme = 'pyramid'
-#html_theme = 'sphinxdoc'
+html_theme = "sphinx_rtd_theme"
+# html_theme = 'alabaster'
+# html_theme = 'pyramid'
+# html_theme = 'sphinxdoc'
 
-github_url = 'https://github.com/petercorke/bdsim'
+github_url = "https://github.com/petercorke/bdsim"
 
 html_theme_options = {
     "github_host": "gitlab.com",
-    'github_user': 'petercorke',
-    'github_repo': 'bdsim',
+    "github_user": "petercorke",
+    "github_repo": "bdsim",
     "display_github": True,
-    'github_version': 'HEAD',
-    #'logo_name': False,
-    'logo_only': False,
-    #'description': 'Spatial maths and geometry for Python',
-    'display_version': True,
-    'prev_next_buttons_location': 'both',
-    'analytics_id': 'G-11Q6WJM565',
+    "github_version": "HEAD",
+    "logo_only": False,
+    "display_version": True,
+    "prev_next_buttons_location": "both",
+    "analytics_id": "G-11Q6WJM565",
+    "sphinx.ext.intersphinx",
 
-    }
+}
 
-html_logo = '../../figs/BDSimLogo_NoBackgnd@2x.png'
-html_last_updated_fmt = '%d-%b-%Y'
+html_logo = "../../figs/BDSimLogo_NoBackgnd@2x.png"
+html_last_updated_fmt = "%d-%b-%Y"
 autoclass_content = "class"
 html_show_sourcelink = True
 
@@ -107,8 +109,8 @@ rst_epilog = """
 
 # see https://stackoverflow.com/questions/9728292/creating-latex-math-macros-within-sphinx
 mathjax3_config = {
-    'tex': {
-        'macros': {
+    "tex": {
+        "macros": {
             # RVC Math notation
             #  - not possible to do the if/then/else approach
             #  - subset only
@@ -138,9 +140,8 @@ mathjax3_config = {
             # quaternions
             "q": r"\mathring{q}",
             "fq": [r"\presup{#1}\mathring{q}", 1],
-
         }
-   }
+    }
 }
 
 # -------- Options favicon -------------------------------------------------------#
@@ -179,3 +180,4 @@ favicons = [
         "type": "image/png",
     },
 ]
+
