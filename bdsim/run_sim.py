@@ -521,7 +521,7 @@ class BDSim:
         x0 = bd.getstate0()
         if not self.options.quiet:
             print(fg("yellow"))
-            print(f">>> Start simulation: T = {T:.2f}, dt = {dt:.3f}")
+            print(f">>> Start simulation: T = {T}, dt = {dt}")
             print(f"  Continuous state variables: {bd.nstates}")
             print("     x0 = ", x0)
 
