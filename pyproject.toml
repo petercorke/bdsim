@@ -1,6 +1,6 @@
 [project]
 name = "bdsim"
-version = "1.0.0"
+version = "1.1.0"
 authors = [
   { name="Peter Corke", email="rvc@petercorke.com" },
 ]
@@ -56,11 +56,21 @@ docs = [
     "sphinx-favicon",
 ]
 
+edit = [
+    "PyQt5",
+    "PIL",
+]
+
 [project.scripts]
 
-bdedit = "bdsim.bdedit:main"
 bdrun = "bdsim:bdrun"
 bdtex2icon = "bdsim.tex2icon:main"
+
+[project.gui-scripts]
+
+# ideally this would only happen if [edit] option given
+bdedit = "bdsim.bdedit:main"
+
 
 [build-system]
 
@@ -79,5 +89,8 @@ packages = [
 line-length = 88
 target-version = ['py37']
 
+[tool.pytest.ini_options]
+testpaths = "tests"
+
 [tool.coverage.run]
-omit = ["tex2icon.py", "io.py", "vision.py", "bdsim/bdedit/*.py"]
+omit = ["tex2icon.py", "io.py", "vision.py", "bdsim/bdedit/*.py", "tk_editor/*.py", "examples/RVC3/*.py"]
