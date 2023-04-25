@@ -181,3 +181,12 @@ favicons = [
     },
 ]
 
+# -------- Options InterSphinx -------------------------------------------------------#
+
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3", None),
+    "numpy": ("http://docs.scipy.org/doc/numpy/", None),
+    "scipy": ("http://docs.scipy.org/doc/scipy/reference/", None),
+    "matplotlib": ("http://matplotlib.sourceforge.net/", None),
+    "spatialmath": ("https://petercorke.github.io/spatialmath-python/", None),
+}
