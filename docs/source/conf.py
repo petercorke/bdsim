@@ -47,6 +47,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.mathjax",
     "sphinx.ext.coverage",
+    "sphinx.ext.intersphinx",
     "sphinx.ext.inheritance_diagram",
     "sphinx_autodoc_typehints",
     "sphinx_favicon",
@@ -86,8 +87,6 @@ html_theme_options = {
     "display_version": True,
     "prev_next_buttons_location": "both",
     "analytics_id": "G-11Q6WJM565",
-    "sphinx.ext.intersphinx",
-
 }
 
 html_logo = "../../figs/BDSimLogo_NoBackgnd@2x.png"
