@@ -97,8 +97,8 @@ which we can express concisely with `bdsim` as (see [`bdsim/examples/eg1.py`](ht
     18	bd.connect(gain, plant)
     19	bd.connect(plant, sum[1], scope[0])
     20	
-    21	bd.compile()   # check the diagram
-    22	bd.report()    # list all blocks and wires
+    21	bd.compile()          # check the diagram
+    22	bd.report_summary()   # list the system
     23
     24  out = sim.run(bd, 5)   # simulate for 5s
 ```
@@ -127,46 +127,48 @@ Line 21 assembles all the blocks and wires, instantiates subsystems, checks conn
 Line 22 generates a report, in tabular form, showing a summary of the block diagram:
 
 ```
-Blocks::
-
-┌───┬─────────┬─────┬──────┬────────┬─────────┬───────┐
-│id │    name │ nin │ nout │ nstate │ ndstate │ type  │
-├───┼─────────┼─────┼──────┼────────┼─────────┼───────┤
-│ 0 │  demand │   0 │    1 │      0 │       0 │ step  │
-│ 1 │   sum.0 │   2 │    1 │      0 │       0 │ sum   │
-│ 2 │  gain.0 │   1 │    1 │      0 │       0 │ gain  │
-│ 3 │   plant │   1 │    1 │      1 │       0 │ LTI   │
-│ 4 │ scope.0 │   2 │    0 │      0 │       0 │ scope │
-└───┴─────────┴─────┴──────┴────────┴─────────┴───────┘
-
-Wires::
-
-┌───┬──────┬──────┬──────────────────────────┬─────────┐
-│id │ from │  to  │       description        │  type   │
-├───┼──────┼──────┼──────────────────────────┼─────────┤
-│ 0 │ 0[0] │ 1[0] │ demand[0] --> sum.0[0]   │ int     │
-│ 1 │ 0[0] │ 4[1] │ demand[0] --> scope.0[1] │ int     │
-│ 2 │ 3[0] │ 1[1] │ plant[0] --> sum.0[1]    │ float64 │
-│ 3 │ 1[0] │ 2[0] │ sum.0[0] --> gain.0[0]   │ float64 │
-│ 4 │ 2[0] │ 3[0] │ gain.0[0] --> plant[0]   │ float64 │
-│ 5 │ 3[0] │ 4[0] │ plant[0] --> scope.0[0]  │ float64 │
-└───┴──────┴──────┴──────────────────────────┴─────────┘
-
-Continuous state variables:   1
-Discrete state variables:     0
-initial state  x0 =  [0.]
+┌────────┬────────┬────────┬─────────────┐
+│ block  │ inport │ source │ source type │
+├────────┼────────┼────────┼─────────────┤
+│demand@ │        │        │             │
+├────────┼────────┼────────┼─────────────┤
+│gain.0  │ 0      │ sum.0  │ float64     │
+├────────┼────────┼────────┼─────────────┤
+│plant   │ 0      │ gain.0 │ float64     │
+├────────┼────────┼────────┼─────────────┤
+│scope.0 │ 0      │ plant  │ float64     │
+│        │ 1      │ demand │ int         │
+├────────┼────────┼────────┼─────────────┤
+│sum.0   │ 0      │ demand │ int         │
+│        │ 1      │ plant  │ float64     │
+└────────┴────────┴────────┴─────────────┘
 ```
-In the first table we can see key information about each block, its `id` (used internally), name, the number of input and output ports, the number of
-continuous- and discrete-time states, and the type which is the block class.  Note that the name is auto-generated based on the type, except if it has
-been set explicitly as for the blocks `demand` and `plant`.
-
-The second table shows all wires in point-to-point form, showing the start and end block and port (the block is represented here by its `id`) and the type of the object sent along the wire.
-
-Finally, there is a summary of the number of states for the complete system: the number of continuous states, the number
-of discrete states, and the initial value of the continuous state vector.
 
 Line 24 runs the simulation for 5 seconds 
-using the default variable-step RK45 solver and saves output values at least every 0.1s.  The scope block pops up a graph
+using the default variable-step RK45 solver and saves output values at least every 0.05s.  It
+causes the following output
+
+```
+>>> Start simulation: T = 5.00, dt = 0.050
+  Continuous state variables: 1
+     x0 =  [0.]
+  Discrete state variables:   0
+
+no graphics backend specified: Qt5Agg found, using instead of MacOSX
+
+bdsim ◉◉◉◉◉◉◉◉◉◉◉◉◉◉◉◉◉◉◉◉◉◉◉◉◉◉◉◉◉◉◉◉ 100.0% - 0s
+
+<<< Simulation complete
+  block diagram evaluations: 784
+  block diagram exec time:   0.075 ms
+  time steps:                123
+  integration intervals:     2
+```
+
+This provides a summary of the number of states for the complete system: the number of continuous states, the number
+of discrete states, and the initial value of the state vectors.
+
+During execution a progress bar is updated and scope blocks pops up a graphical window
 
 ![bdsim output](https://github.com/petercorke/bdsim/raw/master/figs/Figure_1.png)
 
@@ -211,24 +213,38 @@ The `watch` argument is a list of outputs to log, in this case `plant` defaults
 to output port 0.  This information is saved in additional variables `y0`, `y1`
 etc.  `ynames` is a list of the names of the watched variables.
 
-An alternative system report, created by `bd.report_summary` is more compact
+An alternative system report, created by `bd.report_lists` is more detailed
 ```
-┌────────┬────────┬────────┬─────────────┐
-│ block  │ inport │ source │ source type │
-├────────┼────────┼────────┼─────────────┤
-│demand@ │        │        │             │
-├────────┼────────┼────────┼─────────────┤
-│gain.0  │ 0      │ sum.0  │ float64     │
-├────────┼────────┼────────┼─────────────┤
-│plant   │ 0      │ gain.0 │ float64     │
-├────────┼────────┼────────┼─────────────┤
-│scope.0 │ 0      │ plant  │ float64     │
-│        │ 1      │ demand │ int         │
-├────────┼────────┼────────┼─────────────┤
-│sum.0   │ 0      │ demand │ int         │
-│        │ 1      │ plant  │ float64     │
-└────────┴────────┴────────┴─────────────┘
+Blocks::
+
+┌───┬─────────┬─────┬──────┬────────┬─────────┬───────┐
+│id │    name │ nin │ nout │ nstate │ ndstate │ type  │
+├───┼─────────┼─────┼──────┼────────┼─────────┼───────┤
+│ 0 │  demand │   0 │    1 │      0 │       0 │ step  │
+│ 1 │   sum.0 │   2 │    1 │      0 │       0 │ sum   │
+│ 2 │  gain.0 │   1 │    1 │      0 │       0 │ gain  │
+│ 3 │   plant │   1 │    1 │      1 │       0 │ LTI   │
+│ 4 │ scope.0 │   2 │    0 │      0 │       0 │ scope │
+└───┴─────────┴─────┴──────┴────────┴─────────┴───────┘
+
+Wires::
+
+┌───┬──────┬──────┬──────────────────────────┬─────────┐
+│id │ from │  to  │       description        │  type   │
+├───┼──────┼──────┼──────────────────────────┼─────────┤
+│ 0 │ 0[0] │ 1[0] │ demand[0] --> sum.0[0]   │ int     │
+│ 1 │ 0[0] │ 4[1] │ demand[0] --> scope.0[1] │ int     │
+│ 2 │ 3[0] │ 1[1] │ plant[0] --> sum.0[1]    │ float64 │
+│ 3 │ 1[0] │ 2[0] │ sum.0[0] --> gain.0[0]   │ float64 │
+│ 4 │ 2[0] │ 3[0] │ gain.0[0] --> plant[0]   │ float64 │
+│ 5 │ 3[0] │ 4[0] │ plant[0] --> scope.0[0]  │ float64 │
+└───┴──────┴──────┴──────────────────────────┴─────────┘
 ```
+In the first table we can see key information about each block, its `id` (used internally), name, the number of input and output ports, the number of
+continuous- and discrete-time states, and the type which is the block class.  Note that the name is auto-generated based on the type, except if it has
+been set explicitly as for the blocks `demand` and `plant`.
+
+The second table shows all wires in point-to-point form, showing the start and end block and port (the block is represented here by its `id`) and the type of the object sent along the wire.
 
 To save figures we need to make two modifications, changing line 4 to
 ```
