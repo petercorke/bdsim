@@ -958,9 +958,6 @@ class BlockDiagram:
                     table.row(b.id, str(b), c.name, c.T, c.offset)
             table.print(**kwargs)
 
-        print("\nContinuous state variables: {:d}".format(self.nstates))
-        print("Discrete state variables:   {:d}".format(self.ndstates))
-
         if not self.compiled:
             print("** System has not been compiled, or had a compile time error")
 
