@@ -342,8 +342,12 @@
         <span class="n">gstate</span><span class="o">.</span><span class="n">fignum</span> <span class="o">+=</span> <span class="mi">1</span>
 
         <span class="k">def</span> <span class="nf">onkeypress</span><span class="p">(</span><span class="n">event</span><span class="p">):</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;pressed&quot;</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
-            <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">key</span> <span class="o">==</span> <span class="s2">&quot;x&quot;</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;closing all windows&quot;</span><span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;key pressed&quot;</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
 
         <span class="n">f</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">mpl_connect</span><span class="p">(</span><span class="s2">&quot;key_press_event&quot;</span><span class="p">,</span> <span class="n">onkeypress</span><span class="p">)</span>
 

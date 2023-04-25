@@ -577,7 +577,7 @@
                 <span class="c1">#  - recurse to import it</span>
                 <span class="c1">#  - add its blocks and wires to the set</span>
                 <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
-                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;found subsystem &quot;</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;instantiating subsystem &quot;</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
                 <span class="n">ssb</span><span class="p">,</span> <span class="n">ssw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subsystem_import</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">subsystem</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
                 <span class="n">blocks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">ssb</span><span class="p">)</span>
                 <span class="n">wires</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">ssw</span><span class="p">)</span>
