@@ -104,6 +104,7 @@ class Scope(GraphicsBlock):
         grid=True,
         watch=False,
         title=None,
+        loc="best",
         **blockargs,
     ):
         """
@@ -127,6 +128,8 @@ class Scope(GraphicsBlock):
         :type watch: bool, optional
         :param title: title of plot
         :type title: str
+        :param loc: location of legend, see :meth:`matplotlib.pyplot.legend`, defaults to "best"
+        :type loc: str
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
@@ -213,6 +216,7 @@ class Scope(GraphicsBlock):
 
         self.watch = watch
         self.title = title
+        self.loc = loc
 
         # TODO, wire width
         # inherit names from wires, block needs to be able to introspect
@@ -281,7 +285,7 @@ class Scope(GraphicsBlock):
         if self.scale != "auto":
             self.ax.set_ylim(*self.scale)
         if self.labels is not None:
-            self.ax.legend(self.labels, loc="lower right")
+            self.ax.legend(self.labels, loc=self.loc)
 
         if self.watch:
             for wire in self.input_wires:

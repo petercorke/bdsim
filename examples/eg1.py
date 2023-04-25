@@ -10,7 +10,7 @@ demand = bd.STEP(T=1, name="demand")
 sum = bd.SUM("+-")
 gain = bd.GAIN(10)
 plant = bd.LTI_SISO(0.5, [2, 1], name="plant")
-scope = bd.SCOPE(styles=["k", "r--"])  # , movie='eg1.mp4')
+scope = bd.SCOPE(styles=["k", "r--"], loc="lower right")  # , movie='eg1.mp4')
 
 # connect the blocks
 bd.connect(demand, sum[0], scope[1])
