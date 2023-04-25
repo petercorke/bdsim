@@ -42,7 +42,7 @@
               <img src="_static/BDSimLogo_NoBackgnd@2x.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                1.0.0
+                1.1.0
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -200,7 +200,7 @@ Python type, for example float, list or Numpy ndarray.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>value</strong> (<em>any</em><em>, </em><em>optional</em>) – the constant, defaults to 0</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 </dl>
@@ -282,11 +282,8 @@ in a list in a way that can be represented in a JSON file:</p>
 <p class="admonition-title">Note</p>
 <ul class="simple">
 <li><p>The tuples must be order by monotonically increasing time.</p></li>
-<li><dl class="simple">
-<dt>There is no default initial value, the list should contain</dt><dd><p>a tuple with time zero otherwise the output will be undefined.</p>
-</dd>
-</dl>
-</li>
+<li><p>There is no default initial value, the list should contain
+a tuple with time zero otherwise the output will be undefined.</p></li>
 <li><p>The 2-tuples can</p></li>
 </ul>
 </div>
@@ -306,7 +303,7 @@ in a list in a way that can be represented in a JSON file:</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>seq</strong> (<em>list of 2-element iterables</em>) – sequence of time, value pairs</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 </dl>
@@ -387,10 +384,10 @@ in a list in a way that can be represented in a JSON file:</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>T</strong> (<em>float</em><em>, </em><em>optional</em>) – time of ramp start, defaults to 1</p></li>
-<li><p><strong>off</strong> (<em>float</em><em>, </em><em>optional</em>) – initial value, defaults to 0</p></li>
-<li><p><strong>slope</strong> (<em>float</em><em>, </em><em>optional</em>) – gradient of slope, defaults to 1</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>T</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>optional</em>) – time of ramp start, defaults to 1</p></li>
+<li><p><strong>off</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>optional</em>) – initial value, defaults to 0</p></li>
+<li><p><strong>slope</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>optional</em>) – gradient of slope, defaults to 1</p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 </dl>
@@ -471,10 +468,10 @@ equals <code class="docutils literal notranslate"><span class="pre">T</span></co
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>T</strong> (<em>float</em><em>, </em><em>optional</em>) – time of step, defaults to 1</p></li>
-<li><p><strong>off</strong> (<em>float</em><em>, </em><em>optional</em>) – initial value, defaults to 0</p></li>
-<li><p><strong>on</strong> (<em>float</em><em>, </em><em>optional</em>) – final value, defaults to 1</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>T</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>optional</em>) – time of step, defaults to 1</p></li>
+<li><p><strong>off</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>optional</em>) – initial value, defaults to 0</p></li>
+<li><p><strong>on</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>optional</em>) – final value, defaults to 1</p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 </dl>
@@ -548,7 +545,7 @@ equals <code class="docutils literal notranslate"><span class="pre">T</span></co
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/sources.html#Time.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.sources.Time.__init__" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p>
+<dd class="field-odd"><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -649,16 +646,16 @@ events for every discontinuity.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>wave</strong> (<em>str</em><em>, </em><em>optional</em>) – type of waveform to generate, one of: ‘sine’, ‘square’ [default], ‘triangle’</p></li>
-<li><p><strong>freq</strong> (<em>float</em><em>, </em><em>optional</em>) – frequency, defaults to 1</p></li>
-<li><p><strong>unit</strong> (<em>str</em><em>, </em><em>optional</em>) – frequency unit, one of: ‘rad/s’, ‘Hz’ [default]</p></li>
-<li><p><strong>amplitude</strong> (<em>float</em><em>, </em><em>optional</em>) – amplitude, defaults to 1</p></li>
-<li><p><strong>offset</strong> (<em>float</em><em>, </em><em>optional</em>) – signal offset, defaults to 0</p></li>
-<li><p><strong>phase</strong> (<em>float</em><em>, </em><em>optional</em>) – Initial phase of signal in the range [0,1], defaults to 0</p></li>
-<li><p><strong>min</strong> (<em>float</em><em>, </em><em>optional</em>) – minimum value, defaults to None</p></li>
-<li><p><strong>max</strong> (<em>float</em><em>, </em><em>optional</em>) – maximum value, defaults to None</p></li>
-<li><p><strong>duty</strong> (<em>float</em><em>, </em><em>optional</em>) – duty cycle for square wave in range [0,1], defaults to 0.5</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>wave</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>optional</em>) – type of waveform to generate, one of: ‘sine’, ‘square’ [default], ‘triangle’</p></li>
+<li><p><strong>freq</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>optional</em>) – frequency, defaults to 1</p></li>
+<li><p><strong>unit</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>optional</em>) – frequency unit, one of: ‘rad/s’, ‘Hz’ [default]</p></li>
+<li><p><strong>amplitude</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>optional</em>) – amplitude, defaults to 1</p></li>
+<li><p><strong>offset</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>optional</em>) – signal offset, defaults to 0</p></li>
+<li><p><strong>phase</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>optional</em>) – Initial phase of signal in the range [0,1], defaults to 0</p></li>
+<li><p><strong>min</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>optional</em>) – minimum value, defaults to None</p></li>
+<li><p><strong>max</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>optional</em>) – maximum value, defaults to None</p></li>
+<li><p><strong>duty</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>optional</em>) – duty cycle for square wave in range [0,1], defaults to 0.5</p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 </dl>
@@ -744,8 +741,8 @@ all data, like <code class="docutils literal notranslate"><span class="pre">/dev
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>nin</strong> (<em>int</em><em>, </em><em>optional</em>) – number of input ports, defaults to 1</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>nin</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>optional</em>) – number of input ports, defaults to 1</p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 </dl>
@@ -847,9 +844,9 @@ element</p></li>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>fmt</strong> (<em>str</em><em>, </em><em>optional</em>) – Format string, defaults to None</p></li>
+<li><p><strong>fmt</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>optional</em>) – Format string, defaults to None</p></li>
 <li><p><strong>file</strong> (<em>file object</em><em>, </em><em>optional</em>) – file to write data to, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -933,7 +930,7 @@ and if it returns True the simulation is stopped.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>func</strong> (<em>callable</em><em>, </em><em>optional</em>) – evaluate stop condition, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 </dl>
@@ -1019,8 +1016,8 @@ to <code class="docutils literal notranslate"><span class="pre">bdsim.run</span>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>nin</strong> (<em>int</em><em>, </em><em>optional</em>) – number of input ports, defaults to 1</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>nin</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>optional</em>) – number of input ports, defaults to 1</p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 </dl>
@@ -1136,22 +1133,23 @@ same vertical scale.</p>
 </figure>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.displays.Scope.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">styles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stairs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">watch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/displays.html#Scope.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.displays.Scope.__init__" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">styles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stairs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">watch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'best'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/displays.html#Scope.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.displays.Scope.__init__" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>nin</strong> (<em>int</em><em>, </em><em>optional</em>) – number of inputs, defaults to 1 or if given, the length of
+<li><p><strong>nin</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>optional</em>) – number of inputs, defaults to 1 or if given, the length of
 style vector</p></li>
-<li><p><strong>vector</strong> (<em>int</em><em> or </em><em>list</em><em>, </em><em>optional</em>) – vector signal on single input port, defaults to None</p></li>
-<li><p><strong>styles</strong> (<em>str</em><em> or </em><em>dict</em><em>, </em><em>list of strings</em><em> or </em><em>dicts; one per line</em><em>, </em><em>optional</em>) – styles for each line to be plotted</p></li>
-<li><p><strong>stairs</strong> (<em>bool</em><em>, </em><em>optional</em>) – force staircase style plot for all lines, defaults to False</p></li>
-<li><p><strong>scale</strong> (<em>str</em><em> or </em><em>array_like</em><em>(</em><em>2</em><em>)</em>) – fixed y-axis scale or defaults to ‘auto’</p></li>
+<li><p><strong>vector</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><em>list</em></a><em>, </em><em>optional</em>) – vector signal on single input port, defaults to None</p></li>
+<li><p><strong>styles</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a><em>, </em><em>list of strings</em><em> or </em><em>dicts; one per line</em><em>, </em><em>optional</em>) – styles for each line to be plotted</p></li>
+<li><p><strong>stairs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>optional</em>) – force staircase style plot for all lines, defaults to False</p></li>
+<li><p><strong>scale</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em> or </em><em>array_like</em><em>(</em><em>2</em><em>)</em>) – fixed y-axis scale or defaults to ‘auto’</p></li>
 <li><p><strong>labels</strong> (<em>sequence of strings</em>) – vertical axis labels</p></li>
-<li><p><strong>grid</strong> (<em>bool</em><em> or </em><em>sequence</em>) – draw a grid, defaults to True. Can be boolean or a tuple of
+<li><p><strong>grid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em> or </em><em>sequence</em>) – draw a grid, defaults to True. Can be boolean or a tuple of
 options for grid()</p></li>
-<li><p><strong>watch</strong> (<em>bool</em><em>, </em><em>optional</em>) – add these signals to the watchlist, defaults to False</p></li>
-<li><p><strong>title</strong> (<em>str</em>) – title of plot</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>watch</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>optional</em>) – add these signals to the watchlist, defaults to False</p></li>
+<li><p><strong>title</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) – title of plot</p></li>
+<li><p><strong>loc</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) – location of legend, see <code class="xref py py-meth docutils literal notranslate"><span class="pre">matplotlib.pyplot.legend()</span></code>, defaults to “best”</p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 </dl>
@@ -1243,11 +1241,11 @@ providing either:</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>style</strong> (<em>optional str</em><em> or </em><em>dict</em>) – line style, defaults to None</p></li>
-<li><p><strong>scale</strong> (<em>str</em><em> or </em><em>array_like</em><em>(</em><em>2</em><em>) or </em><em>array_like</em><em>(</em><em>4</em><em>)</em>) – fixed y-axis scale or defaults to ‘auto’</p></li>
-<li><p><strong>labels</strong> (<em>2-element tuple</em><em> or </em><em>list</em>) – axis labels (xlabel, ylabel), defaults to [“X”,”Y”]</p></li>
+<li><p><strong>style</strong> (<em>optional str</em><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – line style, defaults to None</p></li>
+<li><p><strong>scale</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em> or </em><em>array_like</em><em>(</em><em>2</em><em>) or </em><em>array_like</em><em>(</em><em>4</em><em>)</em>) – fixed y-axis scale or defaults to ‘auto’</p></li>
+<li><p><strong>labels</strong> (<em>2-element tuple</em><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><em>list</em></a>) – axis labels (xlabel, ylabel), defaults to [“X”,”Y”]</p></li>
 <li><p><strong>init</strong> (<em>callable</em>) – function to initialize the graphics, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 </dl>
@@ -1336,11 +1334,11 @@ providing either:</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>indices</strong> (<em>array_like</em><em>(</em><em>2</em><em>)</em>) – indices of elements to select from block input vector, defaults to [0,1]</p></li>
-<li><p><strong>style</strong> (<em>optional str</em><em> or </em><em>dict</em>) – line style</p></li>
-<li><p><strong>scale</strong> (<em>str</em><em> or </em><em>array_like</em><em>(</em><em>2</em><em>) or </em><em>array_like</em><em>(</em><em>4</em><em>)</em>) – fixed y-axis scale or defaults to ‘auto’</p></li>
-<li><p><strong>labels</strong> (<em>2-element tuple</em><em> or </em><em>list</em>) – axis labels (xlabel, ylabel)</p></li>
+<li><p><strong>style</strong> (<em>optional str</em><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – line style</p></li>
+<li><p><strong>scale</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em> or </em><em>array_like</em><em>(</em><em>2</em><em>) or </em><em>array_like</em><em>(</em><em>4</em><em>)</em>) – fixed y-axis scale or defaults to ‘auto’</p></li>
+<li><p><strong>labels</strong> (<em>2-element tuple</em><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><em>list</em></a>) – axis labels (xlabel, ylabel)</p></li>
 <li><p><strong>init</strong> (<em>callable</em>) – function to initialize the graphics, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 </dl>
@@ -1425,16 +1423,10 @@ providing either:</p>
 minimum and maximum values can be:</p>
 <blockquote>
 <div><ul class="simple">
-<li><dl class="simple">
-<dt>a scalar, in which case the same value applies to every element of</dt><dd><p>the input vector , or</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>a 1D-array, of the same shape as the input vector that applies elementwise to</dt><dd><p>the input vector.</p>
-</dd>
-</dl>
-</li>
+<li><p>a scalar, in which case the same value applies to every element of
+the input vector , or</p></li>
+<li><p>a 1D-array, of the same shape as the input vector that applies elementwise to
+the input vector.</p></li>
 </ul>
 </div></blockquote>
 <p>For example:</p>
@@ -1448,8 +1440,8 @@ minimum and maximum values can be:</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>min</strong> (<em>scalar</em><em> or </em><em>array_like</em><em>, </em><em>optional</em>) – Minimum value, defaults to -math.inf</p></li>
-<li><p><strong>max</strong> (<em>float</em><em> or </em><em>array_like</em><em>, </em><em>optional</em>) – Maximum value, defaults to math.inf</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>max</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em> or </em><em>array_like</em><em>, </em><em>optional</em>) – Maximum value, defaults to math.inf</p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 </dl>
@@ -1566,12 +1558,12 @@ single function which returns a list:</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>func</strong> (<em>callable</em><em> or </em><em>sequence of callables</em><em>, </em><em>optional</em>) – function or lambda, or list thereof, defaults to None</p></li>
-<li><p><strong>nin</strong> (<em>int</em><em>, </em><em>optional</em>) – number of inputs, defaults to 1</p></li>
-<li><p><strong>nout</strong> (<em>int</em><em>, </em><em>optional</em>) – number of outputs, defaults to 1</p></li>
-<li><p><strong>persistent</strong> (<em>bool</em><em>, </em><em>optional</em>) – pass in a reference to a dictionary instance to hold persistent state, defaults to False</p></li>
-<li><p><strong>fargs</strong> (<em>list</em><em>, </em><em>optional</em>) – extra positional arguments passed to the function, defaults to []</p></li>
-<li><p><strong>fkwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – extra keyword arguments passed to the function, defaults to {}</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>nin</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>optional</em>) – number of inputs, defaults to 1</p></li>
+<li><p><strong>nout</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>optional</em>) – number of outputs, defaults to 1</p></li>
+<li><p><strong>persistent</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>optional</em>) – pass in a reference to a dictionary instance to hold persistent state, defaults to False</p></li>
+<li><p><strong>fargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><em>list</em></a><em>, </em><em>optional</em>) – extra positional arguments passed to the function, defaults to []</p></li>
+<li><p><strong>fkwargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a><em>, </em><em>optional</em>) – extra keyword arguments passed to the function, defaults to {}</p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a><em>, </em><em>optional</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 </dl>
@@ -1656,8 +1648,8 @@ to compute <span class="math notranslate nohighlight">\(K u\)</span> use the <co
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>K</strong> (<em>scalar</em><em>, </em><em>array_like</em>) – The gain value, defaults to 1</p></li>
-<li><p><strong>premul</strong> (<em>bool</em><em>, </em><em>optional</em>) – premultiply by constant, default is postmultiply, defaults to False</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>premul</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>optional</em>) – premultiply by constant, default is postmultiply, defaults to False</p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 </dl>
@@ -1755,9 +1747,9 @@ input ports and is a <code class="docutils literal notranslate"><span class="pre
 <li><p><strong>x</strong> (<em>array_like</em><em>, </em><em>shape</em><em> (</em><em>N</em><em>,</em><em>) </em><em>optional</em>) – x-values of function, defaults to None</p></li>
 <li><p><strong>y</strong> (<em>array_like</em><em>, </em><em>optional</em>) – y-values of function, defaults to None</p></li>
 <li><p><strong>xy</strong> (<em>array_like</em><em>, </em><em>optional</em>) – combined x- and y-values of function, defaults to None</p></li>
-<li><p><strong>time</strong> (<em>bool</em><em>, </em><em>optional</em>) – x new is simulation time, defaults to False</p></li>
-<li><p><strong>kind</strong> (<em>str</em><em>, </em><em>optional</em>) – interpolation method, defaults to ‘linear’</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>time</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>optional</em>) – x new is simulation time, defaults to False</p></li>
+<li><p><strong>kind</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>optional</em>) – interpolation method, defaults to ‘linear’</p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 </dl>
@@ -1839,7 +1831,7 @@ to compute the power using an eigenvalue decomposition.</p>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Seealso</dt>
-<dd class="field-odd"><p><code class="xref py py-func docutils literal notranslate"><span class="pre">numpy.matrix_power()</span></code> <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.linalg.fractional_matrix_power()</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-func docutils literal notranslate"><span class="pre">numpy.matrix_power()</span></code> <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.fractional_matrix_power.html#scipy.linalg.fractional_matrix_power" title="(in SciPy v1.10.1)"><code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.linalg.fractional_matrix_power()</span></code></a></p>
 </dd>
 </dl>
 <dl class="py method">
@@ -1849,8 +1841,8 @@ to compute the power using an eigenvalue decomposition.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>p</strong> (<em>scalar</em>) – The exponent value, defaults to 1</p></li>
-<li><p><strong>matrix</strong> (<em>bool</em><em>, </em><em>optional</em>) – premultiply by constant, default is postmultiply, defaults to False</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>matrix</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>optional</em>) – premultiply by constant, default is postmultiply, defaults to False</p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 </dl>
@@ -1943,10 +1935,10 @@ non-singular.  Matrices are multiplied in ascending port order.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ops</strong> (<em>str</em><em>, </em><em>optional</em>) – operations associated with input ports, accepted characters: * or /, defaults to ‘**’</p></li>
+<li><p><strong>ops</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>optional</em>) – operations associated with input ports, accepted characters: * or /, defaults to ‘**’</p></li>
 <li><p><strong>inputs</strong> (<a class="reference internal" href="internals.html#bdsim.Block" title="bdsim.Block"><em>Block</em></a><em> or </em><a class="reference internal" href="internals.html#bdsim.Plug" title="bdsim.Plug"><em>Plug</em></a>) – Optional incoming connections</p></li>
-<li><p><strong>matrix</strong> (<em>bool</em><em>, </em><em>optional</em>) – Arguments are matrices, defaults to False</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>matrix</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>optional</em>) – Arguments are matrices, defaults to False</p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 </dl>
@@ -2034,9 +2026,9 @@ arrays they must be broadcastable.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>signs</strong> (<em>str</em><em>, </em><em>optional</em>) – signs associated with input ports, accepted characters: + or -, defaults to “++”</p></li>
-<li><p><strong>mode</strong> (<em>str</em><em>, </em><em>optional</em>) – controls addition mode, per element, string comprises <code class="docutils literal notranslate"><span class="pre">r</span></code> or <code class="docutils literal notranslate"><span class="pre">c</span></code> or <code class="docutils literal notranslate"><span class="pre">C</span></code> or <code class="docutils literal notranslate"><span class="pre">L</span></code>, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>signs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>optional</em>) – signs associated with input ports, accepted characters: + or -, defaults to “++”</p></li>
+<li><p><strong>mode</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>optional</em>) – controls addition mode, per element, string comprises <code class="docutils literal notranslate"><span class="pre">r</span></code> or <code class="docutils literal notranslate"><span class="pre">c</span></code> or <code class="docutils literal notranslate"><span class="pre">C</span></code> or <code class="docutils literal notranslate"><span class="pre">L</span></code>, defaults to None</p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 </dl>
@@ -2155,7 +2147,7 @@ second element wrapped to the range [-π, π).</p>
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/linalg.html#Cond.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.linalg.Cond.__init__" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p>
+<dd class="field-odd"><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2234,7 +2226,7 @@ second element wrapped to the range [-π, π).</p>
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/linalg.html#Det.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.linalg.Det.__init__" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p>
+<dd class="field-odd"><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2314,8 +2306,8 @@ second element wrapped to the range [-π, π).</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>order</strong> (<em>str</em>) – flattening order, either “C” or “F”, defaults to “C”</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>order</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) – flattening order, either “C” or “F”, defaults to “C”</p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 </dl>
@@ -2406,8 +2398,8 @@ output on the second port.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>pinv</strong> (<em>bool</em><em>, </em><em>optional</em>) – force pseudo inverse, defaults to False</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>pinv</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>optional</em>) – force pseudo inverse, defaults to False</p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 </dl>
@@ -2493,9 +2485,9 @@ output on the second port.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>axis</strong> (<em>int</em><em>, </em><em>optional</em>) – specifies the axis along which to compute the vector norms, defaults to None.</p></li>
-<li><p><strong>ord</strong> (<em>int</em><em> or </em><em>str</em>) – Order of the norm, default to None.</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>axis</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>optional</em>) – specifies the axis along which to compute the vector norms, defaults to None.</p></li>
+<li><p><strong>ord</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) – Order of the norm, default to None.</p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 </dl>
@@ -2600,8 +2592,8 @@ describes a Python slice <code class="docutils literal notranslate"><span class=
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>index</strong> (<em>tuple</em><em>(</em><em>3</em><em>)</em>) – slice, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>index</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.11)"><em>tuple</em></a><em>(</em><em>3</em><em>)</em>) – slice, defaults to None</p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 </dl>
@@ -2710,9 +2702,9 @@ and one for columns.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>rows</strong> (<em>tuple</em><em>(</em><em>3</em><em>) or </em><em>list</em>) – row selection, defaults to None</p></li>
-<li><p><strong>cols</strong> (<em>tuple</em><em>(</em><em>3</em><em>) or </em><em>list</em>) – column selection, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>rows</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.11)"><em>tuple</em></a><em>(</em><em>3</em><em>) or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><em>list</em></a>) – row selection, defaults to None</p></li>
+<li><p><strong>cols</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.11)"><em>tuple</em></a><em>(</em><em>3</em><em>) or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><em>list</em></a>) – column selection, defaults to None</p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 </dl>
@@ -2801,7 +2793,7 @@ row vector with shape (1,N).</p></li>
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/linalg.html#Transpose.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.linalg.Transpose.__init__" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p>
+<dd class="field-odd"><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2878,7 +2870,7 @@ row vector with shape (1,N).</p></li>
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/spatial.html#Pose_inverse.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.spatial.Pose_inverse.__init__" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p>
+<dd class="field-odd"><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2963,7 +2955,7 @@ row vector with shape (1,N).</p></li>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>pose</strong> (<em>SO2</em><em>, </em><em>SE2</em><em>, </em><em>SO3</em><em> or </em><em>SE3</em>) – pose to apply</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 </dl>
@@ -3049,7 +3041,7 @@ row vector with shape (1,N).</p></li>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>pose</strong> (<em>SO2</em><em>, </em><em>SE2</em><em>, </em><em>SO3</em><em> or </em><em>SE3</em>) – pose to apply</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 </dl>
@@ -3129,7 +3121,7 @@ row vector with shape (1,N).</p></li>
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/spatial.html#Transform_vector.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.spatial.Transform_vector.__init__" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p>
+<dd class="field-odd"><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -3183,38 +3175,65 @@ row vector with shape (1,N).</p></li>
     </tr>
     </table>
     </p>
+<p>Demultiplex signals.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Inputs</dt>
-<dd class="field-odd"><p>1 [ndarray]</p>
+<dd class="field-odd"><p>1</p>
 </dd>
 <dt class="field-even">Outputs</dt>
-<dd class="field-even"><p>N [float]</p>
+<dd class="field-even"><p>N</p>
 </dd>
 <dt class="field-odd">States</dt>
 <dd class="field-odd"><p>0</p>
 </dd>
 </dl>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Port type</p></th>
+<th class="head"><p>Port number</p></th>
+<th class="head"><p>Types</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Input</p></td>
+<td><p>0</p></td>
+<td><p>iterable</p></td>
+<td><p><span class="math notranslate nohighlight">\(x\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p>Output</p></td>
+<td><p>i</p></td>
+<td><p>any</p></td>
+<td><p><span class="math notranslate nohighlight">\(x_i\)</span></p></td>
+</tr>
+</tbody>
+</table>
+<p>This block has a single input port and <code class="docutils literal notranslate"><span class="pre">nout</span></code> output ports.  The input signal is
+an iterable whose <code class="docutils literal notranslate"><span class="pre">nout</span></code> elements are routed element-wise to individual scalar
+output ports.  If the input is a 1D Numpy array, then each output port is an
+element of that array.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Seealso</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#bdsim.blocks.connections.Mux" title="bdsim.blocks.connections.Mux"><code class="xref py py-class docutils literal notranslate"><span class="pre">Mux</span></code></a></p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.connections.DeMux.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#DeMux.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.connections.DeMux.__init__" title="Permalink to this definition"></a></dt>
-<dd><p>Demultiplex signals.</p>
-<dl class="field-list simple">
+<dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>nout</strong> (<em>int</em><em>, </em><em>optional</em>) – number of outputs, defaults to 1</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>nout</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>optional</em>) – number of outputs, defaults to 1</p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A DEMUX block</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>DeMux instance</p>
-</dd>
 </dl>
-<p>This block has a single input port and <code class="docutils literal notranslate"><span class="pre">nout</span></code> output ports.  A 1D-array
-input signal (with <code class="docutils literal notranslate"><span class="pre">nout</span></code> elements) is routed element-wise to individual
-scalar output ports.</p>
 </dd></dl>
 
 </dd></dl>
@@ -3241,49 +3260,69 @@ scalar output ports.</p>
     </tr>
     </table>
     </p>
+<p>Create a dictionary signal.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Inputs</dt>
-<dd class="field-odd"><p>N [any]</p>
+<dd class="field-odd"><p>N</p>
 </dd>
 <dt class="field-even">Outputs</dt>
-<dd class="field-even"><p>1 [dict]</p>
+<dd class="field-even"><p>1</p>
 </dd>
 <dt class="field-odd">States</dt>
 <dd class="field-odd"><p>0</p>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="bdsim.blocks.connections.Dict.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#Dict.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.connections.Dict.__init__" title="Permalink to this definition"></a></dt>
-<dd><p>Create a dictionary signal.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>keys</strong> (<em>list</em>) – list of dictionary keys</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A DICT block</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>Dict instance</p>
-</dd>
-</dl>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Port type</p></th>
+<th class="head"><p>Port number</p></th>
+<th class="head"><p>Types</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Input</p></td>
+<td><p>i</p></td>
+<td><p>any</p></td>
+<td><p><span class="math notranslate nohighlight">\(x_i\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p>Output</p></td>
+<td><p>0</p></td>
+<td><p>dict</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">{key:</span> <span class="pre">x[i]</span> <span class="pre">for</span> <span class="pre">i,</span> <span class="pre">key</span> <span class="pre">in</span> <span class="pre">enumerate(keys)}</span></code></p></td>
+</tr>
+</tbody>
+</table>
 <p>Inputs are assigned to a dictionary signal, using the corresponding
 names from <code class="docutils literal notranslate"><span class="pre">keys</span></code>.
 For example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">DICT</span><span class="p">([</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;xd&#39;</span><span class="p">,</span> <span class="s1">&#39;xdd&#39;</span><span class="p">])</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dd</span> <span class="o">=</span> <span class="n">bd</span><span class="o">.</span><span class="n">DICT</span><span class="p">([</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;xd&quot;</span><span class="p">,</span> <span class="s2">&quot;xdd&quot;</span><span class="p">])</span>
 </pre></div>
 </div>
 <p>expects three inputs and assigns them to dictionary items <code class="docutils literal notranslate"><span class="pre">x</span></code>, <code class="docutils literal notranslate"><span class="pre">xd</span></code>, <code class="docutils literal notranslate"><span class="pre">xdd</span></code> of
 the output dictionary respectively.</p>
-<p>A dictionary signal can serve a similar purpose to a “bus” in Simulink(R).</p>
-<p>This is somewhat like a multiplexer <a class="reference internal" href="#bdsim.blocks.connections.Mux" title="bdsim.blocks.connections.Mux"><code class="xref py py-class docutils literal notranslate"><span class="pre">Mux</span></code></a> but allows for
-named heterogeneous data.</p>
+<p>This is somewhat like a multiplexer <a class="reference internal" href="#bdsim.blocks.connections.Mux" title="bdsim.blocks.connections.Mux"><code class="xref py py-class docutils literal notranslate"><span class="pre">Mux</span></code></a> but allows for named heterogeneous
+data.  A dictionary signal can serve a similar purpose to a “bus” in Simulink(R).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Seealso</dt>
 <dd class="field-odd"><p><a class="reference internal" href="#bdsim.blocks.connections.Item" title="bdsim.blocks.connections.Item"><code class="xref py py-class docutils literal notranslate"><span class="pre">Item</span></code></a> <a class="reference internal" href="#bdsim.blocks.connections.Mux" title="bdsim.blocks.connections.Mux"><code class="xref py py-class docutils literal notranslate"><span class="pre">Mux</span></code></a></p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bdsim.blocks.connections.Dict.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">keys</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#Dict.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.connections.Dict.__init__" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>keys</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><em>list</em></a>) – list of dictionary keys</p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -3312,35 +3351,40 @@ named heterogeneous data.</p>
     </tr>
     </table>
     </p>
+<p>Input ports for a subsystem.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Inputs</dt>
 <dd class="field-odd"><p>0</p>
 </dd>
 <dt class="field-even">Outputs</dt>
-<dd class="field-even"><p>N [any]</p>
+<dd class="field-even"><p>N</p>
 </dd>
 <dt class="field-odd">States</dt>
 <dd class="field-odd"><p>0</p>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="bdsim.blocks.connections.InPort.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#InPort.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.connections.InPort.__init__" title="Permalink to this definition"></a></dt>
-<dd><p>Input ports for a subsystem.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>nout</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of output ports, defaults to 1</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>An INPORT block</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>InPort instance</p>
-</dd>
-</dl>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Port type</p></th>
+<th class="head"><p>Port number</p></th>
+<th class="head"><p>Types</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Output</p></td>
+<td><p>j</p></td>
+<td><p>any</p></td>
+<td><p><span class="math notranslate nohighlight">\(y_j\)</span></p></td>
+</tr>
+</tbody>
+</table>
 <p>This block connects a subsystem to a parent block diagram.  Inputs to the
 parent-level <code class="docutils literal notranslate"><span class="pre">SubSystem</span></code> block appear as the outputs of this block.</p>
 <div class="admonition note">
@@ -3349,6 +3393,17 @@ parent-level <code class="docutils literal notranslate"><span class="pre">SubSys
 can have multiple ports.  This is different to Simulink(R) which
 would require multiple single-port input blocks.</p>
 </div>
+<dl class="py method">
+<dt class="sig sig-object py" id="bdsim.blocks.connections.InPort.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#InPort.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.connections.InPort.__init__" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nout</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>optional</em>) – Number of output ports, defaults to 1</p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -3375,36 +3430,50 @@ would require multiple single-port input blocks.</p>
     </tr>
     </table>
     </p>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 40%" />
-<col style="width: 30%" />
-<col style="width: 30%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p>inputs</p></td>
-<td><p>outputs</p></td>
-<td><p>states</p></td>
-</tr>
-<tr class="row-even"><td><p>1</p></td>
-<td><p>1</p></td>
-<td><p>0</p></td>
-</tr>
-<tr class="row-odd"><td><p>ndarray</p></td>
-<td><p>ndarray</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
 <dl class="field-list simple">
 <dt class="field-odd">Inputs</dt>
-<dd class="field-odd"><p>1 [iterable]</p>
+<dd class="field-odd"><p>1</p>
 </dd>
 <dt class="field-even">Outputs</dt>
-<dd class="field-even"><p>1 [iterable]</p>
+<dd class="field-even"><p>1</p>
 </dd>
 <dt class="field-odd">States</dt>
 <dd class="field-odd"><p>0</p>
+</dd>
+</dl>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Port type</p></th>
+<th class="head"><p>Port number</p></th>
+<th class="head"><p>Types</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Input</p></td>
+<td><p>i</p></td>
+<td><p>iterable</p></td>
+<td><p><span class="math notranslate nohighlight">\(x\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p>Output</p></td>
+<td><p>j</p></td>
+<td><p>iterable</p></td>
+<td><p><span class="math notranslate nohighlight">\(x_i\)</span></p></td>
+</tr>
+</tbody>
+</table>
+<p>The specified element(s) of the input iterable (list, string, etc.)
+are output.  The index can be an integer, sequence of integers, a Python slice
+object, or a string with Python slice notation, eg. <code class="docutils literal notranslate"><span class="pre">&quot;::-1&quot;</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Seealso</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Slice1</span></code> <code class="xref py py-class docutils literal notranslate"><span class="pre">Slice2</span></code></p>
 </dd>
 </dl>
 <dl class="py method">
@@ -3414,23 +3483,9 @@ would require multiple single-port input blocks.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>index</strong> (<em>list</em><em>, </em><em>slice</em><em> or </em><em>str</em><em>, </em><em>optional</em>) – elements of input array, defaults to []</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>index</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><em>list</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#slice" title="(in Python v3.11)"><em>slice</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>optional</em>) – elements of input array, defaults to []</p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>An INDEX block</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>Index instance</p>
-</dd>
-</dl>
-<p>The specified element(s) of the input iterable (list, string, etc.)
-are output.  The index can be an integer, sequence of integers, a Python slice
-object, or a string with Python slice notation, eg. <code class="docutils literal notranslate"><span class="pre">&quot;::-1&quot;</span></code>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Seealso</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Slice1</span></code> <code class="xref py py-class docutils literal notranslate"><span class="pre">Slice2</span></code></p>
 </dd>
 </dl>
 </dd></dl>
@@ -3459,47 +3514,68 @@ object, or a string with Python slice notation, eg. <code class="docutils litera
     </tr>
     </table>
     </p>
+<p>Select item from a dictionary signal.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Inputs</dt>
-<dd class="field-odd"><p>1 [dict]</p>
+<dd class="field-odd"><p>1</p>
 </dd>
 <dt class="field-even">Outputs</dt>
-<dd class="field-even"><p>1 [any]</p>
+<dd class="field-even"><p>1</p>
 </dd>
 <dt class="field-odd">States</dt>
 <dd class="field-odd"><p>0</p>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="bdsim.blocks.connections.Item.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#Item.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.connections.Item.__init__" title="Permalink to this definition"></a></dt>
-<dd><p>Selector item from a dictionary signal.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>item</strong> (<em>str</em>) – name of dictionary item</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>An ITEM block</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>Item instance</p>
-</dd>
-</dl>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Port type</p></th>
+<th class="head"><p>Port number</p></th>
+<th class="head"><p>Types</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Input</p></td>
+<td><p>0</p></td>
+<td><p>dict</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">D</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Output</p></td>
+<td><p>0</p></td>
+<td><p>any</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">D[i]</span></code></p></td>
+</tr>
+</tbody>
+</table>
 <p>For a dictionary type input signal, select one item as the output signal.
 For example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ITEM</span><span class="p">(</span><span class="s1">&#39;xd&#39;</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">item</span> <span class="o">=</span> <span class="n">bd</span><span class="o">.</span><span class="n">ITEM</span><span class="p">(</span><span class="s2">&quot;xd&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>selects the <code class="docutils literal notranslate"><span class="pre">xd</span></code> item from the dictionary signal input to the block.</p>
-<p>A dictionary signal can serve a similar purpose to a “bus” in Simulink(R).</p>
 <p>This is somewhat like a demultiplexer <a class="reference internal" href="#bdsim.blocks.connections.DeMux" title="bdsim.blocks.connections.DeMux"><code class="xref py py-class docutils literal notranslate"><span class="pre">DeMux</span></code></a> but allows for
-named heterogeneous data.</p>
+named heterogeneous data.
+A dictionary signal can serve a similar purpose to a “bus” in Simulink(R).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Seealso</dt>
 <dd class="field-odd"><p><a class="reference internal" href="#bdsim.blocks.connections.Dict" title="bdsim.blocks.connections.Dict"><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code></a></p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bdsim.blocks.connections.Item.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#Item.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.connections.Item.__init__" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>item</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) – name of dictionary item</p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -3528,45 +3604,64 @@ named heterogeneous data.</p>
     </tr>
     </table>
     </p>
+<p>Multiplex signals.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Inputs</dt>
-<dd class="field-odd"><p>N [float, ndarray]</p>
+<dd class="field-odd"><p>N</p>
 </dd>
 <dt class="field-even">Outputs</dt>
-<dd class="field-even"><p>1 [ndarray]</p>
+<dd class="field-even"><p>1</p>
 </dd>
 <dt class="field-odd">States</dt>
 <dd class="field-odd"><p>0</p>
 </dd>
 </dl>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Port type</p></th>
+<th class="head"><p>Port number</p></th>
+<th class="head"><p>Types</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Input</p></td>
+<td><p>i</p></td>
+<td><p>float, ndarray</p></td>
+<td><p><span class="math notranslate nohighlight">\(x_i\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p>Output</p></td>
+<td><p>0</p></td>
+<td><p>ndarray</p></td>
+<td><p><span class="math notranslate nohighlight">\([x_0 \ldots x_{N-1}]\)</span></p></td>
+</tr>
+</tbody>
+</table>
+<p>This block takes a number of scalar or 1D-array signals and concatenates
+them into a single 1-D array signal.  For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mux</span> <span class="o">=</span> <span class="n">bd</span><span class="o">.</span><span class="n">MUX</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Seealso</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Demux</span></code> <a class="reference internal" href="#bdsim.blocks.connections.Dict" title="bdsim.blocks.connections.Dict"><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code></a></p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.connections.Mux.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#Mux.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.connections.Mux.__init__" title="Permalink to this definition"></a></dt>
-<dd><p>Multiplex signals.</p>
-<dl class="field-list simple">
+<dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>nin</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of input ports, defaults to 1</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>nin</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>optional</em>) – Number of input ports, defaults to 1</p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A MUX block</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>Mux instance</p>
-</dd>
-</dl>
-<p>This block takes a number of scalar or 1D-array signals and concatenates
-them into a single 1-D array signal.  For example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">MUX</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="n">func1</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">sum3</span><span class="p">))</span>
-</pre></div>
-</div>
-<p>multiplexes the outputs of blocks <code class="docutils literal notranslate"><span class="pre">func1</span></code> (port 2) and <code class="docutils literal notranslate"><span class="pre">sum3</span></code> into a
-single output vector as a 1D-array.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Seealso</dt>
-<dd class="field-odd"><p><a class="reference internal" href="#bdsim.blocks.connections.Dict" title="bdsim.blocks.connections.Dict"><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -3595,9 +3690,10 @@ single output vector as a 1D-array.</p>
     </tr>
     </table>
     </p>
+<p>Output ports for a subsystem.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Inputs</dt>
-<dd class="field-odd"><p>N [any]</p>
+<dd class="field-odd"><p>N</p>
 </dd>
 <dt class="field-even">Outputs</dt>
 <dd class="field-even"><p>0</p>
@@ -3606,25 +3702,29 @@ single output vector as a 1D-array.</p>
 <dd class="field-odd"><p>0</p>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="bdsim.blocks.connections.OutPort.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#OutPort.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.connections.OutPort.__init__" title="Permalink to this definition"></a></dt>
-<dd><p>Output ports for a subsystem.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>nin</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of input ports, defaults to 1</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A OUTPORT block</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>OutPort instance</p>
-</dd>
-</dl>
-<p>This block connects a subsystem to a parent block diagram.  The the
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Port type</p></th>
+<th class="head"><p>Port number</p></th>
+<th class="head"><p>Types</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Input</p></td>
+<td><p>i</p></td>
+<td><p>any</p></td>
+<td><p><span class="math notranslate nohighlight">\(x_i\)</span></p></td>
+</tr>
+</tbody>
+</table>
+<p>This block connects a subsystem to a parent block diagram.  The
 inputs of this block become the outputs of the parent-level <code class="docutils literal notranslate"><span class="pre">SubSystem</span></code>
 block.</p>
 <div class="admonition note">
@@ -3633,6 +3733,17 @@ block.</p>
 can have multiple ports.  This is different to Simulink(R) which
 would require multiple single-port output blocks.</p>
 </div>
+<dl class="py method">
+<dt class="sig sig-object py" id="bdsim.blocks.connections.OutPort.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#OutPort.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.connections.OutPort.__init__" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nin</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>optional</em>) – Number of input ports, defaults to 1</p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -3659,75 +3770,92 @@ would require multiple single-port output blocks.</p>
     </tr>
     </table>
     </p>
+<p>Instantiate a subsystem.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Inputs</dt>
-<dd class="field-odd"><p>N [any]</p>
+<dd class="field-odd"><p>N</p>
 </dd>
 <dt class="field-even">Outputs</dt>
-<dd class="field-even"><p>M [any]</p>
+<dd class="field-even"><p>M</p>
 </dd>
 <dt class="field-odd">States</dt>
 <dd class="field-odd"><p>0</p>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="bdsim.blocks.connections.SubSystem.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subsys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#SubSystem.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.connections.SubSystem.__init__" title="Permalink to this definition"></a></dt>
-<dd><p>Instantiate a subsystem.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>subsys</strong> (<em>str</em><em> or </em><a class="reference internal" href="internals.html#bdsim.BlockDiagram" title="bdsim.BlockDiagram"><em>BlockDiagram</em></a>) – Subsystem as either a filename or a <code class="docutils literal notranslate"><span class="pre">BlockDiagram</span></code> instance</p></li>
-<li><p><strong>nin</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of input ports, defaults to 1</p></li>
-<li><p><strong>nout</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of output ports, defaults to 1</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
-</ul>
-</dd>
-<dt class="field-even">Raises</dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>ImportError</strong> – DESCRIPTION</p></li>
-<li><p><strong>ValueError</strong> – DESCRIPTION</p></li>
-</ul>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A SUBSYSTEM block</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>SubSystem instance</p>
-</dd>
-</dl>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Port type</p></th>
+<th class="head"><p>Port number</p></th>
+<th class="head"><p>Types</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Input</p></td>
+<td><p>i</p></td>
+<td><p>any</p></td>
+<td><p><span class="math notranslate nohighlight">\(x_i\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p>Output</p></td>
+<td><p>j</p></td>
+<td><p>any</p></td>
+<td><p><span class="math notranslate nohighlight">\(y_j\)</span></p></td>
+</tr>
+</tbody>
+</table>
 <p>This block represents a subsystem in a block diagram.  The definition
 of the subsystem can be:</p>
-<blockquote>
-<div><ul class="simple">
+<ul class="simple">
 <li><p>the name of a module which is imported and must contain only
 only <code class="docutils literal notranslate"><span class="pre">BlockDiagram</span></code> instance, or</p></li>
 <li><p>a <code class="docutils literal notranslate"><span class="pre">BlockDiagram</span></code> instance</p></li>
 </ul>
-</div></blockquote>
 <p>The referenced block diagram must contain one or both of:</p>
-<blockquote>
-<div><ul class="simple">
+<ul class="simple">
 <li><p>one <code class="docutils literal notranslate"><span class="pre">InPort</span></code> block, which has outputs but no inputs. These
 outputs are connected to the inputs to the enclosing <code class="docutils literal notranslate"><span class="pre">SubSystem</span></code> block.</p></li>
 <li><p>one <code class="docutils literal notranslate"><span class="pre">OutPort</span></code> block, which has inputs but no outputs. These
 inputs are connected to the outputs to the enclosing <code class="docutils literal notranslate"><span class="pre">SubSystem</span></code> block.</p></li>
 </ul>
-</div></blockquote>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
 <ul class="simple">
 <li><p>The referenced block diagram is treated like a macro and copied into
 the parent block diagram at compile time. The <code class="docutils literal notranslate"><span class="pre">SubSystem</span></code>, <code class="docutils literal notranslate"><span class="pre">InPort</span></code> and
 <code class="docutils literal notranslate"><span class="pre">OutPort</span></code> blocks are eliminated, that is, all hierarchical structure is
 lost.</p></li>
-<li><dl class="simple">
-<dt>The same subsystem can be used multiple times, its blocks and wires</dt><dd><p>will be cloned.  Subsystems can also include subsystems.</p>
-</dd>
-</dl>
-</li>
+<li><p>The same subsystem can be used multiple times, its blocks and wires
+will be cloned.  Subsystems can also include subsystems.</p></li>
 <li><p>The number of input and output ports is not specified, they are computed
 from the number of ports on the <code class="docutils literal notranslate"><span class="pre">InPort</span></code> and <code class="docutils literal notranslate"><span class="pre">OutPort</span></code> blocks within the
 subsystem.</p></li>
 </ul>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="bdsim.blocks.connections.SubSystem.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subsys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">blockargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/connections.html#SubSystem.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.connections.SubSystem.__init__" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>subsys</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em> or </em><a class="reference internal" href="internals.html#bdsim.BlockDiagram" title="bdsim.BlockDiagram"><em>BlockDiagram</em></a>) – Subsystem as either a filename or a <code class="docutils literal notranslate"><span class="pre">BlockDiagram</span></code> instance</p></li>
+<li><p><strong>nin</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>optional</em>) – Number of input ports, defaults to 1</p></li>
+<li><p><strong>nout</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>optional</em>) – Number of output ports, defaults to 1</p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ImportError" title="(in Python v3.11)"><strong>ImportError</strong></a> – DESCRIPTION</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.11)"><strong>ValueError</strong></a> – DESCRIPTION</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -3821,9 +3949,9 @@ initial state of the integrator is <code class="docutils literal notranslate"><s
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>alpha</strong> (<em>float</em>) – filter pole</p></li>
-<li><p><strong>x0</strong> (<em>float</em><em>, </em><em>optional</em>) – initial states, defaults to 0</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – filter pole</p></li>
+<li><p><strong>x0</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>optional</em>) – initial states, defaults to 0</p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 </dl>
@@ -3921,10 +4049,10 @@ but assume that the initial state is within the limits.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – Initial state, defaults to 0</p></li>
-<li><p><strong>gain</strong> (<em>float</em>) – gain or scaling factor, defaults to 1</p></li>
-<li><p><strong>min</strong> (<em>float</em><em> or </em><em>array_like</em><em>, </em><em>optional</em>) – Minimum value of state, defaults to None</p></li>
-<li><p><strong>max</strong> (<em>float</em><em> or </em><em>array_like</em><em>, </em><em>optional</em>) – Maximum value of state, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>gain</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – gain or scaling factor, defaults to 1</p></li>
+<li><p><strong>min</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em> or </em><em>array_like</em><em>, </em><em>optional</em>) – Minimum value of state, defaults to None</p></li>
+<li><p><strong>max</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em> or </em><em>array_like</em><em>, </em><em>optional</em>) – Maximum value of state, defaults to None</p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 </dl>
@@ -4018,7 +4146,7 @@ form.</p>
 <li><p><strong>N</strong> (<em>array_like</em><em>, </em><em>optional</em>) – numerator coefficients, defaults to 1</p></li>
 <li><p><strong>D</strong> (<em>array_like</em><em>, </em><em>optional</em>) – denominator coefficients, defaults to [1,1]</p></li>
 <li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – initial states, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -4114,7 +4242,7 @@ to avoid algebraic loops.</p>
 <li><p><strong>N</strong> (<em>array_like</em><em>, </em><em>optional</em>) – numerator coefficients, defaults to 1</p></li>
 <li><p><strong>D</strong> (<em>array_like</em><em>, </em><em>optional</em>) – denominator coefficients, defaults to [1,1]</p></li>
 <li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – initial states, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 </dl>
@@ -4222,13 +4350,13 @@ error <span class="math notranslate nohighlight">\(e\)</span> is outside the ban
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>P</strong> (<em>float</em>) – proportional gain, defaults to 0</p></li>
-<li><p><strong>D</strong> (<em>float</em>) – derivative gain, defaults to 0</p></li>
-<li><p><strong>I</strong> (<em>float</em>) – integral gain, defaults to 0</p></li>
-<li><p><strong>D_pole</strong> (<em>float</em>) – filter pole for derivative estimate, defaults to 1 rad/s</p></li>
-<li><p><strong>I_limit</strong> (<em>float</em>) – integral limit</p></li>
-<li><p><strong>I_band</strong> (<em>float</em>) – band within which integral action is active</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>P</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – proportional gain, defaults to 0</p></li>
+<li><p><strong>D</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – derivative gain, defaults to 0</p></li>
+<li><p><strong>I</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – integral gain, defaults to 0</p></li>
+<li><p><strong>D_pole</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – filter pole for derivative estimate, defaults to 1 rad/s</p></li>
+<li><p><strong>I_limit</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – integral limit</p></li>
+<li><p><strong>I_band</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – band within which integral action is active</p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 </dl>
@@ -4311,7 +4439,7 @@ output is pose as an <code class="docutils literal notranslate"><span class="pre
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>x0</strong> (<em>SE3</em><em>, </em><em>Twist3</em><em>, </em><em>optional</em>) – Initial pose, defaults to null</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 </dl>
@@ -4410,10 +4538,10 @@ the state.</p></li>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>clock</strong> (<a class="reference internal" href="internals.html#bdsim.Clock" title="bdsim.Clock"><em>Clock</em></a>) – clock source</p></li>
 <li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – Initial state, defaults to 0</p></li>
-<li><p><strong>gain</strong> (<em>float</em>) – gain or scaling factor, defaults to 1</p></li>
-<li><p><strong>min</strong> (<em>float</em><em> or </em><em>array_like</em><em>, </em><em>optional</em>) – Minimum value of state, defaults to None</p></li>
-<li><p><strong>max</strong> (<em>float</em><em> or </em><em>array_like</em><em>, </em><em>optional</em>) – Maximum value of state, defaults to None</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>gain</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – gain or scaling factor, defaults to 1</p></li>
+<li><p><strong>min</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em> or </em><em>array_like</em><em>, </em><em>optional</em>) – Minimum value of state, defaults to None</p></li>
+<li><p><strong>max</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em> or </em><em>array_like</em><em>, </em><em>optional</em>) – Maximum value of state, defaults to None</p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 </dl>
@@ -4503,7 +4631,7 @@ is pose as an <code class="docutils literal notranslate"><span class="pre">SE3</
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>clock</strong> (<a class="reference internal" href="internals.html#bdsim.Clock" title="bdsim.Clock"><em>Clock</em></a>) – clock source</p></li>
 <li><p><strong>x0</strong> (<em>SE3</em><em>, </em><em>optional</em>) – Initial pose, defaults to null</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 </dl>
@@ -4592,7 +4720,7 @@ input signal.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>clock</strong> (<a class="reference internal" href="internals.html#bdsim.Clock" title="bdsim.Clock"><em>Clock</em></a>) – clock source</p></li>
 <li><p><strong>x0</strong> (<em>array_like</em><em>, </em><em>optional</em>) – Initial value of the hold, defaults to 0</p></li>
-<li><p><strong>blockargs</strong> (<em>dict</em>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
+<li><p><strong>blockargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – <span class="raw-html"><a href="https://petercorke.github.io/bdsim/internals.html?highlight=block%20__init__#bdsim.Block.__init__">common Block options</a></span></p></li>
 </ul>
 </dd>
 </dl>
@@ -4642,7 +4770,7 @@ input signal.</p>
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020-, Peter Corke..
-      <span class="lastupdated">Last updated on 19-Apr-2023.
+      <span class="lastupdated">Last updated on 25-Apr-2023.
       </span></p>
   </div>
 
