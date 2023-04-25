@@ -500,7 +500,7 @@ class BlockDiagram:
                 #  - recurse to import it
                 #  - add its blocks and wires to the set
                 if verbose:
-                    print("found subsystem ", b.name)
+                    print("instantiating subsystem ", b.name)
                 ssb, ssw = self._subsystem_import(b.subsystem, b.name)
                 blocks.extend(ssb)
                 wires.extend(ssw)

@@ -265,8 +265,12 @@ class GraphicsBlock(SinkBlock):
         gstate.fignum += 1
 
         def onkeypress(event):
-            print("pressed", event.key)
-            plt.close("all")
+
+            if event.key == "x":
+                print("closing all windows")
+                plt.close("all")
+            else:
+                print("key pressed", event.key)
 
         f.canvas.mpl_connect("key_press_event", onkeypress)
 
