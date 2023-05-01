@@ -516,7 +516,7 @@ class BDSim:
         #   - str in the form BLOCKNAME[PORT]
         watchlist = []
         watchnamelist = []
-        re_block = re.compile(r"(?P<name>[^[]+)(\[(?P<port>[0-9]+)\])")
+        re_block = re.compile(r"(?P<name>[^[]+)(\[(?P<port>[0-9]+)\])?")
         for w in watch:
             if isinstance(w, str):
                 # a name was given, with optional port number
@@ -524,7 +524,14 @@ class BDSim:
                 if m is None:
                     raise ValueError("watch block[port] not found: " + w)
                 name = m.group("name")
-                port = int(m.group("port"))
+
+                # get optional port number
+                port = m.group("port")
+                if port is None:
+                    port = 0
+                else:
+                    port = int(port)
+
                 b = bd.blocknames[name]
                 plug = b[port]
             elif isinstance(w, Block):
@@ -806,7 +813,9 @@ class BDSim:
 
                     # record the ports on the watchlist
                     for i, p in enumerate(simstate.watchlist):
-                        simstate.plist[i].append(p.block.output(integrator.t)[p.port])
+                        b = p.block
+                        out = b.output(integrator.t, b.inputs, b._x)[p.port]
+                        simstate.plist[i].append(out)
 
                     # update all blocks that need to know
                     if (integrator.t - simstate.gtime) > (simstate.T / 200):
@@ -865,7 +874,9 @@ class BDSim:
 
                     # record the ports on the watchlist
                     for i, p in enumerate(simstate.watchlist):
-                        simstate.plist[i].append(p.block.output(t)[p.port])
+                        b = p.block
+                        out = b.output(integrator.t, b.inputs, b._x)[p.port]
+                        simstate.plist[i].append(out)
 
                     # update all blocks that need to know
                     bd.step(t)
@@ -900,7 +911,9 @@ class BDSim:
 
                 # record the ports on the watchlist
                 for i, p in enumerate(simstate.watchlist):
-                    simstate.plist[i].append(p.block.output(t)[p.port])
+                    b = p.block
+                    out = b.output(integrator.t, b.inputs, b._x)[p.port]
+                    simstate.plist[i].append(out)
 
                 # update all blocks that need to know
                 if (t - simstate.gtime) > (simstate.T / 200):
