@@ -23,12 +23,14 @@ class DiscreteTest(unittest.TestCase):
         nt.assert_equal(block.getstate0(), np.r_[5])
 
 
-        x = 7
+        x = np.r_[1]
         nt.assert_equal(block.T_output(0, x=x)[0], x)
 
         u = 3
-        nt.assert_equal(block.T_next(u), np.r_[u])
+        nt.assert_equal(block.T_next(u, x=x), np.r_[u])
     
+        u = np.r_[1]
+        nt.assert_equal(block.T_next(u), u)
     
     def test_dintegrator(self):
 
