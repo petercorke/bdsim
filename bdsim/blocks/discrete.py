@@ -75,12 +75,13 @@ class ZOH(ClockedBlock):
         self.ndstates = len(x0)
         # print('nstates', self.nstates)
 
-    def output(self, t, u, x):
+    def output(self, t, inports, x):
         # print('* output, x is ', self._x)
         return [x]
 
-    def next(self, t, u, x):
-        return np.array(u)
+    def next(self, t, inports, x):
+        u = smb.getvector(inports[0])
+        return u  # must be an ndarray
 
 
 # ------------------------------------------------------------------------
