@@ -267,8 +267,11 @@ class GraphicsBlock(SinkBlock):
         def onkeypress(event):
 
             if event.key == "x":
-                print("closing all windows")
+                print("\nclosing all windows")
                 plt.close("all")
+            elif event.key == "ctrl+c":
+                print("\nterminating bdsim")
+                sys.exit(1)
             else:
                 print("key pressed", event.key)
 
