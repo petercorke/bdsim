@@ -11,6 +11,7 @@
   <title>Block library &mdash; Block diagram simulation  documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/plot_directive.css" type="text/css" />
       <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
@@ -270,7 +271,7 @@ tuple, that is, the latest one in the list whose time is no greater than simulat
 time.</p>
 <p>The tuples can be provided in two different ways.  Firstly, a form convenient for
 Python programming:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">steering</span> <span class="o">=</span> <span class="n">bd</span><span class="o">.</span><span class="n">PIECEWISE</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="o">-</span><span class="mf">0.5</span><span class="p">),</span> <span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="mi">0</span><span class="p">))</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">steering</span> <span class="o">=</span> <span class="n">bd</span><span class="o">.</span><span class="n">PIECEWISE</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="o">-</span><span class="mf">0.5</span><span class="p">),</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">0</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>Secondly, in a form that can be used from <code class="docutils literal notranslate"><span class="pre">bdsim</span></code> where we explicitly pass
@@ -278,10 +279,14 @@ in a list in a way that can be represented in a JSON file:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">steering</span> <span class="o">=</span> <span class="n">bd</span><span class="o">.</span><span class="n">PIECEWISE</span><span class="p">(</span><span class="n">seq</span><span class="o">=</span><span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="o">-</span><span class="mf">0.5</span><span class="p">),</span> <span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="mi">0</span><span class="p">)])</span>
 </pre></div>
 </div>
+<p>(<a class="reference external" href=".//bdsim-blocks-1.py">Source code</a>, <a class="reference external" href=".//bdsim-blocks-1.png">png</a>, <a class="reference external" href=".//bdsim-blocks-1.hires.png">hires.png</a>, <a class="reference external" href=".//bdsim-blocks-1.pdf">pdf</a>)</p>
+<figure class="align-default">
+<img alt="_images/bdsim-blocks-1.png" class="plot-directive" src="_images/bdsim-blocks-1.png" />
+</figure>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <ul class="simple">
-<li><p>The tuples must be order by monotonically increasing time.</p></li>
+<li><p>The tuples must be ordered by monotonically increasing time.</p></li>
 <li><p>There is no default initial value, the list should contain
 a tuple with time zero otherwise the output will be undefined.</p></li>
 <li><p>The 2-tuples can</p></li>
@@ -369,6 +374,14 @@ a tuple with time zero otherwise the output will be undefined.</p></li>
 </table>
 <p>Generate a signal that starts increasing from the value <code class="docutils literal notranslate"><span class="pre">off</span></code> when time equals
 <code class="docutils literal notranslate"><span class="pre">T</span></code> linearly with time, with a gradient of <code class="docutils literal notranslate"><span class="pre">slope</span></code>.</p>
+<p>Example:</p>
+<blockquote>
+<div><p>step = bd.RAMP(2, off=-1, slope=2/3, T=2)</p>
+</div></blockquote>
+<p>(<a class="reference external" href=".//bdsim-blocks-2.py">Source code</a>, <a class="reference external" href=".//bdsim-blocks-2.png">png</a>, <a class="reference external" href=".//bdsim-blocks-2.hires.png">hires.png</a>, <a class="reference external" href=".//bdsim-blocks-2.pdf">pdf</a>)</p>
+<figure class="align-default">
+<img alt="_images/bdsim-blocks-2.png" class="plot-directive" src="_images/bdsim-blocks-2.png" />
+</figure>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>The block declares an event for the ramp start time.</p>
@@ -453,6 +466,14 @@ a tuple with time zero otherwise the output will be undefined.</p></li>
 </table>
 <p>Generate a step signal that transitions from the value <code class="docutils literal notranslate"><span class="pre">off</span></code> to <code class="docutils literal notranslate"><span class="pre">on</span></code> when time
 equals <code class="docutils literal notranslate"><span class="pre">T</span></code>.</p>
+<p>Example:</p>
+<blockquote>
+<div><p>step = bd.STEP(2, off=-1, on=1)</p>
+</div></blockquote>
+<p>(<a class="reference external" href=".//bdsim-blocks-3.py">Source code</a>, <a class="reference external" href=".//bdsim-blocks-3.png">png</a>, <a class="reference external" href=".//bdsim-blocks-3.hires.png">hires.png</a>, <a class="reference external" href=".//bdsim-blocks-3.pdf">pdf</a>)</p>
+<figure class="align-default">
+<img alt="_images/bdsim-blocks-3.png" class="plot-directive" src="_images/bdsim-blocks-3.png" />
+</figure>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>The block declares an event for the step time.</p>
@@ -1724,10 +1745,14 @@ defined by:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">interp</span> <span class="o">=</span> <span class="n">bd</span><span class="o">.</span><span class="n">INTERPOLATE</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">10</span><span class="p">),</span> <span class="n">y</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">))</span>
 </pre></div>
 </div>
-<p>We might also express this as a list of 2D-coordinats:</p>
+<p>We might also express this as a list of 2D-coordinates:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">interp</span> <span class="o">=</span> <span class="n">bd</span><span class="o">.</span><span class="n">INTERPOLATE</span><span class="p">(</span><span class="n">xy</span><span class="o">=</span><span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">0</span><span class="p">)])</span>
 </pre></div>
 </div>
+<p>(<a class="reference external" href=".//bdsim-blocks-4.py">Source code</a>, <a class="reference external" href=".//bdsim-blocks-4.png">png</a>, <a class="reference external" href=".//bdsim-blocks-4.hires.png">hires.png</a>, <a class="reference external" href=".//bdsim-blocks-4.pdf">pdf</a>)</p>
+<figure class="align-default">
+<img alt="_images/bdsim-blocks-4.png" class="plot-directive" src="_images/bdsim-blocks-4.png" />
+</figure>
 <p>The data can also be expressed as Numpy arrays.  If that is the case,
 the interpolation function can be vector valued. <code class="docutils literal notranslate"><span class="pre">x</span></code> has a shape of
 (N,1) and <code class="docutils literal notranslate"><span class="pre">y</span></code> has a shape of (N,M).  Alternatively <code class="docutils literal notranslate"><span class="pre">xy</span></code> has a shape
@@ -1736,6 +1761,9 @@ of (N,M+1) and the first column is the x-data.</p>
 <dt class="field-odd">Note</dt>
 <dd class="field-odd"><p>if <code class="docutils literal notranslate"><span class="pre">time=True</span></code>.  In this case the block has no
 input ports and is a <code class="docutils literal notranslate"><span class="pre">Source</span></code> not a <code class="docutils literal notranslate"><span class="pre">Function</span></code> block.</p>
+</dd>
+<dt class="field-even">Seealso</dt>
+<dd class="field-even"><p><code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.interpolate.interp1d()</span></code></p>
 </dd>
 </dl>
 <dl class="py method">
@@ -1831,7 +1859,7 @@ to compute the power using an eigenvalue decomposition.</p>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Seealso</dt>
-<dd class="field-odd"><p><code class="xref py py-func docutils literal notranslate"><span class="pre">numpy.matrix_power()</span></code> <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.fractional_matrix_power.html#scipy.linalg.fractional_matrix_power" title="(in SciPy v1.10.1)"><code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.linalg.fractional_matrix_power()</span></code></a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.linalg.matrix_power.html#numpy.linalg.matrix_power" title="(in NumPy v1.24)"><code class="xref py py-func docutils literal notranslate"><span class="pre">numpy.linalg.matrix_power()</span></code></a> <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.fractional_matrix_power.html#scipy.linalg.fractional_matrix_power" title="(in SciPy v1.10.1)"><code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.linalg.fractional_matrix_power()</span></code></a></p>
 </dd>
 </dl>
 <dl class="py method">
@@ -4728,7 +4756,7 @@ input signal.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.blocks.discrete.ZOH.next">
-<span class="sig-name descname"><span class="pre">next</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/discrete.html#ZOH.next"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.discrete.ZOH.next" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">next</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inports</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blocks/discrete.html#ZOH.next"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.blocks.discrete.ZOH.next" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -4770,7 +4798,7 @@ input signal.</p>
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020-, Peter Corke..
-      <span class="lastupdated">Last updated on 25-Apr-2023.
+      <span class="lastupdated">Last updated on 01-May-2023.
       </span></p>
   </div>
 

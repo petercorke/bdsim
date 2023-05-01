@@ -6,6 +6,7 @@
   <title>bdsim.blocks.functions &mdash; Block diagram simulation  documentation</title>
       <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/plot_directive.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../../../_static/js/html5shiv.min.js"></script>
@@ -98,9 +99,7 @@
 
 <span class="kn">from</span> <span class="nn">bdsim.components</span> <span class="kn">import</span> <span class="n">FunctionBlock</span>
 
-
-<span class="c1"># PID</span>
-<span class="c1"># product</span>
+<span class="c1"># TODO:</span>
 <span class="c1"># transform 3D points</span>
 
 
@@ -442,7 +441,7 @@
 
 <span class="sd">        pow = bd.POW(2)</span>
 
-<span class="sd">    :seealso: :func:`numpy.matrix_power` :func:`scipy.linalg.fractional_matrix_power`</span>
+<span class="sd">    :seealso: :func:`numpy.linalg.matrix_power` :func:`scipy.linalg.fractional_matrix_power`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
@@ -786,9 +785,18 @@
 
 <span class="sd">        interp = bd.INTERPOLATE(x=(0,5,10), y=(0,1,0))</span>
 
-<span class="sd">    We might also express this as a list of 2D-coordinats::</span>
+<span class="sd">    We might also express this as a list of 2D-coordinates::</span>
 
 <span class="sd">        interp = bd.INTERPOLATE(xy=[(0,0), (5,1), (10,0)])</span>
+
+<span class="sd">    .. plot::</span>
+
+<span class="sd">        import matplotlib.pyplot as plt</span>
+<span class="sd">        plt.plot([0, 5, 10], </span>
+<span class="sd">                 [0, 1, 0], lw=2)</span>
+<span class="sd">        plt.grid(True)</span>
+<span class="sd">        plt.xlabel(&quot;in[0]&quot;)</span>
+<span class="sd">        plt.ylabel(&quot;out[0]&quot;)</span>
 
 <span class="sd">    The data can also be expressed as Numpy arrays.  If that is the case,</span>
 <span class="sd">    the interpolation function can be vector valued. ``x`` has a shape of</span>
@@ -797,6 +805,8 @@
 
 <span class="sd">    :note: if ``time=True``.  In this case the block has no</span>
 <span class="sd">        input ports and is a ``Source`` not a ``Function`` block.</span>
+
+<span class="sd">    :seealso: :func:`scipy.interpolate.interp1d`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
@@ -887,7 +897,7 @@
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020-, Peter Corke..
-      <span class="lastupdated">Last updated on 25-Apr-2023.
+      <span class="lastupdated">Last updated on 01-May-2023.
       </span></p>
   </div>
 

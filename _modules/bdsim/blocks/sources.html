@@ -6,6 +6,7 @@
   <title>bdsim.blocks.sources &mdash; Block diagram simulation  documentation</title>
       <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/plot_directive.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../../../_static/js/html5shiv.min.js"></script>
@@ -388,15 +389,22 @@
 <span class="sd">    The tuples can be provided in two different ways.  Firstly, a form convenient for</span>
 <span class="sd">    Python programming::</span>
 
-<span class="sd">        steering = bd.PIECEWISE((0,0), (3, 0.5), (4,0), (5,-0.5), (6,0))</span>
+<span class="sd">        steering = bd.PIECEWISE((0,0), (2, 0.5), (3,0), (4,-0.5), (5,0))</span>
 
 <span class="sd">    Secondly, in a form that can be used from ``bdsim`` where we explicitly pass</span>
 <span class="sd">    in a list in a way that can be represented in a JSON file::</span>
 
 <span class="sd">        steering = bd.PIECEWISE(seq=[(0,0), (3, 0.5), (4,0), (5,-0.5), (6,0)])</span>
 
+<span class="sd">    .. plot::</span>
+
+<span class="sd">        import matplotlib.pyplot as plt</span>
+<span class="sd">        plt.plot([0, 2, 2,   3,   3, 4,   4,   5,   5, 5.2], </span>
+<span class="sd">                 [0, 0, 0.5, 0.5, 0, 0, -0.5, -0.5, 0, 0], lw=2)</span>
+<span class="sd">        plt.grid(True)</span>
+
 <span class="sd">    .. note::</span>
-<span class="sd">        - The tuples must be order by monotonically increasing time.</span>
+<span class="sd">        - The tuples must be ordered by monotonically increasing time.</span>
 <span class="sd">        - There is no default initial value, the list should contain</span>
 <span class="sd">          a tuple with time zero otherwise the output will be undefined.</span>
 <span class="sd">        - The 2-tuples can</span>
@@ -467,6 +475,16 @@
 <span class="sd">    Generate a step signal that transitions from the value ``off`` to ``on`` when time</span>
 <span class="sd">    equals ``T``.</span>
 
+<span class="sd">    Example:</span>
+
+<span class="sd">        step = bd.STEP(2, off=-1, on=1)</span>
+
+<span class="sd">    .. plot::</span>
+
+<span class="sd">        import matplotlib.pyplot as plt</span>
+<span class="sd">        plt.plot([0, 2, 2, 5], [-1, -1, 1, 1], lw=2)</span>
+<span class="sd">        plt.grid(True)</span>
+
 <span class="sd">    .. note:: The block declares an event for the step time.</span>
 
 <span class="sd">    :seealso: :meth:`declare_events`</span>
@@ -533,6 +551,16 @@
 <span class="sd">    Generate a signal that starts increasing from the value ``off`` when time equals</span>
 <span class="sd">    ``T`` linearly with time, with a gradient of ``slope``.</span>
 
+<span class="sd">    Example:</span>
+
+<span class="sd">        step = bd.RAMP(2, off=-1, slope=2/3, T=2)</span>
+
+<span class="sd">    .. plot::</span>
+
+<span class="sd">        import matplotlib.pyplot as plt</span>
+<span class="sd">        plt.plot([0, 2, 5], [-1, -1, 5], lw=2)</span>
+<span class="sd">        plt.grid(True)</span>
+
 <span class="sd">    .. note:: The block declares an event for the ramp start time.</span>
 
 <span class="sd">    :seealso: :meth:`declare_event`</span>
@@ -587,7 +615,7 @@
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020-, Peter Corke..
-      <span class="lastupdated">Last updated on 25-Apr-2023.
+      <span class="lastupdated">Last updated on 01-May-2023.
       </span></p>
   </div>
 
