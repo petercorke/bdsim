@@ -1,5 +1,6 @@
 import json
 import sys
+import traceback
 
 from bdsim import BDSim
 from colored import fg, attr
@@ -79,7 +80,13 @@ def bdload(bd, filename, globalvars={}, verbose=False, **kwargs):
 
         else:
             # regular bdsim Block
-            block_init = bd.__dict__[block["block_type"]]  # block class
+            try:
+                block_init = bd.__dict__[block["block_type"]]  # block class
+            except KeyError:
+                print(fg("red"))
+                print(f"block [{block['block_type']}] not loaded, check BDSIMPATH")
+                print(attr(0))
+
             params = dict(block["parameters"])  # block params as a dict
 
             if verbose:
@@ -99,12 +106,14 @@ def bdload(bd, filename, globalvars={}, verbose=False, **kwargs):
                         except (ValueError, TypeError, NameError, SyntaxError):
                             print(fg("red"))
                             print(
-                                f"bdload: error resolving parameter {key}: {value} for block [{block['title']}]"
+                                f"bdload: error resolving parameter {key}: {value} for"
+                                f" block [{block['title']}]"
                             )
                             traceback.print_exc(limit=-1, file=sys.stderr)
                             print(attr(0))
                             raise RuntimeError(
-                                f"cannot instantiate block {block['title']} - bad parameters?"
+                                f"cannot instantiate block [{block['title']}] - bad"
+                                " parameters?"
                             )
                     else:
                         # assume it's an "any" type, attempt to evaluate it
@@ -129,20 +138,29 @@ def bdload(bd, filename, globalvars={}, verbose=False, **kwargs):
                 else:
                     blockargs = {}
 
-                # blockargs = blockargs or {}
+                blockargs = blockargs or {}
 
                 newblock = block_init(
                     name=block["title"], **params, **blockargs
                 )  # instantiate the block
 
-            except (ValueError, TypeError, NameError, SyntaxError):
+            except (
+                ValueError,
+                TypeError,
+                NameError,
+                SyntaxError,
+                AssertionError,
+                AttributeError,
+            ):
                 print(fg("red"))
                 print(f"bdload: error instantiating block [{block['title']}]")
-                args = ", ".join([f"{arg[0]}={arg[1]}" for arg in block["parameters"]])
+                args = ", ".join(
+                    [f"{arg[0]} = {arg[1]}" for arg in block["parameters"]]
+                )
                 print(f"  {block['block_type']}({args})")
                 print(attr(0))
                 raise RuntimeError(
-                    f"cannot instantiate block {block['title']} - bad parameters?"
+                    f"cannot instantiate block [{block['title']}] - bad parameters?"
                 )
 
             block_dict[block["id"]] = newblock  # add to mapping
@@ -195,12 +213,12 @@ def bdload(bd, filename, globalvars={}, verbose=False, **kwargs):
 
 
 def bdrun(filename=None, globals={}, **kwargs):
-
     if filename is None:
         if len(sys.argv) > 1:
             filename = sys.argv[1]
-        print("Usage:\n  bdrun file.bd <bdsim args>")
-        return
+        else:
+            print("Usage:\n  bdrun file.bd <bdsim args>")
+            return
 
     sim = BDSim(**kwargs)  # create simulator
     bd = sim.blockdiagram()  # create diagram
@@ -209,9 +227,7 @@ def bdrun(filename=None, globals={}, **kwargs):
     bd.compile()
     bd.report()
 
-    T = 10.0
-    qout = sim.run(bd, 5, dt=0.02)  # simulate for 5s
-    # sim.done(bd, block=True)
+    out = sim.run(bd)  # simulate
     print("bdrun exiting")
 
 
