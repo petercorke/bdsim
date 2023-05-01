@@ -719,7 +719,7 @@ class BlockDiagram:
 
         self.plan = plan
 
-    def schdule_dotfile(self, filename):
+    def schedule_dotfile(self, filename):
         """
         Write a GraphViz dot file representing the execution schedule
 
