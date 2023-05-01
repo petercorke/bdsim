@@ -248,11 +248,16 @@ class BDSimState:
 
 
 class BDSim:
-
     _blocklibrary = None
 
-    def __init__(self, packages=None, load=True, **kwargs):
+    def __init__(self, banner=True, packages=None, load=True, **kwargs):
         """
+        :param banner: display docstring banner, defaults to True
+        :type banner: bool, optional
+        :param packages: colon-separated list of folders to search for blocks
+        :type packages: str
+        :param load: dynamically load blocks from libraries, defaults to True
+        :type load: bool,optional
         :param sysargs: process options from sys.argv, defaults to True
         :type sysargs: bool, optional
         :param graphics: enable graphics, defaults to True
@@ -282,15 +287,21 @@ class BDSim:
         --hold, +h           hold       True      hold graphics in done()
         --no-graphics, -g    graphics   True      disable graphical display
         --no-animation, -a   animation  True      don't update graphics at each time step
-        --no-hold, -h        hold       True      do not hold graphics in done()
+        --no-hold, -H        hold       True      do not hold graphics in done()
         --no-progress, -p    progress   True      do not display simulation progress bar
         --backend BE         backend    'Qt5Agg'  matplotlib backend
         --tiles RxC, -t RxC  tiles      '3x4'     arrangement of figure tiles on the display
         --shape WxH          shape      None      window size, default matplotlib size
-        --altscreen          altscreen  True      use secondary monitor if it exists
-        --verbose, -v        verbose    False     be verbose
+        --altscreen, +A,     altscreen  True      display plots on second monitor
+        --no-altscreen, -A   altscreen  True      do not display plots on second monitor
         --debug F, -d F      debug      ''        debug flag string
         --simtime T[,dt]     simtime    (10,)     simulation time
+        --verbose, -v        verbose    False     be verbose
+        --quiet, -q          quiet      False     suppress reports
+        -o                   outfile    None      output pickled simulation results to bd.out
+        --out OUTFILE        outfile    None      file to save pickled simulation results
+        --set P, -s P        setparam   []        override block parameter using ``P=block:param=value``
+        --global G           setglob    []        override global parameter using ``G=var=value``
         ===================  =========  ========  ===========================================
 
         .. note:: ``animation`` and ``graphics`` options are coupled.  If
@@ -307,6 +318,18 @@ class BDSim:
 
         # process command line and overall options
         self.options = Options(**kwargs)
+
+        # print docstring as a startup banner
+        if banner and not self.options.quiet:
+            calling_frame = inspect.currentframe().f_back
+            try:
+                doc = calling_frame.f_locals["__doc__"]
+                if doc is not None:
+                    for line in doc.strip().split("\n"):
+                        print("* " + line)
+            except KeyError:
+                pass
+
         # load modules from the blocks folder
         if BDSim._blocklibrary is None and load:
             BDSim._blocklibrary = self.load_blocks(self.options.verbose)
