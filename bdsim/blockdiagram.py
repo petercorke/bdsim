@@ -57,7 +57,6 @@ class BlockDiagram:
     """
 
     def __init__(self, name="main", **kwargs):
-
         self.wirelist = []  # list of all wires
         self.blocklist = []  # list of all blocks
         self.clocklist = []  # list of all clock sources
@@ -156,7 +155,6 @@ class BlockDiagram:
             print("{:12s}: ".format(k), ", ".join(v))
 
     def connect(self, start, *ends, name=None):
-
         """
         TODO:
             s.connect(out[3], in1[2], in2[3])  # one to many
@@ -167,7 +165,6 @@ class BlockDiagram:
         # start.type = 'start'
 
         for end in ends:
-
             if isinstance(start, Block):
                 if isinstance(end, Block):
                     # connect(X, Y)
@@ -204,7 +201,6 @@ class BlockDiagram:
                     raise ValueError("bad end type")
 
             elif isinstance(start, Plug) and not start.isslice:
-
                 if isinstance(end, Block):
                     # connect(X[i], Y)
                     # wires from all outport to all inports
@@ -233,7 +229,6 @@ class BlockDiagram:
                     raise ValueError("bad end type")
 
             elif isinstance(start, Plug) and start.isslice:
-
                 if isinstance(end, Block):
                     # connect(X[i:j], Y)
                     assert start.width == end.nin, (
@@ -486,7 +481,6 @@ class BlockDiagram:
         return self.compiled
 
     def _subsystem_import(self, bd, sspath, verbose=False):
-
         blocks = []
         wires = bd.wirelist
 
@@ -581,7 +575,6 @@ class BlockDiagram:
         self.runtime.DEBUG("propagate", "t={:.3f}", t)
 
         for sequence, group in enumerate(self.plan):
-
             # self.runtime.DEBUG('propagate', '---- sequence = ', sequence)
 
             for b in group:
@@ -769,7 +762,6 @@ class BlockDiagram:
     # ---------------------------------------------------------------------- #
 
     def _debugger(self, simstate=None, integrator=None):
-
         if state.t_stop is not None and state.t < state.t_stop:
             return
 
@@ -886,7 +878,6 @@ class BlockDiagram:
             print(legend + "\n")
 
     def report(self, **kwargs):
-
         warnings.warn("use reports_lists() method instead", DeprecationWarning)
         self.report_lists(**kwargs)
 
@@ -1151,7 +1142,6 @@ class BlockDiagram:
         .. note:: if ``graphics`` is False, Graphics blocks are not called
         """
         for b in self.blocklist:
-
             try:
                 b.done(block=block)
             except:
@@ -1278,7 +1268,6 @@ class BlockDiagram:
 
 
 if __name__ == "__main__":  # pragma: no cover
-
     import bdsim
 
     bd = bdsim.BlockDiagram()
