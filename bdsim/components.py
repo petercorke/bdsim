@@ -1182,8 +1182,8 @@ class Block:
         out = self.next(t, inputs, x)
 
         # sanity check the output
-        assert isinstance(out, np.ndarray), "result must be an ndarray"
-        assert out.shape == (self.ndstates,), "result array is wrong length"
+        assert isinstance(out, np.ndarray), "next state must be an ndarray"
+        assert out.shape == (self.ndstates,), "next state array is wrong length"
         return out
 
     def T_step(self, *inputs, t=0.0):
