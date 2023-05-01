@@ -596,12 +596,13 @@ class BlockDiagram:
                     # output method failed, report it
                     print(fg("red"))
                     print(
-                        "--Error at t={:f} when computing output of [{:s}::{:s}]"
-                        .format(t, b.type, str(b))
+                        "--Error at t={:f} when computing output of [{:s}::{:s}]".format(
+                            t, b.type, str(b)
+                        )
                     )
                     print()
                     # print('  {}'.format(err))
-                    traceback.print_exc(limit=-1, file=sys.stderr)
+                    traceback.print_exc(file=sys.stderr)
 
                     print()
                     for i, input in enumerate(b.inputs):
