@@ -311,15 +311,22 @@ class Piecewise(SourceBlock, EventSource):
     The tuples can be provided in two different ways.  Firstly, a form convenient for
     Python programming::
 
-        steering = bd.PIECEWISE((0,0), (3, 0.5), (4,0), (5,-0.5), (6,0))
+        steering = bd.PIECEWISE((0,0), (2, 0.5), (3,0), (4,-0.5), (5,0))
 
     Secondly, in a form that can be used from ``bdsim`` where we explicitly pass
     in a list in a way that can be represented in a JSON file::
 
         steering = bd.PIECEWISE(seq=[(0,0), (3, 0.5), (4,0), (5,-0.5), (6,0)])
 
+    .. plot::
+
+        import matplotlib.pyplot as plt
+        plt.plot([0, 2, 2,   3,   3, 4,   4,   5,   5, 5.2], 
+                 [0, 0, 0.5, 0.5, 0, 0, -0.5, -0.5, 0, 0], lw=2)
+        plt.grid(True)
+
     .. note::
-        - The tuples must be order by monotonically increasing time.
+        - The tuples must be ordered by monotonically increasing time.
         - There is no default initial value, the list should contain
           a tuple with time zero otherwise the output will be undefined.
         - The 2-tuples can
@@ -390,6 +397,16 @@ class Step(SourceBlock, EventSource):
     Generate a step signal that transitions from the value ``off`` to ``on`` when time
     equals ``T``.
 
+    Example:
+
+        step = bd.STEP(2, off=-1, on=1)
+
+    .. plot::
+
+        import matplotlib.pyplot as plt
+        plt.plot([0, 2, 2, 5], [-1, -1, 1, 1], lw=2)
+        plt.grid(True)
+
     .. note:: The block declares an event for the step time.
 
     :seealso: :meth:`declare_events`
@@ -455,6 +472,16 @@ class Ramp(SourceBlock, EventSource):
 
     Generate a signal that starts increasing from the value ``off`` when time equals
     ``T`` linearly with time, with a gradient of ``slope``.
+
+    Example:
+
+        step = bd.RAMP(2, off=-1, slope=2/3, T=2)
+
+    .. plot::
+
+        import matplotlib.pyplot as plt
+        plt.plot([0, 2, 5], [-1, -1, 5], lw=2)
+        plt.grid(True)
 
     .. note:: The block declares an event for the ramp start time.
 

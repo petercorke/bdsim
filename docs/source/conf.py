@@ -46,6 +46,7 @@ extensions = [
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
     "sphinx.ext.mathjax",
+    "matplotlib.sphinxext.plot_directive",
     "sphinx.ext.coverage",
     "sphinx.ext.intersphinx",
     "sphinx.ext.inheritance_diagram",

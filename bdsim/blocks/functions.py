@@ -21,9 +21,7 @@ ArrayLike = Union[np.ndarray, int, float, list, tuple]
 
 from bdsim.components import FunctionBlock
 
-
-# PID
-# product
+# TODO:
 # transform 3D points
 
 
@@ -365,7 +363,7 @@ class Pow(FunctionBlock):
 
         pow = bd.POW(2)
 
-    :seealso: :func:`numpy.matrix_power` :func:`scipy.linalg.fractional_matrix_power`
+    :seealso: :func:`numpy.linalg.matrix_power` :func:`scipy.linalg.fractional_matrix_power`
     """
 
     nin = 1
@@ -709,9 +707,18 @@ class Interpolate(FunctionBlock):
 
         interp = bd.INTERPOLATE(x=(0,5,10), y=(0,1,0))
 
-    We might also express this as a list of 2D-coordinats::
+    We might also express this as a list of 2D-coordinates::
 
         interp = bd.INTERPOLATE(xy=[(0,0), (5,1), (10,0)])
+
+    .. plot::
+
+        import matplotlib.pyplot as plt
+        plt.plot([0, 5, 10], 
+                 [0, 1, 0], lw=2)
+        plt.grid(True)
+        plt.xlabel("in[0]")
+        plt.ylabel("out[0]")
 
     The data can also be expressed as Numpy arrays.  If that is the case,
     the interpolation function can be vector valued. ``x`` has a shape of
@@ -720,6 +727,8 @@ class Interpolate(FunctionBlock):
 
     :note: if ``time=True``.  In this case the block has no
         input ports and is a ``Source`` not a ``Function`` block.
+
+    :seealso: :func:`scipy.interpolate.interp1d`
     """
 
     nin = -1

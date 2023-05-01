@@ -103,7 +103,7 @@ class Integrator(TransferBlock):
         self._x0 = x0
         self.min = min
         self.max = max
-        print("nstates", self.nstates)
+        # print("nstates", self.nstates)
 
     def output(self, t, u, x):
         return [x]

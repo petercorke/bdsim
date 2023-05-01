@@ -201,7 +201,6 @@ xnames = ['plantx0'] (list)
 y0     = ndarray:float64 (123,)
 y1     = ndarray:int64 (123,)
 ynames = ['plant[0]', 'demand[0]'] (list)
-(dev) [130 ~...code/bdsim/examples]  % 
 ```
 where
 
