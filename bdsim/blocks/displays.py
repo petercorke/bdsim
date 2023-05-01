@@ -285,7 +285,12 @@ class Scope(GraphicsBlock):
         if self.scale != "auto":
             self.ax.set_ylim(*self.scale)
         if self.labels is not None:
-            self.ax.legend(self.labels, loc=self.loc)
+            def fix_underscore(s):
+                if s[0] == "_":
+                    return "-" + s[1:]
+                else:
+                    return s
+            self.ax.legend([fix_underscore(label) for label in self.labels], loc=self.loc)
 
         if self.watch:
             for wire in self.input_wires:
