@@ -489,6 +489,7 @@ class BDSim:
         simstate.dt = dt
         simstate.count = 0
         simstate.bdtime = 0.0
+        simstate.gtime = 0.0  # last graphics update
         simstate.solver = solver
         simstate.solver_args = solver_args
         simstate.minstepsize = minstepsize
@@ -807,8 +808,11 @@ class BDSim:
                     for i, p in enumerate(simstate.watchlist):
                         simstate.plist[i].append(p.block.output(integrator.t)[p.port])
 
-                    # # update all blocks that need to know
-                    bd.step(integrator.t)
+                    # update all blocks that need to know
+                    if (integrator.t - simstate.gtime) > (simstate.T / 200):
+                        bd.step(integrator.t)
+                        simstate.gtime = integrator.t
+                    # bd.step(integrator.t)
 
                     self.progress.update(simstate.t)  # update the progress bar
 
@@ -899,7 +903,10 @@ class BDSim:
                     simstate.plist[i].append(p.block.output(t)[p.port])
 
                 # update all blocks that need to know
-                bd.step(t)
+                if (t - simstate.gtime) > (simstate.T / 200):
+                    bd.step(t)
+                    simstate.gtime = t
+                # bd.step(t)
 
                 self.progress.update(simstate.t)  # update the progress bar
 
