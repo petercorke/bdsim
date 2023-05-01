@@ -32,14 +32,12 @@ except ImportError:
 
 
 class Progress:
-
     # print a progress bar
     # https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console
     @staticmethod
     def printProgressBar(
         fraction, prefix="", suffix="", decimals=1, length=50, fill="█", printEnd="\r"
     ):
-
         percent = ("{0:." + str(decimals) + "f}").format(fraction * 100)
         filledLength = int(length * fraction)
         bar = fill * filledLength + "-" * (length - filledLength)
@@ -52,7 +50,6 @@ class Progress:
             return
 
     def start(self, T):
-
         self.T = T
 
         if not self.enable:
@@ -231,7 +228,6 @@ class BDSimState:
     """
 
     def __init__(self):
-
         self.x = None  # continuous state vector numpy.ndarray
         self.T = None  # maximum.BlockDiagram time
         self.t = None  # current time
@@ -667,7 +663,6 @@ class BDSim:
         #   ynames = [] (list)
 
         if self.options.outfile is not None:
-
             out.dump(self.options.outfile)
 
             if not self.options.quiet:
@@ -792,7 +787,6 @@ class BDSim:
 
                 # integrate
                 while integrator.status == "running":
-
                     # step the integrator, calls _deriv and evaluate block diagram multiple times
                     message = integrator.step()
 
@@ -824,10 +818,8 @@ class BDSim:
                     # has any block called a stop?
                     if simstate.stop is not None:
                         print(
-                            fg("red")
-                            + f"\n--- stop requested at t={simstate.t:.4f} by"
-                            f" {simstate.stop}"
-                            + attr(0)
+                            fg("red") + f"\n--- stop requested at t={simstate.t:.4f} by"
+                            f" {simstate.stop}" + attr(0)
                         )
                         break
 
@@ -879,10 +871,8 @@ class BDSim:
                     # has any block called a stop?
                     if simstate.stop is not None:
                         print(
-                            fg("red")
-                            + f"\n--- stop requested at t={simstate.t:.4f} by"
-                            f" {simstate.stop}"
-                            + attr(0)
+                            fg("red") + f"\n--- stop requested at t={simstate.t:.4f} by"
+                            f" {simstate.stop}" + attr(0)
                         )
                         break
 
@@ -916,10 +906,8 @@ class BDSim:
                 # has any block called a stop?
                 if simstate.stop is not None:
                     print(
-                        fg("red")
-                        + f"\n--- stop requested at t={simstate.t:.4f} by"
-                        f" {simstate.stop}"
-                        + attr(0)
+                        fg("red") + f"\n--- stop requested at t={simstate.t:.4f} by"
+                        f" {simstate.stop}" + attr(0)
                     )
 
                 if "i" in simstate.options.debug:
@@ -954,11 +942,9 @@ class BDSim:
         bd = BlockDiagram(name=name)
 
         def new_method(cls, bd):
-
             # return a wrapper for the block constructor that automatically
             # adds the block to the diagram's blocklist
             def block_init_wrapper(self, *args, **kwargs):
-
                 block = cls(*args, bd=bd, **kwargs)  # call __init__ on the block
                 return block
 
@@ -992,7 +978,6 @@ class BDSim:
             print(f"DEBUG.{debug:s}: " + fmt.format(*args))
 
     def done(self, bd, block=False):
-
         if self.options.hold:
             block = self.options.hold
 
@@ -1076,7 +1061,6 @@ class BDSim:
         """
 
         def parse_docstring(ds):
-
             # this should have two versions: sphinx, numpy doc styles
             import re
             from collections import OrderedDict
@@ -1391,7 +1375,6 @@ class BDSim:
 
 class Options(OptionsBase):
     def __init__(self, sysargs=True, **options):
-
         default_options = {
             "backend": None,
             "tiles": "3x4",
