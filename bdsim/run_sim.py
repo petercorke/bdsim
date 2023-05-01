@@ -841,11 +841,9 @@ class BDSim:
                         and integrator.step_size < simstate.minstepsize
                     ):
                         print(
-                            fg("red")
-                            + "\n--- stopping on minimum step size at"
+                            fg("red") + "\n--- stopping on minimum step size at"
                             f" t={simstate.t:.4f} with last stepsize"
-                            f" {integrator.step_size:g}"
-                            + attr(0)
+                            f" {integrator.step_size:g}" + attr(0)
                         )
                         break
 
