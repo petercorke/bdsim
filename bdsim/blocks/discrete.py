@@ -14,7 +14,8 @@ from math import sin, cos, atan2, sqrt, pi
 
 import matplotlib.pyplot as plt
 import inspect
-from spatialmath import base, Twist3, SE3
+from spatialmath import Twist3, SE3
+import spatialmath.base as smb
 
 from bdsim.components import ClockedBlock
 
@@ -69,7 +70,7 @@ class ZOH(ClockedBlock):
         self.type = "sampler"
         super().__init__(nin=1, nout=1, clock=clock, **blockargs)
 
-        x0 = base.getvector(x0)
+        x0 = smb.getvector(x0)
         self._x0 = x0
         self.ndstates = len(x0)
         # print('nstates', self.nstates)
@@ -151,14 +152,14 @@ class DIntegrator(ClockedBlock):
             if x0.ndim > 1:
                 raise ValueError("state must be a 1D vector")
         else:
-            x0 = base.getvector(x0)
+            x0 = smb.getvector(x0)
 
         self.ndstates = x0.shape[0]
 
         if min is not None:
-            min = base.getvector(min, self.ndstates)
+            min = smb.getvector(min, self.ndstates)
         if max is not None:
-            max = base.getvector(max, self.ndstates)
+            max = smb.getvector(max, self.ndstates)
 
         self._x0 = x0
         self.min = min
