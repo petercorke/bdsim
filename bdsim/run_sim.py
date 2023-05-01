@@ -307,7 +307,7 @@ class BDSim:
             the simulation, while ``animation=True` will animate the graphs
             during simulation.
 
-        :seealso: :meth:`set_options`
+        :seealso: :meth:`set_globals()`
         """
 
         self.packages = packages
@@ -1348,7 +1348,7 @@ class BDSim:
 
         The command line option ``--global var=value`` can be used to request the change
         of global variables.  However, actually changing them requires explicit code
-        in the user's program.
+        support in the user's program after the ``BDSim`` constructor.
 
         Example::
 
