@@ -868,14 +868,15 @@ class BlockDiagram:
             if len(b.sources) > 0:
                 # non source block, list all its inputs, one per row
                 inputs = b.inputs
-                for (port, source) in enumerate(b.sources):  # every port
-
+                for port, source in enumerate(b.sources):  # every port
                     value = inputs[port]
                     typ = type(value).__name__
                     if isinstance(value, np.ndarray):
                         typ += "{:s}.{:s}".format(str(value.shape), str(value.dtype))
-
-                    table.row(name if port == 0 else "", port, source.block.name, typ)
+                    src_name = source.block.name
+                    if source.block.nout > 1:
+                        src_name += f"[{source.port}]"
+                    table.row(name if port == 0 else "", port, src_name, typ)
             else:
                 # source block, just list the name
                 table.row(name, "", "", "")
