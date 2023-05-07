@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+"""
+Example with one ZOH sampling a sine wave
+Copyright (c) 2021- Peter Corke
+"""
+
 import bdsim
 import time
 

@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+"""
+Example with two waveform generators driving a scope
+Copyright (c) 2021- Peter Corke
+"""
+
 import bdsim
 
 sim = bdsim.BDSim(animation=True)  # create simulator

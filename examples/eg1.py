@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+"""
+Example of continuous-time system
+Copyright (c) 2021- Peter Corke
+"""
 import bdsim
 
 sim = bdsim.BDSim(animation=True)  # create simulator

@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+"""
+Example of van der Pol oscillator
+Copyright (c) 2021- Peter Corke
+"""
+
 import bdsim
 
 sim = bdsim.BDSim(animation=True, globs=globals())  # create simulator
