@@ -135,7 +135,10 @@ class TimeQ:
             return f"TimeQ: len={len(self)}, first out {self.q[0]}"
 
     def __repr__(self):
-        return str(self)
+        events = []
+        for t in self.q:
+            events.append(str(t))
+        return "\n".join(events)
 
     def push(self, value):
         """
@@ -611,11 +614,11 @@ class BDSim:
                 for source in sources:
                     if isinstance(source, Clock):
                         # clock ticked, save its state
-                        clock.savestate(tnext)
-                        clock.next_event(self.simstate)
+                        source.savestate(tnext)
+                        source.next_event(self.simstate)
 
                         # get the new state
-                        clock._x = clock.getstate(tnext)
+                        source._x = source.getstate(tnext)
                 tprev = tnext
 
                 # are we done?
