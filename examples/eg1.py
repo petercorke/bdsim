@@ -26,7 +26,6 @@ bd.connect(plant, scope[0])
 
 bd.compile()  # check the diagram
 sim.report(bd)  # , format="latex")
-sim.report(bd, "lists")  # list all blocks and wires
 sim.report(bd, "schedule")
 
 # bd.dotfile("eg1a.dot")

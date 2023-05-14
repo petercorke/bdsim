@@ -19,5 +19,5 @@ bd.connect(wave1, scope1)
 bd.connect(wave2, scope2)
 
 bd.compile()
-sim.report()
+sim.report(bd)
 out = sim.run(bd, 4, dt=0.02)

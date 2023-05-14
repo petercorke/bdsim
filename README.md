@@ -98,8 +98,8 @@ which we can express concisely with `bdsim` as (see [`bdsim/examples/eg1.py`](ht
     19	bd.connect(plant, sum[1], scope[0])
     20	
     21	bd.compile()          # check the diagram
-    22	bd.report_summary()   # list the system
-    23
+    22
+    23	sim.report(bd)   # list the system
     24  out = sim.run(bd, 5)   # simulate for 5s
 ```
 which is just 15 lines of executable code.
@@ -124,24 +124,24 @@ The number of wires in each slice must be consistent.  You could even do a cross
 
 Line 21 assembles all the blocks and wires, instantiates subsystems, checks connectivity to create a flat wire list, and then builds the dataflow execution plan.
 
-Line 22 generates a report, in tabular form, showing a summary of the block diagram:
+Line 23 generates a report, in tabular form, showing a summary of the block diagram:
 
 ```
-┌────────┬────────┬────────┬─────────────┐
-│ block  │ inport │ source │ source type │
-├────────┼────────┼────────┼─────────────┤
-│demand@ │        │        │             │
-├────────┼────────┼────────┼─────────────┤
-│gain.0  │ 0      │ sum.0  │ float64     │
-├────────┼────────┼────────┼─────────────┤
-│plant   │ 0      │ gain.0 │ float64     │
-├────────┼────────┼────────┼─────────────┤
-│scope.0 │ 0      │ plant  │ float64     │
-│        │ 1      │ demand │ int         │
-├────────┼────────┼────────┼─────────────┤
-│sum.0   │ 0      │ demand │ int         │
-│        │ 1      │ plant  │ float64     │
-└────────┴────────┴────────┴─────────────┘
+┌────────┬──────────┬────────┬────────┬─────────────┐
+│ block  │   type   │ inport │ source │ source type │
+├────────┼──────────┼────────┼────────┼─────────────┤
+│demand@ │ step     │        │        │             │
+├────────┼──────────┼────────┼────────┼─────────────┤
+│gain.0  │ gain     │ 0      │ sum.0  │ float64     │
+├────────┼──────────┼────────┼────────┼─────────────┤
+│plant   │ lti_siso │ 0      │ gain.0 │ float64     │
+├────────┼──────────┼────────┼────────┼─────────────┤
+│scope.0 │ scope    │ 0      │ plant  │ float64     │
+│        │          │ 1      │ demand │ int         │
+├────────┼──────────┼────────┼────────┼─────────────┤
+│sum.0   │ sum      │ 0      │ demand │ int         │
+│        │          │ 1      │ plant  │ float64     │
+└────────┴──────────┴────────┴────────┴─────────────┘
 ```
 
 Line 24 runs the simulation for 5 seconds 
@@ -212,7 +212,7 @@ The `watch` argument is a list of outputs to log, in this case `plant` defaults
 to output port 0.  This information is saved in additional variables `y0`, `y1`
 etc.  `ynames` is a list of the names of the watched variables.
 
-An alternative system report, created by `bd.report_lists` is more detailed
+An alternative system report, created by `sim.report(bd, type="lists")` is more detailed
 ```
 Blocks::
 
@@ -339,7 +339,6 @@ Wiring, and some simple arithmetic blocks like `GAIN`, `SUM` and `PROD` can be i
     18  bd.compile()   # check the diagram
     19  bd.report()    # list all blocks and wires
     20
-    21  sim.set_options(animation=True)
     22  out = sim.run(bd, 5, watch=[plant,])  # simulate for 5s
 ```
 This requires fewer lines of code and the code is more readable. Importantly, it results in in *exactly the same* block diagram in terms of blocks and wires
