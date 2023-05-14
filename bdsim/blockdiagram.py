@@ -847,10 +847,12 @@ class BlockDiagram:
                 pass
     # ---------------------------------------------------------------------- #
 
-    def report_summary(self, **kwargs):
+    def report_summary(self, sortby="name", **kwargs):
         """
         Print a summary of block diagram.
 
+        :param sortby: sort rows by specified block attribute: "name" [default] or "type"
+        :type sortby: str, optional
         :param style: table style, one of: ansi (default), markdown, latex
         :type style: str
 
@@ -866,15 +868,21 @@ class BlockDiagram:
 
         table = ANSITable(
             Column("block", headalign="^", colalign="<"),
+            Column("type", headalign="^", colalign="<"),
             Column("inport", headalign="^", colalign="<"),
             Column("source", headalign="^", colalign="<"),
             Column("source type", headalign="^", colalign="<"),
             border="thin",
         )
 
+        if sortby == "name":
+            sortfunc = lambda x: x.name
+        elif sortby == "type":
+            sortfunc = lambda x: x.type
+
         first = True
         legend = None
-        for b in sorted(self.blocklist, key=lambda x: x.name):
+        for b in sorted(self.blocklist, key=sortfunc):
             name = str(b)
             if isinstance(b, EventSource):
                 name += "@"
@@ -897,10 +905,15 @@ class BlockDiagram:
                     src_name = source.block.name
                     if source.block.nout > 1:
                         src_name += f"[{source.port}]"
-                    table.row(name if port == 0 else "", port, src_name, typ)
+                    if port == 0:
+                        # first row for this block
+                        table.row(name, b.type, port, src_name, typ)
+                    else:
+                        # subsequent rows
+                        table.row("", "", port, src_name, typ)
             else:
                 # source block, just list the name
-                table.row(name, "", "", "")
+                table.row(name, b.type, "", "", "")
         table.print(**kwargs)
 
         if legend:
