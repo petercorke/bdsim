@@ -92,6 +92,7 @@ def bdload(bd, filename, globalvars={}, verbose=False, **kwargs):
             if verbose:
                 print(f"[{block['title']}]:")
             # process the parameters
+            default_params = []
             for key, value in params.items():
                 if verbose:
                     print(f"    {key}: ", end="")
@@ -121,14 +122,20 @@ def bdload(bd, filename, globalvars={}, verbose=False, **kwargs):
                             newvalue = eval(value, namespace)
                         except (NameError, SyntaxError):
                             pass
+                else:
+                    newvalue = value
 
-                if newvalue is not None:
+                if newvalue is None:
+                    # default_params.append(key)
+                    if verbose:
+                        print(f" {value} default")
+                else:
                     params[key] = newvalue
                     if verbose:
                         print(f" {value} -> {newvalue}")
-                else:
-                    if verbose:
-                        print(f" {value}")
+
+            # for key in default_params:
+            #     del params[key]
 
             # instantiate the block
             try:
