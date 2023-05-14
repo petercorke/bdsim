@@ -47,47 +47,66 @@ class Scope(GraphicsBlock):
             - float
             - :math:`x_i` is the i'th line
 
-    Create a scope block that plots:
+    Create a scope block that plots multiple signals against time.
 
-    * scalar input ports against time, ``vector=None``
-    * selected elements of a NumPy array on a single input port. If ``vector`` is an
-      int this is the expected width of the array. If ``vector`` is a list of ints these
-      are the indices of the array to display.
+    For each line plotted we can specify the:
+    
+    * line style as a heterogeneous list of:
 
-    Each line can have its own color or style which is specified by:
+      * Matplotlib `fmt` string comprising a color and line style, eg. ``"k"`` or ``"r:"``
 
-        - a dict of options for `Line2D <https://matplotlib.org/3.2.2/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D>`_ or
-        - a  MATLAB-style linestyle like 'k--'
+      * a dict of Matplotlib line style options for `Line2D <https://matplotlib.org/3.2.2/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D>`_
+        , eg. ``{"color": "k", "linewidth": 3, "alpha": 0.5)``
 
-    The number of lines to plot will be inferred from:
-    * the length of the ``labels`` list if specified
-    * the length of the ``styles`` list if specified
-    * ``nin`` if specified
-    * ``vector`` if specified
-
-    If multiple lines are plotted then a heterogeneous list of styles, dicts or strings,
-    one per line must be given.
+    * line label, used in the legend and vertical axis. This can include math mode
+      notation or unicode characters.
 
     The vertical scale factor defaults to auto-scaling but can be fixed by
-    providing a 2-tuple [ymin, ymax]. All lines are plotted against the
+    providing a 2-tuple ``[ymin, ymax]``. All lines are plotted against the
     same vertical scale.
-
-    Examples::
-
-        scope = bd.SCOPE()
-        scope = bd.SCOPE(nin=2)
-        scope = bd.SCOPE(nin=2, scale=[-1,2])
-        scope = bd.SCOPE(styles='k--')
-        scope = bd.SCOPE(styles=[{'color': 'blue'}, {'color': 'red', 'linestyle': '--'}])
-        scope = bd.SCOPE(styles=['k', 'r--'])
-        scope = bd.SCOPE(vector=[0,1,2]) # display elements 0, 1, 2 of array on port 0
-
 
     .. figure:: ../../figs/Figure_1.png
         :width: 500px
         :alt: example of generated graphic
 
         Example of scope display.
+
+    **Scalar input ports against time**
+
+    The number of lines to plot will be inferred from:
+
+    * the length of the ``labels`` list if specified
+    * the length of the ``styles`` list if specified
+    * ``nin`` if specified, it defaults to 1
+
+    These numbers must be consistent.
+
+    Examples::
+
+        bd.SCOPE()       # a scope with 1 input port
+        bd.SCOPE(nin=3)  # a scope with 3 input ports
+        bd.SCOPE(styles=["k", "r--"])        # a scope with 2 input ports
+        bd.SCOPE(labels=["x", r"$\gamma$"])  # a scope with 2 input ports
+        bd.SCOPE(styles=[{'color': 'blue'}, {'color': 'red', 'linestyle': '--'}])
+
+    **Single input port with NumPy array**
+     
+    The port is fed with a 1D-array, and ``vector`` is an:
+
+    * int, this is the expected width of the array, all its elements will be plotted
+    * a list of ints, interpretted as indices of the elements to plot.
+
+    Examples::
+
+        bd.SCOPE(vector=[0,1,2]) # display elements 0, 1, 2 of array on port 0
+        bd.SCOPE(vector=[0,1], styles=[{'color': 'blue'}, {'color': 'red', 'linestyle': '--'}])
+
+    .. note:: 
+        * If the vector is of width 3, by default the inputs are plotted as red, green 
+          and blue lines. 
+        * If the vector is of width 6, by default the first three inputs are plotted as
+          solid red, green and blue lines and the last three inputs are plotted as 
+          dashed red, green and blue lines.
     """
 
     nin = -1
@@ -95,7 +114,7 @@ class Scope(GraphicsBlock):
 
     def __init__(
         self,
-        nin=None,
+        nin=1,
         vector=None,
         styles=None,
         stairs=False,
@@ -135,6 +154,7 @@ class Scope(GraphicsBlock):
         """
 
         def listify(s):
+            # guarantee that result is a list
             if isinstance(s, str):
                 return [s]
             elif isinstance(s, (list, tuple)):
@@ -144,67 +164,53 @@ class Scope(GraphicsBlock):
 
         # number of lines plotted (nplots) is inferred from the number of labels
         # or linestyles
+
         nplots = None
-
-        if nin is not None:
-            nplots = nin
-
-        if styles is not None:
-            self.styles = listify(styles)
-            if nplots is not None:
-                assert nplots == len(styles), "need one style per input"
-            else:
-                nplots = len(styles)
-
-        if labels is not None:
-            self.labels = listify(labels)
-            if nplots is not None:
-                assert nplots == len(labels), "need one label per input"
-            else:
-                nplots = len(labels)
-        else:
-            self.labels = None
-
         if vector is not None:
             # vector argument is given
             #  block has single input which is an array
             #  vector is int, width of vector
             #  vector is a list of ints, select those inputs from the input vector
 
-            if nin is not None and nin != 1:
+            if nin != 1:
                 raise ValueError("if vector is given, nin must be 1")
 
             if isinstance(vector, int):
-                nvec = vector
+                nplots = vector
             elif isinstance(vector, list):
-                nvec = len(vector)
+                nplots = len(vector)
             else:
                 raise ValueError("vector must be an int or list of indices")
 
+        if styles is not None:
+            self.styles = listify(styles)
             if nplots is None:
-                nplots = nvec
+                nplots = len(self.styles)
             else:
-                if nvec != nplots:
-                    raise ValueError("vector argument doesnt match nplots")
+                assert nplots == len(self.styles), "need one style per plot"
+        else:
+            self.styles = None
+
+        if labels is not None:
+            self.labels = listify(labels)
+            if nplots is None:
+                nplots = len(self.labels)
+            else:
+                assert nplots == len(self.labels), "need one label per plot"
+        else:
+            self.labels = None
 
         if nplots is None:
-            # still indeterminate, set default
-            nin = 1
-            nplots = 1
-
-        if vector is not None:
-            nin = 1
-            nplots = nvec
-        else:
+            # nplots has not been determined from styles or labels, so use nin
+            nplots = nin
+        elif nin == 1 and vector is None:
+            # nplots is different to the default nin value, override it
             nin = nplots
 
         self.nplots = nplots
         self.vector = vector
 
         super().__init__(nin=nin, **blockargs)
-
-        if styles is None:
-            self.styles = [None] * nplots
 
         self.xlabel = "Time (s)"
 
@@ -233,13 +239,25 @@ class Scope(GraphicsBlock):
             np.array([]),
         ] * self.nplots
 
+
         # create the figures
         self.fig = self.create_figure(simstate)
         self.ax = self.fig.add_subplot(111)
 
         # get labels if not provided
         if self.labels is None:
-            self.labels = [self.sourcename(i) for i in range(self.nin)]
+            if self.vector is None:
+                self.labels = [self.sourcename(i) for i in range(self.nin)]
+            else:
+                self.labels = [str(i) for i in range(self.vector)]
+                if self.styles is None:
+                    if self.vector == 3:
+                        self.styles = ["r", "g", "b"]
+                    elif self.vector == 6:
+                        self.styles = ["r", "g", "b", "r--", "g--", "b--"]
+
+        if self.styles is None:
+            self.styles = [None] * self.nplots
 
         # create empty lines with defined styles
         for i in range(0, self.nplots):
@@ -370,16 +388,18 @@ class ScopeXY(GraphicsBlock):
     Create an XY scope where input :math:`y` (vertical axis) is plotted against :math:`x`
     (horizontal axis).
 
-    The line style is given by either:
+    Line style is one of:
 
-        - a dict of options for ``plot``, or
-        - as a simple MATLAB-style linestyle like ``'k--'``.
+      * Matplotlib `fmt` string comprising a color and line style, eg. ``"k"`` or ``"r:"``
+
+      * a dict of Matplotlib line style options for `Line2D <https://matplotlib.org/3.2.2/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D>`_
+        , eg. ``dict(color="k", linewidth=3, alpha=0.5)``
 
     The scale factor defaults to auto-scaling but can be fixed by
     providing either:
 
-        - a 2-tuple [min, max] which is used for the x- and y-axes
-        - a 4-tuple [xmin, xmax, ymin, ymax]
+        - a 2-tuple ``[min, max]`` which is used for the x- and y-axes
+        - a 4-tuple ``[xmin, xmax, ymin, ymax]``
     """
 
     nin = 2
@@ -509,16 +529,18 @@ class ScopeXY1(ScopeXY):
     :math:`x_i` (horizontal axis). This block has one vector input and the elements to
     be plotted are given by a 2-element iterable :math:`(i, j)`.
 
-    The line style is given by either:
+    Line style is one of:
 
-        - a dict of options for ``plot``, or
-        - as a simple MATLAB-style linestyle like ``'k--'``.
+      * Matplotlib `fmt` string comprising a color and line style, eg. ``"k"`` or ``"r:"``
+
+      * a dict of Matplotlib line style options for `Line2D <https://matplotlib.org/3.2.2/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D>`_
+        , eg. ``dict(color="k", linewidth=3, alpha=0.5)``
 
     The scale factor defaults to auto-scaling but can be fixed by
     providing either:
 
-        - a 2-tuple [min, max] which is used for the x- and y-axes
-        - a 4-tuple [xmin, xmax, ymin, ymax]
+        - a 2-tuple ``[min, max]`` which is used for the x- and y-axes
+        - a 4-tuple ``[xmin, xmax, ymin, ymax]``
     """
 
     nin = 1
