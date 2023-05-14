@@ -851,7 +851,7 @@ class BDSim:
                         break
 
                     if "i" in simstate.options.debug:
-                        bd._debugger(integrator)
+                        bd._debugger(simstate, integrator)
 
                 return integrator.y  # return final state vector
 
@@ -893,7 +893,7 @@ class BDSim:
                         break
 
                     if "i" in simstate.options.debug:
-                        bd._debugger(integrator)
+                        bd._debugger(simstate, integrator)
 
             else:
                 # block diagram has no continuous states
@@ -932,7 +932,7 @@ class BDSim:
                     )
 
                 if "i" in simstate.options.debug:
-                    bd._debugger(simstate=simstate)
+                    bd._debugger(simstate)
 
         except RuntimeError as err:
             # bad things happens, print a message and return no result

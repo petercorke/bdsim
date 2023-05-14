@@ -762,60 +762,89 @@ class BlockDiagram:
     # ---------------------------------------------------------------------- #
 
     def _debugger(self, simstate=None, integrator=None):
-        if state.t_stop is not None and state.t < state.t_stop:
+        if simstate.t_stop is not None and simstate.t < simstate.t_stop:
             return
+        
+        def print_output(b, t, inports, x):
+            out = b.output(t, inports, x)
+            if len(out) == 1:
+                print(f"{b.name} = {out[0]}")
+            else:
+                print(f"{b.name}:")
+                for i, o in enumerate(out):
+                    print(f"  [{i}] = {o}")
 
+        np.set_printoptions(precision=6, linewidth=120)
         simstate.t_stop = None
+        if not hasattr(self, "debug_watch"):
+            self.debug_watch = None
         print("\n")
-        while True:
+        if self.debug_watch is not None:
             t = simstate.t
-            cmd = input(f"(bdsim, t={t:.4f}) ")
+            for b in self.debug_watch:
+                print_output(b, t, b.inputs, b._x)
 
-            if len(cmd) == 0:
-                continue
+        while True:
+            try:
+                t = simstate.t
+                cmd = input(f"(bdsim, t={t:.6f}) ")
 
-            if cmd[0] == "p":
-                # print variables
-                if len(cmd) > 1:
-                    id = int(cmd[1:])
-                    b = self.blocklist[id]
-                    print(b.name, b.output(t, b.inputs, b._x))
-                else:
-                    for b in self.blocklist:
-                        if b.nout > 0:
-                            print(b.name, b.output(t, b.inputs, b._x))
-            elif cmd[0] == "i":
-                print(integrator.status, integrator.step_size, integrator.nfev)
-            elif cmd[0] == "s":
-                # step
-                break
-            elif cmd[0] == "c":
-                # continue
-                self.debug_stop = False
-                self.t_stop = None
-                break
-            elif cmd[0] == "t":
-                self.t_stop = float(cmd[1:])
-                break
-            elif cmd[0] == "q":
-                sys.exit(1)
-            elif cmd[0] == "r":
-                self.report()
-            elif cmd == "pdb":
-                import pdb
+                if len(cmd) == 0:
+                    continue
 
-                pdb.runeval('print("type exit to leave Pdb")')
-            elif cmd[0] in "h?":
-                print("p    print all outputs")
-                print("pI   print block id I output")
-                print("i    print integrator status")
-                print("s    single step")
-                print("c    continue")
-                print("tT   stop at or after time T")
-                print("r    print block and wires")
-                print("pdb  enter PDB debugger")
-                print("q    quit")
+                if cmd[0] == "p":
+                    # print variables
+                    if len(cmd) > 1:
+                        id = int(cmd[1:])
+                        b = self.blocklist[id]
+                        print_output(b, t, b.inputs, b._x)
+                    else:
+                        for b in self.blocklist:
+                            if b.nout > 0:
+                                print_output(b, t, b.inputs, b._x)
+                elif cmd[0] == "i":
+                    print(f"status={integrator.status}, dt={integrator.step_size:.4g}, nfev={integrator.nfev}")
+                elif cmd[0] == "s":
+                    # step
+                    break
+                elif cmd[0] == "c":
+                    # continue
+                    self.debug_stop = False
+                    self.t_stop = None
+                    break
+                elif cmd[0] == "t":
+                    self.t_stop = float(cmd[1:])
+                    break
+                elif cmd[0] == "q":
+                    sys.exit(1)
+                elif cmd[0] == "r":
+                    self.report()
+                elif cmd[0] == "w":
+                    if len(cmd) == 1:
+                        # clear the watch list
+                        print(self.debug_watch)
+                        self.debug_watch = None
+                    else:
+                        self.debug_watch = [self.blocklist[int(s.strip())] for s in cmd[2:].split(" ")]
+                elif cmd == "pdb":
+                    import pdb
 
+                    pdb.runeval('print("type exit to leave Pdb")')
+                elif cmd[0] in "h?":
+                    print("p    print all outputs")
+                    print("pI   print block id I output")
+                    print("i    print integrator status")
+                    print("s    single step")
+                    print("c    continue")
+                    print("tT   stop at or after time T")
+                    print("r    print block and wires")
+                    print("pdb  enter PDB debugger")
+                    print("w id watch list, display at every step")
+                    print("q    quit")
+
+            except (IndexError, ValueError, TypeError):
+                print("??")
+                pass
     # ---------------------------------------------------------------------- #
 
     def report_summary(self, **kwargs):
