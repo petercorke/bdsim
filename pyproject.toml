@@ -1,6 +1,6 @@
 [project]
 name = "bdsim"
-version = "1.1.0"
+version = "1.1.1"
 authors = [
   { name="Peter Corke", email="rvc@petercorke.com" },
 ]
@@ -12,7 +12,6 @@ dependencies = [
     "spatialmath-python",
     "ansitable",
     "progress",
-    "PyQt5",
 ]
 license = { file = "LICENSE" }
 
