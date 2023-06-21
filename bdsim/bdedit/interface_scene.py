@@ -142,7 +142,7 @@ class Scene(Serializable):
         try:
             self._system_font = ImageFont.truetype("arial.ttf", 14)
         except OSError:
-            self._system_font = ImageFont.truetype("Arial.ttf", 14)
+            self._system_font = ImageFont.load_default()
 
     # -----------------------------------------------------------------------------
     def addHasBeenModifiedListener(self, callback: "function"):
