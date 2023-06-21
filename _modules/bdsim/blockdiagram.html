@@ -34,7 +34,7 @@
               <img src="../../_static/BDSimLogo_NoBackgnd@2x.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                1.1.0
+                1.1.1
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -840,66 +840,97 @@
     <span class="c1"># ---------------------------------------------------------------------- #</span>
 
     <span class="k">def</span> <span class="nf">_debugger</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simstate</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">integrator</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">t_stop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">state</span><span class="o">.</span><span class="n">t</span> <span class="o">&lt;</span> <span class="n">state</span><span class="o">.</span><span class="n">t_stop</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">simstate</span><span class="o">.</span><span class="n">t_stop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">simstate</span><span class="o">.</span><span class="n">t</span> <span class="o">&lt;</span> <span class="n">simstate</span><span class="o">.</span><span class="n">t_stop</span><span class="p">:</span>
             <span class="k">return</span>
+        
+        <span class="k">def</span> <span class="nf">print_output</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">out</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">b</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">out</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">b</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">:&quot;</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">out</span><span class="p">):</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  [</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">] = </span><span class="si">{</span><span class="n">o</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
+        <span class="n">np</span><span class="o">.</span><span class="n">set_printoptions</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">120</span><span class="p">)</span>
         <span class="n">simstate</span><span class="o">.</span><span class="n">t_stop</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;debug_watch&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">debug_watch</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">debug_watch</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">t</span> <span class="o">=</span> <span class="n">simstate</span><span class="o">.</span><span class="n">t</span>
-            <span class="n">cmd</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;(bdsim, t=</span><span class="si">{</span><span class="n">t</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">) &quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">debug_watch</span><span class="p">:</span>
+                <span class="n">print_output</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">_x</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="k">continue</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">t</span> <span class="o">=</span> <span class="n">simstate</span><span class="o">.</span><span class="n">t</span>
+                <span class="n">cmd</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;(bdsim, t=</span><span class="si">{</span><span class="n">t</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">) &quot;</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="n">cmd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;p&quot;</span><span class="p">:</span>
-                <span class="c1"># print variables</span>
-                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-                    <span class="nb">id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">cmd</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
-                    <span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span>
-                    <span class="nb">print</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">_x</span><span class="p">))</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
-                        <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">nout</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                            <span class="nb">print</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">_x</span><span class="p">))</span>
-            <span class="k">elif</span> <span class="n">cmd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;i&quot;</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="n">integrator</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="n">integrator</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span> <span class="n">integrator</span><span class="o">.</span><span class="n">nfev</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">cmd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;s&quot;</span><span class="p">:</span>
-                <span class="c1"># step</span>
-                <span class="k">break</span>
-            <span class="k">elif</span> <span class="n">cmd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;c&quot;</span><span class="p">:</span>
-                <span class="c1"># continue</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">debug_stop</span> <span class="o">=</span> <span class="kc">False</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">t_stop</span> <span class="o">=</span> <span class="kc">None</span>
-                <span class="k">break</span>
-            <span class="k">elif</span> <span class="n">cmd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;t&quot;</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">t_stop</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">cmd</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
-                <span class="k">break</span>
-            <span class="k">elif</span> <span class="n">cmd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;q&quot;</span><span class="p">:</span>
-                <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">cmd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;r&quot;</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
-            <span class="k">elif</span> <span class="n">cmd</span> <span class="o">==</span> <span class="s2">&quot;pdb&quot;</span><span class="p">:</span>
-                <span class="kn">import</span> <span class="nn">pdb</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">continue</span>
 
-                <span class="n">pdb</span><span class="o">.</span><span class="n">runeval</span><span class="p">(</span><span class="s1">&#39;print(&quot;type exit to leave Pdb&quot;)&#39;</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">cmd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="s2">&quot;h?&quot;</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;p    print all outputs&quot;</span><span class="p">)</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;pI   print block id I output&quot;</span><span class="p">)</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;i    print integrator status&quot;</span><span class="p">)</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;s    single step&quot;</span><span class="p">)</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;c    continue&quot;</span><span class="p">)</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;tT   stop at or after time T&quot;</span><span class="p">)</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;r    print block and wires&quot;</span><span class="p">)</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;pdb  enter PDB debugger&quot;</span><span class="p">)</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;q    quit&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">cmd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;p&quot;</span><span class="p">:</span>
+                    <span class="c1"># print variables</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="nb">id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">cmd</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+                        <span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span>
+                        <span class="n">print_output</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">_x</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">nout</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                                <span class="n">print_output</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">_x</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">cmd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;i&quot;</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;status=</span><span class="si">{</span><span class="n">integrator</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2">, dt=</span><span class="si">{</span><span class="n">integrator</span><span class="o">.</span><span class="n">step_size</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2">, nfev=</span><span class="si">{</span><span class="n">integrator</span><span class="o">.</span><span class="n">nfev</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">cmd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;s&quot;</span><span class="p">:</span>
+                    <span class="c1"># step</span>
+                    <span class="k">break</span>
+                <span class="k">elif</span> <span class="n">cmd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;c&quot;</span><span class="p">:</span>
+                    <span class="c1"># continue</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">debug_stop</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">t_stop</span> <span class="o">=</span> <span class="kc">None</span>
+                    <span class="k">break</span>
+                <span class="k">elif</span> <span class="n">cmd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;t&quot;</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">t_stop</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">cmd</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+                    <span class="k">break</span>
+                <span class="k">elif</span> <span class="n">cmd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;q&quot;</span><span class="p">:</span>
+                    <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">cmd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;r&quot;</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+                <span class="k">elif</span> <span class="n">cmd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;w&quot;</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="c1"># clear the watch list</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">debug_watch</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">debug_watch</span> <span class="o">=</span> <span class="kc">None</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">debug_watch</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">strip</span><span class="p">())]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">cmd</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)]</span>
+                <span class="k">elif</span> <span class="n">cmd</span> <span class="o">==</span> <span class="s2">&quot;pdb&quot;</span><span class="p">:</span>
+                    <span class="kn">import</span> <span class="nn">pdb</span>
 
+                    <span class="n">pdb</span><span class="o">.</span><span class="n">runeval</span><span class="p">(</span><span class="s1">&#39;print(&quot;type exit to leave Pdb&quot;)&#39;</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">cmd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="s2">&quot;h?&quot;</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;p    print all outputs&quot;</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;pI   print block id I output&quot;</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;i    print integrator status&quot;</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;s    single step&quot;</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;c    continue&quot;</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;tT   stop at or after time T&quot;</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;r    print block and wires&quot;</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;pdb  enter PDB debugger&quot;</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;w id watch list, display at every step&quot;</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;q    quit&quot;</span><span class="p">)</span>
+
+            <span class="k">except</span> <span class="p">(</span><span class="ne">IndexError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;??&quot;</span><span class="p">)</span>
+                <span class="k">pass</span>
     <span class="c1"># ---------------------------------------------------------------------- #</span>
 
-<div class="viewcode-block" id="BlockDiagram.report_summary"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.report_summary">[docs]</a>    <span class="k">def</span> <span class="nf">report_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="BlockDiagram.report_summary"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.report_summary">[docs]</a>    <span class="k">def</span> <span class="nf">report_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sortby</span><span class="o">=</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Print a summary of block diagram.</span>
 
+<span class="sd">        :param sortby: sort rows by specified block attribute: &quot;name&quot; [default] or &quot;type&quot;</span>
+<span class="sd">        :type sortby: str, optional</span>
 <span class="sd">        :param style: table style, one of: ansi (default), markdown, latex</span>
 <span class="sd">        :type style: str</span>
 
@@ -915,15 +946,21 @@
 
         <span class="n">table</span> <span class="o">=</span> <span class="n">ANSITable</span><span class="p">(</span>
             <span class="n">Column</span><span class="p">(</span><span class="s2">&quot;block&quot;</span><span class="p">,</span> <span class="n">headalign</span><span class="o">=</span><span class="s2">&quot;^&quot;</span><span class="p">,</span> <span class="n">colalign</span><span class="o">=</span><span class="s2">&quot;&lt;&quot;</span><span class="p">),</span>
+            <span class="n">Column</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="n">headalign</span><span class="o">=</span><span class="s2">&quot;^&quot;</span><span class="p">,</span> <span class="n">colalign</span><span class="o">=</span><span class="s2">&quot;&lt;&quot;</span><span class="p">),</span>
             <span class="n">Column</span><span class="p">(</span><span class="s2">&quot;inport&quot;</span><span class="p">,</span> <span class="n">headalign</span><span class="o">=</span><span class="s2">&quot;^&quot;</span><span class="p">,</span> <span class="n">colalign</span><span class="o">=</span><span class="s2">&quot;&lt;&quot;</span><span class="p">),</span>
             <span class="n">Column</span><span class="p">(</span><span class="s2">&quot;source&quot;</span><span class="p">,</span> <span class="n">headalign</span><span class="o">=</span><span class="s2">&quot;^&quot;</span><span class="p">,</span> <span class="n">colalign</span><span class="o">=</span><span class="s2">&quot;&lt;&quot;</span><span class="p">),</span>
             <span class="n">Column</span><span class="p">(</span><span class="s2">&quot;source type&quot;</span><span class="p">,</span> <span class="n">headalign</span><span class="o">=</span><span class="s2">&quot;^&quot;</span><span class="p">,</span> <span class="n">colalign</span><span class="o">=</span><span class="s2">&quot;&lt;&quot;</span><span class="p">),</span>
             <span class="n">border</span><span class="o">=</span><span class="s2">&quot;thin&quot;</span><span class="p">,</span>
         <span class="p">)</span>
 
+        <span class="k">if</span> <span class="n">sortby</span> <span class="o">==</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span>
+            <span class="n">sortfunc</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">elif</span> <span class="n">sortby</span> <span class="o">==</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span>
+            <span class="n">sortfunc</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">type</span>
+
         <span class="n">first</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="n">legend</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">name</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">sortfunc</span><span class="p">):</span>
             <span class="n">name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">EventSource</span><span class="p">):</span>
                 <span class="n">name</span> <span class="o">+=</span> <span class="s2">&quot;@&quot;</span>
@@ -946,10 +983,15 @@
                     <span class="n">src_name</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">name</span>
                     <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">nout</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
                         <span class="n">src_name</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">source</span><span class="o">.</span><span class="n">port</span><span class="si">}</span><span class="s2">]&quot;</span>
-                    <span class="n">table</span><span class="o">.</span><span class="n">row</span><span class="p">(</span><span class="n">name</span> <span class="k">if</span> <span class="n">port</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">src_name</span><span class="p">,</span> <span class="n">typ</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">port</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="c1"># first row for this block</span>
+                        <span class="n">table</span><span class="o">.</span><span class="n">row</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">src_name</span><span class="p">,</span> <span class="n">typ</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="c1"># subsequent rows</span>
+                        <span class="n">table</span><span class="o">.</span><span class="n">row</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">src_name</span><span class="p">,</span> <span class="n">typ</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># source block, just list the name</span>
-                <span class="n">table</span><span class="o">.</span><span class="n">row</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+                <span class="n">table</span><span class="o">.</span><span class="n">row</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
         <span class="n">table</span><span class="o">.</span><span class="n">print</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">legend</span><span class="p">:</span>
@@ -1382,7 +1424,7 @@
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020-, Peter Corke..
-      <span class="lastupdated">Last updated on 01-May-2023.
+      <span class="lastupdated">Last updated on 21-Jun-2023.
       </span></p>
   </div>
 

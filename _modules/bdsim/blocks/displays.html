@@ -34,7 +34,7 @@
               <img src="../../../_static/BDSimLogo_NoBackgnd@2x.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                1.1.0
+                1.1.1
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
@@ -125,47 +125,66 @@
 <span class="sd">            - float</span>
 <span class="sd">            - :math:`x_i` is the i&#39;th line</span>
 
-<span class="sd">    Create a scope block that plots:</span>
+<span class="sd">    Create a scope block that plots multiple signals against time.</span>
 
-<span class="sd">    * scalar input ports against time, ``vector=None``</span>
-<span class="sd">    * selected elements of a NumPy array on a single input port. If ``vector`` is an</span>
-<span class="sd">      int this is the expected width of the array. If ``vector`` is a list of ints these</span>
-<span class="sd">      are the indices of the array to display.</span>
+<span class="sd">    For each line plotted we can specify the:</span>
+<span class="sd">    </span>
+<span class="sd">    * line style as a heterogeneous list of:</span>
 
-<span class="sd">    Each line can have its own color or style which is specified by:</span>
+<span class="sd">      * Matplotlib `fmt` string comprising a color and line style, eg. ``&quot;k&quot;`` or ``&quot;r:&quot;``</span>
 
-<span class="sd">        - a dict of options for `Line2D &lt;https://matplotlib.org/3.2.2/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D&gt;`_ or</span>
-<span class="sd">        - a  MATLAB-style linestyle like &#39;k--&#39;</span>
+<span class="sd">      * a dict of Matplotlib line style options for `Line2D &lt;https://matplotlib.org/3.2.2/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D&gt;`_</span>
+<span class="sd">        , eg. ``{&quot;color&quot;: &quot;k&quot;, &quot;linewidth&quot;: 3, &quot;alpha&quot;: 0.5)``</span>
 
-<span class="sd">    The number of lines to plot will be inferred from:</span>
-<span class="sd">    * the length of the ``labels`` list if specified</span>
-<span class="sd">    * the length of the ``styles`` list if specified</span>
-<span class="sd">    * ``nin`` if specified</span>
-<span class="sd">    * ``vector`` if specified</span>
-
-<span class="sd">    If multiple lines are plotted then a heterogeneous list of styles, dicts or strings,</span>
-<span class="sd">    one per line must be given.</span>
+<span class="sd">    * line label, used in the legend and vertical axis. This can include math mode</span>
+<span class="sd">      notation or unicode characters.</span>
 
 <span class="sd">    The vertical scale factor defaults to auto-scaling but can be fixed by</span>
-<span class="sd">    providing a 2-tuple [ymin, ymax]. All lines are plotted against the</span>
+<span class="sd">    providing a 2-tuple ``[ymin, ymax]``. All lines are plotted against the</span>
 <span class="sd">    same vertical scale.</span>
-
-<span class="sd">    Examples::</span>
-
-<span class="sd">        scope = bd.SCOPE()</span>
-<span class="sd">        scope = bd.SCOPE(nin=2)</span>
-<span class="sd">        scope = bd.SCOPE(nin=2, scale=[-1,2])</span>
-<span class="sd">        scope = bd.SCOPE(styles=&#39;k--&#39;)</span>
-<span class="sd">        scope = bd.SCOPE(styles=[{&#39;color&#39;: &#39;blue&#39;}, {&#39;color&#39;: &#39;red&#39;, &#39;linestyle&#39;: &#39;--&#39;}])</span>
-<span class="sd">        scope = bd.SCOPE(styles=[&#39;k&#39;, &#39;r--&#39;])</span>
-<span class="sd">        scope = bd.SCOPE(vector=[0,1,2]) # display elements 0, 1, 2 of array on port 0</span>
-
 
 <span class="sd">    .. figure:: ../../figs/Figure_1.png</span>
 <span class="sd">        :width: 500px</span>
 <span class="sd">        :alt: example of generated graphic</span>
 
 <span class="sd">        Example of scope display.</span>
+
+<span class="sd">    **Scalar input ports against time**</span>
+
+<span class="sd">    The number of lines to plot will be inferred from:</span>
+
+<span class="sd">    * the length of the ``labels`` list if specified</span>
+<span class="sd">    * the length of the ``styles`` list if specified</span>
+<span class="sd">    * ``nin`` if specified, it defaults to 1</span>
+
+<span class="sd">    These numbers must be consistent.</span>
+
+<span class="sd">    Examples::</span>
+
+<span class="sd">        bd.SCOPE()       # a scope with 1 input port</span>
+<span class="sd">        bd.SCOPE(nin=3)  # a scope with 3 input ports</span>
+<span class="sd">        bd.SCOPE(styles=[&quot;k&quot;, &quot;r--&quot;])        # a scope with 2 input ports</span>
+<span class="sd">        bd.SCOPE(labels=[&quot;x&quot;, r&quot;$\gamma$&quot;])  # a scope with 2 input ports</span>
+<span class="sd">        bd.SCOPE(styles=[{&#39;color&#39;: &#39;blue&#39;}, {&#39;color&#39;: &#39;red&#39;, &#39;linestyle&#39;: &#39;--&#39;}])</span>
+
+<span class="sd">    **Single input port with NumPy array**</span>
+<span class="sd">     </span>
+<span class="sd">    The port is fed with a 1D-array, and ``vector`` is an:</span>
+
+<span class="sd">    * int, this is the expected width of the array, all its elements will be plotted</span>
+<span class="sd">    * a list of ints, interpretted as indices of the elements to plot.</span>
+
+<span class="sd">    Examples::</span>
+
+<span class="sd">        bd.SCOPE(vector=[0,1,2]) # display elements 0, 1, 2 of array on port 0</span>
+<span class="sd">        bd.SCOPE(vector=[0,1], styles=[{&#39;color&#39;: &#39;blue&#39;}, {&#39;color&#39;: &#39;red&#39;, &#39;linestyle&#39;: &#39;--&#39;}])</span>
+
+<span class="sd">    .. note:: </span>
+<span class="sd">        * If the vector is of width 3, by default the inputs are plotted as red, green </span>
+<span class="sd">          and blue lines. </span>
+<span class="sd">        * If the vector is of width 6, by default the first three inputs are plotted as</span>
+<span class="sd">          solid red, green and blue lines and the last three inputs are plotted as </span>
+<span class="sd">          dashed red, green and blue lines.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
@@ -173,7 +192,7 @@
 
 <div class="viewcode-block" id="Scope.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.displays.Scope.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">nin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="n">vector</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">styles</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">stairs</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -213,6 +232,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">def</span> <span class="nf">listify</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+            <span class="c1"># guarantee that result is a list</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
                 <span class="k">return</span> <span class="p">[</span><span class="n">s</span><span class="p">]</span>
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
@@ -222,67 +242,53 @@
 
         <span class="c1"># number of lines plotted (nplots) is inferred from the number of labels</span>
         <span class="c1"># or linestyles</span>
+
         <span class="n">nplots</span> <span class="o">=</span> <span class="kc">None</span>
-
-        <span class="k">if</span> <span class="n">nin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">nplots</span> <span class="o">=</span> <span class="n">nin</span>
-
-        <span class="k">if</span> <span class="n">styles</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">styles</span> <span class="o">=</span> <span class="n">listify</span><span class="p">(</span><span class="n">styles</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">nplots</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">assert</span> <span class="n">nplots</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">styles</span><span class="p">),</span> <span class="s2">&quot;need one style per input&quot;</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">nplots</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">styles</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">labels</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">labels</span> <span class="o">=</span> <span class="n">listify</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">nplots</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">assert</span> <span class="n">nplots</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">),</span> <span class="s2">&quot;need one label per input&quot;</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">nplots</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">labels</span> <span class="o">=</span> <span class="kc">None</span>
-
         <span class="k">if</span> <span class="n">vector</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># vector argument is given</span>
             <span class="c1">#  block has single input which is an array</span>
             <span class="c1">#  vector is int, width of vector</span>
             <span class="c1">#  vector is a list of ints, select those inputs from the input vector</span>
 
-            <span class="k">if</span> <span class="n">nin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">nin</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">nin</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;if vector is given, nin must be 1&quot;</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vector</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
-                <span class="n">nvec</span> <span class="o">=</span> <span class="n">vector</span>
+                <span class="n">nplots</span> <span class="o">=</span> <span class="n">vector</span>
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vector</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-                <span class="n">nvec</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">vector</span><span class="p">)</span>
+                <span class="n">nplots</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">vector</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;vector must be an int or list of indices&quot;</span><span class="p">)</span>
 
+        <span class="k">if</span> <span class="n">styles</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">styles</span> <span class="o">=</span> <span class="n">listify</span><span class="p">(</span><span class="n">styles</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">nplots</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">nplots</span> <span class="o">=</span> <span class="n">nvec</span>
+                <span class="n">nplots</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">styles</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">nvec</span> <span class="o">!=</span> <span class="n">nplots</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;vector argument doesnt match nplots&quot;</span><span class="p">)</span>
+                <span class="k">assert</span> <span class="n">nplots</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">styles</span><span class="p">),</span> <span class="s2">&quot;need one style per plot&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">styles</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">labels</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">labels</span> <span class="o">=</span> <span class="n">listify</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">nplots</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">nplots</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="n">nplots</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">),</span> <span class="s2">&quot;need one label per plot&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">labels</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="k">if</span> <span class="n">nplots</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="c1"># still indeterminate, set default</span>
-            <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
-            <span class="n">nplots</span> <span class="o">=</span> <span class="mi">1</span>
-
-        <span class="k">if</span> <span class="n">vector</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
-            <span class="n">nplots</span> <span class="o">=</span> <span class="n">nvec</span>
-        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># nplots has not been determined from styles or labels, so use nin</span>
+            <span class="n">nplots</span> <span class="o">=</span> <span class="n">nin</span>
+        <span class="k">elif</span> <span class="n">nin</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">vector</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># nplots is different to the default nin value, override it</span>
             <span class="n">nin</span> <span class="o">=</span> <span class="n">nplots</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">nplots</span> <span class="o">=</span> <span class="n">nplots</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">vector</span> <span class="o">=</span> <span class="n">vector</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="n">nin</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">styles</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">styles</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">nplots</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">xlabel</span> <span class="o">=</span> <span class="s2">&quot;Time (s)&quot;</span>
 
@@ -311,13 +317,25 @@
             <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([]),</span>
         <span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">nplots</span>
 
+
         <span class="c1"># create the figures</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_figure</span><span class="p">(</span><span class="n">simstate</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
 
         <span class="c1"># get labels if not provided</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sourcename</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nin</span><span class="p">)]</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">vector</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sourcename</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nin</span><span class="p">)]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vector</span><span class="p">)]</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">styles</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">vector</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">styles</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="s2">&quot;g&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">]</span>
+                    <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">vector</span> <span class="o">==</span> <span class="mi">6</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">styles</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="s2">&quot;g&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="s2">&quot;r--&quot;</span><span class="p">,</span> <span class="s2">&quot;g--&quot;</span><span class="p">,</span> <span class="s2">&quot;b--&quot;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">styles</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">styles</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">nplots</span>
 
         <span class="c1"># create empty lines with defined styles</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nplots</span><span class="p">):</span>
@@ -448,16 +466,18 @@
 <span class="sd">    Create an XY scope where input :math:`y` (vertical axis) is plotted against :math:`x`</span>
 <span class="sd">    (horizontal axis).</span>
 
-<span class="sd">    The line style is given by either:</span>
+<span class="sd">    Line style is one of:</span>
 
-<span class="sd">        - a dict of options for ``plot``, or</span>
-<span class="sd">        - as a simple MATLAB-style linestyle like ``&#39;k--&#39;``.</span>
+<span class="sd">      * Matplotlib `fmt` string comprising a color and line style, eg. ``&quot;k&quot;`` or ``&quot;r:&quot;``</span>
+
+<span class="sd">      * a dict of Matplotlib line style options for `Line2D &lt;https://matplotlib.org/3.2.2/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D&gt;`_</span>
+<span class="sd">        , eg. ``dict(color=&quot;k&quot;, linewidth=3, alpha=0.5)``</span>
 
 <span class="sd">    The scale factor defaults to auto-scaling but can be fixed by</span>
 <span class="sd">    providing either:</span>
 
-<span class="sd">        - a 2-tuple [min, max] which is used for the x- and y-axes</span>
-<span class="sd">        - a 4-tuple [xmin, xmax, ymin, ymax]</span>
+<span class="sd">        - a 2-tuple ``[min, max]`` which is used for the x- and y-axes</span>
+<span class="sd">        - a 4-tuple ``[xmin, xmax, ymin, ymax]``</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">2</span>
@@ -587,16 +607,18 @@
 <span class="sd">    :math:`x_i` (horizontal axis). This block has one vector input and the elements to</span>
 <span class="sd">    be plotted are given by a 2-element iterable :math:`(i, j)`.</span>
 
-<span class="sd">    The line style is given by either:</span>
+<span class="sd">    Line style is one of:</span>
 
-<span class="sd">        - a dict of options for ``plot``, or</span>
-<span class="sd">        - as a simple MATLAB-style linestyle like ``&#39;k--&#39;``.</span>
+<span class="sd">      * Matplotlib `fmt` string comprising a color and line style, eg. ``&quot;k&quot;`` or ``&quot;r:&quot;``</span>
+
+<span class="sd">      * a dict of Matplotlib line style options for `Line2D &lt;https://matplotlib.org/3.2.2/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D&gt;`_</span>
+<span class="sd">        , eg. ``dict(color=&quot;k&quot;, linewidth=3, alpha=0.5)``</span>
 
 <span class="sd">    The scale factor defaults to auto-scaling but can be fixed by</span>
 <span class="sd">    providing either:</span>
 
-<span class="sd">        - a 2-tuple [min, max] which is used for the x- and y-axes</span>
-<span class="sd">        - a 4-tuple [xmin, xmax, ymin, ymax]</span>
+<span class="sd">        - a 2-tuple ``[min, max]`` which is used for the x- and y-axes</span>
+<span class="sd">        - a 4-tuple ``[xmin, xmax, ymin, ymax]``</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
@@ -654,7 +676,7 @@
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020-, Peter Corke..
-      <span class="lastupdated">Last updated on 01-May-2023.
+      <span class="lastupdated">Last updated on 21-Jun-2023.
       </span></p>
   </div>
 

@@ -40,7 +40,7 @@
               <img src="_static/BDSimLogo_NoBackgnd@2x.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                1.1.0
+                1.1.1
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -898,11 +898,14 @@ of GraphViz shapes.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="bdsim.BlockDiagram.report_summary">
-<span class="sig-name descname"><span class="pre">report_summary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blockdiagram.html#BlockDiagram.report_summary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.BlockDiagram.report_summary" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">report_summary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sortby</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'name'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdsim/blockdiagram.html#BlockDiagram.report_summary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdsim.BlockDiagram.report_summary" title="Permalink to this definition"></a></dt>
 <dd><p>Print a summary of block diagram.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>style</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) – table style, one of: ansi (default), markdown, latex</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sortby</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>optional</em>) – sort rows by specified block attribute: “name” [default] or “type”</p></li>
+<li><p><strong>style</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) – table style, one of: ansi (default), markdown, latex</p></li>
+</ul>
 </dd>
 </dl>
 <p>Print a table with 4 columns:</p>
@@ -962,7 +965,7 @@ inputs are marked as unknown.</p>
 <dd class="field-even"><p>state derivative</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.24)">numpy.ndarray</a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.25)">numpy.ndarray</a></p>
 </dd>
 </dl>
 <p>Performs the following steps:</p>
@@ -2232,7 +2235,7 @@ system, either linear or nonlinear.</p>
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020-, Peter Corke..
-      <span class="lastupdated">Last updated on 01-May-2023.
+      <span class="lastupdated">Last updated on 21-Jun-2023.
       </span></p>
   </div>
 
