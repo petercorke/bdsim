@@ -6,12 +6,13 @@ labels: ''
 assignees: ''
 
 ---
+For bugs with the graphical tool `bdedit` please use the `bdedit` bug report template.
 
 **Describe the bug**
 A clear and concise description of what the bug is.
 
 **To Reproduce**
-Please provide a complete minimal stand-alone example.
+Please provide a complete minimal stand-alone Python example.
 
 **Expected behavior**
 A clear and concise description of what you expected to happen.
