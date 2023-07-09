@@ -58,13 +58,24 @@ class Integrator(TransferBlock):
     .. note:: The minimum and maximum prevent integration outside the limits,
         but assume that the initial state is within the limits.
 
+    Integration can be controlled by an ``enable`` function::
+
+        enable(t, u, x): bool
+
+    where the arguments are current time, a list of inputs to the block and the state
+    as an ndarray.  If the function returns False then the integrator's output is set
+    to zero.
+
+    .. todo:: Make enable an optional input to the block, or the input for a subclassed
+        variant of the block.
+
     :seealso: :class:`Deriv`
     """
 
     nin = 1
     nout = 1
 
-    def __init__(self, x0=0, gain=1.0, min=None, max=None, **blockargs):
+    def __init__(self, x0=0, gain=1.0, min=None, max=None, enable=None, **blockargs):
         """
         :param x0: Initial state, defaults to 0
         :type x0: array_like, optional
@@ -74,6 +85,8 @@ class Integrator(TransferBlock):
         :type min: float or array_like, optional
         :param max: Maximum value of state, defaults to None
         :type max: float or array_like, optional
+        :param enable: enable or disable integration
+        :type enable: callable
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
@@ -103,13 +116,20 @@ class Integrator(TransferBlock):
         self._x0 = x0
         self.min = min
         self.max = max
+        self.enable = enable
+        if enable is not None and not callable(enable):
+            raise ValueError("enable must be callable")
         # print("nstates", self.nstates)
 
     def output(self, t, u, x):
-        return [x]
+        return [self.gain * x]
 
     def deriv(self, t, u, x):
         xd = base.getvector(u[0])
+        if self.enable is not None and not self.enable(t, u, x):
+            # if enable function returns False then integrator output is jammed at zero
+            self._x = np.zeros(x.shape)
+            return np.zeros(x.shape)
         if self.min is not None:
             xd[x < self.min] = 0
         if self.max is not None:
