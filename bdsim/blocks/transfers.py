@@ -450,7 +450,10 @@ class Deriv(SubsystemBlock):
     .. math:: \frac{s}{\frac{s}{\alpha} + 1}
 
     It is implemented as a subsystem with an integrator and a feedback loop.  The
-    initial state of the integrator is ``x0``.
+    initial state of the integrator is given by ``x0``.
+
+    If the initial output of the derivative block is known it can be provided as ``y0``
+    which is related to ``x0`` by :math:`x_0 = - \alpha y_0`.
 
     :seealso: :class:`Integrator`
     """
@@ -458,12 +461,14 @@ class Deriv(SubsystemBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, alpha, x0=0, **blockargs):
+    def __init__(self, alpha, x0=0, y0=None, **blockargs):
         r"""
-        :param alpha: filter pole
+        :param alpha: filter pole in units of rad/s
         :type alpha: float
         :param x0: initial states, defaults to 0
-        :type x0: float, optional
+        :type x0: array_like, optional
+        :param y0: inital outputs
+        :type y0: array_like
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
@@ -472,6 +477,8 @@ class Deriv(SubsystemBlock):
 
         bd = self.bd.runtime.blockdiagram()
 
+        if y0 is not None:
+            x0 = -y0 * alpha
         integrator = bd.INTEGRATOR(x0=x0)
         inp = bd.INPORT(1)
         outp = bd.OUTPORT(1)
