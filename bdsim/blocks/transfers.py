@@ -602,7 +602,7 @@ class PID(SubsystemBlock):
         I: float = 0.0,
         D_pole=1,
         I_limit=None,
-        I_band=0,
+        I_band=None,
         **blockargs,
     ):
         r"""
