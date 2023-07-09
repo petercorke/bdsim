@@ -516,8 +516,9 @@ class Deriv(SubsystemBlock):
 
         self.ssname = "derivative"
 
+# ------------------------------------------------------------------------ #
 
-class PID(SubSystem):
+class PID(SubsystemBlock):
     r"""
     :blockname:`PID`
 
@@ -555,7 +556,11 @@ class PID(SubSystem):
 
         u &= Pe + D \frac{d}{dt} e + I \int e dt
 
-    To reduce noise the derivative is computed by a first-order system
+    If the I or D terms are not required the ``type`` can be specified as ``"PD"`` or
+    ``"PI"`` in which case the respective gain terms ``I`` and ``D`` will be ignored.
+
+    To reduce noise the derivative is computed by the DERIV block which implements a
+    first-order system
 
     .. math::
 
@@ -580,59 +585,29 @@ class PID(SubSystem):
 
         pid = bd.PID(P=3, D=2, I=1)
 
+    ..note:: The result is a subsystem which will be expanded into 12 blocks for the
+        PID case, fewer for the PI or PD cases.
+
     :seealso: :class:`Deriv`
     """
 
-    class _ID(LTI_SS):
-        def __init__(
-            self,
-            D: float = 0.0,
-            I: float = 0.0,
-            D_pole=1,
-            I_limit=None,
-            I_band=0,
-            **blockargs,
-        ):
-
-            self.D = D
-            self.I = I
-            self.D_pole = D_pole
-            self.I_limit = I_limit
-            self.I_band = I_band
-
-            A = np.zeros((2, 2))
-            B = np.zeros((2, 1))
-            C = np.zeros((1, 2))
-
-            super().__init__(A=A, B=B, C=C, **blockargs)
-
-            if self.verbose:
-                print("A=", A)
-                print("B=", B)
-                print("C=", C)
-
-        def output(self, t, u, x):
-            e = u[1] - u[0]
-            return list(self.C @ x)
-
-        def deriv(self, t, u, x):
-            return self.A @ x + self.B @ np.array(u)
-
-    nin = 1
+    nin = 2
     nout = 1
 
     def __init__(
         self,
+        type: str = "PID",
         P: float = 0.0,
         D: float = 0.0,
         I: float = 0.0,
         D_pole=1,
         I_limit=None,
         I_band=0,
-        name="PID",
         **blockargs,
     ):
         r"""
+        :param type: the controller type, defaults to "PID"
+        :type type: str, optional
         :param P: proportional gain, defaults to 0
         :type P: float
         :param D: derivative gain, defaults to 0
@@ -642,39 +617,80 @@ class PID(SubSystem):
         :param D_pole: filter pole for derivative estimate, defaults to 1 rad/s
         :type D_pole: float
         :param I_limit: integral limit
-        :type I_limit: float
+        :type I_limit: float or 2-tuple
         :param I_band: band within which integral action is active
         :type I_band: float
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
+        super().__init__(**blockargs)
+        self.type = "subsystem"
 
         subsystem = self.bd.runtime.blockdiagram()
 
         bd = blockargs["bd"]
         blockargs.pop("bd")
-        Pblock = subsystem.GAIN(P)
-        IDblock = self._ID(
-            D=D,
-            I=I,
-            D_pole=D_pole,
-            I_limit=I_limit,
-            I_band=I_band,
-            bd=subsystem,
-            **blockargs,
-        )
-        sum = subsystem.SUM("++")
-        Input = subsystem.INPORT(1)
-        Output = subsystem.OUTPORT(1)
+        Pblock = subsystem.GAIN(P)  # proportional gain block
 
-        subsystem.connect(Input, Pblock, IDblock)
-        subsystem.connect(Pblock, sum[0])
-        subsystem.connect(IDblock, sum[1])
-        subsystem.connect(sum, Output)
+        if "I" in type:
+            # if the I term is required, create the block
+            if I_limit is None:
+                min = -np.inf
+                max = np.inf
+            elif isinstance(I_limit, float):
+                min = -I_limit
+                max = I_limit
+            elif isinstance(I_limit, tuple) and len(I_limit) == 2:
+                min, max = I_limit
+
+            if I_band is not None:
+                def ifunc(t, u, x):
+                    return abs(u[0]) < I_band
+            else:
+                ifunc = None
+
+            # integrator block
+            Iblock = subsystem.INTEGRATOR(min=min, max=max, gain=I, enable=ifunc)
+
+        if "D" in type:
+            # if the D term is required, create the blocks
+            Dblock = subsystem.DERIV(alpha=D_pole)  # derivative block
+            Dgain = subsystem.GAIN(D)               # derivative gain
+            subsystem.connect(Dblock, Dgain)
+
+        error_sum = subsystem.SUM("-+", name="errsum")  # error summing junction
+        inp = subsystem.INPORT(2)   # PID block inputs
+        outp = subsystem.OUTPORT(1) # PID block output
+
+        # for each case sum the various terms
+        if type == "PID":
+            out_sum = subsystem.SUM("+++", name="outsum")
+            subsystem.connect(error_sum, Pblock, Dblock, Iblock)
+            subsystem.connect(Pblock, out_sum[0])
+            subsystem.connect(Iblock, out_sum[1])
+            subsystem.connect(Dgain, out_sum[2])
+        elif type == "PI":
+            out_sum = subsystem.SUM("++", name="outsum")
+            subsystem.connect(error_sum, Pblock, Iblock)
+            subsystem.connect(Pblock, out_sum[0])
+            subsystem.connect(Iblock, out_sum[1])
+        elif type == "PD":
+            out_sum = subsystem.SUM("++", name="outsum")
+            subsystem.connect(error_sum, Pblock, Dblock)
+            subsystem.connect(Pblock, out_sum[0])
+            subsystem.connect(Dgain, out_sum[1])
+    
+        subsystem.connect(inp, error_sum)
+        subsystem.connect(out_sum, outp)
 
         subsystem.report()
-        super().__init__(subsystem, name=name, bd=bd)
+        # super().__init__(subsystem, name=name, bd=bd)
+        # get references to the input and output port blocks
+        self.inport = inp
+        self.outport = outp
+        self.subsystem = subsystem
 
+        self.ssname = "PID"
 
 if __name__ == "__main__":
 
