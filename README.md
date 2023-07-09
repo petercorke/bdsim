@@ -374,6 +374,9 @@ will create a display like that shown above.  Pushing the run button, top left (
 * instantiate all blocks and wires
 * compile and run the diagram
 
+
+<video width="800" autoplay src="https://github.com/petercorke/bdsim/raw/master/figs/bdsim-screencast-x4.mp4"></video>
+
 # Article
 
 I published [this article on LinkedIn](https://www.linkedin.com/pulse/journey-toward-open-source-block-diagram-simulation-peter-corke/?trackingId=wrJYinHUgAHDq63Nv65PnA%3D%3D), which describes the thought process behind bdsim.
