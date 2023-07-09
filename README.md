@@ -374,8 +374,8 @@ will create a display like that shown above.  Pushing the run button, top left (
 * instantiate all blocks and wires
 * compile and run the diagram
 
+<a href="https://www.youtube.com/watch?v=1qM5D0jekjc"><img width=100 style="vertical-align:middle" src="https://cdn.mos.cms.futurecdn.net/8gzcr6RpGStvZFA2qRt4v6-1920-80.jpg.webp"> <span style="">Screencast showing bdedit usage.</span></a>
 
-<video width="800" autoplay src="https://github.com/petercorke/bdsim/raw/master/figs/bdsim-screencast-x4.mp4"></video>
 
 # Article
 
