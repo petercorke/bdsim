@@ -6,6 +6,7 @@ labels: ''
 assignees: ''
 
 ---
+
 For bugs with the graphical tool `bdedit` please use the `bdedit` bug report template.
 
 **Describe the bug**

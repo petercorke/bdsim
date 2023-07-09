@@ -7,7 +7,9 @@ assignees: petercorke
 
 ---
 
-Please note that `bdedit` is an experimental editor for block diagrams.  My personal priority is developing and bug fixing for `bdsim`.
+**`bdedit` is an experimental editor for block diagrams that can be used in conjunction with `bdsim`. It is not a drop-in replacement for Simulink, if you want something reliable and supported buy it from The MathWorks.**
+
+**Before you post a bug please check that PyQt5 is properly installed on your computer, see the notes on the [wiki](https://github.com/petercorke/bdsim/wiki/Getting-going-with-PyQt5).  If you cannot run the PyQt5 test example then you need to resolve that yourself, please don't post it here.**
 
 **Describe the bug**
 A clear and concise description of what the bug is.
