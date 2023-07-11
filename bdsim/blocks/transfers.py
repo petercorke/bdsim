@@ -295,7 +295,11 @@ class LTI_SS(TransferBlock):
         return list(self.C @ x)
 
     def deriv(self, t, u, x):
-        xd = self.A @ x + self.B @ np.array(u)
+        # Reshape u and x to (N,1), i.e. column vectors, so
+        # no problems with broadcasting between A@x and B@u
+        x = x.reshape(-1, 1)
+        u = np.array(u).reshape(-1, 1)
+        xd = self.A @ x + self.B @ u
         return xd.flatten()
 
 
