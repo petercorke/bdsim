@@ -373,7 +373,11 @@
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">C</span> <span class="o">@</span> <span class="n">x</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">deriv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-        <span class="n">xd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span> <span class="o">@</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">B</span> <span class="o">@</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+        <span class="c1"># Reshape u and x to (N,1), i.e. column vectors, so</span>
+        <span class="c1"># no problems with broadcasting between A@x and B@u</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">u</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">xd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span> <span class="o">@</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">B</span> <span class="o">@</span> <span class="n">u</span>
         <span class="k">return</span> <span class="n">xd</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span></div>
 
 
@@ -819,7 +823,7 @@
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020-, Peter Corke..
-      <span class="lastupdated">Last updated on 09-Jul-2023.
+      <span class="lastupdated">Last updated on 11-Jul-2023.
       </span></p>
   </div>
 
