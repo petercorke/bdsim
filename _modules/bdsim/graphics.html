@@ -3,10 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>bdsim.graphics &mdash; Block diagram simulation  documentation</title>
+  <title>bdsim.graphics &mdash; Block diagram simulation 0.7 documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../../_static/plot_directive.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
@@ -33,9 +32,6 @@
             Block diagram simulation
               <img src="../../_static/BDSimLogo_NoBackgnd@2x.png" class="logo" alt="Logo"/>
           </a>
-              <div class="version">
-                1.1.1
-              </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -110,18 +106,16 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">movie</span> <span class="o">=</span> <span class="n">movie</span></div>
 
-<div class="viewcode-block" id="GraphicsBlock.start"><a class="viewcode-back" href="../../internals.html#bdsim.GraphicsBlock.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simstate</span><span class="p">):</span>
+<div class="viewcode-block" id="GraphicsBlock.start"><a class="viewcode-back" href="../../internals.html#bdsim.GraphicsBlock.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 
-        <span class="c1"># plt.draw()</span>
-        <span class="c1"># plt.show(block=False)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_simstate</span> <span class="o">=</span> <span class="n">simstate</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_enabled</span> <span class="o">=</span> <span class="n">simstate</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">graphics</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">movie</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">simstate</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">animation</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">movie</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">animation</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span>
                 <span class="s2">&quot;enabling global animation option to allow movie option on block&quot;</span><span class="p">,</span> <span class="bp">self</span>
             <span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">simstate</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">animation</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">animation</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;must enable animation to render a movie&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">movie</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
@@ -133,16 +127,16 @@
             <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">fatal</span><span class="p">(</span><span class="s2">&quot;cannot save movie, please install ffmpeg&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="GraphicsBlock.step"><a class="viewcode-back" href="../../internals.html#bdsim.GraphicsBlock.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">)</span>
+<div class="viewcode-block" id="GraphicsBlock.step"><a class="viewcode-back" href="../../internals.html#bdsim.GraphicsBlock.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
 
         <span class="c1"># bring the figure up to date in a backend-specific way</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_simstate</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">animation</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_simstate</span><span class="o">.</span><span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;TkAgg&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">animation</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;TkAgg&quot;</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">flush_events</span><span class="p">()</span>
                 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
                 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_simstate</span><span class="o">.</span><span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;Qt5Agg&quot;</span><span class="p">:</span>
+            <span class="k">elif</span> <span class="n">state</span><span class="o">.</span><span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;Qt5Agg&quot;</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">flush_events</span><span class="p">()</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
             <span class="k">else</span><span class="p">:</span>
@@ -154,7 +148,7 @@
             <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">fatal</span><span class="p">(</span><span class="s2">&quot;cannot save movie, please install ffmpeg&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="GraphicsBlock.done"><a class="viewcode-back" href="../../internals.html#bdsim.GraphicsBlock.done">[docs]</a>    <span class="k">def</span> <span class="nf">done</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="GraphicsBlock.done"><a class="viewcode-back" href="../../internals.html#bdsim.GraphicsBlock.done">[docs]</a>    <span class="k">def</span> <span class="nf">done</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fig</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">start_event_loop</span><span class="p">(</span><span class="mf">0.001</span><span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">movie</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -223,8 +217,7 @@
 
                             <span class="n">matplotlib</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s2">&quot;Qt5Agg&quot;</span><span class="p">)</span>
                             <span class="nb">print</span><span class="p">(</span>
-                                <span class="s2">&quot;no graphics backend specified: Qt5Agg found, using&quot;</span>
-                                <span class="s2">&quot; instead of MacOSX&quot;</span>
+                                <span class="s2">&quot;no graphics backend specified: Qt5Agg found, using instead of MacOSX&quot;</span>
                             <span class="p">)</span>
                         <span class="k">except</span><span class="p">:</span>
                             <span class="k">pass</span>
@@ -343,15 +336,8 @@
         <span class="n">gstate</span><span class="o">.</span><span class="n">fignum</span> <span class="o">+=</span> <span class="mi">1</span>
 
         <span class="k">def</span> <span class="nf">onkeypress</span><span class="p">(</span><span class="n">event</span><span class="p">):</span>
-
-            <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">key</span> <span class="o">==</span> <span class="s2">&quot;x&quot;</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">closing all windows&quot;</span><span class="p">)</span>
-                <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">event</span><span class="o">.</span><span class="n">key</span> <span class="o">==</span> <span class="s2">&quot;ctrl+c&quot;</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">terminating bdsim&quot;</span><span class="p">)</span>
-                <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;key pressed&quot;</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;pressed&quot;</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">)</span>
 
         <span class="n">f</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">mpl_connect</span><span class="p">(</span><span class="s2">&quot;key_press_event&quot;</span><span class="p">,</span> <span class="n">onkeypress</span><span class="p">)</span>
 
@@ -368,8 +354,8 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2020-, Peter Corke..
-      <span class="lastupdated">Last updated on 11-Jul-2023.
+    <p>&#169; Copyright 2020, Peter Corke.
+      <span class="lastupdated">Last updated on 11-Nov-2023.
       </span></p>
   </div>
 

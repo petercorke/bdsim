@@ -3,10 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>bdsim.blocks.connections &mdash; Block diagram simulation  documentation</title>
+  <title>bdsim.blocks.connections &mdash; Block diagram simulation 0.7 documentation</title>
       <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../../../_static/plot_directive.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../../../_static/js/html5shiv.min.js"></script>
@@ -33,9 +32,6 @@
             Block diagram simulation
               <img src="../../../_static/BDSimLogo_NoBackgnd@2x.png" class="logo" alt="Logo"/>
           </a>
-              <div class="version">
-                1.1.1
-              </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -105,40 +101,16 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`ITEM`</span>
 
-<span class="sd">    Select item from a dictionary signal.</span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
 
-<span class="sd">    :inputs: 1</span>
-<span class="sd">    :outputs: 1</span>
-<span class="sd">    :states: 0</span>
-
-<span class="sd">    .. list-table::</span>
-<span class="sd">        :header-rows: 1</span>
-
-<span class="sd">        *   - Port type</span>
-<span class="sd">            - Port number</span>
-<span class="sd">            - Types</span>
-<span class="sd">            - Description</span>
-<span class="sd">        *   - Input</span>
-<span class="sd">            - 0</span>
-<span class="sd">            - dict</span>
-<span class="sd">            - ``D``</span>
-<span class="sd">        *   - Output</span>
-<span class="sd">            - 0</span>
-<span class="sd">            - any</span>
-<span class="sd">            - ``D[i]``</span>
-
-<span class="sd">    For a dictionary type input signal, select one item as the output signal.</span>
-<span class="sd">    For example::</span>
-
-<span class="sd">        item = bd.ITEM(&quot;xd&quot;)</span>
-
-<span class="sd">    selects the ``xd`` item from the dictionary signal input to the block.</span>
-
-<span class="sd">    This is somewhat like a demultiplexer :class:`DeMux` but allows for</span>
-<span class="sd">    named heterogeneous data.</span>
-<span class="sd">    A dictionary signal can serve a similar purpose to a &quot;bus&quot; in Simulink(R).</span>
-
-<span class="sd">    :seealso: :class:`Dict`</span>
+<span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    | inputs     | outputs |  states |</span>
+<span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    | 1          | 1       | 0       |</span>
+<span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    | dict       | any     |         |</span>
+<span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
@@ -146,21 +118,38 @@
 
 <div class="viewcode-block" id="Item.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Item.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Selector item from a dictionary signal.</span>
+
 <span class="sd">        :param item: name of dictionary item</span>
 <span class="sd">        :type item: str</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
+<span class="sd">        :return: An ITEM block</span>
+<span class="sd">        :rtype: Item instance</span>
+
+<span class="sd">        For a dictionary type input signal, select one item as the output signal.</span>
+<span class="sd">        For example::</span>
+
+<span class="sd">            ITEM(&#39;xd&#39;)</span>
+
+<span class="sd">        selects the ``xd`` item from the dictionary signal input to the block.</span>
+
+<span class="sd">        A dictionary signal can serve a similar purpose to a &quot;bus&quot; in Simulink(R).</span>
+
+<span class="sd">        This is somewhat like a demultiplexer :class:`DeMux` but allows for</span>
+<span class="sd">        named heterogeneous data.</span>
+
+<span class="sd">        :seealso: :class:`Dict`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">item</span> <span class="o">=</span> <span class="n">item</span></div>
 
-    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-        <span class="nb">input</span> <span class="o">=</span> <span class="n">inports</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="c1"># TODO, handle inputs that are vectors themselves</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="nb">dict</span><span class="p">),</span> <span class="s2">&quot;Input signal must be a dict&quot;</span>
-        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">item</span> <span class="ow">in</span> <span class="nb">input</span><span class="p">,</span> <span class="s2">&quot;Item is not in input dict&quot;</span>
-        <span class="k">return</span> <span class="p">[</span><span class="nb">input</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">item</span><span class="p">]]</span></div>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">dict</span><span class="p">),</span> <span class="s2">&quot;Input signal must be a dict&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;Item is not in input dict&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">item</span><span class="p">]]</span></div>
 
 
 <div class="viewcode-block" id="Dict"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Dict">[docs]</a><span class="k">class</span> <span class="nc">Dict</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
@@ -168,60 +157,57 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`DICT`</span>
 
-<span class="sd">    Create a dictionary signal.</span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
 
-<span class="sd">    :inputs: N</span>
-<span class="sd">    :outputs: 1</span>
-<span class="sd">    :states: 0</span>
-
-<span class="sd">    .. list-table::</span>
-<span class="sd">        :header-rows: 1</span>
-
-<span class="sd">        *   - Port type</span>
-<span class="sd">            - Port number</span>
-<span class="sd">            - Types</span>
-<span class="sd">            - Description</span>
-<span class="sd">        *   - Input</span>
-<span class="sd">            - i</span>
-<span class="sd">            - any</span>
-<span class="sd">            - :math:`x_i`</span>
-<span class="sd">        *   - Output</span>
-<span class="sd">            - 0</span>
-<span class="sd">            - dict</span>
-<span class="sd">            - ``{key: x[i] for i, key in enumerate(keys)}``</span>
-
-<span class="sd">    Inputs are assigned to a dictionary signal, using the corresponding</span>
-<span class="sd">    names from ``keys``.</span>
-<span class="sd">    For example::</span>
-
-<span class="sd">        dd = bd.DICT([&quot;x&quot;, &quot;xd&quot;, &quot;xdd&quot;])</span>
-
-<span class="sd">    expects three inputs and assigns them to dictionary items ``x``, ``xd``, ``xdd`` of</span>
-<span class="sd">    the output dictionary respectively.</span>
-
-<span class="sd">    This is somewhat like a multiplexer :class:`Mux` but allows for named heterogeneous</span>
-<span class="sd">    data.  A dictionary signal can serve a similar purpose to a &quot;bus&quot; in Simulink(R).</span>
-
-
-<span class="sd">    :seealso: :class:`Item` :class:`Mux`</span>
+<span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    | inputs     | outputs |  states |</span>
+<span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    | N          | 1       | 0       |</span>
+<span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    | any        | dict    |         |</span>
+<span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
-<div class="viewcode-block" id="Dict.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Dict.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keys</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Dict.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Dict.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a dictionary signal.</span>
+
 <span class="sd">        :param keys: list of dictionary keys</span>
 <span class="sd">        :type keys: list</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
+<span class="sd">        :return: A DICT block</span>
+<span class="sd">        :rtype: Dict instance</span>
+
+<span class="sd">        Inputs are assigned to a dictionary signal, using the corresponding</span>
+<span class="sd">        names from ``keys``.</span>
+<span class="sd">        For example::</span>
+
+<span class="sd">            DICT([&#39;x&#39;, &#39;xd&#39;, &#39;xdd&#39;])</span>
+
+<span class="sd">        expects three inputs and assigns them to dictionary items ``x``, ``xd``, ``xdd`` of</span>
+<span class="sd">        the output dictionary respectively.</span>
+
+<span class="sd">        A dictionary signal can serve a similar purpose to a &quot;bus&quot; in Simulink(R).</span>
+
+<span class="sd">        This is somewhat like a multiplexer :class:`Mux` but allows for</span>
+<span class="sd">        named heterogeneous data.</span>
+
+<span class="sd">        :seealso: :class:`Item` :class:`Mux`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">keys</span> <span class="o">=</span> <span class="n">keys</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">item</span> <span class="o">=</span> <span class="n">item</span></div>
 
-    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">inports</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">)}</span></div>
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="c1"># TODO, handle inputs that are vectors themselves</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">dict</span><span class="p">),</span> <span class="s2">&quot;Input signal must be a dict&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;Item is not in signal dict&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">item</span><span class="p">]]</span></div>
 
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
@@ -229,54 +215,49 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`MUX`</span>
 
-<span class="sd">    Multiplex signals.</span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
 
-<span class="sd">    :inputs: N</span>
-<span class="sd">    :outputs: 1</span>
-<span class="sd">    :states: 0</span>
-
-<span class="sd">    .. list-table::</span>
-<span class="sd">        :header-rows: 1</span>
-
-<span class="sd">        *   - Port type</span>
-<span class="sd">            - Port number</span>
-<span class="sd">            - Types</span>
-<span class="sd">            - Description</span>
-<span class="sd">        *   - Input</span>
-<span class="sd">            - i</span>
-<span class="sd">            - float, ndarray</span>
-<span class="sd">            - :math:`x_i`</span>
-<span class="sd">        *   - Output</span>
-<span class="sd">            - 0</span>
-<span class="sd">            - ndarray</span>
-<span class="sd">            - :math:`[x_0 \ldots x_{N-1}]`</span>
-
-<span class="sd">    This block takes a number of scalar or 1D-array signals and concatenates</span>
-<span class="sd">    them into a single 1-D array signal.  For example::</span>
-
-<span class="sd">        mux = bd.MUX(2)</span>
-
-<span class="sd">    :seealso: :class:`Demux` :class:`Dict`</span>
+<span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    | inputs     | outputs |  states |</span>
+<span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    | nin        | 1       | 0       |</span>
+<span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    | float,     | A(M,)   |         |</span>
+<span class="sd">    | A(N,)      | A(M,)   |         |</span>
+<span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="c1"># TODO could be generalized to creating a list of non numeric data</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
 <div class="viewcode-block" id="Mux.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Mux.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Multiplex signals.</span>
+
 <span class="sd">        :param nin: Number of input ports, defaults to 1</span>
 <span class="sd">        :type nin: int, optional</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
+<span class="sd">        :return: A MUX block</span>
+<span class="sd">        :rtype: Mux instance</span>
+
+<span class="sd">        This block takes a number of scalar or 1D-array signals and concatenates</span>
+<span class="sd">        them into a single 1-D array signal.  For example::</span>
+
+<span class="sd">            MUX(2, inputs=(func1[2], sum3))</span>
+
+<span class="sd">        multiplexes the outputs of blocks ``func1`` (port 2) and ``sum3`` into a</span>
+<span class="sd">        single output vector as a 1D-array.</span>
+
+<span class="sd">        :seealso: :class:`Dict`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="n">nin</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="c1"># TODO, handle inputs that are vectors themselves</span>
         <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="nb">input</span> <span class="ow">in</span> <span class="n">inports</span><span class="p">:</span>
+        <span class="k">for</span> <span class="nb">input</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)):</span>
                 <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
@@ -289,34 +270,17 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`DEMUX`</span>
 
-<span class="sd">    Demultiplex signals.</span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
 
-<span class="sd">    :inputs: 1</span>
-<span class="sd">    :outputs: N</span>
-<span class="sd">    :states: 0</span>
-
-<span class="sd">    .. list-table::</span>
-<span class="sd">        :header-rows: 1</span>
-
-<span class="sd">        *   - Port type</span>
-<span class="sd">            - Port number</span>
-<span class="sd">            - Types</span>
-<span class="sd">            - Description</span>
-<span class="sd">        *   - Input</span>
-<span class="sd">            - 0</span>
-<span class="sd">            - iterable</span>
-<span class="sd">            - :math:`x`</span>
-<span class="sd">        *   - Output</span>
-<span class="sd">            - i</span>
-<span class="sd">            - any</span>
-<span class="sd">            - :math:`x_i`</span>
-
-<span class="sd">    This block has a single input port and ``nout`` output ports.  The input signal is</span>
-<span class="sd">    an iterable whose ``nout`` elements are routed element-wise to individual scalar</span>
-<span class="sd">    output ports.  If the input is a 1D Numpy array, then each output port is an</span>
-<span class="sd">    element of that array.</span>
-
-<span class="sd">    :seealso: :class:`Mux`</span>
+<span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    | inputs     | outputs |  states |</span>
+<span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    | 1          | nout    | 0       |</span>
+<span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    | float,     | float   |         |</span>
+<span class="sd">    | A(nout,)   |         |         |</span>
+<span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
@@ -324,20 +288,28 @@
 
 <div class="viewcode-block" id="DeMux.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.DeMux.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Demultiplex signals.</span>
+
 <span class="sd">        :param nout: number of outputs, defaults to 1</span>
 <span class="sd">        :type nout: int, optional</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
+<span class="sd">        :return: A DEMUX block</span>
+<span class="sd">        :rtype: DeMux instance</span>
+
+<span class="sd">        This block has a single input port and ``nout`` output ports.  A 1D-array</span>
+<span class="sd">        input signal (with ``nout`` elements) is routed element-wise to individual</span>
+<span class="sd">        scalar output ports.</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nout</span><span class="o">=</span><span class="n">nout</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-        <span class="nb">input</span> <span class="o">=</span> <span class="n">inports</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="c1"># TODO, handle inputs that are vectors themselves</span>
         <span class="k">assert</span> <span class="p">(</span>
-            <span class="nb">len</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">nout</span>
+            <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">nout</span>
         <span class="p">),</span> <span class="s2">&quot;Input width not equal to number of output ports&quot;</span>
-        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span></div>
 
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
@@ -347,31 +319,16 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`INDEX`</span>
 
-<span class="sd">    :inputs: 1</span>
-<span class="sd">    :outputs: 1</span>
-<span class="sd">    :states: 0</span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
 
-<span class="sd">    .. list-table::</span>
-<span class="sd">        :header-rows: 1</span>
-
-<span class="sd">        *   - Port type</span>
-<span class="sd">            - Port number</span>
-<span class="sd">            - Types</span>
-<span class="sd">            - Description</span>
-<span class="sd">        *   - Input</span>
-<span class="sd">            - i</span>
-<span class="sd">            - iterable</span>
-<span class="sd">            - :math:`x`</span>
-<span class="sd">        *   - Output</span>
-<span class="sd">            - j</span>
-<span class="sd">            - iterable</span>
-<span class="sd">            - :math:`x_i`</span>
-
-<span class="sd">    The specified element(s) of the input iterable (list, string, etc.)</span>
-<span class="sd">    are output.  The index can be an integer, sequence of integers, a Python slice</span>
-<span class="sd">    object, or a string with Python slice notation, eg. ``&quot;::-1&quot;``.</span>
-
-<span class="sd">    :seealso: :class:`Slice1` :class:`Slice2`</span>
+<span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    | inputs     | outputs |  states |</span>
+<span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    | 1          | 1       | 0       |</span>
+<span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    | ndarray    | ndarray |         |</span>
+<span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
@@ -385,6 +342,14 @@
 <span class="sd">        :type index: list, slice or str, optional</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
+<span class="sd">        :return: An INDEX block</span>
+<span class="sd">        :rtype: Index instance</span>
+
+<span class="sd">        The specified element(s) of the input iterable (list, string, etc.)</span>
+<span class="sd">        are output.  The index can be an integer, sequence of integers, a Python slice</span>
+<span class="sd">        object, or a string with Python slice notation, eg. ``&quot;::-1&quot;``.</span>
+
+<span class="sd">        :seealso: :class:`Slice1` :class:`Slice2`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
 
@@ -393,14 +358,11 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">index</span></div>
 
-    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-        <span class="nb">input</span> <span class="o">=</span> <span class="n">inports</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span><span class="nb">input</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]]]</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
-            <span class="k">return</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">input</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">])]</span>
+            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]]]</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[[</span><span class="nb">input</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">]]</span></div>
+            <span class="k">return</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[[</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">]]]</span></div>
 
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
@@ -410,53 +372,16 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`SUBSYSTEM`</span>
 
-<span class="sd">    Instantiate a subsystem.</span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
 
-<span class="sd">    :inputs: N</span>
-<span class="sd">    :outputs: M</span>
-<span class="sd">    :states: 0</span>
-
-<span class="sd">    .. list-table::</span>
-<span class="sd">        :header-rows: 1</span>
-
-<span class="sd">        *   - Port type</span>
-<span class="sd">            - Port number</span>
-<span class="sd">            - Types</span>
-<span class="sd">            - Description</span>
-<span class="sd">        *   - Input</span>
-<span class="sd">            - i</span>
-<span class="sd">            - any</span>
-<span class="sd">            - :math:`x_i`</span>
-<span class="sd">        *   - Output</span>
-<span class="sd">            - j</span>
-<span class="sd">            - any</span>
-<span class="sd">            - :math:`y_j`</span>
-
-<span class="sd">    This block represents a subsystem in a block diagram.  The definition</span>
-<span class="sd">    of the subsystem can be:</span>
-
-<span class="sd">    - the name of a module which is imported and must contain only</span>
-<span class="sd">      only ``BlockDiagram`` instance, or</span>
-<span class="sd">    - a ``BlockDiagram`` instance</span>
-
-<span class="sd">    The referenced block diagram must contain one or both of:</span>
-
-<span class="sd">    - one ``InPort`` block, which has outputs but no inputs. These</span>
-<span class="sd">      outputs are connected to the inputs to the enclosing ``SubSystem`` block.</span>
-<span class="sd">    - one ``OutPort`` block, which has inputs but no outputs. These</span>
-<span class="sd">      inputs are connected to the outputs to the enclosing ``SubSystem`` block.</span>
-
-<span class="sd">    .. note::</span>
-
-<span class="sd">        - The referenced block diagram is treated like a macro and copied into</span>
-<span class="sd">          the parent block diagram at compile time. The ``SubSystem``, ``InPort`` and</span>
-<span class="sd">          ``OutPort`` blocks are eliminated, that is, all hierarchical structure is</span>
-<span class="sd">          lost.</span>
-<span class="sd">        - The same subsystem can be used multiple times, its blocks and wires</span>
-<span class="sd">          will be cloned.  Subsystems can also include subsystems.</span>
-<span class="sd">        - The number of input and output ports is not specified, they are computed</span>
-<span class="sd">          from the number of ports on the ``InPort`` and ``OutPort`` blocks within the</span>
-<span class="sd">          subsystem.</span>
+<span class="sd">    +------------+------------+---------+</span>
+<span class="sd">    | inputs     | outputs    |  states |</span>
+<span class="sd">    +------------+------------+---------+</span>
+<span class="sd">    | ss.in.nout | ss.out.nin | 0       |</span>
+<span class="sd">    +------------+------------+---------+</span>
+<span class="sd">    | any        | any        |         |</span>
+<span class="sd">    +------------+------------+---------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
@@ -464,8 +389,11 @@
 
 <div class="viewcode-block" id="SubSystem.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.SubSystem.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subsys</span><span class="p">,</span> <span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Instantiate a subsystem.</span>
+
 <span class="sd">        :param subsys: Subsystem as either a filename or a ``BlockDiagram`` instance</span>
 <span class="sd">        :type subsys: str or BlockDiagram</span>
+
 <span class="sd">        :param nin: Number of input ports, defaults to 1</span>
 <span class="sd">        :type nin: int, optional</span>
 <span class="sd">        :param nout: Number of output ports, defaults to 1</span>
@@ -474,6 +402,34 @@
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        :raises ImportError: DESCRIPTION</span>
 <span class="sd">        :raises ValueError: DESCRIPTION</span>
+<span class="sd">        :return: A SUBSYSTEM block</span>
+<span class="sd">        :rtype: SubSystem instance</span>
+
+<span class="sd">        This block represents a subsystem in a block diagram.  The definition</span>
+<span class="sd">        of the subsystem can be:</span>
+
+<span class="sd">            - the name of a module which is imported and must contain only</span>
+<span class="sd">              only ``BlockDiagram`` instance, or</span>
+<span class="sd">            - a ``BlockDiagram`` instance</span>
+
+<span class="sd">        The referenced block diagram must contain one or both of:</span>
+
+<span class="sd">            - one ``InPort`` block, which has outputs but no inputs. These</span>
+<span class="sd">              outputs are connected to the inputs to the enclosing ``SubSystem`` block.</span>
+<span class="sd">            - one ``OutPort`` block, which has inputs but no outputs. These</span>
+<span class="sd">              inputs are connected to the outputs to the enclosing ``SubSystem`` block.</span>
+
+<span class="sd">        .. note::</span>
+
+<span class="sd">        - The referenced block diagram is treated like a macro and copied into</span>
+<span class="sd">          the parent block diagram at compile time. The ``SubSystem``, ``InPort`` and</span>
+<span class="sd">          ``OutPort`` blocks are eliminated, that is, all hierarchical structure is</span>
+<span class="sd">          lost.</span>
+<span class="sd">        - The same subsystem can be used multiple times, its blocks and wires</span>
+<span class="sd">           will be cloned.  Subsystems can also include subsystems.</span>
+<span class="sd">        - The number of input and output ports is not specified, they are computed</span>
+<span class="sd">          from the number of ports on the ``InPort`` and ``OutPort`` blocks within the</span>
+<span class="sd">          subsystem.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
 
@@ -547,30 +503,16 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`INPORT`</span>
 
-<span class="sd">    Input ports for a subsystem.</span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
 
-<span class="sd">    :inputs: 0</span>
-<span class="sd">    :outputs: N</span>
-<span class="sd">    :states: 0</span>
-
-<span class="sd">    .. list-table::</span>
-<span class="sd">        :header-rows: 1</span>
-
-<span class="sd">        *   - Port type</span>
-<span class="sd">            - Port number</span>
-<span class="sd">            - Types</span>
-<span class="sd">            - Description</span>
-<span class="sd">        *   - Output</span>
-<span class="sd">            - j</span>
-<span class="sd">            - any</span>
-<span class="sd">            - :math:`y_j`</span>
-
-<span class="sd">    This block connects a subsystem to a parent block diagram.  Inputs to the</span>
-<span class="sd">    parent-level ``SubSystem`` block appear as the outputs of this block.</span>
-
-<span class="sd">    .. note:: Only one ``INPORT`` block can appear in a block diagram but it</span>
-<span class="sd">        can have multiple ports.  This is different to Simulink(R) which</span>
-<span class="sd">        would require multiple single-port input blocks.</span>
+<span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    | inputs     | outputs |  states |</span>
+<span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    | 0          | nout    | 0       |</span>
+<span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    |            | any     |         |</span>
+<span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">0</span>
@@ -578,17 +520,28 @@
 
 <div class="viewcode-block" id="InPort.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.InPort.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Input ports for a subsystem.</span>
+
 <span class="sd">        :param nout: Number of output ports, defaults to 1</span>
 <span class="sd">        :type nout: int, optional</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
+<span class="sd">        :return: An INPORT block</span>
+<span class="sd">        :rtype: InPort instance</span>
+
+<span class="sd">        This block connects a subsystem to a parent block diagram.  Inputs to the</span>
+<span class="sd">        parent-level ``SubSystem`` block appear as the outputs of this block.</span>
+
+<span class="sd">        .. note:: Only one ``INPORT`` block can appear in a block diagram but it</span>
+<span class="sd">            can have multiple ports.  This is different to Simulink(R) which</span>
+<span class="sd">            would require multiple single-port input blocks.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nout</span><span class="o">=</span><span class="n">nout</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="c1"># signal feed through</span>
 
-        <span class="k">return</span> <span class="n">inports</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span></div>
 
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
@@ -598,31 +551,16 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`OUTPORT`</span>
 
-<span class="sd">    Output ports for a subsystem.</span>
+<span class="sd">    .. table::</span>
+<span class="sd">       :align: left</span>
 
-<span class="sd">    :inputs: N</span>
-<span class="sd">    :outputs: 0</span>
-<span class="sd">    :states: 0</span>
-
-<span class="sd">    .. list-table::</span>
-<span class="sd">        :header-rows: 1</span>
-
-<span class="sd">        *   - Port type</span>
-<span class="sd">            - Port number</span>
-<span class="sd">            - Types</span>
-<span class="sd">            - Description</span>
-<span class="sd">        *   - Input</span>
-<span class="sd">            - i</span>
-<span class="sd">            - any</span>
-<span class="sd">            - :math:`x_i`</span>
-
-<span class="sd">    This block connects a subsystem to a parent block diagram.  The</span>
-<span class="sd">    inputs of this block become the outputs of the parent-level ``SubSystem``</span>
-<span class="sd">    block.</span>
-
-<span class="sd">    .. note:: Only one ``OUTPORT`` block can appear in a block diagram but it</span>
-<span class="sd">        can have multiple ports.  This is different to Simulink(R) which</span>
-<span class="sd">        would require multiple single-port output blocks.</span>
+<span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    | inputs     | outputs |  states |</span>
+<span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    | nin        | 0       | 0       |</span>
+<span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    | any        |         |         |</span>
+<span class="sd">    +------------+---------+---------+</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
@@ -630,16 +568,28 @@
 
 <div class="viewcode-block" id="OutPort.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.OutPort.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Output ports for a subsystem.</span>
+
 <span class="sd">        :param nin: Number of input ports, defaults to 1</span>
 <span class="sd">        :type nin: int, optional</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
+<span class="sd">        :return: A OUTPORT block</span>
+<span class="sd">        :rtype: OutPort instance</span>
+
+<span class="sd">        This block connects a subsystem to a parent block diagram.  The the</span>
+<span class="sd">        inputs of this block become the outputs of the parent-level ``SubSystem``</span>
+<span class="sd">        block.</span>
+
+<span class="sd">        .. note:: Only one ``OUTPORT`` block can appear in a block diagram but it</span>
+<span class="sd">            can have multiple ports.  This is different to Simulink(R) which</span>
+<span class="sd">            would require multiple single-port output blocks.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="n">nin</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="c1"># signal feed through</span>
-        <span class="k">return</span> <span class="n">inports</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span></div>
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
@@ -660,8 +610,8 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2020-, Peter Corke..
-      <span class="lastupdated">Last updated on 11-Jul-2023.
+    <p>&#169; Copyright 2020, Peter Corke.
+      <span class="lastupdated">Last updated on 11-Nov-2023.
       </span></p>
   </div>
 

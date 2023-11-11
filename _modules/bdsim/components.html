@@ -3,10 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>bdsim.components &mdash; Block diagram simulation  documentation</title>
+  <title>bdsim.components &mdash; Block diagram simulation 0.7 documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../../_static/plot_directive.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
@@ -33,9 +32,6 @@
             Block diagram simulation
               <img src="../../_static/BDSimLogo_NoBackgnd@2x.png" class="logo" alt="Logo"/>
           </a>
-              <div class="version">
-                1.1.1
-              </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -89,57 +85,54 @@
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">animation</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">UserDict</span>
 
-<span class="c1"># decorator for debugging implicit block creation with operator overloading</span>
-<span class="k">def</span> <span class="nf">oodebug</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">ret</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="c1"># print(f&quot;{func.__qualname__}{args} --&gt; {ret}&quot;)</span>
-        <span class="k">return</span> <span class="n">ret</span>
 
-    <span class="k">return</span> <span class="n">wrapper</span>
-
-
-<span class="k">class</span> <span class="nc">BDStruct</span><span class="p">:</span>
+<span class="k">class</span> <span class="nc">BDStruct</span><span class="p">(</span><span class="n">UserDict</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A simple data container object that allows items to be added by attribute or by</span>
-<span class="sd">    index.</span>
+<span class="sd">    A dict-like object that allows items to be added by attribute or by key.</span>
 
 <span class="sd">    For example::</span>
 
-<span class="sd">        &gt;&gt;&gt; d = BDStruct(&#39;thing&#39;)</span>
-<span class="sd">        &gt;&gt;&gt; d.foo = 1</span>
-<span class="sd">        &gt;&gt;&gt; d.foo</span>
+<span class="sd">        &gt;&gt;&gt; d = Struct(&#39;thing&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; d.a = 1</span>
+<span class="sd">        &gt;&gt;&gt; d[&#39;b&#39;] = 2</span>
+<span class="sd">        &gt;&gt;&gt; d.a</span>
 <span class="sd">        1</span>
-<span class="sd">        &gt;&gt;&gt; d[&quot;foo&quot;]</span>
-<span class="sd">        ]</span>
-<span class="sd">        &gt;&gt;&gt; d[&quot;bar&quot;] = 2</span>
-<span class="sd">        &gt;&gt;&gt; d.bar</span>
-<span class="sd">        &gt;&gt;&gt; d</span>
-<span class="sd">        bar   = 2 (int)</span>
-<span class="sd">        foo   = 1 (int)</span>
+<span class="sd">        &gt;&gt;&gt; d[&#39;a&#39;]</span>
+<span class="sd">        1</span>
+<span class="sd">        &gt;&gt;&gt; d.b</span>
+<span class="sd">        2</span>
+<span class="sd">        &gt;&gt;&gt; str(d)</span>
+<span class="sd">        &quot;thing {&#39;a&#39;: 1, &#39;b&#39;: 2}&quot;</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;BDStruct2&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">name</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;BDStruct&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="c1"># self.__dict__[key] = value</span>
-            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="k">def</span> <span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="c1"># invoked by struct[name] = value</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">]:</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
 
     <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="c1"># self.__dict__[name] = value</span>
-        <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="k">def</span> <span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="c1"># return self.data[name]</span>
+        <span class="c1"># some tricks to make this deepcopy safe</span>
+        <span class="c1"># https://stackoverflow.com/questions/40583131/python-deepcopy-with-custom-getattr-and-setattr</span>
+        <span class="c1"># https://stackoverflow.com/questions/25977996/supporting-the-deep-copy-operation-on-a-custom-class</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;unknown attribute &quot;</span> <span class="o">+</span> <span class="n">name</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">len</span><span class="p">([</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)])</span>
-
-    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -155,14 +148,12 @@
 
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="s2">&quot;&quot;</span>
-        <span class="n">maxwidth</span> <span class="o">=</span> <span class="nb">max</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">keys</span><span class="p">()])</span>
+        <span class="n">maxwidth</span> <span class="o">=</span> <span class="nb">max</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">()])</span>
         <span class="c1"># if self.name is not None:</span>
         <span class="c1">#     rows.append(self.name + &#39;::&#39;)</span>
-        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
-            <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">):</span>
-                <span class="k">continue</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">BDStruct</span><span class="p">):</span>
-                <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{:s}</span><span class="s2">.</span><span class="si">{:s}</span><span class="s2">::&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">maxwidth</span><span class="p">),</span> <span class="n">v</span><span class="o">.</span><span class="n">_name</span><span class="p">))</span>
+                <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{:s}</span><span class="s2">.</span><span class="si">{:s}</span><span class="s2">::&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">maxwidth</span><span class="p">),</span> <span class="n">v</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
                 <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                     <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
                         <span class="p">[</span><span class="s2">&quot; &quot;</span> <span class="o">*</span> <span class="p">(</span><span class="n">maxwidth</span> <span class="o">+</span> <span class="mi">3</span><span class="p">)</span> <span class="o">+</span> <span class="n">line</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)]</span>
@@ -188,12 +179,6 @@
                 <span class="p">)</span>
 
         <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">dump</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outfile</span><span class="p">):</span>
-        <span class="kn">import</span> <span class="nn">pickle</span>
-
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">outfile</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-            <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
 
 
 <span class="k">class</span> <span class="nc">OptionsBase</span><span class="p">:</span>
@@ -239,8 +224,7 @@
                 <span class="nb">dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
             <span class="k">elif</span> <span class="nb">dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">!=</span> <span class="n">value</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;attempt to programmatically set option </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2"> is&quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot; overriden by command line option </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="nb">dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="si">}</span><span class="s2">, ignored&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;attempt to programmatically set option </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2"> is overriden by command line option </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="nb">dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="si">}</span><span class="s2">, ignored&quot;</span>
                 <span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span> <span class="o">=</span> <span class="nb">dict</span>
@@ -395,34 +379,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">port</span> <span class="o">=</span> <span class="n">port</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="nb">type</span>  <span class="c1"># start</span></div>
 
-<div class="viewcode-block" id="Plug.__str__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__str__">[docs]</a>    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Display plug details.</span>
-
-<span class="sd">        :return: Plug description</span>
-<span class="sd">        :rtype: str</span>
-
-<span class="sd">        String format::</span>
-
-<span class="sd">            bicycle.0[1]</span>
-
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;[&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;]&quot;</span></div>
-
-<div class="viewcode-block" id="Plug.__repr__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__repr__">[docs]</a>    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Display plug details.</span>
-
-<span class="sd">        :return: Plug description</span>
-<span class="sd">        :rtype: str</span>
-
-<span class="sd">        String format::</span>
-
-<span class="sd">            bicycle.0[1]</span>
-
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="s2">&quot;Plug/&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">+</span> <span class="s2">&quot;:&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
-
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">isslice</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -487,8 +443,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">portlist</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Plug.__rshift__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__rshift__">[docs]</a>    <span class="nd">@oodebug</span>
-    <span class="k">def</span> <span class="fm">__rshift__</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
+<div class="viewcode-block" id="Plug.__rshift__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__rshift__">[docs]</a>    <span class="k">def</span> <span class="fm">__rshift__</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded &gt;&gt; operator for implicit wiring.</span>
 
@@ -530,8 +485,7 @@
         <span class="c1"># print(&#39;plug * &#39; + str(w))</span>
         <span class="k">return</span> <span class="n">right</span></div>
 
-<div class="viewcode-block" id="Plug.__add__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__add__">[docs]</a>    <span class="nd">@oodebug</span>
-    <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+<div class="viewcode-block" id="Plug.__add__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__add__">[docs]</a>    <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded + operator for implicit block creation.</span>
 
@@ -562,8 +516,7 @@
             <span class="n">other</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">CONSTANT</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">SUM</span><span class="p">(</span><span class="s2">&quot;++&quot;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">))</span></div>
 
-<div class="viewcode-block" id="Plug.__radd__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__radd__">[docs]</a>    <span class="nd">@oodebug</span>
-    <span class="k">def</span> <span class="fm">__radd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+<div class="viewcode-block" id="Plug.__radd__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__radd__">[docs]</a>    <span class="k">def</span> <span class="fm">__radd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded + operator for implicit block creation.</span>
 
@@ -596,8 +549,7 @@
             <span class="n">other</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">CONSTANT</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">SUM</span><span class="p">(</span><span class="s2">&quot;++&quot;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="p">))</span></div>
 
-<div class="viewcode-block" id="Plug.__sub__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__sub__">[docs]</a>    <span class="nd">@oodebug</span>
-    <span class="k">def</span> <span class="fm">__sub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+<div class="viewcode-block" id="Plug.__sub__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__sub__">[docs]</a>    <span class="k">def</span> <span class="fm">__sub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded - operator for implicit block creation.</span>
 
@@ -631,8 +583,7 @@
             <span class="n">other</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">CONSTANT</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">SUM</span><span class="p">(</span><span class="s2">&quot;+-&quot;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">))</span></div>
 
-<div class="viewcode-block" id="Plug.__rsub__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__rsub__">[docs]</a>    <span class="nd">@oodebug</span>
-    <span class="k">def</span> <span class="fm">__rsub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+<div class="viewcode-block" id="Plug.__rsub__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__rsub__">[docs]</a>    <span class="k">def</span> <span class="fm">__rsub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded - operator for implicit block creation.</span>
 
@@ -666,8 +617,7 @@
             <span class="n">other</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">CONSTANT</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">SUM</span><span class="p">(</span><span class="s2">&quot;+-&quot;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="p">))</span></div>
 
-<div class="viewcode-block" id="Plug.__neg__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__neg__">[docs]</a>    <span class="nd">@oodebug</span>
-    <span class="k">def</span> <span class="fm">__neg__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Plug.__neg__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__neg__">[docs]</a>    <span class="k">def</span> <span class="fm">__neg__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded unary minus operator for implicit block creation.</span>
 
@@ -689,31 +639,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">GAIN</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="p">])</span></div>
 
-<div class="viewcode-block" id="Plug.__pow__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__pow__">[docs]</a>    <span class="nd">@oodebug</span>
-    <span class="k">def</span> <span class="fm">__pow__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Overloaded unary power operator for implicit block creation.</span>
-
-<span class="sd">        :param self: A signal (plug) to be exponentiated</span>
-<span class="sd">        :type self: Plug</span>
-<span class="sd">        :return: POW block</span>
-<span class="sd">        :rtype: Block subclass</span>
-
-<span class="sd">        This method is implicitly invoked by the ** operator for unary power when the operand is a ``Block``::</span>
-
-<span class="sd">            result = X**3</span>
-
-<span class="sd">        where ``X`` is a block.</span>
-
-<span class="sd">        Creates a ``POW(3)`` block named ``_pow.N`` whose input is the</span>
-<span class="sd">        operand.</span>
-
-<span class="sd">        :seealso: :meth:`Plug.__pow__`</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">POW</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="p">])</span></div>
-
-<div class="viewcode-block" id="Plug.__mul__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__mul__">[docs]</a>    <span class="nd">@oodebug</span>
-    <span class="k">def</span> <span class="fm">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+<div class="viewcode-block" id="Plug.__mul__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__mul__">[docs]</a>    <span class="k">def</span> <span class="fm">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded * operator for implicit block creation.</span>
 
@@ -754,8 +680,7 @@
                 <span class="s2">&quot;**&quot;</span><span class="p">,</span> <span class="n">matrix</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">]</span>
             <span class="p">)</span></div>
 
-<div class="viewcode-block" id="Plug.__rmul__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__rmul__">[docs]</a>    <span class="nd">@oodebug</span>
-    <span class="k">def</span> <span class="fm">__rmul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+<div class="viewcode-block" id="Plug.__rmul__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__rmul__">[docs]</a>    <span class="k">def</span> <span class="fm">__rmul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded * operator for implicit block creation.</span>
 
@@ -790,8 +715,7 @@
             <span class="n">matrix</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">_autogain</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">premul</span><span class="o">=</span><span class="n">matrix</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="p">])</span></div>
 
-<div class="viewcode-block" id="Plug.__truediv__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__truediv__">[docs]</a>    <span class="nd">@oodebug</span>
-    <span class="k">def</span> <span class="fm">__truediv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+<div class="viewcode-block" id="Plug.__truediv__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__truediv__">[docs]</a>    <span class="k">def</span> <span class="fm">__truediv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded / operator for implicit block creation.</span>
 
@@ -826,8 +750,7 @@
             <span class="n">other</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">CONSTANT</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">PROD</span><span class="p">(</span><span class="s2">&quot;*/&quot;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">))</span></div>
 
-<div class="viewcode-block" id="Plug.__rtruediv__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__rtruediv__">[docs]</a>    <span class="nd">@oodebug</span>
-    <span class="k">def</span> <span class="fm">__rtruediv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+<div class="viewcode-block" id="Plug.__rtruediv__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__rtruediv__">[docs]</a>    <span class="k">def</span> <span class="fm">__rtruediv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded / operator for implicit block creation.</span>
 
@@ -859,7 +782,21 @@
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>
             <span class="c1"># constant / plug, create a CONSTANT block</span>
             <span class="n">other</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">CONSTANT</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">PROD</span><span class="p">(</span><span class="s2">&quot;*/&quot;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="p">))</span></div></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">PROD</span><span class="p">(</span><span class="s2">&quot;*/&quot;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Plug.__repr__"><a class="viewcode-back" href="../../internals.html#bdsim.Plug.__repr__">[docs]</a>    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Display plug details.</span>
+
+<span class="sd">        :return: Plug description</span>
+<span class="sd">        :rtype: str</span>
+
+<span class="sd">        String format::</span>
+
+<span class="sd">            bicycle.0[1]</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">block</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;[&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;]&quot;</span></div></div>
 
 
 <span class="k">class</span> <span class="nc">StartPlug</span><span class="p">(</span><span class="n">Plug</span><span class="p">):</span>
@@ -928,13 +865,12 @@
             <span class="c1"># print(&#39;x0&#39;, x0)</span>
         <span class="k">return</span> <span class="n">x0</span></div>
 
-<div class="viewcode-block" id="Clock.getstate"><a class="viewcode-back" href="../../internals.html#bdsim.Clock.getstate">[docs]</a>    <span class="k">def</span> <span class="nf">getstate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+<div class="viewcode-block" id="Clock.getstate"><a class="viewcode-back" href="../../internals.html#bdsim.Clock.getstate">[docs]</a>    <span class="k">def</span> <span class="nf">getstate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 
         <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
         <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
             <span class="c1"># update dstate</span>
-            <span class="n">xb</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">_x</span><span class="p">)</span>
-            <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">xb</span><span class="o">.</span><span class="n">flatten</span><span class="p">()]</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">next</span><span class="p">()</span><span class="o">.</span><span class="n">flatten</span><span class="p">()]</span>
 
         <span class="k">return</span> <span class="n">x</span></div>
 
@@ -943,13 +879,13 @@
         <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
             <span class="n">x</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">setstate</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># send it to blocks</span></div>
 
-<div class="viewcode-block" id="Clock.start"><a class="viewcode-back" href="../../internals.html#bdsim.Clock.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simstate</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Clock.start"><a class="viewcode-back" href="../../internals.html#bdsim.Clock.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">i</span> <span class="o">=</span> <span class="mi">1</span>
-        <span class="n">simstate</span><span class="o">.</span><span class="n">declare_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">i</span><span class="p">))</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">declare_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">i</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span></div>
 
-<div class="viewcode-block" id="Clock.next_event"><a class="viewcode-back" href="../../internals.html#bdsim.Clock.next_event">[docs]</a>    <span class="k">def</span> <span class="nf">next_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simstate</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="n">simstate</span><span class="o">.</span><span class="n">declare_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">i</span><span class="p">))</span>
+<div class="viewcode-block" id="Clock.next_event"><a class="viewcode-back" href="../../internals.html#bdsim.Clock.next_event">[docs]</a>    <span class="k">def</span> <span class="nf">next_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">declare_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">i</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span></div>
 
 <div class="viewcode-block" id="Clock.time"><a class="viewcode-back" href="../../internals.html#bdsim.Clock.time">[docs]</a>    <span class="k">def</span> <span class="nf">time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
@@ -960,7 +896,7 @@
 <div class="viewcode-block" id="Clock.savestate"><a class="viewcode-back" href="../../internals.html#bdsim.Clock.savestate">[docs]</a>    <span class="k">def</span> <span class="nf">savestate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
         <span class="c1"># save clock state at time t</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">t</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">getstate</span><span class="p">(</span><span class="n">t</span><span class="p">))</span></div></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">getstate</span><span class="p">())</span></div></div>
 
 
 <span class="c1"># ------------------------------------------------------------------------- #</span>
@@ -993,10 +929,10 @@
         <span class="c1"># name.  Add this attribute now to allow proper operation.</span>
         <span class="n">block</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="s2">&quot;portnames&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># must be first, see __setattr__</span>
 
+        <span class="n">block</span><span class="o">.</span><span class="n">bd</span> <span class="o">=</span> <span class="n">bd</span>
         <span class="n">block</span><span class="o">.</span><span class="n">nstates</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">block</span><span class="o">.</span><span class="n">ndstates</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">block</span><span class="o">.</span><span class="n">_sequence</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="n">block</span><span class="o">.</span><span class="n">_x</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># state vector</span>
 
         <span class="k">return</span> <span class="n">block</span></div>
 
@@ -1167,8 +1103,6 @@
 <span class="sd">        :param *inputs: Input port values</span>
 <span class="sd">        :param t: Simulation time, defaults to 0.0</span>
 <span class="sd">        :type t: float, optional</span>
-<span class="sd">        :param x: state vector</span>
-<span class="sd">        :type x: ndarray</span>
 <span class="sd">        :return: Block output port values</span>
 <span class="sd">        :rtype: list</span>
 
@@ -1184,25 +1118,25 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># check inputs and assign to attribute</span>
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">nin</span><span class="p">,</span> <span class="s2">&quot;wrong number of inputs provided&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_T_inputs</span> <span class="o">=</span> <span class="n">inputs</span>
+
+        <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_x</span> <span class="o">=</span> <span class="n">x</span>
 
         <span class="c1"># evaluate the block</span>
-        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">t</span><span class="p">)</span>
 
         <span class="c1"># sanity check the output</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="nb">list</span><span class="p">),</span> <span class="s2">&quot;result must be a list&quot;</span>
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">out</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">nout</span><span class="p">,</span> <span class="s2">&quot;result list is wrong length&quot;</span>
         <span class="k">return</span> <span class="n">out</span></div>
 
-<div class="viewcode-block" id="Block.T_deriv"><a class="viewcode-back" href="../../internals.html#bdsim.Block.T_deriv">[docs]</a>    <span class="k">def</span> <span class="nf">T_deriv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Block.T_deriv"><a class="viewcode-back" href="../../internals.html#bdsim.Block.T_deriv">[docs]</a>    <span class="k">def</span> <span class="nf">T_deriv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Evaluate a block for unit testing.</span>
 
 <span class="sd">        :param inputs: input port values</span>
 <span class="sd">        :type inputs: list</span>
-<span class="sd">        :param t: Simulation time, defaults to 0.0</span>
-<span class="sd">        :type t: float, optional</span>
-<span class="sd">        :param x: state vector</span>
-<span class="sd">        :type x: ndarray</span>
 <span class="sd">        :return: Block derivative value</span>
 <span class="sd">        :rtype: ndarray</span>
 
@@ -1218,29 +1152,27 @@
 
         <span class="c1"># check inputs and assign to attribute</span>
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">nin</span><span class="p">,</span> <span class="s2">&quot;wrong number of inputs provided&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_T_inputs</span> <span class="o">=</span> <span class="n">inputs</span>
 
         <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span><span class="p">,</span> <span class="s2">&quot;passed state is wrong length&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_x</span> <span class="o">=</span> <span class="n">x</span>
 
         <span class="c1"># evaluate the block</span>
-        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">deriv</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">deriv</span><span class="p">()</span>
 
         <span class="c1"># sanity check the output</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">),</span> <span class="s2">&quot;result must be an ndarray&quot;</span>
         <span class="k">assert</span> <span class="n">out</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nstates</span><span class="p">,),</span> <span class="s2">&quot;result array is wrong length&quot;</span>
         <span class="k">return</span> <span class="n">out</span></div>
 
-<div class="viewcode-block" id="Block.T_next"><a class="viewcode-back" href="../../internals.html#bdsim.Block.T_next">[docs]</a>    <span class="k">def</span> <span class="nf">T_next</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Block.T_next"><a class="viewcode-back" href="../../internals.html#bdsim.Block.T_next">[docs]</a>    <span class="k">def</span> <span class="nf">T_next</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Evaluate a block for unit testing.</span>
 
 <span class="sd">        :param inputs: input port values</span>
 <span class="sd">        :type inputs: list</span>
-<span class="sd">        :param t: Simulation time, defaults to 0.0</span>
-<span class="sd">        :type t: float, optional</span>
-<span class="sd">        :param x: state vector</span>
-<span class="sd">        :type x: ndarray</span>
-<span class="sd">        :return: Block next state value</span>
+<span class="sd">        :return: Block derivative value</span>
 <span class="sd">        :rtype: ndarray</span>
 
 <span class="sd">        The next value of a discrete time block is evaluated for a given set of input port</span>
@@ -1248,49 +1180,46 @@
 
 <span class="sd">        Mostly used for making concise unit tests.</span>
 
+<span class="sd">        .. warning:: the instance is monkey patched, not useable in a block</span>
+<span class="sd">            diagram subsequently.</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="c1"># check inputs and assign to attribute</span>
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">nin</span><span class="p">,</span> <span class="s2">&quot;wrong number of inputs provided&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_T_inputs</span> <span class="o">=</span> <span class="n">inputs</span>
 
         <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndstates</span><span class="p">,</span> <span class="s2">&quot;passed state is wrong length&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_x</span> <span class="o">=</span> <span class="n">x</span>
 
         <span class="c1"># evaluate the block</span>
-        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
 
         <span class="c1"># sanity check the output</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">),</span> <span class="s2">&quot;next state must be an ndarray&quot;</span>
-        <span class="k">assert</span> <span class="n">out</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ndstates</span><span class="p">,),</span> <span class="s2">&quot;next state array is wrong length&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">),</span> <span class="s2">&quot;result must be an ndarray&quot;</span>
+        <span class="k">assert</span> <span class="n">out</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ndstates</span><span class="p">,),</span> <span class="s2">&quot;result array is wrong length&quot;</span>
         <span class="k">return</span> <span class="n">out</span></div>
 
-<div class="viewcode-block" id="Block.T_step"><a class="viewcode-back" href="../../internals.html#bdsim.Block.T_step">[docs]</a>    <span class="k">def</span> <span class="nf">T_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mf">0.0</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Step a block for unit testing.</span>
+<div class="viewcode-block" id="Block.T_step"><a class="viewcode-back" href="../../internals.html#bdsim.Block.T_step">[docs]</a>    <span class="k">def</span> <span class="nf">T_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 
-<span class="sd">        :param inputs: input port values</span>
-<span class="sd">        :type inputs: list</span>
-<span class="sd">        :param t: Simulation time, defaults to 0.0</span>
-<span class="sd">        :type t: float, optional</span>
+        <span class="kn">from</span> <span class="nn">bdsim.run_sim</span> <span class="kn">import</span> <span class="n">BDSimState</span>
 
-<span class="sd">        Step the block for a given set of input port</span>
-<span class="sd">        values. Input port values are treated as lists.</span>
-
-<span class="sd">        Mostly used for making concise unit tests.</span>
-
-<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">state</span> <span class="o">=</span> <span class="n">BDSimState</span><span class="p">()</span>
 
         <span class="c1"># check inputs and assign to attribute</span>
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">nin</span><span class="p">,</span> <span class="s2">&quot;wrong number of inputs provided&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_T_inputs</span> <span class="o">=</span> <span class="n">inputs</span>
 
         <span class="c1"># step the block</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Block.T_start"><a class="viewcode-back" href="../../internals.html#bdsim.Block.T_start">[docs]</a>    <span class="k">def</span> <span class="nf">T_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simstate</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Block.T_start"><a class="viewcode-back" href="../../internals.html#bdsim.Block.T_start">[docs]</a>    <span class="k">def</span> <span class="nf">T_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 
         <span class="kn">from</span> <span class="nn">bdsim.run_sim</span> <span class="kn">import</span> <span class="n">BDSimState</span><span class="p">,</span> <span class="n">Options</span>
 
-        <span class="k">if</span> <span class="n">simstate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
 
             <span class="k">class</span> <span class="nc">RunTime</span><span class="p">:</span>
                 <span class="k">def</span> <span class="nf">DEBUG</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
@@ -1302,46 +1231,45 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">bd</span> <span class="o">=</span> <span class="n">BlockDiagram</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">runtime</span> <span class="o">=</span> <span class="n">RunTime</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="n">Options</span><span class="p">()</span>
-            <span class="n">simstate</span> <span class="o">=</span> <span class="n">BDSimState</span><span class="p">()</span>
-            <span class="n">simstate</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">options</span>
-            <span class="n">simstate</span><span class="o">.</span><span class="n">t</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="n">state</span> <span class="o">=</span> <span class="n">BDSimState</span><span class="p">()</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">options</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">t</span> <span class="o">=</span> <span class="mf">0.0</span>
 
         <span class="c1"># step the block</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">simstate</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">simstate</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">state</span></div>
 
-    <span class="k">def</span> <span class="nf">_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">T_output</span><span class="p">(</span><span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="n">t</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mf">0.0</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">T_output</span><span class="p">(</span><span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="n">t</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mf">0.0</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">T_step</span><span class="p">(</span><span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="n">t</span><span class="p">)</span>
 
-    <span class="c1"># def input(self, port):</span>
-    <span class="c1">#     &quot;&quot;&quot;</span>
-    <span class="c1">#     Get input to block on specified port</span>
+<div class="viewcode-block" id="Block.input"><a class="viewcode-back" href="../../internals.html#bdsim.Block.input">[docs]</a>    <span class="k">def</span> <span class="nf">input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">port</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get input to block on specified port</span>
 
-    <span class="c1">#     :param port: port number</span>
-    <span class="c1">#     :type port: int</span>
-    <span class="c1">#     :return: value applied to specified input port</span>
-    <span class="c1">#     :rtype: any</span>
+<span class="sd">        :param port: port number</span>
+<span class="sd">        :type port: int</span>
+<span class="sd">        :return: value applied to specified input port</span>
+<span class="sd">        :rtype: any</span>
 
-    <span class="c1">#     Return the value of the input applied to the input port numbered</span>
-    <span class="c1">#     ``port``.  The type depends on the source port connected to this input.</span>
+<span class="sd">        Return the value of the input applied to the input port numbered</span>
+<span class="sd">        ``port``.  The type depends on the source port connected to this input.</span>
 
-    <span class="c1">#     .. note:: When a block&#39;s ``output`` method is evaluated the resulting list is</span>
-    <span class="c1">#         saved as an attribute of that block.  The ``input`` method traces back</span>
-    <span class="c1">#         along the wire connected to the input port to obtain a reference to the</span>
-    <span class="c1">#         output value held by the predecessor block.</span>
+<span class="sd">        .. note:: For unit testing purposes, it the block is simply an instance</span>
+<span class="sd">            of the class, then setting its attribute ``test_inputs`` to a list</span>
+<span class="sd">            provides the input values to the block.</span>
 
-    <span class="c1">#     .. note:: For unit testing purposes, it the block is simply an instance</span>
-    <span class="c1">#         of the class, then setting its attribute ``T_inputs`` to a list</span>
-    <span class="c1">#         provides the input values to the block.</span>
-
-    <span class="c1">#     :seealso: :meth:`inputs`</span>
-    <span class="c1">#     &quot;&quot;&quot;</span>
-    <span class="c1">#     try:</span>
-    <span class="c1">#         p = self.sources[port]  # get plug for source block output</span>
-    <span class="c1">#         return p.block.output_values[p.port]</span>
+<span class="sd">        :seealso: :meth:`inputs`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="p">[</span><span class="n">port</span><span class="p">]</span>  <span class="c1"># get plug for source block output</span>
+            <span class="k">return</span> <span class="n">p</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">output_values</span><span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">port</span><span class="p">]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="c1"># for unit testing a block may not have its input ports connected,</span>
+            <span class="c1"># take the value from this list instead</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_T_inputs</span><span class="p">[</span><span class="n">port</span><span class="p">]</span></div>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1351,21 +1279,11 @@
 <span class="sd">        :return: list of block inputs</span>
 <span class="sd">        :rtype: list</span>
 
-<span class="sd">        Returns a list of values corresponding to the input ports of the block.  The</span>
-<span class="sd">        types of the elements are dictated by the blocks connected to the input ports.</span>
-
-<span class="sd">        .. note:: When a block&#39;s ``output`` method is evaluated the resulting list is</span>
-<span class="sd">            saved as an attribute of that block.  The ``inputs`` method uses the</span>
-<span class="sd">            ``sources`` attribute which has references to the output values held by</span>
-<span class="sd">            the predecessor block.</span>
+<span class="sd">        Returns a list of values corresponding to the input ports of the block.</span>
 
 <span class="sd">        :seealso: :meth:`input`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">values</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">port</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nin</span><span class="p">):</span>
-            <span class="n">plug</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="p">[</span><span class="n">port</span><span class="p">]</span>  <span class="c1"># get plug for source block output</span>
-            <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">plug</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">output_values</span><span class="p">[</span><span class="n">plug</span><span class="o">.</span><span class="n">port</span><span class="p">])</span>
-        <span class="k">return</span> <span class="n">values</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nin</span><span class="p">)]</span>
 
 <div class="viewcode-block" id="Block.__getitem__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__getitem__">[docs]</a>    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">port</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -1450,8 +1368,7 @@
             <span class="c1"># regular case, add attribute to the instance&#39;s dictionary</span>
             <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span></div>
 
-<div class="viewcode-block" id="Block.__rshift__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__rshift__">[docs]</a>    <span class="nd">@oodebug</span>
-    <span class="k">def</span> <span class="fm">__rshift__</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
+<div class="viewcode-block" id="Block.__rshift__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__rshift__">[docs]</a>    <span class="k">def</span> <span class="fm">__rshift__</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Operator for implicit wiring.</span>
 
@@ -1513,13 +1430,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">n_auto_gain</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">GAIN</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_autopow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;_pow.</span><span class="si">{:d}</span><span class="s2">(</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">n_auto_pow</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">n_auto_pow</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">POW</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
-<div class="viewcode-block" id="Block.__add__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__add__">[docs]</a>    <span class="nd">@oodebug</span>
-    <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+<div class="viewcode-block" id="Block.__add__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__add__">[docs]</a>    <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded + operator for implicit block creation.</span>
 
@@ -1558,8 +1469,7 @@
             <span class="n">other</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_autoconstant</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">SUM</span><span class="p">(</span><span class="s2">&quot;++&quot;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Block.__radd__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__radd__">[docs]</a>    <span class="nd">@oodebug</span>
-    <span class="k">def</span> <span class="fm">__radd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+<div class="viewcode-block" id="Block.__radd__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__radd__">[docs]</a>    <span class="k">def</span> <span class="fm">__radd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded + operator for implicit block creation.</span>
 
@@ -1598,8 +1508,7 @@
             <span class="n">other</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_autoconstant</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">SUM</span><span class="p">(</span><span class="s2">&quot;++&quot;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Block.__sub__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__sub__">[docs]</a>    <span class="nd">@oodebug</span>
-    <span class="k">def</span> <span class="fm">__sub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+<div class="viewcode-block" id="Block.__sub__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__sub__">[docs]</a>    <span class="k">def</span> <span class="fm">__sub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded - operator for implicit block creation.</span>
 
@@ -1633,8 +1542,7 @@
             <span class="n">other</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_autoconstant</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">SUM</span><span class="p">(</span><span class="s2">&quot;+-&quot;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Block.__rsub__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__rsub__">[docs]</a>    <span class="nd">@oodebug</span>
-    <span class="k">def</span> <span class="fm">__rsub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+<div class="viewcode-block" id="Block.__rsub__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__rsub__">[docs]</a>    <span class="k">def</span> <span class="fm">__rsub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded - operator for implicit block creation.</span>
 
@@ -1672,8 +1580,7 @@
             <span class="n">other</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_autoconstant</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">SUM</span><span class="p">(</span><span class="s2">&quot;+-&quot;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Block.__neg__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__neg__">[docs]</a>    <span class="nd">@oodebug</span>
-    <span class="k">def</span> <span class="fm">__neg__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Block.__neg__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__neg__">[docs]</a>    <span class="k">def</span> <span class="fm">__neg__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded unary minus operator for implicit block creation.</span>
 
@@ -1695,31 +1602,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_autogain</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="p">])</span></div>
 
-<div class="viewcode-block" id="Block.__pow__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__pow__">[docs]</a>    <span class="nd">@oodebug</span>
-    <span class="k">def</span> <span class="fm">__pow__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Overloaded unary power operator for implicit block creation.</span>
-
-<span class="sd">        :param self: A signal (block) to be negated</span>
-<span class="sd">        :type self: Block</span>
-<span class="sd">        :return: POW block</span>
-<span class="sd">        :rtype: Block subclass</span>
-
-<span class="sd">        This method is implicitly invoked by the ** operator for unary power when the operand is a ``Block``::</span>
-
-<span class="sd">            result = X**3</span>
-
-<span class="sd">        where ``X`` is a block.</span>
-
-<span class="sd">        Creates a ``POW(3)`` block named ``_pow.N`` whose input is the</span>
-<span class="sd">        operand.</span>
-
-<span class="sd">        :seealso: :meth:`Plug.__pow__`</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_autopow</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="p">])</span></div>
-
-<div class="viewcode-block" id="Block.__mul__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__mul__">[docs]</a>    <span class="nd">@oodebug</span>
-    <span class="k">def</span> <span class="fm">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+<div class="viewcode-block" id="Block.__mul__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__mul__">[docs]</a>    <span class="k">def</span> <span class="fm">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded * operator for implicit block creation.</span>
 
@@ -1760,8 +1643,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">n_auto_prod</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">PROD</span><span class="p">(</span><span class="s2">&quot;**&quot;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">],</span> <span class="n">matrix</span><span class="o">=</span><span class="n">matrix</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Block.__rmul__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__rmul__">[docs]</a>    <span class="nd">@oodebug</span>
-    <span class="k">def</span> <span class="fm">__rmul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+<div class="viewcode-block" id="Block.__rmul__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__rmul__">[docs]</a>    <span class="k">def</span> <span class="fm">__rmul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded * operator for implicit block creation.</span>
 
@@ -1797,8 +1679,7 @@
             <span class="n">matrix</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_autogain</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">premul</span><span class="o">=</span><span class="n">matrix</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="p">])</span></div>
 
-<div class="viewcode-block" id="Block.__truediv__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__truediv__">[docs]</a>    <span class="nd">@oodebug</span>
-    <span class="k">def</span> <span class="fm">__truediv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+<div class="viewcode-block" id="Block.__truediv__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__truediv__">[docs]</a>    <span class="k">def</span> <span class="fm">__truediv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded / operator for implicit block creation.</span>
 
@@ -1838,8 +1719,7 @@
             <span class="n">matrix</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">PROD</span><span class="p">(</span><span class="s2">&quot;*/&quot;</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">),</span> <span class="n">matrix</span><span class="o">=</span><span class="n">matrix</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Block.__rtruediv__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__rtruediv__">[docs]</a>    <span class="nd">@oodebug</span>
-    <span class="k">def</span> <span class="fm">__rtruediv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+<div class="viewcode-block" id="Block.__rtruediv__"><a class="viewcode-back" href="../../internals.html#bdsim.Block.__rtruediv__">[docs]</a>    <span class="k">def</span> <span class="fm">__rtruediv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overloaded / operator for implicit block creation.</span>
 
@@ -1958,7 +1838,7 @@
 
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="n">w</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_wires</span><span class="p">[</span><span class="n">port</span><span class="p">]</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inports</span><span class="p">[</span><span class="n">port</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">w</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">w</span><span class="o">.</span><span class="n">name</span>
         <span class="n">src</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">block</span>
@@ -2009,7 +1889,7 @@
     <span class="c1">#     for i, val in enumerate(pos):</span>
     <span class="c1">#         self.inputs[i] = val</span>
 
-<div class="viewcode-block" id="Block.start"><a class="viewcode-back" href="../../internals.html#bdsim.Block.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simstate</span><span class="p">):</span>  <span class="c1"># begin a simulation</span>
+<div class="viewcode-block" id="Block.start"><a class="viewcode-back" href="../../internals.html#bdsim.Block.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>  <span class="c1"># begin of a simulation</span>
         <span class="k">pass</span></div>
 
 <div class="viewcode-block" id="Block.check"><a class="viewcode-back" href="../../internals.html#bdsim.Block.check">[docs]</a>    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>  <span class="c1"># check validity of block parameters at start</span>
@@ -2024,6 +1904,9 @@
         <span class="p">),</span> <span class="s2">&quot;Block superclass not initalized. was super().__init__ called?&quot;</span></div>
 
 <div class="viewcode-block" id="Block.done"><a class="viewcode-back" href="../../internals.html#bdsim.Block.done">[docs]</a>    <span class="k">def</span> <span class="nf">done</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>  <span class="c1"># end of simulation</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="Block.step"><a class="viewcode-back" href="../../internals.html#bdsim.Block.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>  <span class="c1"># valid</span>
         <span class="k">pass</span></div>
 
 <div class="viewcode-block" id="Block.savefig"><a class="viewcode-back" href="../../internals.html#bdsim.Block.savefig">[docs]</a>    <span class="k">def</span> <span class="nf">savefig</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">pos</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -2053,10 +1936,7 @@
         <span class="c1"># print(&#39;Sink constructor&#39;)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nout</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span> <span class="o">=</span> <span class="mi">0</span></div>
-
-<div class="viewcode-block" id="SinkBlock.step"><a class="viewcode-back" href="../../internals.html#bdsim.SinkBlock.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">):</span>  <span class="c1"># valid</span>
-        <span class="k">pass</span></div></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span> <span class="o">=</span> <span class="mi">0</span></div></div>
 
 
 <div class="viewcode-block" id="SourceBlock"><a class="viewcode-back" href="../../internals.html#bdsim.SourceBlock">[docs]</a><span class="k">class</span> <span class="nc">SourceBlock</span><span class="p">(</span><span class="n">Block</span><span class="p">):</span>
@@ -2257,8 +2137,8 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2020-, Peter Corke..
-      <span class="lastupdated">Last updated on 11-Jul-2023.
+    <p>&#169; Copyright 2020, Peter Corke.
+      <span class="lastupdated">Last updated on 11-Nov-2023.
       </span></p>
   </div>
 
