@@ -1,9 +1,10 @@
 {
-    "id": 140192902056064,
+    "id": 140690202600592,
     "created_by": "corkep",
     "creation_time": 1632824708,
-    "scene_width": 7207.200000000001,
-    "scene_height": 3595.2000000000003,
+    "simulation_time": 10.0,
+    "scene_width": 7168.000000000001,
+    "scene_height": 3785.6000000000004,
     "blocks": [
         {
             "id": 140596124728768,
@@ -42,6 +43,10 @@
                 [
                     "premul",
                     false
+                ],
+                [
+                    "blockargs",
+                    null
                 ]
             ]
         },
@@ -88,6 +93,10 @@
                 ],
                 [
                     "mode",
+                    null
+                ],
+                [
+                    "blockargs",
                     null
                 ]
             ]
@@ -136,6 +145,10 @@
                 [
                     "x0",
                     null
+                ],
+                [
+                    "blockargs",
+                    null
                 ]
             ]
         },
@@ -172,6 +185,10 @@
                 [
                     "on",
                     1.0
+                ],
+                [
+                    "blockargs",
+                    null
                 ]
             ]
         },
@@ -235,6 +252,18 @@
                 [
                     "watch",
                     false
+                ],
+                [
+                    "title",
+                    null
+                ],
+                [
+                    "loc",
+                    "best"
+                ],
+                [
+                    "blockargs",
+                    null
                 ]
             ]
         }
