@@ -8,7 +8,6 @@ The class definitions are grouped by block class
 |discrete.py |  discrete transfer blocks |
 |displays.py | graphical sink blocks |
 |functions.py | function blocks without state |
-|io.py | |
 |linalg.py | linear algebra blocks |
 |sinks.py | signal sink blocks |
 |sources.py | signal source blocks | 

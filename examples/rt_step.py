@@ -6,7 +6,7 @@ Copyright (c) 2023- Peter Corke
 """
 
 import bdsim
-from bdsim.blocks.io import *
+from bdsim.blocks.IO.Firmata import *
 
 sim = bdsim.BDRealTime(
     toolboxes=False, graphics=True, animation=True
