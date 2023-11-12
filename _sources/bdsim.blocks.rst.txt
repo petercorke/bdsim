@@ -34,9 +34,21 @@ Sink blocks
    :special-members: __init__
    :exclude-members: output, reset, step, start, done, nin, nout, inlabels, outlabels
 
+Display blocks
+==============
+
+.. automodule:: bdsim.blocks.displays
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :special-members: __init__
+   :exclude-members: output, reset, step, start, done, nin, nout, inlabels, outlabels
 
 Function blocks
 ===============
+
+Functions
+---------
 
 .. automodule:: bdsim.blocks.functions
    :members:
@@ -45,28 +57,9 @@ Function blocks
    :special-members: __init__
    :exclude-members: output, reset, step, start, done, nin, nout, inlabels, outlabels
 
-Transfer blocks
-===============
 
-.. automodule:: bdsim.blocks.transfers
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :special-members: __init__
-   :exclude-members: output, reset, step, start, done, deriv, nin, nout, inlabels, outlabels
-
-Discrete-time blocks
-====================
-
-.. automodule:: bdsim.blocks.discrete
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :special-members: __init__
-   :exclude-members: output, reset, step, start, done, deriv, nin, nout, inlabels, outlabels
-   
-Linear algebra blocks
-=====================
+Linear algebra
+--------------
 
 .. automodule:: bdsim.blocks.linalg
    :members:
@@ -74,7 +67,18 @@ Linear algebra blocks
    :show-inheritance:
    :special-members: __init__
    :exclude-members: output, reset, step, start, done, nin, nout, inlabels, outlabels
-  
+
+Spatial math
+------------
+
+.. automodule:: bdsim.blocks.spatial
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :special-members: __init__
+   :exclude-members: output, reset, step, start, done, nin, nout, inlabels, outlabels
+
+
 Connection blocks
 =================
 
@@ -84,6 +88,29 @@ Connection blocks
    :show-inheritance:
    :special-members: __init__
    :exclude-members: output, reset, step, start, done, nin, nout, inlabels, outlabels
+
+Dynamics
+========
+
+Continuous-time blocks
+----------------------
+
+.. automodule:: bdsim.blocks.transfers
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :special-members: __init__
+   :exclude-members: output, reset, step, start, done, deriv, nin, nout, inlabels, outlabels
+
+Discrete-time blocks
+--------------------
+
+.. automodule:: bdsim.blocks.discrete
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :special-members: __init__
+   :exclude-members: output, reset, step, start, done, deriv, nin, nout, inlabels, outlabels
 
 
 External Toolbox blocksets

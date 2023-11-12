@@ -3,9 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>bdsim.blocks.discrete &mdash; Block diagram simulation 0.7 documentation</title>
+  <title>bdsim.blocks.discrete &mdash; Block diagram simulation  documentation</title>
       <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/plot_directive.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../../../_static/js/html5shiv.min.js"></script>
@@ -32,6 +33,9 @@
             Block diagram simulation
               <img src="../../../_static/BDSimLogo_NoBackgnd@2x.png" class="logo" alt="Logo"/>
           </a>
+              <div class="version">
+                1.1.1
+              </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -88,7 +92,8 @@
 
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">inspect</span>
-<span class="kn">from</span> <span class="nn">spatialmath</span> <span class="kn">import</span> <span class="n">base</span><span class="p">,</span> <span class="n">Twist3</span><span class="p">,</span> <span class="n">SE3</span>
+<span class="kn">from</span> <span class="nn">spatialmath</span> <span class="kn">import</span> <span class="n">Twist3</span><span class="p">,</span> <span class="n">SE3</span>
+<span class="kn">import</span> <span class="nn">spatialmath.base</span> <span class="k">as</span> <span class="nn">smb</span>
 
 <span class="kn">from</span> <span class="nn">bdsim.components</span> <span class="kn">import</span> <span class="n">ClockedBlock</span>
 
@@ -99,17 +104,33 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`ZOH`</span>
 
-<span class="sd">    .. table::</span>
-<span class="sd">       :align: left</span>
+<span class="sd">    Zero-order hold.</span>
 
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | inputs     | outputs |  states |</span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | 1          | 1       | N       |</span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | float,     | float,  |         |</span>
-<span class="sd">    | A(N,)      | A(N,)   |         |</span>
-<span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    :inputs: 1</span>
+<span class="sd">    :outputs: 1</span>
+<span class="sd">    :states: N</span>
+
+<span class="sd">    .. list-table::</span>
+<span class="sd">        :header-rows: 1</span>
+
+<span class="sd">        *   - Port type</span>
+<span class="sd">            - Port number</span>
+<span class="sd">            - Types</span>
+<span class="sd">            - Description</span>
+<span class="sd">        *   - Input</span>
+<span class="sd">            - 0</span>
+<span class="sd">            - float, ndarray</span>
+<span class="sd">            - :math:`x`</span>
+<span class="sd">        *   - Output</span>
+<span class="sd">            - 0</span>
+<span class="sd">            - float, ndarray</span>
+<span class="sd">            - :math:`y`</span>
+
+<span class="sd">    Output is the input at the previous clock time $y_{k} = x_{k-1}.  The state can be a</span>
+<span class="sd">    scalar or a vector, this is given by the type of ``x0``.</span>
+
+<span class="sd">    .. note:: If input is not a scalar, ``x0`` must have the shape of the</span>
+<span class="sd">        input signal.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
@@ -117,38 +138,28 @@
 
 <div class="viewcode-block" id="ZOH.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.discrete.ZOH.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clock</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Zero-order hold.</span>
-
 <span class="sd">        :param clock: clock source</span>
 <span class="sd">        :type clock: Clock</span>
 <span class="sd">        :param x0: Initial value of the hold, defaults to 0</span>
 <span class="sd">        :type x0: array_like, optional</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
-<span class="sd">        :return: a ZOH block</span>
-<span class="sd">        :rtype: Integrator instance</span>
-
-<span class="sd">        Output is the input at the previous clock time.  The state can be a scalar or a</span>
-<span class="sd">        vector, this is given by the type of ``x0``.</span>
-
-<span class="sd">        .. note:: If input is not a scalar, ``x0`` must have the shape of the</span>
-<span class="sd">            input signal.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s2">&quot;sampler&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">clock</span><span class="o">=</span><span class="n">clock</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
 
-        <span class="n">x0</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">getvector</span><span class="p">(</span><span class="n">x0</span><span class="p">)</span>
+        <span class="n">x0</span> <span class="o">=</span> <span class="n">smb</span><span class="o">.</span><span class="n">getvector</span><span class="p">(</span><span class="n">x0</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_x0</span> <span class="o">=</span> <span class="n">x0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ndstates</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x0</span><span class="p">)</span></div>
         <span class="c1"># print(&#39;nstates&#39;, self.nstates)</span>
 
-    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="c1"># print(&#39;* output, x is &#39;, self._x)</span>
-        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">x</span><span class="p">]</span>
 
-<div class="viewcode-block" id="ZOH.next"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.discrete.ZOH.next">[docs]</a>    <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">xnext</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">xnext</span></div></div>
+<div class="viewcode-block" id="ZOH.next"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.discrete.ZOH.next">[docs]</a>    <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="n">smb</span><span class="o">.</span><span class="n">getvector</span><span class="p">(</span><span class="n">inports</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">u</span>  <span class="c1"># must be an ndarray</span></div></div>
 
 
 <span class="c1"># ------------------------------------------------------------------------</span>
@@ -158,17 +169,39 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`DINTEGRATOR`</span>
 
-<span class="sd">    .. table::</span>
-<span class="sd">       :align: left</span>
+<span class="sd">    Discrete-time integrator.</span>
 
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | inputs     | outputs |  states |</span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | 1          | 1       | N       |</span>
-<span class="sd">    +------------+---------+---------+</span>
-<span class="sd">    | float,     | float,  |         |</span>
-<span class="sd">    | A(N,)      | A(N,)   |         |</span>
-<span class="sd">    +------------+---------+---------+</span>
+<span class="sd">    :inputs: 1</span>
+<span class="sd">    :outputs: 1</span>
+<span class="sd">    :states: N</span>
+
+<span class="sd">    .. list-table::</span>
+<span class="sd">        :header-rows: 1</span>
+
+<span class="sd">        *   - Port type</span>
+<span class="sd">            - Port number</span>
+<span class="sd">            - Types</span>
+<span class="sd">            - Description</span>
+<span class="sd">        *   - Input</span>
+<span class="sd">            - 0</span>
+<span class="sd">            - float, ndarray</span>
+<span class="sd">            - :math:`x`</span>
+<span class="sd">        *   - Output</span>
+<span class="sd">            - 0</span>
+<span class="sd">            - float, ndarray</span>
+<span class="sd">            - :math:`y`</span>
+
+<span class="sd">    Create a discrete-time integrator block.</span>
+
+<span class="sd">    Output is the time integral of the input.  The state can be a scalar or a</span>
+<span class="sd">    vector, this is given by the type of ``x0``.</span>
+
+<span class="sd">    The minimum and maximum values can be:</span>
+
+<span class="sd">        - a scalar, in which case the same value applies to every element of</span>
+<span class="sd">          the state vector, or</span>
+<span class="sd">        - a vector, of the same shape as ``x0`` that applies elementwise to</span>
+<span class="sd">          the state.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
@@ -176,8 +209,6 @@
 
 <div class="viewcode-block" id="DIntegrator.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.discrete.DIntegrator.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clock</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Discrete-time integrator.</span>
-
 <span class="sd">        :param clock: clock source</span>
 <span class="sd">        :type clock: Clock</span>
 <span class="sd">        :param x0: Initial state, defaults to 0</span>
@@ -190,20 +221,6 @@
 <span class="sd">        :type max: float or array_like, optional</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
-<span class="sd">        :return: an INTEGRATOR block</span>
-<span class="sd">        :rtype: Integrator instance</span>
-
-<span class="sd">        Create a discrete-time integrator block.</span>
-
-<span class="sd">        Output is the time integral of the input.  The state can be a scalar or a</span>
-<span class="sd">        vector, this is given by the type of ``x0``.</span>
-
-<span class="sd">        The minimum and maximum values can be:</span>
-
-<span class="sd">            - a scalar, in which case the same value applies to every element of</span>
-<span class="sd">              the state vector, or</span>
-<span class="sd">            - a vector, of the same shape as ``x0`` that applies elementwise to</span>
-<span class="sd">              the state.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">clock</span><span class="o">=</span><span class="n">clock</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
 
@@ -214,25 +231,25 @@
             <span class="k">if</span> <span class="n">x0</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;state must be a 1D vector&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">x0</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">getvector</span><span class="p">(</span><span class="n">x0</span><span class="p">)</span>
+            <span class="n">x0</span> <span class="o">=</span> <span class="n">smb</span><span class="o">.</span><span class="n">getvector</span><span class="p">(</span><span class="n">x0</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">ndstates</span> <span class="o">=</span> <span class="n">x0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
         <span class="k">if</span> <span class="nb">min</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="nb">min</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">getvector</span><span class="p">(</span><span class="nb">min</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndstates</span><span class="p">)</span>
+            <span class="nb">min</span> <span class="o">=</span> <span class="n">smb</span><span class="o">.</span><span class="n">getvector</span><span class="p">(</span><span class="nb">min</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndstates</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="nb">max</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">getvector</span><span class="p">(</span><span class="nb">max</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndstates</span><span class="p">)</span>
+            <span class="nb">max</span> <span class="o">=</span> <span class="n">smb</span><span class="o">.</span><span class="n">getvector</span><span class="p">(</span><span class="nb">max</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndstates</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_x0</span> <span class="o">=</span> <span class="n">x0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">min</span> <span class="o">=</span> <span class="nb">min</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max</span> <span class="o">=</span> <span class="nb">max</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">=</span> <span class="n">gain</span></div>
 
-    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">]</span>
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">x</span><span class="p">]</span>
 
-<div class="viewcode-block" id="DIntegrator.next"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.discrete.DIntegrator.next">[docs]</a>    <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">xnext</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">clock</span><span class="o">.</span><span class="n">T</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<div class="viewcode-block" id="DIntegrator.next"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.discrete.DIntegrator.next">[docs]</a>    <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">xnext</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">clock</span><span class="o">.</span><span class="n">T</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">u</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">min</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">xnext</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">xnext</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">min</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">xnext</span></div></div>
@@ -242,16 +259,34 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`DPOSEINTEGRATOR`</span>
 
-<span class="sd">    .. table::</span>
-<span class="sd">       :align: left</span>
+<span class="sd">    Discrete-time spatial velocity integrator.</span>
 
-<span class="sd">       +------------+---------+---------+</span>
-<span class="sd">       | inputs     | outputs |  states |</span>
-<span class="sd">       +------------+---------+---------+</span>
-<span class="sd">       | 1          | 1       | N       |</span>
-<span class="sd">       +------------+---------+---------+</span>
-<span class="sd">       | A(6,)      | SE3     |         |</span>
-<span class="sd">       +------------+---------+---------+</span>
+<span class="sd">    :inputs: 1</span>
+<span class="sd">    :outputs: 1</span>
+<span class="sd">    :states: 6</span>
+
+<span class="sd">    .. list-table::</span>
+<span class="sd">        :header-rows: 1</span>
+
+<span class="sd">        *   - Port type</span>
+<span class="sd">            - Port number</span>
+<span class="sd">            - Types</span>
+<span class="sd">            - Description</span>
+<span class="sd">        *   - Input</span>
+<span class="sd">            - 0</span>
+<span class="sd">            - ndarray(6,)</span>
+<span class="sd">            - :math:`x`</span>
+<span class="sd">        *   - Output</span>
+<span class="sd">            - 0</span>
+<span class="sd">            - SE3</span>
+<span class="sd">            - :math:`y`</span>
+
+<span class="sd">    This block integrates spatial velocity over time.</span>
+<span class="sd">    The block input is a spatial velocity as a 6-vector</span>
+<span class="sd">    :math:`(v_x, v_y, v_z, \omega_x, \omega_y, \omega_z)` and the output</span>
+<span class="sd">    is pose as an ``SE3`` instance.</span>
+
+<span class="sd">    .. note:: State is a velocity twist.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
@@ -261,24 +296,12 @@
 
 <div class="viewcode-block" id="DPoseIntegrator.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.discrete.DPoseIntegrator.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clock</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Discrete-time spatial velocity integrator.</span>
-
 <span class="sd">        :param clock: clock source</span>
 <span class="sd">        :type clock: Clock</span>
 <span class="sd">        :param x0: Initial pose, defaults to null</span>
 <span class="sd">        :type x0: SE3, optional</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
-<span class="sd">        :return: an DPOSEINTEGRATOR block</span>
-<span class="sd">        :rtype: Integrator instance</span>
-
-<span class="sd">        This block integrates spatial velocity over time.</span>
-<span class="sd">        The block input is a spatial velocity as a 6-vector</span>
-<span class="sd">        :math:`(v_x, v_y, v_z, \omega_x, \omega_y, \omega_z)` and the output</span>
-<span class="sd">        is pose as an ``SE3`` instance.</span>
-
-<span class="sd">        .. note:: State is a velocity twist.</span>
-
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">clock</span><span class="o">=</span><span class="n">clock</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
 
@@ -297,12 +320,12 @@
 
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;nstates&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nstates</span><span class="p">,</span> <span class="n">x0</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">Twist3</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">)</span><span class="o">.</span><span class="n">SE3</span><span class="p">()]</span>
+    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">Twist3</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">SE3</span><span class="p">()]</span>
 
-<div class="viewcode-block" id="DPoseIntegrator.next"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.discrete.DPoseIntegrator.next">[docs]</a>    <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">T_delta</span> <span class="o">=</span> <span class="n">SE3</span><span class="o">.</span><span class="n">Delta</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">clock</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
-        <span class="n">pose</span> <span class="o">=</span> <span class="n">Twist3</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">)</span><span class="o">.</span><span class="n">SE3</span><span class="p">()</span> <span class="o">*</span> <span class="n">T_delta</span>
+<div class="viewcode-block" id="DPoseIntegrator.next"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.discrete.DPoseIntegrator.next">[docs]</a>    <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">T_delta</span> <span class="o">=</span> <span class="n">SE3</span><span class="o">.</span><span class="n">Delta</span><span class="p">(</span><span class="n">u</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">clock</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        <span class="n">pose</span> <span class="o">=</span> <span class="n">Twist3</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">SE3</span><span class="p">()</span> <span class="o">*</span> <span class="n">T_delta</span>
         <span class="k">return</span> <span class="n">Twist3</span><span class="p">(</span><span class="n">pose</span><span class="p">)</span><span class="o">.</span><span class="n">A</span></div></div>
 
 
@@ -517,8 +540,8 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2020, Peter Corke.
-      <span class="lastupdated">Last updated on 11-Nov-2023.
+    <p>&#169; Copyright 2020-, Peter Corke..
+      <span class="lastupdated">Last updated on 12-Nov-2023.
       </span></p>
   </div>
 

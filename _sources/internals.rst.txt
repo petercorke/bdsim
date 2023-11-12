@@ -34,7 +34,7 @@ BlockDiagram class
 This class describes a block diagram, a collection of blocks and wires that
 can be "executed".
 
-.. autoclass:: bdsim.blockdiagram
+.. autoclass:: bdsim.BlockDiagram
    :members:
    :undoc-members:
    :show-inheritance:
