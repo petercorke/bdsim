@@ -249,7 +249,7 @@ class BDSimState:
 class BDSim:
     _blocklibrary = None
 
-    def __init__(self, banner=True, packages=None, load=True, **kwargs):
+    def __init__(self, banner=True, packages=None, load=True, toolboxes=True, **kwargs):
         """
         :param banner: display docstring banner, defaults to True
         :type banner: bool, optional
@@ -331,7 +331,9 @@ class BDSim:
 
         # load modules from the blocks folder
         if BDSim._blocklibrary is None and load:
-            BDSim._blocklibrary = self.load_blocks(self.options.verbose)
+            BDSim._blocklibrary = self.load_blocks(
+                self.options.verbose, toolboxes=toolboxes
+            )
         if self.options.blocks:
             self.blocks()
 
@@ -1060,7 +1062,7 @@ class BDSim:
         print(message)
         sys.exit(retval)
 
-    def load_blocks(self, verbose=True):
+    def load_blocks(self, verbose=True, toolboxes=True):
         """
         Dynamically load all block definitions.
 
@@ -1140,8 +1142,6 @@ class BDSim:
             for line in fieldlines:
                 m = re_field.match(line)
                 if m is not None:
-                    if name == "Bicycle":
-                        z = 3
                     field, var, body = m.groups()
                     if var in excludevars or field not in fieldnames:
                         continue
@@ -1167,7 +1167,10 @@ class BDSim:
 
         block = namedtuple("block", "name, cls, path")
 
-        packages = ["bdsim", "roboticstoolbox", "machinevisiontoolbox"]
+        if toolboxes:
+            packages = ["bdsim", "roboticstoolbox", "machinevisiontoolbox"]
+        else:
+            packages = ["bdsim"]
         env = os.getenv("BDSIMPATH")
         if env is not None:
             packages += env.split(":")
