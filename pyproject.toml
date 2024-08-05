@@ -1,14 +1,12 @@
 [project]
 name = "bdsim"
-version = "1.1.1"
-authors = [
-  { name="Peter Corke", email="rvc@petercorke.com" },
-]
+version = "1.1.2"
+authors = [{ name = "Peter Corke", email = "rvc@petercorke.com" }]
 
 dependencies = [
     "numpy>=1.17.4",
-    "scipy", 
-    "matplotlib", 
+    "scipy",
+    "matplotlib",
     "spatialmath-python",
     "ansitable",
     "progress",
@@ -23,11 +21,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-keywords = [
-    "python",
-    "block diagram",
-    "dynamic simulation",
-]
+keywords = ["python", "block diagram", "dynamic simulation"]
 
 [project.urls]
 homepage = "https://github.com/petercorke/bdsim"
@@ -36,29 +30,19 @@ repository = "https://github.com/petercorke/bdsim"
 
 [project.optional-dependencies]
 
-dev = [
-    "sympy",
-    "pytest",
-    "pytest-timeout",
-    "pytest-xvfb",
-    "coverage",
-    "flake8"
-]
+dev = ["sympy", "pytest", "pytest-timeout", "pytest-xvfb", "coverage", "flake8"]
 
 docs = [
-    "sphinx", 
-    "sphinx-rtd-theme", 
-    "sphinx-autorun", 
-    "sphinxcontrib-jsmath", 
+    "sphinx",
+    "sphinx-rtd-theme",
+    "sphinx-autorun",
+    "sphinxcontrib-jsmath",
     "sphinx-markdown-tables",
     "sphinx-autodoc-typehints",
     "sphinx-favicon",
 ]
 
-edit = [
-    "PyQt5",
-    "PIL",
-]
+edit = ["PyQt5", "PIL"]
 
 [project.scripts]
 
@@ -78,11 +62,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 
-packages = [
-    "bdsim",
-    "bdsim.blocks",
-    "bdsim.bdedit",
-]
+packages = ["bdsim", "bdsim.blocks", "bdsim.bdedit"]
 
 [tool.black]
 line-length = 88
@@ -92,4 +72,11 @@ target-version = ['py37']
 testpaths = "tests"
 
 [tool.coverage.run]
-omit = ["tex2icon.py", "io.py", "vision.py", "bdsim/bdedit/*.py", "tk_editor/*.py", "examples/RVC3/*.py"]
+omit = [
+    "tex2icon.py",
+    "io.py",
+    "vision.py",
+    "bdsim/bdedit/*.py",
+    "tk_editor/*.py",
+    "examples/RVC3/*.py",
+]
