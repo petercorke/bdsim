@@ -13,20 +13,17 @@ from math import pi, sqrt, sin, cos, atan2
 
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import Polygon
-from numpy.lib.shape_base import expand_dims
-
 
 import spatialmath.base as sm
 
 from bdsim.components import SinkBlock
 from bdsim.graphics import GraphicsBlock
 
-
 # ------------------------------------------------------------------------ #
 
 
 class Scope(GraphicsBlock):
-    """
+    r"""
     :blockname:`SCOPE`
 
     Plot input signals against time.
@@ -50,7 +47,7 @@ class Scope(GraphicsBlock):
     Create a scope block that plots multiple signals against time.
 
     For each line plotted we can specify the:
-    
+
     * line style as a heterogeneous list of:
 
       * Matplotlib `fmt` string comprising a color and line style, eg. ``"k"`` or ``"r:"``
@@ -90,7 +87,7 @@ class Scope(GraphicsBlock):
         bd.SCOPE(styles=[{'color': 'blue'}, {'color': 'red', 'linestyle': '--'}])
 
     **Single input port with NumPy array**
-     
+
     The port is fed with a 1D-array, and ``vector`` is an:
 
     * int, this is the expected width of the array, all its elements will be plotted
@@ -101,11 +98,11 @@ class Scope(GraphicsBlock):
         bd.SCOPE(vector=[0,1,2]) # display elements 0, 1, 2 of array on port 0
         bd.SCOPE(vector=[0,1], styles=[{'color': 'blue'}, {'color': 'red', 'linestyle': '--'}])
 
-    .. note:: 
-        * If the vector is of width 3, by default the inputs are plotted as red, green 
-          and blue lines. 
+    .. note::
+        * If the vector is of width 3, by default the inputs are plotted as red, green
+          and blue lines.
         * If the vector is of width 6, by default the first three inputs are plotted as
-          solid red, green and blue lines and the last three inputs are plotted as 
+          solid red, green and blue lines and the last three inputs are plotted as
           dashed red, green and blue lines.
     """
 
@@ -239,7 +236,6 @@ class Scope(GraphicsBlock):
             np.array([]),
         ] * self.nplots
 
-
         # create the figures
         self.fig = self.create_figure(simstate)
         self.ax = self.fig.add_subplot(111)
@@ -303,12 +299,16 @@ class Scope(GraphicsBlock):
         if self.scale != "auto":
             self.ax.set_ylim(*self.scale)
         if self.labels is not None:
+
             def fix_underscore(s):
                 if s[0] == "_":
                     return "-" + s[1:]
                 else:
                     return s
-            self.ax.legend([fix_underscore(label) for label in self.labels], loc=self.loc)
+
+            self.ax.legend(
+                [fix_underscore(label) for label in self.labels], loc=self.loc
+            )
 
         if self.watch:
             for wire in self.input_wires:

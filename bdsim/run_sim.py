@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import sys
 import importlib
+import traceback as tb
 import inspect
 from collections import Counter, namedtuple
 import argparse
@@ -212,7 +213,6 @@ def blockname(name):
 
 
 class BDSimState:
-
     """
     :ivar x: state vector
     :vartype x: np.ndarray
@@ -249,7 +249,7 @@ class BDSimState:
 class BDSim:
     _blocklibrary = None
 
-    def __init__(self, banner=True, packages=None, load=True, **kwargs):
+    def __init__(self, banner=True, packages=None, load=True, toolboxes=True, **kwargs):
         """
         :param banner: display docstring banner, defaults to True
         :type banner: bool, optional
@@ -331,7 +331,9 @@ class BDSim:
 
         # load modules from the blocks folder
         if BDSim._blocklibrary is None and load:
-            BDSim._blocklibrary = self.load_blocks(self.options.verbose)
+            BDSim._blocklibrary = self.load_blocks(
+                self.options.verbose, toolboxes=toolboxes
+            )
         if self.options.blocks:
             self.blocks()
 
@@ -1060,7 +1062,7 @@ class BDSim:
         print(message)
         sys.exit(retval)
 
-    def load_blocks(self, verbose=True):
+    def load_blocks(self, verbose=True, toolboxes=True):
         """
         Dynamically load all block definitions.
 
@@ -1140,8 +1142,6 @@ class BDSim:
             for line in fieldlines:
                 m = re_field.match(line)
                 if m is not None:
-                    if name == "Bicycle":
-                        z = 3
                     field, var, body = m.groups()
                     if var in excludevars or field not in fieldnames:
                         continue
@@ -1167,7 +1167,14 @@ class BDSim:
 
         block = namedtuple("block", "name, cls, path")
 
-        packages = ["bdsim", "roboticstoolbox", "machinevisiontoolbox"]
+        if toolboxes:
+            packages = [
+                "bdsim",
+                "roboticstoolbox",
+                "machinevisiontoolbox",
+            ]
+        else:
+            packages = ["bdsim"]
         env = os.getenv("BDSIMPATH")
         if env is not None:
             packages += env.split(":")
@@ -1179,19 +1186,31 @@ class BDSim:
         for package in packages:
             try:
                 spec = importlib.util.find_spec(".blocks", package=package)
-                if spec is None:
-                    print(f"package {package} has no blocks module")
-                    continue
-                pkg = spec.loader.load_module()
-            except ModuleNotFoundError:
-                print(f"package {package} not found")
+            except ModuleNotFoundError as err:
+                print(
+                    f"package {package} not loaded: not found, not a proper package, no blocks module"
+                )
                 continue
-            except ImportError:
-                print(f"package {package} load error, continuing")
-                import textwrap
 
-                print(textwrap.indent(traceback.format_exc(), "    "))
+            if spec is None:
+                print(f"package {package} not found or has no blocks module")
                 continue
+
+            try:
+                pkg = spec.loader.load_module()
+            except Exception as err:
+                print(f"package {package} contains a compile error")
+                exc = sys.exception()
+                print(fg("red"))
+                tb.print_exception(exc, limit=-4)
+                print(attr(0))
+                continue
+            # except ImportError:
+            #     print(f"package {package} load error, continuing")
+            #     import textwrap
+
+            #     print(textwrap.indent(traceback.format_exc(), "    "))
+            #     continue
 
             moduledict = {}
 
@@ -1243,9 +1262,9 @@ class BDSim:
 
                 # create a dict for the block with metadata
                 block_info = {}
-                block_info[
-                    "path"
-                ] = pkg.__path__  # path to folder holding block definition
+                block_info["path"] = (
+                    pkg.__path__
+                )  # path to folder holding block definition
                 block_info["classname"] = name
                 block_info["blockname"] = blockname(name)
 

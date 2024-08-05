@@ -164,6 +164,15 @@ class BlockDiagram:
 
         # start.type = 'start'
 
+        # ensure all blocks are in the blocklist
+        for x in [start, *ends]:
+            if isinstance(x, Block):
+                if x.bd is None:
+                    self.add_block(x)
+            elif isinstance(x, Plug):
+                if x.block.bd is None:
+                    self.add_block(x.block)
+
         for end in ends:
             if isinstance(start, Block):
                 if isinstance(end, Block):
@@ -764,7 +773,7 @@ class BlockDiagram:
     def _debugger(self, simstate=None, integrator=None):
         if simstate.t_stop is not None and simstate.t < simstate.t_stop:
             return
-        
+
         def print_output(b, t, inports, x):
             out = b.output(t, inports, x)
             if len(out) == 1:
@@ -803,7 +812,9 @@ class BlockDiagram:
                             if b.nout > 0:
                                 print_output(b, t, b.inputs, b._x)
                 elif cmd[0] == "i":
-                    print(f"status={integrator.status}, dt={integrator.step_size:.4g}, nfev={integrator.nfev}")
+                    print(
+                        f"status={integrator.status}, dt={integrator.step_size:.4g}, nfev={integrator.nfev}"
+                    )
                 elif cmd[0] == "s":
                     # step
                     break
@@ -825,7 +836,9 @@ class BlockDiagram:
                         print(self.debug_watch)
                         self.debug_watch = None
                     else:
-                        self.debug_watch = [self.blocklist[int(s.strip())] for s in cmd[2:].split(" ")]
+                        self.debug_watch = [
+                            self.blocklist[int(s.strip())] for s in cmd[2:].split(" ")
+                        ]
                 elif cmd == "pdb":
                     import pdb
 
@@ -845,6 +858,7 @@ class BlockDiagram:
             except (IndexError, ValueError, TypeError):
                 print("??")
                 pass
+
     # ---------------------------------------------------------------------- #
 
     def report_summary(self, sortby="name", **kwargs):
