@@ -1,21 +1,24 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="../../">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>bdsim.graphics &mdash; Block diagram simulation  documentation</title>
-      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../../_static/plot_directive.css" type="text/css" />
-      <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+
+  
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/underscore.js"></script>
-        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
@@ -34,7 +37,7 @@
               <img src="../../_static/BDSimLogo_NoBackgnd@2x.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                1.1.1
+                1.1.2
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -83,7 +86,9 @@
 <span class="kn">from</span> <span class="nn">bdsim.components</span> <span class="kn">import</span> <span class="n">SinkBlock</span>
 
 
-<div class="viewcode-block" id="GraphicsBlock"><a class="viewcode-back" href="../../internals.html#bdsim.GraphicsBlock">[docs]</a><span class="k">class</span> <span class="nc">GraphicsBlock</span><span class="p">(</span><span class="n">SinkBlock</span><span class="p">):</span>
+<div class="viewcode-block" id="GraphicsBlock">
+<a class="viewcode-back" href="../../internals.html#bdsim.GraphicsBlock">[docs]</a>
+<span class="k">class</span> <span class="nc">GraphicsBlock</span><span class="p">(</span><span class="n">SinkBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A GraphicsBlock is a subclass of SinkBlock that represents a block that has inputs</span>
 <span class="sd">    but no outputs and creates/updates a graphical display.</span>
@@ -91,7 +96,9 @@
 
     <span class="n">blockclass</span> <span class="o">=</span> <span class="s2">&quot;graphics&quot;</span>
 
-<div class="viewcode-block" id="GraphicsBlock.__init__"><a class="viewcode-back" href="../../internals.html#bdsim.GraphicsBlock.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">movie</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<div class="viewcode-block" id="GraphicsBlock.__init__">
+<a class="viewcode-back" href="../../internals.html#bdsim.GraphicsBlock.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">movie</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create a graphical display block.</span>
 
@@ -110,7 +117,10 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">movie</span> <span class="o">=</span> <span class="n">movie</span></div>
 
-<div class="viewcode-block" id="GraphicsBlock.start"><a class="viewcode-back" href="../../internals.html#bdsim.GraphicsBlock.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simstate</span><span class="p">):</span>
+
+<div class="viewcode-block" id="GraphicsBlock.start">
+<a class="viewcode-back" href="../../internals.html#bdsim.GraphicsBlock.start">[docs]</a>
+    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simstate</span><span class="p">):</span>
 
         <span class="c1"># plt.draw()</span>
         <span class="c1"># plt.show(block=False)</span>
@@ -133,7 +143,10 @@
             <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">fatal</span><span class="p">(</span><span class="s2">&quot;cannot save movie, please install ffmpeg&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="GraphicsBlock.step"><a class="viewcode-back" href="../../internals.html#bdsim.GraphicsBlock.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">):</span>
+
+<div class="viewcode-block" id="GraphicsBlock.step">
+<a class="viewcode-back" href="../../internals.html#bdsim.GraphicsBlock.step">[docs]</a>
+    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">)</span>
 
         <span class="c1"># bring the figure up to date in a backend-specific way</span>
@@ -154,7 +167,10 @@
             <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">fatal</span><span class="p">(</span><span class="s2">&quot;cannot save movie, please install ffmpeg&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="GraphicsBlock.done"><a class="viewcode-back" href="../../internals.html#bdsim.GraphicsBlock.done">[docs]</a>    <span class="k">def</span> <span class="nf">done</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+<div class="viewcode-block" id="GraphicsBlock.done">
+<a class="viewcode-back" href="../../internals.html#bdsim.GraphicsBlock.done">[docs]</a>
+    <span class="k">def</span> <span class="nf">done</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fig</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">start_event_loop</span><span class="p">(</span><span class="mf">0.001</span><span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">movie</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -162,7 +178,10 @@
                 <span class="c1"># self.cleanup()</span>
             <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="n">block</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="GraphicsBlock.savefig"><a class="viewcode-back" href="../../internals.html#bdsim.GraphicsBlock.savefig">[docs]</a>    <span class="k">def</span> <span class="nf">savefig</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;pdf&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+<div class="viewcode-block" id="GraphicsBlock.savefig">
+<a class="viewcode-back" href="../../internals.html#bdsim.GraphicsBlock.savefig">[docs]</a>
+    <span class="k">def</span> <span class="nf">savefig</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;pdf&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Save the figure as an image file</span>
 
@@ -184,7 +203,10 @@
         <span class="k">except</span><span class="p">:</span>
             <span class="k">pass</span></div>
 
-<div class="viewcode-block" id="GraphicsBlock.create_figure"><a class="viewcode-back" href="../../internals.html#bdsim.GraphicsBlock.create_figure">[docs]</a>    <span class="k">def</span> <span class="nf">create_figure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+
+<div class="viewcode-block" id="GraphicsBlock.create_figure">
+<a class="viewcode-back" href="../../internals.html#bdsim.GraphicsBlock.create_figure">[docs]</a>
+    <span class="k">def</span> <span class="nf">create_figure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
         <span class="k">def</span> <span class="nf">move_figure</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
 <span class="w">            </span><span class="sd">&quot;&quot;&quot;Move figure&#39;s upper left corner to pixel (x, y)&quot;&quot;&quot;</span>
             <span class="n">backend</span> <span class="o">=</span> <span class="n">matplotlib</span><span class="o">.</span><span class="n">get_backend</span><span class="p">()</span>
@@ -358,7 +380,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">(</span>
             <span class="s2">&quot;graphics&quot;</span><span class="p">,</span> <span class="s2">&quot;create figure </span><span class="si">{:d}</span><span class="s2"> at (</span><span class="si">{:d}</span><span class="s2">, </span><span class="si">{:d}</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="n">gstate</span><span class="o">.</span><span class="n">fignum</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">col</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">f</span></div></div>
+        <span class="k">return</span> <span class="n">f</span></div>
+</div>
+
 </pre></div>
 
            </div>
@@ -369,7 +393,7 @@
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020-, Peter Corke..
-      <span class="lastupdated">Last updated on 12-Nov-2023.
+      <span class="lastupdated">Last updated on 05-Aug-2024.
       </span></p>
   </div>
 

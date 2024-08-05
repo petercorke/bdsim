@@ -1,21 +1,24 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="../../../">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>bdsim.blocks.linalg &mdash; Block diagram simulation  documentation</title>
-      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../../../_static/plot_directive.css" type="text/css" />
-      <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/plot_directive.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=fd3f3429" />
+
+  
   <!--[if lt IE 9]>
     <script src="../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-        <script src="../../../_static/jquery.js"></script>
-        <script src="../../../_static/underscore.js"></script>
-        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
@@ -34,7 +37,7 @@
               <img src="../../../_static/BDSimLogo_NoBackgnd@2x.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                1.1.1
+                1.1.2
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
@@ -93,7 +96,9 @@
 <span class="kn">from</span> <span class="nn">bdsim.components</span> <span class="kn">import</span> <span class="n">FunctionBlock</span>
 
 
-<div class="viewcode-block" id="Inverse"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Inverse">[docs]</a><span class="k">class</span> <span class="nc">Inverse</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
+<div class="viewcode-block" id="Inverse">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Inverse">[docs]</a>
+<span class="k">class</span> <span class="nc">Inverse</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`INVERSE`</span>
 
@@ -138,7 +143,9 @@
 
     <span class="n">onames</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;inv&quot;</span><span class="p">,</span> <span class="s2">&quot;cond&quot;</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Inverse.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Inverse.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pinv</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Inverse.__init__">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Inverse.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pinv</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param pinv: force pseudo inverse, defaults to False</span>
 <span class="sd">        :type pinv: bool, optional</span>
@@ -149,6 +156,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s2">&quot;inverse&quot;</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">pinv</span> <span class="o">=</span> <span class="n">pinv</span></div>
+
 
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="n">mat</span> <span class="o">=</span> <span class="n">inports</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -174,8 +182,11 @@
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;object cannot be inverted&quot;</span><span class="p">)</span></div>
 
 
+
 <span class="c1"># ------------------------------------------------------------------------ #</span>
-<div class="viewcode-block" id="Transpose"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Transpose">[docs]</a><span class="k">class</span> <span class="nc">Transpose</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
+<div class="viewcode-block" id="Transpose">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Transpose">[docs]</a>
+<span class="k">class</span> <span class="nc">Transpose</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`TRANSPOSE`</span>
 
@@ -215,13 +226,16 @@
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
-<div class="viewcode-block" id="Transpose.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Transpose.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Transpose.__init__">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Transpose.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s2">&quot;transpose&quot;</span></div>
+
 
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="n">mat</span> <span class="o">=</span> <span class="n">inports</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -234,10 +248,13 @@
         <span class="k">return</span> <span class="p">[</span><span class="n">out</span><span class="p">]</span></div>
 
 
+
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 
 
-<div class="viewcode-block" id="Norm"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Norm">[docs]</a><span class="k">class</span> <span class="nc">Norm</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
+<div class="viewcode-block" id="Norm">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Norm">[docs]</a>
+<span class="k">class</span> <span class="nc">Norm</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`NORM`</span>
 
@@ -271,7 +288,9 @@
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
-<div class="viewcode-block" id="Norm.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Norm.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">ord</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Norm.__init__">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Norm.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">ord</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param axis: specifies the axis along which to compute the vector norms, defaults to None.</span>
 <span class="sd">        :type axis: int, optional</span>
@@ -284,16 +303,20 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s2">&quot;norm&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">ord</span><span class="o">=</span><span class="nb">ord</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">)</span></div>
 
+
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="n">vec</span> <span class="o">=</span> <span class="n">inports</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">out</span><span class="p">]</span></div>
 
 
+
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 
 
-<div class="viewcode-block" id="Flatten"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Flatten">[docs]</a><span class="k">class</span> <span class="nc">Flatten</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
+<div class="viewcode-block" id="Flatten">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Flatten">[docs]</a>
+<span class="k">class</span> <span class="nc">Flatten</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`FLATTEN`</span>
 
@@ -327,7 +350,9 @@
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
-<div class="viewcode-block" id="Flatten.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Flatten.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Flatten.__init__">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Flatten.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param order: flattening order, either &quot;C&quot; or &quot;F&quot;, defaults to &quot;C&quot;</span>
 <span class="sd">        :type order: str</span>
@@ -338,16 +363,20 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s2">&quot;flatten&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">order</span> <span class="o">=</span> <span class="n">order</span></div>
 
+
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="n">vec</span> <span class="o">=</span> <span class="n">inports</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">out</span> <span class="o">=</span> <span class="n">vec</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">out</span><span class="p">]</span></div>
 
 
+
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 
 
-<div class="viewcode-block" id="Slice2"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Slice2">[docs]</a><span class="k">class</span> <span class="nc">Slice2</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
+<div class="viewcode-block" id="Slice2">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Slice2">[docs]</a>
+<span class="k">class</span> <span class="nc">Slice2</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`SLICE2`</span>
 
@@ -412,7 +441,9 @@
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
-<div class="viewcode-block" id="Slice2.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Slice2.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cols</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Slice2.__init__">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Slice2.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cols</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param rows: row selection, defaults to None</span>
 <span class="sd">        :type rows: tuple(3) or list</span>
@@ -442,6 +473,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;bad columns specifier&quot;</span><span class="p">)</span></div>
 
+
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="n">array</span> <span class="o">=</span> <span class="n">inports</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">array</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
@@ -449,10 +481,13 @@
         <span class="k">return</span> <span class="p">[</span><span class="n">array</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">rows</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cols</span><span class="p">]]</span></div>
 
 
+
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 
 
-<div class="viewcode-block" id="Slice1"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Slice1">[docs]</a><span class="k">class</span> <span class="nc">Slice1</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
+<div class="viewcode-block" id="Slice1">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Slice1">[docs]</a>
+<span class="k">class</span> <span class="nc">Slice1</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`SLICE1`</span>
 
@@ -511,7 +546,9 @@
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
-<div class="viewcode-block" id="Slice1.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Slice1.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Slice1.__init__">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Slice1.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param index: slice, defaults to None</span>
 <span class="sd">        :type index: tuple(3)</span>
@@ -530,6 +567,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;bad index specifier&quot;</span><span class="p">)</span></div>
 
+
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="n">array</span> <span class="o">=</span> <span class="n">inports</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">array</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
@@ -537,8 +575,11 @@
         <span class="k">return</span> <span class="p">[</span><span class="n">array</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">]]</span></div>
 
 
+
 <span class="c1"># ------------------------------------------------------------------------ #</span>
-<div class="viewcode-block" id="Det"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Det">[docs]</a><span class="k">class</span> <span class="nc">Det</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
+<div class="viewcode-block" id="Det">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Det">[docs]</a>
+<span class="k">class</span> <span class="nc">Det</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`DET`</span>
 
@@ -572,7 +613,9 @@
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
-<div class="viewcode-block" id="Det.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Det.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Det.__init__">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Det.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
@@ -580,14 +623,18 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s2">&quot;det&quot;</span></div>
 
+
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="n">mat</span> <span class="o">=</span> <span class="n">inports</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">det</span><span class="p">(</span><span class="n">mat</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">out</span><span class="p">]</span></div>
 
 
+
 <span class="c1"># ------------------------------------------------------------------------ #</span>
-<div class="viewcode-block" id="Cond"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Cond">[docs]</a><span class="k">class</span> <span class="nc">Cond</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
+<div class="viewcode-block" id="Cond">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Cond">[docs]</a>
+<span class="k">class</span> <span class="nc">Cond</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`COND`</span>
 
@@ -619,7 +666,9 @@
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
-<div class="viewcode-block" id="Cond.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Cond.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Cond.__init__">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.linalg.Cond.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param blockargs: |BlockOptions|</span>
 <span class="sd">        :type blockargs: dict</span>
@@ -627,10 +676,12 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s2">&quot;cond&quot;</span></div>
 
+
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="n">mat</span> <span class="o">=</span> <span class="n">inports</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span><span class="n">mat</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">out</span><span class="p">]</span></div>
+
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
@@ -648,7 +699,7 @@
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020-, Peter Corke..
-      <span class="lastupdated">Last updated on 12-Nov-2023.
+      <span class="lastupdated">Last updated on 05-Aug-2024.
       </span></p>
   </div>
 

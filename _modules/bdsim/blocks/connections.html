@@ -1,21 +1,24 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="../../../">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>bdsim.blocks.connections &mdash; Block diagram simulation  documentation</title>
-      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../../../_static/plot_directive.css" type="text/css" />
-      <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/plot_directive.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=fd3f3429" />
+
+  
   <!--[if lt IE 9]>
     <script src="../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-        <script src="../../../_static/jquery.js"></script>
-        <script src="../../../_static/underscore.js"></script>
-        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
@@ -34,7 +37,7 @@
               <img src="../../../_static/BDSimLogo_NoBackgnd@2x.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                1.1.1
+                1.1.2
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
@@ -100,7 +103,9 @@
 <span class="kn">from</span> <span class="nn">bdsim.components</span> <span class="kn">import</span> <span class="n">SubsystemBlock</span><span class="p">,</span> <span class="n">SourceBlock</span><span class="p">,</span> <span class="n">SinkBlock</span><span class="p">,</span> <span class="n">FunctionBlock</span>
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
-<div class="viewcode-block" id="Item"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Item">[docs]</a><span class="k">class</span> <span class="nc">Item</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
+<div class="viewcode-block" id="Item">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Item">[docs]</a>
+<span class="k">class</span> <span class="nc">Item</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`ITEM`</span>
@@ -144,7 +149,9 @@
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
-<div class="viewcode-block" id="Item.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Item.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Item.__init__">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Item.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param item: name of dictionary item</span>
 <span class="sd">        :type item: str</span>
@@ -155,6 +162,7 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">item</span> <span class="o">=</span> <span class="n">item</span></div>
 
+
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="nb">input</span> <span class="o">=</span> <span class="n">inports</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="c1"># TODO, handle inputs that are vectors themselves</span>
@@ -163,7 +171,10 @@
         <span class="k">return</span> <span class="p">[</span><span class="nb">input</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">item</span><span class="p">]]</span></div>
 
 
-<div class="viewcode-block" id="Dict"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Dict">[docs]</a><span class="k">class</span> <span class="nc">Dict</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
+
+<div class="viewcode-block" id="Dict">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Dict">[docs]</a>
+<span class="k">class</span> <span class="nc">Dict</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`DICT`</span>
@@ -209,7 +220,9 @@
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
-<div class="viewcode-block" id="Dict.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Dict.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keys</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Dict.__init__">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Dict.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keys</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param keys: list of dictionary keys</span>
 <span class="sd">        :type keys: list</span>
@@ -220,12 +233,16 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">blockargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">keys</span> <span class="o">=</span> <span class="n">keys</span></div>
 
+
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">inports</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">)}</span></div>
 
 
+
 <span class="c1"># ------------------------------------------------------------------------ #</span>
-<div class="viewcode-block" id="Mux"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Mux">[docs]</a><span class="k">class</span> <span class="nc">Mux</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
+<div class="viewcode-block" id="Mux">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Mux">[docs]</a>
+<span class="k">class</span> <span class="nc">Mux</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`MUX`</span>
 
@@ -264,7 +281,9 @@
     <span class="n">nin</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
-<div class="viewcode-block" id="Mux.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Mux.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Mux.__init__">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Mux.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param nin: Number of input ports, defaults to 1</span>
 <span class="sd">        :type nin: int, optional</span>
@@ -272,6 +291,7 @@
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="n">nin</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span></div>
+
 
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="c1"># TODO, handle inputs that are vectors themselves</span>
@@ -284,8 +304,11 @@
         <span class="k">return</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">out</span><span class="p">)]</span></div>
 
 
+
 <span class="c1"># ------------------------------------------------------------------------ #</span>
-<div class="viewcode-block" id="DeMux"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.DeMux">[docs]</a><span class="k">class</span> <span class="nc">DeMux</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
+<div class="viewcode-block" id="DeMux">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.DeMux">[docs]</a>
+<span class="k">class</span> <span class="nc">DeMux</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`DEMUX`</span>
 
@@ -322,7 +345,9 @@
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
 
-<div class="viewcode-block" id="DeMux.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.DeMux.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<div class="viewcode-block" id="DeMux.__init__">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.DeMux.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param nout: number of outputs, defaults to 1</span>
 <span class="sd">        :type nout: int, optional</span>
@@ -330,6 +355,7 @@
 <span class="sd">        :type blockargs: dict</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nout</span><span class="o">=</span><span class="n">nout</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span></div>
+
 
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="nb">input</span> <span class="o">=</span> <span class="n">inports</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -340,10 +366,13 @@
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span></div>
 
 
+
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 
 
-<div class="viewcode-block" id="Index"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Index">[docs]</a><span class="k">class</span> <span class="nc">Index</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
+<div class="viewcode-block" id="Index">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Index">[docs]</a>
+<span class="k">class</span> <span class="nc">Index</span><span class="p">(</span><span class="n">FunctionBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`INDEX`</span>
 
@@ -377,7 +406,9 @@
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
-<div class="viewcode-block" id="Index.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Index.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="p">[],</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Index.__init__">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.Index.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="p">[],</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Index an iterable signal.</span>
 
@@ -393,6 +424,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">index</span></div>
 
+
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="nb">input</span> <span class="o">=</span> <span class="n">inports</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -403,10 +435,13 @@
             <span class="k">return</span> <span class="p">[[</span><span class="nb">input</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">]]</span></div>
 
 
+
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 
 
-<div class="viewcode-block" id="SubSystem"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.SubSystem">[docs]</a><span class="k">class</span> <span class="nc">SubSystem</span><span class="p">(</span><span class="n">SubsystemBlock</span><span class="p">):</span>
+<div class="viewcode-block" id="SubSystem">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.SubSystem">[docs]</a>
+<span class="k">class</span> <span class="nc">SubSystem</span><span class="p">(</span><span class="n">SubsystemBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`SUBSYSTEM`</span>
 
@@ -462,7 +497,9 @@
     <span class="n">nin</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
 
-<div class="viewcode-block" id="SubSystem.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.SubSystem.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subsys</span><span class="p">,</span> <span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<div class="viewcode-block" id="SubSystem.__init__">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.SubSystem.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subsys</span><span class="p">,</span> <span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param subsys: Subsystem as either a filename or a ``BlockDiagram`` instance</span>
 <span class="sd">        :type subsys: str or BlockDiagram</span>
@@ -537,13 +574,17 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">ssname</span> <span class="o">=</span> <span class="n">subsys</span><span class="o">.</span><span class="n">name</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">nin</span> <span class="o">=</span> <span class="n">ninp</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">nout</span> <span class="o">=</span> <span class="n">noutp</span></div></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nout</span> <span class="o">=</span> <span class="n">noutp</span></div>
+</div>
+
 
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 
 
-<div class="viewcode-block" id="InPort"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.InPort">[docs]</a><span class="k">class</span> <span class="nc">InPort</span><span class="p">(</span><span class="n">SubsystemBlock</span><span class="p">):</span>
+<div class="viewcode-block" id="InPort">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.InPort">[docs]</a>
+<span class="k">class</span> <span class="nc">InPort</span><span class="p">(</span><span class="n">SubsystemBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`INPORT`</span>
 
@@ -576,7 +617,9 @@
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
 
-<div class="viewcode-block" id="InPort.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.InPort.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<div class="viewcode-block" id="InPort.__init__">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.InPort.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param nout: Number of output ports, defaults to 1</span>
 <span class="sd">        :type nout: int, optional</span>
@@ -585,16 +628,20 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nout</span><span class="o">=</span><span class="n">nout</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span></div>
 
+
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="c1"># signal feed through</span>
 
         <span class="k">return</span> <span class="n">inports</span></div>
 
 
+
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 
 
-<div class="viewcode-block" id="OutPort"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.OutPort">[docs]</a><span class="k">class</span> <span class="nc">OutPort</span><span class="p">(</span><span class="n">SubsystemBlock</span><span class="p">):</span>
+<div class="viewcode-block" id="OutPort">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.OutPort">[docs]</a>
+<span class="k">class</span> <span class="nc">OutPort</span><span class="p">(</span><span class="n">SubsystemBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`OUTPORT`</span>
 
@@ -628,7 +675,9 @@
     <span class="n">nin</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">0</span>
 
-<div class="viewcode-block" id="OutPort.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.OutPort.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<div class="viewcode-block" id="OutPort.__init__">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.connections.OutPort.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param nin: Number of input ports, defaults to 1</span>
 <span class="sd">        :type nin: int, optional</span>
@@ -637,9 +686,11 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nin</span><span class="o">=</span><span class="n">nin</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">)</span></div>
 
+
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="c1"># signal feed through</span>
         <span class="k">return</span> <span class="n">inports</span></div>
+
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
@@ -661,7 +712,7 @@
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020-, Peter Corke..
-      <span class="lastupdated">Last updated on 12-Nov-2023.
+      <span class="lastupdated">Last updated on 05-Aug-2024.
       </span></p>
   </div>
 

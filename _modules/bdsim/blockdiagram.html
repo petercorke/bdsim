@@ -1,21 +1,24 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="../../">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>bdsim.blockdiagram &mdash; Block diagram simulation  documentation</title>
-      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../../_static/plot_directive.css" type="text/css" />
-      <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+
+  
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/underscore.js"></script>
-        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
@@ -34,7 +37,7 @@
               <img src="../../_static/BDSimLogo_NoBackgnd@2x.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                1.1.1
+                1.1.2
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -106,7 +109,9 @@
 
 
 <span class="c1"># class BlockDiagram(BlockDiagramMixin):</span>
-<div class="viewcode-block" id="BlockDiagram"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram">[docs]</a><span class="k">class</span> <span class="nc">BlockDiagram</span><span class="p">:</span>
+<div class="viewcode-block" id="BlockDiagram">
+<a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram">[docs]</a>
+<span class="k">class</span> <span class="nc">BlockDiagram</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Block diagram class.  This object is the parent of all blocks and wires in</span>
 <span class="sd">    the system.</span>
@@ -187,13 +192,18 @@
     <span class="k">def</span> <span class="nf">issubsystem</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_issubsystem</span>
 
-<div class="viewcode-block" id="BlockDiagram.clock"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.clock">[docs]</a>    <span class="k">def</span> <span class="nf">clock</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="BlockDiagram.clock">
+<a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.clock">[docs]</a>
+    <span class="k">def</span> <span class="nf">clock</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">clock</span> <span class="o">=</span> <span class="n">Clock</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">clock</span><span class="o">.</span><span class="n">bd</span> <span class="o">=</span> <span class="bp">self</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">clocklist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">clock</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">clock</span></div>
 
-<div class="viewcode-block" id="BlockDiagram.add_block"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.add_block">[docs]</a>    <span class="k">def</span> <span class="nf">add_block</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BlockDiagram.add_block">
+<a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.add_block">[docs]</a>
+    <span class="k">def</span> <span class="nf">add_block</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">block</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocknames</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;block </span><span class="si">{}</span><span class="s2"> already added&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
         <span class="n">block</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">)</span>
@@ -207,12 +217,16 @@
             <span class="k">raise</span> <span class="ne">Warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;block name </span><span class="si">{</span><span class="n">block</span><span class="si">}</span><span class="s2"> is not unique&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">blocknames</span><span class="p">[</span><span class="n">block</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">block</span></div>
 
-<div class="viewcode-block" id="BlockDiagram.add_wire"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.add_wire">[docs]</a>    <span class="k">def</span> <span class="nf">add_wire</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wire</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BlockDiagram.add_wire">
+<a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.add_wire">[docs]</a>
+    <span class="k">def</span> <span class="nf">add_wire</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wire</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="n">wire</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wirelist</span><span class="p">)</span>
         <span class="n">wire</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
         <span class="c1"># just add wire to the list, gets instantiated at compile time</span>
         <span class="c1"># when add_output_wire and add_input_wire are called on the blocks</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">wirelist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">wire</span><span class="p">)</span></div>
+
 
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="s2">&quot;BlockDiagram: </span><span class="si">{:s}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
@@ -228,11 +242,16 @@
         <span class="c1">#     s += str(wire) + &quot;\n&quot;</span>
         <span class="c1"># return s.lstrip(&quot;\n&quot;)</span>
 
-<div class="viewcode-block" id="BlockDiagram.ls"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.ls">[docs]</a>    <span class="k">def</span> <span class="nf">ls</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="BlockDiagram.ls">
+<a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.ls">[docs]</a>
+    <span class="k">def</span> <span class="nf">ls</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blockdict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{:12s}</span><span class="s2">: &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">v</span><span class="p">))</span></div>
 
-<div class="viewcode-block" id="BlockDiagram.connect"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.connect">[docs]</a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="o">*</span><span class="n">ends</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BlockDiagram.connect">
+<a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.connect">[docs]</a>
+    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="o">*</span><span class="n">ends</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        TODO:</span>
 <span class="sd">            s.connect(out[3], in1[2], in2[3])  # one to many</span>
@@ -349,9 +368,12 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;bad start type&quot;</span><span class="p">)</span></div>
 
+
     <span class="c1"># ---------------------------------------------------------------------- #</span>
 
-<div class="viewcode-block" id="BlockDiagram.compile"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.compile">[docs]</a>    <span class="k">def</span> <span class="nf">compile</span><span class="p">(</span>
+<div class="viewcode-block" id="BlockDiagram.compile">
+<a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.compile">[docs]</a>
+    <span class="k">def</span> <span class="nf">compile</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">subsystem</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">doimport</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">evaluate</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">report</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -567,6 +589,7 @@
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compiled</span></div>
 
+
     <span class="k">def</span> <span class="nf">_subsystem_import</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bd</span><span class="p">,</span> <span class="n">sspath</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="n">blocks</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">wires</span> <span class="o">=</span> <span class="n">bd</span><span class="o">.</span><span class="n">wirelist</span>
@@ -616,7 +639,9 @@
 
     <span class="c1"># ---------------------------------------------------------------------- #</span>
 
-<div class="viewcode-block" id="BlockDiagram.schedule_evaluate"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.schedule_evaluate">[docs]</a>    <span class="k">def</span> <span class="nf">schedule_evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">checkfinite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sinks</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">simstate</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="BlockDiagram.schedule_evaluate">
+<a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.schedule_evaluate">[docs]</a>
+    <span class="k">def</span> <span class="nf">schedule_evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">checkfinite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sinks</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">simstate</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Evaluate all blocks in the network</span>
 
@@ -741,7 +766,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">(</span><span class="s2">&quot;deriv&quot;</span><span class="p">,</span> <span class="n">YD</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">YD</span></div>
 
-<div class="viewcode-block" id="BlockDiagram.schedule_generate"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.schedule_generate">[docs]</a>    <span class="k">def</span> <span class="nf">schedule_generate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BlockDiagram.schedule_generate">
+<a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.schedule_generate">[docs]</a>
+    <span class="k">def</span> <span class="nf">schedule_generate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create execution plan</span>
 
@@ -799,7 +827,10 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">plan</span> <span class="o">=</span> <span class="n">plan</span></div>
 
-<div class="viewcode-block" id="BlockDiagram.schedule_dotfile"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.schedule_dotfile">[docs]</a>    <span class="k">def</span> <span class="nf">schedule_dotfile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BlockDiagram.schedule_dotfile">
+<a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.schedule_dotfile">[docs]</a>
+    <span class="k">def</span> <span class="nf">schedule_dotfile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Write a GraphViz dot file representing the execution schedule</span>
 
@@ -845,6 +876,7 @@
                     <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&quot;</span><span class="si">{:s}</span><span class="s1">&quot; -&gt; &quot;</span><span class="si">{:s}</span><span class="s1">&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
 
         <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
 
     <span class="c1"># ---------------------------------------------------------------------- #</span>
 
@@ -939,7 +971,9 @@
 
     <span class="c1"># ---------------------------------------------------------------------- #</span>
 
-<div class="viewcode-block" id="BlockDiagram.report_summary"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.report_summary">[docs]</a>    <span class="k">def</span> <span class="nf">report_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sortby</span><span class="o">=</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="BlockDiagram.report_summary">
+<a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.report_summary">[docs]</a>
+    <span class="k">def</span> <span class="nf">report_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sortby</span><span class="o">=</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Print a summary of block diagram.</span>
 
@@ -1011,11 +1045,17 @@
         <span class="k">if</span> <span class="n">legend</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="n">legend</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="BlockDiagram.report"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.report">[docs]</a>    <span class="k">def</span> <span class="nf">report</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BlockDiagram.report">
+<a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.report">[docs]</a>
+    <span class="k">def</span> <span class="nf">report</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;use reports_lists() method instead&quot;</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">report_lists</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="BlockDiagram.report_lists"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.report_lists">[docs]</a>    <span class="k">def</span> <span class="nf">report_lists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BlockDiagram.report_lists">
+<a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.report_lists">[docs]</a>
+    <span class="k">def</span> <span class="nf">report_lists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Print a tabular report about the block diagram.</span>
 
@@ -1088,7 +1128,10 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">compiled</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;** System has not been compiled, or had a compile time error&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="BlockDiagram.report_schedule"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.report_schedule">[docs]</a>    <span class="k">def</span> <span class="nf">report_schedule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BlockDiagram.report_schedule">
+<a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.report_schedule">[docs]</a>
+    <span class="k">def</span> <span class="nf">report_schedule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Display execution schedule in tabular form</span>
 
@@ -1106,6 +1149,7 @@
             <span class="n">table</span><span class="o">.</span><span class="n">row</span><span class="p">(</span><span class="n">sequence</span><span class="p">,</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">group</span><span class="p">]))</span>
 
         <span class="n">table</span><span class="o">.</span><span class="n">print</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
 
     <span class="c1"># ---------------------------------------------------------------------- #</span>
 
@@ -1146,7 +1190,9 @@
         <span class="c1"># raise RuntimeError(&#39;Fatal failure&#39;).with_traceback(back_tb)</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Fatal failure&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="kc">None</span>
 
-<div class="viewcode-block" id="BlockDiagram.getstate0"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.getstate0">[docs]</a>    <span class="k">def</span> <span class="nf">getstate0</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="BlockDiagram.getstate0">
+<a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.getstate0">[docs]</a>
+    <span class="k">def</span> <span class="nf">getstate0</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># get the state from each stateful block</span>
         <span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
         <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
@@ -1158,7 +1204,10 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">_error_handler</span><span class="p">(</span><span class="s2">&quot;getstate0&quot;</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">x0</span></div>
 
-<div class="viewcode-block" id="BlockDiagram.reset"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.reset">[docs]</a>    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BlockDiagram.reset">
+<a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.reset">[docs]</a>
+    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Reset conditions within every active block.  Most importantly, all</span>
 <span class="sd">        inputs are marked as unknown.</span>
@@ -1172,7 +1221,10 @@
             <span class="k">except</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_error_handler</span><span class="p">(</span><span class="s2">&quot;reset&quot;</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="BlockDiagram.step"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BlockDiagram.step">
+<a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.step">[docs]</a>
+    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Step all blocks</span>
 
@@ -1200,7 +1252,10 @@
             <span class="k">except</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_error_handler</span><span class="p">(</span><span class="s2">&quot;step&quot;</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="BlockDiagram.deriv"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.deriv">[docs]</a>    <span class="k">def</span> <span class="nf">deriv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BlockDiagram.deriv">
+<a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.deriv">[docs]</a>
+    <span class="k">def</span> <span class="nf">deriv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Harvest derivatives from all blocks.</span>
 
@@ -1226,7 +1281,10 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">_error_handler</span><span class="p">(</span><span class="s2">&quot;deriv&quot;</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">YD</span></div>
 
-<div class="viewcode-block" id="BlockDiagram.start"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simstate</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BlockDiagram.start">
+<a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.start">[docs]</a>
+    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simstate</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Start all blocks</span>
 
@@ -1255,12 +1313,18 @@
             <span class="k">except</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_error_handler</span><span class="p">(</span><span class="s2">&quot;start&quot;</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="BlockDiagram.initialstate"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.initialstate">[docs]</a>    <span class="k">def</span> <span class="nf">initialstate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BlockDiagram.initialstate">
+<a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.initialstate">[docs]</a>
+    <span class="k">def</span> <span class="nf">initialstate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">blockclass</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;transfer&quot;</span><span class="p">,</span> <span class="s2">&quot;clocked&quot;</span><span class="p">):</span>
                 <span class="n">b</span><span class="o">.</span><span class="n">_x</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">_x0</span></div>
 
-<div class="viewcode-block" id="BlockDiagram.done"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.done">[docs]</a>    <span class="k">def</span> <span class="nf">done</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BlockDiagram.done">
+<a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.done">[docs]</a>
+    <span class="k">def</span> <span class="nf">done</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Finishup all blocks</span>
 
@@ -1281,7 +1345,10 @@
             <span class="k">except</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_error_handler</span><span class="p">(</span><span class="s2">&quot;done&quot;</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="BlockDiagram.dotfile"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.dotfile">[docs]</a>    <span class="k">def</span> <span class="nf">dotfile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">shapes</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BlockDiagram.dotfile">
+<a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.dotfile">[docs]</a>
+    <span class="k">def</span> <span class="nf">dotfile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">shapes</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Write a GraphViz dot file representing the network.</span>
 
@@ -1367,7 +1434,10 @@
 
         <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="BlockDiagram.showgraph"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.showgraph">[docs]</a>    <span class="k">def</span> <span class="nf">showgraph</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BlockDiagram.showgraph">
+<a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.showgraph">[docs]</a>
+    <span class="k">def</span> <span class="nf">showgraph</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Display diagram as a graph in browser tab</span>
 
@@ -1394,11 +1464,16 @@
         <span class="c1"># open the PDF file in browser (hopefully portable), then cleanup</span>
         <span class="n">webbrowser</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;file://</span><span class="si">{</span><span class="n">pdffile</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="BlockDiagram.blockvalues"><a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.blockvalues">[docs]</a>    <span class="k">def</span> <span class="nf">blockvalues</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">simstate</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BlockDiagram.blockvalues">
+<a class="viewcode-back" href="../../internals.html#bdsim.BlockDiagram.blockvalues">[docs]</a>
+    <span class="k">def</span> <span class="nf">blockvalues</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">simstate</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Block </span><span class="si">{:s}</span><span class="s2">:&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  inputs:  &quot;</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">inputs</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  outputs: &quot;</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">_x</span><span class="p">))</span></div></div>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  outputs: &quot;</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">_x</span><span class="p">))</span></div>
+</div>
+
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
@@ -1438,7 +1513,7 @@
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020-, Peter Corke..
-      <span class="lastupdated">Last updated on 12-Nov-2023.
+      <span class="lastupdated">Last updated on 05-Aug-2024.
       </span></p>
   </div>
 

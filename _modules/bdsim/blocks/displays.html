@@ -1,21 +1,24 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="../../../">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>bdsim.blocks.displays &mdash; Block diagram simulation  documentation</title>
-      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../../../_static/plot_directive.css" type="text/css" />
-      <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/plot_directive.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=fd3f3429" />
+
+  
   <!--[if lt IE 9]>
     <script src="../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-        <script src="../../../_static/jquery.js"></script>
-        <script src="../../../_static/underscore.js"></script>
-        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
@@ -34,7 +37,7 @@
               <img src="../../../_static/BDSimLogo_NoBackgnd@2x.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                1.1.1
+                1.1.2
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
@@ -91,20 +94,19 @@
 
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">from</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">import</span> <span class="n">Polygon</span>
-<span class="kn">from</span> <span class="nn">numpy.lib.shape_base</span> <span class="kn">import</span> <span class="n">expand_dims</span>
-
 
 <span class="kn">import</span> <span class="nn">spatialmath.base</span> <span class="k">as</span> <span class="nn">sm</span>
 
 <span class="kn">from</span> <span class="nn">bdsim.components</span> <span class="kn">import</span> <span class="n">SinkBlock</span>
 <span class="kn">from</span> <span class="nn">bdsim.graphics</span> <span class="kn">import</span> <span class="n">GraphicsBlock</span>
 
-
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 
 
-<div class="viewcode-block" id="Scope"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.displays.Scope">[docs]</a><span class="k">class</span> <span class="nc">Scope</span><span class="p">(</span><span class="n">GraphicsBlock</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="Scope">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.displays.Scope">[docs]</a>
+<span class="k">class</span> <span class="nc">Scope</span><span class="p">(</span><span class="n">GraphicsBlock</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`SCOPE`</span>
 
 <span class="sd">    Plot input signals against time.</span>
@@ -128,7 +130,7 @@
 <span class="sd">    Create a scope block that plots multiple signals against time.</span>
 
 <span class="sd">    For each line plotted we can specify the:</span>
-<span class="sd">    </span>
+
 <span class="sd">    * line style as a heterogeneous list of:</span>
 
 <span class="sd">      * Matplotlib `fmt` string comprising a color and line style, eg. ``&quot;k&quot;`` or ``&quot;r:&quot;``</span>
@@ -168,7 +170,7 @@
 <span class="sd">        bd.SCOPE(styles=[{&#39;color&#39;: &#39;blue&#39;}, {&#39;color&#39;: &#39;red&#39;, &#39;linestyle&#39;: &#39;--&#39;}])</span>
 
 <span class="sd">    **Single input port with NumPy array**</span>
-<span class="sd">     </span>
+
 <span class="sd">    The port is fed with a 1D-array, and ``vector`` is an:</span>
 
 <span class="sd">    * int, this is the expected width of the array, all its elements will be plotted</span>
@@ -179,18 +181,20 @@
 <span class="sd">        bd.SCOPE(vector=[0,1,2]) # display elements 0, 1, 2 of array on port 0</span>
 <span class="sd">        bd.SCOPE(vector=[0,1], styles=[{&#39;color&#39;: &#39;blue&#39;}, {&#39;color&#39;: &#39;red&#39;, &#39;linestyle&#39;: &#39;--&#39;}])</span>
 
-<span class="sd">    .. note:: </span>
-<span class="sd">        * If the vector is of width 3, by default the inputs are plotted as red, green </span>
-<span class="sd">          and blue lines. </span>
+<span class="sd">    .. note::</span>
+<span class="sd">        * If the vector is of width 3, by default the inputs are plotted as red, green</span>
+<span class="sd">          and blue lines.</span>
 <span class="sd">        * If the vector is of width 6, by default the first three inputs are plotted as</span>
-<span class="sd">          solid red, green and blue lines and the last three inputs are plotted as </span>
+<span class="sd">          solid red, green and blue lines and the last three inputs are plotted as</span>
 <span class="sd">          dashed red, green and blue lines.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">nin</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">0</span>
 
-<div class="viewcode-block" id="Scope.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.displays.Scope.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<div class="viewcode-block" id="Scope.__init__">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.displays.Scope.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">nin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="n">vector</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -302,6 +306,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">title</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">loc</span> <span class="o">=</span> <span class="n">loc</span></div>
 
+
         <span class="c1"># TODO, wire width</span>
         <span class="c1"># inherit names from wires, block needs to be able to introspect</span>
 
@@ -316,7 +321,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">ydata</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([]),</span>
         <span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">nplots</span>
-
 
         <span class="c1"># create the figures</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_figure</span><span class="p">(</span><span class="n">simstate</span><span class="p">)</span>
@@ -381,12 +385,16 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">!=</span> <span class="s2">&quot;auto&quot;</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+
             <span class="k">def</span> <span class="nf">fix_underscore</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;_&quot;</span><span class="p">:</span>
                     <span class="k">return</span> <span class="s2">&quot;-&quot;</span> <span class="o">+</span> <span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="k">return</span> <span class="n">s</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">([</span><span class="n">fix_underscore</span><span class="p">(</span><span class="n">label</span><span class="p">)</span> <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">],</span> <span class="n">loc</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">loc</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">fix_underscore</span><span class="p">(</span><span class="n">label</span><span class="p">)</span> <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">],</span> <span class="n">loc</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">loc</span>
+            <span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">watch</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">wire</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_wires</span><span class="p">:</span>
@@ -434,10 +442,13 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">)</span></div>
 
 
+
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 
 
-<div class="viewcode-block" id="ScopeXY"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.displays.ScopeXY">[docs]</a><span class="k">class</span> <span class="nc">ScopeXY</span><span class="p">(</span><span class="n">GraphicsBlock</span><span class="p">):</span>
+<div class="viewcode-block" id="ScopeXY">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.displays.ScopeXY">[docs]</a>
+<span class="k">class</span> <span class="nc">ScopeXY</span><span class="p">(</span><span class="n">GraphicsBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`SCOPEXY`</span>
 
@@ -483,7 +494,9 @@
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">2</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">0</span>
 
-<div class="viewcode-block" id="ScopeXY.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.displays.ScopeXY.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<div class="viewcode-block" id="ScopeXY.__init__">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.displays.ScopeXY.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">style</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">scale</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
@@ -519,6 +532,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">aspect</span> <span class="o">=</span> <span class="n">aspect</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">labels</span> <span class="o">=</span> <span class="n">labels</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">inport_names</span><span class="p">((</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">))</span></div>
+
 
     <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simstate</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">simstate</span><span class="p">)</span>
@@ -575,13 +589,16 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">autoscale_view</span><span class="p">()</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
 
+
     <span class="c1"># def done(self, block=False, **blockargs):</span>
     <span class="c1">#     if self.bd.runtime.options.graphics:</span>
     <span class="c1">#         plt.show(block=block)</span>
     <span class="c1">#         super().done()</span>
 
 
-<div class="viewcode-block" id="ScopeXY1"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.displays.ScopeXY1">[docs]</a><span class="k">class</span> <span class="nc">ScopeXY1</span><span class="p">(</span><span class="n">ScopeXY</span><span class="p">):</span>
+<div class="viewcode-block" id="ScopeXY1">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.displays.ScopeXY1">[docs]</a>
+<span class="k">class</span> <span class="nc">ScopeXY1</span><span class="p">(</span><span class="n">ScopeXY</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`SCOPEXY1`</span>
 
@@ -624,7 +641,9 @@
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">0</span>
 
-<div class="viewcode-block" id="ScopeXY1.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.displays.ScopeXY1.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indices</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<div class="viewcode-block" id="ScopeXY1.__init__">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.displays.ScopeXY1.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indices</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param indices: indices of elements to select from block input vector, defaults to [0,1]</span>
 <span class="sd">        :type indices: array_like(2)</span>
@@ -645,6 +664,7 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;indices must have 2 elements&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">indices</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">]</span></div>
 
+
     <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">inports</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_enabled</span><span class="p">:</span>
             <span class="k">return</span>
@@ -654,6 +674,7 @@
         <span class="n">y</span> <span class="o">=</span> <span class="n">inports</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_step</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span></div>
+
 
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
@@ -676,7 +697,7 @@
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020-, Peter Corke..
-      <span class="lastupdated">Last updated on 12-Nov-2023.
+      <span class="lastupdated">Last updated on 05-Aug-2024.
       </span></p>
   </div>
 

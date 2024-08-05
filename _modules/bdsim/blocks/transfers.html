@@ -1,21 +1,24 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="../../../">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>bdsim.blocks.transfers &mdash; Block diagram simulation  documentation</title>
-      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../../../_static/plot_directive.css" type="text/css" />
-      <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/plot_directive.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=fd3f3429" />
+
+  
   <!--[if lt IE 9]>
     <script src="../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-        <script src="../../../_static/jquery.js"></script>
-        <script src="../../../_static/underscore.js"></script>
-        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
@@ -34,7 +37,7 @@
               <img src="../../../_static/BDSimLogo_NoBackgnd@2x.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                1.1.1
+                1.1.2
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
@@ -95,7 +98,9 @@
 <span class="kn">from</span> <span class="nn">bdsim.components</span> <span class="kn">import</span> <span class="n">TransferBlock</span><span class="p">,</span> <span class="n">SubsystemBlock</span>
 
 
-<div class="viewcode-block" id="Integrator"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.Integrator">[docs]</a><span class="k">class</span> <span class="nc">Integrator</span><span class="p">(</span><span class="n">TransferBlock</span><span class="p">):</span>
+<div class="viewcode-block" id="Integrator">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.Integrator">[docs]</a>
+<span class="k">class</span> <span class="nc">Integrator</span><span class="p">(</span><span class="n">TransferBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`INTEGRATOR`</span>
 
@@ -153,7 +158,9 @@
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
-<div class="viewcode-block" id="Integrator.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.Integrator.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">enable</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Integrator.__init__">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.Integrator.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">enable</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param x0: Initial state, defaults to 0</span>
 <span class="sd">        :type x0: array_like, optional</span>
@@ -197,6 +204,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">enable</span> <span class="o">=</span> <span class="n">enable</span>
         <span class="k">if</span> <span class="n">enable</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">enable</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;enable must be callable&quot;</span><span class="p">)</span></div>
+
         <span class="c1"># print(&quot;nstates&quot;, self.nstates)</span>
 
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
@@ -216,7 +224,10 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">*</span> <span class="n">xd</span></div>
 
 
-<div class="viewcode-block" id="PoseIntegrator"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.PoseIntegrator">[docs]</a><span class="k">class</span> <span class="nc">PoseIntegrator</span><span class="p">(</span><span class="n">TransferBlock</span><span class="p">):</span>
+
+<div class="viewcode-block" id="PoseIntegrator">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.PoseIntegrator">[docs]</a>
+<span class="k">class</span> <span class="nc">PoseIntegrator</span><span class="p">(</span><span class="n">TransferBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`POSEINTEGRATOR`</span>
 
@@ -252,7 +263,9 @@
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
-<div class="viewcode-block" id="PoseIntegrator.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.PoseIntegrator.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<div class="viewcode-block" id="PoseIntegrator.__init__">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.PoseIntegrator.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param x0: Initial pose, defaults to null</span>
 <span class="sd">        :type x0: SE3, Twist3, optional</span>
@@ -268,6 +281,7 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_x0</span> <span class="o">=</span> <span class="n">x0</span></div>
 
+
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">Twist3</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">SE3</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span>
 
@@ -275,10 +289,13 @@
         <span class="k">return</span> <span class="n">u</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
 
 
+
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 
 
-<div class="viewcode-block" id="LTI_SS"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.LTI_SS">[docs]</a><span class="k">class</span> <span class="nc">LTI_SS</span><span class="p">(</span><span class="n">TransferBlock</span><span class="p">):</span>
+<div class="viewcode-block" id="LTI_SS">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.LTI_SS">[docs]</a>
+<span class="k">class</span> <span class="nc">LTI_SS</span><span class="p">(</span><span class="n">TransferBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`LTI_SS`</span>
 
@@ -327,7 +344,9 @@
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
-<div class="viewcode-block" id="LTI_SS.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.LTI_SS.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">A</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">B</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">C</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<div class="viewcode-block" id="LTI_SS.__init__">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.LTI_SS.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">A</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">B</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">C</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param N: numerator coefficients, defaults to 1</span>
 <span class="sd">        :type N: array_like, optional</span>
@@ -369,18 +388,26 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_x0</span> <span class="o">=</span> <span class="n">x0</span></div>
 
+
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">C</span> <span class="o">@</span> <span class="n">x</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">deriv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-        <span class="n">xd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span> <span class="o">@</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">B</span> <span class="o">@</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+        <span class="c1"># Reshape u and x to (N,1), i.e. column vectors, so</span>
+        <span class="c1"># no problems with broadcasting between A@x and B@u</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">u</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">xd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span> <span class="o">@</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">B</span> <span class="o">@</span> <span class="n">u</span>
         <span class="k">return</span> <span class="n">xd</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span></div>
+
 
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 
 
-<div class="viewcode-block" id="LTI_SISO"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.LTI_SISO">[docs]</a><span class="k">class</span> <span class="nc">LTI_SISO</span><span class="p">(</span><span class="n">LTI_SS</span><span class="p">):</span>
+<div class="viewcode-block" id="LTI_SISO">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.LTI_SISO">[docs]</a>
+<span class="k">class</span> <span class="nc">LTI_SISO</span><span class="p">(</span><span class="n">LTI_SS</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`LTI_SISO`</span>
 
@@ -433,7 +460,9 @@
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
-<div class="viewcode-block" id="LTI_SISO.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.LTI_SISO.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">D</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">x0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<div class="viewcode-block" id="LTI_SISO.__init__">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.LTI_SISO.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">D</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">x0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param N: numerator coefficients, defaults to 1</span>
 <span class="sd">        :type N: array_like, optional</span>
@@ -508,7 +537,9 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">B</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">C</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">signal</span><span class="o">.</span><span class="n">tf2ss</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">den</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">add_param</span><span class="p">(</span><span class="s2">&quot;num&quot;</span><span class="p">,</span> <span class="n">change_param</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">add_param</span><span class="p">(</span><span class="s2">&quot;den&quot;</span><span class="p">,</span> <span class="n">change_param</span><span class="p">)</span></div></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_param</span><span class="p">(</span><span class="s2">&quot;den&quot;</span><span class="p">,</span> <span class="n">change_param</span><span class="p">)</span></div>
+</div>
+
 
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
@@ -516,7 +547,9 @@
 <span class="kn">from</span> <span class="nn">bdsim.blocks.connections</span> <span class="kn">import</span> <span class="n">SubSystem</span>
 
 
-<div class="viewcode-block" id="Deriv"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.Deriv">[docs]</a><span class="k">class</span> <span class="nc">Deriv</span><span class="p">(</span><span class="n">SubsystemBlock</span><span class="p">):</span>
+<div class="viewcode-block" id="Deriv">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.Deriv">[docs]</a>
+<span class="k">class</span> <span class="nc">Deriv</span><span class="p">(</span><span class="n">SubsystemBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`DERIV`</span>
 
@@ -559,7 +592,9 @@
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
-<div class="viewcode-block" id="Deriv.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.Deriv.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">y0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Deriv.__init__">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.Deriv.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">y0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">blockargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param alpha: filter pole in units of rad/s</span>
 <span class="sd">        :type alpha: float</span>
@@ -592,11 +627,15 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">outport</span> <span class="o">=</span> <span class="n">outp</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">subsystem</span> <span class="o">=</span> <span class="n">bd</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">ssname</span> <span class="o">=</span> <span class="s2">&quot;derivative&quot;</span></div></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ssname</span> <span class="o">=</span> <span class="s2">&quot;derivative&quot;</span></div>
+</div>
+
 
 <span class="c1"># ------------------------------------------------------------------------ #</span>
 
-<div class="viewcode-block" id="PID"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.PID">[docs]</a><span class="k">class</span> <span class="nc">PID</span><span class="p">(</span><span class="n">SubsystemBlock</span><span class="p">):</span>
+<div class="viewcode-block" id="PID">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.PID">[docs]</a>
+<span class="k">class</span> <span class="nc">PID</span><span class="p">(</span><span class="n">SubsystemBlock</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :blockname:`PID`</span>
 
@@ -672,7 +711,9 @@
     <span class="n">nin</span> <span class="o">=</span> <span class="mi">2</span>
     <span class="n">nout</span> <span class="o">=</span> <span class="mi">1</span>
 
-<div class="viewcode-block" id="PID.__init__"><a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.PID.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<div class="viewcode-block" id="PID.__init__">
+<a class="viewcode-back" href="../../../bdsim.blocks.html#bdsim.blocks.transfers.PID.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;PID&quot;</span><span class="p">,</span>
         <span class="n">P</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
@@ -680,7 +721,7 @@
         <span class="n">I</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
         <span class="n">D_pole</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="n">I_limit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">I_band</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">I_band</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">blockargs</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
@@ -768,7 +809,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">outport</span> <span class="o">=</span> <span class="n">outp</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">subsystem</span> <span class="o">=</span> <span class="n">subsystem</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">ssname</span> <span class="o">=</span> <span class="s2">&quot;PID&quot;</span></div></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ssname</span> <span class="o">=</span> <span class="s2">&quot;PID&quot;</span></div>
+</div>
+
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
 
@@ -819,7 +862,7 @@
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020-, Peter Corke..
-      <span class="lastupdated">Last updated on 12-Nov-2023.
+      <span class="lastupdated">Last updated on 05-Aug-2024.
       </span></p>
   </div>
 

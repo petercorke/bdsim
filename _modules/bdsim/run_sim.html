@@ -1,21 +1,24 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="../../">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>bdsim.run_sim &mdash; Block diagram simulation  documentation</title>
-      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../../_static/plot_directive.css" type="text/css" />
-      <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+
+  
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/underscore.js"></script>
-        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
@@ -34,7 +37,7 @@
               <img src="../../_static/BDSimLogo_NoBackgnd@2x.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                1.1.1
+                1.1.2
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -80,6 +83,7 @@
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">importlib</span>
+<span class="kn">import</span> <span class="nn">traceback</span> <span class="k">as</span> <span class="nn">tb</span>
 <span class="kn">import</span> <span class="nn">inspect</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">Counter</span><span class="p">,</span> <span class="n">namedtuple</span>
 <span class="kn">import</span> <span class="nn">argparse</span>
@@ -289,8 +293,9 @@
     <span class="k">return</span> <span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
 
 
-<div class="viewcode-block" id="BDSimState"><a class="viewcode-back" href="../../internals.html#bdsim.BDSimState">[docs]</a><span class="k">class</span> <span class="nc">BDSimState</span><span class="p">:</span>
-
+<div class="viewcode-block" id="BDSimState">
+<a class="viewcode-back" href="../../internals.html#bdsim.BDSimState">[docs]</a>
+<span class="k">class</span> <span class="nc">BDSimState</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :ivar x: state vector</span>
 <span class="sd">    :vartype x: np.ndarray</span>
@@ -308,7 +313,9 @@
 <span class="sd">    :vartype graphics: bool</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="BDSimState.__init__"><a class="viewcode-back" href="../../internals.html#bdsim.BDSimState.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="BDSimState.__init__">
+<a class="viewcode-back" href="../../internals.html#bdsim.BDSimState.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># continuous state vector numpy.ndarray</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">T</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># maximum.BlockDiagram time</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">t</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># current time</span>
@@ -320,14 +327,23 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">t_stop</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># time-based breakpoint</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">eventq</span> <span class="o">=</span> <span class="n">TimeQ</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="BDSimState.declare_event"><a class="viewcode-back" href="../../internals.html#bdsim.BDSimState.declare_event">[docs]</a>    <span class="k">def</span> <span class="nf">declare_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">eventq</span><span class="o">.</span><span class="n">push</span><span class="p">((</span><span class="n">t</span><span class="p">,</span> <span class="n">block</span><span class="p">))</span></div></div>
+
+<div class="viewcode-block" id="BDSimState.declare_event">
+<a class="viewcode-back" href="../../internals.html#bdsim.BDSimState.declare_event">[docs]</a>
+    <span class="k">def</span> <span class="nf">declare_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eventq</span><span class="o">.</span><span class="n">push</span><span class="p">((</span><span class="n">t</span><span class="p">,</span> <span class="n">block</span><span class="p">))</span></div>
+</div>
 
 
-<div class="viewcode-block" id="BDSim"><a class="viewcode-back" href="../../internals.html#bdsim.BDSim">[docs]</a><span class="k">class</span> <span class="nc">BDSim</span><span class="p">:</span>
+
+<div class="viewcode-block" id="BDSim">
+<a class="viewcode-back" href="../../internals.html#bdsim.BDSim">[docs]</a>
+<span class="k">class</span> <span class="nc">BDSim</span><span class="p">:</span>
     <span class="n">_blocklibrary</span> <span class="o">=</span> <span class="kc">None</span>
 
-<div class="viewcode-block" id="BDSim.__init__"><a class="viewcode-back" href="../../internals.html#bdsim.BDSim.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">banner</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">packages</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">load</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">toolboxes</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="BDSim.__init__">
+<a class="viewcode-back" href="../../internals.html#bdsim.BDSim.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">banner</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">packages</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">load</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">toolboxes</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param banner: display docstring banner, defaults to True</span>
 <span class="sd">        :type banner: bool, optional</span>
@@ -415,7 +431,10 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">blocks</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">blocks</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="BDSim.blockinfo"><a class="viewcode-back" href="../../internals.html#bdsim.BDSim.blockinfo">[docs]</a>    <span class="k">def</span> <span class="nf">blockinfo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BDSim.blockinfo">
+<a class="viewcode-back" href="../../internals.html#bdsim.BDSim.blockinfo">[docs]</a>
+    <span class="k">def</span> <span class="nf">blockinfo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return info about all blocks</span>
 
 <span class="sd">        :param block: name of block to return info for, otherwise list of info for all</span>
@@ -448,6 +467,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_blocklibrary</span><span class="p">[</span><span class="n">block</span><span class="p">]</span></div>
 
+
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        String representation of simulation</span>
@@ -468,7 +488,9 @@
             <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;  </span><span class="si">{:s}</span><span class="s2">: </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">s</span>
 
-<div class="viewcode-block" id="BDSim.run"><a class="viewcode-back" href="../../internals.html#bdsim.BDSim.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span>
+<div class="viewcode-block" id="BDSim.run">
+<a class="viewcode-back" href="../../internals.html#bdsim.BDSim.run">[docs]</a>
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">bd</span><span class="p">,</span>
         <span class="n">T</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
@@ -765,7 +787,10 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">done</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bd</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">hold</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">out</span></div>
 
-<div class="viewcode-block" id="BDSim.update_parameters"><a class="viewcode-back" href="../../internals.html#bdsim.BDSim.update_parameters">[docs]</a>    <span class="k">def</span> <span class="nf">update_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bd</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BDSim.update_parameters">
+<a class="viewcode-back" href="../../internals.html#bdsim.BDSim.update_parameters">[docs]</a>
+    <span class="k">def</span> <span class="nf">update_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bd</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Set value of parameters according to command line arguments</span>
 
@@ -828,7 +853,10 @@
                 <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">new_value</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="p">)</span></div>
 
-<div class="viewcode-block" id="BDSim.run_interval"><a class="viewcode-back" href="../../internals.html#bdsim.BDSim.run_interval">[docs]</a>    <span class="k">def</span> <span class="nf">run_interval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bd</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">simstate</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BDSim.run_interval">
+<a class="viewcode-back" href="../../internals.html#bdsim.BDSim.run_interval">[docs]</a>
+    <span class="k">def</span> <span class="nf">run_interval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bd</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">simstate</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Integrate system over interval</span>
 
@@ -1019,7 +1047,10 @@
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;unrecoverable error in evaluation: &quot;</span><span class="p">,</span> <span class="n">err</span><span class="p">)</span>
             <span class="k">raise</span></div>
 
-<div class="viewcode-block" id="BDSim.blockdiagram"><a class="viewcode-back" href="../../internals.html#bdsim.BDSim.blockdiagram">[docs]</a>    <span class="k">def</span> <span class="nf">blockdiagram</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;main&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BlockDiagram</span><span class="p">:</span>
+
+<div class="viewcode-block" id="BDSim.blockdiagram">
+<a class="viewcode-back" href="../../internals.html#bdsim.BDSim.blockdiagram">[docs]</a>
+    <span class="k">def</span> <span class="nf">blockdiagram</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;main&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BlockDiagram</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Instantiate a new block diagram object.</span>
 
@@ -1074,11 +1105,17 @@
 
         <span class="k">return</span> <span class="n">bd</span></div>
 
-<div class="viewcode-block" id="BDSim.DEBUG"><a class="viewcode-back" href="../../internals.html#bdsim.BDSim.DEBUG">[docs]</a>    <span class="k">def</span> <span class="nf">DEBUG</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">debug</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BDSim.DEBUG">
+<a class="viewcode-back" href="../../internals.html#bdsim.BDSim.DEBUG">[docs]</a>
+    <span class="k">def</span> <span class="nf">DEBUG</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">debug</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">debug</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;DEBUG.</span><span class="si">{</span><span class="n">debug</span><span class="si">:</span><span class="s2">s</span><span class="si">}</span><span class="s2">: &quot;</span> <span class="o">+</span> <span class="n">fmt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">))</span></div>
 
-<div class="viewcode-block" id="BDSim.done"><a class="viewcode-back" href="../../internals.html#bdsim.BDSim.done">[docs]</a>    <span class="k">def</span> <span class="nf">done</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bd</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BDSim.done">
+<a class="viewcode-back" href="../../internals.html#bdsim.BDSim.done">[docs]</a>
+    <span class="k">def</span> <span class="nf">done</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bd</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">hold</span><span class="p">:</span>
             <span class="n">block</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">hold</span>
 
@@ -1093,24 +1130,36 @@
         <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">)</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">pause</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>  <span class="c1"># let the event handler do its work</span></div>
 
-<div class="viewcode-block" id="BDSim.closefigs"><a class="viewcode-back" href="../../internals.html#bdsim.BDSim.closefigs">[docs]</a>    <span class="k">def</span> <span class="nf">closefigs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BDSim.closefigs">
+<a class="viewcode-back" href="../../internals.html#bdsim.BDSim.closefigs">[docs]</a>
+    <span class="k">def</span> <span class="nf">closefigs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simstate</span><span class="o">.</span><span class="n">fignum</span><span class="p">):</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;close&quot;</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
             <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
             <span class="n">plt</span><span class="o">.</span><span class="n">pause</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">simstate</span><span class="o">.</span><span class="n">fignum</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># reset figure counter</span></div>
 
-<div class="viewcode-block" id="BDSim.savefig"><a class="viewcode-back" href="../../internals.html#bdsim.BDSim.savefig">[docs]</a>    <span class="k">def</span> <span class="nf">savefig</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;pdf&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BDSim.savefig">
+<a class="viewcode-back" href="../../internals.html#bdsim.BDSim.savefig">[docs]</a>
+    <span class="k">def</span> <span class="nf">savefig</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;pdf&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">block</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="nb">format</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="BDSim.savefigs"><a class="viewcode-back" href="../../internals.html#bdsim.BDSim.savefigs">[docs]</a>    <span class="k">def</span> <span class="nf">savefigs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bd</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;pdf&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BDSim.savefigs">
+<a class="viewcode-back" href="../../internals.html#bdsim.BDSim.savefigs">[docs]</a>
+    <span class="k">def</span> <span class="nf">savefigs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bd</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;pdf&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="kn">from</span> <span class="nn">bdsim.graphics</span> <span class="kn">import</span> <span class="n">GraphicsBlock</span>
 
         <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">bd</span><span class="o">.</span><span class="n">blocklist</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">GraphicsBlock</span><span class="p">):</span>
                 <span class="n">b</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">b</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="nb">format</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="BDSim.showgraph"><a class="viewcode-back" href="../../internals.html#bdsim.BDSim.showgraph">[docs]</a>    <span class="k">def</span> <span class="nf">showgraph</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bd</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BDSim.showgraph">
+<a class="viewcode-back" href="../../internals.html#bdsim.BDSim.showgraph">[docs]</a>
+    <span class="k">def</span> <span class="nf">showgraph</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bd</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="c1"># create the temporary dotfile</span>
         <span class="n">dotfile</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryFile</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;w&quot;</span><span class="p">)</span>
         <span class="n">bd</span><span class="o">.</span><span class="n">dotfile</span><span class="p">(</span><span class="n">dotfile</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -1124,7 +1173,10 @@
         <span class="n">webbrowser</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;file://</span><span class="si">{</span><span class="n">pdffile</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">pdffile</span><span class="o">.</span><span class="n">name</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="BDSim.fatal"><a class="viewcode-back" href="../../internals.html#bdsim.BDSim.fatal">[docs]</a>    <span class="k">def</span> <span class="nf">fatal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">retval</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BDSim.fatal">
+<a class="viewcode-back" href="../../internals.html#bdsim.BDSim.fatal">[docs]</a>
+    <span class="k">def</span> <span class="nf">fatal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">retval</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Fatal simulation error</span>
 
@@ -1140,7 +1192,10 @@
         <span class="nb">print</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
         <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">retval</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="BDSim.load_blocks"><a class="viewcode-back" href="../../internals.html#bdsim.BDSim.load_blocks">[docs]</a>    <span class="k">def</span> <span class="nf">load_blocks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">toolboxes</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BDSim.load_blocks">
+<a class="viewcode-back" href="../../internals.html#bdsim.BDSim.load_blocks">[docs]</a>
+    <span class="k">def</span> <span class="nf">load_blocks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">toolboxes</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Dynamically load all block definitions.</span>
 
@@ -1246,7 +1301,11 @@
         <span class="n">block</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s2">&quot;block&quot;</span><span class="p">,</span> <span class="s2">&quot;name, cls, path&quot;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">toolboxes</span><span class="p">:</span>
-            <span class="n">packages</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;bdsim&quot;</span><span class="p">,</span> <span class="s2">&quot;roboticstoolbox&quot;</span><span class="p">,</span> <span class="s2">&quot;machinevisiontoolbox&quot;</span><span class="p">]</span>
+            <span class="n">packages</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="s2">&quot;bdsim&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;roboticstoolbox&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;machinevisiontoolbox&quot;</span><span class="p">,</span>
+            <span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">packages</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;bdsim&quot;</span><span class="p">]</span>
         <span class="n">env</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;BDSIMPATH&quot;</span><span class="p">)</span>
@@ -1260,19 +1319,31 @@
         <span class="k">for</span> <span class="n">package</span> <span class="ow">in</span> <span class="n">packages</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">spec</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">find_spec</span><span class="p">(</span><span class="s2">&quot;.blocks&quot;</span><span class="p">,</span> <span class="n">package</span><span class="o">=</span><span class="n">package</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;package </span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s2"> has no blocks module&quot;</span><span class="p">)</span>
-                    <span class="k">continue</span>
-                <span class="n">pkg</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">loader</span><span class="o">.</span><span class="n">load_module</span><span class="p">()</span>
-            <span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;package </span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s2"> not found&quot;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ModuleNotFoundError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;package </span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s2"> not loaded: not found, not a proper package, no blocks module&quot;</span>
+                <span class="p">)</span>
                 <span class="k">continue</span>
-            <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;package </span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s2"> load error, continuing&quot;</span><span class="p">)</span>
-                <span class="kn">import</span> <span class="nn">textwrap</span>
 
-                <span class="nb">print</span><span class="p">(</span><span class="n">textwrap</span><span class="o">.</span><span class="n">indent</span><span class="p">(</span><span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">(),</span> <span class="s2">&quot;    &quot;</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;package </span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s2"> not found or has no blocks module&quot;</span><span class="p">)</span>
                 <span class="k">continue</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">pkg</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">loader</span><span class="o">.</span><span class="n">load_module</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;package </span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s2"> contains a compile error&quot;</span><span class="p">)</span>
+                <span class="n">exc</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exception</span><span class="p">()</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">fg</span><span class="p">(</span><span class="s2">&quot;red&quot;</span><span class="p">))</span>
+                <span class="n">tb</span><span class="o">.</span><span class="n">print_exception</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="n">limit</span><span class="o">=-</span><span class="mi">4</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">attr</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+                <span class="k">continue</span>
+            <span class="c1"># except ImportError:</span>
+            <span class="c1">#     print(f&quot;package {package} load error, continuing&quot;)</span>
+            <span class="c1">#     import textwrap</span>
+
+            <span class="c1">#     print(textwrap.indent(traceback.format_exc(), &quot;    &quot;))</span>
+            <span class="c1">#     continue</span>
 
             <span class="n">moduledict</span> <span class="o">=</span> <span class="p">{}</span>
 
@@ -1324,9 +1395,9 @@
 
                 <span class="c1"># create a dict for the block with metadata</span>
                 <span class="n">block_info</span> <span class="o">=</span> <span class="p">{}</span>
-                <span class="n">block_info</span><span class="p">[</span>
-                    <span class="s2">&quot;path&quot;</span>
-                <span class="p">]</span> <span class="o">=</span> <span class="n">pkg</span><span class="o">.</span><span class="n">__path__</span>  <span class="c1"># path to folder holding block definition</span>
+                <span class="n">block_info</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">pkg</span><span class="o">.</span><span class="n">__path__</span>
+                <span class="p">)</span>  <span class="c1"># path to folder holding block definition</span>
                 <span class="n">block_info</span><span class="p">[</span><span class="s2">&quot;classname&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span>
                 <span class="n">block_info</span><span class="p">[</span><span class="s2">&quot;blockname&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">blockname</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
 
@@ -1370,7 +1441,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">moduledicts</span> <span class="o">=</span> <span class="n">moduledicts</span>
         <span class="k">return</span> <span class="n">blocks</span></div>
 
-<div class="viewcode-block" id="BDSim.blocks"><a class="viewcode-back" href="../../internals.html#bdsim.BDSim.blocks">[docs]</a>    <span class="k">def</span> <span class="nf">blocks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BDSim.blocks">
+<a class="viewcode-back" href="../../internals.html#bdsim.BDSim.blocks">[docs]</a>
+    <span class="k">def</span> <span class="nf">blocks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        List all loaded blocks.</span>
 
@@ -1419,11 +1493,17 @@
                     <span class="k">else</span><span class="p">:</span>
                         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dots</span><span class="p">(</span><span class="n">k</span><span class="p">)</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="BDSim.set_options"><a class="viewcode-back" href="../../internals.html#bdsim.BDSim.set_options">[docs]</a>    <span class="k">def</span> <span class="nf">set_options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BDSim.set_options">
+<a class="viewcode-back" href="../../internals.html#bdsim.BDSim.set_options">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="o">**</span><span class="n">options</span><span class="p">)</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;use sim.options.OPT=VALUE instead&quot;</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="BDSim.set_globals"><a class="viewcode-back" href="../../internals.html#bdsim.BDSim.set_globals">[docs]</a>    <span class="k">def</span> <span class="nf">set_globals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">globs</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BDSim.set_globals">
+<a class="viewcode-back" href="../../internals.html#bdsim.BDSim.set_globals">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_globals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">globs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Set globals as specified by command line</span>
 
@@ -1449,7 +1529,10 @@
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;changed value of global </span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s2"> from </span><span class="si">{</span><span class="n">globs</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">new_value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="n">globs</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_value</span></div>
 
-<div class="viewcode-block" id="BDSim.report"><a class="viewcode-back" href="../../internals.html#bdsim.BDSim.report">[docs]</a>    <span class="k">def</span> <span class="nf">report</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bd</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;summary&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BDSim.report">
+<a class="viewcode-back" href="../../internals.html#bdsim.BDSim.report">[docs]</a>
+    <span class="k">def</span> <span class="nf">report</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bd</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;summary&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Print block diagram report</span>
 
 <span class="sd">        :param bd: the block diagram to be reported</span>
@@ -1472,7 +1555,9 @@
         <span class="k">elif</span> <span class="nb">type</span> <span class="o">==</span> <span class="s2">&quot;summary&quot;</span><span class="p">:</span>
             <span class="n">bd</span><span class="o">.</span><span class="n">report_summary</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">type</span> <span class="o">==</span> <span class="s2">&quot;schedule&quot;</span><span class="p">:</span>
-            <span class="n">bd</span><span class="o">.</span><span class="n">report_schedule</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div></div>
+            <span class="n">bd</span><span class="o">.</span><span class="n">report_schedule</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+</div>
+
 
 
 <span class="k">class</span> <span class="nc">Options</span><span class="p">(</span><span class="n">OptionsBase</span><span class="p">):</span>
@@ -1732,7 +1817,7 @@
 
   <div role="contentinfo">
     <p>&#169; Copyright 2020-, Peter Corke..
-      <span class="lastupdated">Last updated on 12-Nov-2023.
+      <span class="lastupdated">Last updated on 05-Aug-2024.
       </span></p>
   </div>
 
