@@ -13,6 +13,8 @@ Key features include:
   * automatically discovers all bsdim and toolbbox blocks and adds them to the block library menu
   * icons can be easily created using any image creation tool or a LaTeX expression 
 
+**Note that `PyQt5` is licenced under GPL3.**
+
 # Getting started
 
 From the examples folder
