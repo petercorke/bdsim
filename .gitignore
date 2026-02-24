@@ -9,6 +9,12 @@ untitled*.py
 *.pdf
 *.dot
 
+# Mac stuff
+**.DS_Store
+
+# documents
+docs/CSM/**
+docs/paper1/**
 
 # MATLAB
 *.m
