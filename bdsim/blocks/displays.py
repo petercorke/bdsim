@@ -12,12 +12,12 @@ import numpy as np
 from math import pi, sqrt, sin, cos, atan2
 
 import matplotlib.pyplot as plt
-from matplotlib.pyplot import Polygon
 
-import spatialmath.base as sm
+import spatialmath.base as smb
 
 from bdsim.components import SinkBlock
 from bdsim.graphics import GraphicsBlock
+from typing import Union, List, Literal
 
 # ------------------------------------------------------------------------ #
 
@@ -112,14 +112,14 @@ class Scope(GraphicsBlock):
     def __init__(
         self,
         nin=1,
-        vector=None,
+        vector: Union[None, int, list[int]] = None,
         styles=None,
         stairs=False,
-        scale="auto",
+        scale: Union[Literal["auto"], float] = "auto",
         labels=None,
         grid=True,
         watch=False,
-        title=None,
+        title: Union[None, str] = None,
         loc="best",
         **blockargs,
     ):
@@ -214,7 +214,7 @@ class Scope(GraphicsBlock):
         self.grid = grid
         self.stairs = stairs
 
-        self.line = [None] * nplots
+        self.line: list = [None] * nplots
         self.scale = scale
 
         self.watch = watch
@@ -244,7 +244,7 @@ class Scope(GraphicsBlock):
         if self.labels is None:
             if self.vector is None:
                 self.labels = [self.sourcename(i) for i in range(self.nin)]
-            else:
+            elif isinstance(self.vector, int):
                 self.labels = [str(i) for i in range(self.vector)]
                 if self.styles is None:
                     if self.vector == 3:
@@ -282,10 +282,9 @@ class Scope(GraphicsBlock):
         self.ax.set_xlabel(self.xlabel)
 
         if self.title is not None:
-            name = self.title
+            self.ax.set_title(self.title)
         else:
-            name = self.name_tex
-        self.ax.set_title(name)
+            self.ax.set_title(self.name_tex)
 
         # grid control
         if self.grid is True:
@@ -297,7 +296,7 @@ class Scope(GraphicsBlock):
         self.ax.set_xlim(0, simstate.T)
 
         if self.scale != "auto":
-            self.ax.set_ylim(*self.scale)
+            self.ax.set_ylim(*self.scale)  # type: ignore
         if self.labels is not None:
 
             def fix_underscore(s):
@@ -436,7 +435,7 @@ class ScopeXY(GraphicsBlock):
 
         self.styles = style
         if scale != "auto":
-            scale = sm.expand_dims(scale, 2)
+            scale = smb.expand_dims(scale, 2)
         self.scale = scale
         self.aspect = aspect
         self.labels = labels
