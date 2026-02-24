@@ -28,8 +28,12 @@ header = '''\
 # Do not edit by hand – run stubgen.py to regenerate.
 from __future__ import annotations
 
-from typing import Any
+from math import inf
+from typing import Any, Optional, Union, Callable, Literal
+import numpy as np
+from spatialmath import SE3, Twist3
 
+Vector1D = Union[int, float, tuple[float, ...], list[float], np.ndarray]
 
 class BlockDiagramMixin:
     """
@@ -49,6 +53,8 @@ with open(OUTPUT, "w") as f:
     print(f"writing mixin --> {OUTPUT}")
     f.write(header)
 
+    assert sim._blocklibrary, "No blocks found in library"
+
     for block, info in sorted(sim._blocklibrary.items()):
         meth = info["class"]
         sig = inspect.signature(meth.__init__)
@@ -60,11 +66,20 @@ with open(OUTPUT, "w") as f:
         if not has_blockargs:
             params.append(inspect.Parameter("blockargs", inspect.Parameter.VAR_KEYWORD))
 
-        sig_str = "(" + ", ".join(["self"] + [str(p) for p in params]) + ")"
+        # NoneType is Python's internal name for type(None); replace with None
+        # so the generated file is valid (e.g. Union[int, NoneType] -> Union[int, None]).
+        sig_str = (
+            "("
+            + ", ".join(["self"] + [str(p).replace("NoneType", "None") for p in params])
+            + ")"
+        )
         doc = (meth.__init__.__doc__ or "").rstrip()
 
         f.write(f"\n    # {info['module']}.{info['classname']}\n")
         f.write(f"    def {block}{sig_str} -> Any:\n")
         if doc:
-            f.write(f'        """{doc}\n        """\n')
+            # Escape backslashes so LaTeX sequences like \omega don't produce
+            # SyntaxWarnings in the generated file (Python 3.12+).
+            safe_doc = doc.replace("\\", "\\\\")
+            f.write(f'        """{safe_doc}\n        """\n')
         f.write("        ...\n")

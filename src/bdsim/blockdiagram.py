@@ -24,7 +24,17 @@ import warnings
 
 from ansitable import ANSITable, Column
 
-from bdsim._blockdiagram_mixin import BlockDiagramMixin
+if TYPE_CHECKING:
+    from bdsim._blockdiagram_mixin import BlockDiagramMixin
+else:
+    try:
+        from bdsim._blockdiagram_mixin import BlockDiagramMixin
+    except (ImportError, SyntaxError, NameError):
+        # if the mixin file is missing or has syntax errors, create a dummy one so that the rest of the code can be imported without errors.  The real mixin will be generated at runtime by the @block decorator when the blocks are imported.
+        class BlockDiagramMixin:  # type: ignore[no-redef]
+            pass
+
+
 from bdsim.components import *
 from bdsim.components import Clock
 from bdsim.components import Clock
