@@ -21,9 +21,9 @@ import copy
 import bdsim
 from bdsim.components import SubsystemBlock, SourceBlock, SinkBlock, FunctionBlock
 
+
 # ------------------------------------------------------------------------ #
 class Item(FunctionBlock):
-
     """
     :blockname:`ITEM`
 
@@ -86,7 +86,6 @@ class Item(FunctionBlock):
 
 
 class Dict(FunctionBlock):
-
     """
     :blockname:`DICT`
 
@@ -148,7 +147,7 @@ class Dict(FunctionBlock):
 
 # ------------------------------------------------------------------------ #
 class Mux(FunctionBlock):
-    """
+    r"""
     :blockname:`MUX`
 
     Multiplex signals.

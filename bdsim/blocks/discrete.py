@@ -178,7 +178,7 @@ class DIntegrator(ClockedBlock):
 
 
 class DPoseIntegrator(ClockedBlock):
-    """
+    r"""
     :blockname:`DPOSEINTEGRATOR`
 
     Discrete-time spatial velocity integrator.

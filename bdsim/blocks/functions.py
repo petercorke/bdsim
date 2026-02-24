@@ -26,7 +26,7 @@ from bdsim.components import FunctionBlock
 
 
 class Sum(FunctionBlock):
-    """
+    r"""
     :blockname:`SUM`
 
     Summing junction.
@@ -479,6 +479,7 @@ class Clip(FunctionBlock):
 
 # ------------------------------------------------------------------------ #
 
+
 # TODO can have multiple outputs: pass in a tuple of functions, return a tuple
 class Function(FunctionBlock):
     r"""
@@ -563,7 +564,6 @@ class Function(FunctionBlock):
         fkwargs: dict = None,
         **blockargs,
     ):
-
         """
         :param func: function or lambda, or list thereof, defaults to None
         :type func: callable or sequence of callables, optional
@@ -714,7 +714,7 @@ class Interpolate(FunctionBlock):
     .. plot::
 
         import matplotlib.pyplot as plt
-        plt.plot([0, 5, 10], 
+        plt.plot([0, 5, 10],
                  [0, 1, 0], lw=2)
         plt.grid(True)
         plt.xlabel("in[0]")
