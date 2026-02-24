@@ -16,7 +16,7 @@ from tempfile import _TemporaryFileWrapper
 import traceback
 from collections import Counter, namedtuple
 from copy import deepcopy
-from typing import Any, NoReturn
+from typing import TYPE_CHECKING, Any, NoReturn
 import numpy as np
 from colored import fg, attr
 import warnings
@@ -39,7 +39,6 @@ from bdsim.components import *
 from bdsim.components import Clock
 from bdsim.components import Clock
 
-# from stubs import BlockDiagramMixin
 
 # ------------------------------------------------------------------------- #
 
@@ -789,7 +788,7 @@ class BlockDiagram(BlockDiagramMixin):
 
     # ---------------------------------------------------------------------- #
 
-    def _debugger(self, simstate=None, integrator=None):
+    def _debugger(self, simstate: Simstate = None, integrator=None):
         if simstate.t_stop is not None and simstate.t < simstate.t_stop:
             return
 

@@ -9,8 +9,6 @@ Linear algebra blocks:
 
 from __future__ import annotations
 
-# The constructor of each class ``MyClass`` with a ``@block`` decorator becomes a method ``MYCLASS()`` of the BlockDiagram instance.
-
 import numpy as np
 import math
 from typing import Any

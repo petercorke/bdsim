@@ -6,8 +6,6 @@ Define vision processing blocks for use in block diagrams.  These are blocks tha
 - are a subclass of ``SourceBlock``, ``SinkBlock`` or ``FunctionBlock``
 
 """
-# The constructor of each class ``MyClass`` with a ``@block`` decorator becomes a method ``MYCLASS()`` of the BlockDiagram instance.
-
 
 # camera
 # display

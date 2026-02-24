@@ -256,7 +256,6 @@ class DPoseIntegrator(ClockedBlock):
 # ------------------------------------------------------------------------ #
 
 
-# @block
 # class LTI_SS(TransferBlock):
 #     """
 #     :blockname:`LTI_SS`
@@ -350,7 +349,6 @@ class DPoseIntegrator(ClockedBlock):
 # # ------------------------------------------------------------------------ #
 
 
-# @block
 # class LTI_SISO(LTI_SS):
 #     """
 #     :blockname:`LTI_SISO`

@@ -17,7 +17,7 @@ import spatialmath.base as smb
 
 from bdsim.components import SinkBlock
 from bdsim.graphics import GraphicsBlock
-from typing import Union, List, Literal
+from typing import Union, Literal, Optional
 
 # ------------------------------------------------------------------------ #
 
@@ -111,8 +111,8 @@ class Scope(GraphicsBlock):
 
     def __init__(
         self,
-        nin=1,
-        vector: Union[None, int, list[int]] = None,
+        nin: int = 1,
+        vector: Optional[Union[int, list[int]]] = None,
         styles=None,
         stairs=False,
         scale: Union[Literal["auto"], float] = "auto",
@@ -485,16 +485,20 @@ class ScopeXY(GraphicsBlock):
         self.xdata.append(x)
         self.ydata.append(y)
 
+        assert self.fig is not None, "figure not created, step called before start?"
         plt.figure(self.fig.number)
         self.line.set_data(self.xdata, self.ydata)
 
-        if self.bd.runtime.options.animation:  # type: ignore[union-attr]
+        assert (
+            self.bd is not None
+        ), f"block {self.name} not connected to a block diagram, step called before start?"
+        if self.bd.runtime.options.animation:
             self.fig.canvas.flush_events()
 
         if isinstance(self.scale, str) and self.scale == "auto":
             self.ax.relim()
             self.ax.autoscale_view()
-        super().step(t, None)
+        super().step(t, [])
 
     # def done(self, block=False, **blockargs):
     #     if self.bd.runtime.options.graphics:

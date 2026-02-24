@@ -14,8 +14,6 @@ Connection blocks are in two categories:
 
 from __future__ import annotations
 
-# The constructor of each class ``MyClass`` with a ``@block`` decorator becomes a method ``MYCLASS()`` of the BlockDiagram instance.
-
 import importlib.util
 import types
 import numpy as np

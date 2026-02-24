@@ -12,9 +12,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import animation
 from collections import UserDict
-from typing import Optional, Literal, Union, Any, Self
+from typing import TYPE_CHECKING, Optional, Literal, Union, Any, Self
 
 from abc import ABC, abstractmethod
+
+if TYPE_CHECKING:
+    from bdsim.blockdiagram import BlockDiagram
+    from bdsim.run_sim import BDSimState
 
 
 # decorator for debugging implicit block creation with operator overloading
@@ -192,10 +196,10 @@ class Wire:
     """
     Create a wire.
 
-    :param start: Plug at the start of a wire, defaults to None
-    :type start: Plug, optional
-    :param end: Plug at the end of a wire, defaults to None
-    :type end: Plug, optional
+    :param start: Plug at the start of a wire
+    :type start: Plug
+    :param end: Plug at the end of a wire
+    :type end: Plug
     :param name: Name of wire, defaults to None
     :type name: str, optional
     :return: A wire object
@@ -212,7 +216,7 @@ class Wire:
     another block.
     """
 
-    def __init__(self, start=None, end=None, name=None) -> None:
+    def __init__(self, start: Plug, end: Plug, name: Optional[str] = None) -> None:
 
         self.name = name
         self.id = None
@@ -317,11 +321,11 @@ class Plug:
 
     __array_ufunc__ = None  # allow block operators with NumPy values
 
-    def __init__(self, block, port=0, type=None) -> None:
+    def __init__(self, block, port=0, type: Optional[str] = None) -> None:
 
-        self.block: Any = block
+        self.block: Block = block
         self.port: int = port
-        self.type = type  # start
+        self.type: str = type or ""  # start or end
 
     def __str__(self) -> str:
         """
@@ -416,7 +420,7 @@ class Plug:
         return len(self.portlist)
 
     @oodebug
-    def __rshift__(left, right):
+    def __rshift__(left: Plug, right: Plug | Block) -> Plug | Block:
         """
         Overloaded >> operator for implicit wiring.
 
@@ -453,6 +457,9 @@ class Plug:
         # block * block
         # block * plug
         s = left.block.bd
+        assert (
+            s is not None
+        ), "left operand of >> operator must be a plug connected to a block diagram"
         # assert isinstance(right, Block), 'arguments to * must be blocks not ports (for now)'
         w = s.connect(left, right)  # add a wire
         # print('plug * ' + str(w))
@@ -485,10 +492,13 @@ class Plug:
 
         :seealso: :meth:`Plug.__radd__` :meth:`Block.__add__`
         """
+        from bdsim.blocks import Constant, Sum
+
         if isinstance(other, (int, float, np.ndarray)):
             # plug + constant, create a CONSTANT block
-            other = self.block.bd.CONSTANT(other)
-        return self.block.bd.SUM("++", inputs=(self, other))
+            # other = self.block.bd.CONSTANT(other)
+            other = Constant(other, bd=self.block.bd)
+        return Sum("++", inputs=(self, other), bd=self.block.bd)
 
     @oodebug
     def __radd__(self, other):
@@ -519,10 +529,12 @@ class Plug:
 
         :seealso: :meth:`Plug.__add__` :meth:`Block.__radd__`
         """
+        from bdsim.blocks import Constant, Sum
+
         if isinstance(other, (int, float, np.ndarray)):
             # constant + plug, create a CONSTANT block
-            other = self.block.bd.CONSTANT(other)
-        return self.block.bd.SUM("++", inputs=(other, self))
+            other = Constant(other, bd=self.block.bd)
+        return Sum("++", inputs=(other, self), bd=self.block.bd)
 
     @oodebug
     def __sub__(self, other):
@@ -554,10 +566,12 @@ class Plug:
 
         :seealso: :meth:`Plug.__rsub__` :meth:`Block.__sub__`
         """
+        from bdsim.blocks import Constant, Sum
+
         if isinstance(other, (int, float, np.ndarray)):
             # plug - constant, create a CONSTANT block
-            other = self.block.bd.CONSTANT(other)
-        return self.block.bd.SUM("+-", inputs=(self, other))
+            other = Constant(other, bd=self.block.bd)
+        return Sum("+-", inputs=(self, other), bd=self.block.bd)
 
     @oodebug
     def __rsub__(self, other):
@@ -588,11 +602,13 @@ class Plug:
 
         :seealso: :meth:`Plug.__sub__` :meth:`Block.__rsub__`
         """
+        from bdsim.blocks import Constant, Sum
+
         # TODO deal with other cases as per above
         if isinstance(other, (int, float, np.ndarray)):
             # constant - plug, create a CONSTANT block
-            other = self.block.bd.CONSTANT(other)
-        return self.block.bd.SUM("+-", inputs=(other, self))
+            other = Constant(other, bd=self.block.bd)
+        return Sum("+-", inputs=(other, self), bd=self.block.bd)
 
     @oodebug
     def __neg__(self):
@@ -615,7 +631,9 @@ class Plug:
 
         :seealso: :meth:`Block.__neg__`
         """
-        return self.block.bd.GAIN(-1, inputs=[self])
+        from bdsim.blocks import Gain
+
+        return Gain(-1, inputs=[self], bd=self.block.bd)
 
     @oodebug
     def __pow__(self, p):
@@ -638,10 +656,12 @@ class Plug:
 
         :seealso: :meth:`Plug.__pow__`
         """
-        return self.block.bd.POW(p, inputs=[self])
+        from bdsim.blocks import Pow
+
+        return Pow(p, inputs=[self], bd=self.block.bd)
 
     @oodebug
-    def __mul__(self, other):
+    def __mul__(self, other: Block | Plug | int | float | np.ndarray):
         """
         Overloaded * operator for implicit block creation.
 
@@ -671,16 +691,25 @@ class Plug:
 
         :seealso: :meth:`Plug.__rmul__` :meth:`Block.__mul__`
         """
+        from bdsim.blocks import Prod
+
         if isinstance(other, (int, float, np.ndarray)):
             # plug * constant, create a GAIN block
             return self.block._autogain(other, inputs=[self])
+        elif isinstance(other, Block):
+            bd = other.bd
+        elif isinstance(other, Plug):
+            bd = self.block.bd
         else:
-            # value * value, create a PROD block
-            name: str = "_prod.{:d}".format(self.bd.n_auto_prod)
-            self.bd.n_auto_prod += 1
-            return self.block.bd.PROD(
-                "**", matrix=True, name=name, inputs=[self, other]
-            )
+            raise ValueError("unsupported operand type for *: " + str(type(other)))
+
+        # value * value, create a PROD block
+        assert (
+            bd is not None
+        ), "left operand of * operator must be a plug connected to a block diagram"
+        name = "_prod.{:d}".format(bd.n_auto_prod)
+        bd.n_auto_prod += 1
+        return Prod("**", matrix=True, name=name, inputs=[self, other], bd=bd)
 
     @oodebug
     def __rmul__(self, other):
@@ -749,10 +778,12 @@ class Plug:
 
         :seealso: :meth:`Plug.__rtruediv__` :meth:`Block.__truediv__`
         """
+        from bdsim.blocks import Prod, Constant
+
         if isinstance(other, (int, float, np.ndarray)):
             # plug / constant , create a CONSTANT block
-            other = self.block.bd.CONSTANT(other)
-        return self.block.bd.PROD("*/", inputs=(self, other))
+            other = Constant(other, bd=self.block.bd)
+        return Prod("*/", inputs=(self, other), bd=self.block.bd)
 
     @oodebug
     def __rtruediv__(self, other):
@@ -784,10 +815,12 @@ class Plug:
 
         :seealso: :meth:`Plug.__truediv__` :meth:`Block.__rtruediv__`
         """
+        from bdsim.blocks import Constant, Prod
+
         if isinstance(other, (int, float, np.ndarray)):
             # constant / plug, create a CONSTANT block
-            other = self.block.bd.CONSTANT(other)
-        return self.block.bd.PROD("*/", inputs=(other, self))
+            other = Constant(other, bd=self.block.bd)
+        return Prod("*/", inputs=(other, self), bd=self.block.bd)
 
 
 class StartPlug(Plug):
@@ -871,12 +904,12 @@ class Clock:
         for b in self.blocklist:
             x = b.setstate(x)  # send it to blocks
 
-    def start(self, simstate=None) -> None:
+    def start(self, simstate: BDSimState) -> None:
         self.i = 1
         simstate.declare_event(self, self.time(self.i))
         self.i += 1
 
-    def next_event(self, simstate=None) -> None:
+    def next_event(self, simstate: BDSimState) -> None:
         simstate.declare_event(self, self.time(self.i))
         self.i += 1
 
@@ -901,6 +934,18 @@ class Block(ABC):
 
     _name: Optional[str]
     _name_tex: Optional[str]
+
+    nstates: int
+    ndstates: int
+    _sequence: Optional[int]
+    _x: Optional[np.ndarray[tuple[Any, ...], np.dtype[Any]]]
+
+    sources: list[Block]
+    out: list[Plug]
+    input: Optional[list[Plug]]
+    output: list
+    input_wires: list[Wire]
+    output_wires: list[list[Wire]]
 
     __array_ufunc__ = None  # allow block operators with NumPy values
 
@@ -946,7 +991,7 @@ class Block(ABC):
         onames=None,
         snames=None,
         pos=None,
-        bd=None,
+        bd: Optional["BlockDiagram"] = None,
         blockclass=None,
         verbose=False,
         **kwargs,
@@ -988,7 +1033,7 @@ class Block(ABC):
 
         # print('Block constructor, bd = ', bd)
         self.name = name
-        self.bd = bd
+        self.bd: Optional[BlockDiagram] = bd
         self.pos = pos
         self.id = None
         self.out = []
@@ -1028,6 +1073,9 @@ class Block(ABC):
             inputs: tuple[Block] = (inputs,)
         if inputs is not None and len(inputs) > 0:
             # assert len(inputs) == self.nin, 'Number of input connections must match number of inputs'
+            assert (
+                self.bd is not None
+            ), "inputs provided but block is not in a block diagram"
             for i, input in enumerate(inputs):
                 self.bd.connect(input, Plug(self, port=i))
 
@@ -1196,6 +1244,7 @@ class Block(ABC):
             assert len(x) == self.ndstates, "passed state is wrong length"
 
         # evaluate the block
+        assert hasattr(self, "next"), "block does not have a next method"
         out = self.next(t, inputs, x)
 
         # sanity check the output
@@ -1430,6 +1479,9 @@ class Block(ABC):
         # block * block
         # block * plug
         s = left.bd
+        assert (
+            s is not None
+        ), "left operand of >> operator must be a block connected to a block diagram"
         # assert isinstance(right, Block), 'arguments to * must be blocks not ports (for now)'
         w = s.connect(left, right)  # add a wire
         # print('block * ' + str(w))
@@ -1438,27 +1490,44 @@ class Block(ABC):
         # make connection, return a plug
 
     def _autoconstant(self, value):
+        assert (
+            self.bd is not None
+        ), "block must be connected to a block diagram to create an automatic constant"
+
         if isinstance(value, (int, float, str)):
-            name: str = "_const.{:d}({})".format(self.bd.n_auto_const, value)
+            name = "_const.{:d}({})".format(self.bd.n_auto_const, value)
         else:
-            name: str = "_const.{:d}<{}>".format(
-                self.bd.n_auto_const, type(value).__name__
-            )
+            name = "_const.{:d}<{}>".format(self.bd.n_auto_const, type(value).__name__)
+        assert (
+            self.bd is not None
+        ), "block must be connected to a block diagram to create an automatic constant"
         self.bd.n_auto_const += 1
         return self.bd.CONSTANT(value, name=name)
 
     def _autogain(self, value, **kwargs):
+        assert (
+            self.bd is not None
+        ), "block must be connected to a block diagram to create an automatic gain"
+
         if isinstance(value, (int, float, str)):
-            name: str = "_gain.{:d}({})".format(self.bd.n_auto_gain, value)
+            name = "_gain.{:d}({})".format(self.bd.n_auto_gain, value)
         else:
-            name: str = "_gain.{:d}<{}>".format(
-                self.bd.n_auto_gain, type(value).__name__
-            )
+            name = "_gain.{:d}<{}>".format(self.bd.n_auto_gain, type(value).__name__)
+        assert (
+            self.bd is not None
+        ), "block must be connected to a block diagram to create an automatic gain"
         self.bd.n_auto_gain += 1
         return self.bd.GAIN(value, name=name, **kwargs)
 
     def _autopow(self, value, **kwargs):
-        name: str = "_pow.{:d}({})".format(self.bd.n_auto_pow, value)
+        assert (
+            self.bd is not None
+        ), "block must be connected to a block diagram to create an automatic power block"
+
+        name = "_pow.{:d}({})".format(self.bd.n_auto_pow, value)
+        assert (
+            self.bd is not None
+        ), "block must be connected to a block diagram to create an automatic power block"
         self.bd.n_auto_pow += 1
         return self.bd.POW(value, name=name, **kwargs)
 
@@ -1495,12 +1564,17 @@ class Block(ABC):
         :seealso: :meth:`Block.__radd__` :meth:`Plug.__add__`
         """
         # value + value, create a SUM block
-        name: str = "_sum.{:d}".format(self.bd.n_auto_sum)
+        from bdsim.blocks import Sum
+
+        assert (
+            self.bd is not None
+        ), "block must be connected to a block diagram to create an automatic sum block"
+        name = "_sum.{:d}".format(self.bd.n_auto_sum)
         self.bd.n_auto_sum += 1
         if isinstance(other, (int, float, np.ndarray)):
             # block + constant, create a CONSTANT block
             other = self._autoconstant(other)
-        return self.bd.SUM("++", inputs=(self, other), name=name)
+        return Sum("++", inputs=(self, other), name=name, bd=self.bd)
 
     @oodebug
     def __radd__(self, other):
@@ -1535,12 +1609,17 @@ class Block(ABC):
         :seealso: :meth:`Block.__add__` :meth:`Plug.__radd__`
         """
         # value + value, create a SUM block
-        name: str = "_sum.{:d}".format(self.bd.n_auto_sum)
+        from bdsim.blocks import Sum
+
+        assert (
+            self.bd is not None
+        ), "block must be connected to a block diagram to create an automatic sum block"
+        name = "_sum.{:d}".format(self.bd.n_auto_sum)
         self.bd.n_auto_sum += 1
         if isinstance(other, (int, float, np.ndarray)):
             # constant + block, create a CONSTANT block
             other = self._autoconstant(other)
-        return self.bd.SUM("++", inputs=(other, self), name=name)
+        return Sum("++", inputs=(other, self), name=name, bd=self.bd)
 
     @oodebug
     def __sub__(self, other):
@@ -1570,12 +1649,17 @@ class Block(ABC):
         :seealso: :meth:`Block.__rsub__` :meth:`Plug.__sub__`
         """
         # value - value, create a SUM block
-        name: str = "_sum.{:d}".format(self.bd.n_auto_sum)
+        from bdsim.blocks import Sum
+
+        assert (
+            self.bd is not None
+        ), "block must be connected to a block diagram to create an automatic sum block"
+        name = "_sum.{:d}".format(self.bd.n_auto_sum)
         self.bd.n_auto_sum += 1
         if isinstance(other, (int, float, np.ndarray)):
             # block - constant, create a CONSTANT block
             other = self._autoconstant(other)
-        return self.bd.SUM("+-", inputs=(self, other), name=name)
+        return Sum("+-", inputs=(self, other), name=name, bd=self.bd)
 
     @oodebug
     def __rsub__(self, other):
@@ -1609,12 +1693,18 @@ class Block(ABC):
         :seealso: :meth:`Block.__sub__` :meth:`Plug.__rsub__`
         """
         # value - value, create a SUM block
-        name: str = "_sum.{:d}".format(self.bd.n_auto_sum)
+        from bdsim.blocks import Sum
+
+        assert (
+            self.bd is not None
+        ), "block must be connected to a block diagram to create an automatic sum block"
+
+        name = "_sum.{:d}".format(self.bd.n_auto_sum)
         self.bd.n_auto_sum += 1
         if isinstance(other, (int, float, np.ndarray)):
             # constant - block, create a CONSTANT block
             other = self._autoconstant(other)
-        return self.bd.SUM("+-", inputs=(other, self), name=name)
+        return Sum("+-", inputs=(other, self), name=name, bd=self.bd)
 
     @oodebug
     def __neg__(self):
@@ -1693,6 +1783,12 @@ class Block(ABC):
 
         :seealso: :meth:`Block.__rmul__` :meth:`Plug.__mul__`
         """
+        from bdsim.blocks import Prod
+
+        assert (
+            self.bd is not None
+        ), "block must be connected to a block diagram to create an automatic product block"
+
         matrix = False
         if isinstance(other, (int, float, np.ndarray)):
             # block * constant, create a GAIN block
@@ -1700,9 +1796,11 @@ class Block(ABC):
             return self._autogain(other, premul=matrix, matrix=matrix, inputs=[self])
         else:
             # value * value, create a PROD block
-            name: str = "_prod.{:d}".format(self.bd.n_auto_prod)
+            name = "_prod.{:d}".format(self.bd.n_auto_prod)
             self.bd.n_auto_prod += 1
-            return self.bd.PROD("**", inputs=[self, other], matrix=matrix, name=name)
+            return Prod(
+                "**", inputs=[self, other], matrix=matrix, name=name, bd=self.bd
+            )
 
     @oodebug
     def __rmul__(self, other):
@@ -1773,14 +1871,20 @@ class Block(ABC):
         :seealso: :meth:`Block.__rtruediv__` :meth:`Plug.__truediv__`
         """
         # value / value, create a PROD block
-        name: str = "_prod.{:d}".format(self.bd.n_auto_prod)
+        from bdsim.blocks import Prod
+
+        assert (
+            self.bd is not None
+        ), "block must be connected to a block diagram to create an automatic product block"
+
+        name = "_prod.{:d}".format(self.bd.n_auto_prod)
         self.bd.n_auto_prod += 1
         matrix = False
         if isinstance(other, (int, float, np.ndarray)):
             # block / constant, create a CONSTANT block
             other = self._autoconstant(other)
             matrix: bool = isinstance(other, np.ndarray)
-        return self.bd.PROD("*/", inputs=(self, other), matrix=matrix, name=name)
+        return Prod("*/", inputs=(self, other), matrix=matrix, name=name, bd=self.bd)
 
     @oodebug
     def __rtruediv__(self, other):
@@ -1813,14 +1917,20 @@ class Block(ABC):
         :seealso: :meth:`Block.__truediv__` :meth:`Plug.__rtruediv__`
         """
         # value / value, create a PROD block
-        name: str = "_prod.{:d}".format(self.bd.n_auto_prod)
+        from bdsim.blocks import Prod
+
+        assert (
+            self.bd is not None
+        ), "block must be connected to a block diagram to create an automatic product block"
+
+        name = "_prod.{:d}".format(self.bd.n_auto_prod)
         self.bd.n_auto_prod += 1
         matrix = False
         if isinstance(other, (int, float, np.ndarray)):
             # constant / block, create a CONSTANT block
             other = self._autoconstant(other)
             matrix: bool = isinstance(other, np.ndarray)
-        return self.bd.PROD("*/", inputs=(other, self), matrix=matrix, name=name)
+        return Prod("*/", inputs=(other, self), matrix=matrix, name=name, bd=self.bd)
 
     # TODO arithmetic with a constant, add a gain block or a constant block
 

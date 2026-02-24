@@ -9,8 +9,6 @@ Function blocks:
 
 from __future__ import annotations
 
-# The constructor of each class ``MyClass`` with a ``@block`` decorator becomes a method ``MYCLASS()`` of the BlockDiagram instance.
-
 import numpy as np
 from scipy import linalg
 import scipy.interpolate
@@ -19,7 +17,7 @@ import inspect
 import spatialmath.base as smb
 from typing import Any, Union, Callable, Optional
 
-ArrayLike = Union[np.ndarray, int, float, list, tuple]
+Vector1D = Union[int, float, tuple[float, ...], list[float], np.ndarray]
 
 from bdsim.components import FunctionBlock
 
@@ -459,7 +457,7 @@ class Clip(FunctionBlock):
     nout = 1
 
     def __init__(
-        self, min: ArrayLike = -math.inf, max: ArrayLike = math.inf, **blockargs
+        self, min: Vector1D = -math.inf, max: Vector1D = math.inf, **blockargs
     ) -> None:
         """
         :param min: Minimum value, defaults to -math.inf

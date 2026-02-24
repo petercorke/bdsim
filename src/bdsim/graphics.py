@@ -98,9 +98,8 @@ class GraphicsBlock(SinkBlock):
         jpeg, png or pdf.
         """
         try:
-            plt.figure(
-                self.fig.number
-            )  # make block's figure the current one  # type: ignore[union-attr]
+            assert self.fig is not None, "no figure to save"
+            plt.figure(self.fig.number)  # make block's figure the current one
             if filename is None:
                 filename = self.name or ""
             filename += "." + format

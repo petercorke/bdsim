@@ -12,6 +12,7 @@ from __future__ import annotations
 import numpy as np
 import math
 from bdsim.components import SourceBlock, EventSource
+from typing import Any, Optional
 
 
 # ------------------------------------------------------------------------ #
@@ -44,7 +45,7 @@ class Constant(SourceBlock):
     nin = 0
     nout = 1
 
-    def __init__(self, value=0, **blockargs) -> None:
+    def __init__(self, value: Any = 0, **blockargs) -> None:
         """
         :param value: the constant, defaults to 0
         :type value: any, optional
@@ -211,7 +212,7 @@ class WaveForm(SourceBlock, EventSource):
         else:
             raise ValueError("bad waveform")
         if unit == "Hz":
-            self.freq: int = freq
+            self.freq: float = freq
         elif unit == "rad/s":
             self.freq: float = freq / (2 * math.pi)
         else:
@@ -342,7 +343,12 @@ class Piecewise(SourceBlock, EventSource):
     nin = 0
     nout = 1
 
-    def __init__(self, *args, seq=None, **blockargs) -> None:
+    def __init__(
+        self,
+        *args: list[tuple[float, float]],
+        seq: Optional[list[tuple[float, float]]] = None,
+        **blockargs,
+    ) -> None:
         """
         :param seq: sequence of time, value pairs
         :type seq: list of 2-element iterables
@@ -353,10 +359,14 @@ class Piecewise(SourceBlock, EventSource):
         super().__init__(**blockargs)
 
         if len(args) > 0:
-            seq = args
+            _seq = args
+        else:
+            _seq = seq
 
-        self.t = [x[0] for x in seq]
-        self.y = [x[1] for x in seq]
+        assert _seq is not None, "no sequence provided"
+
+        self.t = [x[0] for x in _seq]
+        self.y = [x[1] for x in _seq]
 
     def start(self, simstate) -> None:
         super().start(simstate)

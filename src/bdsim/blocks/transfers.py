@@ -8,7 +8,7 @@ Transfer blocks:
 """
 
 from __future__ import annotations
-from typing import Any, Optional, Union
+from typing import Any, Optional, Union, Callable, Callable
 
 
 import numpy as np
@@ -17,11 +17,12 @@ import math
 from math import sin, cos, atan2, sqrt, pi
 import matplotlib.pyplot as plt
 import spatialmath.base as smb
+from spatialmath import SE3, Twist3
 
 from bdsim.blockdiagram import BlockDiagram
 from bdsim.components import TransferBlock, SubsystemBlock
 
-Vector1D = Union[float, tuple[float, ...], list[float], np.ndarray, None]
+Vector1D = Union[int, float, tuple[float, ...], list[float], np.ndarray]
 
 
 class Integrator(TransferBlock):
@@ -84,11 +85,11 @@ class Integrator(TransferBlock):
 
     def __init__(
         self,
-        x0: Vector1D = None,
+        x0: Optional[Vector1D] = None,
         gain: float = 1.0,
-        min: Vector1D = None,
-        max: Vector1D = None,
-        enable=None,
+        min: Optional[Vector1D] = None,
+        max: Optional[Vector1D] = None,
+        enable: Optional[Callable[..., Any]] = None,
         **blockargs,
     ) -> None:
         """
@@ -100,7 +101,7 @@ class Integrator(TransferBlock):
         :type min: float or array_like, optional
         :param max: Maximum value of state, defaults to None
         :type max: float or array_like, optional
-        :param enable: enable or disable integration
+        :param enable: function to enable or disable integration
         :type enable: callable
         :param blockargs: |BlockOptions|
         :type blockargs: dict
@@ -188,7 +189,7 @@ class PoseIntegrator(TransferBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, x0=None, **blockargs) -> None:
+    def __init__(self, x0: Optional[SE3 | Twist3] = None, **blockargs) -> None:
         r"""
         :param x0: Initial pose, defaults to null
         :type x0: SE3, Twist3, optional
@@ -198,11 +199,15 @@ class PoseIntegrator(TransferBlock):
         super().__init__(**blockargs)
 
         if x0 is None:
-            x0: np.ndarray[tuple[int], np.dtype[np.float64]] = np.zeros((6,))
+            _x0 = np.zeros((6,))
+        elif isinstance(x0, SE3):
+            _x0 = Twist3(x0).A
+        elif isinstance(x0, Twist3):
+            _x0 = x0.A
 
-        self.nstates = len(x0)
+        self.nstates = len(_x0)
 
-        self._x0 = x0
+        self._x0 = _x0
 
     def output(self, t, u, x):
         return [Twist3(x).SE3(1)]
@@ -265,9 +270,9 @@ class LTI_SS(TransferBlock):
 
     def __init__(
         self,
-        A: Optional[np.ndarray] = None,
-        B: Optional[np.ndarray] = None,
-        C: Optional[np.ndarray] = None,
+        A: np.ndarray,
+        B: np.ndarray,
+        C: np.ndarray,
         x0: Optional[np.ndarray] = None,
         **blockargs,
     ) -> None:
@@ -308,9 +313,7 @@ class LTI_SS(TransferBlock):
         self.nstates = A.shape[0]
 
         if x0 is None:
-            self._x0: np.ndarray[tuple[int], np.dtype[np.float64]] = np.zeros(
-                (self.nstates,)
-            )
+            self._x0 = np.zeros((self.nstates,))
         else:
             self._x0 = x0
 
@@ -384,8 +387,8 @@ class LTI_SISO(LTI_SS):
 
     def __init__(
         self,
-        N: list[float] = [1],
-        D: list[float] = [1, 1],
+        N: Vector1D = 1,
+        D: Vector1D = [1, 1],
         x0: Optional[np.ndarray] = None,
         **blockargs,
     ) -> None:
@@ -403,23 +406,21 @@ class LTI_SISO(LTI_SS):
         """
         # print('in SISO constscutor')
 
-        if not isinstance(N, list):
-            N: list[int] = [N]
-        if not isinstance(D, list):
-            D = [D]
-        self.N: list[int] = N
-        self.D: list[int] = N
-        n: int = len(D) - 1
-        nn: int = len(N)
-        if x0 is None:
-            x0: np.ndarray[tuple[int], np.dtype[np.float64]] = np.zeros((n,))
+        N = smb.getvector(N)
+        D = smb.getvector(D)
+
+        n = len(D) - 1
+        nn = len(N)
+
         assert nn <= n, "direct pass through is not supported"
+
+        if x0 is None:
+            x0 = np.zeros((n,))
+        else:
+            x0 = smb.getvector(x0, n)
 
         # convert to numpy arrays
         # N = np.r_[np.zeros((len(D) - len(N),)), np.array(N)]
-        N: np.ndarray[tuple[Any, ...], np.dtype[Any]] = np.array(N)
-
-        D = np.array(D)
 
         # normalize the coefficients to obtain
         #
@@ -517,8 +518,8 @@ class Deriv(SubsystemBlock):
     def __init__(
         self,
         alpha: float,
-        x0: Optional[np.ndarray] = None,
-        y0: Optional[np.ndarray] = None,
+        x0: Optional[Vector1D] = None,
+        y0: Optional[Vector1D] = None,
         **blockargs,
     ) -> None:
         r"""
@@ -534,10 +535,13 @@ class Deriv(SubsystemBlock):
         super().__init__(**blockargs)
         self.type = "subsystem"
 
+        assert self.bd is not None, "Deriv block must be created within a block diagram"
         bd = self.bd.runtime.blockdiagram()
 
         if y0 is not None:
+            y0 = smb.getvector(y0)
             x0 = -y0 * alpha
+
         integrator = bd.INTEGRATOR(x0=x0)
         inp = bd.INPORT(1)
         outp = bd.OUTPORT(1)
@@ -642,8 +646,8 @@ class PID(SubsystemBlock):
         D: float = 0.0,
         I: float = 0.0,
         D_pole: float = 1,
-        I_limit: Union[float, tuple(float, float)] = None,
-        I_band=None,
+        I_limit: Optional[Union[float, tuple[float, ...], list[float]]] = None,
+        I_band: Optional[float] = None,
         **blockargs,
     ) -> None:
         r"""
@@ -667,6 +671,7 @@ class PID(SubsystemBlock):
         super().__init__(**blockargs)
         self.type = "subsystem"
 
+        assert self.bd is not None, "PID block must be created within a block diagram"
         subsystem = self.bd.runtime.blockdiagram()
 
         bd = blockargs["bd"]
@@ -689,11 +694,11 @@ class PID(SubsystemBlock):
                 def ifunc(t, u, x):
                     return abs(u[0]) < I_band
 
-            else:
-                ifunc = None
+                # integrator block
+                Iblock = subsystem.INTEGRATOR(min=min, max=max, gain=I, enable=ifunc)
 
-            # integrator block
-            Iblock = subsystem.INTEGRATOR(min=min, max=max, gain=I, enable=ifunc)
+            else:
+                Iblock = subsystem.INTEGRATOR(min=min, max=max, gain=I)
 
         if "D" in type:
             # if the D term is required, create the blocks
