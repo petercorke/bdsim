@@ -1906,8 +1906,8 @@ class Block:
     #     return self.blockclass + "." + str(self)
 
     def reset(self):
-        if self.nin > 0:
-            self.inputs = [None] * self.nin
+        # if self.nin > 0:
+        #     self.input_wires = [None] * self.nin
         self.updated = False
 
     def add_output_wire(self, w):

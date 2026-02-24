@@ -467,7 +467,7 @@ class BlockDiagram:
 
         if report:
             self.report()
-            self.schedule_report()
+            self.report_schedule()
 
         if not subsystem and evaluate:
             # run all the blocks for one step
@@ -928,10 +928,10 @@ class BlockDiagram:
                         )
                     else:
                         # subsequent rows
-                        table.row("", "", port, src_name, typ)
+                        table.row("", "", "", "", port, src_name, typ)
             else:
                 # source block, just list the name
-                table.row(name, b.type, "", "", "")
+                table.row(name, b.nstates, b.ndstates, b.type, "", "", "")
         table.print(**kwargs)
 
         if legend:

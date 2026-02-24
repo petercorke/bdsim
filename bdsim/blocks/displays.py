@@ -284,13 +284,13 @@ class Scope(GraphicsBlock):
         if self.title is not None:
             self.ax.set_title(self.title)
         else:
-            self.ax.set_title(self.name_tex)
+            self.ax.set_title(self._name_tex or "")
 
         # grid control
         if self.grid is True:
             self.ax.grid(self.grid)
         elif isinstance(self.grid, (list, tuple)):
-            self.ax.grid(True, *self.grid)
+            self.ax.grid(True, *self.grid)  # type: ignore[arg-type]
 
         # set limits
         self.ax.set_xlim(0, simstate.T)
@@ -310,7 +310,7 @@ class Scope(GraphicsBlock):
             )
 
         if self.watch:
-            for wire in self.input_wires:
+            for wire in self.input_wires:  # type: ignore[attr-defined]
                 plug = wire.start  # start plug for input wire
 
                 # append to the watchlist, bdsim.run() will do the rest
@@ -435,7 +435,7 @@ class ScopeXY(GraphicsBlock):
 
         self.styles = style
         if scale != "auto":
-            scale = smb.expand_dims(scale, 2)
+            scale = smb.expand_dims(scale, 2)  # type: ignore[arg-type]
         self.scale = scale
         self.aspect = aspect
         self.labels = labels
@@ -465,11 +465,11 @@ class ScopeXY(GraphicsBlock):
         self.ax.grid(True)
         self.ax.set_xlabel(self.labels[0])
         self.ax.set_ylabel(self.labels[1])
-        self.ax.set_title(self.name)
+        self.ax.set_title(self.name or "")
         if not (isinstance(self.scale, str) and self.scale == "auto"):
-            self.ax.set_xlim(*self.scale[0:2])
-            self.ax.set_ylim(*self.scale[2:4])
-        self.ax.set_aspect(self.aspect)
+            self.ax.set_xlim(*self.scale[0:2])  # type: ignore[arg-type]
+            self.ax.set_ylim(*self.scale[2:4])  # type: ignore[arg-type]
+        self.ax.set_aspect(self.aspect)  # type: ignore[arg-type]
         if self.init is not None:
             self.init(self.ax)
 
@@ -488,7 +488,7 @@ class ScopeXY(GraphicsBlock):
         plt.figure(self.fig.number)
         self.line.set_data(self.xdata, self.ydata)
 
-        if self.bd.runtime.options.animation:
+        if self.bd.runtime.options.animation:  # type: ignore[union-attr]
             self.fig.canvas.flush_events()
 
         if isinstance(self.scale, str) and self.scale == "auto":
