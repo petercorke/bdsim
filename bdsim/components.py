@@ -10,6 +10,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import animation
 from collections import UserDict
+from typing import Optional, Literal, Union
+
 
 # decorator for debugging implicit block creation with operator overloading
 def oodebug(func):
@@ -893,6 +895,9 @@ class Block:
     varinputs = False
     varoutputs = False
 
+    _name: Optional[str]
+    _name_tex: Optional[str]
+
     __array_ufunc__ = None  # allow block operators with NumPy values
 
     def __new__(cls, *args, bd=None, **kwargs):
@@ -940,7 +945,6 @@ class Block:
         verbose=False,
         **kwargs,
     ):
-
         """
         Construct a new block object.
 
@@ -977,18 +981,12 @@ class Block:
         """
 
         # print('Block constructor, bd = ', bd)
-        if name is not None:
-            self.name_tex = name
-            self.name = self._fixname(name)
-        else:
-            self.name_tex = None
-            self.name = None
-
+        self.name = name
         self.bd = bd
         self.pos = pos
         self.id = None
         self.out = []
-        self.inputs = None
+        # self.inputs = None
         self.updated = False
         self.shape = "block"  # for box
         self._inport_names = None
@@ -1041,6 +1039,19 @@ class Block:
     def set_param(self, name, newvalue):
         print(f"setting parameter {name} of block {self.name} to {newvalue}")
         self._parameters[name](self, name, newvalue)
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, name):
+        if name is not None:
+            self._name_tex = name
+            self._name = self._fixname(name)
+        else:
+            self._name_tex = None
+            self._name = None
 
     @property
     def info(self):
@@ -1370,7 +1381,8 @@ class Block:
             self.bd.connect(value, getattr(self, name))
         else:
             # regular case, add attribute to the instance's dictionary
-            self.__dict__[name] = value
+            # self.__dict__[name] = value
+            super().__setattr__(name, value)
 
     @oodebug
     def __rshift__(left, right):
