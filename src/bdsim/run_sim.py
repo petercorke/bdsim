@@ -1230,7 +1230,9 @@ class BDSim:
                 continue
 
             try:
-                pkg = spec.loader.load_module()
+                pkg = importlib.util.module_from_spec(spec)
+                sys.modules[spec.name] = pkg
+                spec.loader.exec_module(pkg)
             except Exception as err:
                 print(f"package {package} contains a compile error")
                 exc_type, exc_value, exc_traceback = sys.exc_info()
