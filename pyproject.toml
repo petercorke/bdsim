@@ -61,8 +61,13 @@ requires = ["setuptools", "oldest-supported-numpy"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-
 packages = ["bdsim", "bdsim.blocks", "bdsim.bdedit"]
+# [tool.setuptools.packages.find]
+# where = ["."]        # Explicitly say "look in current dir"
+# include = ["bdsim*"] # Include bdsim and any subpackages like bdsim.blocks
+# namespaces = false   # simpler if you have __init__.py files everywhere
+[tool.setuptools.package-dir]
+"bdsim" = "bdsim"
 
 [tool.black]
 line-length = 88
