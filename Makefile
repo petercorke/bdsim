@@ -17,10 +17,10 @@ test:
 	pytest
 
 coverage:
-	coverage run --source='bdsim' -m pytest
+	coverage run --source='src/bdsim' -m pytest
 	coverage report
 	coverage html
-	open htmlcov/index.html
+	open -a Safari htmlcov/index.html
 
 docs: .FORCE
 	(cd docs; make html)

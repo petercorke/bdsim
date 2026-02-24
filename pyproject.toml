@@ -56,18 +56,14 @@ bdedit = "bdsim.bdedit:main"
 
 
 [build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-requires = ["setuptools", "oldest-supported-numpy"]
-build-backend = "setuptools.build_meta"
+[tool.hatch.build.targets.wheel]
+packages = ["src/bdsim"]
 
-[tool.setuptools]
-packages = ["bdsim", "bdsim.blocks", "bdsim.bdedit"]
-# [tool.setuptools.packages.find]
-# where = ["."]        # Explicitly say "look in current dir"
-# include = ["bdsim*"] # Include bdsim and any subpackages like bdsim.blocks
-# namespaces = false   # simpler if you have __init__.py files everywhere
-[tool.setuptools.package-dir]
-"bdsim" = "bdsim"
+[tool.hatch.build.targets.sdist]
+include = ["src/", "tests/", "README.md", "LICENSE"]
 
 [tool.black]
 line-length = 88
@@ -78,10 +74,10 @@ testpaths = "tests"
 
 [tool.coverage.run]
 omit = [
-    "tex2icon.py",
-    "io.py",
-    "vision.py",
-    "bdsim/bdedit/*.py",
+    "src/bdsim/tex2icon.py",
+    "src/bdsim/blocks/io.py",
+    "src/bdsim/blocks/vision.py",
+    "src/bdsim/bdedit/*.py",
     "tk_editor/*.py",
     "examples/RVC3/*.py",
 ]
