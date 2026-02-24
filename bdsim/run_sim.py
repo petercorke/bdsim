@@ -1200,9 +1200,9 @@ class BDSim:
                 pkg = spec.loader.load_module()
             except Exception as err:
                 print(f"package {package} contains a compile error")
-                exc = sys.exception()
+                exc_type, exc_value, exc_traceback = sys.exc_info()
                 print(fg("red"))
-                tb.print_exception(exc, limit=-4)
+                tb.print_exception(exc_type, exc_value, exc_traceback, limit=-4)
                 print(attr(0))
                 continue
             # except ImportError:
