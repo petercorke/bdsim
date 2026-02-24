@@ -8,6 +8,7 @@ Sink blocks:
 
 """
 
+from __future__ import annotations
 
 import numpy as np
 from math import pi, sqrt, sin, cos, atan2
@@ -72,7 +73,7 @@ class Print(SinkBlock):
     nin = 1
     nout = 0
 
-    def __init__(self, fmt=None, file=None, **blockargs):
+    def __init__(self, fmt=None, file=None, **blockargs) -> None:
         """
         :param fmt: Format string, defaults to None
         :type fmt: str, optional
@@ -89,9 +90,9 @@ class Print(SinkBlock):
 
         # TODO format can be a string or function
 
-    def step(self, t, inports):
-        prefix = "{:12s}".format("PRINT({:s} (t={:.3f})".format(self.name, t))
-        value = inports[0]
+    def step(self, t, inputs) -> None:
+        prefix: str = "{:12s}".format("PRINT({:s} (t={:.3f})".format(self.name, t))
+        value = inputs[0]
         if self.format is None:
             # no format string
             if hasattr(value, "strline"):
@@ -149,7 +150,7 @@ class Stop(SinkBlock):
     nin = 1
     nout = 0
 
-    def __init__(self, func=None, **blockargs):
+    def __init__(self, func=None, **blockargs) -> None:
         """
         :param func: evaluate stop condition, defaults to None
         :type func: callable, optional
@@ -160,20 +161,20 @@ class Stop(SinkBlock):
 
         if func is not None and not callable(func):
             raise TypeError("argument must be a callable")
-        self.stopfunc = func
+        self.stopfunc: None | Callable[..., object] = func
 
-    def start(self, simstate):
+    def start(self, simstate) -> None:
         self._simstate = simstate
 
-    def step(self, t, inports):
-        value = inports[0]
+    def step(self, t, inputs) -> None:
+        value = inputs[0]
 
         if self.stopfunc is not None:
-            value = self.stopfunc(value)
+            value: object = self.stopfunc(value)
 
         stop = False
         if isinstance(value, bool):
-            stop = value
+            stop: bool = value
         else:
             try:
                 stop = value > 0
@@ -217,10 +218,10 @@ class Null(SinkBlock):
     .. note:: ``bdsim`` issues a warning for unconnected outputs but execution can continue.
     """
 
-    nin = -1
+    nin: int = -1
     nout = 0
 
-    def __init__(self, nin=1, **blockargs):
+    def __init__(self, nin=1, **blockargs) -> None:
         """
         :param nin: number of input ports, defaults to 1
         :type nin: int, optional
@@ -276,7 +277,7 @@ class Watch(SinkBlock):
     nin = 1
     nout = 0
 
-    def __init__(self, **blockargs):
+    def __init__(self, **blockargs) -> None:
         """
         :param nin: number of input ports, defaults to 1
         :type nin: int, optional
@@ -285,7 +286,7 @@ class Watch(SinkBlock):
         """
         super().__init__(**blockargs)
 
-    def start(self, simstate):
+    def start(self, simstate) -> None:
         # called at start of simulation, add this block to the watchlist
         plug = self.sources[0]  # start plug for input wire
 

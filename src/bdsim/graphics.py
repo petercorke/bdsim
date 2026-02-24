@@ -1,5 +1,7 @@
+from __future__ import annotations
 import sys
 import matplotlib
+import matplotlib.figure
 import matplotlib.pyplot as plt
 from matplotlib import animation
 from bdsim.components import SinkBlock
@@ -13,7 +15,7 @@ class GraphicsBlock(SinkBlock):
 
     blockclass = "graphics"
 
-    def __init__(self, movie=None, **blockargs):
+    def __init__(self, movie=None, **blockargs) -> None:
         """
         Create a graphical display block.
 
@@ -29,10 +31,10 @@ class GraphicsBlock(SinkBlock):
 
         super().__init__(**blockargs)
         self._graphics = True
-
+        self.fig: matplotlib.figure.Figure | None = None
         self.movie = movie
 
-    def start(self, simstate):
+    def start(self, simstate) -> None:
 
         # plt.draw()
         # plt.show(block=False)
@@ -50,41 +52,41 @@ class GraphicsBlock(SinkBlock):
                 self.writer = animation.FFMpegWriter(
                     fps=10, extra_args=["-vcodec", "libx264"]
                 )
-                self.writer.setup(fig=self.fig, outfile=self.movie)
+                self.writer.setup(fig=self.fig, outfile=self.movie)  # type: ignore[union-attr]
                 print("movie block", self, " --> ", self.movie)
             except FileNotFoundError:
-                self.fatal("cannot save movie, please install ffmpeg")
+                self.fatal("cannot save movie, please install ffmpeg")  # type: ignore[union-attr]
 
-    def step(self, t, inports):
+    def step(self, t, inports) -> None:
         super().step(t, inports)
 
         # bring the figure up to date in a backend-specific way
         if self._simstate.options.animation:
             if self._simstate.backend == "TkAgg":
-                self.fig.canvas.flush_events()
+                self.fig.canvas.flush_events()  # type: ignore[union-attr]
                 plt.show(block=False)
                 plt.show(block=False)
             elif self._simstate.backend == "Qt5Agg":
-                self.fig.canvas.flush_events()
-                self.fig.canvas.draw()
+                self.fig.canvas.flush_events()  # type: ignore[union-attr]
+                self.fig.canvas.draw()  # type: ignore[union-attr]
             else:
-                self.fig.canvas.draw()
+                self.fig.canvas.draw()  # type: ignore[union-attr]
 
         if self.movie is not None:
             try:
-                self.writer.grab_frame()
+                self.writer.grab_frame()  # type: ignore[union-attr]
             except AttributeError:
-                self.fatal("cannot save movie, please install ffmpeg")
+                self.fatal("cannot save movie, please install ffmpeg")  # type: ignore[union-attr]
 
-    def done(self, block=False):
+    def done(self, block=False) -> None:
         if self.fig is not None:
-            self.fig.canvas.start_event_loop(0.001)
+            self.fig.canvas.start_event_loop(0.001)  # type: ignore[union-attr]
             if self.movie is not None:
-                self.writer.finish()
+                self.writer.finish()  # type: ignore[union-attr]
                 # self.cleanup()
             plt.show(block=block)
 
-    def savefig(self, filename=None, format="pdf", **kwargs):
+    def savefig(self, filename=None, format="pdf", **kwargs) -> None:
         """
         Save the figure as an image file
 
@@ -96,9 +98,11 @@ class GraphicsBlock(SinkBlock):
         jpeg, png or pdf.
         """
         try:
-            plt.figure(self.fig.number)  # make block's figure the current one
+            plt.figure(
+                self.fig.number
+            )  # make block's figure the current one  # type: ignore[union-attr]
             if filename is None:
-                filename = self.name
+                filename = self.name or ""
             filename += "." + format
             print("saved {} -> {}".format(str(self), filename))
             plt.savefig(filename, **kwargs)  # save the current figure
@@ -106,10 +110,10 @@ class GraphicsBlock(SinkBlock):
         except:
             pass
 
-    def create_figure(self, state):
-        def move_figure(f, x, y):
+    def create_figure(self, state) -> matplotlib.figure.Figure:
+        def move_figure(f, x, y) -> None:
             """Move figure's upper left corner to pixel (x, y)"""
-            backend = matplotlib.get_backend()
+            backend: str = matplotlib.get_backend()
             x = int(x) + gstate.xoffset
             y = int(y)
             if backend == "TkAgg":
@@ -127,21 +131,21 @@ class GraphicsBlock(SinkBlock):
         gstate = state
         options = state.options
 
-        self.bd.runtime.DEBUG(
+        self.bd.runtime.DEBUG(  # type: ignore[union-attr]
             "graphics", "{} matplotlib figures exist", len(plt.get_fignums())
         )
 
         if gstate.fignum == 0:
             # no figures yet created, lazy initialization
-            self.bd.runtime.DEBUG("graphics", "lazy initialization")
+            self.bd.runtime.DEBUG("graphics", "lazy initialization")  # type: ignore[union-attr]
 
             if options.backend is None:
                 if sys.platform == "darwin":
                     # for MacOS, use Qt5Agg if its installed
                     # otherwise use default (MacOSX)
-                    if "Qt5Agg" in matplotlib.rcsetup.all_backends:
+                    if "Qt5Agg" in matplotlib.rcsetup.all_backends:  # type: ignore[union-attr]
                         try:
-                            import PyQt5
+                            import PyQt5  # type: ignore[import-untyped]
 
                             matplotlib.use("Qt5Agg")
                             print(
@@ -154,28 +158,28 @@ class GraphicsBlock(SinkBlock):
                 try:
                     matplotlib.use(options.backend)
                 except ImportError:
-                    self.fatal(f"can't select backend: {options.backend}")
+                    self.fatal(f"can't select backend: {options.backend}")  # type: ignore[union-attr]
 
-            mpl_backend = matplotlib.get_backend()
+            mpl_backend: str = matplotlib.get_backend()
             gstate.backend = mpl_backend
 
-            self.bd.runtime.DEBUG("graphics", "  backend={:s}", mpl_backend)
+            self.bd.runtime.DEBUG("graphics", "  backend={:s}", mpl_backend)  # type: ignore[union-attr]
 
             # split the string
-            ntiles = [int(x) for x in options.tiles.split("x")]
+            ntiles: list[int] = [int(x) for x in options.tiles.split("x")]
 
             xoffset = 0
             if options.shape is None:
                 if mpl_backend == "Qt5Agg":
                     # next line actually creates a figure if none already exist
-                    QScreen = plt.get_current_fig_manager().canvas.screen()
+                    QScreen = plt.get_current_fig_manager().canvas.screen()  # type: ignore[union-attr]
                     # this is a QScreenClass object, see https://doc.qt.io/qt-5/qscreen.html#availableGeometry-prop
                     # next line creates a figure
                     sz = QScreen.availableSize()
                     dpiscale = (
                         QScreen.devicePixelRatio()
                     )  # is 2.0 for Mac laptop screen
-                    self.bd.runtime.DEBUG(
+                    self.bd.runtime.DEBUG(  # type: ignore[union-attr]
                         "graphics",
                         "  {} x {} @ {}dpi",
                         sz.width(),
@@ -192,34 +196,34 @@ class GraphicsBlock(SinkBlock):
                         elif vsize[0] >= sz.width():
                             # extra monitor to the right
                             xoffset = vsize[0]
-                        self.bd.runtime.DEBUG(
+                        self.bd.runtime.DEBUG(  # type: ignore[union-attr]
                             "graphics", "  altscreen offset {}", xoffset
                         )
 
                     screen_width, screen_height = sz.width(), sz.height()
                     dpi = QScreen.physicalDotsPerInch()
-                    f = plt.gcf()
+                    f: matplotlib.figure.Figure = plt.gcf()
 
                 elif mpl_backend == "TkAgg":
-                    window = plt.get_current_fig_manager().window
+                    window = plt.get_current_fig_manager().window  # type: ignore[union-attr]
                     screen_width, screen_height = (
                         window.winfo_screenwidth(),
                         window.winfo_screenheight(),
                     )
                     dpiscale = 1
-                    self.bd.runtime.DEBUG(
+                    self.bd.runtime.DEBUG(  # type: ignore[union-attr]
                         "graphics",
                         "  screensize: {:d} x {:d}",
                         screen_width,
                         screen_height,
                     )
-                    f = plt.gcf()
-                    dpi = f.dpi
+                    f: matplotlib.figure.Figure = plt.gcf()
+                    dpi: float = f.dpi
 
                 else:
                     # all other backends
-                    f = plt.figure()
-                    dpi = f.dpi
+                    f: matplotlib.figure.Figure = plt.figure()
+                    dpi: float = f.dpi
                     dpiscale = 2
                     screen_width, screen_height = f.get_size_inches() * f.dpi
 
@@ -233,9 +237,9 @@ class GraphicsBlock(SinkBlock):
                 # shape is given explictly
                 screen_width, screen_height = [int(x) for x in options.shape.split("x")]
 
-                f = plt.gcf()
+                f: matplotlib.figure.Figure = plt.gcf()
 
-            f.canvas.manager.set_window_title(f"bdsim: Figure {f.number:d}")
+            f.canvas.manager.set_window_title(f"bdsim: Figure {f.number:d}")  # type: ignore[union-attr]
 
             # save graphics info away in state
             gstate.figsize = figsize
@@ -246,12 +250,14 @@ class GraphicsBlock(SinkBlock):
 
             # resize the figure
             f.set_dpi(gstate.dpi * dpiscale)
-            f.set_size_inches(figsize, forward=True)
+            f.set_size_inches(figsize, forward=True)  # type: ignore[union-attr]
             plt.ion()
 
         else:
             # subsequent figures
-            f = plt.figure(figsize=gstate.figsize, dpi=gstate.dpi)
+            f: matplotlib.figure.Figure = plt.figure(
+                figsize=gstate.figsize, dpi=gstate.dpi
+            )
 
         # move the figure to right place on screen
         row = gstate.fignum // gstate.ntiles[0]
@@ -264,7 +270,7 @@ class GraphicsBlock(SinkBlock):
         )
         gstate.fignum += 1
 
-        def onkeypress(event):
+        def onkeypress(event) -> None:
 
             if event.key == "x":
                 print("\nclosing all windows")
@@ -277,7 +283,7 @@ class GraphicsBlock(SinkBlock):
 
         f.canvas.mpl_connect("key_press_event", onkeypress)
 
-        self.bd.runtime.DEBUG(
+        self.bd.runtime.DEBUG(  # type: ignore[union-attr]
             "graphics", "create figure {:d} at ({:d}, {:d})", gstate.fignum, row, col
         )
         return f

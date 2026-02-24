@@ -7,9 +7,12 @@ Source blocks:
 
 """
 
+from __future__ import annotations
+
 import numpy as np
 import math
 from bdsim.components import SourceBlock, EventSource
+
 
 # ------------------------------------------------------------------------ #
 class Constant(SourceBlock):
@@ -41,7 +44,7 @@ class Constant(SourceBlock):
     nin = 0
     nout = 1
 
-    def __init__(self, value=0, **blockargs):
+    def __init__(self, value=0, **blockargs) -> None:
         """
         :param value: the constant, defaults to 0
         :type value: any, optional
@@ -56,7 +59,7 @@ class Constant(SourceBlock):
 
         self.add_param("value")
 
-    def output(self, t, inports, x):
+    def output(self, t, inputs, x):
         return [self.value]
 
 
@@ -95,14 +98,14 @@ class Time(SourceBlock):
     nin = 0
     nout = 1
 
-    def __init__(self, value=None, **blockargs):
+    def __init__(self, value=None, **blockargs) -> None:
         """
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
         super().__init__(**blockargs)
 
-    def output(self, t, inports, x):
+    def output(self, t, inputs, x):
         return [t]
 
 
@@ -175,7 +178,7 @@ class WaveForm(SourceBlock, EventSource):
         max=None,
         duty=0.5,
         **blockargs,
-    ):
+    ) -> None:
         """
         :param wave: type of waveform to generate, one of: 'sine', 'square' [default], 'triangle'
         :type wave: str, optional
@@ -204,17 +207,17 @@ class WaveForm(SourceBlock, EventSource):
         assert 0 < duty < 1, "duty must be in range [0,1]"
 
         if wave in ("square", "triangle", "sine"):
-            self.wave = wave
+            self.wave: str = wave
         else:
             raise ValueError("bad waveform")
         if unit == "Hz":
-            self.freq = freq
+            self.freq: int = freq
         elif unit == "rad/s":
-            self.freq = freq / (2 * math.pi)
+            self.freq: float = freq / (2 * math.pi)
         else:
             raise ValueError("bad unit")
         if 0 <= phase <= 1:
-            self.phase = phase
+            self.phase: int = phase
         else:
             raise ValueError("phase out of range")
         if max is not None and min is not None:
@@ -223,26 +226,26 @@ class WaveForm(SourceBlock, EventSource):
             self.min = min
             self.mablock = max
         if 0 <= duty <= 1:
-            self.duty = duty
+            self.duty: float = duty
         else:
             raise ValueError("duty out of range")
         self.amplitude = amplitude
         self.offset = offset
 
-    def start(self, simstate):
+    def start(self, simstate) -> None:
         super().start(simstate)
 
         if self.wave == "square":
-            t1 = self.phase / self.freq
-            t2 = (self.duty + self.phase) / self.freq
+            t1: float = self.phase / self.freq
+            t2: float = (self.duty + self.phase) / self.freq
         elif self.wave == "triangle":
-            t1 = (0.25 + self.phase) / self.freq
-            t2 = (0.75 + self.phase) / self.freq
+            t1: float = (0.25 + self.phase) / self.freq
+            t2: float = (0.75 + self.phase) / self.freq
         else:
             return
 
         # t1 < t2
-        T = 1.0 / self.freq
+        T: float = 1.0 / self.freq
         if simstate is not None:
             while t1 < simstate.T:
                 simstate.declare_event(self, t1)
@@ -250,8 +253,8 @@ class WaveForm(SourceBlock, EventSource):
                 t1 += T
                 t2 += T
 
-    def output(self, t, inports, x):
-        T = 1.0 / self.freq
+    def output(self, t, inputs, x):
+        T: float = 1.0 / self.freq
         phase = (t * self.freq - self.phase) % 1.0
 
         # define all signals in the range -1 to 1
@@ -268,7 +271,7 @@ class WaveForm(SourceBlock, EventSource):
             else:
                 out = -1 + 4 * (phase - 0.75)
         elif self.wave == "sine":
-            out = math.sin(phase * 2 * math.pi)
+            out: float = math.sin(phase * 2 * math.pi)
         else:
             raise ValueError("bad option for signal")
 
@@ -321,7 +324,7 @@ class Piecewise(SourceBlock, EventSource):
     .. plot::
 
         import matplotlib.pyplot as plt
-        plt.plot([0, 2, 2,   3,   3, 4,   4,   5,   5, 5.2], 
+        plt.plot([0, 2, 2,   3,   3, 4,   4,   5,   5, 5.2],
                  [0, 0, 0.5, 0.5, 0, 0, -0.5, -0.5, 0, 0], lw=2)
         plt.grid(True)
 
@@ -339,7 +342,7 @@ class Piecewise(SourceBlock, EventSource):
     nin = 0
     nout = 1
 
-    def __init__(self, *args, seq=None, **blockargs):
+    def __init__(self, *args, seq=None, **blockargs) -> None:
         """
         :param seq: sequence of time, value pairs
         :type seq: list of 2-element iterables
@@ -355,15 +358,15 @@ class Piecewise(SourceBlock, EventSource):
         self.t = [x[0] for x in seq]
         self.y = [x[1] for x in seq]
 
-    def start(self, simstate):
+    def start(self, simstate) -> None:
         super().start(simstate)
 
         if simstate is not None:
             for t in self.t:
                 simstate.declare_event(self, t)
 
-    def output(self, t, inports, x):
-        i = sum([1 if t >= _t else 0 for _t in self.t]) - 1
+    def output(self, t, inputs, x):
+        i: int = sum([1 if t >= _t else 0 for _t in self.t]) - 1
         out = self.y[i]
         # print(out)
         return [out]
@@ -415,7 +418,7 @@ class Step(SourceBlock, EventSource):
     nin = 0
     nout = 1
 
-    def __init__(self, T=1, off=0, on=1, **blockargs):
+    def __init__(self, T=1, off=0, on=1, **blockargs) -> None:
         """
         :param T: time of step, defaults to 1
         :type T: float, optional
@@ -428,18 +431,18 @@ class Step(SourceBlock, EventSource):
         """
         super().__init__(**blockargs)
 
-        self.T = T
-        self.off = off
-        self.on = on
+        self.T: int = T
+        self.off: int = off
+        self.on: int = on
 
-    def start(self, simstate):
+    def start(self, simstate) -> None:
         simstate.declare_event(self, self.T)
 
-    def output(self, t, inports, x):
+    def output(self, t, inputs, x) -> list[int]:
         if t >= self.T:
-            out = self.on
+            out: int = self.on
         else:
-            out = self.off
+            out: int = self.off
 
         # print(out)
         return [out]
@@ -491,8 +494,7 @@ class Ramp(SourceBlock, EventSource):
     nin = 0
     nout = 1
 
-    def __init__(self, T=1, off=0, slope=1, **blockargs):
-
+    def __init__(self, T=1, off=0, slope=1, **blockargs) -> None:
         """
         :param T: time of ramp start, defaults to 1
         :type T: float, optional
@@ -505,18 +507,18 @@ class Ramp(SourceBlock, EventSource):
         """
         super().__init__(**blockargs)
 
-        self.T = T
-        self.off = off
-        self.slope = slope
+        self.T: int = T
+        self.off: int = off
+        self.slope: int = slope
 
-    def start(self, simstate):
+    def start(self, simstate) -> None:
         simstate.declare_event(self, self.T)
 
-    def output(self, t, inports, x):
+    def output(self, t, inputs, x):
         if t >= self.T:
             out = self.off + self.slope * (t - self.T)
         else:
-            out = self.off
+            out: int = self.off
 
         # print(out)
         return [out]

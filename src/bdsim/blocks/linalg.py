@@ -7,10 +7,13 @@ Linear algebra blocks:
 
 """
 
+from __future__ import annotations
+
 # The constructor of each class ``MyClass`` with a ``@block`` decorator becomes a method ``MYCLASS()`` of the BlockDiagram instance.
 
 import numpy as np
 import math
+from typing import Any
 
 from bdsim.components import FunctionBlock
 
@@ -60,7 +63,7 @@ class Inverse(FunctionBlock):
 
     onames = ("inv", "cond")
 
-    def __init__(self, pinv=False, **blockargs):
+    def __init__(self, pinv=False, **blockargs) -> None:
         """
         :param pinv: force pseudo inverse, defaults to False
         :type pinv: bool, optional
@@ -70,21 +73,25 @@ class Inverse(FunctionBlock):
         super().__init__(**blockargs)
         self.type = "inverse"
 
-        self.pinv = pinv
+        self.pinv: bool = pinv
 
-    def output(self, t, inports, x):
-        mat = inports[0]
+    def output(self, t, inputs, x):
+        mat = inputs[0]
         if isinstance(mat, np.ndarray):
             if mat.shape[0] != mat.shape[1]:
                 pinv = True
             else:
-                pinv = self.pinv
+                pinv: bool = self.pinv
 
             if pinv:
-                out = np.linalg.pinv(mat)
+                out: np.ndarray[tuple[Any, ...], np.dtype[np.float64]] = np.linalg.pinv(
+                    mat
+                )
             else:
                 try:
-                    out = np.linalg.inv(mat)
+                    out: np.ndarray[tuple[Any, ...], np.dtype[np.float64]] = (
+                        np.linalg.inv(mat)
+                    )
                 except np.linalg.LinAlgError:
                     raise RuntimeError("matrix is singular")
             return [out, np.linalg.cond(mat)]
@@ -137,7 +144,7 @@ class Transpose(FunctionBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, **blockargs):
+    def __init__(self, **blockargs) -> None:
         """
         :param blockargs: |BlockOptions|
         :type blockargs: dict
@@ -145,8 +152,8 @@ class Transpose(FunctionBlock):
         super().__init__(**blockargs)
         self.type = "transpose"
 
-    def output(self, t, inports, x):
-        mat = inports[0]
+    def output(self, t, inputs, x):
+        mat = inputs[0]
 
         if mat.ndim == 1:
             out = mat.reshape((mat.shape[0], 1))
@@ -193,7 +200,7 @@ class Norm(FunctionBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, ord=None, axis=None, **blockargs):
+    def __init__(self, ord=None, axis=None, **blockargs) -> None:
         """
         :param axis: specifies the axis along which to compute the vector norms, defaults to None.
         :type axis: int, optional
@@ -206,8 +213,8 @@ class Norm(FunctionBlock):
         self.type = "norm"
         self.args = dict(ord=ord, axis=axis)
 
-    def output(self, t, inports, x):
-        vec = inports[0]
+    def output(self, t, inputs, x):
+        vec = inputs[0]
         out = np.linalg.norm(vec, **self.args)
         return [out]
 
@@ -249,7 +256,7 @@ class Flatten(FunctionBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, order="C", **blockargs):
+    def __init__(self, order="C", **blockargs) -> None:
         """
         :param order: flattening order, either "C" or "F", defaults to "C"
         :type order: str
@@ -258,10 +265,10 @@ class Flatten(FunctionBlock):
         """
         super().__init__(**blockargs)
         self.type = "flatten"
-        self.order = order
+        self.order: str = order
 
-    def output(self, t, inports, x):
-        vec = inports[0]
+    def output(self, t, inputs, x):
+        vec = inputs[0]
         out = vec.flatten(self.order)
         return [out]
 
@@ -334,7 +341,7 @@ class Slice2(FunctionBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, rows=None, cols=None, **blockargs):
+    def __init__(self, rows=None, cols=None, **blockargs) -> None:
         """
         :param rows: row selection, defaults to None
         :type rows: tuple(3) or list
@@ -347,25 +354,25 @@ class Slice2(FunctionBlock):
         self.type = "slice2"
 
         if rows is None:
-            self.rows = slice(None, None, None)
+            self.rows: slice[Any, Any, Any] = slice(None, None, None)
         elif isinstance(rows, list):
             self.rows = rows
         elif isinstance(rows, tuple) and len(rows) == 3:
-            self.rows = slice(*rows)
+            self.rows: slice[Any, Any, Any] = slice(*rows)
         else:
             raise ValueError("bad rows specifier")
 
         if cols is None:
-            self.cols = slice(None, None, None)
+            self.cols: slice[Any, Any, Any] = slice(None, None, None)
         elif isinstance(cols, list):
             self.cols = cols
         elif isinstance(cols, tuple) and len(cols) == 3:
-            self.cols = slice(*cols)
+            self.cols: slice[Any, Any, Any] = slice(*cols)
         else:
             raise ValueError("bad columns specifier")
 
-    def output(self, t, inports, x):
-        array = inports[0]
+    def output(self, t, inputs, x):
+        array = inputs[0]
         if array.ndim != 2:
             raise RuntimeError("Slice2 block expecting 2d array")
         return [array[self.rows, self.cols]]
@@ -433,7 +440,7 @@ class Slice1(FunctionBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, index, **blockargs):
+    def __init__(self, index, **blockargs) -> None:
         """
         :param index: slice, defaults to None
         :type index: tuple(3)
@@ -444,16 +451,16 @@ class Slice1(FunctionBlock):
         self.type = "slice1"
 
         if index is None:
-            self.index = slice(None, None, None)
+            self.index: slice[Any, Any, Any] = slice(None, None, None)
         elif isinstance(index, list):
             self.index = index
         elif isinstance(index, tuple) and len(index) == 3:
-            self.index = slice(*index)
+            self.index: slice[Any, Any, Any] = slice(*index)
         else:
             raise ValueError("bad index specifier")
 
-    def output(self, t, inports, x):
-        array = inports[0]
+    def output(self, t, inputs, x):
+        array = inputs[0]
         if array.ndim != 1:
             raise RuntimeError("Slice1 block expecting 1d array")
         return [array[self.index]]
@@ -494,7 +501,7 @@ class Det(FunctionBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, **blockargs):
+    def __init__(self, **blockargs) -> None:
         """
         :param blockargs: |BlockOptions|
         :type blockargs: dict
@@ -502,8 +509,8 @@ class Det(FunctionBlock):
         super().__init__(**blockargs)
         self.type = "det"
 
-    def output(self, t, inports, x):
-        mat = inports[0]
+    def output(self, t, inputs, x) -> list[Any]:
+        mat = inputs[0]
         out = np.linalg.det(mat)
         return [out]
 
@@ -541,7 +548,7 @@ class Cond(FunctionBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, **blockargs):
+    def __init__(self, **blockargs) -> None:
         """
         :param blockargs: |BlockOptions|
         :type blockargs: dict
@@ -549,8 +556,8 @@ class Cond(FunctionBlock):
         super().__init__(**blockargs)
         self.type = "cond"
 
-    def output(self, t, inports, x):
-        mat = inports[0]
+    def output(self, t, inputs, x) -> list[Any]:
+        mat = inputs[0]
         out = np.linalg.cond(mat)
         return [out]
 

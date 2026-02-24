@@ -5,14 +5,18 @@ Created on Mon May 18 21:43:18 2020
 
 @author: corkep
 """
+from __future__ import annotations
+import io
 import os
 from pathlib import Path
 import sys
 import importlib
 import inspect
+from tempfile import _TemporaryFileWrapper
 import traceback
 from collections import Counter, namedtuple
 from copy import deepcopy
+from typing import Any, NoReturn
 import numpy as np
 from colored import fg, attr
 import warnings
@@ -21,6 +25,8 @@ import warnings
 from ansitable import ANSITable, Column
 
 from bdsim.components import *
+from bdsim.components import Clock
+from bdsim.components import Clock
 
 # from stubs import BlockDiagramMixin
 
@@ -56,13 +62,13 @@ class BlockDiagram:
     * evaluates the entire diagram as a function to compute :meth:`\dot{x} = f(x, t)`
     """
 
-    def __init__(self, name="main", **kwargs):
+    def __init__(self, name="main", **kwargs) -> None:
         self.wirelist = []  # list of all wires
         self.blocklist = []  # list of all blocks
         self.clocklist = []  # list of all clock sources
         self.compiled = False  # network has been compiled
         self.blockcounter = Counter()
-        self.name = name
+        self.name: str = name
         self.nstates = 0
         self.ndstates = 0
         self._issubsystem = False
@@ -84,14 +90,14 @@ class BlockDiagram:
                     return b
             raise ValueError(f"block {id} not found")
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.blocklist)
 
-    def __deepcopy__(self, memo):
+    def __deepcopy__(self, memo) -> Self:
         # deep copy a block diagram
         # retain references (don't copy) to blocks and the runtime
-        cls = self.__class__
-        result = cls.__new__(cls)
+        cls: type[Self] = self.__class__
+        result: Self = cls.__new__(cls)
         memo[id(self)] = result
         for k, v in self.__dict__.items():
             if type(v).__name__ == "method":
@@ -106,21 +112,21 @@ class BlockDiagram:
         return result
 
     @property
-    def issubsystem(self):
+    def issubsystem(self) -> bool:
         return self._issubsystem
 
-    def clock(self, *args, **kwargs):
-        clock = Clock(*args, **kwargs)
+    def clock(self, *args, **kwargs) -> Clock:
+        clock: Clock = Clock(*args, **kwargs)
         clock.bd = self
         self.clocklist.append(clock)
         return clock
 
-    def add_block(self, block):
+    def add_block(self, block) -> None:
         if block.name in self.blocknames:
             raise ValueError("block {} already added".format(block.name))
         block.id = len(self.blocklist)
         if block.name is None:
-            i = self.blockcounter[block.type]
+            i: int = self.blockcounter[block.type]
             self.blockcounter[block.type] += 1
             block.name = "{:s}.{:d}".format(block.type, i)
         block.bd = self
@@ -136,10 +142,10 @@ class BlockDiagram:
         # when add_output_wire and add_input_wire are called on the blocks
         return self.wirelist.append(wire)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "BlockDiagram: {:s}".format(self.name)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return str(self) + " with {:d} blocks and {:d} wires".format(
             len(self.blocklist), len(self.wirelist)
         )
@@ -150,11 +156,11 @@ class BlockDiagram:
         #     s += str(wire) + "\n"
         # return s.lstrip("\n")
 
-    def ls(self):
+    def ls(self) -> None:
         for k, v in self.blockdict.items():
             print("{:12s}: ".format(k), ", ".join(v))
 
-    def connect(self, start, *ends, name=None):
+    def connect(self, start, *ends, name=None) -> None:
         """
         TODO:
             s.connect(out[3], in1[2], in2[3])  # one to many
@@ -275,7 +281,7 @@ class BlockDiagram:
 
     def compile(
         self, subsystem=False, doimport=True, evaluate=True, report=False, verbose=True
-    ):
+    ) -> bool:
         """
         Compile the block diagram
 
@@ -301,8 +307,8 @@ class BlockDiagram:
         """
 
         # name the elements
-        self.nblocks = len(self.blocklist)
-        self.nwires = len(self.wirelist)
+        self.nblocks: int = len(self.blocklist)
+        self.nwires: int = len(self.wirelist)
 
         error = False
 
@@ -460,7 +466,7 @@ class BlockDiagram:
         self.schedule_generate()
 
         ## evaluate the network once to check out wire types
-        x = self.getstate0()
+        x: np.ndarray[tuple[Any, ...], np.dtype[Any]] | Any = self.getstate0()
 
         for clock in self.clocklist:
             clock._x = clock.getstate0()
@@ -538,7 +544,9 @@ class BlockDiagram:
 
     # ---------------------------------------------------------------------- #
 
-    def schedule_evaluate(self, x, t, checkfinite=True, sinks=True, simstate=None):
+    def schedule_evaluate(
+        self, x, t, checkfinite=True, sinks=True, simstate=None
+    ) -> np.ndarray[tuple[Any, ...], np.dtype[Any]] | Any:
         """
         Evaluate all blocks in the network
 
@@ -658,12 +666,12 @@ class BlockDiagram:
                     b.step(t, b.inputs)
 
         # gather the derivative
-        YD = self.deriv(t)
+        YD: np.ndarray[tuple[Any, ...], np.dtype[Any]] | Any = self.deriv(t)
 
         self.runtime.DEBUG("deriv", YD)
         return YD
 
-    def schedule_generate(self):
+    def schedule_generate(self) -> None:
         """
         Create execution plan
 
@@ -694,7 +702,7 @@ class BlockDiagram:
                 b._sequence = 0
                 group.append(b)
         plan.append(group)
-        sequence = len(plan)
+        sequence: int = len(plan)
 
         while True:
             group = []
@@ -721,7 +729,7 @@ class BlockDiagram:
 
         self.plan = plan
 
-    def schedule_dotfile(self, filename):
+    def schedule_dotfile(self, filename) -> None:
         """
         Write a GraphViz dot file representing the execution schedule
 
@@ -738,7 +746,7 @@ class BlockDiagram:
         """
 
         if isinstance(filename, str):
-            file = open(filename, "w")
+            file: io.TextIOWrapper = open(filename, "w")
         else:
             file = filename
 
@@ -774,7 +782,7 @@ class BlockDiagram:
         if simstate.t_stop is not None and simstate.t < simstate.t_stop:
             return
 
-        def print_output(b, t, inports, x):
+        def print_output(b, t, inports, x) -> None:
             out = b.output(t, inports, x)
             if len(out) == 1:
                 print(f"{b.name} = {out[0]}")
@@ -796,7 +804,7 @@ class BlockDiagram:
         while True:
             try:
                 t = simstate.t
-                cmd = input(f"(bdsim, t={t:.6f}) ")
+                cmd: str = input(f"(bdsim, t={t:.6f}) ")
 
                 if len(cmd) == 0:
                     continue
@@ -861,7 +869,7 @@ class BlockDiagram:
 
     # ---------------------------------------------------------------------- #
 
-    def report_summary(self, sortby="name", **kwargs):
+    def report_summary(self, sortby="name", **kwargs) -> None:
         """
         Print a summary of block diagram.
 
@@ -915,7 +923,7 @@ class BlockDiagram:
                 inputs = b.inputs
                 for port, source in enumerate(b.sources):  # every port
                     value = inputs[port]
-                    typ = type(value).__name__
+                    typ: str = type(value).__name__
                     if isinstance(value, np.ndarray):
                         typ += "{:s}.{:s}".format(str(value.shape), str(value.dtype))
                     src_name = source.block.name
@@ -937,11 +945,11 @@ class BlockDiagram:
         if legend:
             print(legend + "\n")
 
-    def report(self, **kwargs):
+    def report(self, **kwargs) -> None:
         warnings.warn("use reports_lists() method instead", DeprecationWarning)
         self.report_lists(**kwargs)
 
-    def report_lists(self, **kwargs):
+    def report_lists(self, **kwargs) -> None:
         """
         Print a tabular report about the block diagram.
 
@@ -981,12 +989,12 @@ class BlockDiagram:
             border="thin",
         )
         for w in self.wirelist:
-            start = "{:d}[{:d}]".format(w.start.block.id, w.start.port)
-            end = "{:d}[{:d}]".format(w.end.block.id, w.end.port)
+            start: str = "{:d}[{:d}]".format(w.start.block.id, w.start.port)
+            end: str = "{:d}[{:d}]".format(w.end.block.id, w.end.port)
 
             try:
                 value = w.end.block.inputs[w.end.port]
-                typ = type(value).__name__
+                typ: str = type(value).__name__
                 if isinstance(value, np.ndarray):
                     typ += "{:s}.{:s}".format(str(value.shape), str(value.dtype))
             except:
@@ -1014,7 +1022,7 @@ class BlockDiagram:
         if not self.compiled:
             print("** System has not been compiled, or had a compile time error")
 
-    def report_schedule(self, **kwargs):
+    def report_schedule(self, **kwargs) -> None:
         """
         Display execution schedule in tabular form
 
@@ -1035,7 +1043,7 @@ class BlockDiagram:
 
     # ---------------------------------------------------------------------- #
 
-    def _error_handler(self, where, block):
+    def _error_handler(self, where, block) -> NoReturn:
         # called from except clause
 
         import traceback
@@ -1072,9 +1080,9 @@ class BlockDiagram:
         # raise RuntimeError('Fatal failure').with_traceback(back_tb)
         raise RuntimeError("Fatal failure") from None
 
-    def getstate0(self):
+    def getstate0(self) -> np.ndarray[tuple[Any, ...], np.dtype[Any]] | Any:
         # get the state from each stateful block
-        x0 = np.array([])
+        x0: np.ndarray[tuple[Any, ...], np.dtype[Any]] = np.array([])
         for b in self.blocklist:
             try:
                 if b.blockclass == "transfer":
@@ -1084,7 +1092,7 @@ class BlockDiagram:
                 self._error_handler("getstate0", b)
         return x0
 
-    def reset(self):
+    def reset(self) -> None:
         """
         Reset conditions within every active block.  Most importantly, all
         inputs are marked as unknown.
@@ -1098,7 +1106,7 @@ class BlockDiagram:
             except:
                 self._error_handler("reset", b)
 
-    def step(self, t):
+    def step(self, t) -> None:
         """
         Step all blocks
 
@@ -1126,7 +1134,7 @@ class BlockDiagram:
             except:
                 self._error_handler("step", b)
 
-    def deriv(self, t):
+    def deriv(self, t) -> np.ndarray[tuple[Any, ...], np.dtype[Any]] | Any:
         """
         Harvest derivatives from all blocks.
 
@@ -1135,7 +1143,7 @@ class BlockDiagram:
         :param simstate: simulation state, defaults to None
         :type simstate: SimState, optional
         """
-        YD = np.array([])
+        YD: np.ndarray[tuple[Any, ...], np.dtype[Any]] = np.array([])
         for b in self.blocklist:
             if b.blockclass == "transfer":
                 try:
@@ -1152,7 +1160,7 @@ class BlockDiagram:
                     self._error_handler("deriv", b)
         return YD
 
-    def start(self, simstate=None):
+    def start(self, simstate=None) -> None:
         """
         Start all blocks
 
@@ -1181,12 +1189,12 @@ class BlockDiagram:
             except:
                 self._error_handler("start", b)
 
-    def initialstate(self):
+    def initialstate(self) -> None:
         for b in self.blocklist:
             if b.blockclass in ("transfer", "clocked"):
                 b._x = b._x0
 
-    def done(self, block=False):
+    def done(self, block=False) -> None:
         """
         Finishup all blocks
 
@@ -1207,7 +1215,7 @@ class BlockDiagram:
             except:
                 self._error_handler("done", b)
 
-    def dotfile(self, filename, shapes=None):
+    def dotfile(self, filename, shapes=None) -> None:
         """
         Write a GraphViz dot file representing the network.
 
@@ -1241,10 +1249,12 @@ class BlockDiagram:
         :seealso: :meth:`showgraph`
         """
         if shapes is None:
-            shapes = dict(source="record", sink="Mrecord", graphics="Mrecord")
+            shapes: dict[str, str] = dict(
+                source="record", sink="Mrecord", graphics="Mrecord"
+            )
 
         if isinstance(filename, str):
-            file = open(filename, "w")
+            file: io.TextIOWrapper = open(filename, "w")
         else:
             file = filename
 
@@ -1293,7 +1303,7 @@ class BlockDiagram:
 
         file.write("}\n")
 
-    def showgraph(self):
+    def showgraph(self) -> None:
         """
         Display diagram as a graph in browser tab
 
@@ -1309,18 +1319,20 @@ class BlockDiagram:
             return
 
         # create the temporary dotfile
-        dotfile = tempfile.TemporaryFile(mode="w")
+        dotfile: io.TextIOWrapper = tempfile.TemporaryFile(mode="w")
         self.dotfile(dotfile)
 
         # rewind the dot file, create PDF file in the filesystem, run dot
         dotfile.seek(0)
-        pdffile = tempfile.NamedTemporaryFile(suffix=".pdf", delete=False)
+        pdffile: _TemporaryFileWrapper[bytes] = tempfile.NamedTemporaryFile(
+            suffix=".pdf", delete=False
+        )
         subprocess.run("dot -Tpdf", shell=True, stdin=dotfile, stdout=pdffile)
 
         # open the PDF file in browser (hopefully portable), then cleanup
         webbrowser.open(f"file://{pdffile.name}")
 
-    def blockvalues(self, t=None, simstate=None):
+    def blockvalues(self, t=None, simstate=None) -> None:
         for b in self.blocklist:
             print("Block {:s}:".format(b.name))
             print("  inputs:  ", b.inputs)

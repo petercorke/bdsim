@@ -1,3 +1,5 @@
+from __future__ import annotations
+import io
 import os
 from pathlib import Path
 import sys
@@ -9,6 +11,7 @@ import argparse
 import types
 import warnings
 import time
+from typing import Any, NoReturn
 
 from bdsim.blockdiagram import BlockDiagram
 from bdsim.components import OptionsBase, Block, Clock, BDStruct, Plug, clocklist
@@ -38,19 +41,19 @@ class Progress:
     @staticmethod
     def printProgressBar(
         fraction, prefix="", suffix="", decimals=1, length=50, fill="█", printEnd="\r"
-    ):
-        percent = ("{0:." + str(decimals) + "f}").format(fraction * 100)
+    ) -> None:
+        percent: str = ("{0:." + str(decimals) + "f}").format(fraction * 100)
         filledLength = int(length * fraction)
-        bar = fill * filledLength + "-" * (length - filledLength)
+        bar: str = fill * filledLength + "-" * (length - filledLength)
         print(f"\r{prefix} |{bar}| {percent}% {suffix}", end=printEnd)
 
-    def __init__(self, enable=True):
-        self.enable = enable
+    def __init__(self, enable=True) -> None:
+        self.enable: bool = enable
         self.length = 60
         if not enable:
             return
 
-    def start(self, T):
+    def start(self, T) -> None:
         self.T = T
 
         if not self.enable:
@@ -65,7 +68,7 @@ class Progress:
                 0, prefix="Progress:", suffix="complete", length=self.length
             )
 
-    def end(self):
+    def end(self) -> None:
         """
         Clean up progress bar
         """
@@ -77,7 +80,7 @@ class Progress:
         else:
             print("\r" + " " * (self.length + 20) + "\r")
 
-    def update(self, t):
+    def update(self, t) -> None:
         """
         Update progress bar
 
@@ -110,11 +113,11 @@ class TimeQ:
     The list is not ordered, and is sorted on a pop event.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.q = []
         self.dirty = False
 
-    def __len__(self):
+    def __len__(self) -> int:
         """
         Length of time-ordered queue
 
@@ -123,7 +126,7 @@ class TimeQ:
         """
         return len(self.q)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         String representation of time-ordered queue
 
@@ -135,13 +138,13 @@ class TimeQ:
         else:
             return f"TimeQ: len={len(self)}, first out {self.q[0]}"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         events = []
         for t in self.q:
             events.append(str(t))
         return "\n".join(events)
 
-    def push(self, value):
+    def push(self, value) -> None:
         """
         Push value onto time-ordered queue
 
@@ -230,26 +233,49 @@ class BDSimState:
     :vartype graphics: bool
     """
 
-    def __init__(self):
-        self.x = None  # continuous state vector numpy.ndarray
-        self.T = None  # maximum.BlockDiagram time
-        self.t = None  # current time
-        self.fignum = 0
+    def __init__(self) -> None:
+        self.x: np.ndarray | None = None  # continuous state vector numpy.ndarray
+        self.T: float | None = None  # maximum.BlockDiagram time
+        self.t: float | None = None  # current time
+        self.fignum: int = 0
         self.stop = None
-        self.checkfinite = True
+        self.checkfinite: bool = True
 
-        self.debugger = True
-        self.t_stop = None  # time-based breakpoint
-        self.eventq = TimeQ()
+        self.debugger: bool = True
+        self.t_stop: float | None = None  # time-based breakpoint
+        self.eventq: TimeQ = TimeQ()
 
-    def declare_event(self, block, t):
+        # attributes set during run()
+        self.dt: float | None = None
+        self.count: int = 0
+        self.bdtime: float = 0.0
+        self.gtime: float = 0.0
+        self.solver: str = ""
+        self.solver_args: dict = {}
+        self.minstepsize: float | None = None
+        self.options: OptionsBase
+        self.watchlist: list = []
+        self.watchnamelist: list = []
+        self.tlist: list = []
+        self.xlist: list = []
+        self.plist: list = []
+        self.figsize: list = []
+        self.dpi: float = 100.0
+        self.backend: str = ""
+        self.screensize_pix: tuple = ()
+        self.ntiles: list = []
+        self.xoffset: int = 0
+
+    def declare_event(self, block, t) -> None:
         self.eventq.push((t, block))
 
 
 class BDSim:
-    _blocklibrary = None
+    _blocklibrary: dict | None = None
 
-    def __init__(self, banner=True, packages=None, load=True, toolboxes=True, **kwargs):
+    def __init__(
+        self, banner=True, packages=None, load=True, toolboxes=True, **kwargs
+    ) -> None:
         """
         :param banner: display docstring banner, defaults to True
         :type banner: bool, optional
@@ -320,14 +346,15 @@ class BDSim:
 
         # print docstring as a startup banner
         if banner and not self.options.quiet:
-            calling_frame = inspect.currentframe().f_back
-            try:
-                doc = calling_frame.f_locals["__doc__"]
-                if doc is not None:
-                    for line in doc.strip().split("\n"):
-                        print("* " + line)
-            except KeyError:
-                pass
+            calling_frame: types.FrameType | None = inspect.currentframe().f_back
+            if calling_frame is not None:
+                try:
+                    doc = calling_frame.f_locals["__doc__"]
+                    if doc is not None:
+                        for line in doc.strip().split("\n"):
+                            print("* " + line)
+                except KeyError:
+                    pass
 
         # load modules from the blocks folder
         if BDSim._blocklibrary is None and load:
@@ -370,18 +397,18 @@ class BDSim:
         else:
             return self._blocklibrary[block]
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         String representation of simulation
 
         :return: single line summary of simulation environment
         :rtype: str
         """
-        s = f"BDSim: {len(self._blocklibrary)} blocks in library\n"
+        s: str = f"BDSim: {len(self._blocklibrary)} blocks in library\n"
         return s
 
-    def __repr__(self):
-        s = (
+    def __repr__(self) -> str:
+        s: str = (
             f"Block diagram simulation runtime, {len(self._blocklibrary)} blocks"
             " imported to library.\n"
         )
@@ -471,7 +498,7 @@ class BDSim:
             try:
                 default_times = eval(self.options.simtime)
                 if isinstance(default_times, (int, float)):
-                    T = default_times
+                    T: int | float = default_times
                 elif isinstance(default_times, tuple):
                     T, dt = default_times
                 else:
@@ -486,7 +513,7 @@ class BDSim:
         # dt = dt or 0.01
 
         simstate = BDSimState()
-        self.simstate = simstate
+        self.simstate: BDSimState = simstate
         simstate.T = T
 
         if dt is None and not "max_step" in solver_args:
@@ -521,17 +548,19 @@ class BDSim:
         #   - str in the form BLOCKNAME[PORT]
         watchlist = []
         watchnamelist = []
-        re_block = re.compile(r"(?P<name>[^[]+)(\[(?P<port>[0-9]+)\])?")
+        re_block: re.Pattern[str] = re.compile(
+            r"(?P<name>[^[]+)(\[(?P<port>[0-9]+)\])?"
+        )
         for w in watch:
             if isinstance(w, str):
                 # a name was given, with optional port number
-                m = re_block.match(w)
+                m: re.Match[str] | None = re_block.match(w)
                 if m is None:
                     raise ValueError("watch block[port] not found: " + w)
-                name = m.group("name")
+                name: str | None = m.group("name")
 
                 # get optional port number
-                port = m.group("port")
+                port: str | None = m.group("port")
                 if port is None:
                     port = 0
                 else:
@@ -541,10 +570,10 @@ class BDSim:
                 plug = b[port]
             elif isinstance(w, Block):
                 # a block was given, defaults to port 0
-                plug = w[0]
+                plug: Plug = w[0]
             elif isinstance(w, Plug):
                 # a plug was given
-                plug = w
+                plug: Plug = w
             watchlist.append(plug)
             watchnamelist.append(str(plug))
         simstate.watchlist = watchlist
@@ -687,7 +716,7 @@ class BDSim:
             self.done(self.bd, block=self.options.hold)
         return out
 
-    def update_parameters(self, bd):
+    def update_parameters(self, bd) -> None:
         """
         Set value of parameters according to command line arguments
 
@@ -708,28 +737,30 @@ class BDSim:
         ``value`` is the new value of the variable
         """
 
-        re_set = re.compile(r"(?P<block>[\w\.]+):(?P<param>[\w]+)=(?P<value>.*)")
+        re_set: re.Pattern[str] = re.compile(
+            r"(?P<block>[\w\.]+):(?P<param>[\w]+)=(?P<value>.*)"
+        )
         for s in self.options.setparam:
-            m = re_set.match(s)
+            m: re.Match[str] | None = re_set.match(s)
             if m is None:
                 raise ValueError("bad set parameter: " + s)
 
             # get block reference
-            blockname = m["block"]
+            blockname: str | None = m["block"]
             try:
                 blockname = int(blockname)
             except ValueError:
                 pass
             block = bd[blockname]
 
-            param = m["param"]
+            param: str | Any = m["param"]
             try:
                 prev_value = getattr(block, param)
             except ValueError:
                 raise ValueError(f"block {block.name} has no parameter '{param}'")
 
             # get the parameter
-            value = m["value"]
+            value: str | Any = m["value"]
             new_value = None
 
             try:
@@ -784,9 +815,9 @@ class BDSim:
                 def ydot(t, y):
                     simstate.t = t
                     simstate.count += 1
-                    t0 = time.time()
+                    t0: float = time.time()
                     yd = bd.schedule_evaluate(y, t, sinks=False, simstate=simstate)
-                    t1 = time.time()
+                    t1: float = time.time()
                     simstate.bdtime += t1 - t0
                     return yd
 
@@ -867,9 +898,9 @@ class BDSim:
                     simstate.t = t
 
                     simstate.count += 1
-                    t0 = time.time()
+                    t0: float = time.time()
                     bd.schedule_evaluate([], t)
-                    t1 = time.time()
+                    t1: float = time.time()
                     simstate.bdtime += t1 - t0
 
                     # stash the results
@@ -904,9 +935,9 @@ class BDSim:
                 # evaluate the block diagram
 
                 simstate.count += 1
-                t0 = time.time()
+                t0: float = time.time()
                 bd.schedule_evaluate([], t)
-                t1 = time.time()
+                t1: float = time.time()
                 simstate.bdtime += t1 - t0
 
                 # stash the results
@@ -996,11 +1027,11 @@ class BDSim:
 
         return bd
 
-    def DEBUG(self, debug, fmt, *args):
+    def DEBUG(self, debug, fmt, *args) -> None:
         if debug[0] in self.options.debug:
             print(f"DEBUG.{debug:s}: " + fmt.format(*args))
 
-    def done(self, bd, block=False):
+    def done(self, bd, block=False) -> None:
         if self.options.hold:
             block = self.options.hold
 
@@ -1015,38 +1046,40 @@ class BDSim:
         plt.close("all")
         plt.pause(0.5)  # let the event handler do its work
 
-    def closefigs(self):
+    def closefigs(self) -> None:
         for i in range(self.simstate.fignum):
             print("close", i + 1)
             plt.close(i + 1)
             plt.pause(0.1)
         self.simstate.fignum = 0  # reset figure counter
 
-    def savefig(self, block, filename=None, format="pdf", **kwargs):
+    def savefig(self, block, filename=None, format="pdf", **kwargs) -> None:
         block.savefig(filename=filename, format=format, **kwargs)
 
-    def savefigs(self, bd, format="pdf", **kwargs):
+    def savefigs(self, bd, format="pdf", **kwargs) -> None:
         from bdsim.graphics import GraphicsBlock
 
         for b in bd.blocklist:
             if isinstance(b, GraphicsBlock):
                 b.savefig(filename=b.name, format=format, **kwargs)
 
-    def showgraph(self, bd, **kwargs):
+    def showgraph(self, bd, **kwargs) -> None:
         # create the temporary dotfile
-        dotfile = tempfile.TemporaryFile(mode="w")
+        dotfile: io.TextIOWrapper = tempfile.TemporaryFile(mode="w")
         bd.dotfile(dotfile, **kwargs)
 
         # rewind the dot file, create PDF file in the filesystem, run dot
         dotfile.seek(0)
-        pdffile = tempfile.NamedTemporaryFile(suffix=".pdf", delete=False)
+        pdffile: tempfile._TemporaryFileWrapper[bytes] = tempfile.NamedTemporaryFile(
+            suffix=".pdf", delete=False
+        )
         subprocess.run("dot -Tpdf", shell=True, stdin=dotfile, stdout=pdffile)
 
         # open the PDF file in browser (hopefully portable), then cleanup
         webbrowser.open(f"file://{pdffile.name}")
         os.remove(pdffile.name)
 
-    def fatal(self, message, retval=1):
+    def fatal(self, message, retval=1) -> NoReturn:
         """
         Fatal simulation error
 
@@ -1088,14 +1121,14 @@ class BDSim:
             import re
             from collections import OrderedDict
 
-            re_isfield = re.compile(r"\s*:[a-zA-Zα-ωΑ-Ω0-9_ ]+:")
-            re_field = re.compile(
+            re_isfield: re.Pattern[str] = re.compile(r"\s*:[a-zA-Zα-ωΑ-Ω0-9_ ]+:")
+            re_field: re.Pattern[str] = re.compile(
                 r"^\s*:(?P<field>[a-zA-Z]+)(?:"
                 r" +(?P<var>[a-zA-Zα-ωΑ-Ω0-9_]+))?:(?P<body>.+)$"
             )
 
             # a-zA-Zα-ωΑ-Ω0-9_
-            def indent(s):
+            def indent(s) -> int:
                 return len(s) - len(s.lstrip())
 
             fieldnames = ("param", "type", "input", "output")
@@ -1119,7 +1152,7 @@ class BDSim:
                     if len(line) == 0:
                         continue
                     if indent_prev is None:
-                        indent_prev = indent(line)
+                        indent_prev: int = indent(line)
                     if re_isfield.match(line) is not None:
                         fieldlines.append(line.lstrip())
                         infield = True
@@ -1140,7 +1173,7 @@ class BDSim:
             dict = OrderedDict()
 
             for line in fieldlines:
-                m = re_field.match(line)
+                m: re.Match[str] | None = re_field.match(line)
                 if m is not None:
                     field, var, body = m.groups()
                     if var in excludevars or field not in fieldnames:
@@ -1165,17 +1198,17 @@ class BDSim:
 
             return params
 
-        block = namedtuple("block", "name, cls, path")
+        block: type[block] = namedtuple("block", "name, cls, path")
 
         if toolboxes:
-            packages = [
+            packages: list[str] = [
                 "bdsim",
                 "roboticstoolbox",
                 "machinevisiontoolbox",
             ]
         else:
-            packages = ["bdsim"]
-        env = os.getenv("BDSIMPATH")
+            packages: list[str] = ["bdsim"]
+        env: str | None = os.getenv("BDSIMPATH")
         if env is not None:
             packages += env.split(":")
         if self.packages is not None:
@@ -1225,7 +1258,7 @@ class BDSim:
 
                 if value.blockclass in ("source", "transfer", "function"):
                     # must have an output function
-                    valid = (
+                    valid: inspect.TypeIs[Callable[..., object]] | bool = (
                         hasattr(value, "output")
                         and callable(value.output)
                         and len(inspect.signature(value.output).parameters) == 4
@@ -1241,7 +1274,7 @@ class BDSim:
                 if value.blockclass == "sink":
                     # must have a step function with at least one
                     # parameter: step(self [,state])
-                    valid = (
+                    valid: inspect.TypeIs[Callable[..., object]] | bool = (
                         hasattr(value, "step")
                         and callable(value.step)
                         and len(inspect.signature(value.step).parameters) == 3
@@ -1280,7 +1313,7 @@ class BDSim:
                 block_info["package"] = package
 
                 # get the docstring from the class and the constructor
-                ds = ""
+                ds: str = ""
                 if value.__doc__ is not None:
                     ds += value.__doc__
                 if value.__init__.__doc__ is not None:
@@ -1308,7 +1341,7 @@ class BDSim:
         self.moduledicts = moduledicts
         return blocks
 
-    def blocks(self):
+    def blocks(self) -> None:
         """
         List all loaded blocks.
 
@@ -1336,7 +1369,7 @@ class BDSim:
         print(len(self._blocklibrary), " blocks loaded")
         for pkg, dict in self.moduledicts.items():
             for k, v in dict.items():
-                s = ""
+                s: str = ""
                 once = False
                 while len(v) > 0:
                     n = v.pop(0) + " "
@@ -1350,18 +1383,18 @@ class BDSim:
                             once = True
                         else:
                             print(f"{dots('')}: {s}")
-                        s = ""
+                        s: str = ""
                 if len(s) > 0:
                     if once:
                         print(f"{dots('')}: {s}")
                     else:
                         print(f"{dots(k)}: {s}")
 
-    def set_options(self, **options):
+    def set_options(self, **options) -> None:
         self.options.set(**options)
         warnings.warn("use sim.options.OPT=VALUE instead", DeprecationWarning)
 
-    def set_globals(self, globs):
+    def set_globals(self, globs) -> None:
         """
         Set globals as specified by command line
 
@@ -1387,7 +1420,7 @@ class BDSim:
             print(f"changed value of global {var} from {globs[var]} -> {new_value}")
             globs[var] = new_value
 
-    def report(self, bd, type="summary", **kwargs):
+    def report(self, bd, type="summary", **kwargs) -> None:
         """Print block diagram report
 
         :param bd: the block diagram to be reported
@@ -1414,7 +1447,7 @@ class BDSim:
 
 
 class Options(OptionsBase):
-    def __init__(self, sysargs=True, **options):
+    def __init__(self, sysargs=True, **options) -> None:
         default_options = {
             "backend": None,
             "tiles": "3x4",
@@ -1437,7 +1470,7 @@ class Options(OptionsBase):
         # modify defaults according to envariable BDSIM which is comma/semicolon
         # separated list of key=value pairs
         # eg. setenv BDSIM graphics=True,hold=True
-        env = os.getenv("BDSIM")
+        env: str | None = os.getenv("BDSIM")
         if env is not None:
             for key_value in env.split(",;"):
                 # for each key=value pair
@@ -1618,10 +1651,10 @@ class Options(OptionsBase):
             )
 
             args, unknownargs = parser.parse_known_args()
-            cmdline_options = vars(args)  # get args as a dictionary
+            cmdline_options: dict[str, Any] = vars(args)  # get args as a dictionary
             # keep only the options that are not None, ie. those that were
             # explicitly set on the command line
-            cmdline_options = {
+            cmdline_options: dict[str, Any] = {
                 option: value
                 for option, value in cmdline_options.items()
                 if value is not None
@@ -1646,7 +1679,7 @@ class Options(OptionsBase):
         if self.verbose:
             print(self)
 
-        self._argv = unknownargs  # save non-bdsim arguments
+        self._argv: list[str] = unknownargs  # save non-bdsim arguments
 
     def sanity(self, options):
         # ensure graphics is enabled if animation is requested

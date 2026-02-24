@@ -3,6 +3,8 @@
 """
 Components of the simulation system, namely blocks, wires and plugs.
 """
+from __future__ import annotations
+from io import BufferedWriter
 import types
 import math
 from re import S
@@ -10,6 +12,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import animation
 from collections import UserDict
+from typing import Optional, Literal, Union, Any, Self
+
 from abc import ABC, abstractmethod
 
 
@@ -43,29 +47,29 @@ class BDStruct:
         foo   = 1 (int)
     """
 
-    def __init__(self, name="BDStruct2", **kwargs):
-        self._name = name
+    def __init__(self, name="BDStruct2", **kwargs) -> None:
+        self._name: str = name
         for key, value in kwargs.items():
             # self.__dict__[key] = value
             setattr(self, key, value)
 
-    def add(self, name, value):
+    def add(self, name, value) -> None:
         # self.__dict__[name] = value
         setattr(self, name, value)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return str(self)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len([k for k in self.__dict__.keys() if not k.startswith("_")])
 
     def __getitem__(self, key):
         return getattr(self, key)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value) -> None:
         setattr(self, key, value)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Display struct as a string
 
@@ -79,7 +83,7 @@ class BDStruct:
 
         if len(self) == 0:
             return ""
-        maxwidth = max([len(key) for key in self.__dict__.keys()])
+        maxwidth: int = max([len(key) for key in self.__dict__.keys()])
         # if self.name is not None:
         #     rows.append(self.name + '::')
         for k, v in sorted(self.__dict__.items(), key=lambda x: x[0]):
@@ -113,7 +117,7 @@ class BDStruct:
 
         return "\n".join(rows)
 
-    def dump(self, outfile):
+    def dump(self, outfile) -> None:
         import pickle
 
         with open(outfile, "wb") as f:
@@ -130,7 +134,7 @@ class OptionsBase:
     a sequence of ``option=value`` arguments.
     """
 
-    def __init__(self, readonly={}, args={}):
+    def __init__(self, readonly={}, args={}) -> None:
         self._readonly = list(readonly)
         self._dict = {**args, **readonly}
 
@@ -146,7 +150,7 @@ class OptionsBase:
         except KeyError:
             raise AttributeError(name)
 
-    def __setattr__(self, name, value):
+    def __setattr__(self, name, value) -> None:
         if name.startswith("_"):
             self.__dict__[name] = value
         else:
@@ -155,7 +159,7 @@ class OptionsBase:
                 dict[name] = value
                 self.__dict__["_dict"] = self.sanity(dict)
 
-    def set(self, **changes):
+    def set(self, **changes) -> None:
         changes = self.sanity(changes)
         dict = self._dict
         for name, value in changes.items():
@@ -172,15 +176,15 @@ class OptionsBase:
     def sanity(self, options):
         return options
 
-    def __str__(self):
+    def __str__(self) -> str:
         dict = self._dict
-        maxwidth = max([len(option) for option in dict.keys()])
+        maxwidth: int = max([len(option) for option in dict.keys()])
         options = sorted(dict.keys())
         return "\n".join(
             [f"{option.ljust(maxwidth)}: {dict[option]}" for option in options]
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return str(self)
 
 
@@ -208,7 +212,7 @@ class Wire:
     another block.
     """
 
-    def __init__(self, start=None, end=None, name=None):
+    def __init__(self, start=None, end=None, name=None) -> None:
 
         self.name = name
         self.id = None
@@ -219,7 +223,7 @@ class Wire:
         self.name = None
 
     @property
-    def info(self):
+    def info(self) -> None:
         """
         Interactive display of wire properties.
 
@@ -230,7 +234,7 @@ class Wire:
         for k, v in self.__dict__.items():
             print("  {:8s}{:s}".format(k + ":", str(v)))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         Display wire with name and connection details.
 
@@ -245,7 +249,7 @@ class Wire:
         return str(self) + ": " + self.fullname
 
     @property
-    def fullname(self):
+    def fullname(self) -> str:
         """
         Display wire connection details.
 
@@ -313,13 +317,13 @@ class Plug:
 
     __array_ufunc__ = None  # allow block operators with NumPy values
 
-    def __init__(self, block, port=0, type=None):
+    def __init__(self, block, port=0, type=None) -> None:
 
-        self.block = block
-        self.port = port
+        self.block: Any = block
+        self.port: int = port
         self.type = type  # start
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Display plug details.
 
@@ -348,7 +352,7 @@ class Plug:
         return "Plug/" + self.type + ":" + str(self)
 
     @property
-    def isslice(self):
+    def isslice(self) -> bool:
         """
         Test if port number is a slice.
 
@@ -361,7 +365,7 @@ class Plug:
         return isinstance(self.port, slice)
 
     @property
-    def portlist(self):
+    def portlist(self) -> list[int] | range | ValueError:
         """
         Return port numbers.
 
@@ -380,25 +384,25 @@ class Plug:
 
         elif isinstance(self.port, slice):
             # this plug is a bunch of wires
-            start = self.port.start or 0
-            step = self.port.step or 1
+            start: int = self.port.start or 0
+            step: int = self.port.step or 1
             if self.port.stop is None:
                 if self.type == "start":
                     stop = self.block.nout
                 else:
                     stop = self.block.nin
             else:
-                stop = self.port.stop
+                stop: int = self.port.stop
 
             return range(start, stop, step)
         else:
             return ValueError("bad plug index")
 
-    def __getitem__(self, i):
+    def __getitem__(self, i) -> Self:
         return self.__class__(self.block, self.portlist[i])
 
     @property
-    def width(self):
+    def width(self) -> int:
         """
         Return number of ports connected.
 
@@ -672,7 +676,7 @@ class Plug:
             return self.block._autogain(other, inputs=[self])
         else:
             # value * value, create a PROD block
-            name = "_prod.{:d}".format(self.bd.n_auto_prod)
+            name: str = "_prod.{:d}".format(self.bd.n_auto_prod)
             self.bd.n_auto_prod += 1
             return self.block.bd.PROD(
                 "**", matrix=True, name=name, inputs=[self, other]
@@ -711,7 +715,7 @@ class Plug:
         """
         if isinstance(other, (int, float, np.ndarray)):
             # constant * plug, create a CONSTANT block
-            matrix = isinstance(other, np.ndarray)
+            matrix: bool = isinstance(other, np.ndarray)
             return self.block._autogain(other, premul=matrix, inputs=[self])
 
     @oodebug
@@ -787,12 +791,12 @@ class Plug:
 
 
 class StartPlug(Plug):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, type="start", **kwargs)
 
 
 class EndPlug(Plug):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, type="end", **kwargs)
 
 
@@ -802,18 +806,18 @@ clocklist = []
 
 
 class Clock:
-    def __init__(self, arg, unit="s", offset=0, name=None):
+    def __init__(self, arg, unit="s", offset=0, name=None) -> None:
         global clocklist
         if unit == "s":
-            self.T = arg
+            self.T: Any = arg
         elif unit == "ms":
             self.T = arg / 1000
         elif unit == "Hz":
-            self.T = 1 / arg
+            self.T: float = 1 / arg
         else:
             raise ValueError("unknown clock unit", unit)
 
-        self.offset = offset
+        self.offset: int = offset
 
         self.blocklist = []
 
@@ -823,7 +827,7 @@ class Clock:
         self.timer = None
 
         if name is None:
-            self.name = "clock." + str(len(clocklist))
+            self.name: str = "clock." + str(len(clocklist))
         else:
             self.name = name
 
@@ -831,30 +835,30 @@ class Clock:
 
         # events happen at time t = kT + offset
 
-    def add_block(self, block):
+    def add_block(self, block) -> None:
         self.blocklist.append(block)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return str(self)
 
-    def __str__(self):
-        s = f"{self.name}: T={self.T} sec"
+    def __str__(self) -> str:
+        s: str = f"{self.name}: T={self.T} sec"
         if self.offset != 0:
             s += f", offset={self.offset}"
         s += f", clocking {len(self.blocklist)} blocks"
         return s
 
-    def getstate0(self):
+    def getstate0(self) -> np.ndarray[tuple[Any, ...], np.dtype[Any]]:
         # get the state from each stateful block on this clock
-        x0 = np.array([])
+        x0: np.ndarray[tuple[Any, ...], np.dtype[Any]] = np.array([])
         for b in self.blocklist:
             x0 = np.r_[x0, b.getstate0()]
             # print('x0', x0)
         return x0
 
-    def getstate(self, t):
+    def getstate(self, t) -> np.ndarray[tuple[Any, ...], np.dtype[Any]]:
 
-        x = np.array([])
+        x: np.ndarray[tuple[Any, ...], np.dtype[Any]] = np.array([])
         for b in self.blocklist:
             # update dstate
             xb = b.next(t, b.inputs, b._x)
@@ -862,17 +866,17 @@ class Clock:
 
         return x
 
-    def setstate(self):
+    def setstate(self) -> None:
         x = self._x
         for b in self.blocklist:
             x = b.setstate(x)  # send it to blocks
 
-    def start(self, simstate=None):
+    def start(self, simstate=None) -> None:
         self.i = 1
         simstate.declare_event(self, self.time(self.i))
         self.i += 1
 
-    def next_event(self, simstate=None):
+    def next_event(self, simstate=None) -> None:
         simstate.declare_event(self, self.time(self.i))
         self.i += 1
 
@@ -881,7 +885,7 @@ class Clock:
         # k = int((t - self.offset) / self.T + 0.5)
         return i * self.T + self.offset
 
-    def savestate(self, t):
+    def savestate(self, t) -> None:
         # save clock state at time t
         self.t.append(t)
         self.x.append(self.getstate(t))
@@ -900,7 +904,7 @@ class Block(ABC):
 
     __array_ufunc__ = None  # allow block operators with NumPy values
 
-    def __new__(cls, *args, bd=None, **kwargs):
+    def __new__(cls, *args, bd=None, **kwargs) -> Self:
         """
         Construct a new Block object.
 
@@ -914,7 +918,7 @@ class Block(ABC):
         :rtype: Block instance
         """
         # print('Block __new__', args,bd, kwargs)
-        block = super(Block, cls).__new__(cls)  # create a new instance
+        block: Self = super(Block, cls).__new__(cls)  # create a new instance
 
         # we overload setattr, so need to know whether it is being passed a port
         # name.  Add this attribute now to allow proper operation.
@@ -927,7 +931,9 @@ class Block(ABC):
 
         return block
 
-    _latex_remove = str.maketrans({"$": "", "\\": "", "{": "", "}": "", "^": ""})
+    _latex_remove: dict[int, str] = str.maketrans(
+        {"$": "", "\\": "", "{": "", "}": "", "^": ""}
+    )
 
     def __init__(
         self,
@@ -944,7 +950,7 @@ class Block(ABC):
         blockclass=None,
         verbose=False,
         **kwargs,
-    ):
+    ) -> None:
         """
         Construct a new block object.
 
@@ -996,7 +1002,7 @@ class Block(ABC):
         self._clocked = False
         self._graphics = False
         self._parameters = {}
-        self.verbose = verbose
+        self.verbose: bool = verbose
 
         if nin is not None:
             self.nin = nin
@@ -1006,7 +1012,7 @@ class Block(ABC):
             self.blockclass = blockclass
 
         if type is None:
-            self.type = self.__class__.__name__.lower()
+            self.type: str = self.__class__.__name__.lower()
 
         if bd is not None:
             bd.add_block(self)
@@ -1019,7 +1025,7 @@ class Block(ABC):
             self.state_names(snames)
 
         if isinstance(inputs, Block):
-            inputs = (inputs,)
+            inputs: tuple[Block] = (inputs,)
         if inputs is not None and len(inputs) > 0:
             # assert len(inputs) == self.nin, 'Number of input connections must match number of inputs'
             for i, input in enumerate(inputs):
@@ -1028,24 +1034,24 @@ class Block(ABC):
         if len(kwargs) > 0:
             print("WARNING: unused arguments", kwargs.keys())
 
-    def add_param(self, param, handler=None):
+    def add_param(self, param, handler=None) -> None:
         if handler == None:
 
-            def handler(self, name, newvalue):
+            def handler(self, name, newvalue) -> None:
                 setattr(self, name, newvalue)
 
         self.__dict__["_parameters"][param] = handler
 
-    def set_param(self, name, newvalue):
+    def set_param(self, name, newvalue) -> None:
         print(f"setting parameter {name} of block {self.name} to {newvalue}")
         self._parameters[name](self, name, newvalue)
 
     @property
-    def name(self):
+    def name(self) -> str | None:
         return self._name
 
     @name.setter
-    def name(self, name):
+    def name(self, name) -> None:
         if name is not None:
             self._name_tex = name
             self._name = self._fixname(name)
@@ -1054,7 +1060,7 @@ class Block(ABC):
             self._name = None
 
     @property
-    def info(self):
+    def info(self) -> None:
         """
         Interactive display of block properties.
 
@@ -1067,7 +1073,7 @@ class Block(ABC):
                 print("  {:11s}{:s}".format(k + ":", str(v)))
 
     @property
-    def isclocked(self):
+    def isclocked(self) -> bool:
         """
         Test if block is clocked
 
@@ -1079,7 +1085,7 @@ class Block(ABC):
         return self._clocked
 
     @property
-    def isgraphics(self):
+    def isgraphics(self) -> bool:
         """
         Test if block does graphics
 
@@ -1197,7 +1203,7 @@ class Block(ABC):
         assert out.shape == (self.ndstates,), "next state array is wrong length"
         return out
 
-    def T_step(self, *inputs, t=0.0):
+    def T_step(self, *inputs, t=0.0) -> None:
         """
         Step a block for unit testing.
 
@@ -1226,7 +1232,7 @@ class Block(ABC):
         if simstate is None:
 
             class RunTime:
-                def DEBUG(*args):
+                def DEBUG(*args) -> None:
                     pass
 
             class BlockDiagram:
@@ -1246,7 +1252,7 @@ class Block(ABC):
     def _output(self, *inputs, t=0.0, x=None):
         return self.T_output(*inputs, t=t, x=x)
 
-    def _step(self, *inputs, t=0.0):
+    def _step(self, *inputs, t=0.0) -> None:
         return self.T_step(*inputs, t=t)
 
     # def input(self, port):
@@ -1300,7 +1306,7 @@ class Block(ABC):
             values.append(plug.block.output_values[plug.port])
         return values
 
-    def __getitem__(self, port):
+    def __getitem__(self, port) -> Plug:
         """
         Convert a block slice reference to a plug.
 
@@ -1322,7 +1328,7 @@ class Block(ABC):
         # print('getitem called', self, port)
         return Plug(self, port)
 
-    def __setitem__(self, port, src):
+    def __setitem__(self, port, src) -> None:
         """
         Convert a LHS block slice reference to a wire.
 
@@ -1346,7 +1352,7 @@ class Block(ABC):
         # print('connecting', src, self, port)
         self.bd.connect(src, self[port])
 
-    def __setattr__(self, name, value):
+    def __setattr__(self, name, value) -> None:
         """
         Convert a LHS block name reference to a wire.
 
@@ -1433,22 +1439,26 @@ class Block(ABC):
 
     def _autoconstant(self, value):
         if isinstance(value, (int, float, str)):
-            name = "_const.{:d}({})".format(self.bd.n_auto_const, value)
+            name: str = "_const.{:d}({})".format(self.bd.n_auto_const, value)
         else:
-            name = "_const.{:d}<{}>".format(self.bd.n_auto_const, type(value).__name__)
+            name: str = "_const.{:d}<{}>".format(
+                self.bd.n_auto_const, type(value).__name__
+            )
         self.bd.n_auto_const += 1
         return self.bd.CONSTANT(value, name=name)
 
     def _autogain(self, value, **kwargs):
         if isinstance(value, (int, float, str)):
-            name = "_gain.{:d}({})".format(self.bd.n_auto_gain, value)
+            name: str = "_gain.{:d}({})".format(self.bd.n_auto_gain, value)
         else:
-            name = "_gain.{:d}<{}>".format(self.bd.n_auto_gain, type(value).__name__)
+            name: str = "_gain.{:d}<{}>".format(
+                self.bd.n_auto_gain, type(value).__name__
+            )
         self.bd.n_auto_gain += 1
         return self.bd.GAIN(value, name=name, **kwargs)
 
     def _autopow(self, value, **kwargs):
-        name = "_pow.{:d}({})".format(self.bd.n_auto_pow, value)
+        name: str = "_pow.{:d}({})".format(self.bd.n_auto_pow, value)
         self.bd.n_auto_pow += 1
         return self.bd.POW(value, name=name, **kwargs)
 
@@ -1485,7 +1495,7 @@ class Block(ABC):
         :seealso: :meth:`Block.__radd__` :meth:`Plug.__add__`
         """
         # value + value, create a SUM block
-        name = "_sum.{:d}".format(self.bd.n_auto_sum)
+        name: str = "_sum.{:d}".format(self.bd.n_auto_sum)
         self.bd.n_auto_sum += 1
         if isinstance(other, (int, float, np.ndarray)):
             # block + constant, create a CONSTANT block
@@ -1525,7 +1535,7 @@ class Block(ABC):
         :seealso: :meth:`Block.__add__` :meth:`Plug.__radd__`
         """
         # value + value, create a SUM block
-        name = "_sum.{:d}".format(self.bd.n_auto_sum)
+        name: str = "_sum.{:d}".format(self.bd.n_auto_sum)
         self.bd.n_auto_sum += 1
         if isinstance(other, (int, float, np.ndarray)):
             # constant + block, create a CONSTANT block
@@ -1560,7 +1570,7 @@ class Block(ABC):
         :seealso: :meth:`Block.__rsub__` :meth:`Plug.__sub__`
         """
         # value - value, create a SUM block
-        name = "_sum.{:d}".format(self.bd.n_auto_sum)
+        name: str = "_sum.{:d}".format(self.bd.n_auto_sum)
         self.bd.n_auto_sum += 1
         if isinstance(other, (int, float, np.ndarray)):
             # block - constant, create a CONSTANT block
@@ -1599,7 +1609,7 @@ class Block(ABC):
         :seealso: :meth:`Block.__sub__` :meth:`Plug.__rsub__`
         """
         # value - value, create a SUM block
-        name = "_sum.{:d}".format(self.bd.n_auto_sum)
+        name: str = "_sum.{:d}".format(self.bd.n_auto_sum)
         self.bd.n_auto_sum += 1
         if isinstance(other, (int, float, np.ndarray)):
             # constant - block, create a CONSTANT block
@@ -1686,11 +1696,11 @@ class Block(ABC):
         matrix = False
         if isinstance(other, (int, float, np.ndarray)):
             # block * constant, create a GAIN block
-            matrix = isinstance(other, np.ndarray)
+            matrix: bool = isinstance(other, np.ndarray)
             return self._autogain(other, premul=matrix, matrix=matrix, inputs=[self])
         else:
             # value * value, create a PROD block
-            name = "_prod.{:d}".format(self.bd.n_auto_prod)
+            name: str = "_prod.{:d}".format(self.bd.n_auto_prod)
             self.bd.n_auto_prod += 1
             return self.bd.PROD("**", inputs=[self, other], matrix=matrix, name=name)
 
@@ -1728,7 +1738,7 @@ class Block(ABC):
         matrix = False
         if isinstance(other, (int, float, np.ndarray)):
             # constant * block, create a GAIN block
-            matrix = isinstance(other, np.ndarray)
+            matrix: bool = isinstance(other, np.ndarray)
             return self._autogain(other, premul=matrix, inputs=[self])
 
     @oodebug
@@ -1763,13 +1773,13 @@ class Block(ABC):
         :seealso: :meth:`Block.__rtruediv__` :meth:`Plug.__truediv__`
         """
         # value / value, create a PROD block
-        name = "_prod.{:d}".format(self.bd.n_auto_prod)
+        name: str = "_prod.{:d}".format(self.bd.n_auto_prod)
         self.bd.n_auto_prod += 1
         matrix = False
         if isinstance(other, (int, float, np.ndarray)):
             # block / constant, create a CONSTANT block
             other = self._autoconstant(other)
-            matrix = isinstance(other, np.ndarray)
+            matrix: bool = isinstance(other, np.ndarray)
         return self.bd.PROD("*/", inputs=(self, other), matrix=matrix, name=name)
 
     @oodebug
@@ -1803,13 +1813,13 @@ class Block(ABC):
         :seealso: :meth:`Block.__truediv__` :meth:`Plug.__rtruediv__`
         """
         # value / value, create a PROD block
-        name = "_prod.{:d}".format(self.bd.n_auto_prod)
+        name: str = "_prod.{:d}".format(self.bd.n_auto_prod)
         self.bd.n_auto_prod += 1
         matrix = False
         if isinstance(other, (int, float, np.ndarray)):
             # constant / block, create a CONSTANT block
             other = self._autoconstant(other)
-            matrix = isinstance(other, np.ndarray)
+            matrix: bool = isinstance(other, np.ndarray)
         return self.bd.PROD("*/", inputs=(other, self), matrix=matrix, name=name)
 
     # TODO arithmetic with a constant, add a gain block or a constant block
@@ -1826,7 +1836,7 @@ class Block(ABC):
     def _fixname(self, s):
         return s.translate(self._latex_remove)
 
-    def inport_names(self, names):
+    def inport_names(self, names) -> None:
         """
         Set the names of block input ports.
 
@@ -1847,7 +1857,7 @@ class Block(ABC):
             setattr(self, fn, self[port])
             self.portnames.append(fn)
 
-    def outport_names(self, names):
+    def outport_names(self, names) -> None:
         """
         Set the names of block output ports.
 
@@ -1868,7 +1878,7 @@ class Block(ABC):
             setattr(self, fn, self[port])
             self.portnames.append(fn)
 
-    def state_names(self, names):
+    def state_names(self, names) -> None:
         self._state_names = names
 
     def sourcename(self, port):
@@ -1905,17 +1915,17 @@ class Block(ABC):
     # def fullname(self):
     #     return self.blockclass + "." + str(self)
 
-    def reset(self):
+    def reset(self) -> None:
         # if self.nin > 0:
         #     self.input_wires = [None] * self.nin
         self.updated = False
 
-    def add_output_wire(self, w):
+    def add_output_wire(self, w) -> None:
         port = w.start.port
         assert port < len(self.output_wires), "port number too big"
         self.output_wires[port].append(w)
 
-    def add_input_wire(self, w):
+    def add_input_wire(self, w) -> None:
         port = w.end.port
         assert (
             self.input_wires[port] is None
@@ -1943,10 +1953,10 @@ class Block(ABC):
     #     for i, val in enumerate(pos):
     #         self.inputs[i] = val
 
-    def start(self, simstate):  # begin a simulation
+    def start(self, simstate) -> None:  # begin a simulation
         pass
 
-    def check(self):  # check validity of block parameters at start
+    def check(self) -> None:  # check validity of block parameters at start
         assert hasattr(self, "nin"), f"block {self.name} has no nin specified"
         assert hasattr(self, "nout"), f"block {self.name} has no nout specified"
 
@@ -1957,10 +1967,10 @@ class Block(ABC):
             hasattr(self, "initd") and self.initd
         ), "Block superclass not initalized. was super().__init__ called?"
 
-    def done(self, **kwargs):  # end of simulation
+    def done(self, **kwargs) -> None:  # end of simulation
         pass
 
-    def savefig(self, *pos, **kwargs):
+    def savefig(self, *pos, **kwargs) -> None:
         pass
 
 
@@ -1971,9 +1981,9 @@ class SinkBlock(Block):
     graphics.
     """
 
-    blockclass = "sink"
+    blockclass: str = "sink"
 
-    def __init__(self, **blockargs):
+    def __init__(self, **blockargs) -> None:
         """
         Create a sink block.
 
@@ -2000,9 +2010,9 @@ class SourceBlock(Block):
     but no inputs.  Its output is a function of parameters and time.
     """
 
-    blockclass = "source"
+    blockclass: str = "source"
 
-    def __init__(self, **blockargs):
+    def __init__(self, **blockargs) -> None:
         """
         Create a source block.
 
@@ -2030,9 +2040,9 @@ class TransferBlock(Block):
     system, either linear or nonlinear.
     """
 
-    blockclass = "transfer"
+    blockclass: str = "transfer"
 
-    def __init__(self, nstates=1, **blockargs):
+    def __init__(self, nstates=1, **blockargs) -> None:
         """
         Create a transfer function block.
 
@@ -2044,10 +2054,10 @@ class TransferBlock(Block):
         This is the parent class of all transfer function blocks.
         """
         # print('Transfer constructor')
-        self.nstates = nstates
+        self.nstates: int = nstates
         super().__init__(**blockargs)
 
-    def reset(self):
+    def reset(self) -> None:
         super().reset()
         self._x = self._x0
         # return self._x
@@ -2060,7 +2070,7 @@ class TransferBlock(Block):
     def getstate0(self):
         return self._x0
 
-    def check(self):
+    def check(self) -> None:
         assert len(self._x0) == self.nstates, "incorrect length for initial state"
         assert self.nin > 0 or self.nout > 0, "no inputs or outputs specified"
 
@@ -2080,9 +2090,9 @@ class FunctionBlock(Block):
     such as gain, summation or various mappings.
     """
 
-    blockclass = "function"
+    blockclass: str = "function"
 
-    def __init__(self, **blockargs):
+    def __init__(self, **blockargs) -> None:
         """
         Create a function block.
 
@@ -2109,9 +2119,9 @@ class SubsystemBlock(Block):
     such as gain, summation or various mappings.
     """
 
-    blockclass = "subsystem"
+    blockclass: str = "subsystem"
 
-    def __init__(self, **blockargs):
+    def __init__(self, **blockargs) -> None:
         """
         Create a subsystem block.
 
@@ -2134,9 +2144,9 @@ class ClockedBlock(Block):
     system, either linear or nonlinear.
     """
 
-    blockclass = "clocked"
+    blockclass: str = "clocked"
 
-    def __init__(self, clock=None, **blockargs):
+    def __init__(self, clock=None, **blockargs) -> None:
         """
         Create a clocked block.
 
@@ -2154,7 +2164,7 @@ class ClockedBlock(Block):
         self.clock = clock
         clock.add_block(self)
 
-    def reset(self):
+    def reset(self) -> None:
         super().reset()
         # self._x = self._x0
         # return self._x
@@ -2167,7 +2177,7 @@ class ClockedBlock(Block):
     def getstate0(self):
         return self._x0
 
-    def check(self):
+    def check(self) -> None:
         assert len(self._x0) == self.ndstates, "incorrect length for initial state"
 
         assert self.nin > 0 or self.nout > 0, "no inputs or outputs specified"

@@ -7,14 +7,21 @@ Transfer blocks:
 
 """
 
+from __future__ import annotations
+from typing import Any, Optional, Union
+
+
 import numpy as np
 import scipy.signal
 import math
 from math import sin, cos, atan2, sqrt, pi
 import matplotlib.pyplot as plt
-from spatialmath import base
+import spatialmath.base as smb
 
+from bdsim.blockdiagram import BlockDiagram
 from bdsim.components import TransferBlock, SubsystemBlock
+
+Vector1D = Union[float, tuple[float, ...], list[float], np.ndarray, None]
 
 
 class Integrator(TransferBlock):
@@ -75,7 +82,15 @@ class Integrator(TransferBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, x0=0, gain=1.0, min=None, max=None, enable=None, **blockargs):
+    def __init__(
+        self,
+        x0: Vector1D = None,
+        gain: float = 1.0,
+        min: Vector1D = None,
+        max: Vector1D = None,
+        enable=None,
+        **blockargs,
+    ) -> None:
         """
         :param x0: Initial state, defaults to 0
         :type x0: array_like, optional
@@ -92,26 +107,25 @@ class Integrator(TransferBlock):
         """
         super().__init__(**blockargs)
 
-        if isinstance(x0, (int, float)):
-            x0 = np.r_[x0]
-
+        if x0 is None:
+            x0 = np.zeros((self.nstates,))
         elif isinstance(x0, np.ndarray):
             if x0.ndim > 1:
                 raise ValueError("state must be a 1D vector")
         else:
-            x0 = base.getvector(x0)
+            x0 = smb.getvector(x0)
 
         self.nstates = x0.shape[0]
 
         if min is not None:
-            min = base.getvector(min, self.nstates)
+            min = smb.getvector(min, self.nstates)
         if max is not None:
-            max = base.getvector(max, self.nstates)
+            max = smb.getvector(max, self.nstates)
 
         self._x0 = x0
         self.min = min
         self.max = max
-        self.gain = gain
+        self.gain: float = gain
 
         self._x0 = x0
         self.min = min
@@ -125,10 +139,10 @@ class Integrator(TransferBlock):
         return [self.gain * x]
 
     def deriv(self, t, u, x):
-        xd = base.getvector(u[0])
+        xd = smb.getvector(u[0])
         if self.enable is not None and not self.enable(t, u, x):
             # if enable function returns False then integrator output is jammed at zero
-            self._x = np.zeros(x.shape)
+            self._x: np.ndarray[tuple[int], np.dtype[np.float64]] = np.zeros(x.shape)
             return np.zeros(x.shape)
         if self.min is not None:
             xd[x < self.min] = 0
@@ -174,7 +188,7 @@ class PoseIntegrator(TransferBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, x0=None, **blockargs):
+    def __init__(self, x0=None, **blockargs) -> None:
         r"""
         :param x0: Initial pose, defaults to null
         :type x0: SE3, Twist3, optional
@@ -184,7 +198,7 @@ class PoseIntegrator(TransferBlock):
         super().__init__(**blockargs)
 
         if x0 is None:
-            x0 = np.zeros((6,))
+            x0: np.ndarray[tuple[int], np.dtype[np.float64]] = np.zeros((6,))
 
         self.nstates = len(x0)
 
@@ -249,7 +263,14 @@ class LTI_SS(TransferBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, A=None, B=None, C=None, x0=None, **blockargs):
+    def __init__(
+        self,
+        A: Optional[np.ndarray] = None,
+        B: Optional[np.ndarray] = None,
+        C: Optional[np.ndarray] = None,
+        x0: Optional[np.ndarray] = None,
+        **blockargs,
+    ) -> None:
         r"""
         :param N: numerator coefficients, defaults to 1
         :type N: array_like, optional
@@ -287,7 +308,9 @@ class LTI_SS(TransferBlock):
         self.nstates = A.shape[0]
 
         if x0 is None:
-            self._x0 = np.zeros((self.nstates,))
+            self._x0: np.ndarray[tuple[int], np.dtype[np.float64]] = np.zeros(
+                (self.nstates,)
+            )
         else:
             self._x0 = x0
 
@@ -359,7 +382,13 @@ class LTI_SISO(LTI_SS):
     nin = 1
     nout = 1
 
-    def __init__(self, N=1, D=[1, 1], x0=None, **blockargs):
+    def __init__(
+        self,
+        N: list[float] = [1],
+        D: list[float] = [1, 1],
+        x0: Optional[np.ndarray] = None,
+        **blockargs,
+    ) -> None:
         r"""
         :param N: numerator coefficients, defaults to 1
         :type N: array_like, optional
@@ -375,20 +404,20 @@ class LTI_SISO(LTI_SS):
         # print('in SISO constscutor')
 
         if not isinstance(N, list):
-            N = [N]
+            N: list[int] = [N]
         if not isinstance(D, list):
             D = [D]
-        self.N = N
-        self.D = N
-        n = len(D) - 1
-        nn = len(N)
+        self.N: list[int] = N
+        self.D: list[int] = N
+        n: int = len(D) - 1
+        nn: int = len(N)
         if x0 is None:
-            x0 = np.zeros((n,))
+            x0: np.ndarray[tuple[int], np.dtype[np.float64]] = np.zeros((n,))
         assert nn <= n, "direct pass through is not supported"
 
         # convert to numpy arrays
         # N = np.r_[np.zeros((len(D) - len(N),)), np.array(N)]
-        N = np.array(N)
+        N: np.ndarray[tuple[Any, ...], np.dtype[Any]] = np.array(N)
 
         D = np.array(D)
 
@@ -426,7 +455,7 @@ class LTI_SISO(LTI_SS):
             print("B=", B)
             print("C=", C)
 
-        def change_param(self, param, newvalue):
+        def change_param(self, param, newvalue) -> None:
             if param == "num":
                 self.num = newvalue
             elif param == "den":
@@ -485,7 +514,13 @@ class Deriv(SubsystemBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, alpha, x0=0, y0=None, **blockargs):
+    def __init__(
+        self,
+        alpha: float,
+        x0: Optional[np.ndarray] = None,
+        y0: Optional[np.ndarray] = None,
+        **blockargs,
+    ) -> None:
         r"""
         :param alpha: filter pole in units of rad/s
         :type alpha: float
@@ -520,7 +555,9 @@ class Deriv(SubsystemBlock):
 
         self.ssname = "derivative"
 
+
 # ------------------------------------------------------------------------ #
+
 
 class PID(SubsystemBlock):
     r"""
@@ -604,11 +641,11 @@ class PID(SubsystemBlock):
         P: float = 0.0,
         D: float = 0.0,
         I: float = 0.0,
-        D_pole=1,
-        I_limit=None,
+        D_pole: float = 1,
+        I_limit: Union[float, tuple(float, float)] = None,
         I_band=None,
         **blockargs,
-    ):
+    ) -> None:
         r"""
         :param type: the controller type, defaults to "PID"
         :type type: str, optional
@@ -639,17 +676,19 @@ class PID(SubsystemBlock):
         if "I" in type:
             # if the I term is required, create the block
             if I_limit is None:
-                min = -np.inf
-                max = np.inf
+                min: float = -np.inf
+                max: float = np.inf
             elif isinstance(I_limit, float):
-                min = -I_limit
-                max = I_limit
+                min: float = -I_limit
+                max: float = I_limit
             elif isinstance(I_limit, tuple) and len(I_limit) == 2:
                 min, max = I_limit
 
             if I_band is not None:
+
                 def ifunc(t, u, x):
                     return abs(u[0]) < I_band
+
             else:
                 ifunc = None
 
@@ -659,12 +698,12 @@ class PID(SubsystemBlock):
         if "D" in type:
             # if the D term is required, create the blocks
             Dblock = subsystem.DERIV(alpha=D_pole)  # derivative block
-            Dgain = subsystem.GAIN(D)               # derivative gain
+            Dgain = subsystem.GAIN(D)  # derivative gain
             subsystem.connect(Dblock, Dgain)
 
         error_sum = subsystem.SUM("-+", name="errsum")  # error summing junction
-        inp = subsystem.INPORT(2)   # PID block inputs
-        outp = subsystem.OUTPORT(1) # PID block output
+        inp = subsystem.INPORT(2)  # PID block inputs
+        outp = subsystem.OUTPORT(1)  # PID block output
 
         # for each case sum the various terms
         if type == "PID":
@@ -683,7 +722,7 @@ class PID(SubsystemBlock):
             subsystem.connect(error_sum, Pblock, Dblock)
             subsystem.connect(Pblock, out_sum[0])
             subsystem.connect(Dgain, out_sum[1])
-    
+
         subsystem.connect(inp, error_sum)
         subsystem.connect(out_sum, outp)
 
@@ -696,12 +735,13 @@ class PID(SubsystemBlock):
 
         self.ssname = "PID"
 
+
 if __name__ == "__main__":
 
     from bdsim import BDSim
 
     sim = BDSim(hold=False)
-    bd = sim.blockdiagram()
+    bd: BlockDiagram = sim.blockdiagram()
     deriv = bd.DERIV(alpha=0.1, verbose=True)
 
     c = bd.WAVEFORM(wave="sine", freq=1)

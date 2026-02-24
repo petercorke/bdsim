@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 try:
     from spatialmath import SE2, SE3, SO2, SO3
 
@@ -45,7 +47,7 @@ if sm:
         nin = 1
         nout = 1
 
-        def __init__(self, pose=None, **blockargs):
+        def __init__(self, pose=None, **blockargs) -> None:
             """
             :param pose: pose to apply
             :type pose: SO2, SE2, SO3 or SE3
@@ -58,8 +60,8 @@ if sm:
             super().__init__(**blockargs)
             self.pose = pose
 
-        def output(self, t, inports, x):
-            input = inports[0]
+        def output(self, t, inputs, x):
+            input = inputs[0]
             return [input * self.pose]
 
     # ------------------------------------------------------------------------ #
@@ -100,7 +102,7 @@ if sm:
         nin = 1
         nout = 1
 
-        def __init__(self, pose=None, **blockargs):
+        def __init__(self, pose=None, **blockargs) -> None:
             """
             :param pose: pose to apply
             :type pose: SO2, SE2, SO3 or SE3
@@ -113,8 +115,8 @@ if sm:
             super().__init__(**blockargs)
             self.pose = pose
 
-        def output(self, t, inports, x):
-            input = inports[0]
+        def output(self, t, inputs, x):
+            input = inputs[0]
             return [self.pose * input]
 
     # ------------------------------------------------------------------------ #
@@ -155,18 +157,18 @@ if sm:
         nin = 2
         nout = 1
 
-        def __init__(self, **blockargs):
+        def __init__(self, **blockargs) -> None:
             """
             :param blockargs: |BlockOptions|
             :type blockargs: dict
             """
             super().__init__(nin=2, **blockargs)
 
-        def output(self, t, inports, x):
-            pose = inports[0]
+        def output(self, t, inputs, x):
+            pose = inputs[0]
             if not isinstance(pose, (SO2, SO3, SE2, SE3)):
                 raise ValueError("pose must be SO2, SE2, SO3 or SE3")
-            return [pose * inports[1]]
+            return [pose * inputs[1]]
 
     # ------------------------------------------------------------------------ #
 
@@ -203,15 +205,15 @@ if sm:
         nin = 1
         nout = 1
 
-        def __init__(self, **blockargs):
+        def __init__(self, **blockargs) -> None:
             """
             :param blockargs: |BlockOptions|
             :type blockargs: dict
             """
             super().__init__(**blockargs)
 
-        def output(self, t, inports, x):
-            input = inports[0]
+        def output(self, t, inputs, x):
+            input = inputs[0]
             return [input.inv()]
 
 

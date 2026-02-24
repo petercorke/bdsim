@@ -8,6 +8,8 @@ Transfer blocks:
 
 """
 
+from __future__ import annotations
+
 import numpy as np
 import math
 from math import sin, cos, atan2, sqrt, pi
@@ -58,7 +60,7 @@ class ZOH(ClockedBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, clock, x0=0, **blockargs):
+    def __init__(self, clock, x0=0, **blockargs) -> None:
         """
         :param clock: clock source
         :type clock: Clock
@@ -72,15 +74,15 @@ class ZOH(ClockedBlock):
 
         x0 = smb.getvector(x0)
         self._x0 = x0
-        self.ndstates = len(x0)
+        self.ndstates: int = len(x0)
         # print('nstates', self.nstates)
 
-    def output(self, t, inports, x):
+    def output(self, t, inputs, x):
         # print('* output, x is ', self._x)
         return [x]
 
-    def next(self, t, inports, x):
-        u = smb.getvector(inports[0])
+    def next(self, t, inputs, x):
+        u = smb.getvector(inputs[0])
         return u  # must be an ndarray
 
 
@@ -129,7 +131,7 @@ class DIntegrator(ClockedBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, clock, x0=0, gain=1.0, min=None, max=None, **blockargs):
+    def __init__(self, clock, x0=0, gain=1.0, min=None, max=None, **blockargs) -> None:
         """
         :param clock: clock source
         :type clock: Clock
@@ -165,7 +167,7 @@ class DIntegrator(ClockedBlock):
         self._x0 = x0
         self.min = min
         self.max = max
-        self.gain = gain
+        self.gain: float = gain
 
     def output(self, t, u, x):
         return [x]
@@ -216,7 +218,7 @@ class DPoseIntegrator(ClockedBlock):
     inlabels = ("ν",)
     outlabels = ("ξ",)
 
-    def __init__(self, clock, x0=None, **blockargs):
+    def __init__(self, clock, x0=None, **blockargs) -> None:
         r"""
         :param clock: clock source
         :type clock: Clock
@@ -233,8 +235,8 @@ class DPoseIntegrator(ClockedBlock):
             x0 = Twist3(x0).A
         elif isinstance(x0, Twist3):
             x0 = x0.A
-        elif isvector(x0, 6):
-            x0 = getvector(x0, 6)
+        elif smb.isvector(x0, 6):
+            x0 = smb.getvector(x0, 6)
 
         self.ndstates = 6
 
@@ -242,11 +244,11 @@ class DPoseIntegrator(ClockedBlock):
 
         print("nstates", self.nstates, x0)
 
-    def output(self, t, u, x):
+    def output(self, t, u, x) -> list[SE3]:
         return [Twist3(x).SE3()]
 
     def next(self, t, u, x):
-        T_delta = SE3.Delta(u[0] * self.clock.T)
+        T_delta: SE3 = SE3.Delta(u[0] * self.clock.T)
         pose = Twist3(x).SE3() * T_delta
         return Twist3(pose).A
 
