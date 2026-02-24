@@ -882,6 +882,8 @@ class BlockDiagram:
 
         table = ANSITable(
             Column("block", headalign="^", colalign="<"),
+            Column("nc", headalign="^", colalign="^"),
+            Column("nd", headalign="^", colalign="^"),
             Column("type", headalign="^", colalign="<"),
             Column("inport", headalign="^", colalign="<"),
             Column("source", headalign="^", colalign="<"),
@@ -921,7 +923,9 @@ class BlockDiagram:
                         src_name += f"[{source.port}]"
                     if port == 0:
                         # first row for this block
-                        table.row(name, b.type, port, src_name, typ)
+                        table.row(
+                            name, b.nstates, b.ndstates, b.type, port, src_name, typ
+                        )
                     else:
                         # subsequent rows
                         table.row("", "", port, src_name, typ)
