@@ -24,6 +24,7 @@ import warnings
 
 from ansitable import ANSITable, Column
 
+from bdsim._blockdiagram_mixin import BlockDiagramMixin
 from bdsim.components import *
 from bdsim.components import Clock
 from bdsim.components import Clock
@@ -34,7 +35,7 @@ from bdsim.components import Clock
 
 
 # class BlockDiagram(BlockDiagramMixin):
-class BlockDiagram:
+class BlockDiagram(BlockDiagramMixin):
     r"""
     Block diagram class.  This object is the parent of all blocks and wires in
     the system.
