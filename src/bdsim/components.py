@@ -10,7 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import animation
 from collections import UserDict
-from typing import Optional, Literal, Union
+from abc import ABC, abstractmethod
 
 
 # decorator for debugging implicit block creation with operator overloading
@@ -890,7 +890,7 @@ class Clock:
 # ------------------------------------------------------------------------- #
 
 
-class Block:
+class Block(ABC):
 
     varinputs = False
     varoutputs = False
@@ -1989,7 +1989,8 @@ class SinkBlock(Block):
         self.nout = 0
         self.nstates = 0
 
-    def step(self, t, inports):  # valid
+    @abstractmethod
+    def step(self, t: float, inports: list) -> None:  # valid
         pass
 
 
@@ -2016,6 +2017,10 @@ class SourceBlock(Block):
         super().__init__(**blockargs)
         self.nin = 0
         self.nstates = 0
+
+    @abstractmethod
+    def output(self, t: float, inports: list, x):
+        pass
 
 
 class TransferBlock(Block):
@@ -2059,6 +2064,14 @@ class TransferBlock(Block):
         assert len(self._x0) == self.nstates, "incorrect length for initial state"
         assert self.nin > 0 or self.nout > 0, "no inputs or outputs specified"
 
+    @abstractmethod
+    def deriv(self, t: float, inports: list) -> None:  # valid
+        pass
+
+    @abstractmethod
+    def output(self, t: float, inports: list, x):
+        pass
+
 
 class FunctionBlock(Block):
     """
@@ -2083,6 +2096,10 @@ class FunctionBlock(Block):
         # print('Function constructor')
         super().__init__(**blockargs)
         self.nstates = 0
+
+    @abstractmethod
+    def output(self, t: float, inports: list, x):
+        pass
 
 
 class SubsystemBlock(Block):

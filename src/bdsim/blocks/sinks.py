@@ -229,6 +229,9 @@ class Null(SinkBlock):
         """
         super().__init__(nin=nin, **blockargs)
 
+    def step(self, t, inputs) -> None:
+        pass  # do nothing
+
 
 # ------------------------------------------------------------------------ #
 
@@ -289,6 +292,9 @@ class Watch(SinkBlock):
         # append to the watchlist, bdsim.run() will do the rest
         simstate.watchlist.append(plug)
         simstate.watchnamelist.append(str(plug))
+
+    def step(self, t, inputs) -> None:
+        pass  # do nothing
 
 
 if __name__ == "__main__":  # pragma: no cover
