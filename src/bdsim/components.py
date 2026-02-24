@@ -1142,12 +1142,14 @@ class Block(ABC):
         """
         return self._graphics
 
-    # for use in unit testing
+    # ---------------------------------------------------------------------- #
 
-    # TODO: should redo this, eliminate the monkey patch
-    # TODO: make T_step(), dummpy out the state object
+    # methods used for unit testing
 
-    def T_output(self, *inputs, t=0.0, x=None):
+    #  test_MMMMM is a wrapper around the normal block method MMMMM, which checks the inputs and outputs for
+    #  consistency with the block definition, and is used for concise unit tests.
+
+    def test_output(self, *inputs, t=0.0, x=None):
         """
         Evaluate a block for unit testing.
 
@@ -1164,10 +1166,6 @@ class Block(ABC):
         output port values are a list.
 
         Mostly used for making concise unit tests.
-
-        .. warning:: the instance is monkey patched, not useable in a block
-            diagram subsequently.
-
         """
         # check inputs and assign to attribute
         assert len(inputs) == self.nin, "wrong number of inputs provided"
@@ -1180,7 +1178,7 @@ class Block(ABC):
         assert len(out) == self.nout, "result list is wrong length"
         return out
 
-    def T_deriv(self, *inputs, t=0.0, x=None):
+    def test_deriv(self, *inputs, t=0.0, x=None):
         """
         Evaluate a block for unit testing.
 
@@ -1197,10 +1195,6 @@ class Block(ABC):
         values. Input port values are treated as lists.
 
         Mostly used for making concise unit tests.
-
-        .. warning:: the instance is monkey patched, not useable in a block
-            diagram subsequently.
-
         """
 
         # check inputs and assign to attribute
@@ -1217,7 +1211,7 @@ class Block(ABC):
         assert out.shape == (self.nstates,), "result array is wrong length"
         return out
 
-    def T_next(self, *inputs, t=0.0, x=None):
+    def test_next(self, *inputs, t=0.0, x=None):
         """
         Evaluate a block for unit testing.
 
@@ -1252,7 +1246,7 @@ class Block(ABC):
         assert out.shape == (self.ndstates,), "next state array is wrong length"
         return out
 
-    def T_step(self, *inputs, t=0.0) -> None:
+    def test_step(self, *inputs, t=0.0) -> None:
         """
         Step a block for unit testing.
 
@@ -1274,7 +1268,7 @@ class Block(ABC):
         # step the block
         self.step(t, inputs)
 
-    def T_start(self, simstate=None):
+    def test_start(self, simstate=None):
 
         from bdsim.run_sim import BDSimState, Options
 
@@ -1298,11 +1292,11 @@ class Block(ABC):
         self.start(simstate)
         return simstate
 
-    def _output(self, *inputs, t=0.0, x=None):
-        return self.T_output(*inputs, t=t, x=x)
+    # def _output(self, *inputs, t=0.0, x=None):
+    #     return self.T_output(*inputs, t=t, x=x)
 
-    def _step(self, *inputs, t=0.0) -> None:
-        return self.T_step(*inputs, t=t)
+    # def _step(self, *inputs, t=0.0) -> None:
+    #     return self.T_step(*inputs, t=t)
 
     # def input(self, port):
     #     """
