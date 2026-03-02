@@ -452,13 +452,13 @@ class SubSystem(SubsystemBlock):
         self.subsystem: Any = copy.deepcopy(subsys)
 
         # get references to the input and output port blocks
-        self.inport = None
+        self._ss_inport = None
         self.outport = None
         for b in self.subsystem.blocklist:
             if b.type == "inport":
-                self.inport = b
+                self._ss_inport = b
             elif b.type == "outport":
-                self.outport = b
+                self._ss_outport = b
 
         self.ssname = subsys.name
 
@@ -469,7 +469,7 @@ class SubSystem(SubsystemBlock):
 # ------------------------------------------------------------------------ #
 
 
-class InPort(SubsystemBlock):
+class InPort(FunctionBlock):
     """
     :blockname:`INPORT`
 
@@ -520,7 +520,7 @@ class InPort(SubsystemBlock):
 # ------------------------------------------------------------------------ #
 
 
-class OutPort(SubsystemBlock):
+class OutPort(FunctionBlock):
     """
     :blockname:`OUTPORT`
 

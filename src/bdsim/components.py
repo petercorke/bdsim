@@ -7,11 +7,7 @@ from __future__ import annotations
 from io import BufferedWriter
 import types
 import math
-from re import S
 import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib import animation
-from collections import UserDict
 from typing import TYPE_CHECKING, Optional, Literal, Union, Any, Self
 
 from abc import ABC, abstractmethod
@@ -29,6 +25,16 @@ def oodebug(func):
         return ret
 
     return wrapper
+
+
+# remove LaTeX characters from names for use in port names, etc.
+_latex_remove: dict[int, str] = str.maketrans(
+    {"$": "", "\\": "", "{": "", "}": "", "^": ""}
+)
+
+
+def _fixname(s):
+    return s.translate(_latex_remove)
 
 
 class BDStruct:
@@ -928,72 +934,176 @@ class Clock:
 
 
 class Block(ABC):
+    """_summary_
 
-    varinputs = False
-    varoutputs = False
+    :param ABC: _description_
+    :type ABC: _type_
+    :return: _description_
+    :rtype: _type_
+
+    Block is the superclass of all blocks in the simulation environment.  It defines the common properties of all blocks:
+
+    - ``nin`` the number of input ports
+    - ``nout`` the number of output ports
+    - ``nstates`` the number of continuous-time state variables
+    - ``ndstates`` the number of discrete-time state variables
+    - ``name`` the unique name of the block
+    - ``blockclass`` a string indicating the block class, eg. 'sink', 'source', 'function', 'transfer', 'subsystem', 'clocked', etc.
+    - ``type`` a string indicating the block type, eg. 'gain', 'sum', 'integrator', etc.
+
+    The simulation engine uses these methods:
+
+        - ``getstate0()``: returns the initial state of the block as a NumPy array
+        - ``setstate(x)``: sets the state of the block to the given state ``x`` and returns any remaining state for the next block in the clock sequence
+        - ``next(t, u, x)``: computes the next state of the block given the current time ``t``, input values ``inputs``, and current state ``x``
+        - ``output(t, u, x)``: returns the output value of the block at output port ``i`` given the current state and inputs. The outputs are cached and
+          can be accessed by ``block.output_value(i)``
+        - ``deriv(t, u, x)``: returns the derivative of the state variables for continuous-time blocks
+        - ``reset()``: resets the block to its initial state
+        - ``done()``: performs any cleanup at end of the simulation
+        - ``info()``: displays information about the block for debugging purposes
+
+    Ports can be accessed by index, eg. ``block.input_value(i)`` or ``block.output_value(i)``, or by name, eg. ``block.inport("in1")`` or ``block.outport("out1")`` if the block has named ports.
+
+        - ``input_value(i)``: returns the value of the input port at index ``i``
+        - ``output_value(i)``: returns the value of the output port at index ``i``
+        - ``inport_name(i)``: returns the name of the input port at index ``i``
+        - ``outport_name(i)``: returns the name of the output port at index ``i``
+
+    """
+
+    nin: int  # number of input ports
+    nout: int  # number of output ports
+    nstates: int  # number of continuous-time state variables
+    ndstates: int  # number of discrete-time state variables
+
+    # block class, eg. 'sink', 'source', 'function', 'transfer', 'subsystem', 'clocked', etc.
+    blockclass: str = "?"
+    type: str = "?"
 
     _name: Optional[str]
     _name_tex: Optional[str]
 
-    nstates: int
-    ndstates: int
-    _sequence: Optional[int]
+    # graphical hints
+    _pos: Optional[tuple[float, float]]  # position on canvas, eg. (x,y)
+    _shape: Optional[str]  # passed to graphviz, eg. 'box', 'ellipse', 'diamond'
+
+    _initd: bool = False
+    _bd: Optional[BlockDiagram] = None
+
+    _output_values: Optional[list] = None  # access by block.output_value(i)
+
     _x: Optional[np.ndarray[tuple[Any, ...], np.dtype[Any]]]
 
-    sources: list[Block]
-    out: list[Plug]
-    input: Optional[list[Plug]]
-    output: list
-    input_wires: list[Wire]
-    output_wires: list[list[Wire]]
+    _inport_names: Optional[list[str]]
+    _outport_names: Optional[list[str]]
+    _portnames: list[str] = []
+    _state_names: Optional[list[str]]
 
-    __array_ufunc__ = None  # allow block operators with NumPy values
+    _clocked: bool = False
+    _clock: Clock
 
-    def __new__(cls, *args, bd=None, **kwargs) -> Self:
+    _graphics: bool = False
+    _parameters: dict[str, Any]
+
+    # these lists are used to record the wires connected to the block, set by connect()
+    # used to build inter-block references at compile time
+    _input_wires: list[Wire]  # incoming wires
+    _output_wires: list[list[Wire]]  # outgoing wires
+
+    # used at compile time to determine the order of block execution
+    _sequence: Optional[int]
+    _parents: list[Block]  # blocks that feed into this block, set at compile time
+
+    __array_ufunc__ = None  # allow block operators with NumPy operands
+
+    # def __new__(cls, *args, bd=None, **kwargs) -> Self:
+    #     """
+    #     Construct a new Block object.
+
+    #     :param cls: The class to construct
+    #     :type cls: class type
+    #     :param *args: positional args passed to constructor
+    #     :type *args: list
+    #     :param **kwargs: keyword args passed to constructor
+    #     :type **kwargs: dict
+    #     :return: new Block instance
+    #     :rtype: Block instance
+    #     """
+    #     # print('Block __new__', args,bd, kwargs)
+    #     block: Self = super(Block, cls).__new__(cls)  # create a new instance
+
+    #     # we overload setattr, so need to know whether it is being passed a port
+    #     # name.  Add this attribute now to allow proper operation.
+    #     # block.__dict__["_portnames"] = []  # must be first, see __setattr__
+    #     # block._portnames = []  # must be first, see __setattr__
+    #     return block
+
+    def __init_subclass__(cls, **kwargs) -> None:
         """
-        Construct a new Block object.
+        Initialize a subclass of Block.
 
-        :param cls: The class to construct
+        :param cls: The subclass being initialized
         :type cls: class type
-        :param *args: positional args passed to constructor
-        :type *args: list
-        :param **kwargs: keyword args passed to constructor
+        :param **kwargs: keyword args passed to subclass definition
         :type **kwargs: dict
-        :return: new Block instance
-        :rtype: Block instance
+
+        This method is called when a new subclass of Block is defined.  It can be used
+        to set class variables such as ``nin``, ``nout``, ``inlabels``, ``outlabels``,
+        etc.  For example::
+
+            class MyBlock(Block):
+                nin = 1
+                nout = 1
+                inlabels = ['in']
+                outlabels = ['out']
+
         """
-        # print('Block __new__', args,bd, kwargs)
-        block: Self = super(Block, cls).__new__(cls)  # create a new instance
+        super().__init_subclass__(**kwargs)
+        if "nin" in cls.__dict__ and not isinstance(cls.__dict__["nin"], property):
+            # Capture the default value defined in the subclass
+            cls._nin = cls.nin
+            # Delete it so the Base property is visible again
+            del cls.nin
 
-        # we overload setattr, so need to know whether it is being passed a port
-        # name.  Add this attribute now to allow proper operation.
-        block.__dict__["portnames"] = []  # must be first, see __setattr__
+        if "nout" in cls.__dict__ and not isinstance(cls.__dict__["nout"], property):
+            # Capture the default value defined in the subclass
+            cls._nout = cls.nout
+            # Delete it so the Base property is visible again
+            del cls.nout
 
-        block.nstates = 0
-        block.ndstates = 0
-        block._sequence = None
-        block._x = None  # state vector
+        if "inlabels" in cls.__dict__ and not isinstance(
+            cls.__dict__["inlabels"], property
+        ):
+            # Capture the default value defined in the subclass
+            cls._inlabels = cls.inlabels
+            # Delete it so the Base property is visible again
+            del cls.inlabels
 
-        return block
-
-    _latex_remove: dict[int, str] = str.maketrans(
-        {"$": "", "\\": "", "{": "", "}": "", "^": ""}
-    )
+        if "outlabels" in cls.__dict__ and not isinstance(
+            cls.__dict__["outlabels"], property
+        ):
+            # Capture the default value defined in the subclass
+            cls._outlabels = cls.outlabels
+            # Delete it so the Base property is visible again
+            del cls.outlabels
 
     def __init__(
         self,
         name=None,
         nin=None,
         nout=None,
+        nstates=0,
+        ndstates=0,
         inputs=None,
-        type=None,
         inames=None,
         onames=None,
         snames=None,
+        clock=None,
         pos=None,
         bd: Optional["BlockDiagram"] = None,
+        type=None,
         blockclass=None,
-        verbose=False,
         **kwargs,
     ) -> None:
         """
@@ -1017,8 +1127,6 @@ class Block(ABC):
         :type pos: 2-element tuple or list, optional
         :param bd: Parent block diagram, defaults to None
         :type bd: BlockDiagram, optional
-        :param verbose: enable diagnostic prints, defaults to False
-        :type verbose: bool, optional
         :param kwargs: Unused arguments
         :type kwargs: dict
         :return: A Block superclass
@@ -1032,43 +1140,95 @@ class Block(ABC):
         """
 
         # print('Block constructor, bd = ', bd)
-        self.name = name
-        self.bd: Optional[BlockDiagram] = bd
-        self.pos = pos
-        self.id = None
-        self.out = []
-        # self.inputs = None
-        self.updated = False
-        self.shape = "block"  # for box
-        self._inport_names = None
-        self._outport_names = None
-        self._state_names = None
-        self.initd = True
-        self._clocked = False
-        self._graphics = False
-        self._parameters = {}
-        self.verbose: bool = verbose
 
+        # set basic block parameters
+
+        # nin and nout can be set by the constructor, or by class variables in the subclass, or default to 0.
         if nin is not None:
             self.nin = nin
+
         if nout is not None:
             self.nout = nout
-        if blockclass is not None:
-            self.blockclass = blockclass
 
+        self.name = name
+
+        # set the block type and block class
         if type is None:
             self.type: str = self.__class__.__name__.lower()
+
+        if blockclass is None:
+            for cls in self.__class__.__bases__:
+                if cls.__name__.endswith("Block"):
+                    self.blockclass = cls.__name__[:-5].lower()
+                    break
+        assert (
+            self.blockclass is not None
+        ), f"blockclass must be specified for block {self.name}"
+
+        # key simulation variables
+        self._x = None  # state vector
+        self._output_values = None  # cached block output values, set by output() method, accessed by outport_value()
+
+        # set by add_block() when block is added to a block diagram
+        self._bd: Optional[BlockDiagram] = bd  # owning block diagram
+        self.id = None  # index in block diagram's blocklist
+
+        # initialize lists of input and output ports
+        #  these are set when blocks are connected, used to build inter-block references at compile time
+        self._output_wires = [[]] * self.nout
+        self._input_wires = [None] * self.nin
+
+        # used to build execution plan at compile time, set by compile() method
+        self._sequence = None
+        self._parents = [None] * self.nin
+
+        # deprecated options for graphical display
+        self._pos = pos
+        self._shape = "block"  # for box
+
+        self._initd = True
+        self._clocked = False
+        self._clock = clock
+        self._graphics = False
+        self._parameters = {}
 
         if bd is not None:
             bd.add_block(self)
 
+        # ports can have names as well as indices, for access by name.
+        #  names are set by:
+        #  - inames and onames options, or by
+        #  - inlabels and outlabels class variables, or
+        #  - default to None.
+        #
+        # _portnames is the list of all port names, used for access by name in __setattr__ and __getattr__
+        self._portnames = []
         if inames is not None:
-            self.inport_names(inames)
-        if onames is not None:
-            self.outport_names(onames)
-        if snames is not None:
-            self.state_names(snames)
+            self._inport_names = inames
+        elif hasattr(self, "inlabels"):
+            self._inport_names = self.inlabels
+        else:
+            self._inport_names = None
+        if self._inport_names is not None:
+            assert (
+                len(self._inport_names) == self.nin
+            ), "number of input port names must match number of inputs"
+            self._portnames = self._inport_names
 
+        if onames is not None:
+            self._outport_names = onames
+        elif hasattr(self, "outlabels"):
+            self._outport_names = self.outlabels
+        else:
+            self._outport_names = None
+        if self._outport_names is not None:
+            assert (
+                len(self._outport_names) == self.nout
+            ), "number of output port names must match number of outputs"
+            self._portnames += self._outport_names
+        self._state_names = snames
+
+        # block inputs can be specified in the constructor for convenience, and are connected here.
         if isinstance(inputs, Block):
             inputs: tuple[Block] = (inputs,)
         if inputs is not None and len(inputs) > 0:
@@ -1079,8 +1239,8 @@ class Block(ABC):
             for i, input in enumerate(inputs):
                 self.bd.connect(input, Plug(self, port=i))
 
-        if len(kwargs) > 0:
-            print("WARNING: unused arguments", kwargs.keys())
+        self.nstates = nstates
+        self.ndstates = ndstates
 
     def add_param(self, param, handler=None) -> None:
         if handler == None:
@@ -1095,14 +1255,50 @@ class Block(ABC):
         self._parameters[name](self, name, newvalue)
 
     @property
+    def nin(self) -> int:
+        return self._nin
+
+    @nin.setter
+    def nin(self, nin) -> None:
+        self._nin = nin
+        # update input wires and port names
+        self._input_wires = [None] * self.nin
+        self._parents = [None] * self.nin
+
+        if hasattr(self, "_inport_names") and self._inport_names is not None:
+            assert (
+                len(self._inport_names) == self.nin
+            ), "number of input port names must match number of inputs"
+            self._portnames = (self._inport_names or []) + (self._outport_names or [])
+
+    @property
+    def nout(self) -> int:
+        return self._nout
+
+    @nout.setter
+    def nout(self, nout) -> None:
+        self._nout = nout
+        # update output wires and port names
+        self._output_wires = [[]] * self.nout
+        if hasattr(self, "_outport_names") and self._outport_names is not None:
+            assert (
+                len(self._outport_names) == self.nout
+            ), "number of output port names must match number of outputs"
+            self._portnames = (self._inport_names or []) + (self._outport_names or [])
+
+    @property
     def name(self) -> str | None:
         return self._name
+
+    @property
+    def name_tex(self) -> str | None:
+        return self._name_tex
 
     @name.setter
     def name(self, name) -> None:
         if name is not None:
             self._name_tex = name
-            self._name = self._fixname(name)
+            self._name = _fixname(name)
         else:
             self._name_tex = None
             self._name = None
@@ -1119,6 +1315,24 @@ class Block(ABC):
         for k, v in self.__dict__.items():
             if k != "sim":
                 print("  {:11s}{:s}".format(k + ":", str(v)))
+
+    def __str__(self):
+        if hasattr(self, "name") and self.name is not None:
+            return self.name
+        else:
+            return self.blockclass + ".??"
+
+    def __repr__(self):
+        return self.__str__()
+
+    def state_names(self, names) -> None:
+        self._state_names = names
+
+    @property
+    def fullname(self):
+        return self.blockclass + "." + str(self)
+
+    # ---------------------------------------------------------------------- #
 
     @property
     def isclocked(self) -> bool:
@@ -1142,8 +1356,204 @@ class Block(ABC):
         """
         return self._graphics
 
-    # ---------------------------------------------------------------------- #
+    @property
+    def pos(self) -> Optional[tuple[float, float]]:
+        return self._pos
 
+    @property
+    def shape(self) -> str:
+        return self._shape
+
+    @property
+    def initd(self) -> bool:
+        return self._initd
+
+    @property
+    def portnames(self) -> list[str]:
+        return self._portnames
+
+    @property
+    def bd(self) -> BlockDiagram:
+        assert self._bd is not None, "block is not in a block diagram"
+        return self._bd
+
+    @property
+    def bd(self) -> BlockDiagram:
+        assert self._bd is not None, "block is not in a block diagram"
+        return self._bd
+
+    # ---------------------------------------------------------------------- #
+    # inputs to the block
+
+    @property
+    def parents(self) -> list[Block]:
+        """
+        List of blocks feeding into this block.
+
+        :return: List of parent blocks
+        :rtype: list of Block, of length ``nin``
+
+        Returns the list of parent blocks, those that feed into this block.
+
+        This is determined at compile time by the connections in the block diagram.  It
+        is used to determine the order of block execution.
+
+        :seealso: :meth:`Block.inports` :meth:`Block.inputs`
+        """
+        return [w.start.block for w in self._input_wires]
+
+    @property
+    def inports(self) -> list[Plug]:
+        """
+        List of output plugs feeding into this block.
+
+        :return: List of source plugs
+        :rtype: list of Plug, of length ``nin``
+
+        Returns the list of plugs that describe the outout ports (block and port) that
+        feed into this block.
+
+        This is determined at compile time by the connections in the block diagram.  It
+        is used to determine the order of block execution.
+
+        :seealso: :meth:`Block.parents` :meth:`Block.inputs`
+        """
+        return [w.start for w in self._input_wires]
+
+    @property
+    def inport_values(self):
+        """
+        Get inport values as a list
+
+        :return: list of input to block
+        :rtype: list of length ``nin``
+
+        Returns a list of values corresponding to the input ports of the block.  The types of the
+        elements are dictated by the blocks connected to the input ports.
+
+        .. note:: The value is obtained from the predecessor block's output values
+            which are stored in the attribute ``_output_values`` -- a list of length
+            ``nout``. These values are set when the predecessor block's ``output``
+            method is evaluated.
+
+        :seealso: :meth:`inport_value`
+        """
+        values = []
+        for w in self._input_wires:
+            plug = w.start
+            # for port in range(self.nin):
+            #     plug = self.sources[port]  # get plug for source block output
+            values.append(plug.block.outport_value(plug.port))
+        return values
+
+    def inport_value(self, i: int) -> Any:
+        """
+        Get the value applied to specified input port.
+
+        :param i: Input port index
+        :type i: int
+        :return: Input port value
+        :rtype: Any
+
+        Get the value of the signal applied to port ``i``.
+
+        .. note:: The value is obtained from the predecessor block's output values
+            which are stored in the attribute ``_output_values`` -- a list of length
+            ``nout``. These values are set when the predecessor block's ``output``
+            method is evaluated.
+
+        :seealso: :meth:`inport_values`
+        """
+        source = self._parents[i].start
+        return source.block.outport_value(source.port)
+
+    def inport_name(self, i: int) -> str:
+        """
+        Get the name of an input port.
+
+        :param i: Input port index
+        :type i: int
+
+        Get the name of an input port by index.  By default the name is the port number
+        in square brackets, but if the block has named ports then the name is taken from
+        the list of input port names.
+
+        :seealso: :meth:`outport_name` :meth:`source_name`
+        """
+        assert i < self.nin, f"block {self.name} input port index {i} out of range"
+        if self._inport_names is None:
+            return f"[{i}]"
+        else:
+            return self._inport_names[i]
+
+    def source_name(self, port):
+        """
+        Get the name of output port driving this input port.
+
+        :param port: Input port
+        :type port: int
+        :return: Port name
+        :rtype: str
+
+        Get the name of the output port that drives the specified input port.  By default
+        the name is the port number in square brackets, but if the block has named ports
+        then the name is taken from the list of input port names.
+
+        :seealso: :meth:`outport_name` :meth:`inport_name`
+        """
+
+        wire = self._input_wires[port]
+        if wire.name is not None:
+            return wire.name
+        b = wire.start.block
+        return f"{b.name}{b.outport_name(wire.start.port)}"
+
+    # ---------------------------------------------------------------------- #
+    # outputs of a block
+
+    def outport_value(self, i: int) -> Any:
+        """
+        Get the value of an output port.
+
+        :param i: Output port index
+        :type i: int
+        :return: Output port value
+        :rtype: Any
+
+        Get the value of the signal at output port ``i``.
+
+        .. note:: The value is obtained from the block's output values
+            which are stored in the attribute ``_output_values`` -- a list of length
+            ``nout``. These values are set when the block's ``output``
+            method is evaluated.
+
+        :seealso: :meth:`inport_value`
+        """
+        assert (
+            self._output_values[i] is not None
+        ), f"block {self.name} output value {i} not set"
+        return self._output_values[i]
+
+    def outport_name(self, i: int) -> str:
+        """
+        Get the name of an output port.
+
+        :param i: Output port index
+        :type i: int
+
+        Get the name of an output port by index.  By default the name is the port number
+        in square brackets, but if the block has named ports then the name is taken from
+        the list of output port names.
+
+        :seealso: :meth:`inport_name` :meth:`source_name`
+        """
+        assert i < self.nout, f"block {self.name} output port index {i} out of range"
+        if self._outport_names is None:
+            return f"[{i}]"
+        else:
+            return self._outport_names[i]
+
+    # ---------------------------------------------------------------------- #
     # methods used for unit testing
 
     #  test_MMMMM is a wrapper around the normal block method MMMMM, which checks the inputs and outputs for
@@ -1292,66 +1702,12 @@ class Block(ABC):
         self.start(simstate)
         return simstate
 
-    # def _output(self, *inputs, t=0.0, x=None):
-    #     return self.T_output(*inputs, t=t, x=x)
-
-    # def _step(self, *inputs, t=0.0) -> None:
-    #     return self.T_step(*inputs, t=t)
-
-    # def input(self, port):
-    #     """
-    #     Get input to block on specified port
-
-    #     :param port: port number
-    #     :type port: int
-    #     :return: value applied to specified input port
-    #     :rtype: any
-
-    #     Return the value of the input applied to the input port numbered
-    #     ``port``.  The type depends on the source port connected to this input.
-
-    #     .. note:: When a block's ``output`` method is evaluated the resulting list is
-    #         saved as an attribute of that block.  The ``input`` method traces back
-    #         along the wire connected to the input port to obtain a reference to the
-    #         output value held by the predecessor block.
-
-    #     .. note:: For unit testing purposes, it the block is simply an instance
-    #         of the class, then setting its attribute ``T_inputs`` to a list
-    #         provides the input values to the block.
-
-    #     :seealso: :meth:`inputs`
-    #     """
-    #     try:
-    #         p = self.sources[port]  # get plug for source block output
-    #         return p.block.output_values[p.port]
-
-    @property
-    def inputs(self):
-        """
-        Get block inputs as a list
-
-        :return: list of block inputs
-        :rtype: list
-
-        Returns a list of values corresponding to the input ports of the block.  The
-        types of the elements are dictated by the blocks connected to the input ports.
-
-        .. note:: When a block's ``output`` method is evaluated the resulting list is
-            saved as an attribute of that block.  The ``inputs`` method uses the
-            ``sources`` attribute which has references to the output values held by
-            the predecessor block.
-
-        :seealso: :meth:`input`
-        """
-        values = []
-        for port in range(self.nin):
-            plug = self.sources[port]  # get plug for source block output
-            values.append(plug.block.output_values[plug.port])
-        return values
+    # ---------------------------------------------------------------------- #
+    #  set/get items and attributes
 
     def __getitem__(self, port) -> Plug:
         """
-        Convert a block slice reference to a plug.
+        Convert a block slice reference to a Plug.
 
         :param port: Port number
         :type port: int
@@ -1393,7 +1749,46 @@ class Block(ABC):
         # b[port] = src
         # src --> b[port]
         # print('connecting', src, self, port)
-        self.bd.connect(src, self[port])
+        return self.bd.connect(src, self[port])
+
+    def __getattribute__(self, name) -> Plug:
+        """
+        Convert a LHS block name reference to a Plug.
+
+        :param name: Port name
+        :type port: str
+        :return: Plug for specified block port name
+        :rtype: Plug
+
+        Used to create a wired connection by assignment, for example::
+
+            c = bd.CONSTANT(1, inames=['u'])
+
+            y = c.u
+
+        .. note::  this overloaded method handles all instances of ``setattr`` and
+              implements normal functionality as well, only creating a wire
+              if ``name`` is a known port name.
+
+        .. warning:: to avoid infinite recursion, this method must use
+            ``super().__getattribute__`` to access attributes of the block, and only
+            create a Plug if the name is in the list of port names.
+        """
+
+        # b[port] = src
+        # src --> b[port]
+        # gets called for regular attribute settings, as well as for wiring
+
+        if name in super().__getattribute__("_portnames"):
+            # we're doing a port access
+            try:
+                port = super().__getattribute__("_inport_names").index(name)
+            except ValueError:
+                port = super().__getattribute__("_outport_names").index(name)
+            return Plug(self, port)
+        else:
+            # regular case, get attribute
+            return super().__getattribute__(name)
 
     def __setattr__(self, name, value) -> None:
         """
@@ -1424,14 +1819,31 @@ class Block(ABC):
         # src --> b[port]
         # gets called for regular attribute settings, as well as for wiring
 
-        if name in self.portnames:
+        if name in self._portnames:
             # we're doing wiring
-            # print('in __setattr___', self, name, value)
             self.bd.connect(value, getattr(self, name))
         else:
-            # regular case, add attribute to the instance's dictionary
-            # self.__dict__[name] = value
+            # regular case, add attribute
             super().__setattr__(name, value)
+
+    # ---------------------------------------------------------------------- #
+    # methods used at compile time to build inter-block references
+
+    def add_output_wire(self, w) -> None:
+        port = w.start.port
+        assert port < len(self._output_wires), "port number too big"
+        self._output_wires[port].append(w)
+
+    def add_input_wire(self, w) -> None:
+        port = w.end.port
+        assert (
+            self._input_wires[port] is None
+        ), "attempting to connect second wire to an input"
+        self._input_wires[port] = w
+        self._parents[port] = w.start
+
+    # ---------------------------------------------------------------------- #
+    # operator overloads for implicit wiring
 
     @oodebug
     def __rshift__(left, right):
@@ -1928,134 +2340,11 @@ class Block(ABC):
 
     # TODO arithmetic with a constant, add a gain block or a constant block
 
-    def __str__(self):
-        if hasattr(self, "name") and self.name is not None:
-            return self.name
-        else:
-            return self.blockclass + ".??"
-
-    def __repr__(self):
-        return self.__str__()
-
-    def _fixname(self, s):
-        return s.translate(self._latex_remove)
-
-    def inport_names(self, names) -> None:
-        """
-        Set the names of block input ports.
-
-        :param names: List of port names
-        :type names: list of str
-
-        Invoked by the ``inames`` argument to the Block constructor.
-
-        The names can include LaTeX math markup.  The LaTeX version is used
-        where appropriate, but the port names are a de-LaTeXd version of the
-        given string with backslash, caret, braces and dollar signs
-        removed.
-        """
-        self._inport_names = names
-
-        for port, name in enumerate(names):
-            fn = self._fixname(name)
-            setattr(self, fn, self[port])
-            self.portnames.append(fn)
-
-    def outport_names(self, names) -> None:
-        """
-        Set the names of block output ports.
-
-        :param names: List of port names
-        :type names: list of str
-
-        Invoked by the ``onames`` argument to the Block constructor.
-
-        The names can include LaTeX math markup.  The LaTeX version is used
-        where appropriate, but the port names are a de-LaTeXd version of the
-        given string with backslash, caret, braces and dollar signs
-        removed.
-
-        """
-        self._outport_names = names
-        for port, name in enumerate(names):
-            fn = self._fixname(name)
-            setattr(self, fn, self[port])
-            self.portnames.append(fn)
-
-    def state_names(self, names) -> None:
-        self._state_names = names
-
-    def sourcename(self, port):
-        """
-        Get the name of output port driving this input port.
-
-        :param port: Input port
-        :type port: int
-        :return: Port name
-        :rtype: str
-
-        Return the name of the output port that drives the specified input
-        port. The name can be:
-
-            - a LaTeX string if provided
-            - block name with port number given in square brackets.  The block
-              name will the one optionally assigned by the user using the ``name``
-              keyword, otherwise a systematic default name.
-
-        :seealso: outport_names
-
-        """
-
-        w = self.input_wires[port]
-        if w.name is not None:
-            return w.name
-        src = w.start.block
-        srcp = w.start.port
-        if src._outport_names is not None:
-            return src._outport_names[srcp]
-        return str(w.start)
-
-    # @property
-    # def fullname(self):
-    #     return self.blockclass + "." + str(self)
+    # ---------------------------------------------------------------------- #
 
     def reset(self) -> None:
-        # if self.nin > 0:
-        #     self.input_wires = [None] * self.nin
-        self.updated = False
-
-    def add_output_wire(self, w) -> None:
-        port = w.start.port
-        assert port < len(self.output_wires), "port number too big"
-        self.output_wires[port].append(w)
-
-    def add_input_wire(self, w) -> None:
-        port = w.end.port
-        assert (
-            self.input_wires[port] is None
-        ), "attempting to connect second wire to an input"
-        self.input_wires[port] = w
-        self.sources[port] = w.start
-
-    # def setinput(self, port, value):
-    #     """
-    #     Receive input from a wire
-
-    #     :param self: Block to be updated
-    #     :type wire: Block
-    #     :param port: Input port to be updated
-    #     :type port: int
-    #     :param value: Input value
-    #     :type val: any
-    #     """
-    #     # stash it away
-    #     self.inputs[port] = value
-
-    # def setinputs(self, *pos):
-    #     assert len(pos) == self.nin, 'mismatch in number of inputs'
-    #     self.reset()
-    #     for i, val in enumerate(pos):
-    #         self.inputs[i] = val
+        self._updated = False
+        self._output_values = [None] * self.nout
 
     def start(self, simstate) -> None:  # begin a simulation
         pass
@@ -2068,7 +2357,7 @@ class Block(ABC):
             self.nin > 0 or self.nout > 0
         ), f"block {self.name} no inputs or outputs specified"
         assert (
-            hasattr(self, "initd") and self.initd
+            hasattr(self, "_initd") and self._initd
         ), "Block superclass not initalized. was super().__init__ called?"
 
     def done(self, **kwargs) -> None:  # end of simulation
@@ -2085,7 +2374,7 @@ class SinkBlock(Block):
     graphics.
     """
 
-    blockclass: str = "sink"
+    blockclass = "sink"
 
     def __init__(self, **blockargs) -> None:
         """
@@ -2099,9 +2388,7 @@ class SinkBlock(Block):
         This is the parent class of all sink blocks.
         """
         # print('Sink constructor')
-        super().__init__(**blockargs)
-        self.nout = 0
-        self.nstates = 0
+        super().__init__(nout=0, nstates=0, ndstates=0, **blockargs)
 
     @abstractmethod
     def step(self, t: float, inports: list) -> None:  # valid
@@ -2114,7 +2401,7 @@ class SourceBlock(Block):
     but no inputs.  Its output is a function of parameters and time.
     """
 
-    blockclass: str = "source"
+    blockclass = "source"
 
     def __init__(self, **blockargs) -> None:
         """
@@ -2128,9 +2415,7 @@ class SourceBlock(Block):
         This is the parent class of all source blocks.
         """
         # print('Source constructor')
-        super().__init__(**blockargs)
-        self.nin = 0
-        self.nstates = 0
+        super().__init__(nin=0, nstates=0, ndstates=0, **blockargs)
 
     @abstractmethod
     def output(self, t: float, inports: list, x):
@@ -2144,9 +2429,9 @@ class TransferBlock(Block):
     system, either linear or nonlinear.
     """
 
-    blockclass: str = "transfer"
+    blockclass = "transfer"
 
-    def __init__(self, nstates=1, **blockargs) -> None:
+    def __init__(self, nstates, **blockargs) -> None:
         """
         Create a transfer function block.
 
@@ -2158,8 +2443,7 @@ class TransferBlock(Block):
         This is the parent class of all transfer function blocks.
         """
         # print('Transfer constructor')
-        self.nstates: int = nstates
-        super().__init__(**blockargs)
+        super().__init__(nstates=nstates, ndstates=0, **blockargs)
 
     def reset(self) -> None:
         super().reset()
@@ -2175,6 +2459,7 @@ class TransferBlock(Block):
         return self._x0
 
     def check(self) -> None:
+        super().check()
         assert len(self._x0) == self.nstates, "incorrect length for initial state"
         assert self.nin > 0 or self.nout > 0, "no inputs or outputs specified"
 
@@ -2194,7 +2479,7 @@ class FunctionBlock(Block):
     such as gain, summation or various mappings.
     """
 
-    blockclass: str = "function"
+    blockclass = "function"
 
     def __init__(self, **blockargs) -> None:
         """
@@ -2208,8 +2493,7 @@ class FunctionBlock(Block):
         This is the parent class of all function blocks.
         """
         # print('Function constructor')
-        super().__init__(**blockargs)
-        self.nstates = 0
+        super().__init__(nstates=0, ndstates=0, **blockargs)
 
     @abstractmethod
     def output(self, t: float, inports: list, x):
@@ -2223,7 +2507,7 @@ class SubsystemBlock(Block):
     such as gain, summation or various mappings.
     """
 
-    blockclass: str = "subsystem"
+    blockclass = "subsystem"
 
     def __init__(self, **blockargs) -> None:
         """
@@ -2237,8 +2521,7 @@ class SubsystemBlock(Block):
         This is the parent class of all subsystem blocks.
         """
         # print('Subsystem constructor')
-        super().__init__(**blockargs)
-        self.nstates = 0
+        super().__init__(nstates=0, ndstates=0, **blockargs)
 
 
 class ClockedBlock(Block):
@@ -2248,12 +2531,16 @@ class ClockedBlock(Block):
     system, either linear or nonlinear.
     """
 
-    blockclass: str = "clocked"
+    blockclass = "clocked"
 
-    def __init__(self, clock=None, **blockargs) -> None:
+    def __init__(self, *, ndstates: int, clock: Clock, **blockargs) -> None:
         """
         Create a clocked block.
 
+        :param ndstates: number of discrete-time states
+        :type ndstates: int
+        :param clock: the clock that governs the block's discrete time updates
+        :type clock: Clock
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         :return: clocked block base class
@@ -2262,10 +2549,10 @@ class ClockedBlock(Block):
         This is the parent class of all clocked blocks.
         """
         # print('Clocked constructor')
-        super().__init__(**blockargs)
+        super().__init__(nstates=0, ndstates=ndstates, **blockargs)
         assert clock is not None, "clocked block must have a clock"
         self._clocked = True
-        self.clock = clock
+        self._clock = clock
         clock.add_block(self)
 
     def reset(self) -> None:

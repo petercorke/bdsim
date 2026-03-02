@@ -69,12 +69,12 @@ class ZOH(ClockedBlock):
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        self.type = "sampler"
-        super().__init__(nin=1, nout=1, clock=clock, **blockargs)
-
         x0 = smb.getvector(x0)
         self._x0 = x0
-        self.ndstates: int = len(x0)
+        ndstates = len(x0)
+
+        super().__init__(nin=1, nout=1, ndstates=ndstates, clock=clock, **blockargs)
+
         # print('nstates', self.nstates)
 
     def output(self, t, inputs, x):
@@ -146,7 +146,6 @@ class DIntegrator(ClockedBlock):
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        super().__init__(clock=clock, **blockargs)
 
         if isinstance(x0, (int, float)):
             x0 = np.r_[x0]
@@ -157,12 +156,13 @@ class DIntegrator(ClockedBlock):
         else:
             x0 = smb.getvector(x0)
 
-        self.ndstates = x0.shape[0]
+        ndstates = x0.shape[0]
+        super().__init__(ndstates=ndstates, clock=clock, **blockargs)
 
         if min is not None:
-            min = smb.getvector(min, self.ndstates)
+            min = smb.getvector(min, ndstates)
         if max is not None:
-            max = smb.getvector(max, self.ndstates)
+            max = smb.getvector(max, ndstates)
 
         self._x0 = x0
         self.min = min
@@ -173,7 +173,7 @@ class DIntegrator(ClockedBlock):
         return [x]
 
     def next(self, t, u, x):
-        xnext = x + self.gain * self.clock.T * np.array(u[0])
+        xnext = x + self.gain * self._clock.T * np.array(u[0])
         if self.min is not None or self.max is not None:
             xnext = np.clip(xnext, self.min, self.max)
         return xnext
@@ -227,7 +227,6 @@ class DPoseIntegrator(ClockedBlock):
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        super().__init__(clock=clock, **blockargs)
 
         if x0 is None:
             x0 = Twist3()
@@ -239,16 +238,17 @@ class DPoseIntegrator(ClockedBlock):
             x0 = smb.getvector(x0, 6)
 
         self.ndstates = 6
+        super().__init__(ndstates=self.ndstates, clock=clock, **blockargs)
 
         self._x0 = x0
 
-        print("nstates", self.nstates, x0)
+        # print("nstates", self.nstates, x0)
 
     def output(self, t, u, x) -> list[SE3]:
         return [Twist3(x).SE3()]
 
     def next(self, t, u, x):
-        T_delta: SE3 = SE3.Delta(u[0] * self.clock.T)
+        T_delta: SE3 = SE3.Delta(u[0] * self._clock.T)
         pose = Twist3(x).SE3() * T_delta
         return Twist3(pose).A
 

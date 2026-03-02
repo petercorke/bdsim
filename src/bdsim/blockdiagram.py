@@ -73,8 +73,8 @@ class BlockDiagram(BlockDiagramMixin):
     """
 
     def __init__(self, name="main", **kwargs) -> None:
-        self.wirelist = []  # list of all wires
-        self.blocklist = []  # list of all blocks
+        self.wirelist: list[Wire] = []  # list of all wires
+        self.blocklist: list[Block] = []  # list of all blocks
         self.clocklist = []  # list of all clock sources
         self.compiled = False  # network has been compiled
         self.blockcounter = Counter()
@@ -139,7 +139,7 @@ class BlockDiagram(BlockDiagramMixin):
             i: int = self.blockcounter[block.type]
             self.blockcounter[block.type] += 1
             block.name = "{:s}.{:d}".format(block.type, i)
-        block.bd = self
+        block._bd = self
         self.blocklist.append(block)  # add to the list of available blocks
         if block in self.blocknames:
             raise Warning(f"block name {block} is not unique")
@@ -170,7 +170,7 @@ class BlockDiagram(BlockDiagramMixin):
         for k, v in self.blockdict.items():
             print("{:12s}: ".format(k), ", ".join(v))
 
-    def connect(self, start, *ends, name=None) -> None:
+    def connect(self, start: Block | Plug, *ends: Block | Plug, name=None) -> None:
         """
         TODO:
             s.connect(out[3], in1[2], in2[3])  # one to many
@@ -354,8 +354,11 @@ class BlockDiagram(BlockDiagramMixin):
         for b in self.blocklist:
             try:
                 b.check()
-            except:
-                raise RuntimeError("block failed check " + str(b))
+            except Exception:
+                print(fg("red"))
+                traceback.print_exc(file=sys.stderr)
+                print(attr(0))
+                raise RuntimeError("block failed check " + str(b)) from None
 
         # build a dictionary of all block names
         self.blocknames = {b.name: b for b in self.blocklist}
@@ -387,22 +390,11 @@ class BlockDiagram(BlockDiagramMixin):
                         [b.name + "X" + str(i) for i in range(0, b.nstates)]
                     )
 
-        # initialize lists of input and output ports
-        for b in self.blocklist:
-            b.output_wires = [[] for i in range(0, b.nout)]
-            b.input_wires = [None for i in range(0, b.nin)]
-            b.sources = [None for i in range(0, b.nin)]
-
-            # used to build execution plan
-            # TODO: might overlap with sources
-            b._parents = [None for i in range(0, b.nin)]
-
         # connect the source and destination blocks to each wire
         for w in self.wirelist:
             try:
                 w.start.block.add_output_wire(w)
                 w.end.block.add_input_wire(w)
-                w.end.block._parents[w.end.port] = w.start.block
 
             except:
                 print(fg("red"))
@@ -411,20 +403,22 @@ class BlockDiagram(BlockDiagramMixin):
                 error = True
 
         # check connections every block
+        # determine the predecessor/parent blocks, used later to generate the schedule
         for b in self.blocklist:
             # check all inputs are connected
-            for port, connection in enumerate(b.input_wires):
-                if connection is None:
+            for port, w in enumerate(b._input_wires):
+                if w is None:
                     print(
                         "  ERROR: [{:s}] input {:d} is not connected".format(
                             str(b), port
                         )
                     )
                     error = True
+                # b.add_parent(w.start.block)
 
             # check all outputs are connected
-            for port, connections in enumerate(b.output_wires):
-                if len(connections) == 0:
+            for port, w in enumerate(b._output_wires):
+                if len(w) == 0:
                     print(
                         "  INFORMATION: [{:s}] output {:d} is not connected".format(
                             str(b), port
@@ -448,7 +442,7 @@ class BlockDiagram(BlockDiagramMixin):
         def _DFS(path):
             start = path[0]
             tail = path[-1]
-            for outgoing in tail.output_wires:
+            for outgoing in tail._output_wires:
                 # for every port on this block
                 for w in outgoing:
                     dest = w.end.block
@@ -514,7 +508,7 @@ class BlockDiagram(BlockDiagramMixin):
             if sspath is not None:
                 b.name = sspath + "/" + b.name
 
-            if b.type == "subsystem":
+            if isinstance(b, SubsystemBlock):
                 # deal with a subsystem
                 #  - recurse to import it
                 #  - add its blocks and wires to the set
@@ -526,8 +520,8 @@ class BlockDiagram(BlockDiagramMixin):
 
                 # INPORT/OUTPORT blocks now become simple pass throughs
                 # same number of inputs and outputs
-                b.inport.nin = b.inport.nout
-                b.outport.nout = b.outport.nin
+                b._ss_inport.nin = b._ss_inport.nout
+                b._ss_outport.nout = b._ss_outport.nin
 
                 # modify the wiring, keep the INPORT/OUTPORT blocks but lose
                 # the SUBSYSTEM blocks
@@ -536,10 +530,10 @@ class BlockDiagram(BlockDiagramMixin):
                     # to the subsystem and tweak them
                     if w.start.block == b:
                         # SS output
-                        w.start.block = b.outport
+                        w.start.block = b._ss_outport
                     if w.end.block == b:
                         # SS input
-                        w.end.block = b.inport
+                        w.end.block = b._ss_inport
 
             else:
                 # not a subsystem, just add the block to the list
@@ -611,7 +605,7 @@ class BlockDiagram(BlockDiagramMixin):
                         # blocks called at step 0 have no inputs
                         out = b.output(t, None, b._x)
                     else:
-                        out = b.output(t, b.inputs, b._x)
+                        out = b.output(t, b.inport_values, b._x)
                 except Exception as err:
                     # output method failed, report it
                     print(fg("red"))
@@ -625,7 +619,8 @@ class BlockDiagram(BlockDiagramMixin):
                     traceback.print_exc(file=sys.stderr)
 
                     print()
-                    for i, input in enumerate(b.inputs):
+                    for i in range(b.nin):
+                        input = b.inport_value(i)
                         print(f"Input[{i}] = {input}")
 
                     if b.nstates > 0:
@@ -668,12 +663,12 @@ class BlockDiagram(BlockDiagramMixin):
 
                 #         # TODO send return status no longer needed
                 #         # TODO use common error handler in all cases above
-                b.output_values = out
+                b._output_values = out
 
         if sinks:
             for b in self.blocklist:
                 if isinstance(b, SinkBlock):
-                    b.step(t, b.inputs)
+                    b.step(t, b.inport_values)
 
         # gather the derivative
         YD: np.ndarray[tuple[Any, ...], np.dtype[Any]] | Any = self.deriv(t)
@@ -723,7 +718,7 @@ class BlockDiagram(BlockDiagramMixin):
                 if all(
                     [
                         p._sequence < sequence if p._sequence is not None else False
-                        for p in b._parents
+                        for p in b.parents
                     ]
                 ):
                     group.append(b)
@@ -781,7 +776,7 @@ class BlockDiagram(BlockDiagramMixin):
         # connect them to their parents, except if a transfer block
         for b in self.blocklist:
             if not b.blockclass == "transfer":
-                for p in b._parents:
+                for p in b.parents:
                     file.write('\t"{:s}" -> "{:s}"\n'.format(p.name, b.name))
 
         file.write("}\n")
@@ -809,7 +804,7 @@ class BlockDiagram(BlockDiagramMixin):
         if self.debug_watch is not None:
             t = simstate.t
             for b in self.debug_watch:
-                print_output(b, t, b.inputs, b._x)
+                print_output(b, t, b.inport_values, b._x)
 
         while True:
             try:
@@ -824,11 +819,11 @@ class BlockDiagram(BlockDiagramMixin):
                     if len(cmd) > 1:
                         id = int(cmd[1:])
                         b = self.blocklist[id]
-                        print_output(b, t, b.inputs, b._x)
+                        print_output(b, t, b.inport_values, b._x)
                     else:
                         for b in self.blocklist:
                             if b.nout > 0:
-                                print_output(b, t, b.inputs, b._x)
+                                print_output(b, t, b.inport_values, b._x)
                 elif cmd[0] == "i":
                     print(
                         f"status={integrator.status}, dt={integrator.step_size:.4g}, nfev={integrator.nfev}"
@@ -928,12 +923,11 @@ class BlockDiagram(BlockDiagramMixin):
                 first = False
 
             # print the details
-            if len(b.sources) > 0:
+            if b.nin > 0:
                 # non source block, list all its inputs, one per row
-                inputs = b.inputs
-                for port, source in enumerate(b.sources):  # every port
-                    value = inputs[port]
-                    typ: str = type(value).__name__
+                for port, source in enumerate(b.inports):
+                    value = source.block.outport_value(source.port)
+                    typ = type(value).__name__
                     if isinstance(value, np.ndarray):
                         typ += "{:s}.{:s}".format(str(value.shape), str(value.dtype))
                     src_name = source.block.name
@@ -942,7 +936,13 @@ class BlockDiagram(BlockDiagramMixin):
                     if port == 0:
                         # first row for this block
                         table.row(
-                            name, b.nstates, b.ndstates, b.type, port, src_name, typ
+                            name,
+                            b.nstates,
+                            b.ndstates,
+                            b.type,
+                            port,
+                            src_name,
+                            typ,
                         )
                     else:
                         # subsequent rows
@@ -998,18 +998,18 @@ class BlockDiagram(BlockDiagramMixin):
             Column("type", headalign="^", colalign="<"),
             border="thin",
         )
-        for w in self.wirelist:
-            start: str = "{:d}[{:d}]".format(w.start.block.id, w.start.port)
-            end: str = "{:d}[{:d}]".format(w.end.block.id, w.end.port)
+        for wire in self.wirelist:
+            start: str = "{:d}[{:d}]".format(wire.start.block.id, wire.start.port)
+            end: str = "{:d}[{:d}]".format(wire.end.block.id, wire.end.port)
 
             try:
-                value = w.end.block.inputs[w.end.port]
+                value = wire.end.block.inport_value(wire.end.port)
                 typ: str = type(value).__name__
                 if isinstance(value, np.ndarray):
                     typ += "{:s}.{:s}".format(str(value.shape), str(value.dtype))
             except:
                 typ = "??"
-            table.row(w.id, start, end, w.fullname, typ)
+            table.row(wire.id, start, end, wire.fullname, typ)
         table.print(**kwargs)
 
         if len(self.clocklist) > 0:
@@ -1025,7 +1025,7 @@ class BlockDiagram(BlockDiagramMixin):
             )
             for b in self.blocklist:
                 if b.blockclass == "clocked":
-                    c = b.clock
+                    c = b._clock
                     table.row(b.id, str(b), c.name, c.T, c.offset)
             table.print(**kwargs)
 
@@ -1071,10 +1071,10 @@ class BlockDiagram(BlockDiagramMixin):
         # print all block inputs
         print()
         for i in range(block.nin):
-            input = block.inputs[i]
+            input = block.inport_value(i)
             print(
                 f"input {i} from"
-                f" {block.sources[i].block.name} [{input.__class__.__name__}]"
+                f" {block.parents[i].name} [{input.__class__.__name__}]"
             )
             print("  ", input)
 
@@ -1140,7 +1140,7 @@ class BlockDiagram(BlockDiagramMixin):
         for b in self.blocklist:
             try:
                 if isinstance(b, SinkBlock):
-                    b.step(t, b.inputs)
+                    b.step(t, b.inport_values)
             except:
                 self._error_handler("step", b)
 
@@ -1157,7 +1157,7 @@ class BlockDiagram(BlockDiagramMixin):
         for b in self.blocklist:
             if b.blockclass == "transfer":
                 try:
-                    yd = b.deriv(t, b.inputs, b._x)
+                    yd = b.deriv(t, b.inport_values, b._x)
                     if not isinstance(yd, np.ndarray):
                         raise AssertionError(f"deriv: block {b} did not return ndarray")
                     if yd.ndim != 1 or yd.shape[0] != b.nstates:
@@ -1345,8 +1345,8 @@ class BlockDiagram(BlockDiagramMixin):
     def blockvalues(self, t=None, simstate=None) -> None:
         for b in self.blocklist:
             print("Block {:s}:".format(b.name))
-            print("  inputs:  ", b.inputs)
-            print("  outputs: ", b.output(t, b.inputs, b._x))
+            print("  inputs:  ", b.inport_values)
+            print("  outputs: ", b.output(t, b.inport_values, b._x))
 
 
 if __name__ == "__main__":  # pragma: no cover

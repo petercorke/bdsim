@@ -31,6 +31,8 @@ Created on Thu May 21 06:39:29 2020
 
 @author: Peter Corke
 """
+from __future__ import annotations
+
 import numpy as np
 import math
 
@@ -38,6 +40,7 @@ import math
 import unittest
 
 from bdsim.blocks.sinks import *
+from typing import Any
 
 
 class SinkBlockTest(unittest.TestCase):
@@ -57,6 +60,8 @@ class SinkBlockTest(unittest.TestCase):
 
         # test print of object
         class testObject:
+            value: Any
+
             def strline(self):
                 return f"testObject={self.value:d}"
 

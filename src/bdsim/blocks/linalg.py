@@ -69,7 +69,6 @@ class Inverse(FunctionBlock):
         :type blockargs: dict
         """
         super().__init__(**blockargs)
-        self.type = "inverse"
 
         self.pinv: bool = pinv
 
@@ -148,7 +147,6 @@ class Transpose(FunctionBlock):
         :type blockargs: dict
         """
         super().__init__(**blockargs)
-        self.type = "transpose"
 
     def output(self, t, inputs, x):
         mat = inputs[0]
@@ -208,7 +206,6 @@ class Norm(FunctionBlock):
         :type blockargs: dict
         """
         super().__init__(**blockargs)
-        self.type = "norm"
         self.args = dict(ord=ord, axis=axis)
 
     def output(self, t, inputs, x):
@@ -262,7 +259,6 @@ class Flatten(FunctionBlock):
         :type blockargs: dict
         """
         super().__init__(**blockargs)
-        self.type = "flatten"
         self.order: str = order
 
     def output(self, t, inputs, x):
@@ -349,7 +345,6 @@ class Slice2(FunctionBlock):
         :type blockargs: dict
         """
         super().__init__(**blockargs)
-        self.type = "slice2"
 
         if rows is None:
             self.rows: slice[Any, Any, Any] = slice(None, None, None)
@@ -446,7 +441,6 @@ class Slice1(FunctionBlock):
         :type blockargs: dict
         """
         super().__init__(**blockargs)
-        self.type = "slice1"
 
         if index is None:
             self.index: slice[Any, Any, Any] = slice(None, None, None)
@@ -505,7 +499,6 @@ class Det(FunctionBlock):
         :type blockargs: dict
         """
         super().__init__(**blockargs)
-        self.type = "det"
 
     def output(self, t, inputs, x) -> list[Any]:
         mat = inputs[0]
@@ -552,7 +545,6 @@ class Cond(FunctionBlock):
         :type blockargs: dict
         """
         super().__init__(**blockargs)
-        self.type = "cond"
 
     def output(self, t, inputs, x) -> list[Any]:
         mat = inputs[0]

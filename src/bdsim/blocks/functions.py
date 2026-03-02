@@ -457,7 +457,7 @@ class Clip(FunctionBlock):
     nout = 1
 
     def __init__(
-        self, min: Vector1D = -math.inf, max: Vector1D = math.inf, **blockargs
+        self, min: Vector1D = -math.inf, max: ArrayLike = math.inf, **blockargs
     ) -> None:
         """
         :param min: Minimum value, defaults to -math.inf

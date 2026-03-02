@@ -187,7 +187,6 @@ class Scope(GraphicsBlock):
                 assert nplots == len(self.styles), "need one style per plot"
         else:
             self.styles = None
-
         if labels is not None:
             self.labels = listify(labels)
             if nplots is None:
@@ -243,7 +242,7 @@ class Scope(GraphicsBlock):
         # get labels if not provided
         if self.labels is None:
             if self.vector is None:
-                self.labels = [self.sourcename(i) for i in range(self.nin)]
+                self.labels = [self.source_name(i) for i in range(self.nin)]
             elif isinstance(self.vector, int):
                 self.labels = [str(i) for i in range(self.vector)]
                 if self.styles is None:
@@ -426,7 +425,8 @@ class ScopeXY(GraphicsBlock):
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        super().__init__(**blockargs)
+        super().__init__(inames=("x", "y"), **blockargs)
+
         self.xdata = []
         self.ydata = []
         if init is not None:
@@ -439,7 +439,6 @@ class ScopeXY(GraphicsBlock):
         self.scale = scale
         self.aspect = aspect
         self.labels = labels
-        self.inport_names(("x", "y"))
 
     def start(self, simstate):
         super().start(simstate)

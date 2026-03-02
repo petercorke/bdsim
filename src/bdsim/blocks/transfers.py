@@ -85,7 +85,7 @@ class Integrator(TransferBlock):
 
     def __init__(
         self,
-        x0: Optional[Vector1D] = None,
+        x0: Vector1D = 0,
         gain: float = 1.0,
         min: Optional[Vector1D] = None,
         max: Optional[Vector1D] = None,
@@ -106,31 +106,27 @@ class Integrator(TransferBlock):
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        super().__init__(**blockargs)
 
-        if x0 is None:
-            x0 = np.zeros((self.nstates,))
-        elif isinstance(x0, np.ndarray):
+        if isinstance(x0, np.ndarray):
             if x0.ndim > 1:
                 raise ValueError("state must be a 1D vector")
         else:
             x0 = smb.getvector(x0)
 
-        self.nstates = x0.shape[0]
+        nstates = x0.shape[0]
+
+        super().__init__(nstates=nstates, **blockargs)
 
         if min is not None:
-            min = smb.getvector(min, self.nstates)
+            min = smb.getvector(min, nstates)
         if max is not None:
-            max = smb.getvector(max, self.nstates)
+            max = smb.getvector(max, nstates)
 
         self._x0 = x0
         self.min = min
         self.max = max
         self.gain: float = gain
 
-        self._x0 = x0
-        self.min = min
-        self.max = max
         self.enable = enable
         if enable is not None and not callable(enable):
             raise ValueError("enable must be callable")
@@ -145,6 +141,8 @@ class Integrator(TransferBlock):
             # if enable function returns False then integrator output is jammed at zero
             self._x: np.ndarray[tuple[int], np.dtype[np.float64]] = np.zeros(x.shape)
             return np.zeros(x.shape)
+
+        # stop integration if state is outside limits
         if self.min is not None:
             xd[x < self.min] = 0
         if self.max is not None:
@@ -196,7 +194,6 @@ class PoseIntegrator(TransferBlock):
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        super().__init__(**blockargs)
 
         if x0 is None:
             _x0 = np.zeros((6,))
@@ -205,7 +202,9 @@ class PoseIntegrator(TransferBlock):
         elif isinstance(x0, Twist3):
             _x0 = x0.A
 
-        self.nstates = len(_x0)
+        nstates = len(_x0)
+
+        super().__init__(nstates=nstates, **blockargs)
 
         self._x0 = _x0
 
@@ -304,16 +303,14 @@ class LTI_SS(TransferBlock):
             nout = C.shape[0]
             assert C.shape[1] == n, "C must have same number of columns as A"
 
-        super().__init__(**blockargs)
+        super().__init__(nstates=n, **blockargs)
 
         self.A = A
         self.B = B
         self.C = C
 
-        self.nstates = A.shape[0]
-
         if x0 is None:
-            self._x0 = np.zeros((self.nstates,))
+            self._x0 = np.zeros((n,))
         else:
             self._x0 = x0
 
@@ -451,7 +448,7 @@ class LTI_SISO(LTI_SS):
 
         super().__init__(A=A, B=B, C=C, x0=x0, **blockargs)
 
-        if self.verbose:
+        if blockargs.get("verbose", False):
             print("A=", A)
             print("B=", B)
             print("C=", C)
@@ -532,8 +529,7 @@ class Deriv(SubsystemBlock):
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        super().__init__(**blockargs)
-        self.type = "subsystem"
+        super().__init__(name="DERIV", **blockargs)
 
         assert self.bd is not None, "Deriv block must be created within a block diagram"
         bd = self.bd.runtime.blockdiagram()
@@ -556,8 +552,6 @@ class Deriv(SubsystemBlock):
         self.inport = inp
         self.outport = outp
         self.subsystem = bd
-
-        self.ssname = "derivative"
 
 
 # ------------------------------------------------------------------------ #
@@ -669,10 +663,8 @@ class PID(SubsystemBlock):
         :type blockargs: dict
         """
         super().__init__(**blockargs)
-        self.type = "subsystem"
 
-        assert self.bd is not None, "PID block must be created within a block diagram"
-        subsystem = self.bd.runtime.blockdiagram()
+        subsystem = self.bd.runtime.blockdiagram(name="PID")
 
         bd = blockargs["bd"]
         blockargs.pop("bd")
@@ -737,8 +729,6 @@ class PID(SubsystemBlock):
         self.inport = inp
         self.outport = outp
         self.subsystem = subsystem
-
-        self.ssname = "PID"
 
 
 if __name__ == "__main__":
