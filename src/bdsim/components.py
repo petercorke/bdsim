@@ -1181,15 +1181,6 @@ class Block(ABC, Port):
         self._bd: Optional[BlockDiagram] = bd  # owning block diagram
         self.id = None  # index in block diagram's blocklist
 
-        # initialize lists of input and output ports
-        #  these are set when blocks are connected, used to build inter-block references at compile time
-        self._output_wires = [[]] * self.nout
-        self._input_wires = [None] * self.nin
-
-        # used to build execution plan at compile time, set by compile() method
-        self._sequence = None
-        self._parents = [None] * self.nin
-
         # deprecated options for graphical display
         self._pos = pos
         self._shape = "block"  # for box
@@ -1287,7 +1278,7 @@ class Block(ABC, Port):
     def nout(self, nout) -> None:
         self._nout = nout
         # update output wires and port names
-        self._output_wires = [[]] * self.nout
+        # self._output_wires = [[]] * self.nout
         if hasattr(self, "_outport_names") and self._outport_names is not None:
             assert (
                 len(self._outport_names) == self.nout
@@ -1837,6 +1828,24 @@ class Block(ABC, Port):
 
     # ---------------------------------------------------------------------- #
     # methods used at compile time to build inter-block references
+
+    def compile(self) -> None:
+        """
+        Compile the block for execution.
+
+        This method is called at compile time to initialize the attributes required for
+        compilation.
+
+        :seealso: :meth:`BlockDiagram.compile`
+        """
+        # initialize lists of input and output ports
+        #  these are set when blocks are connected, used to build inter-block references at compile time
+        self._output_wires = [[]] * self.nout
+        self._input_wires = [None] * self.nin
+
+        # used to build execution plan at compile time, set by compile() method
+        self._sequence = None
+        self._parents = [None] * self.nin
 
     def add_output_wire(self, w) -> None:
         port = w.start.port

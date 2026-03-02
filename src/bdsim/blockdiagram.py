@@ -354,6 +354,10 @@ class BlockDiagram(BlockDiagramMixin):
             self, None, verbose=verbose
         )
 
+        # get all the blocks ready for compilation
+        for b in self.blocklist:
+            b.compile()
+
         # check that wires all point to valid blocks
         for w in self.wirelist:
             if w.start.block not in self.blocklist:
