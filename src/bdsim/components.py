@@ -300,7 +300,15 @@ class Wire:
 # ------------------------------------------------------------------------- #
 
 
-class Plug:
+class Port:
+    """
+    A common base class for blocks and plugs, to allow operator overloading for implicit block creation.
+    """
+
+    pass
+
+
+class Plug(Port):
     """
     Create a plug.
 
@@ -933,7 +941,7 @@ class Clock:
 # ------------------------------------------------------------------------- #
 
 
-class Block(ABC):
+class Block(ABC, Port):
     """_summary_
 
     :param ABC: _description_
@@ -1707,7 +1715,7 @@ class Block(ABC):
 
     def __getitem__(self, port) -> Plug:
         """
-        Convert a block slice reference to a Plug.
+        Convert a RHS block slice reference to a Plug.
 
         :param port: Port number
         :type port: int
@@ -1751,9 +1759,9 @@ class Block(ABC):
         # print('connecting', src, self, port)
         return self.bd.connect(src, self[port])
 
-    def __getattribute__(self, name) -> Plug:
+    def __getattr__(self, name) -> Plug:
         """
-        Convert a LHS block name reference to a Plug.
+        Convert a RHS block name reference to a Plug.
 
         :param name: Port name
         :type port: str
@@ -1775,20 +1783,21 @@ class Block(ABC):
             create a Plug if the name is in the list of port names.
         """
 
-        # b[port] = src
-        # src --> b[port]
-        # gets called for regular attribute settings, as well as for wiring
+        # come here only if the attribute is not found in the normal way, so we know it's not a regular attribute of the block
 
-        if name in super().__getattribute__("_portnames"):
-            # we're doing a port access
-            try:
-                port = super().__getattribute__("_inport_names").index(name)
-            except ValueError:
-                port = super().__getattribute__("_outport_names").index(name)
+        # we have to use self.__dict__.get() to avoid infinite recursion, since the port names are stored in attributes of the block
+        inport_names = self.__dict__.get("_inport_names")
+        outport_names = self.__dict__.get("_outport_names")
+
+        if inport_names is not None and name in inport_names:
+            port = inport_names.index(name)
             return Plug(self, port)
-        else:
-            # regular case, get attribute
-            return super().__getattribute__(name)
+        if outport_names is not None and name in outport_names:
+            port = outport_names.index(name)
+            return Plug(self, port)
+        raise AttributeError(
+            f"'{type(self).__name__}' object has no attribute '{name}'"
+        )
 
     def __setattr__(self, name, value) -> None:
         """

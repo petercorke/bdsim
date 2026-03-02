@@ -121,6 +121,24 @@ class BlockDiagram(BlockDiagramMixin):
                 setattr(result, k, deepcopy(v, memo))
         return result
 
+    def __str__(self) -> str:
+        return "BlockDiagram: {:s}".format(self.name)
+
+    def __repr__(self) -> str:
+        return str(self) + " with {:d} blocks and {:d} wires".format(
+            len(self.blocklist), len(self.wirelist)
+        )
+        # for block in self.blocklist:
+        #     s += str(block) + "\n"
+        # s += "\n"
+        # for wire in self.wirelist:
+        #     s += str(wire) + "\n"
+        # return s.lstrip("\n")
+
+    def ls(self) -> None:
+        for k, v in self.blockdict.items():
+            print("{:12s}: ".format(k), ", ".join(v))
+
     @property
     def issubsystem(self) -> bool:
         return self._issubsystem
@@ -152,30 +170,25 @@ class BlockDiagram(BlockDiagramMixin):
         # when add_output_wire and add_input_wire are called on the blocks
         return self.wirelist.append(wire)
 
-    def __str__(self) -> str:
-        return "BlockDiagram: {:s}".format(self.name)
+    def connect(self, start: Port, *ends: Port, name=None) -> None:
+        """Connect blocks
 
-    def __repr__(self) -> str:
-        return str(self) + " with {:d} blocks and {:d} wires".format(
-            len(self.blocklist), len(self.wirelist)
-        )
-        # for block in self.blocklist:
-        #     s += str(block) + "\n"
-        # s += "\n"
-        # for wire in self.wirelist:
-        #     s += str(wire) + "\n"
-        # return s.lstrip("\n")
+        :param start: The output port that the wire starts from.
+        :type start: Block | Plug
+        :param ends: The input port(s) that the wire ends at.  Can be one or more.
+        :type ends: Block | Plug
+        :param name: The name of the wire, defaults to None
+        :type name: _type_, optional
 
-    def ls(self) -> None:
-        for k, v in self.blockdict.items():
-            print("{:12s}: ".format(k), ", ".join(v))
+        Connect blocks together.  The start block can be connected to one or more end
+        blocks.
 
-    def connect(self, start: Block | Plug, *ends: Block | Plug, name=None) -> None:
-        """
-        TODO:
-            s.connect(out[3], in1[2], in2[3])  # one to many
-            block[1] = SigGen()  # use setitem
-            block[1] = SumJunction(block2[3], block3[4]) * Gain(value=2)
+        Blocks are added to the block diagram's ``blocklist`` if they are not already
+        part of it.
+
+        The wires are added to the diagram's ``wirelist``, but the connections are not
+        actually made until compile time.  The ``wirelist`` is a list of things that
+        will be connected later.
         """
 
         # start.type = 'start'
