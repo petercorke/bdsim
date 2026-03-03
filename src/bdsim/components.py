@@ -34,7 +34,10 @@ _latex_remove: dict[int, str] = str.maketrans(
 
 
 def _fixname(s):
-    return s.translate(_latex_remove)
+    if isinstance(s, (tuple, list)):
+        return [_fixname(x) for x in s]
+    else:
+        return s.translate(_latex_remove)
 
 
 class BDStruct:
@@ -1005,7 +1008,6 @@ class Block(ABC, Port):
 
     _inport_names: Optional[list[str]]
     _outport_names: Optional[list[str]]
-    _portnames: list[str] = []
     _state_names: Optional[list[str]]
 
     _clocked: bool = False
@@ -1056,9 +1058,9 @@ class Block(ABC, Port):
         :param **kwargs: keyword args passed to subclass definition
         :type **kwargs: dict
 
-        This method is called when a new subclass of Block is defined.  It can be used
-        to set class variables such as ``nin``, ``nout``, ``inlabels``, ``outlabels``,
-        etc.  For example::
+        This method is called when a new subclass of Block is defined, not when it is
+        instantiated.  It can be used to set class variables such as ``nin``, ``nout``,
+        ``inlabels``, ``outlabels``, etc.  For example::
 
             class MyBlock(Block):
                 nin = 1
@@ -1068,6 +1070,7 @@ class Block(ABC, Port):
 
         """
         super().__init_subclass__(**kwargs)
+        # print("*** in Block.__init_subclass__ for class", cls.__name__)
         if "nin" in cls.__dict__ and not isinstance(cls.__dict__["nin"], property):
             # Capture the default value defined in the subclass
             cls._nin = cls.nin
@@ -1084,7 +1087,7 @@ class Block(ABC, Port):
             cls.__dict__["inlabels"], property
         ):
             # Capture the default value defined in the subclass
-            cls._inlabels = cls.inlabels
+            cls._inport_names = cls.inlabels
             # Delete it so the Base property is visible again
             del cls.inlabels
 
@@ -1092,7 +1095,7 @@ class Block(ABC, Port):
             cls.__dict__["outlabels"], property
         ):
             # Capture the default value defined in the subclass
-            cls._outlabels = cls.outlabels
+            cls._outport_names = cls.outlabels
             # Delete it so the Base property is visible again
             del cls.outlabels
 
@@ -1201,30 +1204,46 @@ class Block(ABC, Port):
         #  - default to None.
         #
         # _portnames is the list of all port names, used for access by name in __setattr__ and __getattr__
-        self._portnames = []
-        if inames is not None:
-            self._inport_names = inames
-        elif hasattr(self, "inlabels"):
-            self._inport_names = self.inlabels
-        else:
-            self._inport_names = None
-        if self._inport_names is not None:
-            assert (
-                len(self._inport_names) == self.nin
-            ), "number of input port names must match number of inputs"
-            self._portnames = self._inport_names
+        def checknames(names):
+            for name in names:
+                if name in self.__dict__:
+                    raise ValueError(f"port name {name} conflicts with block attribute")
 
+        if inames is None:
+            inames = getattr(self, "_inport_names", None)
+        if inames is not None:
+            if hasattr(self, "_nin") and self._nin is not None:
+                assert (
+                    len(inames) == self.nin
+                ), "number of input port names must match number of inputs"
+            else:
+                self.nin = len(inames)
+            inames = _fixname(inames)
+            assert len(set(inames)) == len(inames), "input port names must be unique"
+            checknames(inames)
+        self._inport_names = inames
+
+        if onames is None:
+            onames = getattr(self, "_outport_names", None)
         if onames is not None:
-            self._outport_names = onames
-        elif hasattr(self, "outlabels"):
-            self._outport_names = self.outlabels
-        else:
-            self._outport_names = None
-        if self._outport_names is not None:
-            assert (
-                len(self._outport_names) == self.nout
-            ), "number of output port names must match number of outputs"
-            self._portnames += self._outport_names
+            if hasattr(self, "_nout") and self._nout is not None:
+                assert (
+                    len(onames) == self.nout
+                ), "number of output port names must match number of outputs"
+            else:
+                self.nout = len(onames)
+            onames = _fixname(onames)
+            assert len(set(onames)) == len(onames), "output port names must be unique"
+            checknames(onames)
+        self._outport_names = onames
+
+        if snames is not None:
+            if nstates is not None:
+                assert (
+                    len(snames) == nstates
+                ), "number of state names must match number of states"
+            else:
+                nstates = len(snames)
         self._state_names = snames
 
         # block inputs can be specified in the constructor for convenience, and are connected here.
@@ -1260,15 +1279,11 @@ class Block(ABC, Port):
     @nin.setter
     def nin(self, nin) -> None:
         self._nin = nin
-        # update input wires and port names
-        self._input_wires = [None] * self.nin
-        self._parents = [None] * self.nin
 
         if hasattr(self, "_inport_names") and self._inport_names is not None:
             assert (
                 len(self._inport_names) == self.nin
             ), "number of input port names must match number of inputs"
-            self._portnames = (self._inport_names or []) + (self._outport_names or [])
 
     @property
     def nout(self) -> int:
@@ -1283,7 +1298,6 @@ class Block(ABC, Port):
             assert (
                 len(self._outport_names) == self.nout
             ), "number of output port names must match number of outputs"
-            self._portnames = (self._inport_names or []) + (self._outport_names or [])
 
     @property
     def name(self) -> str | None:
@@ -1366,10 +1380,6 @@ class Block(ABC, Port):
     @property
     def initd(self) -> bool:
         return self._initd
-
-    @property
-    def portnames(self) -> list[str]:
-        return self._portnames
 
     @property
     def bd(self) -> BlockDiagram:
@@ -1756,14 +1766,18 @@ class Block(ABC, Port):
 
         :param name: Port name
         :type port: str
-        :return: Plug for specified block port name
-        :rtype: Plug
+        :return: Block or plug for specified block port name
+        :rtype: ``Port``
 
         Used to create a wired connection by assignment, for example::
 
-            c = bd.CONSTANT(1, inames=['u'])
+            c = bd.CONSTANT(1, onames=['v'])
 
-            y = c.u
+            y = c.v
+
+                +---+               +---+
+                | c | -v ---------> | y |
+                +---+               +---+
 
         .. note::  this overloaded method handles all instances of ``setattr`` and
               implements normal functionality as well, only creating a wire
@@ -1774,15 +1788,15 @@ class Block(ABC, Port):
             create a Plug if the name is in the list of port names.
         """
 
-        # come here only if the attribute is not found in the normal way, so we know it's not a regular attribute of the block
+        # come here only if the attribute is not found in the normal way, so we know
+        # it's not a regular attribute of the block
 
-        # we have to use self.__dict__.get() to avoid infinite recursion, since the port names are stored in attributes of the block
-        inport_names = self.__dict__.get("_inport_names")
+        # we have to use self.__dict__.get() to avoid infinite recursion, since the port
+        # names are stored in attributes of the block
+
+        # on the RHS the ports must be output ports
         outport_names = self.__dict__.get("_outport_names")
 
-        if inport_names is not None and name in inport_names:
-            port = inport_names.index(name)
-            return Plug(self, port)
         if outport_names is not None and name in outport_names:
             port = outport_names.index(name)
             return Plug(self, port)
@@ -1797,7 +1811,7 @@ class Block(ABC, Port):
         :param name: Port name
         :type port: str
         :param value: the RHS
-        :type value: Block or Plug
+        :type value: ``Port``
 
         Used to create a wired connection by assignment, for example::
 
@@ -1807,6 +1821,10 @@ class Block(ABC, Port):
 
         Ths method is invoked to create a wire from ``x`` to port 'u' of
         the constant block ``c``.
+
+                +---+              +---+
+                | x | --------> u- | c |
+                +---+              +---+
 
         Notes:
 
@@ -1819,9 +1837,13 @@ class Block(ABC, Port):
         # src --> b[port]
         # gets called for regular attribute settings, as well as for wiring
 
-        if name in self._portnames:
+        # on the LHS the ports must be input ports
+
+        inport_names = self.__dict__.get("_inport_names")
+        if inport_names is not None and name in (inport_names or []):
             # we're doing wiring
-            self.bd.connect(value, getattr(self, name))
+            port = inport_names.index(name)
+            self.bd.connect(value, Plug(value, port=0))
         else:
             # regular case, add attribute
             super().__setattr__(name, value)

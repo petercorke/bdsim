@@ -720,6 +720,124 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(dst.inport_values, [1.5])
 
 
+class LabelTest(unittest.TestCase):
+
+    @unittest.skip
+    def test_label1(self):
+        bd = bdsim.BDSim(animation=False).blockdiagram()
+        const = bd.CONSTANT(2, onames=["c"])
+        func = bd.FUNCTION(lambda x: x**2, inames=["fx"], onames=["fy"])
+        bd.connect(const.c, func.fx)
+
+    @unittest.skip
+    def test_label2(self):
+
+        # provide labels and number of ports as class variables, and check that they are captured correctly by __init_subclass__
+
+        class MyBlock(bdsim.Block):
+            inlabels = ("in1", "in2")
+            outlabels = ("out1", "out2")
+            nin = 2
+            nout = 2
+
+            def __init__(self, **kwargs):
+                super().__init__(**kwargs)
+
+        mb = MyBlock()
+        self.assertEqual(mb._inport_names, ("in1", "in2"))
+        self.assertEqual(mb._outport_names, ("out1", "out2"))
+
+    @unittest.skip
+    def test_label3(self):
+        # provide labels as class variables, number of ports passed to constructor
+
+        class MyBlock(bdsim.Block):
+            inlabels = ("in1", "in2")
+            outlabels = ("out1", "out2")
+
+            def __init__(self, **kwargs):
+                super().__init__(**kwargs)
+
+        mb = MyBlock(nin=2, nout=2)
+        self.assertEqual(mb._inport_names, ("in1", "in2"))
+        self.assertEqual(mb._outport_names, ("out1", "out2"))
+
+    @unittest.skip
+    def test_label4(self):
+        # provide labels and infer number of ports from labels
+
+        class MyBlock(bdsim.Block):
+            inlabels = ("in1", "in2")
+            outlabels = ("out1", "out2")
+
+            def __init__(self, **kwargs):
+                super().__init__(**kwargs)
+
+        mb = MyBlock(nin=2, nout=2)
+        self.assertEqual(mb._inport_names, ("in1", "in2"))
+        self.assertEqual(mb._outport_names, ("out1", "out2"))
+
+    @unittest.skip
+    def test_label4b(self):
+        # provide labels and infer number of ports from labels
+
+        class MyBlock(bdsim.Block):
+            inlabels = ("in1", "in2")
+            outlabels = ("out1", "out2")
+
+            def __init__(self, **kwargs):
+                super().__init__(**kwargs)
+
+        with self.assertRaises(AssertionError):
+            mb = MyBlock(nin=1, nout=2)
+
+        with self.assertRaises(AssertionError):
+            mb = MyBlock(nin=2, nout=3)
+
+        with self.assertRaises(AssertionError):
+            mb = MyBlock()
+
+    def test_label4c(self):
+        # provide labels and infer number of ports from labels
+
+        mb = Gain(inames=["in1", "in2", "in3"], onames=["out1", "out2"])
+        self.assertEqual(mb._inport_names, ("in1", "in2", "in3"))
+        self.assertEqual(mb._outport_names, ("out1", "out2"))
+        self.assertEqual(mb.nin, 3)
+        self.assertEqual(mb.nout, 2)
+
+        # check we pickup non unique labels
+        with self.assertRaises(AssertionError):
+            mb = Gain(inames=["in1", "in2", "in1"], onames=["out1", "out2"])
+
+        # check we pickup on block attributes
+        with self.assertRaises(AssertionError):
+            mb = Gain(inames=["in1", "in2", "nin"], onames=["out1", "out2"])
+
+    def test_label5(self):
+        # provide labels and infer number of ports from labels
+
+        class MyBlock(bdsim.Block):
+            inlabels = ("alpha", "𝛼", r"$\Alpha$")
+            outlabels = ("beta", "β", r"$\Beta$")
+
+            def __init__(self, **kwargs):
+                super().__init__(**kwargs)
+
+        bd = bdsim.BDSim(animation=False).blockdiagram()
+        mb = MyBlock(bd=bd)
+
+        self.assertListEqual(mb._inport_names, ["alpha", "𝛼", "Alpha"])
+        self.assertListEqual(mb._outport_names, ["beta", "β", "Beta"])
+
+        c = bd.CONSTANT(1)
+        mb.alpha = c
+        mb.𝛼 = c
+        mb.Alpha = c
+
+        self.assertEqual(len(bd.wirelist), 3)
+
+
 class ImportTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -737,7 +855,7 @@ class ImportTest(unittest.TestCase):
         ss.connect(f, outp)
 
         # create main system
-        bd = self.sim.blockdiagram()
+        bd = bdsim.BDSim(animation=False).blockdiagram()
 
         const = bd.CONSTANT(1)
         scope = bd.SCOPE()
