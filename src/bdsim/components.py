@@ -7,6 +7,8 @@ from __future__ import annotations
 from io import BufferedWriter
 import types
 import math
+import warnings
+import unicodedata
 import numpy as np
 from typing import TYPE_CHECKING, Optional, Literal, Union, Any, Self
 
@@ -37,7 +39,27 @@ def _fixname(s):
     if isinstance(s, (tuple, list)):
         return [_fixname(x) for x in s]
     else:
-        return s.translate(_latex_remove)
+        s = s.translate(_latex_remove)
+        # PEP 3131: Python normalizes all identifiers to NFKC at parse time.
+        # Port names used as attributes must round-trip through that normalization
+        # or lookups via __setattr__/__getattr__ will silently fail.
+        normalized = unicodedata.normalize("NFKC", s)
+        if normalized != s:
+            warnings.warn(
+                f"Port name {s!r} contains Unicode compatibility characters "
+                f"(e.g. U+{ord(next(c for c in s if unicodedata.normalize('NFKC', c) != c)):04X}); "
+                f"Python identifiers are NFKC-normalized, so attribute access will use {normalized!r} instead.",
+                UnicodeWarning,
+                stacklevel=3,
+            )
+        # if not normalized.isidentifier():
+        #     warnings.warn(
+        #         f"Port name {normalized!r} is not a valid Python identifier "
+        #         f"and cannot be used for attribute-style port access.",
+        #         UserWarning,
+        #         stacklevel=3,
+        #     )
+        return normalized
 
 
 class BDStruct:
@@ -1325,9 +1347,11 @@ class Block(ABC, Port):
 
         """
         print("block: " + type(self).__name__)
-        for k, v in self.__dict__.items():
-            if k != "sim":
-                print("  {:11s}{:s}".format(k + ":", str(v)))
+        items = sorted(self.__dict__.items())
+        for k, v in [i for i in items if i[0].startswith("_")] + [
+            i for i in items if not i[0].startswith("_")
+        ]:
+            print("  {:11s}{:s}".format(k + ":", str(v)))
 
     def __str__(self):
         if hasattr(self, "name") and self.name is not None:

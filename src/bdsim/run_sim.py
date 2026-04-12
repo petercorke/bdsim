@@ -1638,7 +1638,7 @@ class Options(OptionsBase):
             )
             parser.add_argument(
                 "--set",
-                "-s",
+                "-s",  # NOTE: clashes with `unittest discover -s <startdir>`; use pytest or --start-directory instead
                 dest="setparam",
                 action="append",
                 type=str,

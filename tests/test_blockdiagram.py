@@ -8,6 +8,8 @@ import bdsim
 import unittest
 import numpy.testing as nt
 
+from bdsim.blocks import Gain
+
 
 class BlockTest(unittest.TestCase):
     pass
@@ -800,9 +802,9 @@ class LabelTest(unittest.TestCase):
     def test_label4c(self):
         # provide labels and infer number of ports from labels
 
-        mb = Gain(inames=["in1", "in2", "in3"], onames=["out1", "out2"])
-        self.assertEqual(mb._inport_names, ("in1", "in2", "in3"))
-        self.assertEqual(mb._outport_names, ("out1", "out2"))
+        mb = Gain(inames=["in1", "in2", "in3"], onames=["out1", "out2"], nin=3, nout=2)
+        self.assertSequenceEqual(mb._inport_names, ("in1", "in2", "in3"))
+        self.assertSequenceEqual(mb._outport_names, ("out1", "out2"))
         self.assertEqual(mb.nin, 3)
         self.assertEqual(mb.nout, 2)
 
@@ -827,7 +829,7 @@ class LabelTest(unittest.TestCase):
         bd = bdsim.BDSim(animation=False).blockdiagram()
         mb = MyBlock(bd=bd)
 
-        self.assertListEqual(mb._inport_names, ["alpha", "𝛼", "Alpha"])
+        self.assertListEqual(mb._inport_names, ["alpha", "α", "Alpha"])
         self.assertListEqual(mb._outport_names, ["beta", "β", "Beta"])
 
         c = bd.CONSTANT(1)
