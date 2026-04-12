@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import spatialmath.base as smb
 
 from bdsim.components import SinkBlock
-from bdsim.graphics import GraphicsBlock
+from bdsim.block_types import GraphicsBlock
 from typing import Union, Literal, Optional
 
 # ------------------------------------------------------------------------ #

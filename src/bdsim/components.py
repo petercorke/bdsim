@@ -1011,8 +1011,8 @@ class Block(ABC, Port):
     ndstates: int  # number of discrete-time state variables
 
     # block class, eg. 'sink', 'source', 'function', 'transfer', 'subsystem', 'clocked', etc.
-    blockclass: str = "?"
-    type: str = "?"
+    _blockclass: str = "?"
+    _type: str = "?"
 
     _name: Optional[str]
     _name_tex: Optional[str]
@@ -1186,16 +1186,17 @@ class Block(ABC, Port):
         self.name = name
 
         # set the block type and block class
-        if type is None:
-            self.type: str = self.__class__.__name__.lower()
+        self._type = type or self.__class__.__name__.lower()
 
         if blockclass is None:
             for cls in self.__class__.__bases__:
                 if cls.__name__.endswith("Block"):
-                    self.blockclass = cls.__name__[:-5].lower()
+                    self._blockclass = cls.__name__[:-5].lower()
                     break
+        else:
+            self._blockclass = blockclass
         assert (
-            self.blockclass is not None
+            self._blockclass is not None
         ), f"blockclass must be specified for block {self.name}"
 
         # key simulation variables
@@ -1204,7 +1205,7 @@ class Block(ABC, Port):
 
         # set by add_block() when block is added to a block diagram
         self._bd: Optional[BlockDiagram] = bd  # owning block diagram
-        self.id = None  # index in block diagram's blocklist
+        self._id = None  # index in block diagram's blocklist
 
         # deprecated options for graphical display
         self._pos = pos
@@ -1279,8 +1280,8 @@ class Block(ABC, Port):
             for i, input in enumerate(inputs):
                 self.bd.connect(input, Plug(self, port=i))
 
-        self.nstates = nstates
-        self.ndstates = ndstates
+        self._nstates = nstates
+        self._ndstates = ndstates
 
     def add_param(self, param, handler=None) -> None:
         if handler == None:
@@ -1320,6 +1321,46 @@ class Block(ABC, Port):
             assert (
                 len(self._outport_names) == self.nout
             ), "number of output port names must match number of outputs"
+
+    @property
+    def id(self) -> Optional[int]:
+        return self._id
+
+    @id.setter
+    def id(self, v) -> None:
+        self._id = v
+
+    @property
+    def type(self) -> str:
+        return self._type
+
+    @type.setter
+    def type(self, v: str) -> None:
+        self._type = v
+
+    @property
+    def nstates(self) -> int:
+        return self._nstates
+
+    @nstates.setter
+    def nstates(self, v: int) -> None:
+        self._nstates = v
+
+    @property
+    def ndstates(self) -> int:
+        return self._ndstates
+
+    @ndstates.setter
+    def ndstates(self, v: int) -> None:
+        self._ndstates = v
+
+    @property
+    def blockclass(self) -> str:
+        return self._blockclass
+
+    @blockclass.setter
+    def blockclass(self, v: str) -> None:
+        self._blockclass = v
 
     @property
     def name(self) -> str | None:
@@ -2431,216 +2472,16 @@ class Block(ABC, Port):
         pass
 
 
-class SinkBlock(Block):
-    """
-    A SinkBlock is a subclass of Block that represents a block that has inputs
-    but no outputs. Typically used to save data to a variable, file or
-    graphics.
-    """
-
-    blockclass = "sink"
-
-    def __init__(self, **blockargs) -> None:
-        """
-        Create a sink block.
-
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        :return: sink block base class
-        :rtype: SinkBlock
-
-        This is the parent class of all sink blocks.
-        """
-        # print('Sink constructor')
-        super().__init__(nout=0, nstates=0, ndstates=0, **blockargs)
-
-    @abstractmethod
-    def step(self, t: float, inports: list) -> None:  # valid
-        pass
-
-
-class SourceBlock(Block):
-    """
-    A SourceBlock is a subclass of Block that represents a block that has outputs
-    but no inputs.  Its output is a function of parameters and time.
-    """
-
-    blockclass = "source"
-
-    def __init__(self, **blockargs) -> None:
-        """
-        Create a source block.
-
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        :return: source block base class
-        :rtype: SourceBlock
-
-        This is the parent class of all source blocks.
-        """
-        # print('Source constructor')
-        super().__init__(nin=0, nstates=0, ndstates=0, **blockargs)
-
-    @abstractmethod
-    def output(self, t: float, inports: list, x):
-        pass
-
-
-class TransferBlock(Block):
-    """
-    A TransferBlock is a subclass of Block that represents a block with inputs
-    outputs and states. Typically used to describe a continuous time dynamic
-    system, either linear or nonlinear.
-    """
-
-    blockclass = "transfer"
-
-    def __init__(self, nstates, **blockargs) -> None:
-        """
-        Create a transfer function block.
-
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        :return: transfer function block base class
-        :rtype: TransferBlock
-
-        This is the parent class of all transfer function blocks.
-        """
-        # print('Transfer constructor')
-        super().__init__(nstates=nstates, ndstates=0, **blockargs)
-
-    def reset(self) -> None:
-        super().reset()
-        self._x = self._x0
-        # return self._x
-
-    def setstate(self, x):
-        x = np.array(x)
-        self._x = x[: self.nstates]  # take as much state vector as we need
-        return x[self.nstates :]  # return the rest
-
-    def getstate0(self):
-        return self._x0
-
-    def check(self) -> None:
-        super().check()
-        assert len(self._x0) == self.nstates, "incorrect length for initial state"
-        assert self.nin > 0 or self.nout > 0, "no inputs or outputs specified"
-
-    @abstractmethod
-    def deriv(self, t: float, inports: list) -> None:  # valid
-        pass
-
-    @abstractmethod
-    def output(self, t: float, inports: list, x):
-        pass
-
-
-class FunctionBlock(Block):
-    """
-    A FunctionBlock is a subclass of Block that represents a block that has inputs
-    and outputs but no state variables.  Typically used to describe operations
-    such as gain, summation or various mappings.
-    """
-
-    blockclass = "function"
-
-    def __init__(self, **blockargs) -> None:
-        """
-        Create a function block.
-
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        :return: function block base class
-        :rtype: FunctionBlock
-
-        This is the parent class of all function blocks.
-        """
-        # print('Function constructor')
-        super().__init__(nstates=0, ndstates=0, **blockargs)
-
-    @abstractmethod
-    def output(self, t: float, inports: list, x):
-        pass
-
-
-class SubsystemBlock(Block):
-    """
-    A SubSystem  s a subclass of Block that represents a block that has inputs
-    and outputs but no state variables.  Typically used to describe operations
-    such as gain, summation or various mappings.
-    """
-
-    blockclass = "subsystem"
-
-    def __init__(self, **blockargs) -> None:
-        """
-        Create a subsystem block.
-
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        :return: subsystem block base class
-        :rtype: SubsystemBlock
-
-        This is the parent class of all subsystem blocks.
-        """
-        # print('Subsystem constructor')
-        super().__init__(nstates=0, ndstates=0, **blockargs)
-
-
-class ClockedBlock(Block):
-    """
-    A ClockedBlock is a subclass of Block that represents a block with inputs
-    outputs and discrete states. Typically used to describe a discrete time dynamic
-    system, either linear or nonlinear.
-    """
-
-    blockclass = "clocked"
-
-    def __init__(self, *, ndstates: int, clock: Clock, **blockargs) -> None:
-        """
-        Create a clocked block.
-
-        :param ndstates: number of discrete-time states
-        :type ndstates: int
-        :param clock: the clock that governs the block's discrete time updates
-        :type clock: Clock
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        :return: clocked block base class
-        :rtype: ClockedBlock
-
-        This is the parent class of all clocked blocks.
-        """
-        # print('Clocked constructor')
-        super().__init__(nstates=0, ndstates=ndstates, **blockargs)
-        assert clock is not None, "clocked block must have a clock"
-        self._clocked = True
-        self._clock = clock
-        clock.add_block(self)
-
-    def reset(self) -> None:
-        super().reset()
-        # self._x = self._x0
-        # return self._x
-
-    def setstate(self, x):
-        self._x = x[: self.ndstates]  # take as much state vector as we need
-        # print('** set block state to ', self._x)
-        return x[self.ndstates :]  # return the rest
-
-    def getstate0(self):
-        return self._x0
-
-    def check(self) -> None:
-        assert len(self._x0) == self.ndstates, "incorrect length for initial state"
-
-        assert self.nin > 0 or self.nout > 0, "no inputs or outputs specified"
-        self._x = self._x0
-
-
-class EventSource:
-    pass
+# Re-export block type subclasses defined in block_types.py
+from bdsim.block_types import (  # noqa: E402, F401
+    SinkBlock,
+    SourceBlock,
+    TransferBlock,
+    FunctionBlock,
+    SubsystemBlock,
+    ClockedBlock,
+    EventSource,
+)
 
 
 # c = Clock(5)

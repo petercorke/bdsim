@@ -1,10 +1,222 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Concrete Block subclasses: SinkBlock, SourceBlock, TransferBlock,
+FunctionBlock, SubsystemBlock, ClockedBlock, EventSource, GraphicsBlock.
+"""
 from __future__ import annotations
+
 import sys
+import numpy as np
 import matplotlib
 import matplotlib.figure
 import matplotlib.pyplot as plt
 from matplotlib import animation
-from bdsim.components import SinkBlock
+from abc import abstractmethod
+from typing import Optional
+
+from bdsim.components import Block, Clock
+
+
+class SinkBlock(Block):
+    """
+    A SinkBlock is a subclass of Block that represents a block that has inputs
+    but no outputs. Typically used to save data to a variable, file or
+    graphics.
+    """
+
+    _blockclass = "sink"
+
+    def __init__(self, **blockargs) -> None:
+        """
+        Create a sink block.
+
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        :return: sink block base class
+        :rtype: SinkBlock
+
+        This is the parent class of all sink blocks.
+        """
+        super().__init__(nout=0, nstates=0, ndstates=0, **blockargs)
+
+    @abstractmethod
+    def step(self, t: float, inports: list) -> None:  # valid
+        pass
+
+
+class SourceBlock(Block):
+    """
+    A SourceBlock is a subclass of Block that represents a block that has outputs
+    but no inputs.  Its output is a function of parameters and time.
+    """
+
+    _blockclass = "source"
+
+    def __init__(self, **blockargs) -> None:
+        """
+        Create a source block.
+
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        :return: source block base class
+        :rtype: SourceBlock
+
+        This is the parent class of all source blocks.
+        """
+        super().__init__(nin=0, nstates=0, ndstates=0, **blockargs)
+
+    @abstractmethod
+    def output(self, t: float, inports: list, x):
+        pass
+
+
+class TransferBlock(Block):
+    """
+    A TransferBlock is a subclass of Block that represents a block with inputs
+    outputs and states. Typically used to describe a continuous time dynamic
+    system, either linear or nonlinear.
+    """
+
+    _blockclass = "transfer"
+
+    def __init__(self, nstates, **blockargs) -> None:
+        """
+        Create a transfer function block.
+
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        :return: transfer function block base class
+        :rtype: TransferBlock
+
+        This is the parent class of all transfer function blocks.
+        """
+        super().__init__(nstates=nstates, ndstates=0, **blockargs)
+
+    def reset(self) -> None:
+        super().reset()
+        self._x = self._x0
+
+    def setstate(self, x):
+        x = np.array(x)
+        self._x = x[: self.nstates]  # take as much state vector as we need
+        return x[self.nstates :]  # return the rest
+
+    def getstate0(self):
+        return self._x0
+
+    def check(self) -> None:
+        super().check()
+        assert len(self._x0) == self.nstates, "incorrect length for initial state"
+        assert self.nin > 0 or self.nout > 0, "no inputs or outputs specified"
+
+    @abstractmethod
+    def deriv(self, t: float, inports: list) -> None:  # valid
+        pass
+
+    @abstractmethod
+    def output(self, t: float, inports: list, x):
+        pass
+
+
+class FunctionBlock(Block):
+    """
+    A FunctionBlock is a subclass of Block that represents a block that has inputs
+    and outputs but no state variables.  Typically used to describe operations
+    such as gain, summation or various mappings.
+    """
+
+    _blockclass = "function"
+
+    def __init__(self, **blockargs) -> None:
+        """
+        Create a function block.
+
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        :return: function block base class
+        :rtype: FunctionBlock
+
+        This is the parent class of all function blocks.
+        """
+        super().__init__(nstates=0, ndstates=0, **blockargs)
+
+    @abstractmethod
+    def output(self, t: float, inports: list, x):
+        pass
+
+
+class SubsystemBlock(Block):
+    """
+    A SubSystem is a subclass of Block that represents a block that has inputs
+    and outputs but no state variables.  Typically used to describe operations
+    such as gain, summation or various mappings.
+    """
+
+    _blockclass = "subsystem"
+
+    def __init__(self, **blockargs) -> None:
+        """
+        Create a subsystem block.
+
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        :return: subsystem block base class
+        :rtype: SubsystemBlock
+
+        This is the parent class of all subsystem blocks.
+        """
+        super().__init__(nstates=0, ndstates=0, **blockargs)
+
+
+class ClockedBlock(Block):
+    """
+    A ClockedBlock is a subclass of Block that represents a block with inputs
+    outputs and discrete states. Typically used to describe a discrete time dynamic
+    system, either linear or nonlinear.
+    """
+
+    _blockclass = "clocked"
+
+    def __init__(self, *, ndstates: int, clock: Clock, **blockargs) -> None:
+        """
+        Create a clocked block.
+
+        :param ndstates: number of discrete-time states
+        :type ndstates: int
+        :param clock: the clock that governs the block's discrete time updates
+        :type clock: Clock
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        :return: clocked block base class
+        :rtype: ClockedBlock
+
+        This is the parent class of all clocked blocks.
+        """
+        super().__init__(nstates=0, ndstates=ndstates, **blockargs)
+        assert clock is not None, "clocked block must have a clock"
+        self._clocked = True
+        self._clock = clock
+        clock.add_block(self)
+
+    def reset(self) -> None:
+        super().reset()
+
+    def setstate(self, x):
+        self._x = x[: self.ndstates]  # take as much state vector as we need
+        return x[self.ndstates :]  # return the rest
+
+    def getstate0(self):
+        return self._x0
+
+    def check(self) -> None:
+        assert len(self._x0) == self.ndstates, "incorrect length for initial state"
+        assert self.nin > 0 or self.nout > 0, "no inputs or outputs specified"
+        self._x = self._x0
+
+
+class EventSource:
+    pass
 
 
 class GraphicsBlock(SinkBlock):
@@ -13,7 +225,7 @@ class GraphicsBlock(SinkBlock):
     but no outputs and creates/updates a graphical display.
     """
 
-    blockclass = "graphics"
+    _blockclass = "graphics"
 
     def __init__(self, movie=None, **blockargs) -> None:
         """
@@ -28,11 +240,34 @@ class GraphicsBlock(SinkBlock):
 
         This is the parent class of all graphic display blocks.
         """
-
         super().__init__(**blockargs)
         self._graphics = True
-        self.fig: matplotlib.figure.Figure | None = None
-        self.movie = movie
+        self._fig: matplotlib.figure.Figure | None = None
+        self._movie = movie
+
+    @property
+    def fig(self) -> matplotlib.figure.Figure | None:
+        return self._fig
+
+    @fig.setter
+    def fig(self, v: matplotlib.figure.Figure | None) -> None:
+        self._fig = v
+
+    @property
+    def movie(self) -> str | None:
+        return self._movie
+
+    @movie.setter
+    def movie(self, v: str | None) -> None:
+        self._movie = v
+
+    @property
+    def writer(self):
+        return self._writer
+
+    @writer.setter
+    def writer(self, v) -> None:
+        self._writer = v
 
     def start(self, simstate) -> None:
 
@@ -41,19 +276,19 @@ class GraphicsBlock(SinkBlock):
         self._simstate = simstate
         self._enabled = simstate.options.graphics
 
-        if self.movie is not None and not simstate.options.animation:
+        if self._movie is not None and not simstate.options.animation:
             print(
                 "enabling global animation option to allow movie option on block", self
             )
             if not simstate.options.animation:
                 print("must enable animation to render a movie")
-        if self.movie is not None:
+        if self._movie is not None:
             try:
-                self.writer = animation.FFMpegWriter(
+                self._writer = animation.FFMpegWriter(
                     fps=10, extra_args=["-vcodec", "libx264"]
                 )
-                self.writer.setup(fig=self.fig, outfile=self.movie)  # type: ignore[union-attr]
-                print("movie block", self, " --> ", self.movie)
+                self._writer.setup(fig=self._fig, outfile=self._movie)  # type: ignore[union-attr]
+                print("movie block", self, " --> ", self._movie)
             except FileNotFoundError:
                 self.fatal("cannot save movie, please install ffmpeg")  # type: ignore[union-attr]
 
@@ -63,26 +298,26 @@ class GraphicsBlock(SinkBlock):
         # bring the figure up to date in a backend-specific way
         if self._simstate.options.animation:
             if self._simstate.backend == "TkAgg":
-                self.fig.canvas.flush_events()  # type: ignore[union-attr]
+                self._fig.canvas.flush_events()  # type: ignore[union-attr]
                 plt.show(block=False)
                 plt.show(block=False)
             elif self._simstate.backend == "Qt5Agg":
-                self.fig.canvas.flush_events()  # type: ignore[union-attr]
-                self.fig.canvas.draw()  # type: ignore[union-attr]
+                self._fig.canvas.flush_events()  # type: ignore[union-attr]
+                self._fig.canvas.draw()  # type: ignore[union-attr]
             else:
-                self.fig.canvas.draw()  # type: ignore[union-attr]
+                self._fig.canvas.draw()  # type: ignore[union-attr]
 
-        if self.movie is not None:
+        if self._movie is not None:
             try:
-                self.writer.grab_frame()  # type: ignore[union-attr]
+                self._writer.grab_frame()  # type: ignore[union-attr]
             except AttributeError:
                 self.fatal("cannot save movie, please install ffmpeg")  # type: ignore[union-attr]
 
     def done(self, block=False) -> None:
-        if self.fig is not None:
-            self.fig.canvas.start_event_loop(0.001)  # type: ignore[union-attr]
-            if self.movie is not None:
-                self.writer.finish()  # type: ignore[union-attr]
+        if self._fig is not None:
+            self._fig.canvas.start_event_loop(0.001)  # type: ignore[union-attr]
+            if self._movie is not None:
+                self._writer.finish()  # type: ignore[union-attr]
                 # self.cleanup()
             plt.show(block=block)
 
@@ -98,8 +333,8 @@ class GraphicsBlock(SinkBlock):
         jpeg, png or pdf.
         """
         try:
-            assert self.fig is not None, "no figure to save"
-            plt.figure(self.fig.number)  # make block's figure the current one
+            assert self._fig is not None, "no figure to save"
+            plt.figure(self._fig.number)  # make block's figure the current one
             if filename is None:
                 filename = self.name or ""
             filename += "." + format

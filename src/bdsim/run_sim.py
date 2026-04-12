@@ -1057,7 +1057,7 @@ class BDSim:
         block.savefig(filename=filename, format=format, **kwargs)
 
     def savefigs(self, bd, format="pdf", **kwargs) -> None:
-        from bdsim.graphics import GraphicsBlock
+        from bdsim.block_types import GraphicsBlock
 
         for b in bd.blocklist:
             if isinstance(b, GraphicsBlock):
@@ -1258,7 +1258,7 @@ class BDSim:
                 if name.endswith("Block"):
                     continue
 
-                if value.blockclass in ("source", "transfer", "function"):
+                if value._blockclass in ("source", "transfer", "function"):
                     # must have an output function
                     valid: inspect.TypeIs[Callable[..., object]] | bool = (
                         hasattr(value, "output")
@@ -1273,7 +1273,7 @@ class BDSim:
                         )
                         continue
 
-                if value.blockclass == "sink":
+                if value._blockclass == "sink":
                     # must have a step function with at least one
                     # parameter: step(self [,state])
                     valid: inspect.TypeIs[Callable[..., object]] | bool = (
