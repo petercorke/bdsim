@@ -15,6 +15,8 @@ from typing import Any
 
 from bdsim.components import FunctionBlock
 
+IndexSpec = slice | list[Any]
+
 
 class Inverse(FunctionBlock):
     r"""
@@ -347,20 +349,20 @@ class Slice2(FunctionBlock):
         super().__init__(**blockargs)
 
         if rows is None:
-            self.rows: slice[Any, Any, Any] = slice(None, None, None)
+            self.rows: IndexSpec = slice(None, None, None)
         elif isinstance(rows, list):
             self.rows = rows
         elif isinstance(rows, tuple) and len(rows) == 3:
-            self.rows: slice[Any, Any, Any] = slice(*rows)
+            self.rows = slice(*rows)
         else:
             raise ValueError("bad rows specifier")
 
         if cols is None:
-            self.cols: slice[Any, Any, Any] = slice(None, None, None)
+            self.cols: IndexSpec = slice(None, None, None)
         elif isinstance(cols, list):
             self.cols = cols
         elif isinstance(cols, tuple) and len(cols) == 3:
-            self.cols: slice[Any, Any, Any] = slice(*cols)
+            self.cols = slice(*cols)
         else:
             raise ValueError("bad columns specifier")
 
@@ -443,11 +445,11 @@ class Slice1(FunctionBlock):
         super().__init__(**blockargs)
 
         if index is None:
-            self.index: slice[Any, Any, Any] = slice(None, None, None)
+            self.index: IndexSpec = slice(None, None, None)
         elif isinstance(index, list):
             self.index = index
         elif isinstance(index, tuple) and len(index) == 3:
-            self.index: slice[Any, Any, Any] = slice(*index)
+            self.index = slice(*index)
         else:
             raise ValueError("bad index specifier")
 

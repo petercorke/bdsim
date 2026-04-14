@@ -13,11 +13,12 @@ from math import pi, sqrt, sin, cos, atan2
 
 import matplotlib.pyplot as plt
 
-import spatialmath.base as smb
+import spatialmath.base as smb  # type: ignore[import-not-found]
 
-from bdsim.components import SinkBlock
+from typing import Any, Callable, Literal
+
 from bdsim.block_types import GraphicsBlock
-from typing import Union, Literal, Optional
+from bdsim.components import SinkBlock
 
 # ------------------------------------------------------------------------ #
 
@@ -112,17 +113,17 @@ class Scope(GraphicsBlock):
     def __init__(
         self,
         nin: int = 1,
-        vector: Optional[Union[int, list[int]]] = None,
-        styles=None,
-        stairs=False,
-        scale: Union[Literal["auto"], float] = "auto",
-        labels=None,
-        grid=True,
-        watch=False,
-        title: Union[None, str] = None,
-        loc="best",
-        **blockargs,
-    ):
+        vector: int | list[int] | None = None,
+        styles: str | dict | list[str | dict] | None = None,
+        stairs: bool = False,
+        scale: Literal["auto"] | float = "auto",
+        labels: list[str] | None = None,
+        grid: bool | list | tuple = True,
+        watch: bool = False,
+        title: str | None = None,
+        loc: str = "best",
+        **blockargs: Any,
+    ) -> None:
         """
         :param nin: number of inputs, defaults to 1 or if given, the length of
                     style vector
@@ -223,7 +224,7 @@ class Scope(GraphicsBlock):
         # TODO, wire width
         # inherit names from wires, block needs to be able to introspect
 
-    def start(self, simstate):
+    def start(self, simstate: Any) -> None:
         super().start(simstate)
 
         if not self._enabled:
@@ -318,7 +319,7 @@ class Scope(GraphicsBlock):
         plt.draw()
         plt.show(block=False)
 
-    def step(self, t, inports):
+    def step(self, t: float, inports: list[Any]) -> None:
         if not self._enabled:
             return
 
@@ -405,14 +406,14 @@ class ScopeXY(GraphicsBlock):
 
     def __init__(
         self,
-        style=None,
-        scale="auto",
-        aspect="equal",
-        labels=["X", "Y"],
-        init=None,
-        nin=2,
-        **blockargs,
-    ):
+        style: str | dict | None = None,
+        scale: Literal["auto"] | list | tuple = "auto",
+        aspect: str = "equal",
+        labels: list[str] = ["X", "Y"],
+        init: Callable | None = None,
+        nin: int = 2,
+        **blockargs: Any,
+    ) -> None:
         """
         :param style: line style, defaults to None
         :type style: optional str or dict
@@ -440,7 +441,7 @@ class ScopeXY(GraphicsBlock):
         self.aspect = aspect
         self.labels = labels
 
-    def start(self, simstate):
+    def start(self, simstate: Any) -> None:
         super().start(simstate)
 
         if not self._enabled:
@@ -475,12 +476,12 @@ class ScopeXY(GraphicsBlock):
         plt.draw()
         plt.show(block=False)
 
-    def step(self, t, inports):
+    def step(self, t: float, inports: list[Any]) -> None:
         if not self._enabled:
             return
         self._step(inports[0], inports[1], t)
 
-    def _step(self, x, y, t):
+    def _step(self, x: Any, y: Any, t: float) -> None:
         self.xdata.append(x)
         self.ydata.append(y)
 
@@ -548,7 +549,7 @@ class ScopeXY1(ScopeXY):
     nin = 1
     nout = 0
 
-    def __init__(self, indices=[0, 1], **blockargs):
+    def __init__(self, indices: list[int] = [0, 1], **blockargs: Any) -> None:
         """
         :param indices: indices of elements to select from block input vector, defaults to [0,1]
         :type indices: array_like(2)
@@ -569,7 +570,7 @@ class ScopeXY1(ScopeXY):
             raise ValueError("indices must have 2 elements")
         self.indices = [int(x) for x in indices]
 
-    def step(self, t, inports):
+    def step(self, t: float, inports: list[Any]) -> None:
         if not self._enabled:
             return
 

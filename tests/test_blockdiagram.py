@@ -62,6 +62,52 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(dst1.inport_values[0], 2)
         self.assertEqual(dst2.inport_values[0], 2)
 
+    def test_wire_value_published_on_evaluate(self):
+
+        bd = self.sim.blockdiagram()
+        src = bd.CONSTANT(2)
+        dst = bd.NULL(1)
+        bd.connect(src, dst)
+
+        bd.compile(verbose=False)
+        bd.schedule_evaluate(x=[], t=0)
+
+        inwire = dst._input_wires[0]
+        assert inwire is not None
+        self.assertEqual(inwire.value, 2)
+
+    def test_fanout_wires_receive_same_value(self):
+
+        bd = self.sim.blockdiagram()
+        src = bd.CONSTANT(2)
+        dst1 = bd.NULL(1)
+        dst2 = bd.NULL(1)
+        bd.connect(src, dst1)
+        bd.connect(src, dst2)
+
+        bd.compile(verbose=False)
+        bd.schedule_evaluate(x=[], t=0)
+
+        outwires = src._output_wires[0]
+        self.assertEqual(len(outwires), 2)
+        self.assertTrue(all(w.value == 2 for w in outwires))
+
+    def test_inport_reads_wire_value_without_source_cache(self):
+
+        bd = self.sim.blockdiagram()
+        src = bd.CONSTANT(2)
+        dst = bd.NULL(1)
+        bd.connect(src, dst)
+        bd.compile(verbose=False)
+
+        inwire = dst._input_wires[0]
+        assert inwire is not None
+        inwire.value = 42
+        src._output_values = None
+
+        self.assertEqual(dst.inport_values, [42])
+        self.assertEqual(dst.inport_value(0), 42)
+
     def test_multi_connect(self):
 
         bd = self.sim.blockdiagram()
@@ -724,14 +770,14 @@ class WiringTest(unittest.TestCase):
 
 class LabelTest(unittest.TestCase):
 
-    @unittest.skip
+    @unittest.skip("legacy/manual label wiring test")
     def test_label1(self):
         bd = bdsim.BDSim(animation=False).blockdiagram()
         const = bd.CONSTANT(2, onames=["c"])
         func = bd.FUNCTION(lambda x: x**2, inames=["fx"], onames=["fy"])
         bd.connect(const.c, func.fx)
 
-    @unittest.skip
+    @unittest.skip("legacy manual subclass metadata test")
     def test_label2(self):
 
         # provide labels and number of ports as class variables, and check that they are captured correctly by __init_subclass__
@@ -749,7 +795,7 @@ class LabelTest(unittest.TestCase):
         self.assertEqual(mb._inport_names, ("in1", "in2"))
         self.assertEqual(mb._outport_names, ("out1", "out2"))
 
-    @unittest.skip
+    @unittest.skip("legacy manual subclass metadata test")
     def test_label3(self):
         # provide labels as class variables, number of ports passed to constructor
 
@@ -764,7 +810,7 @@ class LabelTest(unittest.TestCase):
         self.assertEqual(mb._inport_names, ("in1", "in2"))
         self.assertEqual(mb._outport_names, ("out1", "out2"))
 
-    @unittest.skip
+    @unittest.skip("legacy manual subclass metadata test")
     def test_label4(self):
         # provide labels and infer number of ports from labels
 
@@ -779,7 +825,7 @@ class LabelTest(unittest.TestCase):
         self.assertEqual(mb._inport_names, ("in1", "in2"))
         self.assertEqual(mb._outport_names, ("out1", "out2"))
 
-    @unittest.skip
+    @unittest.skip("legacy manual subclass metadata test")
     def test_label4b(self):
         # provide labels and infer number of ports from labels
 
@@ -803,6 +849,8 @@ class LabelTest(unittest.TestCase):
         # provide labels and infer number of ports from labels
 
         mb = Gain(inames=["in1", "in2", "in3"], onames=["out1", "out2"], nin=3, nout=2)
+        assert mb._inport_names is not None
+        assert mb._outport_names is not None
         self.assertSequenceEqual(mb._inport_names, ("in1", "in2", "in3"))
         self.assertSequenceEqual(mb._outport_names, ("out1", "out2"))
         self.assertEqual(mb.nin, 3)
@@ -829,6 +877,8 @@ class LabelTest(unittest.TestCase):
         bd = bdsim.BDSim(animation=False).blockdiagram()
         mb = MyBlock(bd=bd)
 
+        assert mb._inport_names is not None
+        assert mb._outport_names is not None
         self.assertListEqual(mb._inport_names, ["alpha", "α", "Alpha"])
         self.assertListEqual(mb._outport_names, ["beta", "β", "Beta"])
 

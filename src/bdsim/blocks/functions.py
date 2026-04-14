@@ -16,6 +16,7 @@ import math
 import inspect
 import spatialmath.base as smb
 from typing import Any, Union, Callable, Optional
+from numpy.typing import ArrayLike
 
 Vector1D = Union[int, float, tuple[float, ...], list[float], np.ndarray]
 
@@ -76,7 +77,7 @@ class Sum(FunctionBlock):
     }
 
     def __init__(
-        self, signs: str = "++", mode: Optional[str] = None, **blockargs
+        self, signs: str = "++", mode: Optional[str] = None, **blockargs: Any
     ) -> None:
         """
         :param signs: signs associated with input ports, accepted characters: + or -, defaults to "++"
@@ -111,7 +112,7 @@ class Sum(FunctionBlock):
         self.signs: str = signs
         self.mode: Optional[str] = mode
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         for i, input in enumerate(inputs):
             # code makes no assumption about types of inputs
             # NOTE: use sum = sum =/- input rather than sum +/-= input since
@@ -204,7 +205,7 @@ class Prod(FunctionBlock):
     nin: int = -1
     nout = 1
 
-    def __init__(self, ops: str = "**", matrix: bool = False, **blockargs) -> None:
+    def __init__(self, ops: str = "**", matrix: bool = False, **blockargs: Any) -> None:
         """
         :param ops: operations associated with input ports, accepted characters: * or /, defaults to '**'
         :type ops: str, optional
@@ -222,7 +223,7 @@ class Prod(FunctionBlock):
         self.ops: str = ops
         self.matrix: bool = matrix
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         for i, input in enumerate(inputs):
             if i == 0:
                 if self.ops[i] == "*":
@@ -291,7 +292,10 @@ class Gain(FunctionBlock):
     nout = 1
 
     def __init__(
-        self, K: Union[int, float, np.ndarray] = 1, premul: bool = False, **blockargs
+        self,
+        K: Union[int, float, np.ndarray] = 1,
+        premul: bool = False,
+        **blockargs: Any,
     ) -> None:
         """
         :param K: The gain value, defaults to 1
@@ -308,7 +312,7 @@ class Gain(FunctionBlock):
 
         self.add_param("K")
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         input = inputs[0]
 
         if isinstance(input, np.ndarray) and isinstance(self.K, np.ndarray):
@@ -372,7 +376,7 @@ class Pow(FunctionBlock):
     nout = 1
 
     def __init__(
-        self, p: Union[int, float] = 1, matrix: bool = False, **blockargs
+        self, p: Union[int, float] = 1, matrix: bool = False, **blockargs: Any
     ) -> None:
         """
         :param p: The exponent value, defaults to 1
@@ -389,7 +393,7 @@ class Pow(FunctionBlock):
         self.matrix: bool = matrix
         self.add_param("p")
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         input = inputs[0]
 
         if isinstance(input, np.ndarray):
@@ -457,7 +461,10 @@ class Clip(FunctionBlock):
     nout = 1
 
     def __init__(
-        self, min: Vector1D = -math.inf, max: ArrayLike = math.inf, **blockargs
+        self,
+        min: Vector1D = -math.inf,
+        max: ArrayLike = math.inf,
+        **blockargs: Any,
     ) -> None:
         """
         :param min: Minimum value, defaults to -math.inf
@@ -471,7 +478,7 @@ class Clip(FunctionBlock):
         self.min = min
         self.max = max
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         input = inputs[0]
 
         if isinstance(input, np.ndarray):
@@ -560,13 +567,17 @@ class Function(FunctionBlock):
 
     def __init__(
         self,
-        func: Optional[Callable] = None,
+        func: Optional[
+            Callable[..., Any]
+            | list[Callable[..., Any]]
+            | tuple[Callable[..., Any], ...]
+        ] = None,
         nin: int = 1,
         nout: int = 1,
         persistent: bool = False,
-        fargs: Optional[list] = None,
-        fkwargs: Optional[dict] = None,
-        **blockargs,
+        fargs: Optional[list[Any]] = None,
+        fkwargs: Optional[dict[str, Any]] = None,
+        **blockargs: Any,
     ) -> None:
         """
         :param func: function or lambda, or list thereof, defaults to None
@@ -633,13 +644,13 @@ class Function(FunctionBlock):
         self.args = fargs
         self.kwargs = fkwargs
 
-    def start(self, simstate) -> None:
+    def start(self, simstate: Any) -> None:
         super().start(simstate)
         if self.userdata is not None:
             self.userdata.clear()
             print("clearing user data")
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
 
         if callable(self.func):
             # single function
@@ -740,12 +751,12 @@ class Interpolate(FunctionBlock):
 
     def __init__(
         self,
-        x: Optional[Union[list, tuple, np.ndarray]] = None,
-        y: Optional[Union[list, tuple, np.ndarray]] = None,
+        x: Optional[Union[list[Any], tuple[Any, ...], np.ndarray]] = None,
+        y: Optional[Union[list[Any], tuple[Any, ...], np.ndarray]] = None,
         xy: Optional[np.ndarray] = None,
         time: bool = False,
         kind: str = "linear",
-        **blockargs,
+        **blockargs: Any,
     ) -> None:
         """
         :param x: x-values of function, defaults to None
@@ -790,7 +801,7 @@ class Interpolate(FunctionBlock):
         )
         self.x = x
 
-    def start(self, simstate, **blockargs) -> None:
+    def start(self, simstate: Any, **blockargs: Any) -> None:
         super().start(simstate)
 
         if simstate is not None:
@@ -800,7 +811,7 @@ class Interpolate(FunctionBlock):
                     self.x[-1] = simstate.T
                 assert self.x[-1] >= simstate.T, "interpolation not defined for t>T"
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         if self.time:
             xnew = t
         else:

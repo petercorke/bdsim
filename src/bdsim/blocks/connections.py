@@ -14,13 +14,15 @@ Connection blocks are in two categories:
 
 from __future__ import annotations
 
-import importlib.util
+import importlib
 import types
-import numpy as np
 import copy
-from typing import Any, Optional
+from typing import Any, cast
+
+import numpy as np
 
 import bdsim
+from bdsim.blockdiagram import BlockDiagram
 from bdsim.components import SubsystemBlock, SourceBlock, SinkBlock, FunctionBlock
 
 
@@ -65,10 +67,10 @@ class Item(FunctionBlock):
     :seealso: :class:`Dict`
     """
 
-    nin = 1
-    nout = 1
+    nin = 1  # type: ignore[assignment]
+    nout = 1  # type: ignore[assignment]
 
-    def __init__(self, item, **blockargs) -> None:
+    def __init__(self, item: Any, **blockargs: Any) -> None:
         """
         :param item: name of dictionary item
         :type item: str
@@ -79,7 +81,7 @@ class Item(FunctionBlock):
         super().__init__(**blockargs)
         self.item: Any = item
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         input = inputs[0]
         # TODO, handle inputs that are vectors themselves
         assert isinstance(input, dict), "Input signal must be a dict"
@@ -129,10 +131,10 @@ class Dict(FunctionBlock):
     :seealso: :class:`Item` :class:`Mux`
     """
 
-    nin = 1
-    nout = 1
+    nin = 1  # type: ignore[assignment]
+    nout = 1  # type: ignore[assignment]
 
-    def __init__(self, keys, **blockargs) -> None:
+    def __init__(self, keys: list[str], **blockargs: Any) -> None:
         """
         :param keys: list of dictionary keys
         :type keys: list
@@ -141,9 +143,9 @@ class Dict(FunctionBlock):
         """
 
         super().__init__(**blockargs)
-        self.keys: Any = keys
+        self.keys: list[str] = keys
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: Any) -> Any:
         return {key: inputs[i] for i, key in enumerate(self.keys)}
 
 
@@ -185,9 +187,9 @@ class Mux(FunctionBlock):
     # TODO could be generalized to creating a list of non numeric data
 
     nin: int = -1
-    nout = 1
+    nout = 1  # type: ignore[assignment]
 
-    def __init__(self, nin=1, **blockargs) -> None:
+    def __init__(self, nin: int = 1, **blockargs: Any) -> None:
         """
         :param nin: Number of input ports, defaults to 1
         :type nin: int, optional
@@ -196,7 +198,7 @@ class Mux(FunctionBlock):
         """
         super().__init__(nin=nin, **blockargs)
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         # TODO, handle inputs that are vectors themselves
         out = []
         for input in inputs:
@@ -242,10 +244,10 @@ class DeMux(FunctionBlock):
     :seealso: :class:`Mux`
     """
 
-    nin = 1
+    nin = 1  # type: ignore[assignment]
     nout: int = -1
 
-    def __init__(self, nout=1, **blockargs) -> None:
+    def __init__(self, nout: int = 1, **blockargs: Any) -> None:
         """
         :param nout: number of outputs, defaults to 1
         :type nout: int, optional
@@ -254,7 +256,7 @@ class DeMux(FunctionBlock):
         """
         super().__init__(nout=nout, **blockargs)
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         input = inputs[0]
         # TODO, handle inputs that are vectors themselves
         assert (
@@ -297,10 +299,12 @@ class Index(FunctionBlock):
     :seealso: :class:`Slice1` :class:`Slice2`
     """
 
-    nin = 1
-    nout = 1
+    nin = 1  # type: ignore[assignment]
+    nout = 1  # type: ignore[assignment]
 
-    def __init__(self, index=[], **blockargs) -> None:
+    def __init__(
+        self, index: list[int] | slice | str | None = None, **blockargs: Any
+    ) -> None:
         """
         Index an iterable signal.
 
@@ -311,15 +315,17 @@ class Index(FunctionBlock):
         """
         super().__init__(**blockargs)
 
-        if isinstance(index, str):
+        if index is None:
+            self.index: Any = []
+        elif isinstance(index, str):
             args: list[int | None] = [
                 None if a == "" else int(a) for a in index.split(":")
             ]
-            self.index: Any = slice(*args)
+            self.index = slice(*args)
         else:
             self.index = index
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         input = inputs[0]
         if len(self.index) == 1:
             return [input[self.index[0]]]
@@ -388,7 +394,13 @@ class SubSystem(SubsystemBlock):
     nin: int = -1
     nout: int = -1
 
-    def __init__(self, subsys, nin=1, nout=1, **blockargs) -> None:
+    def __init__(
+        self,
+        subsys: str | BlockDiagram,
+        nin: int = 1,
+        nout: int = 1,
+        **blockargs: Any,
+    ) -> None:
         """
         :param subsys: Subsystem as either a filename or a ``BlockDiagram`` instance
         :type subsys: str or BlockDiagram
@@ -403,19 +415,23 @@ class SubSystem(SubsystemBlock):
         """
         super().__init__(**blockargs)
 
+        resolved_subsys: BlockDiagram
+
         if isinstance(subsys, str):
             # attempt to import the file
             try:
                 module: types.ModuleType = importlib.import_module(subsys, package=".")
-            except SyntaxError:
-                print("-- syntax error in block definiton: " + subsys)
-            except ModuleNotFoundError:
-                print("-- module not found ", subsys)
+            except SyntaxError as exc:
+                raise ImportError(
+                    "-- syntax error in block definiton: " + subsys
+                ) from exc
+            except ModuleNotFoundError as exc:
+                raise ImportError("-- module not found " + subsys) from exc
             # get all the bdsim.BlockDiagram instances
             simvars: list[str] = [
                 name
                 for name, ref in module.__dict__.items()
-                if isinstance(ref, bdsim.BlockDiagram)
+                if isinstance(ref, BlockDiagram)
             ]
             if len(simvars) == 0:
                 raise ImportError("no bdsim.Simulation instances in imported module")
@@ -424,10 +440,11 @@ class SubSystem(SubsystemBlock):
                     "multiple bdsim.Simulation instances in imported module"
                     + str(simvars)
                 )
-            subsys = module.__dict__[simvars[0]]
-            self.ssvar: Optional[str] = simvars[0]
-        elif isinstance(subsys, bdsim.BlockDiagram):
+            resolved_subsys = cast(BlockDiagram, module.__dict__[simvars[0]])
+            self.ssvar: str | None = simvars[0]
+        elif isinstance(subsys, BlockDiagram):
             # use an in-memory diagram
+            resolved_subsys = subsys
             self.ssvar = None
         else:
             raise ValueError("argument must be filename or BlockDiagram instance")
@@ -435,7 +452,7 @@ class SubSystem(SubsystemBlock):
         # check if valid input and output ports
         ninp = 0
         noutp = 0
-        for b in subsys.blocklist:
+        for b in resolved_subsys.blocklist:
             if b.type == "inport":
                 ninp += 1
             elif b.type == "outport":
@@ -449,7 +466,7 @@ class SubSystem(SubsystemBlock):
             raise ValueError("subsystem cannot have zero INPORT or OUTPORT blocks")
 
         # it's valid, make a deep copy
-        self.subsystem: Any = copy.deepcopy(subsys)
+        self.subsystem: Any = copy.deepcopy(resolved_subsys)
 
         # get references to the input and output port blocks
         self._ss_inport = None
@@ -460,7 +477,7 @@ class SubSystem(SubsystemBlock):
             elif b.type == "outport":
                 self._ss_outport = b
 
-        self.ssname = subsys.name
+        self.ssname = resolved_subsys.name
 
         self.nin: int = ninp
         self.nout: int = noutp
@@ -499,10 +516,10 @@ class InPort(FunctionBlock):
         would require multiple single-port input blocks.
     """
 
-    nin = 0
+    nin = 0  # type: ignore[assignment]
     nout: int = -1
 
-    def __init__(self, nout=1, **blockargs) -> None:
+    def __init__(self, nout: int = 1, **blockargs: Any) -> None:
         """
         :param nout: Number of output ports, defaults to 1
         :type nout: int, optional
@@ -511,7 +528,7 @@ class InPort(FunctionBlock):
         """
         super().__init__(nout=nout, **blockargs)
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         # signal feed through
 
         return inputs
@@ -552,9 +569,9 @@ class OutPort(FunctionBlock):
     """
 
     nin: int = -1
-    nout = 0
+    nout = 0  # type: ignore[assignment]
 
-    def __init__(self, nin=1, **blockargs) -> None:
+    def __init__(self, nin: int = 1, **blockargs: Any) -> None:
         """
         :param nin: Number of input ports, defaults to 1
         :type nin: int, optional
@@ -563,7 +580,7 @@ class OutPort(FunctionBlock):
         """
         super().__init__(nin=nin, **blockargs)
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         # signal feed through
         return inputs
 

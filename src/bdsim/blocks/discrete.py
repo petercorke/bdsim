@@ -16,10 +16,12 @@ from math import sin, cos, atan2, sqrt, pi
 
 import matplotlib.pyplot as plt
 import inspect
-from spatialmath import Twist3, SE3
-import spatialmath.base as smb
+from spatialmath import Twist3, SE3  # type: ignore[import-not-found]
+import spatialmath.base as smb  # type: ignore[import-not-found]
 
-from bdsim.components import ClockedBlock
+from typing import Any
+
+from bdsim.components import ClockedBlock, Clock
 
 # ------------------------------------------------------------------------
 
@@ -60,7 +62,9 @@ class ZOH(ClockedBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, clock, x0=0, **blockargs) -> None:
+    def __init__(
+        self, clock: Clock, x0: int | float | np.ndarray = 0, **blockargs: Any
+    ) -> None:
         """
         :param clock: clock source
         :type clock: Clock
@@ -69,7 +73,7 @@ class ZOH(ClockedBlock):
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        x0 = smb.getvector(x0)
+        x0 = np.array(smb.getvector(x0), dtype=float).reshape(-1)
         self._x0 = x0
         ndstates = len(x0)
 
@@ -77,11 +81,11 @@ class ZOH(ClockedBlock):
 
         # print('nstates', self.nstates)
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         # print('* output, x is ', self._x)
         return [x]
 
-    def next(self, t, inputs, x):
+    def next(self, t: float, inputs: list[Any], x: np.ndarray) -> np.ndarray:
         u = smb.getvector(inputs[0])
         return u  # must be an ndarray
 
@@ -131,7 +135,15 @@ class DIntegrator(ClockedBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, clock, x0=0, gain=1.0, min=None, max=None, **blockargs) -> None:
+    def __init__(
+        self,
+        clock: Clock,
+        x0: int | float | np.ndarray = 0,
+        gain: float = 1.0,
+        min: float | np.ndarray | None = None,
+        max: float | np.ndarray | None = None,
+        **blockargs: Any,
+    ) -> None:
         """
         :param clock: clock source
         :type clock: Clock
@@ -156,6 +168,7 @@ class DIntegrator(ClockedBlock):
         else:
             x0 = smb.getvector(x0)
 
+        x0 = np.array(x0, dtype=float).reshape(-1)
         ndstates = x0.shape[0]
         super().__init__(ndstates=ndstates, clock=clock, **blockargs)
 
@@ -169,10 +182,11 @@ class DIntegrator(ClockedBlock):
         self.max = max
         self.gain: float = gain
 
-    def output(self, t, u, x):
+    def output(self, t: float, u: list[Any], x: np.ndarray) -> list[Any]:
         return [x]
 
-    def next(self, t, u, x):
+    def next(self, t: float, u: list[Any], x: np.ndarray) -> np.ndarray:
+        assert self._clock is not None
         xnext = x + self.gain * self._clock.T * np.array(u[0])
         if self.min is not None or self.max is not None:
             xnext = np.clip(xnext, self.min, self.max)
@@ -218,7 +232,12 @@ class DPoseIntegrator(ClockedBlock):
     inlabels = ("ν",)
     outlabels = ("ξ",)
 
-    def __init__(self, clock, x0=None, **blockargs) -> None:
+    def __init__(
+        self,
+        clock: Clock,
+        x0: SE3 | Twist3 | np.ndarray | None = None,
+        **blockargs: Any,
+    ) -> None:
         r"""
         :param clock: clock source
         :type clock: Clock
@@ -232,8 +251,8 @@ class DPoseIntegrator(ClockedBlock):
             x0 = Twist3()
         elif isinstance(x0, SE3):
             x0 = Twist3(x0).A
-        elif isinstance(x0, Twist3):
-            x0 = x0.A
+        elif hasattr(x0, "A"):
+            x0 = np.array(getattr(x0, "A"), dtype=float).reshape(-1)
         elif smb.isvector(x0, 6):
             x0 = smb.getvector(x0, 6)
 
@@ -244,10 +263,11 @@ class DPoseIntegrator(ClockedBlock):
 
         # print("nstates", self.nstates, x0)
 
-    def output(self, t, u, x) -> list[SE3]:
+    def output(self, t: float, u: list[Any], x: np.ndarray) -> list[SE3]:
         return [Twist3(x).SE3()]
 
-    def next(self, t, u, x):
+    def next(self, t: float, u: list[Any], x: np.ndarray) -> np.ndarray:
+        assert self._clock is not None
         T_delta: SE3 = SE3.Delta(u[0] * self._clock.T)
         pose = Twist3(x).SE3() * T_delta
         return Twist3(pose).A

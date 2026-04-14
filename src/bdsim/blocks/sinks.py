@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import numpy as np
 from math import pi, sqrt, sin, cos, atan2
+from typing import Any, Callable, TextIO
 
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import Polygon
@@ -73,7 +74,9 @@ class Print(SinkBlock):
     nin = 1
     nout = 0
 
-    def __init__(self, fmt=None, file=None, **blockargs) -> None:
+    def __init__(
+        self, fmt: str | None = None, file: TextIO | None = None, **blockargs: Any
+    ) -> None:
         """
         :param fmt: Format string, defaults to None
         :type fmt: str, optional
@@ -105,8 +108,10 @@ class Print(SinkBlock):
                 print(prefix, self.format.format(value), file=self.file)
 
             elif isinstance(value, np.ndarray):
+                fmt = self.format
+                assert fmt is not None
                 with np.printoptions(
-                    formatter={"all": lambda x: self.format.format(x)}
+                    formatter={"all": lambda x: fmt.format(x)}  # type: ignore[arg-type]
                 ):
                     print(prefix, value, file=self.file)
             else:
@@ -150,7 +155,9 @@ class Stop(SinkBlock):
     nin = 1
     nout = 0
 
-    def __init__(self, func=None, **blockargs) -> None:
+    def __init__(
+        self, func: Callable[[Any], object] | None = None, **blockargs: Any
+    ) -> None:
         """
         :param func: evaluate stop condition, defaults to None
         :type func: callable, optional
@@ -170,11 +177,11 @@ class Stop(SinkBlock):
         value = inputs[0]
 
         if self.stopfunc is not None:
-            value: object = self.stopfunc(value)
+            value = self.stopfunc(value)
 
-        stop = False
+        stop: bool = False
         if isinstance(value, bool):
-            stop: bool = value
+            stop = value
         else:
             try:
                 stop = value > 0
@@ -221,7 +228,7 @@ class Null(SinkBlock):
     nin: int = -1
     nout = 0
 
-    def __init__(self, nin=1, **blockargs) -> None:
+    def __init__(self, nin: int = 1, **blockargs: Any) -> None:
         """
         :param nin: number of input ports, defaults to 1
         :type nin: int, optional
@@ -277,7 +284,7 @@ class Watch(SinkBlock):
     nin = 1
     nout = 0
 
-    def __init__(self, **blockargs) -> None:
+    def __init__(self, **blockargs: Any) -> None:
         """
         :param nin: number of input ports, defaults to 1
         :type nin: int, optional

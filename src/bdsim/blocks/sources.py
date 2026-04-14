@@ -11,8 +11,9 @@ from __future__ import annotations
 
 import numpy as np
 import math
-from bdsim.components import SourceBlock, EventSource
-from typing import Any, Optional
+from typing import Any
+
+from bdsim.components import EventSource, SourceBlock
 
 
 # ------------------------------------------------------------------------ #
@@ -99,7 +100,7 @@ class Time(SourceBlock):
     nin = 0
     nout = 1
 
-    def __init__(self, value=None, **blockargs) -> None:
+    def __init__(self, value: Any | None = None, **blockargs: Any) -> None:
         """
         :param blockargs: |BlockOptions|
         :type blockargs: dict
@@ -169,16 +170,16 @@ class WaveForm(SourceBlock, EventSource):
 
     def __init__(
         self,
-        wave="square",
-        freq=1,
-        unit="Hz",
-        phase=0,
-        amplitude=1,
-        offset=0,
-        min=None,
-        max=None,
-        duty=0.5,
-        **blockargs,
+        wave: str = "square",
+        freq: float = 1,
+        unit: str = "Hz",
+        phase: float = 0,
+        amplitude: float = 1,
+        offset: float = 0,
+        min: float | None = None,
+        max: float | None = None,
+        duty: float = 0.5,
+        **blockargs: Any,
     ) -> None:
         """
         :param wave: type of waveform to generate, one of: 'sine', 'square' [default], 'triangle'
@@ -211,14 +212,16 @@ class WaveForm(SourceBlock, EventSource):
             self.wave: str = wave
         else:
             raise ValueError("bad waveform")
+        frequency: float
         if unit == "Hz":
-            self.freq: float = freq
+            frequency = freq
         elif unit == "rad/s":
-            self.freq: float = freq / (2 * math.pi)
+            frequency = freq / (2 * math.pi)
         else:
             raise ValueError("bad unit")
+        self.freq: float = frequency
         if 0 <= phase <= 1:
-            self.phase: int = phase
+            self.phase: float = phase
         else:
             raise ValueError("phase out of range")
         if max is not None and min is not None:
@@ -236,12 +239,14 @@ class WaveForm(SourceBlock, EventSource):
     def start(self, simstate) -> None:
         super().start(simstate)
 
+        t1: float
+        t2: float
         if self.wave == "square":
-            t1: float = self.phase / self.freq
-            t2: float = (self.duty + self.phase) / self.freq
+            t1 = self.phase / self.freq
+            t2 = (self.duty + self.phase) / self.freq
         elif self.wave == "triangle":
-            t1: float = (0.25 + self.phase) / self.freq
-            t2: float = (0.75 + self.phase) / self.freq
+            t1 = (0.25 + self.phase) / self.freq
+            t2 = (0.75 + self.phase) / self.freq
         else:
             return
 
@@ -345,9 +350,9 @@ class Piecewise(SourceBlock, EventSource):
 
     def __init__(
         self,
-        *args: list[tuple[float, float]],
-        seq: Optional[list[tuple[float, float]]] = None,
-        **blockargs,
+        *args: tuple[float, float],
+        seq: list[tuple[float, float]] | None = None,
+        **blockargs: Any,
     ) -> None:
         """
         :param seq: sequence of time, value pairs
@@ -358,6 +363,7 @@ class Piecewise(SourceBlock, EventSource):
         """
         super().__init__(**blockargs)
 
+        _seq: tuple[tuple[float, float], ...] | list[tuple[float, float]] | None
         if len(args) > 0:
             _seq = args
         else:
@@ -428,7 +434,9 @@ class Step(SourceBlock, EventSource):
     nin = 0
     nout = 1
 
-    def __init__(self, T=1, off=0, on=1, **blockargs) -> None:
+    def __init__(
+        self, T: float = 1, off: float = 0, on: float = 1, **blockargs: Any
+    ) -> None:
         """
         :param T: time of step, defaults to 1
         :type T: float, optional
@@ -441,18 +449,19 @@ class Step(SourceBlock, EventSource):
         """
         super().__init__(**blockargs)
 
-        self.T: int = T
-        self.off: int = off
-        self.on: int = on
+        self.T: float = T
+        self.off: float = off
+        self.on: float = on
 
     def start(self, simstate) -> None:
         simstate.declare_event(self, self.T)
 
-    def output(self, t, inputs, x) -> list[int]:
+    def output(self, t, inputs, x) -> list[float]:
+        out: float
         if t >= self.T:
-            out: int = self.on
+            out = self.on
         else:
-            out: int = self.off
+            out = self.off
 
         # print(out)
         return [out]
@@ -504,7 +513,9 @@ class Ramp(SourceBlock, EventSource):
     nin = 0
     nout = 1
 
-    def __init__(self, T=1, off=0, slope=1, **blockargs) -> None:
+    def __init__(
+        self, T: float = 1, off: float = 0, slope: float = 1, **blockargs: Any
+    ) -> None:
         """
         :param T: time of ramp start, defaults to 1
         :type T: float, optional
@@ -517,18 +528,19 @@ class Ramp(SourceBlock, EventSource):
         """
         super().__init__(**blockargs)
 
-        self.T: int = T
-        self.off: int = off
-        self.slope: int = slope
+        self.T: float = T
+        self.off: float = off
+        self.slope: float = slope
 
     def start(self, simstate) -> None:
         simstate.declare_event(self, self.T)
 
     def output(self, t, inputs, x):
+        out: float | int
         if t >= self.T:
             out = self.off + self.slope * (t - self.T)
         else:
-            out: int = self.off
+            out = self.off
 
         # print(out)
         return [out]

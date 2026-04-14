@@ -1,28 +1,21 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Mon May 18 21:43:18 2020
+"""Block-diagram container, compilation, and evaluation logic."""
 
-@author: corkep
-"""
 from __future__ import annotations
+
+from collections import Counter
+from copy import deepcopy
 import io
-import os
-from pathlib import Path
 import sys
-import importlib
-import inspect
 from tempfile import _TemporaryFileWrapper
 import traceback
-from collections import Counter, namedtuple
-from copy import deepcopy
-from typing import TYPE_CHECKING, Any, NoReturn
-import numpy as np
-from colored import fg, attr
 import warnings
+from typing import TYPE_CHECKING, Any, NoReturn, Self
 
+import numpy as np
+from ansitable import ANSITable, Column  # type: ignore[import-not-found]
+from colored import attr, fg
 
-from ansitable import ANSITable, Column
+from bdsim.block import BlockRuntimeError
 
 if TYPE_CHECKING:
     from bdsim._blockdiagram_mixin import BlockDiagramMixin
@@ -36,8 +29,7 @@ else:
 
 
 from bdsim.components import *
-from bdsim.components import Clock
-from bdsim.components import Clock
+from bdsim.connect import EndPlug, Plug, Port, StartPlug, Wire
 
 
 # ------------------------------------------------------------------------- #
@@ -75,15 +67,16 @@ class BlockDiagram(BlockDiagramMixin):
     def __init__(self, name="main", **kwargs) -> None:
         self.wirelist: list[Wire] = []  # list of all wires
         self.blocklist: list[Block] = []  # list of all blocks
-        self.clocklist = []  # list of all clock sources
+        self.clocklist: list[Clock] = []  # list of all clock sources
         self.compiled = False  # network has been compiled
-        self.blockcounter = Counter()
+        self.blockcounter: Counter[str] = Counter()
         self.name: str = name
         self.nstates = 0
         self.ndstates = 0
         self._issubsystem = False
-        self.blocknames = {}
+        self.blocknames: dict[str, Any] = {}
         self.options = None
+        self.runtime: Any = None  # set by BDSim before compilation
         self.n_auto_sum = 0
         self.n_auto_prod = 0
         self.n_auto_const = 0
@@ -121,22 +114,23 @@ class BlockDiagram(BlockDiagramMixin):
                 setattr(result, k, deepcopy(v, memo))
         return result
 
-    def __str__(self) -> str:
-        return "BlockDiagram: {:s}".format(self.name)
-
     def __repr__(self) -> str:
-        return str(self) + " with {:d} blocks and {:d} wires".format(
-            len(self.blocklist), len(self.wirelist)
-        )
-        # for block in self.blocklist:
-        #     s += str(block) + "\n"
-        # s += "\n"
-        # for wire in self.wirelist:
-        #     s += str(wire) + "\n"
-        # return s.lstrip("\n")
+        return f"BlockDiagram(name={self.name}, nblocks={len(self.blocklist)}, nwires={len(self.wirelist)})"
+
+    def __str__(self) -> str:
+        # return str(self) + " with {:d} blocks and {:d} wires".format(
+        #     len(self.blocklist), len(self.wirelist)
+        # )
+        s = ""
+        for block in self.blocklist:
+            s += repr(block) + "\n"
+        s += "\n"
+        for wire in self.wirelist:
+            s += str(wire) + "\n"
+        return s.lstrip("\n")
 
     def ls(self) -> None:
-        for k, v in self.blockdict.items():
+        for k, v in self.blocknames.items():
             print("{:12s}: ".format(k), ", ".join(v))
 
     @property
@@ -368,17 +362,14 @@ class BlockDiagram(BlockDiagramMixin):
                 raise RuntimeError(f"wire {w} ends at unreferenced block {w.end.block}")
 
         # run block specific checks
-        for b in self.blocklist:
-            try:
-                b.check()
-            except Exception:
-                print(fg("red"))
-                traceback.print_exc(file=sys.stderr)
-                print(attr(0))
-                raise RuntimeError("block failed check " + str(b)) from None
+        try:
+            for b in self.blocklist:
+                b.check_safe()
+        except BlockRuntimeError as err:
+            self._handle_block_runtime_error(err)
 
         # build a dictionary of all block names
-        self.blocknames = {b.name: b for b in self.blocklist}
+        self.blocknames = {b.name: b for b in self.blocklist if b.name is not None}
 
         # visit all stateful blocks
         for b in self.blocklist:
@@ -392,7 +383,7 @@ class BlockDiagram(BlockDiagramMixin):
                 else:
                     # create default state names
                     self.statenames.extend(
-                        [b.name + "x" + str(i) for i in range(0, b.nstates)]
+                        [(b.name or "") + "x" + str(i) for i in range(0, b.nstates)]
                     )
             if b.blockclass == "clocked":
                 self.ndstates += b.ndstates
@@ -404,7 +395,7 @@ class BlockDiagram(BlockDiagramMixin):
                 else:
                     # create default state names
                     self.statenames.extend(
-                        [b.name + "X" + str(i) for i in range(0, b.nstates)]
+                        [(b.name or "") + "X" + str(i) for i in range(0, b.nstates)]
                     )
 
         # connect the source and destination blocks to each wire
@@ -434,8 +425,8 @@ class BlockDiagram(BlockDiagramMixin):
                 # b.add_parent(w.start.block)
 
             # check all outputs are connected
-            for port, w in enumerate(b._output_wires):
-                if len(w) == 0:
+            for port, ws in enumerate(b._output_wires):
+                if len(ws) == 0:
                     print(
                         "  INFORMATION: [{:s}] output {:d} is not connected".format(
                             str(b), port
@@ -498,12 +489,7 @@ class BlockDiagram(BlockDiagramMixin):
 
         if not subsystem and evaluate:
             # run all the blocks for one step
-            try:
-                self.schedule_evaluate(x, 0.0, sinks=False)
-            except RuntimeError as err:
-                print("\nFrom compile: unrecoverable error in value propagation:", err)
-                traceback.print_exc(file=sys.stderr)
-                error = True
+            self.schedule_evaluate(x, 0.0, sinks=False)
 
         if error:
             # show report if there was an error
@@ -596,102 +582,77 @@ class BlockDiagram(BlockDiagramMixin):
         # TODO: don't copy outputs to inputs of next block, have inputs
         # pull the value from connected inputs
 
-        self.runtime.DEBUG("state", ">>>>>>>>> t={}, x={} >>>>>>>>>>>>>>>>", t, x)
+        try:
+            self.runtime.DEBUG("state", ">>>>>>>>> t={}, x={} >>>>>>>>>>>>>>>>", t, x)
 
-        # reset all the blocks ready for the evalation
-        self.reset()
+            # reset all the blocks ready for the evalation
+            self.reset()
 
-        # split the state vector to stateful blocks
-        for b in self.blocklist:
-            if b.blockclass == "transfer":
-                x = b.setstate(x)
-
-        # split the discrete state vector to clocked blocks
-        for clock in self.clocklist:
-            clock.setstate()
-
-        self.runtime.DEBUG("propagate", "t={:.3f}", t)
-
-        for sequence, group in enumerate(self.plan):
-            # self.runtime.DEBUG('propagate', '---- sequence = ', sequence)
-
-            for b in group:
-                # ask the block for output, check for errors
-                try:
-                    if sequence == 0:
-                        # blocks called at step 0 have no inputs
-                        out = b.output(t, None, b._x)
-                    else:
-                        out = b.output(t, b.inport_values, b._x)
-                except Exception as err:
-                    # output method failed, report it
-                    print(fg("red"))
-                    print(
-                        "--Error at t={:f} when computing output of [{:s}::{:s}]".format(
-                            t, b.type, str(b)
-                        )
-                    )
-                    print()
-                    # print('  {}'.format(err))
-                    traceback.print_exc(file=sys.stderr)
-
-                    print()
-                    for i in range(b.nin):
-                        input = b.inport_value(i)
-                        print(f"Input[{i}] = {input}")
-
-                    if b.nstates > 0:
-                        print(f"Block state x = {b._x}")
-                    print(attr(0))
-                    raise RuntimeError from None
-
-                self.runtime.DEBUG("propagate", "block {:s}: output = {}", b, out)
-
-                # check that output is a list of correct length
-                if not isinstance(out, (tuple, list)):
-                    raise AssertionError(
-                        f"block {b} output {b} must be a list: {type(out)}"
-                    )
-                if len(out) != b.nout:
-                    raise AssertionError(
-                        f"block {b} output {b} has incorrect length: {len(out)} instead"
-                        f" of {b.nout}"
-                    )
-
-                # TODO check output validity once at the startq
-
-                # check it has no nan or inf values
-                if (
-                    checkfinite
-                    and isinstance(out, (int, float, np.ndarray))
-                    and not np.isfinite(out).any()
-                ):
-                    raise RuntimeError(f"block {b} output contains NaN")
-
-                # # send block outputs to all downstream connected blocks
-                # for (port, outwires) in enumerate(b.outports): # every port
-                #     value = out[port]
-                #     for w in outwires:     # every wire
-
-                #         self.DEBUG('propagate', '  [{}] = {} -->  {}[{}]', port, value, w.end.block.name, w.end.port)
-
-                #         # send value to wire
-                #         w.send(value)
-
-                #         # TODO send return status no longer needed
-                #         # TODO use common error handler in all cases above
-                b._output_values = out
-
-        if sinks:
+            # split the state vector to stateful blocks
             for b in self.blocklist:
-                if isinstance(b, SinkBlock):
-                    b.step(t, b.inport_values)
+                if b.blockclass == "transfer":
+                    x = b.setstate(x)
 
-        # gather the derivative
-        YD: np.ndarray[tuple[Any, ...], np.dtype[Any]] | Any = self.deriv(t)
+            # split the discrete state vector to clocked blocks
+            for clock in self.clocklist:
+                clock.setstate()
 
-        self.runtime.DEBUG("deriv", YD)
-        return YD
+            self.runtime.DEBUG("propagate", "t={:.3f}", t)
+
+            for sequence, group in enumerate(self.plan):
+                for b in group:
+                    inports = None if sequence == 0 else b.inport_values
+                    out = b.output_safe(t, inports, b._x)
+
+                    self.runtime.DEBUG("propagate", "block {:s}: output = {}", b, out)
+
+                    if not isinstance(out, (tuple, list)):
+                        b._raise_runtime_error(
+                            "output",
+                            AssertionError(
+                                f"block {b} output {b} must be a list: {type(out)}"
+                            ),
+                            t=t,
+                            inputs=inports,
+                            state=b._x,
+                        )
+                    if len(out) != b.nout:
+                        b._raise_runtime_error(
+                            "output",
+                            AssertionError(
+                                f"block {b} output {b} has incorrect length: {len(out)} instead of {b.nout}"
+                            ),
+                            t=t,
+                            inputs=inports,
+                            state=b._x,
+                        )
+
+                    if (
+                        checkfinite
+                        and isinstance(out, (int, float, np.ndarray))
+                        and not np.isfinite(out).any()
+                    ):
+                        b._raise_runtime_error(
+                            "output",
+                            RuntimeError(f"block {b} output contains NaN"),
+                            t=t,
+                            inputs=inports,
+                            state=b._x,
+                        )
+
+                    b._publish_output_values(out)
+
+            if sinks:
+                for b in self.blocklist:
+                    if isinstance(b, SinkBlock):
+                        b.step_safe(t, b.inport_values)
+
+            YD: np.ndarray[tuple[Any, ...], np.dtype[Any]] | Any = self.deriv(t)
+
+            self.runtime.DEBUG("deriv", YD)
+            return YD
+        except BlockRuntimeError as err:
+            self._handle_block_runtime_error(err)
 
     def schedule_generate(self) -> None:
         """
@@ -735,7 +696,7 @@ class BlockDiagram(BlockDiagramMixin):
                 if all(
                     [
                         p._sequence < sequence if p._sequence is not None else False
-                        for p in b.parents
+                        for p in b.sources
                     ]
                 ):
                     group.append(b)
@@ -790,22 +751,22 @@ class BlockDiagram(BlockDiagramMixin):
 
             file.write("\t}\n\n")
 
-        # connect them to their parents, except if a transfer block
+        # connect them to their sources, except if a transfer block
         for b in self.blocklist:
             if not b.blockclass == "transfer":
-                for p in b.parents:
+                for p in b.sources:
                     file.write('\t"{:s}" -> "{:s}"\n'.format(p.name, b.name))
 
         file.write("}\n")
 
     # ---------------------------------------------------------------------- #
 
-    def _debugger(self, simstate: Simstate = None, integrator=None):
+    def _debugger(self, simstate: SimulationState, integrator=None):
         if simstate.t_stop is not None and simstate.t < simstate.t_stop:
             return
 
         def print_output(b, t, inports, x) -> None:
-            out = b.output(t, inports, x)
+            out = b.output_safe(t, inports, x)
             if len(out) == 1:
                 print(f"{b.name} = {out[0]}")
             else:
@@ -826,7 +787,7 @@ class BlockDiagram(BlockDiagramMixin):
         while True:
             try:
                 t = simstate.t
-                cmd: str = input(f"(bdsim, t={t:.6f}) ")
+                cmd: str = input(f"(t={t:10.6f}) bsdsim> ")
 
                 if len(cmd) == 0:
                     continue
@@ -842,9 +803,12 @@ class BlockDiagram(BlockDiagramMixin):
                             if b.nout > 0:
                                 print_output(b, t, b.inport_values, b._x)
                 elif cmd[0] == "i":
-                    print(
-                        f"status={integrator.status}, dt={integrator.step_size:.4g}, nfev={integrator.nfev}"
-                    )
+                    if integrator is None:
+                        print("no active integrator")
+                    else:
+                        print(
+                            f"status={integrator.status}, dt={integrator.step_size:.4g}, nfev={integrator.nfev}"
+                        )
                 elif cmd[0] == "s":
                     # step
                     break
@@ -947,7 +911,7 @@ class BlockDiagram(BlockDiagramMixin):
                     typ = type(value).__name__
                     if isinstance(value, np.ndarray):
                         typ += "{:s}.{:s}".format(str(value.shape), str(value.dtype))
-                    src_name = source.block.name
+                    src_name = source.block.name or ""
                     if source.block.nout > 1:
                         src_name += f"[{source.port}]"
                     if port == 0:
@@ -1016,8 +980,8 @@ class BlockDiagram(BlockDiagramMixin):
             border="thin",
         )
         for wire in self.wirelist:
-            start: str = "{:d}[{:d}]".format(wire.start.block.id, wire.start.port)
-            end: str = "{:d}[{:d}]".format(wire.end.block.id, wire.end.port)
+            start: str = "{}[{}]".format(wire.start.block.id, wire.start.port)
+            end: str = "{}[{}]".format(wire.end.block.id, wire.end.port)
 
             try:
                 value = wire.end.block.inport_value(wire.end.port)
@@ -1043,6 +1007,7 @@ class BlockDiagram(BlockDiagramMixin):
             for b in self.blocklist:
                 if b.blockclass == "clocked":
                     c = b._clock
+                    assert c is not None
                     table.row(b.id, str(b), c.name, c.T, c.offset)
             table.print(**kwargs)
 
@@ -1070,54 +1035,51 @@ class BlockDiagram(BlockDiagramMixin):
 
     # ---------------------------------------------------------------------- #
 
-    def _error_handler(self, where, block) -> NoReturn:
-        # called from except clause
+    def _handle_block_runtime_error(self, err: BlockRuntimeError) -> NoReturn:
+        cause = err.__cause__ if isinstance(err.__cause__, Exception) else err.cause
 
-        import traceback
-        import types
-
-        t, v, tb = sys.exc_info()  # get the exception
-
-        print(fg("red"))  # red text
-
-        # print the traceback
-        print(f"[{block.type} block: {block.name}.{where}]: exception {t.__name__}")
-        print(f"  {v}\n")
-        traceback.print_tb(tb)
-
-        # print all block inputs
-        print()
-        for i in range(block.nin):
-            input = block.inport_value(i)
+        print(fg("red"))
+        if err.t is None:
+            print(f"[{err.block.type} block: {err.block.name}.{err.operation}]")
+        else:
             print(
-                f"input {i} from"
-                f" {block.parents[i].name} [{input.__class__.__name__}]"
+                f"[{err.block.type} block: {err.block.name}.{err.operation}] at t={err.t:f}"
             )
-            print("  ", input)
 
-        print(attr(0))  # default text
+        if cause.__traceback__ is not None:
+            frame = traceback.extract_tb(cause.__traceback__)[-1]
+            print(f'  File "{frame.filename}", line {frame.lineno}, in {frame.name}')
+            if frame.line is not None:
+                print(f"    {frame.line.strip()}")
+        print(
+            "  " + "".join(traceback.format_exception_only(type(cause), cause)).strip()
+        )
 
-        # traceback = err[2]
-        # back_frame = traceback.tb_frame.f_back
+        if isinstance(err.inputs, (list, tuple)) and len(err.inputs) > 0:
+            print()
+            for i, value in enumerate(err.inputs):
+                print(f"Input[{i}] = {value}")
+        elif err.inputs is not None:
+            print()
+            print(f"Inputs = {err.inputs}")
 
-        # back_tb = types.TracebackType(tb_next=None,
-        #                           tb_frame=back_frame,
-        #                           tb_lasti=back_frame.f_lasti,
-        #                           tb_lineno=back_frame.f_lineno)
-        # raise RuntimeError('Fatal failure').with_traceback(back_tb)
+        if err.state is not None:
+            print()
+            print(f"State = {err.state}")
+
+        print(attr(0))
         raise RuntimeError("Fatal failure") from None
 
     def getstate0(self) -> np.ndarray[tuple[Any, ...], np.dtype[Any]] | Any:
         # get the state from each stateful block
-        x0: np.ndarray[tuple[Any, ...], np.dtype[Any]] = np.array([])
-        for b in self.blocklist:
-            try:
+        try:
+            x0: np.ndarray[tuple[Any, ...], np.dtype[Any]] = np.array([])
+            for b in self.blocklist:
                 if b.blockclass == "transfer":
-                    x0 = np.r_[x0, b.getstate0()]
-                # print('x0', x0)
-            except:
-                self._error_handler("getstate0", b)
-        return x0
+                    x0 = np.r_[x0, b.getstate0_safe()]
+            return x0
+        except BlockRuntimeError as err:
+            self._handle_block_runtime_error(err)
 
     def reset(self) -> None:
         """
@@ -1127,11 +1089,11 @@ class BlockDiagram(BlockDiagramMixin):
         Invokes the `reset` method on all blocks.
 
         """
-        for b in self.blocklist:
-            try:
-                b.reset()
-            except:
-                self._error_handler("reset", b)
+        try:
+            for b in self.blocklist:
+                b.reset_safe()
+        except BlockRuntimeError as err:
+            self._handle_block_runtime_error(err)
 
     def step(self, t) -> None:
         """
@@ -1154,12 +1116,12 @@ class BlockDiagram(BlockDiagramMixin):
 
         # TODO could be done by output method, even if no outputs
 
-        for b in self.blocklist:
-            try:
+        try:
+            for b in self.blocklist:
                 if isinstance(b, SinkBlock):
-                    b.step(t, b.inport_values)
-            except:
-                self._error_handler("step", b)
+                    b.step_safe(t, b.inport_values)
+        except BlockRuntimeError as err:
+            self._handle_block_runtime_error(err)
 
     def deriv(self, t) -> np.ndarray[tuple[Any, ...], np.dtype[Any]] | Any:
         """
@@ -1170,29 +1132,40 @@ class BlockDiagram(BlockDiagramMixin):
         :param simstate: simulation state, defaults to None
         :type simstate: SimState, optional
         """
-        YD: np.ndarray[tuple[Any, ...], np.dtype[Any]] = np.array([])
-        for b in self.blocklist:
-            if b.blockclass == "transfer":
-                try:
-                    yd = b.deriv(t, b.inport_values, b._x)
+        try:
+            YD: np.ndarray[tuple[Any, ...], np.dtype[Any]] = np.array([])
+            for b in self.blocklist:
+                if b.blockclass == "transfer":
+                    yd = b.deriv_safe(t, b.inport_values, b._x)
                     if not isinstance(yd, np.ndarray):
-                        raise AssertionError(f"deriv: block {b} did not return ndarray")
+                        b._raise_runtime_error(
+                            "deriv",
+                            AssertionError(f"deriv: block {b} did not return ndarray"),
+                            t=t,
+                            inputs=b.inport_values,
+                            state=b._x,
+                        )
                     if yd.ndim != 1 or yd.shape[0] != b.nstates:
-                        raise AssertionError(
-                            f"deriv: block {b} returns wrong shape {yd.shape}, should"
-                            f" be ({b.nstates},)"
+                        b._raise_runtime_error(
+                            "deriv",
+                            AssertionError(
+                                f"deriv: block {b} returns wrong shape {yd.shape}, should be ({b.nstates},)"
+                            ),
+                            t=t,
+                            inputs=b.inport_values,
+                            state=b._x,
                         )
                     YD = np.r_[YD, yd]
-                except:
-                    self._error_handler("deriv", b)
-        return YD
+            return YD
+        except BlockRuntimeError as err:
+            self._handle_block_runtime_error(err)
 
-    def start(self, simstate=None) -> None:
+    def start(self, simstate: SimulationState) -> None:
         """
         Start all blocks
 
-        :param simstate: simulation state, defaults to None
-        :type simstate: SimState, optional
+        :param simstate: simulation state
+        :type simstate: SimState
 
         Inform all blocks that BlockDiagram execution is about to start by
         invoking their ``start`` method and passing the ``state`` object.  Used
@@ -1205,16 +1178,28 @@ class BlockDiagram(BlockDiagramMixin):
         for c in self.clocklist:
             try:
                 c.start(simstate)
-            except:
-                self._error_handler("start_clocked", c)
+            except Exception as err:
+                print(fg("red"))
+                print(f"[clock: {c.name}.start]")
+                if err.__traceback__ is not None:
+                    frame = traceback.extract_tb(err.__traceback__)[-1]
+                    print(
+                        f'  File "{frame.filename}", line {frame.lineno}, in {frame.name}'
+                    )
+                    if frame.line is not None:
+                        print(f"    {frame.line.strip()}")
+                print(
+                    "  "
+                    + "".join(traceback.format_exception_only(type(err), err)).strip()
+                )
+                print(attr(0))
+                raise RuntimeError("Fatal failure") from None
 
-        # safe wrapper for block starting, does error handling
-        for b in self.blocklist:
-            # print('starting block', b)
-            try:
-                b.start(simstate)
-            except:
-                self._error_handler("start", b)
+        try:
+            for b in self.blocklist:
+                b.start_safe(simstate)
+        except BlockRuntimeError as err:
+            self._handle_block_runtime_error(err)
 
     def initialstate(self) -> None:
         for b in self.blocklist:
@@ -1236,11 +1221,11 @@ class BlockDiagram(BlockDiagramMixin):
 
         .. note:: if ``graphics`` is False, Graphics blocks are not called
         """
-        for b in self.blocklist:
-            try:
-                b.done(block=block)
-            except:
-                self._error_handler("done", b)
+        try:
+            for b in self.blocklist:
+                b.done_safe(block=block)
+        except BlockRuntimeError as err:
+            self._handle_block_runtime_error(err)
 
     def dotfile(self, filename, shapes=None) -> None:
         """
@@ -1276,9 +1261,7 @@ class BlockDiagram(BlockDiagramMixin):
         :seealso: :meth:`showgraph`
         """
         if shapes is None:
-            shapes: dict[str, str] = dict(
-                source="record", sink="Mrecord", graphics="Mrecord"
-            )
+            shapes = dict(source="record", sink="Mrecord", graphics="Mrecord")
 
         if isinstance(filename, str):
             file: io.TextIOWrapper = open(filename, "w")
@@ -1363,7 +1346,7 @@ class BlockDiagram(BlockDiagramMixin):
         for b in self.blocklist:
             print("Block {:s}:".format(b.name))
             print("  inputs:  ", b.inport_values)
-            print("  outputs: ", b.output(t, b.inport_values, b._x))
+            print("  outputs: ", b.output_safe(t, b.inport_values, b._x))
 
 
 if __name__ == "__main__":  # pragma: no cover
@@ -1388,7 +1371,7 @@ if __name__ == "__main__":  # pragma: no cover
 
     bd.compile()  # check the diagram
     bd.report()  # list all blocks and wires
-    bd.run(5, debug=True)
+    bd.run(5, debug=True)  # type: ignore[attr-defined]
 
     # from pathlib import Path
 

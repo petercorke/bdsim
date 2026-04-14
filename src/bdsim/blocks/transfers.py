@@ -8,7 +8,7 @@ Transfer blocks:
 """
 
 from __future__ import annotations
-from typing import Any, Optional, Union, Callable, Callable
+from typing import Any, Callable
 
 
 import numpy as np
@@ -16,13 +16,13 @@ import scipy.signal
 import math
 from math import sin, cos, atan2, sqrt, pi
 import matplotlib.pyplot as plt
-import spatialmath.base as smb
-from spatialmath import SE3, Twist3
+import spatialmath.base as smb  # type: ignore[import-not-found]
+from spatialmath import SE3, Twist3  # type: ignore[import-not-found]
 
 from bdsim.blockdiagram import BlockDiagram
 from bdsim.components import TransferBlock, SubsystemBlock
 
-Vector1D = Union[int, float, tuple[float, ...], list[float], np.ndarray]
+Vector1D = int | float | tuple[float, ...] | list[float] | np.ndarray
 
 
 class Integrator(TransferBlock):
@@ -87,10 +87,10 @@ class Integrator(TransferBlock):
         self,
         x0: Vector1D = 0,
         gain: float = 1.0,
-        min: Optional[Vector1D] = None,
-        max: Optional[Vector1D] = None,
-        enable: Optional[Callable[..., Any]] = None,
-        **blockargs,
+        min: Vector1D | None = None,
+        max: Vector1D | None = None,
+        enable: Callable[[float, list[Any], np.ndarray], bool] | None = None,
+        **blockargs: Any,
     ) -> None:
         """
         :param x0: Initial state, defaults to 0
@@ -113,6 +113,8 @@ class Integrator(TransferBlock):
         else:
             x0 = smb.getvector(x0)
 
+        x0 = np.array(x0, dtype=float).reshape(-1)
+
         nstates = x0.shape[0]
 
         super().__init__(nstates=nstates, **blockargs)
@@ -132,14 +134,14 @@ class Integrator(TransferBlock):
             raise ValueError("enable must be callable")
         # print("nstates", self.nstates)
 
-    def output(self, t, u, x):
+    def output(self, t: float, u: list[Any], x: np.ndarray) -> list[Any]:
         return [self.gain * x]
 
-    def deriv(self, t, u, x):
+    def deriv(self, t: float, u: list[Any], x: np.ndarray) -> np.ndarray:
         xd = smb.getvector(u[0])
         if self.enable is not None and not self.enable(t, u, x):
             # if enable function returns False then integrator output is jammed at zero
-            self._x: np.ndarray[tuple[int], np.dtype[np.float64]] = np.zeros(x.shape)
+            self._x = np.zeros_like(x, dtype=float)
             return np.zeros(x.shape)
 
         # stop integration if state is outside limits
@@ -187,7 +189,7 @@ class PoseIntegrator(TransferBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, x0: Optional[SE3 | Twist3] = None, **blockargs) -> None:
+    def __init__(self, x0: SE3 | Twist3 | None = None, **blockargs: Any) -> None:
         r"""
         :param x0: Initial pose, defaults to null
         :type x0: SE3, Twist3, optional
@@ -208,10 +210,10 @@ class PoseIntegrator(TransferBlock):
 
         self._x0 = _x0
 
-    def output(self, t, u, x):
+    def output(self, t: float, u: list[Any], x: np.ndarray) -> list[SE3]:
         return [Twist3(x).SE3(1)]
 
-    def deriv(self, t, u, x):
+    def deriv(self, t: float, u: list[Any], x: np.ndarray) -> Any:
         return u[0]
 
 
@@ -272,8 +274,8 @@ class LTI_SS(TransferBlock):
         A: np.ndarray,
         B: np.ndarray,
         C: np.ndarray,
-        x0: Optional[np.ndarray] = None,
-        **blockargs,
+        x0: np.ndarray | None = None,
+        **blockargs: Any,
     ) -> None:
         r"""
         :param N: numerator coefficients, defaults to 1
@@ -314,15 +316,15 @@ class LTI_SS(TransferBlock):
         else:
             self._x0 = x0
 
-    def output(self, t, u, x):
+    def output(self, t: float, u: list[Any], x: np.ndarray) -> list[Any]:
         return list(self.C @ x)
 
-    def deriv(self, t, u, x):
+    def deriv(self, t: float, u: list[Any], x: np.ndarray) -> np.ndarray:
         # Reshape u and x to (N,1), i.e. column vectors, so
         # no problems with broadcasting between A@x and B@u
         x = x.reshape(-1, 1)
-        u = np.array(u).reshape(-1, 1)
-        xd = self.A @ x + self.B @ u
+        u_arr = np.array(u).reshape(-1, 1)
+        xd = self.A @ x + self.B @ u_arr
         return xd.flatten()
 
 
@@ -386,8 +388,8 @@ class LTI_SISO(LTI_SS):
         self,
         N: Vector1D = 1,
         D: Vector1D = [1, 1],
-        x0: Optional[np.ndarray] = None,
-        **blockargs,
+        x0: np.ndarray | None = None,
+        **blockargs: Any,
     ) -> None:
         r"""
         :param N: numerator coefficients, defaults to 1
@@ -403,8 +405,8 @@ class LTI_SISO(LTI_SS):
         """
         # print('in SISO constscutor')
 
-        N = smb.getvector(N)
-        D = smb.getvector(D)
+        N = np.array(smb.getvector(N), dtype=float).reshape(-1)
+        D = np.array(smb.getvector(D), dtype=float).reshape(-1)
 
         n = len(D) - 1
         nn = len(N)
@@ -453,7 +455,7 @@ class LTI_SISO(LTI_SS):
             print("B=", B)
             print("C=", C)
 
-        def change_param(self, param, newvalue) -> None:
+        def change_param(self, param: str, newvalue: np.ndarray) -> None:
             if param == "num":
                 self.num = newvalue
             elif param == "den":
@@ -515,9 +517,9 @@ class Deriv(SubsystemBlock):
     def __init__(
         self,
         alpha: float,
-        x0: Optional[Vector1D] = None,
-        y0: Optional[Vector1D] = None,
-        **blockargs,
+        x0: Vector1D | None = None,
+        y0: Vector1D | None = None,
+        **blockargs: Any,
     ) -> None:
         r"""
         :param alpha: filter pole in units of rad/s
@@ -535,7 +537,7 @@ class Deriv(SubsystemBlock):
         bd = self.bd.runtime.blockdiagram()
 
         if y0 is not None:
-            y0 = smb.getvector(y0)
+            y0 = np.array(smb.getvector(y0), dtype=float).reshape(-1)
             x0 = -y0 * alpha
 
         integrator = bd.INTEGRATOR(x0=x0)
@@ -640,9 +642,9 @@ class PID(SubsystemBlock):
         D: float = 0.0,
         I: float = 0.0,
         D_pole: float = 1,
-        I_limit: Optional[Union[float, tuple[float, ...], list[float]]] = None,
-        I_band: Optional[float] = None,
-        **blockargs,
+        I_limit: float | tuple[float, ...] | list[float] | None = None,
+        I_band: float | None = None,
+        **blockargs: Any,
     ) -> None:
         r"""
         :param type: the controller type, defaults to "PID"
@@ -683,7 +685,7 @@ class PID(SubsystemBlock):
 
             if I_band is not None:
 
-                def ifunc(t, u, x):
+                def ifunc(t: float, u: list[Any], x: Any) -> bool:
                     return abs(u[0]) < I_band
 
                 # integrator block
@@ -750,7 +752,7 @@ if __name__ == "__main__":
 
     import matplotlib.pyplot as plt
 
-    plt.plot(out.t, out.x)
+    plt.plot(out["t"], out["x"])
     sim.done(bd, block=True)
 
     # sim = BDSim()

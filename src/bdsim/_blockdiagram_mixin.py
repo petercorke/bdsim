@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from math import inf
-from typing import Any, Optional, Union, Callable, Literal
+from typing import Any, Callable, Literal
 import numpy as np
 from spatialmath import SE3, Twist3
 
-Vector1D = Union[int, float, tuple[float, ...], list[float], np.ndarray]
+Vector1D = int | float | tuple[float, ...] | list[float] | np.ndarray
 
 class BlockDiagramMixin:
     """
@@ -25,7 +25,7 @@ class BlockDiagramMixin:
         """
 :param camera: Camera model, defaults to None
 :type camera: Camera subclass, optional
-:param blockargs: |BlockOptions|
+:param blockargs: Additional options for the block, passed as a dictionary
 :type blockargs: dict
 :return: a CAMERA block
 :rtype: Camera instance
@@ -42,7 +42,7 @@ Camera projection model.
         ...
 
     # bdsim.blocks.functions.Clip
-    def CLIP(self, min: 'Vector1D' = -inf, max: 'Vector1D' = inf, **blockargs) -> Any:
+    def CLIP(self, min: 'Vector1D' = -inf, max: 'ArrayLike' = inf, **blockargs: 'Any') -> Any:
         """
 :param min: Minimum value, defaults to -math.inf
 :type min: scalar or array_like, optional
@@ -72,7 +72,7 @@ Camera projection model.
         ...
 
     # bdsim.blocks.connections.DeMux
-    def DEMUX(self, nout=1, **blockargs) -> Any:
+    def DEMUX(self, nout: 'int' = 1, **blockargs: 'Any') -> Any:
         """
 :param nout: number of outputs, defaults to 1
 :type nout: int, optional
@@ -82,7 +82,7 @@ Camera projection model.
         ...
 
     # bdsim.blocks.transfers.Deriv
-    def DERIV(self, alpha: 'float', x0: 'Optional[Vector1D]' = None, y0: 'Optional[Vector1D]' = None, **blockargs) -> Any:
+    def DERIV(self, alpha: 'float', x0: 'Vector1D | None' = None, y0: 'Vector1D | None' = None, **blockargs: 'Any') -> Any:
         """
 :param alpha: filter pole in units of rad/s
 :type alpha: float
@@ -104,7 +104,7 @@ Camera projection model.
         ...
 
     # bdsim.blocks.connections.Dict
-    def DICT(self, keys, **blockargs) -> Any:
+    def DICT(self, keys: 'list[str]', **blockargs: 'Any') -> Any:
         """
 :param keys: list of dictionary keys
 :type keys: list
@@ -114,7 +114,7 @@ Camera projection model.
         ...
 
     # bdsim.blocks.discrete.DIntegrator
-    def DINTEGRATOR(self, clock, x0=0, gain=1.0, min=None, max=None, **blockargs) -> Any:
+    def DINTEGRATOR(self, clock: 'Clock', x0: 'int | float | np.ndarray' = 0, gain: 'float' = 1.0, min: 'float | np.ndarray | None' = None, max: 'float | np.ndarray | None' = None, **blockargs: 'Any') -> Any:
         """
 :param clock: clock source
 :type clock: Clock
@@ -132,7 +132,7 @@ Camera projection model.
         ...
 
     # bdsim.blocks.discrete.DPoseIntegrator
-    def DPOSEINTEGRATOR(self, clock, x0=None, **blockargs) -> Any:
+    def DPOSEINTEGRATOR(self, clock: 'Clock', x0: 'SE3 | Twist3 | np.ndarray | None' = None, **blockargs: 'Any') -> Any:
         """
 :param clock: clock source
 :type clock: Clock
@@ -154,7 +154,7 @@ Camera projection model.
 :type frame: str, optional
 :param method: pose estimation algorithm one of: 'iterative' [default], 'epnp', 'p3p', 'ap3p', 'ippe', 'ippe-square'
 :type method: str, optional
-:param blockargs: |BlockOptions|
+:param blockargs: Additional options for the block, passed as a dictionary
 :type blockargs: dict
 :return: a ESTPOSE_P block
 :rtype: EstPose_p instance
@@ -172,7 +172,7 @@ Camera projection model.
         ...
 
     # bdsim.blocks.functions.Function
-    def FUNCTION(self, func: 'Optional[Callable]' = None, nin: 'int' = 1, nout: 'int' = 1, persistent: 'bool' = False, fargs: 'Optional[list]' = None, fkwargs: 'Optional[dict]' = None, **blockargs) -> Any:
+    def FUNCTION(self, func: 'Callable[..., Any] | list[Callable[..., Any]] | tuple[Callable[..., Any], ...] | None' = None, nin: 'int' = 1, nout: 'int' = 1, persistent: 'bool' = False, fargs: 'list[Any] | None' = None, fkwargs: 'dict[str, Any] | None' = None, **blockargs: 'Any') -> Any:
         """
 :param func: function or lambda, or list thereof, defaults to None
 :type func: callable or sequence of callables, optional
@@ -192,7 +192,7 @@ Camera projection model.
         ...
 
     # bdsim.blocks.functions.Gain
-    def GAIN(self, K: 'Union[int, float, np.ndarray]' = 1, premul: 'bool' = False, **blockargs) -> Any:
+    def GAIN(self, K: 'int | float | np.ndarray' = 1, premul: 'bool' = False, **blockargs: 'Any') -> Any:
         """
 :param K: The gain value, defaults to 1
 :type K: scalar, array_like
@@ -221,7 +221,7 @@ Create a block that plots image plane coordinates.
 :type watch: bool, optional
 :param init: function to initialize the graphics, defaults to None
 :type init: callable, optional
-:param blockargs: |BlockOptions|
+:param blockargs: Additional options for the block, passed as a dictionary
 :type blockargs: dict
 :return: An IMAGEPLANE block
 :rtype: ImagePlane instance
@@ -236,18 +236,11 @@ Examples::
     SCOPE(styles='k--')
     SCOPE(styles=[{'color': 'blue'}, {'color': 'red', 'linestyle': '--'}])
     SCOPE(styles=['k', 'r--'])
-
-
-.. figure:: ../../figs/Figure_1.png
-   :width: 500px
-   :alt: example of generated graphic
-
-   Example of scope display.
         """
         ...
 
     # bdsim.blocks.connections.Index
-    def INDEX(self, index=[], **blockargs) -> Any:
+    def INDEX(self, index: 'list[int] | slice | str | None' = None, **blockargs: 'Any') -> Any:
         """
 Index an iterable signal.
 
@@ -259,7 +252,7 @@ Index an iterable signal.
         ...
 
     # bdsim.blocks.connections.InPort
-    def INPORT(self, nout=1, **blockargs) -> Any:
+    def INPORT(self, nout: 'int' = 1, **blockargs: 'Any') -> Any:
         """
 :param nout: Number of output ports, defaults to 1
 :type nout: int, optional
@@ -269,7 +262,7 @@ Index an iterable signal.
         ...
 
     # bdsim.blocks.transfers.Integrator
-    def INTEGRATOR(self, x0: 'Optional[Vector1D]' = None, gain: 'float' = 1.0, min: 'Optional[Vector1D]' = None, max: 'Optional[Vector1D]' = None, enable: 'Optional[Callable[..., Any]]' = None, **blockargs) -> Any:
+    def INTEGRATOR(self, x0: 'Vector1D' = 0, gain: 'float' = 1.0, min: 'Vector1D | None' = None, max: 'Vector1D | None' = None, enable: 'Callable[[float, list[Any], np.ndarray], bool] | None' = None, **blockargs: 'Any') -> Any:
         """
 :param x0: Initial state, defaults to 0
 :type x0: array_like, optional
@@ -287,7 +280,7 @@ Index an iterable signal.
         ...
 
     # bdsim.blocks.functions.Interpolate
-    def INTERPOLATE(self, x: 'Optional[Union[list, tuple, np.ndarray]]' = None, y: 'Optional[Union[list, tuple, np.ndarray]]' = None, xy: 'Optional[np.ndarray]' = None, time: 'bool' = False, kind: 'str' = 'linear', **blockargs) -> Any:
+    def INTERPOLATE(self, x: 'list[Any] | tuple[Any, ...] | np.ndarray | None' = None, y: 'list[Any] | tuple[Any, ...] | np.ndarray | None' = None, xy: 'np.ndarray | None' = None, time: 'bool' = False, kind: 'str' = 'linear', **blockargs: 'Any') -> Any:
         """
 :param x: x-values of function, defaults to None
 :type x: array_like, shape (N,) optional
@@ -315,7 +308,7 @@ Index an iterable signal.
         ...
 
     # bdsim.blocks.connections.Item
-    def ITEM(self, item, **blockargs) -> Any:
+    def ITEM(self, item: 'Any', **blockargs: 'Any') -> Any:
         """
 :param item: name of dictionary item
 :type item: str
@@ -324,24 +317,8 @@ Index an iterable signal.
         """
         ...
 
-    # bdsim.blocks.transfers.LTI_SISO
-    def LTI_SISO(self, N: 'Vector1D' = 1, D: 'Vector1D' = [1, 1], x0: 'Optional[np.ndarray]' = None, **blockargs) -> Any:
-        """
-:param N: numerator coefficients, defaults to 1
-:type N: array_like, optional
-:param D: denominator coefficients, defaults to [1,1]
-:type D: array_like, optional
-:param x0: initial states, defaults to None
-:type x0: array_like, optional
-:param blockargs: |BlockOptions|
-:type blockargs: dict
-:return: LTI_SISO block
-:rtype: ``LTI_SISO`` instance
-        """
-        ...
-
     # bdsim.blocks.transfers.LTI_SS
-    def LTI_SS(self, A: 'np.ndarray', B: 'np.ndarray', C: 'np.ndarray', x0: 'Optional[np.ndarray]' = None, **blockargs) -> Any:
+    def LTI_SS(self, A: 'np.ndarray', B: 'np.ndarray', C: 'np.ndarray', x0: 'np.ndarray | None' = None, **blockargs: 'Any') -> Any:
         """
 :param N: numerator coefficients, defaults to 1
 :type N: array_like, optional
@@ -355,7 +332,7 @@ Index an iterable signal.
         ...
 
     # bdsim.blocks.connections.Mux
-    def MUX(self, nin=1, **blockargs) -> Any:
+    def MUX(self, nin: 'int' = 1, **blockargs: 'Any') -> Any:
         """
 :param nin: Number of input ports, defaults to 1
 :type nin: int, optional
@@ -377,7 +354,7 @@ Index an iterable signal.
         ...
 
     # bdsim.blocks.sinks.Null
-    def NULL(self, nin=1, **blockargs) -> Any:
+    def NULL(self, nin: 'int' = 1, **blockargs: 'Any') -> Any:
         """
 :param nin: number of input ports, defaults to 1
 :type nin: int, optional
@@ -387,7 +364,7 @@ Index an iterable signal.
         ...
 
     # bdsim.blocks.connections.OutPort
-    def OUTPORT(self, nin=1, **blockargs) -> Any:
+    def OUTPORT(self, nin: 'int' = 1, **blockargs: 'Any') -> Any:
         """
 :param nin: Number of input ports, defaults to 1
 :type nin: int, optional
@@ -397,7 +374,7 @@ Index an iterable signal.
         ...
 
     # bdsim.blocks.transfers.PID
-    def PID(self, type: 'str' = 'PID', P: 'float' = 0.0, D: 'float' = 0.0, I: 'float' = 0.0, D_pole: 'float' = 1, I_limit: 'Optional[Union[float, tuple[float, ...], list[float]]]' = None, I_band: 'Optional[float]' = None, **blockargs) -> Any:
+    def PID(self, type: 'str' = 'PID', P: 'float' = 0.0, D: 'float' = 0.0, I: 'float' = 0.0, D_pole: 'float' = 1, I_limit: 'float | tuple[float, ...] | list[float] | None' = None, I_band: 'float | None' = None, **blockargs: 'Any') -> Any:
         """
 :param type: the controller type, defaults to "PID"
 :type type: str, optional
@@ -419,7 +396,7 @@ Index an iterable signal.
         ...
 
     # bdsim.blocks.sources.Piecewise
-    def PIECEWISE(self, *args: 'list[tuple[float, float]]', seq: 'Optional[list[tuple[float, float]]]' = None, **blockargs) -> Any:
+    def PIECEWISE(self, *args: 'tuple[float, float]', seq: 'list[tuple[float, float]] | None' = None, **blockargs: 'Any') -> Any:
         """
 :param seq: sequence of time, value pairs
 :type seq: list of 2-element iterables
@@ -429,7 +406,7 @@ Index an iterable signal.
         ...
 
     # bdsim.blocks.transfers.PoseIntegrator
-    def POSEINTEGRATOR(self, x0: 'Optional[SE3 | Twist3]' = None, **blockargs) -> Any:
+    def POSEINTEGRATOR(self, x0: 'SE3 | Twist3 | None' = None, **blockargs: 'Any') -> Any:
         """
 :param x0: Initial pose, defaults to null
 :type x0: SE3, Twist3, optional
@@ -438,36 +415,8 @@ Index an iterable signal.
         """
         ...
 
-    # bdsim.blocks.spatial.Pose_inverse
-    def POSE_INVERSE(self, **blockargs) -> Any:
-        """
-:param blockargs: |BlockOptions|
-:type blockargs: dict
-        """
-        ...
-
-    # bdsim.blocks.spatial.Pose_postmul
-    def POSE_POSTMUL(self, pose=None, **blockargs) -> Any:
-        """
-:param pose: pose to apply
-:type pose: SO2, SE2, SO3 or SE3
-:param blockargs: |BlockOptions|
-:type blockargs: dict
-        """
-        ...
-
-    # bdsim.blocks.spatial.Pose_premul
-    def POSE_PREMUL(self, pose=None, **blockargs) -> Any:
-        """
-:param pose: pose to apply
-:type pose: SO2, SE2, SO3 or SE3
-:param blockargs: |BlockOptions|
-:type blockargs: dict
-        """
-        ...
-
     # bdsim.blocks.functions.Pow
-    def POW(self, p: 'Union[int, float]' = 1, matrix: 'bool' = False, **blockargs) -> Any:
+    def POW(self, p: 'int | float' = 1, matrix: 'bool' = False, **blockargs: 'Any') -> Any:
         """
 :param p: The exponent value, defaults to 1
 :type p: scalar
@@ -479,7 +428,7 @@ Index an iterable signal.
         ...
 
     # bdsim.blocks.sinks.Print
-    def PRINT(self, fmt=None, file=None, **blockargs) -> Any:
+    def PRINT(self, fmt: 'str | None' = None, file: 'TextIO | None' = None, **blockargs: 'Any') -> Any:
         """
 :param fmt: Format string, defaults to None
 :type fmt: str, optional
@@ -493,7 +442,7 @@ Index an iterable signal.
         ...
 
     # bdsim.blocks.functions.Prod
-    def PROD(self, ops: 'str' = '**', matrix: 'bool' = False, **blockargs) -> Any:
+    def PROD(self, ops: 'str' = '**', matrix: 'bool' = False, **blockargs: 'Any') -> Any:
         """
 :param ops: operations associated with input ports, accepted characters: * or /, defaults to '**'
 :type ops: str, optional
@@ -507,7 +456,7 @@ Index an iterable signal.
         ...
 
     # bdsim.blocks.sources.Ramp
-    def RAMP(self, T=1, off=0, slope=1, **blockargs) -> Any:
+    def RAMP(self, T: 'float' = 1, off: 'float' = 0, slope: 'float' = 1, **blockargs: 'Any') -> Any:
         """
 :param T: time of ramp start, defaults to 1
 :type T: float, optional
@@ -521,7 +470,7 @@ Index an iterable signal.
         ...
 
     # bdsim.blocks.displays.Scope
-    def SCOPE(self, nin: int = 1, vector: Union[int, list[int], None] = None, styles=None, stairs=False, scale: Union[Literal['auto'], float] = 'auto', labels=None, grid=True, watch=False, title: Optional[str] = None, loc='best', **blockargs) -> Any:
+    def SCOPE(self, nin: int = 1, vector: int | list[int] | None = None, styles: str | dict | list[str | dict] | None = None, stairs: bool = False, scale: Literal['auto'] | float = 'auto', labels: list[str] | None = None, grid: bool | list | tuple = True, watch: bool = False, title: str | None = None, loc: str = 'best', **blockargs: Any) -> Any:
         """
 :param nin: number of inputs, defaults to 1 or if given, the length of
             style vector
@@ -551,31 +500,13 @@ Index an iterable signal.
         ...
 
     # bdsim.blocks.displays.ScopeXY
-    def SCOPEXY(self, style=None, scale='auto', aspect='equal', labels=['X', 'Y'], init=None, nin=2, **blockargs) -> Any:
+    def SCOPEXY(self, style: str | dict | None = None, scale: Literal['auto'] | list | tuple = 'auto', aspect: str = 'equal', labels: list[str] = ['X', 'Y'], init: Callable | None = None, nin: int = 2, **blockargs: Any) -> Any:
         """
 :param style: line style, defaults to None
 :type style: optional str or dict
 :param scale: fixed y-axis scale or defaults to 'auto'
 :type scale: str or array_like(2) or array_like(4)
 :param labels: axis labels (xlabel, ylabel), defaults to ["X","Y"]
-:type labels: 2-element tuple or list
-:param init: function to initialize the graphics, defaults to None
-:type init: callable
-:param blockargs: |BlockOptions|
-:type blockargs: dict
-        """
-        ...
-
-    # bdsim.blocks.displays.ScopeXY1
-    def SCOPEXY1(self, indices=[0, 1], **blockargs) -> Any:
-        """
-:param indices: indices of elements to select from block input vector, defaults to [0,1]
-:type indices: array_like(2)
-:param style: line style
-:type style: optional str or dict
-:param scale: fixed y-axis scale or defaults to 'auto'
-:type scale: str or array_like(2) or array_like(4)
-:param labels: axis labels (xlabel, ylabel)
 :type labels: 2-element tuple or list
 :param init: function to initialize the graphics, defaults to None
 :type init: callable
@@ -607,7 +538,7 @@ Index an iterable signal.
         ...
 
     # bdsim.blocks.sources.Step
-    def STEP(self, T=1, off=0, on=1, **blockargs) -> Any:
+    def STEP(self, T: 'float' = 1, off: 'float' = 0, on: 'float' = 1, **blockargs: 'Any') -> Any:
         """
 :param T: time of step, defaults to 1
 :type T: float, optional
@@ -621,7 +552,7 @@ Index an iterable signal.
         ...
 
     # bdsim.blocks.sinks.Stop
-    def STOP(self, func=None, **blockargs) -> Any:
+    def STOP(self, func: 'Callable[[Any], object] | None' = None, **blockargs: 'Any') -> Any:
         """
 :param func: evaluate stop condition, defaults to None
 :type func: callable, optional
@@ -631,7 +562,7 @@ Index an iterable signal.
         ...
 
     # bdsim.blocks.connections.SubSystem
-    def SUBSYSTEM(self, subsys, nin=1, nout=1, **blockargs) -> Any:
+    def SUBSYSTEM(self, subsys: 'str | BlockDiagram', nin: 'int' = 1, nout: 'int' = 1, **blockargs: 'Any') -> Any:
         """
 :param subsys: Subsystem as either a filename or a ``BlockDiagram`` instance
 :type subsys: str or BlockDiagram
@@ -647,7 +578,7 @@ Index an iterable signal.
         ...
 
     # bdsim.blocks.functions.Sum
-    def SUM(self, signs: 'str' = '++', mode: 'Optional[str]' = None, **blockargs) -> Any:
+    def SUM(self, signs: 'str' = '++', mode: 'str | None' = None, **blockargs: 'Any') -> Any:
         """
 :param signs: signs associated with input ports, accepted characters: + or -, defaults to "++"
 :type signs: str, optional
@@ -676,15 +607,7 @@ second element wrapped to the range [-π, π).
         ...
 
     # bdsim.blocks.sources.Time
-    def TIME(self, value=None, **blockargs) -> Any:
-        """
-:param blockargs: |BlockOptions|
-:type blockargs: dict
-        """
-        ...
-
-    # bdsim.blocks.spatial.Transform_vector
-    def TRANSFORM_VECTOR(self, **blockargs) -> Any:
+    def TIME(self, value: 'Any | None' = None, **blockargs: 'Any') -> Any:
         """
 :param blockargs: |BlockOptions|
 :type blockargs: dict
@@ -708,7 +631,7 @@ second element wrapped to the range [-π, π).
 :type depth: float or ndarray
 :param depthest: Use depth estimation, defaults to True
 :type depthest: bool, optional
-:param blockargs: |BlockOptions|
+:param blockargs: Additional options for the block, passed as a dictionary
 :type blockargs: dict
 :return: a VISJAC_P block
 :rtype: Visjac_p instance
@@ -718,7 +641,7 @@ If the Jacobian
         ...
 
     # bdsim.blocks.sinks.Watch
-    def WATCH(self, **blockargs) -> Any:
+    def WATCH(self, **blockargs: 'Any') -> Any:
         """
 :param nin: number of input ports, defaults to 1
 :type nin: int, optional
@@ -728,7 +651,7 @@ If the Jacobian
         ...
 
     # bdsim.blocks.sources.WaveForm
-    def WAVEFORM(self, wave='square', freq=1, unit='Hz', phase=0, amplitude=1, offset=0, min=None, max=None, duty=0.5, **blockargs) -> Any:
+    def WAVEFORM(self, wave: 'str' = 'square', freq: 'float' = 1, unit: 'str' = 'Hz', phase: 'float' = 0, amplitude: 'float' = 1, offset: 'float' = 0, min: 'float | None' = None, max: 'float | None' = None, duty: 'float' = 0.5, **blockargs: 'Any') -> Any:
         """
 :param wave: type of waveform to generate, one of: 'sine', 'square' [default], 'triangle'
 :type wave: str, optional
@@ -754,7 +677,7 @@ If the Jacobian
         ...
 
     # bdsim.blocks.discrete.ZOH
-    def ZOH(self, clock, x0=0, **blockargs) -> Any:
+    def ZOH(self, clock: 'Clock', x0: 'int | float | np.ndarray' = 0, **blockargs: 'Any') -> Any:
         """
 :param clock: clock source
 :type clock: Clock
