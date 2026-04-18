@@ -351,8 +351,8 @@ class BDSim(Runner):
         --simtime T[,dt]     simtime    (10,)     simulation time
         --verbose, -v        verbose    False     be verbose
         --quiet, -q          quiet      False     suppress reports
-        -o                   outfile    None      output pickled simulation results to bd.out
-        --out OUTFILE        outfile    None      file to save pickled simulation results
+        -o, --out [FILE]     outfile    None      output pickled simulation results (default: bd.out)
+        -j, --json [FILE]    jsonfile   None      output JSON simulation results (default: bd.json)
         --set P, -s P        setparam   []        override block parameter using ``P=block:param=value``
         --global G           setglob    []        override global parameter using ``G=var=value``
         ===================  =========  ========  ===========================================
@@ -796,11 +796,11 @@ class BDSim(Runner):
                 out["y" + str(i)] = np.array(simstate.plist[i])
             out["ynames"] = watchnamelist
 
-            # the command line options -o or --out saves results as a pickle file
-            #  -o defaults to bd.out
-            #  --out FILE allows the filename to be specified
+            # command line output options:
+            #  -o/--out [FILE] writes pickle (default filename: bd.out)
+            #  -j/--json [FILE] writes JSON (default filename: bd.json)
             #
-            # we can visualize the output file by
+            # we can visualize a pickle output file by
             #
             #   % python -mpickle bd.out
             #   t      = ndarray:float64 (123,)
@@ -813,6 +813,12 @@ class BDSim(Runner):
 
                 if not simstate.options.quiet:
                     print("simulation results pickled --> ", simstate.options.outfile)
+
+            if simstate.options.jsonfile is not None:
+                out.dump_json(simstate.options.jsonfile)
+
+                if not simstate.options.quiet:
+                    print("simulation results JSON --> ", simstate.options.jsonfile)
 
             # pause until all graphics blocks close
 
@@ -1768,6 +1774,7 @@ class Options(OptionsBase):
             "simtime": None,
             "blocks": False,
             "outfile": None,
+            "jsonfile": None,
             "quiet": False,
             "setparam": [],
             "setglob": [],
@@ -1945,16 +1952,21 @@ class Options(OptionsBase):
             )
             parser.add_argument(
                 "-o",
-                action="store_const",
+                "--out",
+                nargs="?",
                 const="bd.out",
+                metavar="FILE",
                 dest="outfile",
-                help="output pickled simulation results to bd.out",
+                help="output pickled simulation results (default filename: bd.out)",
             )
             parser.add_argument(
-                "--out",
-                type=str,
-                dest="outfile",
-                help="file to save pickled simulation results",
+                "-j",
+                "--json",
+                nargs="?",
+                const="bd.json",
+                metavar="FILE",
+                dest="jsonfile",
+                help="output simulation results as JSON (default filename: bd.json)",
             )
             parser.add_argument(
                 "--set",

@@ -158,8 +158,28 @@ class BDStruct:
         with open(outfile, "wb") as f:
             pickle.dump(self, f)
 
+    def dump_json(self, outfile) -> None:
+        import json
+        import numpy as np
 
-class OptionsBase:
+        class _Encoder(json.JSONEncoder):
+            def default(self, obj):
+                if isinstance(obj, np.ndarray):
+                    return obj.tolist()
+                if isinstance(obj, np.generic):
+                    return obj.item()
+                return super().default(obj)
+
+        def _to_dict(v):
+            if isinstance(v, BDStruct):
+                return {k: _to_dict(val) for k, val in v.items()}
+            return v
+
+        with open(outfile, "w") as f:
+            json.dump(_to_dict(self), f, cls=_Encoder, indent=2)
+
+
+class OptionsBase(UserDict):
     """A struct like object for option handling
 
     Maintains an internal dict to keep options and their values.  Some of these
