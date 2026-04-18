@@ -55,6 +55,13 @@ class SourceBlockTest(unittest.TestCase):
         self.assertEqual(len(out), 1)
         nt.assert_array_almost_equal(out[0], np.r_[1, 2, 3])
 
+    def test_time(self):
+
+        block = Time()
+        self.assertEqual(block.test_output(t=0.0)[0], 0.0)
+        self.assertEqual(block.test_output(t=1.25)[0], 1.25)
+        self.assertEqual(block.test_output(t=10)[0], 10)
+
     def test_waveform_sine(self):
 
         block = WaveForm(wave="sine")

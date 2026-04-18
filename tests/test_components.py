@@ -1,5 +1,7 @@
 import unittest
 import numpy.testing as nt
+import tempfile
+import os
 from bdsim.components import *
 from bdsim.blocks import *
 from bdsim import BDSim, TimeQ, BlockDiagram
@@ -203,8 +205,8 @@ class ClockTest(unittest.TestCase):
 
         c._x = np.r_[5, 6]
         c.setstate()
-        nt.assert_almost_equal(block1._x, np.r_[5])
-        nt.assert_almost_equal(block2._x, np.r_[6])
+        nt.assert_almost_equal(block1.x, np.r_[5])
+        nt.assert_almost_equal(block2.x, np.r_[6])
 
         nt.assert_almost_equal(c.getstate(0.0), np.r_[13, 14])
 
@@ -224,6 +226,10 @@ class ClockTest(unittest.TestCase):
 
 
 class StructTest(unittest.TestCase):
+    def test_struct_empty_str(self):
+        x = BDStruct()
+        self.assertEqual(str(x), "")
+
     def test_struct(self):
 
         x = BDStruct()
@@ -286,6 +292,27 @@ class StructTest(unittest.TestCase):
         s = BDStruct(a=2, c=1, b=3)
         self.assertEqual(len(s), 3)
 
+    def test_add_and_array_and_dump(self):
+        s = BDStruct(name="arr")
+        s.add("arr", np.array([1, 2, 3]))
+        txt = str(s)
+        self.assertIn("ndarray", txt)
+
+        with tempfile.NamedTemporaryFile(delete=False) as f:
+            path = f.name
+        try:
+            s.dump(path)
+            self.assertTrue(os.path.exists(path))
+            self.assertGreater(os.path.getsize(path), 0)
+        finally:
+            if os.path.exists(path):
+                os.unlink(path)
+
+    def test_getattr_private_name_raises(self):
+        s = BDStruct(a=1)
+        with self.assertRaises(AttributeError):
+            s.__getattr__("_private")
+
 
 class OptionTest(unittest.TestCase):
     def test_init(self):
@@ -330,6 +357,25 @@ class OptionTest(unittest.TestCase):
         opt.set(foo=3)
         self.assertEqual(opt.foo, 3)
         self.assertEqual(opt.bar, "hello")
+
+    def test_items_str_repr(self):
+        opt = OptionsBase({}, dict(alpha=1, beta="x"))
+        items = dict(opt.items())
+        self.assertEqual(items["alpha"], 1)
+        s = str(opt)
+        self.assertIn("alpha", s)
+        self.assertIn("beta", s)
+        self.assertEqual(repr(opt), s)
+
+    def test_getattr_missing_raises(self):
+        opt = OptionsBase({}, dict(foo=1))
+        with self.assertRaises(AttributeError):
+            _ = opt.does_not_exist
+
+    def test_getattr_private_missing_raises(self):
+        opt = OptionsBase({}, dict(foo=1))
+        with self.assertRaises(AttributeError):
+            opt.__getattr__("_does_not_exist")
 
 
 # ---------------------------------------------------------------------------------------#

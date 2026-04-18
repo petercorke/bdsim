@@ -52,6 +52,20 @@ class FunctionBlockTest(unittest.TestCase):
         out = block.test_output(np.array([[5, 6], [7, 8]]))
         nt.assert_array_almost_equal(out[0], np.array([[23, 34], [31, 46]]))
 
+    def test_pow(self):
+
+        block = Pow(3)
+        self.assertEqual(block.test_output(2)[0], 8)
+
+        block = Pow(2)
+        nt.assert_array_almost_equal(block.test_output(np.r_[2, 3])[0], np.r_[4, 9])
+
+        block = Pow(3, matrix=True)
+        nt.assert_array_almost_equal(
+            block.test_output(np.array([[2, 0], [0, 3]]))[0],
+            np.array([[8, 0], [0, 27]]),
+        )
+
     def test_sum(self):
 
         block = Sum("++")

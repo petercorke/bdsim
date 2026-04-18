@@ -134,6 +134,29 @@ class SinkBlockTest(unittest.TestCase):
         with self.assertRaises(TypeError):
             b = Stop(func=3)
 
+    def test_stop_registers_crossing_detector_when_supported(self):
+        from bdsim.run_sim import BDSimState
+
+        b = Stop(lambda x: x - 0.2)
+        simstate = BDSimState()
+        b.start(simstate)
+
+        self.assertEqual(len(simstate.crossing_detectors), 1)
+        detector, source = simstate.crossing_detectors[0]
+        self.assertIs(source, b)
+        self.assertTrue(getattr(detector, "terminal"))
+        self.assertEqual(getattr(detector, "direction"), 1.0)
+
+    def test_stop_event_handler_sets_simstate_stop(self):
+        class State:
+            def __init__(self):
+                self.stop = None
+
+        b = Stop()
+        s = State()
+        b.event_handler(0.0, None, s)
+        self.assertIs(s.stop, b)
+
     def test_watch(self):
         from bdsim import BDSim
 
@@ -145,9 +168,47 @@ class SinkBlockTest(unittest.TestCase):
         bd.connect(b1, b2, b3)
         bd.compile()
 
-        # bd.start()
-        # state is not yet setup
-        # bd.state.watchlist
+        simstate = b3.test_start()
+        self.assertEqual(len(simstate.watchlist), 1)
+        self.assertIs(simstate.watchlist[0], b3.sources[0])
+        self.assertEqual(simstate.watchnamelist, [str(b3.sources[0])])
+
+    def test_event_registers_detector(self):
+        from bdsim.run_sim import BDSimState
+
+        direction_expectation = {"^": 1.0, "+": 1.0, "v": -1.0, "-": -1.0}
+        for direction, expected in direction_expectation.items():
+            with self.subTest(direction=direction):
+                b = Event(direction, lambda blk: None)
+                simstate = BDSimState()
+                b.start(simstate)
+
+                self.assertEqual(len(simstate.crossing_detectors), 1)
+                detector, source = simstate.crossing_detectors[0]
+                self.assertIs(source, b)
+                self.assertTrue(getattr(detector, "terminal"))
+                self.assertEqual(getattr(detector, "direction"), expected)
+
+    def test_event_handler_args_and_kwargs(self):
+        called = {}
+
+        def callback(block, *args, **kwargs):
+            called["block"] = block
+            called["args"] = args
+            called["kwargs"] = kwargs
+
+        b = Event("+", callback, fargs=(1, 2), fkwargs={"k": 3})
+        b.event_handler(0.0, None, None)
+
+        self.assertIs(called["block"], b)
+        self.assertEqual(called["args"], (1, 2))
+        self.assertEqual(called["kwargs"], {"k": 3})
+
+    def test_event_constructor_validation(self):
+        with self.assertRaises(ValueError):
+            Event("x", lambda blk: None)
+        with self.assertRaises(TypeError):
+            Event("+", 3)
 
 
 # --------------------------------------------------------------------------------------#
