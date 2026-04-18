@@ -7,6 +7,7 @@ import warnings
 import unicodedata
 import heapq
 import itertools
+from collections import UserDict
 
 import matplotlib.pyplot as plt
 
@@ -63,7 +64,7 @@ def _fixname(s):
         return normalized
 
 
-class BDStruct:
+class BDStruct(UserDict):
     """
     A simple data container object that allows items to be added by attribute or by
     index.
@@ -84,25 +85,45 @@ class BDStruct:
     """
 
     def __init__(self, name="BDStruct2", **kwargs) -> None:
-        self._name: str = name
+        super().__init__()
+        object.__setattr__(self, "_name", str(name))
         for key, value in kwargs.items():
-            # self.__dict__[key] = value
-            setattr(self, key, value)
+            self.data[key] = value
 
     def add(self, name, value) -> None:
-        # self.__dict__[name] = value
-        setattr(self, name, value)
+        self.data[name] = value
 
     def __repr__(self) -> str:
         return str(self)
 
     def __len__(self) -> int:
-        return len([k for k in self.__dict__.keys() if not k.startswith("_")])
+        return len(self.data)
 
     def __getitem__(self, key):
-        return getattr(self, key)
+        return self.data[key]
 
     def __setitem__(self, key, value) -> None:
+        self.data[key] = value
+
+    def __getattr__(self, name):
+        if name.startswith("_"):
+            raise AttributeError(name)
+        try:
+            return self.data[name]
+        except KeyError:
+            pass
+        # Allow attribute access to dot-prefixed hidden fields, e.g. out.stats → out[".stats"]
+        try:
+            return self.data["." + name]
+        except KeyError as err:
+            raise AttributeError(name) from err
+
+    def __setattr__(self, name, value) -> None:
+        if name.startswith("_") or name == "data":
+            object.__setattr__(self, name, value)
+        else:
+            self.data[name] = value
+
     def __repr__(self) -> str:
         visible = [k for k in self.data.keys() if not k.startswith(".")]
         return f"BDStruct({self._name}, fields: {', '.join(visible)})"
@@ -190,60 +211,62 @@ class OptionsBase(UserDict):
     a sequence of ``option=value`` arguments.
     """
 
-    def __init__(self, readonly={}, args={}) -> None:
-        self._readonly = list(readonly)
-        self._dict = {**args, **readonly}
+    def __init__(self, readonly=None, args=None) -> None:
+        readonly = readonly or {}
+        args = args or {}
+        super().__init__({**args, **readonly})
+        object.__setattr__(self, "_readonly", list(readonly))
 
     def items(self):
-        return self._dict.items()
+        return self.data.items()
 
     def __getattr__(self, name):
         try:
             if name.startswith("_"):
                 return self.__dict__[name]
             else:
-                return self.__dict__["_dict"][name]
+                return self.data[name]
         except KeyError:
             raise AttributeError(name)
 
     def __setattr__(self, name, value) -> None:
-        if name.startswith("_"):
-            self.__dict__[name] = value
+        if name.startswith("_") or name == "data":
+            object.__setattr__(self, name, value)
         else:
-            dict = self.__dict__["_dict"]
             if name not in self._readonly:
-                dict[name] = value
-                self.__dict__["_dict"] = self.sanity(dict)
+                updated = dict(self.data)
+                updated[name] = value
+                self.data = self.sanity(updated)
 
     def set(self, **changes) -> None:
-        changes = self.sanity(changes)
-        dict = self._dict
+        changes = self.sanity(dict(changes))
+        current = dict(self.data)
         for name, value in changes.items():
             if name not in self._readonly:
-                dict[name] = value
-            elif dict[name] != value:
+                current[name] = value
+            elif current[name] != value:
                 print(
                     f"attempt to programmatically set option {name}={value} is"
-                    f" overriden by command line option {name}={dict[name]}, ignored"
+                    f" overriden by command line option {name}={current[name]}, ignored"
                 )
 
-        self._dict = dict
+        self.data = current
 
     def copy(self):
         new = self.__class__.__new__(self.__class__)
-        new._readonly = list(self._readonly)
-        new._dict = dict(self._dict)
+        object.__setattr__(new, "_readonly", list(self._readonly))
+        UserDict.__init__(new, dict(self.data))
         return new
 
     def sanity(self, options):
         return options
 
     def __str__(self) -> str:
-        dict = self._dict
-        maxwidth: int = max([len(option) for option in dict.keys()])
-        options = sorted(dict.keys())
+        values = self.data
+        maxwidth: int = max([len(option) for option in values.keys()])
+        options = sorted(values.keys())
         return "\n".join(
-            [f"{option.ljust(maxwidth)}: {dict[option]}" for option in options]
+            [f"{option.ljust(maxwidth)}: {values[option]}" for option in options]
         )
 
     def __repr__(self) -> str:
