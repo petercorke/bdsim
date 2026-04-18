@@ -287,7 +287,7 @@ class BDRealTime(BDSim):
                 try:
                     # evaluate the block diagram
                     te_0: float = time.time()
-                    bd.schedule_evaluate([], t)
+                    bd.evaluate([], t)
 
                     # record the ports on the watchlist
                     for i, p in enumerate(simstate.watchlist):

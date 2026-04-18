@@ -518,7 +518,7 @@ class BlockDiagram(BlockDiagramMixin):
 
         if not subsystem and evaluate:
             # run all the blocks for one step
-            self.schedule_evaluate(x, 0.0, sinks=False)
+            self.evaluate(x, 0.0, sinks=False)
 
         if error:
             # show report if there was an error
@@ -580,11 +580,11 @@ class BlockDiagram(BlockDiagramMixin):
 
     # ---------------------------------------------------------------------- #
 
-    def schedule_evaluate(
+    def evaluate(
         self, x, t, checkfinite=True, sinks=True, simstate=None
     ) -> np.ndarray[tuple[Any, ...], np.dtype[Any]] | Any:
         """
-        Evaluate all blocks in the network
+        Evaluate all blocks in the network using the compiled execution schedule
 
         :param x: state
         :type x: ndarray

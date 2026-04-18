@@ -950,7 +950,7 @@ class BDSim(Runner):
                     simstate.t = t
                     simstate.count += 1
                     eval_start = time.time()
-                    yd = bd.schedule_evaluate(y, t, sinks=False, simstate=simstate)
+                    yd = bd.evaluate(y, t, sinks=False, simstate=simstate)
                     eval_end = time.time()
                     simstate.bdtime += eval_end - eval_start
                     return yd
