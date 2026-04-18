@@ -547,3 +547,12 @@ class BDRealTime(BDSim):
         # print(f't sdev {math.sqrt((tsum2 - tsum**2/n)/(n-1)*1000):.1f} ms')
         # print(f't max {tmax*1000:.1f} ms')
         # print(attr(0))
+
+
+if __name__ == "__main__":
+    try:
+        from ._selftest import run_module_test
+    except ImportError:
+        from bdsim._selftest import run_module_test
+
+    raise SystemExit(run_module_test(__file__))

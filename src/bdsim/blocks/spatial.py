@@ -220,7 +220,15 @@ if sm:
 # ------------------------------------------------------------------------ #
 
 if __name__ == "__main__":  # pragma: no cover
-
     from pathlib import Path
+    import subprocess
+    import sys
 
-    exec(open(Path(__file__).parent.parent.parent / "tests" / "test_spatial.py").read())
+    root = Path(__file__).resolve().parents[3]
+    test_file = root / "tests" / "blocks" / f"test_blocks_{Path(__file__).stem.lower()}.py"
+
+    if not test_file.exists():
+        print(f"No module unit tests found for {Path(__file__).name}: {test_file}")
+        raise SystemExit(0)
+
+    raise SystemExit(subprocess.call([sys.executable, "-m", "pytest", str(test_file)]))

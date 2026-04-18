@@ -486,17 +486,9 @@ from bdsim.block import (  # noqa: E402, F401
 # print(c.next(0), c1.next(0))
 
 if __name__ == "__main__":
-    # opt = OptionsBase(dict(foo=1, bar='hello'))
-    # print(opt.foo)
-    # print(opt.bar)
-    # opt.set(foo=3)
-    # print(opt.foo)
+    try:
+        from ._selftest import run_module_test
+    except ImportError:
+        from bdsim._selftest import run_module_test
 
-    # from bdsim.blocks.functions import Sum
-    # print(Sum.parameters())
-
-    import bdsim
-
-    sim = bdsim.BDSim()  # create simulator
-
-    print(sim.moduledicts)
+    raise SystemExit(run_module_test(__file__))

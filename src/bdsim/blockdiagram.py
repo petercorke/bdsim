@@ -1350,29 +1350,9 @@ class BlockDiagram(BlockDiagramMixin):
 
 
 if __name__ == "__main__":  # pragma: no cover
-    import bdsim
+    try:
+        from ._selftest import run_module_test
+    except ImportError:
+        from bdsim._selftest import run_module_test
 
-    bd = bdsim.BlockDiagram()
-
-    # define the blocks
-    demand = bd.STEP(T=1, pos=(0, 0), name="demand")
-    sum = bd.SUM("+-", pos=(1, 0))
-    gain = bd.GAIN(10, pos=(1.5, 0))
-    plant = bd.LTI_SISO(0.5, [2, 1], name="plant", pos=(3, 0))
-    # scope = bd.SCOPE(pos=(4,0), styles=[{'color': 'blue'}, {'color': 'red', 'linestyle': '--'})
-    scope = bd.SCOPE(nin=2, styles=["k", "r--"], pos=(4, 0))
-
-    # connect the blocks
-    bd.connect(demand, sum[0], scope[1])
-    bd.connect(plant, sum[1])
-    bd.connect(sum, gain)
-    bd.connect(gain, plant)
-    bd.connect(plant, scope[0])
-
-    bd.compile()  # check the diagram
-    bd.report()  # list all blocks and wires
-    bd.run(5, debug=True)  # type: ignore[attr-defined]
-
-    # from pathlib import Path
-
-    # exec(open(Path(__file__).parent.absolute() / "test_blockdiagram.py").read())
+    raise SystemExit(run_module_test(__file__))

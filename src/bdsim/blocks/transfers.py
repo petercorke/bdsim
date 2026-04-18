@@ -733,42 +733,18 @@ class PID(SubsystemBlock):
         self.subsystem = subsystem
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
+    from pathlib import Path
+    import subprocess
+    import sys
 
-    from bdsim import BDSim
+    root = Path(__file__).resolve().parents[3]
+    test_file = (
+        root / "tests" / "blocks" / f"test_blocks_{Path(__file__).stem.lower()}.py"
+    )
 
-    sim = BDSim(hold=False)
-    bd: BlockDiagram = sim.blockdiagram()
-    deriv = bd.DERIV(alpha=0.1, verbose=True)
+    if not test_file.exists():
+        print(f"No module unit tests found for {Path(__file__).name}: {test_file}")
+        raise SystemExit(0)
 
-    c = bd.WAVEFORM(wave="sine", freq=1)
-    s = bd.SCOPE(2)
-    bd.connect(c, deriv, s[0])
-    bd.connect(deriv, s[1])
-
-    bd.compile()
-    bd.report_summary()
-    out = sim.run(bd, 10, dt=0.02)
-
-    import matplotlib.pyplot as plt
-
-    plt.plot(out["t"], out["x"])
-    sim.done(bd, block=True)
-
-    # sim = BDSim()
-    # bd = sim.blockdiagram()
-    # pid = bd.PID(P=2, D=0.01, verbose=True)
-
-    # c = bd.CONSTANT(1)
-    # s = bd.SCOPE()
-    # bd.connect(c, pid)
-    # bd.connect(pid, s)
-
-    # bd.compile(report=True)
-    # bd.report()
-
-    # from pathlib import Path
-
-    # exec(
-    #     open(Path(__file__).parent.parent.parent / "tests" / "test_transfers.py").read()
-    # )
+    raise SystemExit(subprocess.call([sys.executable, "-m", "pytest", str(test_file)]))

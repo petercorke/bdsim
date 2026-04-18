@@ -1961,3 +1961,12 @@ class Options(OptionsBase):
             options["graphics"] = True
 
         return options
+
+
+if __name__ == "__main__":
+    try:
+        from ._selftest import run_module_test
+    except ImportError:
+        from bdsim._selftest import run_module_test
+
+    raise SystemExit(run_module_test(__file__))
