@@ -102,7 +102,9 @@ class BDStruct:
         return getattr(self, key)
 
     def __setitem__(self, key, value) -> None:
-        setattr(self, key, value)
+    def __repr__(self) -> str:
+        visible = [k for k in self.data.keys() if not k.startswith(".")]
+        return f"BDStruct({self._name}, fields: {', '.join(visible)})"
 
     def __str__(self) -> str:
         """
@@ -112,18 +114,16 @@ class BDStruct:
         :rtype: str
 
         The struct is rendered with one line per element, and substructures
-        are indented.
+        are indented.  Keys whose names start with '.' are hidden (internal
+        metadata fields).
         """
         rows = []
 
-        if len(self) == 0:
+        visible = {k: v for k, v in self.data.items() if not k.startswith(".")}
+        if len(visible) == 0:
             return ""
-        maxwidth: int = max([len(key) for key in self.__dict__.keys()])
-        # if self.name is not None:
-        #     rows.append(self.name + '::')
-        for k, v in sorted(self.__dict__.items(), key=lambda x: x[0]):
-            if k.startswith("_"):
-                continue
+        maxwidth: int = max([len("_name")] + [len(key) for key in visible.keys()])
+        for k, v in sorted(visible.items(), key=lambda x: x[0]):
             if isinstance(v, BDStruct):
                 rows.append("{:s}.{:s}::".format(k.ljust(maxwidth), v._name))
                 rows.append(
@@ -246,7 +246,7 @@ class OptionsBase(UserDict):
         )
 
     def __repr__(self) -> str:
-        return str(self)
+        return f"{self.__class__.__name__}({', '.join(f'{k}={v}' for k, v in self.data.items())})"
 
 
 class TimeQ:
@@ -262,15 +262,17 @@ class TimeQ:
         self.dirty = False
 
     def __len__(self) -> int:
-        return len(self.q)
-
-    def __str__(self) -> str:
-        if len(self) == 0:
-            return f"TimeQ: len={len(self)}"
-        return f"TimeQ: len={len(self)}, first out {self.q[0]}"
+        return len(self._heap)
 
     def __repr__(self) -> str:
-        return "\n".join(str(t) for t in self.q)
+        if len(self) == 0:
+            return f"TimeQ(len=0)"
+        first = self._heap[0]
+        return f"TimeQ(len={len(self)}, nextout={first[2]} @ t={first[0]})"
+
+    def __str__(self) -> str:
+        items = [(t, block) for t, _, block in sorted(self._heap)]
+        return "\n".join(f"{t:10.6f}: {block}" for t, block in items)
 
     def push(self, value) -> None:
         self.q.append(value)
@@ -441,13 +443,10 @@ class Clock:
             i += n
 
     def __repr__(self) -> str:
-        return str(self)
-
-    def __str__(self) -> str:
-        s: str = f"{self.name}: T={self.T} sec"
+        s = f"Clock(name={self.name}, T={self.T}"
         if self.offset != 0:
             s += f", offset={self.offset}"
-        s += f", clocking {len(self.blocklist)} blocks"
+        s += f", blocks={len(self.blocklist)})"
         return s
 
     def getstate0(self) -> np.ndarray[tuple[Any, ...], np.dtype[Any]]:

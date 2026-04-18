@@ -118,18 +118,6 @@ class BlockDiagram(BlockDiagramMixin):
     def __repr__(self) -> str:
         return f"BlockDiagram(name={self.name}, nblocks={len(self.blocklist)}, nwires={len(self.wirelist)})"
 
-    def __str__(self) -> str:
-        # return str(self) + " with {:d} blocks and {:d} wires".format(
-        #     len(self.blocklist), len(self.wirelist)
-        # )
-        s = ""
-        for block in self.blocklist:
-            s += repr(block) + "\n"
-        s += "\n"
-        for wire in self.wirelist:
-            s += str(wire) + "\n"
-        return s.lstrip("\n")
-
     def ls(self) -> None:
         for k, v in self.blocknames.items():
             print("{:12s}: ".format(k), ", ".join(v))
@@ -144,26 +132,7 @@ class BlockDiagram(BlockDiagramMixin):
         self.clocklist.append(clock)
         return clock
 
-    def add_block(self, block) -> None:
-        if block.name in self.blocknames:
-            raise ValueError("block {} already added".format(block.name))
-        block.id = len(self.blocklist)
-        if block.name is None:
-            i: int = self.blockcounter[block.type]
-            self.blockcounter[block.type] += 1
-            block.name = "{:s}.{:d}".format(block.type, i)
-        block._bd = self
-        self.blocklist.append(block)  # add to the list of available blocks
-        if block in self.blocknames:
-            raise Warning(f"block name {block} is not unique")
-        self.blocknames[block.name] = block
-
-    def add_wire(self, wire, name=None):
-        wire.id = len(self.wirelist)
-        wire.name = name
-        # just add wire to the list, gets instantiated at compile time
-        # when add_output_wire and add_input_wire are called on the blocks
-        return self.wirelist.append(wire)
+    # ---------------------------------------------------------------------- #
 
     def connect(self, start: Port, *ends: Port, name=None) -> None:
         """Connect blocks
@@ -510,7 +479,8 @@ class BlockDiagram(BlockDiagramMixin):
         x: np.ndarray[tuple[Any, ...], np.dtype[Any]] | Any = self.getstate0()
 
         for clock in self.clocklist:
-            clock._x = clock.getstate0()
+            # Keep compile-time one-shot evaluation stateless with respect to Clock.
+            clock.setstate(simstate=None)
 
         if report:
             self.report()
@@ -624,7 +594,7 @@ class BlockDiagram(BlockDiagramMixin):
 
             # split the discrete state vector to clocked blocks
             for clock in self.clocklist:
-                clock.setstate()
+                clock.setstate(simstate)
 
             self.runtime.DEBUG("propagate", "t={:.3f}", t)
 
@@ -922,7 +892,7 @@ class BlockDiagram(BlockDiagramMixin):
         first = True
         legend = None
         for b in sorted(self.blocklist, key=sortfunc):
-            name = str(b)
+            name = b.name
             if isinstance(b, EventSource):
                 name += "@"
                 legend = "Note: @ = event source"
@@ -995,7 +965,7 @@ class BlockDiagram(BlockDiagramMixin):
             border="thin",
         )
         for b in self.blocklist:
-            table.row(b.id, str(b), b.nin, b.nout, b.nstates, b.ndstates, b.type)
+            table.row(b.id, b.name, b.nin, b.nout, b.nstates, b.ndstates, b.type)
         table.print(**kwargs)
 
         # print all the wires
@@ -1058,7 +1028,7 @@ class BlockDiagram(BlockDiagramMixin):
         )
 
         for sequence, group in enumerate(self.plan):
-            table.row(sequence, ", ".join([str(b) for b in group]))
+            table.row(sequence, ", ".join([b.name for b in group]))
 
         table.print(**kwargs)
 
