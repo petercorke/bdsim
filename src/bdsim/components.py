@@ -414,8 +414,8 @@ class Clock:
         self.blocklist = []
         self.bd: BlockDiagram | None = None
 
-        self.x = []  # discrete state vector numpy.ndarray
-        self.t = []
+        self.x = []  # deprecated runtime log storage (kept for compatibility)
+        self.t = []  # deprecated runtime log storage (kept for compatibility)
         self.tick = 0
         self.timer = None
         self._x = np.array([])
@@ -431,6 +431,14 @@ class Clock:
 
     def add_block(self, block) -> None:
         self.blocklist.append(block)
+
+    def _assign_state_slices(self) -> None:
+        """Assign each clocked block its slice into this clock's state vector."""
+        i = 0
+        for b in self.blocklist:
+            n = int(getattr(b, "ndstates", 0))
+            b._clock_state_slice = slice(i, i + n)
+            i += n
 
     def __repr__(self) -> str:
         return str(self)
@@ -450,12 +458,46 @@ class Clock:
             # print('x0', x0)
         return x0
 
+    def _ensure_runtime(self, simstate: SimulationState) -> None:
+        if self not in simstate.clock_state:
+            simstate.clock_state[self] = self.getstate0()
+        if self not in simstate.clock_ticks:
+            simstate.clock_ticks[self] = 1
+        simstate.clock_tlog.setdefault(self, [])
+        simstate.clock_xlog.setdefault(self, [])
+
+    def _set_runtime_state(
+        self,
+        x: np.ndarray[tuple[Any, ...], np.dtype[Any]],
+        simstate: SimulationState | None = None,
+    ) -> None:
+        if simstate is not None:
+            self._ensure_runtime(simstate)
+            simstate.clock_state[self] = np.array(x)
+        else:
+            # Compile-time/evaluation fallback where no SimulationState is available.
+            self._x = np.array(x)
+
+    def _get_runtime_state(
+        self, simstate: SimulationState | None = None
+    ) -> np.ndarray[tuple[Any, ...], np.dtype[Any]]:
+        if simstate is not None:
+            self._ensure_runtime(simstate)
+            return simstate.clock_state[self]
+        return self.getstate0()
+
+    def getlog(self, simstate: SimulationState | None = None) -> tuple[list, list]:
+        if simstate is None:
+            return self.t, self.x
+        self._ensure_runtime(simstate)
+        return simstate.clock_tlog[self], simstate.clock_xlog[self]
+
     def getstate(self, t) -> np.ndarray[tuple[Any, ...], np.dtype[Any]]:
 
         x: np.ndarray[tuple[Any, ...], np.dtype[Any]] = np.array([])
         for b in self.blocklist:
             # update dstate
-            xb = b.next(t, b.inputs, b._x)
+            xb = b.next(t, b.inputs, b.x)
             x = np.r_[x, xb.flatten()]
 
         return x

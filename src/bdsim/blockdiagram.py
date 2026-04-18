@@ -631,7 +631,7 @@ class BlockDiagram(BlockDiagramMixin):
             for sequence, group in enumerate(self.plan):
                 for b in group:
                     inports = None if sequence == 0 else b.inport_values
-                    out = b.output_safe(t, inports, b._x)
+                    out = b.output_safe(t, inports, b.x)
 
                     self.runtime.DEBUG("propagate", "block {:s}: output = {}", b, out)
 
@@ -643,7 +643,7 @@ class BlockDiagram(BlockDiagramMixin):
                             ),
                             t=t,
                             inputs=inports,
-                            state=b._x,
+                            state=b.x,
                         )
                     if len(out) != b.nout:
                         b._raise_runtime_error(
@@ -653,7 +653,7 @@ class BlockDiagram(BlockDiagramMixin):
                             ),
                             t=t,
                             inputs=inports,
-                            state=b._x,
+                            state=b.x,
                         )
 
                     if (
@@ -666,7 +666,7 @@ class BlockDiagram(BlockDiagramMixin):
                             RuntimeError(f"block {b} output contains NaN"),
                             t=t,
                             inputs=inports,
-                            state=b._x,
+                            state=b.x,
                         )
 
                     b._publish_output_values(out)
@@ -811,7 +811,7 @@ class BlockDiagram(BlockDiagramMixin):
         if self.debug_watch is not None:
             t = simstate.t
             for b in self.debug_watch:
-                print_output(b, t, b.inport_values, b._x)
+                print_output(b, t, b.inport_values, b.x)
 
         while True:
             try:
@@ -826,11 +826,11 @@ class BlockDiagram(BlockDiagramMixin):
                     if len(cmd) > 1:
                         id = int(cmd[1:])
                         b = self.blocklist[id]
-                        print_output(b, t, b.inport_values, b._x)
+                        print_output(b, t, b.inport_values, b.x)
                     else:
                         for b in self.blocklist:
                             if b.nout > 0:
-                                print_output(b, t, b.inport_values, b._x)
+                                print_output(b, t, b.inport_values, b.x)
                 elif cmd[0] == "i":
                     if integrator is None:
                         print("no active integrator")
@@ -1165,14 +1165,14 @@ class BlockDiagram(BlockDiagramMixin):
             YD: np.ndarray[tuple[Any, ...], np.dtype[Any]] = np.array([])
             for b in self.blocklist:
                 if b.blockclass == "transfer":
-                    yd = b.deriv_safe(t, b.inport_values, b._x)
+                    yd = b.deriv_safe(t, b.inport_values, b.x)
                     if not isinstance(yd, np.ndarray):
                         b._raise_runtime_error(
                             "deriv",
                             AssertionError(f"deriv: block {b} did not return ndarray"),
                             t=t,
                             inputs=b.inport_values,
-                            state=b._x,
+                            state=b.x,
                         )
                     if yd.ndim != 1 or yd.shape[0] != b.nstates:
                         b._raise_runtime_error(
@@ -1182,7 +1182,7 @@ class BlockDiagram(BlockDiagramMixin):
                             ),
                             t=t,
                             inputs=b.inport_values,
-                            state=b._x,
+                            state=b.x,
                         )
                     YD = np.r_[YD, yd]
             return YD
@@ -1233,7 +1233,7 @@ class BlockDiagram(BlockDiagramMixin):
     def initialstate(self) -> None:
         for b in self.blocklist:
             if b.blockclass in ("transfer", "clocked"):
-                b._x = b._x0
+                b.x = b._x0
 
     def done(self, block=False) -> None:
         """
@@ -1375,7 +1375,7 @@ class BlockDiagram(BlockDiagramMixin):
         for b in self.blocklist:
             print("Block {:s}:".format(b.name))
             print("  inputs:  ", b.inport_values)
-            print("  outputs: ", b.output_safe(t, b.inport_values, b._x))
+            print("  outputs: ", b.output_safe(t, b.inport_values, b.x))
 
 
 if __name__ == "__main__":  # pragma: no cover

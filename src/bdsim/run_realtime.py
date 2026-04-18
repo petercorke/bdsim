@@ -292,7 +292,7 @@ class BDRealTime(BDSim):
                     # record the ports on the watchlist
                     for i, p in enumerate(simstate.watchlist):
                         b = p.block
-                        output = b.output_safe(t, b.inputs, b._x)[p.port]
+                        output = b.output_safe(t, b.inport_values, b.x)[p.port]
                         simstate.plist[i].append(output)
                 except BlockRuntimeError as err:
                     bd._handle_block_runtime_error(err)
