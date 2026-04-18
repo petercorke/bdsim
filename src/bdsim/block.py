@@ -8,9 +8,10 @@ from typing import TYPE_CHECKING, Any, cast
 
 import matplotlib
 import matplotlib.figure
-import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import animation
+
+import matplotlib.pyplot as plt
 
 from bdsim.exceptions import BlockApiError, BlockRuntimeError
 
@@ -1966,6 +1967,22 @@ class EventSource:
     pass
 
 
+def is_notebook_backend(backend: str) -> bool:
+    """Return True if *backend* names a Jupyter/inline rendering backend.
+
+    Matplotlib exposes notebook backends under two different name forms:
+    - Full module path: ``module://matplotlib_inline.backend_inline``,
+      ``module://ipympl.backend_nbagg``, etc.
+    - Short alias registered by the magic: ``inline``, ``widget``, ``nbagg``.
+
+    Recognising both forms prevents bdsim from overriding a notebook backend
+    with a desktop GUI backend (e.g. QtAgg) when running inside Jupyter.
+    """
+    if backend.startswith("module://"):
+        return True
+    return backend.lower() in ("inline", "widget", "nbagg")
+
+
 class GraphicsBlock(SinkBlock):
     """
     A GraphicsBlock is a subclass of SinkBlock that represents a block that has inputs
@@ -2092,6 +2109,42 @@ class GraphicsBlock(SinkBlock):
             pass
 
     def create_figure(self, state) -> matplotlib.figure.Figure:
+        def resolve_tiles_spec(spec: str | None) -> list[int] | None:
+            if spec is None:
+                return None
+            spec_l = spec.strip().lower()
+            if spec_l == "":
+                return None
+            if spec_l in {"square", "wide", "tall"}:
+                ngraphics = sum(
+                    1 for b in self.bd.blocklist if getattr(b, "isgraphics", False)
+                )
+                ngraphics = max(1, ngraphics)
+                if spec_l == "wide":
+                    # Arrange windows horizontally.
+                    return [1, ngraphics]
+                if spec_l == "tall":
+                    # Arrange windows vertically.
+                    return [ngraphics, 1]
+                rows = int(math.ceil(math.sqrt(ngraphics)))
+                cols = int(math.ceil(ngraphics / rows))
+                return [rows, cols]
+
+            parts = spec_l.split("x")
+            if len(parts) != 2:
+                raise ValueError(
+                    f"bad tiles spec '{spec}', expected RxC or one of square|wide|tall"
+                )
+            try:
+                rows, cols = int(parts[0]), int(parts[1])
+            except ValueError as exc:
+                raise ValueError(
+                    f"bad tiles spec '{spec}', expected integer RxC"
+                ) from exc
+            if rows <= 0 or cols <= 0:
+                raise ValueError(f"bad tiles spec '{spec}', row/col must be > 0")
+            return [rows, cols]
+
         def move_figure(f, x, y) -> None:
             """Move figure's upper left corner to pixel (x, y)"""
             backend: str = matplotlib.get_backend()
@@ -2107,12 +2160,29 @@ class GraphicsBlock(SinkBlock):
                 try:
                     f.canvas.manager.window.move(x, y)
                 except AttributeError:
+                    # Native MacOSX backend does not expose a window move API.
+                    if (
+                        backend.lower() == "macosx"
+                        and getattr(gstate, "ntiles", [1, 1]) not in (None, [1, 1])
+                        and not getattr(gstate, "_warned_nomove", False)
+                    ):
+                        print(
+                            "bdsim: backend MacOSX cannot position figure windows;"
+                            " tiled windows may overlap. Use --backend QtAgg or TkAgg"
+                            " (or BDSIM backend=QtAgg/TkAgg)."
+                        )
+                        gstate._warned_nomove = True
                     pass  # can't do this for MacOSX
 
         gstate = state
         options = state.options
         f: matplotlib.figure.Figure
         dpi: float
+        row = 0
+        col = 0
+
+        # Reset per-block subplot assignment each start.
+        self._tile_axes = None
 
         self.bd.runtime.DEBUG(  # type: ignore[attr-defined]
             "graphics", "{} matplotlib figures exist", len(plt.get_fignums())
@@ -2122,34 +2192,67 @@ class GraphicsBlock(SinkBlock):
             # no figures yet created, lazy initialization
             self.bd.runtime.DEBUG("graphics", "lazy initialization")  # type: ignore[attr-defined]
 
-            if options.backend is None:
-                if sys.platform == "darwin":
-                    # for MacOS, use Qt5Agg if its installed
-                    # otherwise use default (MacOSX)
-                    if "Qt5Agg" in matplotlib.rcsetup.all_backends:  # type: ignore[union-attr]
-                        try:
-                            import PyQt5  # type: ignore[import-untyped]
+            def backend_available(name: str) -> bool:
+                try:
+                    from matplotlib.backends import backend_registry
 
-                            matplotlib.use("Qt5Agg")
-                            print(
-                                "no graphics backend specified: Qt5Agg found, using"
-                                " instead of MacOSX"
-                            )
-                        except:
-                            pass
+                    return name.lower() in {
+                        backend.lower() for backend in backend_registry.list_builtin()
+                    }
+                except Exception:
+                    backends = getattr(matplotlib.rcsetup, "all_backends", [])
+                    return name.lower() in {backend.lower() for backend in backends}
+
+            if options.backend is None:
+                # If %matplotlib magic (or any other code) already set a notebook
+                # backend (e.g. module://matplotlib_inline... or module://ipympl...),
+                # honour it and don't override with a Qt/Tk window backend.
+                _current_backend = matplotlib.get_backend()
+                if is_notebook_backend(_current_backend):
+                    pass  # already a notebook backend, leave it alone
+                elif sys.platform == "darwin":
+                    # For macOS, prefer backends that allow window placement.
+                    selected = False
+                    for backend_name, module_names in (
+                        ("QtAgg", ("PyQt6", "PySide6", "PyQt5", "PySide2")),
+                        ("Qt5Agg", ("PyQt5", "PySide2")),
+                        ("TkAgg", ("tkinter",)),
+                    ):
+                        if not backend_available(backend_name):
+                            continue
+                        for module_name in module_names:
+                            try:
+                                importlib.import_module(module_name)
+                                matplotlib.use(backend_name)
+                                print(
+                                    "no graphics backend specified: "
+                                    f"{backend_name} found, using instead of MacOSX"
+                                )
+                                selected = True
+                                break
+                            except Exception:
+                                continue
+                        if selected:
+                            break
             else:
                 try:
                     matplotlib.use(options.backend)
-                except ImportError:
-                    self.fatal(f"can't select backend: {options.backend}")  # type: ignore[union-attr]
+                except Exception as exc:
+                    raise RuntimeError(
+                        "can't select matplotlib backend "
+                        f"'{options.backend}': {exc}. "
+                        "If this is a Qt backend, install one of: PyQt6, PySide6, "
+                        "PyQt5, or PySide2. Or use --backend TkAgg (requires tkinter)."
+                    ) from exc
 
             mpl_backend: str = matplotlib.get_backend()
             gstate.backend = mpl_backend
 
             self.bd.runtime.DEBUG("graphics", "  backend={:s}", mpl_backend)  # type: ignore[attr-defined]
 
-            # split the string
-            ntiles: list[int] = [int(x) for x in options.tiles.split("x")]
+            # Resolve tile specification from explicit grid or shape keyword.
+            # If no tiles are specified, graphics blocks each use their own figure.
+            ntiles: list[int] | None = resolve_tiles_spec(options.tiles)
 
             xoffset = 0
             if options.shape is None:
@@ -2204,51 +2307,114 @@ class GraphicsBlock(SinkBlock):
                     dpi = f.dpi
 
                 else:
-                    # all other backends
+                    # all other backends (e.g. QtAgg, inline, widget)
+                    # Modern backends handle HiDPI/Retina natively so dpiscale=1.
+                    # Using dpiscale=2 double-counts the device pixel ratio on
+                    # Retina Macs and makes everything visually half-sized.
                     f = plt.figure()
                     dpi = f.dpi
-                    dpiscale = 2
+                    dpiscale = 1
                     screen_width, screen_height = f.get_size_inches() * f.dpi
 
-                # compute fig size in inches (width, height)
-                figsize = [
-                    screen_width / ntiles[1] / dpi,
-                    screen_height / ntiles[0] / dpi,
-                ]
+                # Compute figure size from screen tiles, but avoid giant windows.
+                # For a single tile, preserve matplotlib's default figure size.
+                default_figsize = list(f.get_size_inches())
+                effective_dpi = dpi * dpiscale
+                if ntiles is None or ntiles == [1, 1]:
+                    figsize = default_figsize
+                else:
+                    tile_figsize = [
+                        screen_width / ntiles[1] / effective_dpi,
+                        screen_height / ntiles[0] / effective_dpi,
+                    ]
+                    max_scale = 1.5
+                    figsize = [
+                        min(tile_figsize[0], default_figsize[0] * max_scale),
+                        min(tile_figsize[1], default_figsize[1] * max_scale),
+                    ]
 
             else:
                 # shape is given explictly
                 screen_width, screen_height = [int(x) for x in options.shape.split("x")]
 
                 f = plt.gcf()
+                dpi = f.dpi
+                dpiscale = 1
+                figsize = [
+                    screen_width / dpi,
+                    screen_height / dpi,
+                ]
 
-            f.canvas.manager.set_window_title(f"bdsim: Figure {f.number:d}")  # type: ignore[union-attr]
+            # Notebook/inline backends have no window manager; skip desktop GUI ops.
+            _is_notebook_backend = is_notebook_backend(mpl_backend)
+            if not _is_notebook_backend:
+                f.canvas.manager.set_window_title(f"bdsim: Figure {f.number:d}")  # type: ignore[union-attr]
 
             # save graphics info away in state
             gstate.figsize = figsize
-            gstate.dpi = dpi
+            gstate.dpi = dpi * dpiscale
             gstate.screensize_pix = (screen_width, screen_height)
             gstate.ntiles = ntiles
             gstate.xoffset = xoffset
+            gstate.tiled_figure = None
+            gstate.notebook_backend = _is_notebook_backend
 
-            # resize the figure
-            f.set_dpi(gstate.dpi * dpiscale)
-            f.set_size_inches(figsize, forward=True)  # type: ignore[union-attr, arg-type]
-            plt.ion()
+            # resize the figure (skip in notebook: Jupyter controls figure size)
+            if not _is_notebook_backend:
+                f.set_dpi(gstate.dpi)
+                f.set_size_inches(figsize, forward=True)  # type: ignore[union-attr, arg-type]
+                plt.ion()
 
         else:
-            # subsequent figures
-            f = plt.figure(figsize=gstate.figsize, dpi=gstate.dpi)
+            # subsequent graphics blocks
+            if gstate.ntiles is None:
+                f = plt.figure(figsize=gstate.figsize, dpi=gstate.dpi)
+            else:
+                tiled_figure = getattr(gstate, "tiled_figure", None)
+                assert tiled_figure is not None
+                f = tiled_figure
 
-        # move the figure to right place on screen
-        row = gstate.fignum // gstate.ntiles[0]
-        col = gstate.fignum % gstate.ntiles[0]
-        scale = 1.02
-        move_figure(
-            f,
-            col * gstate.figsize[0] * gstate.dpi * scale,
-            row * gstate.figsize[1] * gstate.dpi * scale,
-        )
+        _notebook = getattr(gstate, "notebook_backend", False)
+        if gstate.ntiles is None:
+            # Untiled mode: each graphics block gets its own figure.
+            if gstate.fignum > 0 and not _notebook:
+                f.canvas.manager.set_window_title(f"bdsim: Figure {f.number:d}")  # type: ignore[union-attr]
+        else:
+            # Tiled mode: one shared figure with subplots; each block gets a tile.
+            rows, cols = gstate.ntiles
+            max_tiles = rows * cols
+            if gstate.fignum >= max_tiles:
+                raise ValueError(
+                    "tile specification "
+                    f"'{options.tiles}' has {max_tiles} tile(s) but "
+                    f"requires at least {gstate.fignum + 1}"
+                )
+
+            if gstate.fignum == 0:
+                gstate.tiled_figure = f
+                f.clf()
+                # Constrained layout prevents title/xlabel overlap between tiles;
+                # dark background makes the white subplot panels stand out.
+                f.set_constrained_layout(True)
+                try:
+                    f.get_layout_engine().set(hspace=0.08, wspace=0.06)
+                except Exception:
+                    f.set_constrained_layout_pads(hspace=0.08, wspace=0.06)  # type: ignore[attr-defined]  # pre-3.6 fallback
+                f.patch.set_facecolor("#323232")
+
+            row = gstate.fignum // cols
+            col = gstate.fignum % cols
+            self._tile_axes = f.add_subplot(rows, cols, gstate.fignum + 1)
+
+        # move figure windows only when not using shared tiled subplots,
+        # and only when a real window manager is available (not notebook backends)
+        if not _notebook:
+            if gstate.ntiles is not None:
+                if gstate.fignum == 0:
+                    move_figure(f, 0, 0)
+            else:
+                move_figure(f, 0, 0)
+
         gstate.fignum += 1
 
         def onkeypress(event) -> None:
@@ -2262,7 +2428,9 @@ class GraphicsBlock(SinkBlock):
             else:
                 print("key pressed", event.key)
 
-        f.canvas.mpl_connect("key_press_event", onkeypress)
+        if not getattr(f, "_bdsim_global_keys", False):
+            f.canvas.mpl_connect("key_press_event", onkeypress)
+            f._bdsim_global_keys = True
 
         self.bd.runtime.DEBUG(  # type: ignore[attr-defined]
             "graphics", "create figure {:d} at ({:d}, {:d})", gstate.fignum, row, col

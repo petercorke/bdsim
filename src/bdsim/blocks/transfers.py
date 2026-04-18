@@ -15,7 +15,6 @@ import numpy as np
 import scipy.signal
 import math
 from math import sin, cos, atan2, sqrt, pi
-import matplotlib.pyplot as plt
 import spatialmath.base as smb  # type: ignore[import-not-found]
 from spatialmath import SE3, Twist3  # type: ignore[import-not-found]
 

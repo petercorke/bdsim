@@ -14,9 +14,6 @@ import numpy as np
 from math import pi, sqrt, sin, cos, atan2
 from typing import Any, Callable, TextIO
 
-import matplotlib.pyplot as plt
-from matplotlib.pyplot import Polygon
-
 from bdsim.components import SinkBlock
 
 # ------------------------------------------------------------------------ #

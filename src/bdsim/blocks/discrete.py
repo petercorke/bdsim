@@ -14,7 +14,6 @@ import numpy as np
 import math
 from math import sin, cos, atan2, sqrt, pi
 
-import matplotlib.pyplot as plt
 import inspect
 from spatialmath import Twist3, SE3  # type: ignore[import-not-found]
 import spatialmath.base as smb  # type: ignore[import-not-found]
@@ -473,7 +472,9 @@ if __name__ == "__main__":  # pragma: no cover
     import sys
 
     root = Path(__file__).resolve().parents[3]
-    test_file = root / "tests" / "blocks" / f"test_blocks_{Path(__file__).stem.lower()}.py"
+    test_file = (
+        root / "tests" / "blocks" / f"test_blocks_{Path(__file__).stem.lower()}.py"
+    )
 
     if not test_file.exists():
         print(f"No module unit tests found for {Path(__file__).name}: {test_file}")

@@ -18,7 +18,9 @@ import time
 import traceback
 import traceback as tb
 import warnings
-from typing import Any, NoReturn
+from typing import Any, Callable, NoReturn
+
+import matplotlib
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -319,7 +321,7 @@ class BDSim(Runner):
         :type debug: str, optional
         :param backend: matplotlib backend, defaults to 'Qt5Agg''
         :type backend: str, optional
-        :param tiles: figure tile layout on monitor, defaults to '3x4'
+        :param tiles: figure tile layout on monitor, defaults to None
         :type tiles: str, optional
         :raises ImportError: syntax error in block
         :return: parent object for blockdiagram simulation
@@ -339,11 +341,13 @@ class BDSim(Runner):
         --no-hold, -H        hold       True      do not hold graphics in done()
         --no-progress, -p    progress   True      do not display simulation progress bar
         --backend BE         backend    'Qt5Agg'  matplotlib backend
-        --tiles RxC, -t RxC  tiles      '3x4'     arrangement of figure tiles on the display
+        --tiles SPEC, -t SPEC tiles      None      arrangement of figure tiles in one window,
+                                SPEC is RxC or one of: square, wide, tall
         --shape WxH          shape      None      window size, default matplotlib size
         --altscreen, +A,     altscreen  True      display plots on second monitor
         --no-altscreen, -A   altscreen  True      do not display plots on second monitor
         --debug F, -d F      debug      ''        debug flag string
+        --animation-rate R   animation_rate 20    animation/debugger sample rate (Hz)
         --simtime T[,dt]     simtime    (10,)     simulation time
         --verbose, -v        verbose    False     be verbose
         --quiet, -q          quiet      False     suppress reports
@@ -814,6 +818,15 @@ class BDSim(Runner):
 
             if simstate.options.graphics and simstate.options.hold:
                 self.done(bd, block=simstate.options.hold)
+            elif simstate.options.graphics and getattr(
+                simstate, "notebook_backend", False
+            ):
+                # In a notebook, plt.draw() flushes pending updates so the
+                # inline/widget backend captures the final figure state.
+                try:
+                    plt.draw()
+                except Exception:
+                    pass
             return out
         finally:
             self._set_context(previous_context)
@@ -1722,11 +1735,30 @@ class BDSim(Runner):
 
 class Options(OptionsBase):
     def __init__(self, sysargs=True, **options) -> None:
+        def available_matplotlib_backends() -> list[str]:
+            try:
+                from matplotlib.backends import backend_registry
+
+                backends = list(backend_registry.list_builtin())
+            except Exception:
+                backends = list(getattr(matplotlib.rcsetup, "all_backends", []))
+
+            # Preserve order while removing duplicates case-insensitively.
+            unique: list[str] = []
+            seen: set[str] = set()
+            for backend in backends:
+                key = backend.lower()
+                if key not in seen:
+                    seen.add(key)
+                    unique.append(backend)
+            return unique
+
         default_options: dict[str, Any] = {
             "backend": None,
-            "tiles": "3x4",
+            "tiles": None,
             "graphics": True,
             "animation": False,
+            "animation_rate": 20.0,
             "hold": True,
             "shape": None,
             "altscreen": True,
@@ -1775,15 +1807,20 @@ class Options(OptionsBase):
                 "--backend",
                 "-b",
                 type=str,
+                nargs="?",
+                const="list",
                 metavar="BACKEND",
-                help="matplotlib backend to choose",
+                help=(
+                    "matplotlib backend to choose; use with no argument or with "
+                    "'list'/'help' to print available backends"
+                ),
             )
             parser.add_argument(
                 "--tiles",
                 "-t",
                 type=str,
-                metavar="ROWSxCOLS",
-                help="window tiling as NxM",
+                metavar="SPEC",
+                help="window tiling as RxC or one of: square, wide, tall",
             )
             parser.add_argument(
                 "--shape",
@@ -1800,15 +1837,16 @@ class Options(OptionsBase):
                 help="Display blocks at startup",
             )
 
-            parser.add_argument(
+            g_group = parser.add_mutually_exclusive_group()
+            g_group.add_argument(
                 "-g",
                 "--no-graphics",
                 action="store_const",
                 const=False,
                 dest="graphics",
-                help="disable graphic display, also does --no-animation",
+                help="disable graphic display",
             )
-            parser.add_argument(
+            g_group.add_argument(
                 "+g",
                 "--graphics",
                 action="store_const",
@@ -1817,7 +1855,8 @@ class Options(OptionsBase):
                 help="enable graphic display",
             )
 
-            parser.add_argument(
+            a_group = parser.add_mutually_exclusive_group()
+            a_group.add_argument(
                 "-a",
                 "--no-animation",
                 action="store_const",
@@ -1825,16 +1864,17 @@ class Options(OptionsBase):
                 dest="animation",
                 help="do not animate graphics",
             )
-            parser.add_argument(
+            a_group.add_argument(
                 "+a",
                 "--animation",
                 action="store_const",
                 const=True,
                 dest="animation",
-                help="animate graphics, also does ++graphics",
+                help="animate graphics (implies --graphics)",
             )
 
-            parser.add_argument(
+            h_group = parser.add_mutually_exclusive_group()
+            h_group.add_argument(
                 "-H",
                 "--no-hold",
                 action="store_const",
@@ -1842,7 +1882,7 @@ class Options(OptionsBase):
                 dest="hold",
                 help="do not hold graphics in done()",
             )
-            parser.add_argument(
+            h_group.add_argument(
                 "+H",
                 "--hold",
                 action="store_const",
@@ -1851,7 +1891,8 @@ class Options(OptionsBase):
                 help="hold graphics in done()",
             )
 
-            parser.add_argument(
+            alt_group = parser.add_mutually_exclusive_group()
+            alt_group.add_argument(
                 "+A",
                 "--altscreen",
                 action="store_const",
@@ -1859,7 +1900,7 @@ class Options(OptionsBase):
                 dest="altscreen",
                 help="display plots on second monitor",
             )
-            parser.add_argument(
+            alt_group.add_argument(
                 "-A",
                 "--no-altscreen",
                 action="store_const",
@@ -1888,6 +1929,12 @@ class Options(OptionsBase):
             )
             parser.add_argument(
                 "--simtime", "-S", type=str, help="simulation time: T or T,dt"
+            )
+            parser.add_argument(
+                "--animation-rate",
+                type=float,
+                metavar="HZ",
+                help="target interactive update cadence for animation/debugger",
             )
             parser.add_argument(
                 "--quiet",
@@ -1935,18 +1982,22 @@ class Options(OptionsBase):
                 if value is not None
             }
 
-            if "graphics" in cmdline_options:
-                # -g or +g present
-                if not cmdline_options["graphics"]:
-                    # -g then disable animation
-                    cmdline_options["animation"] = False
-            elif "animation" in cmdline_options and cmdline_options["animation"]:
-                # +a present
-                cmdline_options["graphics"] = True
+            backend_option = cmdline_options.get("backend")
+            if isinstance(backend_option, str) and backend_option.lower() in {
+                "list",
+                "help",
+            }:
+                backends = sorted(available_matplotlib_backends(), key=str.lower)
+                print("available matplotlib backends: " + ", ".join(backends))
+                raise SystemExit(0)
         else:
             cmdline_options = dict()  # empty dictionary
 
         super().__init__(readonly=cmdline_options, args=default_options)
+
+        # Validate and normalize the initialized option set, including
+        # command-line readonly values and environment-derived defaults.
+        self.data = self.sanity(dict(self.data))
 
         # now handle the passed options
         self.set(**options)
@@ -1966,6 +2017,9 @@ class Options(OptionsBase):
             options["animation"] = False
         elif "animation" in options and options["animation"]:
             options["graphics"] = True
+
+        if "animation_rate" in options and float(options["animation_rate"]) <= 0:
+            raise ValueError("animation_rate must be > 0")
 
         return options
 

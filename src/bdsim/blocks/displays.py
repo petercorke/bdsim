@@ -10,8 +10,14 @@ Sink blocks:
 
 import numpy as np
 from math import pi, sqrt, sin, cos, atan2
+from pathlib import Path
 
 import matplotlib.pyplot as plt
+
+try:
+    from matplotlib.backend_tools import ToolToggleBase
+except Exception:  # pragma: no cover
+    ToolToggleBase = None  # type: ignore[assignment]
 
 import spatialmath.base as smb  # type: ignore[import-not-found]
 
@@ -21,6 +27,198 @@ from bdsim.block_types import GraphicsBlock
 from bdsim.components import SinkBlock
 
 # ------------------------------------------------------------------------ #
+
+# Styling/theme knobs for scope displays. Keep all visual tuning here.
+#
+# Dark tiled mode: used when multiple scopes share one figure window.
+TILE_AXES_FACE_COLOR = "#1e1e1e"
+TILE_TEXT_COLOR = "white"
+TILE_SPINE_COLOR = "#888888"
+TILE_LEGEND_FACE_COLOR = "#3a3a3a"
+TILE_LEGEND_EDGE_COLOR = "#888888"
+
+# Cursor visuals.
+CURSOR_COLOR_LIGHT = "k"
+CURSOR_COLOR_DARK = "white"
+CURSOR_LINE_WIDTH = 0.8
+CURSOR_LINE_ALPHA = 0.7
+CURSOR_MARKER_SIZE = 4
+CURSOR_MARKER_ALPHA = 0.7
+
+# Cursor readout textbox visuals.
+CURSOR_TEXTBOX_BOXSTYLE = "round"
+CURSOR_TEXTBOX_FACE_COLOR = "white"
+CURSOR_TEXTBOX_EDGE_COLOR = "0.5"
+CURSOR_TEXTBOX_ALPHA = 0.65
+
+
+_DATA_CURSOR_ICON_PATH = (
+    Path(__file__).resolve().parents[3] / "figs" / "data-cursor.png"
+)
+_DATA_CURSOR_ICON = (
+    str(_DATA_CURSOR_ICON_PATH) if _DATA_CURSOR_ICON_PATH.exists() else None
+)
+
+
+def _cursor_controller(fig):
+    controller = getattr(fig, "_bdsim_cursor_controller", None)
+    if controller is None:
+        controller = {
+            "enabled": True,
+            "owners": [],
+            "controls_registered": False,
+            "tool_id": None,
+            "qt_action": None,
+        }
+        setattr(fig, "_bdsim_cursor_controller", controller)
+    return controller
+
+
+def _cursor_add_owner(owner) -> None:
+    if owner.fig is None:
+        return
+    controller = _cursor_controller(owner.fig)
+    if owner not in controller["owners"]:
+        controller["owners"].append(owner)
+
+
+def _cursor_enabled(owner) -> bool:
+    if owner.fig is None:
+        return True
+    return bool(_cursor_controller(owner.fig)["enabled"])
+
+
+def _cursor_set_enabled_for_figure(fig, enabled: bool) -> None:
+    controller = _cursor_controller(fig)
+    controller["enabled"] = enabled
+    for owner in list(controller["owners"]):
+        owner._cursor_apply_enabled(enabled)
+
+    # Keep classic Qt toolbar toggle action state in sync with keyboard toggles.
+    qt_action = controller.get("qt_action")
+    if qt_action is not None:
+        try:
+            if bool(qt_action.isChecked()) != bool(enabled):
+                qt_action.blockSignals(True)
+                qt_action.setChecked(bool(enabled))
+                qt_action.blockSignals(False)
+        except Exception:
+            pass
+
+
+def _cursor_toggle_for_figure(fig) -> None:
+    _cursor_set_enabled_for_figure(fig, not bool(_cursor_controller(fig)["enabled"]))
+
+
+def _apply_tile_axes_style(ax) -> None:
+    """Apply white text/spine colors so plots are readable on the dark tiled background."""
+    ax.set_facecolor(TILE_AXES_FACE_COLOR)
+    for spine in ax.spines.values():
+        spine.set_edgecolor(TILE_SPINE_COLOR)
+    ax.tick_params(colors=TILE_TEXT_COLOR)
+    ax.xaxis.label.set_color(TILE_TEXT_COLOR)
+    ax.yaxis.label.set_color(TILE_TEXT_COLOR)
+    ax.title.set_color(TILE_TEXT_COLOR)
+    legend = ax.get_legend()
+    if legend is not None:
+        for text in legend.get_texts():
+            text.set_color(TILE_TEXT_COLOR)
+        legend.get_frame().set_facecolor(TILE_LEGEND_FACE_COLOR)
+        legend.get_frame().set_edgecolor(TILE_LEGEND_EDGE_COLOR)
+
+
+def _cursor_text_bbox_style() -> dict[str, Any]:
+    return dict(
+        boxstyle=CURSOR_TEXTBOX_BOXSTYLE,
+        facecolor=CURSOR_TEXTBOX_FACE_COLOR,
+        edgecolor=CURSOR_TEXTBOX_EDGE_COLOR,
+        alpha=CURSOR_TEXTBOX_ALPHA,
+    )
+
+
+def _cursor_register_controls(owner) -> None:
+    if owner.fig is None:
+        return
+
+    fig = owner.fig
+    controller = _cursor_controller(fig)
+    if controller["controls_registered"]:
+        return
+    controller["controls_registered"] = True
+
+    def _on_keypress(event) -> None:
+        key = (event.key or "").lower()
+        if key == "d":
+            _cursor_toggle_for_figure(fig)
+
+    fig.canvas.mpl_connect("key_press_event", _on_keypress)
+
+    manager = getattr(fig.canvas, "manager", None)
+    if manager is None:
+        return
+
+    toolmanager = getattr(manager, "toolmanager", None)
+    toolbar = getattr(manager, "toolbar", None)
+
+    # Preferred path: toolmanager-based toolbar toggle.
+    if ToolToggleBase is not None and toolmanager is not None and toolbar is not None:
+        tool_id = f"bdsim-datacursor-{fig.number}"
+        controller["tool_id"] = tool_id
+
+        class _DataCursorTool(ToolToggleBase):
+            default_keymap = ["d"]
+            description = "Toggle data cursor"
+            image = _DATA_CURSOR_ICON
+
+            def enable(self, *args):
+                _cursor_set_enabled_for_figure(fig, True)
+
+            def disable(self, *args):
+                _cursor_set_enabled_for_figure(fig, False)
+
+        try:
+            toolmanager.add_tool(tool_id, _DataCursorTool)
+            toolbar.add_tool(tool_id, "navigation")
+            if controller["enabled"]:
+                toolmanager.trigger_tool(tool_id)
+            return
+        except Exception:
+            pass
+
+    # Fallback for classic Qt toolbar (NavigationToolbar2QT) where toolmanager
+    # is not active: add a checkable QAction directly.
+    if toolbar is not None and hasattr(toolbar, "addAction"):
+        action = None
+        try:
+            from matplotlib.backends.qt_compat import QtGui
+
+            icon = (
+                QtGui.QIcon(_DATA_CURSOR_ICON) if _DATA_CURSOR_ICON else QtGui.QIcon()
+            )
+            action = toolbar.addAction(icon, "Data Cursor")
+        except Exception:
+            try:
+                action = toolbar.addAction("Data Cursor")
+            except Exception:
+                action = None
+
+        if action is not None:
+            try:
+                action.setCheckable(True)
+                action.setChecked(bool(controller["enabled"]))
+                controller["qt_action"] = action
+
+                if hasattr(action, "toggled"):
+                    action.toggled.connect(
+                        lambda checked: _cursor_set_enabled_for_figure(
+                            fig, bool(checked)
+                        )
+                    )
+                elif hasattr(action, "triggered"):
+                    action.triggered.connect(lambda *_: _cursor_toggle_for_figure(fig))
+            except Exception:
+                # Keep keyboard toggle as the final portable fallback.
+                pass
 
 
 class Scope(GraphicsBlock):
@@ -221,6 +419,15 @@ class Scope(GraphicsBlock):
         self.title = title
         self.loc = loc
 
+        # Interactive cursor state (initialized in start()).
+        self._cursor_x: float | None = None
+        self._cursor_line = None
+        self._cursor_text = None
+        self._cursor_labels: list[str] = []
+        self._cursor_text_xy: tuple[float, float] = (0.02, 0.98)
+        self._cursor_dragging: bool = False
+        self._cursor_drag_offset: tuple[float, float] = (0.0, 0.0)
+
         # TODO, wire width
         # inherit names from wires, block needs to be able to introspect
 
@@ -236,9 +443,10 @@ class Scope(GraphicsBlock):
             np.array([]),
         ] * self.nplots
 
-        # create the figures
+        # create the figure/axes (subplot axis is pre-assigned in tiled mode)
         self.fig = self.create_figure(simstate)
-        self.ax = self.fig.add_subplot(111)
+        tile_ax = getattr(self, "_tile_axes", None)
+        self.ax = tile_ax if tile_ax is not None else self.fig.add_subplot(111)
 
         # get labels if not provided
         if self.labels is None:
@@ -305,9 +513,47 @@ class Scope(GraphicsBlock):
                 else:
                     return s
 
-            self.ax.legend(
-                [fix_underscore(label) for label in self.labels], loc=self.loc
-            )
+            self._cursor_labels = [fix_underscore(label) for label in self.labels]
+            legend = self.ax.legend(self._cursor_labels, loc=self.loc)
+            if legend is not None:
+                legend.set_draggable(False)
+        else:
+            self._cursor_labels = [f"y{i}" for i in range(self.nplots)]
+
+        # Apply dark-theme text styling when inside a tiled (shared-figure) layout.
+        if getattr(self, "_tile_axes", None) is not None:
+            _apply_tile_axes_style(self.ax)
+        cursor_color = (
+            CURSOR_COLOR_DARK
+            if getattr(self, "_tile_axes", None) is not None
+            else CURSOR_COLOR_LIGHT
+        )
+
+        # Add interactive data cursor: a thin vertical line + translucent value box.
+        self._cursor_line = self.ax.axvline(
+            0.0,
+            color=cursor_color,
+            linewidth=CURSOR_LINE_WIDTH,
+            alpha=CURSOR_LINE_ALPHA,
+            visible=False,
+            zorder=3,
+        )
+        self._cursor_text = self.ax.text(
+            self._cursor_text_xy[0],
+            self._cursor_text_xy[1],
+            "",
+            transform=self.ax.transAxes,
+            va="top",
+            ha="left",
+            visible=False,
+            bbox=_cursor_text_bbox_style(),
+        )
+        self.fig.canvas.mpl_connect("motion_notify_event", self._cursor_on_move)
+        self.fig.canvas.mpl_connect("axes_leave_event", self._cursor_on_leave)
+        self.fig.canvas.mpl_connect("button_press_event", self._cursor_on_press)
+        self.fig.canvas.mpl_connect("button_release_event", self._cursor_on_release)
+        _cursor_add_owner(self)
+        _cursor_register_controls(self)
 
         if self.watch:
             for wire in self.input_wires:  # type: ignore[attr-defined]
@@ -317,7 +563,6 @@ class Scope(GraphicsBlock):
                 simstate.watchlist.append(plug)
                 simstate.watchnamelist.append(str(plug))
         plt.draw()
-        plt.show(block=False)
 
     def step(self, t: float, inports: list[Any]) -> None:
         if not self._enabled:
@@ -336,7 +581,7 @@ class Scope(GraphicsBlock):
 
         else:
             # single input with vector data
-            data = self.inputs[0]
+            data = inports[0]
             if isinstance(self.vector, list):
                 data = data[self.vector]
 
@@ -352,7 +597,115 @@ class Scope(GraphicsBlock):
             self.ax.relim()
             self.ax.autoscale_view(scalex=False, scaley=True)
 
+        # Keep cursor readout up to date while data evolves.
+        if self._cursor_x is not None:
+            self._cursor_update(self._cursor_x)
+
         super().step(t, inports)
+
+    def _cursor_values(self, x: float) -> list[float]:
+        if len(self.tdata) == 0:
+            return []
+
+        values = []
+        for i in range(self.nplots):
+            y = self.ydata[i]
+            if len(y) == 0:
+                values.append(float("nan"))
+            else:
+                values.append(float(np.interp(x, self.tdata, y)))
+        return values
+
+    def _cursor_update(self, x: float) -> None:
+        if self._cursor_line is None or self._cursor_text is None:
+            return
+        if len(self.tdata) == 0:
+            return
+
+        self._cursor_x = x
+        self._cursor_line.set_xdata([x, x])
+        self._cursor_line.set_visible(True)
+
+        values = self._cursor_values(x)
+        lines = []
+        for label, value in zip(self._cursor_labels, values):
+            lines.append(f"{label}: {value:.6g}")
+        self._cursor_text.set_text("\n".join(lines))
+        self._cursor_text.set_visible(True)
+        self.fig.canvas.draw_idle()
+
+    def _cursor_on_move(self, event) -> None:
+        if not self._enabled:
+            return
+        if not _cursor_enabled(self):
+            return
+        if self._cursor_dragging:
+            self._cursor_move_textbox(event)
+        if event.inaxes is not self.ax or event.xdata is None:
+            return
+        self._cursor_update(float(event.xdata))
+
+    def _cursor_on_leave(self, event) -> None:
+        if not _cursor_enabled(self):
+            return
+        if self._cursor_dragging:
+            return
+        if self._cursor_line is not None:
+            self._cursor_line.set_visible(False)
+        if self._cursor_text is not None:
+            self._cursor_text.set_visible(False)
+        if self.fig is not None:
+            self.fig.canvas.draw_idle()
+
+    def _event_to_axes(self, event) -> tuple[float, float] | None:
+        if self.ax is None or event.x is None or event.y is None:
+            return None
+        return self.ax.transAxes.inverted().transform((event.x, event.y))
+
+    def _cursor_move_textbox(self, event) -> None:
+        if self._cursor_text is None:
+            return
+        point = self._event_to_axes(event)
+        if point is None:
+            return
+        x = float(np.clip(point[0] - self._cursor_drag_offset[0], 0.01, 0.99))
+        y = float(np.clip(point[1] - self._cursor_drag_offset[1], 0.01, 0.99))
+        self._cursor_text_xy = (x, y)
+        self._cursor_text.set_position(self._cursor_text_xy)
+        if self.fig is not None:
+            self.fig.canvas.draw_idle()
+
+    def _cursor_on_press(self, event) -> None:
+        if not _cursor_enabled(self):
+            return
+        if self._cursor_text is None or event.button != 1:
+            return
+        contains, _ = self._cursor_text.contains(event)
+        if not contains:
+            return
+        point = self._event_to_axes(event)
+        if point is None:
+            return
+        self._cursor_dragging = True
+        self._cursor_drag_offset = (
+            point[0] - self._cursor_text_xy[0],
+            point[1] - self._cursor_text_xy[1],
+        )
+
+    def _cursor_on_release(self, event) -> None:
+        if event.button == 1:
+            self._cursor_dragging = False
+
+    def _cursor_apply_enabled(self, enabled: bool) -> None:
+        if not enabled:
+            self._cursor_dragging = False
+            self._cursor_x = None
+            if self._cursor_line is not None:
+                self._cursor_line.set_visible(False)
+            if self._cursor_text is not None:
+                self._cursor_text.set_visible(False)
+            if self.fig is not None:
+                self.fig.canvas.draw_idle()
 
 
 # ------------------------------------------------------------------------ #
@@ -441,6 +794,14 @@ class ScopeXY(GraphicsBlock):
         self.aspect = aspect
         self.labels = labels
 
+        # Interactive cursor state (initialized in start()).
+        self._cursor_marker = None
+        self._cursor_text = None
+        self._cursor_index: int | None = None
+        self._cursor_text_xy: tuple[float, float] = (0.02, 0.98)
+        self._cursor_dragging: bool = False
+        self._cursor_drag_offset: tuple[float, float] = (0.0, 0.0)
+
     def start(self, simstate: Any) -> None:
         super().start(simstate)
 
@@ -451,7 +812,8 @@ class ScopeXY(GraphicsBlock):
         super().reset()
 
         self.fig = self.create_figure(simstate)
-        self.ax = self.fig.gca()
+        tile_ax = getattr(self, "_tile_axes", None)
+        self.ax = tile_ax if tile_ax is not None else self.fig.gca()
 
         args = []
         blockargs = {}
@@ -473,8 +835,44 @@ class ScopeXY(GraphicsBlock):
         if self.init is not None:
             self.init(self.ax)
 
+        # Apply dark-theme text styling when inside a tiled (shared-figure) layout.
+        if getattr(self, "_tile_axes", None) is not None:
+            _apply_tile_axes_style(self.ax)
+        cursor_color = (
+            CURSOR_COLOR_DARK
+            if getattr(self, "_tile_axes", None) is not None
+            else CURSOR_COLOR_LIGHT
+        )
+
+        self._cursor_marker = self.ax.plot(
+            [],
+            [],
+            marker="o",
+            linestyle="None",
+            color=cursor_color,
+            markersize=CURSOR_MARKER_SIZE,
+            alpha=CURSOR_MARKER_ALPHA,
+            visible=False,
+            zorder=3,
+        )[0]
+        self._cursor_text = self.ax.text(
+            self._cursor_text_xy[0],
+            self._cursor_text_xy[1],
+            "",
+            transform=self.ax.transAxes,
+            va="top",
+            ha="left",
+            visible=False,
+            bbox=_cursor_text_bbox_style(),
+        )
+        self.fig.canvas.mpl_connect("motion_notify_event", self._cursor_on_move)
+        self.fig.canvas.mpl_connect("axes_leave_event", self._cursor_on_leave)
+        self.fig.canvas.mpl_connect("button_press_event", self._cursor_on_press)
+        self.fig.canvas.mpl_connect("button_release_event", self._cursor_on_release)
+        _cursor_add_owner(self)
+        _cursor_register_controls(self)
+
         plt.draw()
-        plt.show(block=False)
 
     def step(self, t: float, inports: list[Any]) -> None:
         if not self._enabled:
@@ -498,7 +896,116 @@ class ScopeXY(GraphicsBlock):
         if isinstance(self.scale, str) and self.scale == "auto":
             self.ax.relim()
             self.ax.autoscale_view()
+
+        if self._cursor_index is not None:
+            self._cursor_update_from_index(self._cursor_index)
         super().step(t, [])
+
+    def _xy_nearest_index(self, event) -> int | None:
+        if len(self.xdata) == 0 or len(self.ydata) == 0:
+            return None
+        if event.x is None or event.y is None:
+            return None
+
+        points = np.column_stack((self.xdata, self.ydata))
+        points_disp = self.ax.transData.transform(points)
+        delta = points_disp - np.array([event.x, event.y])
+        idx = int(np.argmin(np.sum(delta * delta, axis=1)))
+        return idx
+
+    def _cursor_update_from_index(self, index: int) -> None:
+        if self._cursor_marker is None or self._cursor_text is None:
+            return
+        if len(self.xdata) == 0 or len(self.ydata) == 0:
+            return
+
+        index = max(0, min(index, len(self.xdata) - 1))
+        self._cursor_index = index
+        x = float(self.xdata[index])
+        y = float(self.ydata[index])
+        self._cursor_marker.set_data([x], [y])
+        self._cursor_marker.set_visible(True)
+
+        x_label = self.labels[0] if len(self.labels) > 0 else "x"
+        y_label = self.labels[1] if len(self.labels) > 1 else "y"
+        self._cursor_text.set_text(f"{x_label}: {x:.6g}\\n{y_label}: {y:.6g}")
+        self._cursor_text.set_visible(True)
+        self.fig.canvas.draw_idle()
+
+    def _event_to_axes(self, event) -> tuple[float, float] | None:
+        if self.ax is None or event.x is None or event.y is None:
+            return None
+        return self.ax.transAxes.inverted().transform((event.x, event.y))
+
+    def _cursor_move_textbox(self, event) -> None:
+        if self._cursor_text is None:
+            return
+        point = self._event_to_axes(event)
+        if point is None:
+            return
+        x = float(np.clip(point[0] - self._cursor_drag_offset[0], 0.01, 0.99))
+        y = float(np.clip(point[1] - self._cursor_drag_offset[1], 0.01, 0.99))
+        self._cursor_text_xy = (x, y)
+        self._cursor_text.set_position(self._cursor_text_xy)
+        self.fig.canvas.draw_idle()
+
+    def _cursor_on_move(self, event) -> None:
+        if not self._enabled:
+            return
+        if not _cursor_enabled(self):
+            return
+        if self._cursor_dragging:
+            self._cursor_move_textbox(event)
+        if event.inaxes is not self.ax:
+            return
+        idx = self._xy_nearest_index(event)
+        if idx is None:
+            return
+        self._cursor_update_from_index(idx)
+
+    def _cursor_on_leave(self, event) -> None:
+        if not _cursor_enabled(self):
+            return
+        if self._cursor_dragging:
+            return
+        if self._cursor_marker is not None:
+            self._cursor_marker.set_visible(False)
+        if self._cursor_text is not None:
+            self._cursor_text.set_visible(False)
+        if self.fig is not None:
+            self.fig.canvas.draw_idle()
+
+    def _cursor_on_press(self, event) -> None:
+        if not _cursor_enabled(self):
+            return
+        if self._cursor_text is None or event.button != 1:
+            return
+        contains, _ = self._cursor_text.contains(event)
+        if not contains:
+            return
+        point = self._event_to_axes(event)
+        if point is None:
+            return
+        self._cursor_dragging = True
+        self._cursor_drag_offset = (
+            point[0] - self._cursor_text_xy[0],
+            point[1] - self._cursor_text_xy[1],
+        )
+
+    def _cursor_on_release(self, event) -> None:
+        if event.button == 1:
+            self._cursor_dragging = False
+
+    def _cursor_apply_enabled(self, enabled: bool) -> None:
+        if not enabled:
+            self._cursor_dragging = False
+            self._cursor_index = None
+            if self._cursor_marker is not None:
+                self._cursor_marker.set_visible(False)
+            if self._cursor_text is not None:
+                self._cursor_text.set_visible(False)
+            if self.fig is not None:
+                self.fig.canvas.draw_idle()
 
     # def done(self, block=False, **blockargs):
     #     if self.bd.runtime.options.graphics:
@@ -590,7 +1097,9 @@ if __name__ == "__main__":  # pragma: no cover
     import sys
 
     root = Path(__file__).resolve().parents[3]
-    test_file = root / "tests" / "blocks" / f"test_blocks_{Path(__file__).stem.lower()}.py"
+    test_file = (
+        root / "tests" / "blocks" / f"test_blocks_{Path(__file__).stem.lower()}.py"
+    )
 
     if not test_file.exists():
         print(f"No module unit tests found for {Path(__file__).name}: {test_file}")
