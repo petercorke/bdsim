@@ -37,7 +37,13 @@ from bdsim.components import (
     TimeQ,
     clocklist,
 )
-from bdsim.block import BlockApiError, BlockRuntimeError
+from bdsim.exceptions import (
+    BlockApiError,
+    BlockCreationError,
+    BlockRuntimeError,
+    IntegrationFailureError,
+    SimulationContextError,
+)
 from bdsim.blockdiagram import BlockDiagram
 from bdsim.run_context import SimulationContext, SimulationJob
 
@@ -454,7 +460,7 @@ class BDSim(Runner):
     def _require_context(self) -> SimulationContext:
         context: SimulationContext | None = self._get_context()
         if context is None:
-            raise RuntimeError("no active simulation context")
+            raise SimulationContextError("no active simulation context")
         return context
 
     def _set_context(self, context: SimulationContext | None) -> None:
@@ -1118,7 +1124,8 @@ class BDSim(Runner):
                     self._print_exception_red(
                         f"runtime error while creating block {cls.__name__}", err
                     )
-                raise RuntimeError(f"failed to create block {cls.__name__}") from None
+                raise BlockCreationError(
+                    f"failed to create block {cls.__name__}") from None
 
             # return a function that invokes the class constructor
             f = block_init_wrapper

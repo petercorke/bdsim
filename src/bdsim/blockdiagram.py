@@ -15,7 +15,7 @@ import numpy as np
 from ansitable import ANSITable, Column  # type: ignore[import-not-found]
 from colored import attr, fg
 
-from bdsim.block import BlockRuntimeError
+from bdsim.exceptions import BlockRuntimeError
 
 if TYPE_CHECKING:
     from bdsim._blockdiagram_mixin import BlockDiagramMixin

@@ -11,7 +11,7 @@ from typing import Any
 import numpy as np
 from colored import attr, fg
 
-from bdsim.block import BlockRuntimeError
+from bdsim.exceptions import BlockRuntimeError
 from bdsim.components import BDStruct, Block, OptionsBase, SimulationState
 from bdsim.connect import Plug
 from bdsim.run_context import SimulationContext

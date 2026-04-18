@@ -12,35 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import animation
 
-
-class BlockApiError(TypeError):
-    """Raised when a block class violates bdsim block API rules."""
-
-    def __init__(self, *args: object, traceback: bool = True) -> None:
-        super().__init__(*args)
-        self.traceback = traceback
-
-
-class BlockRuntimeError(RuntimeError):
-    """Raised when execution of a block callback fails at runtime."""
-
-    def __init__(
-        self,
-        *,
-        operation: str,
-        block: Any,
-        cause: Exception,
-        t: float | None = None,
-        inputs: Any = None,
-        state: Any = None,
-    ) -> None:
-        super().__init__(f"{operation} failed for block {block}")
-        self.operation = operation
-        self.block = block
-        self.cause = cause
-        self.t = t
-        self.inputs = inputs
-        self.state = state
+from bdsim.exceptions import BlockApiError, BlockRuntimeError
 
 
 from bdsim.components import Clock, _fixname, oodebug
@@ -401,6 +373,81 @@ class Block(ABC, Port):
 
         self._nstates = nstates
         self._ndstates = ndstates
+
+    def __init_subclass__(cls, **kwargs) -> None:
+        """
+        Initialize a subclass of Block.
+
+        :param cls: The subclass being initialized
+        :type cls: class type
+        :param **kwargs: keyword args passed to subclass definition
+        :type **kwargs: dict
+
+        This method is called when a new subclass of Block is defined, not when it is
+        instantiated. Here we check that the subclass does not define methods that are
+        inconsistent with its block class, and raise an error if it does.  This is a
+        sanity check to prevent blocks from being defined with methods that will never
+        be called by the simulation engine, which would indicate a misunderstanding of
+        the block API.
+
+        """
+        super().__init_subclass__(**kwargs)
+        # check that the subclass does not have methods inconsistent with its class
+        disallowed = {
+            "SourceBlock": ["deriv", "step", "next"],
+            "SinkBlock": ["deriv", "output", "next"],
+            "FunctionBlock": ["deriv", "next", "step"],
+            "TransferBlock": ["next", "step"],
+            "GraphicsBlock": ["deriv", "next", "output"],
+            "ClockedBlock": ["deriv", "step"],
+            "SubsystemBlock": ["deriv", "output", "next", "step"],
+        }
+        blockclass = cls.__mro__[1].__name__
+        x = ":".join([c.__name__ for c in cls.__mro__])
+        if blockclass in disallowed:
+            # raise ValueError(
+            #     f"unknown block class {blockclass} for class {cls.__name__}"
+            # )
+            # # check that the subclass does not have methods inconsistent with its class
+            for method in disallowed[blockclass]:
+                if hasattr(cls, method):
+                    raise BlockApiError(
+                        f"method {method} not allowed for block {cls.__name__} in class {blockclass} -- owning module will not be included in block library",
+                        traceback=False,
+                    )
+
+    # def __str__(self) -> str:
+    #     if hasattr(self, "name") and self.name is not None:
+    #         return self.name
+    #     else:
+    #         return self.blockclass + ".??"
+
+    def __repr__(self):
+        s = f"Block(name={self._name}, type={self._type}, blockclass={self._blockclass}"
+        if self.nin > 0:
+            s += f", nin={self.nin}"
+        if self.nout > 0:
+            s += f", nout={self.nout}"
+        if self._nstates > 0:
+            s += f", nstates={self.nstates}"
+        if self._ndstates > 0:
+            s += f", ndstates={self.ndstates}"
+        return s + ")"
+
+    @property
+    def info(self) -> None:
+        """
+        Interactive display of block properties.
+
+        Displays all attributes of the block for debugging purposes.
+
+        """
+        print("block: " + type(self).__name__)
+        items = sorted(self.__dict__.items())
+        for k, v in [i for i in items if i[0].startswith("_")] + [
+            i for i in items if not i[0].startswith("_")
+        ]:
+            print("  {:11s}{:s}".format(k + ":", str(v)))
 
     def add_param(self, param, handler=None) -> None:
         if handler is None:
