@@ -1984,7 +1984,10 @@ class Options(OptionsBase):
                 help="override global parameter using var=value",
             )
 
+            argv0 = sys.argv[0] if len(sys.argv) > 0 else ""
             args, unknownargs = parser.parse_known_args()
+            # Consume bdsim options from sys.argv so user code sees only its own args.
+            sys.argv = [argv0, *unknownargs]
             cmdline_options: dict[str, Any] = vars(args)  # get args as a dictionary
             # keep only the options that are not None, ie. those that were
             # explicitly set on the command line
