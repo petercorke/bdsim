@@ -446,6 +446,13 @@ class BlockDiagram(BlockDiagramMixin):
                     len(b._state_names) == b.nstates
                 ), "incorrect number of state names given: " + str(b)
 
+        # bind runtime input slots to source output slots.
+        # done here after subsystem flattening, block.compile(), and wire hookup.
+        for w in self.wirelist:
+            source_slot = w.start.block.outport_slot(w.start.port)
+            w.bind_slot(source_slot)
+            w.end.block.bind_input_slot(w.end.port, source_slot)
+
         # check for cycles of function blocks
         def _DFS(path):
             start = path[0]

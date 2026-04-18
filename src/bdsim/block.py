@@ -22,6 +22,13 @@ if TYPE_CHECKING:
     from bdsim.blockdiagram import BlockDiagram
 
 
+class PortValueSlot:
+    __slots__ = ("value",)
+
+    def __init__(self) -> None:
+        self.value: Any = None
+
+
 class Block(ABC, Port):
     """_summary_
 
@@ -64,24 +71,21 @@ class Block(ABC, Port):
     # ========================================================================
     # ARCHITECTURE: Wire-Centric Signal Values
     # ========================================================================
-    # Runtime signal transport now uses Wire.value as the primary store.
+    # Runtime signal transport is via one mutable slot per output port.
     #
     # Publish path:
     #   block.output(...) -> Block._publish_output_values(values)
     #   -> cache in block._output_values
-    #   -> copy each output-port value onto every outgoing wire on that port
+    #   -> write each output-port value once to self._outport_slots[port]
     #
     # Read path:
     #   block.inport_values / block.inport_value(i)
-    #   -> read wire.value directly
+    #   -> read directly from pre-bound self._inport_slots[i]
     #
-    # Compatibility:
-    #   If wire.value is None (eg. direct unit tests that set _output_values
-    #   without schedule evaluation), reads fall back to source.outport_value().
-    #
-    # This keeps the Wire/Plug connection model while removing the runtime
-    # dependency on traversing Plug -> source Block -> _output_values for each
-    # input read.
+    # Wiring model:
+    #   Wires remain the topology model. During compile(), after subsystem
+    #   flattening and wire hookup, each destination input port is bound to
+    #   the source output slot for fast runtime access.
     # ========================================================================
 
     # Subclasses may define port counts and labels as plain class variables.
@@ -122,6 +126,8 @@ class Block(ABC, Port):
     # used to build inter-block references at compile time
     _input_wires: list[Wire | None]  # incoming wires
     _output_wires: list[list[Wire]]  # outgoing wires
+    _inport_slots: list[PortValueSlot | None]
+    _outport_slots: list[PortValueSlot]
 
     # used at compile time to determine the order of block execution
     _sequence: int | None
@@ -664,24 +670,32 @@ class Block(ABC, Port):
         Returns a list of values corresponding to the input ports of the block.  The types of the
         elements are dictated by the blocks connected to the input ports.
 
-        .. note:: Values are read from each connected wire's ``value`` attribute.
-            For compatibility with direct unit tests, if a wire has no value yet the
-            value is read from the predecessor block via ``outport_value``.
-
-        .. architecture-note:: This is the core runtime data path. The fast path is
-            a direct read from ``wire.value``.
+        .. note:: Values are read from pre-bound input slots.
+            For compatibility with direct unit tests (without compile), if an
+            input slot is not bound yet the value is read from the predecessor block.
 
         :seealso: :meth:`inport_value`
         """
         values = []
-        for wire in self._input_wires:
-            assert wire is not None, f"block {self.name} has an unconnected input"
-            if wire.value is not None:
-                values.append(wire.value)
-            else:
-                # Compatibility fallback for tests that populate source outputs directly.
+        slots = getattr(self, "_inport_slots", None)
+        if slots is not None:
+            for i, slot in enumerate(slots):
+                if slot is not None:
+                    values.append(slot.value)
+                    continue
+
+                # Compatibility fallback for tests using uncompiled/manual wiring.
+                wire = self._input_wires[i]
+                assert wire is not None, f"block {self.name} has an unconnected input"
                 plug = wire.start
                 values.append(plug.block.outport_value(plug.port))
+            return values
+
+        # Compatibility path if called before compile() initialized slots.
+        for wire in self._input_wires:
+            assert wire is not None, f"block {self.name} has an unconnected input"
+            plug = wire.start
+            values.append(plug.block.outport_value(plug.port))
         return values
 
     def inport_value(self, i: int) -> Any:
@@ -695,16 +709,20 @@ class Block(ABC, Port):
 
         Get the value of the signal applied to port ``i``.
 
-        .. note:: The value is read from the connected wire's ``value`` attribute.
-            For compatibility with direct unit tests, if the wire value is not set,
-            it falls back to predecessor block output lookup.
+        .. note:: The value is read from a pre-bound input slot.
+            For compatibility with direct unit tests (without compile), it
+            falls back to predecessor block output lookup.
 
         :seealso: :meth:`inport_values`
         """
+        slots = getattr(self, "_inport_slots", None)
+        if slots is not None:
+            slot = slots[i]
+            if slot is not None:
+                return slot.value
+
         wire = self._input_wires[i]
         assert wire is not None, f"block {self.name} input port {i} not connected"
-        if wire.value is not None:
-            return wire.value
         source = wire.start
         return source.block.outport_value(source.port)
 
@@ -779,12 +797,18 @@ class Block(ABC, Port):
         return self._output_values[i]
 
     def _publish_output_values(self, out: list[Any] | tuple[Any, ...]) -> None:
-        """Cache block outputs and copy each port value to all outgoing wires."""
+        """Cache block outputs and publish each port value once to its slot."""
         self._output_values = list(out)
-        for port, wires in enumerate(self._output_wires):
-            value = self._output_values[port]
-            for wire in wires:
-                wire.value = value
+        for port, value in enumerate(self._output_values):
+            self._outport_slots[port].value = value
+
+    def outport_slot(self, i: int) -> PortValueSlot:
+        assert i < self.nout, f"block {self.name} output port index {i} out of range"
+        return self._outport_slots[i]
+
+    def bind_input_slot(self, i: int, slot: PortValueSlot) -> None:
+        assert i < self.nin, f"block {self.name} input port index {i} out of range"
+        self._inport_slots[i] = slot
 
     def outport_name(self, i: int) -> str:
         """
@@ -1183,6 +1207,10 @@ class Block(ABC, Port):
         #  these are set when blocks are connected, used to build inter-block references at compile time
         self._output_wires: list[list[Wire]] = [[] for _ in range(self.nout)]
         self._input_wires: list[Wire | None] = [None] * self.nin  # type: ignore[list-item]
+        self._outport_slots: list[PortValueSlot] = [
+            PortValueSlot() for _ in range(self.nout)
+        ]
+        self._inport_slots: list[PortValueSlot | None] = [None] * self.nin
 
         # used to build execution plan at compile time, set by compile() method
         self._sequence = None
@@ -1706,9 +1734,8 @@ class Block(ABC, Port):
     def reset(self) -> None:
         self._updated = False
         self._output_values = [None] * self.nout
-        for wires in getattr(self, "_output_wires", []):
-            for wire in wires:
-                wire.value = None
+        for slot in getattr(self, "_outport_slots", []):
+            slot.value = None
 
     def start(self, simstate) -> None:  # begin a simulation
         pass

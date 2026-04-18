@@ -50,9 +50,25 @@ class Wire:
         self.id = None
         self.start = start
         self.end = end
-        self.value = None
         self.type = None
         self.name = None
+
+    @property
+    def value(self):
+        if self._slot is not None:
+            return self._slot.value
+        return self._value
+
+    @value.setter
+    def value(self, v) -> None:
+        if self._slot is not None:
+            self._slot.value = v
+        else:
+            self._value = v
+
+    def bind_slot(self, slot) -> None:
+        self._slot = slot
+        self._value = None
 
     @property
     def info(self) -> None:
