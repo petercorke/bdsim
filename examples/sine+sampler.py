@@ -29,6 +29,4 @@ bd.report()  # list all blocks and wires
 
 print(clock)
 
-out = sim.run(bd, 5)  # simulate for 5s
-
-sim.done(bd, block=True)
+out = sim.run(bd, 5, block=True)  # simulate for 5s and hold graphics

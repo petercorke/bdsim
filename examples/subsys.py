@@ -2,7 +2,7 @@
 
 import bdsim
 
-sim = bdsim.BDSim()
+sim = bdsim.BDSim(tiles="tall")
 
 # create simple subsystem as a blockdiagram
 ss = sim.blockdiagram(name="subsystem1")
@@ -22,14 +22,18 @@ main = sim.blockdiagram()
 
 x = main.WAVEFORM("sine", 1, "Hz")
 const = main.CONSTANT(1)
-scope = main.SCOPE()
-subsys = main.SUBSYSTEM(ss)  # instantiate the subsystem
+scope1 = main.SCOPE(nin=1)
+scope2 = main.SCOPE(nin=1)
+subsys1 = main.SUBSYSTEM(ss)  # instantiate the subsystem
+subsys2 = main.SUBSYSTEM(ss)  # instantiate the subsystem
 
-main.connect(x, subsys[0])
-main.connect(const, subsys[1])
-main.connect(subsys, scope)
+main.connect(x, subsys1[0], subsys2[0])
+main.connect(const, subsys1[1], subsys2[1])
+main.connect(subsys1, scope1)
+main.connect(subsys2, scope2)
 
 main.compile(verbose=False)
+main.report_lists()
 
 sim.report(main)
 sim.run(main, T=5)
