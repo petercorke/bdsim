@@ -11,7 +11,6 @@ Sink blocks:
 from __future__ import annotations
 
 import numpy as np
-from math import pi, sqrt, sin, cos, atan2
 from typing import Any, Callable, TextIO
 
 from bdsim.components import SinkBlock
@@ -166,29 +165,180 @@ class Stop(SinkBlock):
         if func is not None and not callable(func):
             raise TypeError("argument must be a callable")
         self.stopfunc: None | Callable[..., object] = func
+        self._event_detector: Callable[[float, Any], float] | None = None
+
+    @staticmethod
+    def _coerce_scalar_metric(metric: Any) -> Any:
+        if isinstance(metric, np.ndarray):
+            if metric.size != 1:
+                raise RuntimeError("bad input type to stop block")
+            return metric.item()
+        if isinstance(metric, np.generic):
+            return metric.item()
+        return metric
+
+    @staticmethod
+    def _metric_to_stop(metric: Any) -> bool:
+        metric = Stop._coerce_scalar_metric(metric)
+        if isinstance(metric, bool):
+            return metric
+        try:
+            return bool(metric > 0)
+        except Exception as exc:
+            raise RuntimeError("bad input type to stop block") from exc
+
+    def _stop_metric(self, value: Any) -> float:
+        metric = self.stopfunc(value) if self.stopfunc is not None else value
+        metric = self._coerce_scalar_metric(metric)
+        if isinstance(metric, bool):
+            return 1.0 if metric else -1.0
+        try:
+            return float(metric)
+        except Exception as exc:
+            raise RuntimeError("bad input type to stop block") from exc
 
     def start(self, simstate) -> None:
         self._simstate = simstate
 
+        # If runtime supports crossing detectors (offline solve_ivp), register
+        # STOP as a terminal zero-crossing event. For pure discrete/non-ivp
+        # modes this method is absent and step() fallback is used.
+        if hasattr(simstate, "declare_crossing_event"):
+
+            def event_detector(t: float, y: Any) -> float:
+                simstate.t = t
+                simstate.count += 1
+                self.bd.evaluate(y, t, sinks=False, simstate=simstate)
+                return self._stop_metric(self.inport_values[0])
+
+            event_detector.terminal = True  # type: ignore[attr-defined]
+            event_detector.direction = 1.0  # type: ignore[attr-defined]
+            self._event_detector = event_detector
+            simstate.declare_crossing_event(event_detector, self)
+
+    def event_handler(self, t_crossing: float, y_crossing: Any, simstate: Any) -> None:
+        simstate.stop = self
+
     def step(self, t, inputs) -> None:
-        value = inputs[0]
-
-        if self.stopfunc is not None:
-            value = self.stopfunc(value)
-
-        stop: bool = False
-        if isinstance(value, bool):
-            stop = value
-        else:
-            try:
-                stop = value > 0
-            except:
-                raise RuntimeError("bad input type to stop block")
+        metric = self.stopfunc(inputs[0]) if self.stopfunc is not None else inputs[0]
+        stop = self._metric_to_stop(metric)
 
         # we signal stop condition by setting simstate.stop to the block calling
         # the stop
         if stop:
             self._simstate.stop = self
+
+
+# ------------------------------------------------------------------------ #
+
+
+class Event(SinkBlock):
+    """
+    :blockname:`EVENT`
+
+    Runtime event detector for solve_ivp.
+
+    :inputs: 1
+    :outputs: 0
+    :states: 0
+
+    The input signal is used as an event function value.  A zero crossing
+    triggers an event in ``solve_ivp``.
+
+    Direction can be one of:
+
+    - ``'^'`` or ``'+'``: positive-going crossing (direction = +1)
+    - ``'v'`` or ``'-'``: negative-going crossing (direction = -1)
+
+    Event handling callback signature is:
+
+    ``func(block, *fargs, **fkwargs)``
+
+    where ``block`` is this EVENT block instance.
+    """
+
+    nin = 1
+    nout = 0
+
+    def __init__(
+        self,
+        direction: str,
+        func: Callable[..., Any],
+        fargs: list[Any] | tuple[Any, ...] | None = None,
+        fkwargs: dict[str, Any] | None = None,
+        **blockargs: Any,
+    ) -> None:
+        """
+        :param direction: event crossing direction, one of ``'^'``, ``'v'``, ``'+'``, ``'-'``
+        :type direction: str
+        :param func: user callback invoked when event is detected
+        :type func: callable
+        :param fargs: extra positional args passed to callback
+        :type fargs: list or tuple, optional
+        :param fkwargs: extra keyword args passed to callback
+        :type fkwargs: dict, optional
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        """
+        super().__init__(**blockargs)
+
+        direction_map = {"^": 1.0, "+": 1.0, "v": -1.0, "-": -1.0}
+        if direction not in direction_map:
+            raise ValueError("direction must be one of '^', 'v', '+', '-' ")
+        if not callable(func):
+            raise TypeError("func must be callable")
+
+        self.direction = direction_map[direction]
+        self.func = func
+        self.args = [] if fargs is None else list(fargs)
+        self.kwargs = {} if fkwargs is None else dict(fkwargs)
+        self._event_detector: Callable[[float, Any], float] | None = None
+
+    def start(self, simstate) -> None:
+        # Build an event function from the current input value. solve_ivp reads
+        # .terminal and .direction attributes directly from this callable.
+        def event_detector(t: float, y: Any) -> float:
+            # print(
+            #     "event_detector called at t =",
+            #     t,
+            #     "u =",
+            #     self.inport_values[0][0],
+            #     "y =",
+            #     y,
+            # )
+
+            # print("  ydot called at t =", t, "y =", y)
+            simstate.t = t
+            simstate.count += 1
+            # trigger evaluation of the block diagram at this time/state
+            self.bd.evaluate(y, t, sinks=False, simstate=simstate)
+
+            value = self.inport_values[0]
+            if isinstance(value, np.ndarray):
+                if value.size != 1:
+                    raise RuntimeError("EVENT input must be a scalar or 1-element array")
+                return float(value.item())
+            if isinstance(value, (list, tuple)):
+                if len(value) != 1:
+                    raise RuntimeError("EVENT input must be a scalar or 1-element sequence")
+                return float(value[0])
+            return float(value)
+
+        event_detector.terminal = True  # type: ignore[attr-defined]
+        event_detector.direction = self.direction  # type: ignore[attr-defined]
+        self._event_detector = event_detector
+
+        if not hasattr(simstate, "declare_crossing_event"):
+            raise RuntimeError(
+                "EVENT block requires runtime support for zero-crossing detection"
+            )
+        simstate.declare_crossing_event(event_detector, self)
+
+    def event_handler(self, t_crossing: float, y_crossing: Any, simstate: Any) -> None:
+        self.func(self, *self.args, **self.kwargs)
+
+    def step(self, t, inputs) -> None:
+        pass
 
 
 # ------------------------------------------------------------------------ #

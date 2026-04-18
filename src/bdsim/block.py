@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import sys
+import math
+import importlib
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, cast
 
@@ -136,74 +138,6 @@ class Block(ABC, Port):
     _parents: list[Plug | None]  # blocks that feed into this block, set at compile time
 
     __array_ufunc__ = None  # allow block operators with NumPy operands
-
-    # def __new__(cls, *args, bd=None, **kwargs) -> Self:
-    #     """
-    #     Construct a new Block object.
-
-    #     :param cls: The class to construct
-    #     :type cls: class type
-    #     :param *args: positional args passed to constructor
-    #     :type *args: list
-    #     :param **kwargs: keyword args passed to constructor
-    #     :type **kwargs: dict
-    #     :return: new Block instance
-    #     :rtype: Block instance
-    #     """
-    #     # print('Block __new__', args,bd, kwargs)
-    #     block: Self = super(Block, cls).__new__(cls)  # create a new instance
-
-    #     # we overload setattr, so need to know whether it is being passed a port
-    #     # name.  Add this attribute now to allow proper operation.
-    #     # block.__dict__["_portnames"] = []  # must be first, see __setattr__
-    #     # block._portnames = []  # must be first, see __setattr__
-    #     return block
-
-    def __init_subclass__(cls, **kwargs) -> None:
-        """
-        Initialize a subclass of Block.
-
-        :param cls: The subclass being initialized
-        :type cls: class type
-        :param **kwargs: keyword args passed to subclass definition
-        :type **kwargs: dict
-
-        This method is called when a new subclass of Block is defined, not when it is
-        instantiated. Subclasses can define class variables such as ``nin``, ``nout``,
-        ``inlabels``, ``outlabels``, etc.  For example::
-
-            class MyBlock(Block):
-                nin = 1
-                nout = 1
-                inlabels = ['in']
-                outlabels = ['out']
-
-        """
-        super().__init_subclass__(**kwargs)
-
-        # check that the subclass does not have methods inconsistent with its class
-        disallowed = {
-            "SourceBlock": ["deriv", "step", "next"],
-            "SinkBlock": ["deriv", "output", "next"],
-            "FunctionBlock": ["deriv", "next", "step"],
-            "TransferBlock": ["next", "step"],
-            "GraphicsBlock": ["deriv", "next", "output"],
-            "ClockedBlock": ["deriv", "step"],
-            "SubsystemBlock": ["deriv", "output", "next", "step"],
-        }
-        blockclass = cls.__mro__[1].__name__
-        x = ":".join([c.__name__ for c in cls.__mro__])
-        if blockclass in disallowed:
-            # raise ValueError(
-            #     f"unknown block class {blockclass} for class {cls.__name__}"
-            # )
-            # # check that the subclass does not have methods inconsistent with its class
-            for method in disallowed[blockclass]:
-                if hasattr(cls, method):
-                    raise BlockApiError(
-                        f"method {method} not allowed for block {cls.__name__} in class {blockclass} -- owning module will not be included in block library",
-                        traceback=False,
-                    )
 
     def __init__(
         self,

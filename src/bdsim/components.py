@@ -54,13 +54,6 @@ def _fixname(s):
                 UnicodeWarning,
                 stacklevel=3,
             )
-        # if not normalized.isidentifier():
-        #     warnings.warn(
-        #         f"Port name {normalized!r} is not a valid Python identifier "
-        #         f"and cannot be used for attribute-style port access.",
-        #         UserWarning,
-        #         stacklevel=3,
-        #     )
         return normalized
 
 
@@ -341,6 +334,11 @@ class SimulationState:
         self.t_stop: float | None = None
         self.eventq: TimeQ = TimeQ()
         self.options: OptionsBase | None = None
+        # Per-run discrete clock runtime state, keyed by Clock instance.
+        self.clock_state: dict[Any, np.ndarray] = {}
+        self.clock_ticks: dict[Any, int] = {}
+        self.clock_tlog: dict[Any, list[float]] = {}
+        self.clock_xlog: dict[Any, list[np.ndarray]] = {}
 
     def declare_event(self, block, t) -> None:
         self.eventq.push((t, block))
@@ -359,7 +357,7 @@ class Runner:
     def _require_context(self) -> SimulationContext:
         context = self._get_context()
         if context is None:
-            raise RuntimeError("no active simulation context")
+            raise SimulationContextError("no active simulation context")
         return context
 
     def _set_context(self, context: SimulationContext | None) -> None:
@@ -468,6 +466,7 @@ class Clock:
 
     def getstate0(self) -> np.ndarray[tuple[Any, ...], np.dtype[Any]]:
         # get the state from each stateful block on this clock
+        self._assign_state_slices()
         x0: np.ndarray[tuple[Any, ...], np.dtype[Any]] = np.array([])
         for b in self.blocklist:
             x0 = np.r_[x0, b.getstate0()]
@@ -513,41 +512,54 @@ class Clock:
         x: np.ndarray[tuple[Any, ...], np.dtype[Any]] = np.array([])
         for b in self.blocklist:
             # update dstate
-            xb = b.next(t, b.inputs, b.x)
+            xb = b.next(t, b.inport_values, b.x)
             x = np.r_[x, xb.flatten()]
 
         return x
 
-    def setstate(self) -> None:
-        x = self._x
+    def setstate(self, simstate: SimulationState | None = None) -> None:
+        self._assign_state_slices()
+        x = self._get_runtime_state(simstate)
         for b in self.blocklist:
+            b._clock_state_vector = x
             x = b.setstate(x)  # send it to blocks
 
     def start(self, simstate: SimulationState) -> None:
-        self.i = 1
-        simstate.declare_event(self, self.time(self.i))
-        self.i += 1
+        self._ensure_runtime(simstate)
+        i = simstate.clock_ticks[self]
+        simstate.declare_event(self, self.time(i))
+        simstate.clock_ticks[self] = i + 1
 
     def next_event(self, simstate: SimulationState) -> None:
-        simstate.declare_event(self, self.time(self.i))
-        self.i += 1
+        self._ensure_runtime(simstate)
+        i = simstate.clock_ticks[self]
+        simstate.declare_event(self, self.time(i))
+        simstate.clock_ticks[self] = i + 1
 
     def time(self, i):
         # return (math.floor((t - self.offset) / self.T) + 1) * self.T + self.offset
         # k = int((t - self.offset) / self.T + 0.5)
         return i * self.T + self.offset
 
-    def savestate(self, t) -> None:
+    def savestate(self, t, simstate: SimulationState | None = None) -> None:
         # save clock state at time t
-        self.t.append(t)
-        self.x.append(self.getstate(t))
+        x = self.getstate(t)
+        if simstate is not None:
+            self._ensure_runtime(simstate)
+            simstate.clock_tlog[self].append(t)
+            simstate.clock_xlog[self].append(x)
+            simstate.clock_state[self] = np.array(x)
+        else:
+            self.t.append(t)
+            self.x.append(x)
+            self._x = np.array(x)
 
 
 # ------------------------------------------------------------------------- #
 
 
 # Block moved to bdsim.block to separate core block API from other components.
-from bdsim.block import Block, BlockApiError, BlockRuntimeError  # noqa: E402, F401
+from bdsim.block import Block  # noqa: E402, F401
 
 # Re-export block type subclasses defined in block.py
 from bdsim.block import (  # noqa: E402, F401
@@ -560,12 +572,6 @@ from bdsim.block import (  # noqa: E402, F401
     EventSource,
 )
 
-
-# c = Clock(5)
-# c1 = Clock(5, 2)
-
-# print(c, c1)
-# print(c.next(0), c1.next(0))
 
 if __name__ == "__main__":
     try:
