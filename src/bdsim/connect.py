@@ -275,8 +275,7 @@ class Plug(Port):
         assert (
             bd is not None
         ), "left operand of * operator must be a plug connected to a block diagram"
-        name = "_prod.{:d}".format(bd.n_auto_prod)
-        bd.n_auto_prod += 1
+        name = "_prod.{:d}".format(next(bd.n_auto_prod))
         return Prod("**", matrix=True, name=name, inputs=[self, other], bd=bd)
 
     @oodebug

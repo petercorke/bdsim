@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from collections import Counter
+from collections import defaultdict
+import itertools
 from copy import deepcopy
 import io
 import sys
@@ -50,7 +51,7 @@ class BlockDiagram(BlockDiagramMixin):
     :ivar compiled: diagram has successfully compiled
     :vartype compiled: bool
     :ivar blockcounter: unique counter for each block type
-    :vartype blockcounter: collections.Counter
+    :vartype blockcounter: defaultdict of itertools.count
     :ivar blockdict: index of all blocks by category
     :vartype blockdict: dict of lists
     :ivar name: name of this diagram
@@ -69,7 +70,7 @@ class BlockDiagram(BlockDiagramMixin):
         self.blocklist: list[Block] = []  # list of all blocks
         self.clocklist: list[Clock] = []  # list of all clock sources
         self.compiled = False  # network has been compiled
-        self.blockcounter: Counter[str] = Counter()
+        self.blockcounter: defaultdict = defaultdict(itertools.count)
         self.name: str = name
         self.nstates = 0
         self.ndstates = 0
@@ -77,11 +78,11 @@ class BlockDiagram(BlockDiagramMixin):
         self.blocknames: dict[str, Any] = {}
         self.options = None
         self.runtime: Any = None  # set by BDSim before compilation
-        self.n_auto_sum = 0
-        self.n_auto_prod = 0
-        self.n_auto_const = 0
-        self.n_auto_gain = 0
-        self.n_auto_pow = 0
+        self.n_auto_sum = itertools.count()
+        self.n_auto_prod = itertools.count()
+        self.n_auto_const = itertools.count()
+        self.n_auto_gain = itertools.count()
+        self.n_auto_pow = itertools.count()
 
     def __getitem__(self, id):
         print(id)
@@ -293,6 +294,27 @@ class BlockDiagram(BlockDiagramMixin):
 
             else:
                 raise ValueError("bad start type")
+
+    def add_block(self, block) -> None:
+        if block.name in self.blocknames:
+            raise ValueError("block {} already added".format(block.name))
+        block.id = len(self.blocklist)
+        if block.name is None:
+            block.name = "{:s}.{:d}".format(
+                block.type, next(self.blockcounter[block.type])
+            )
+        block._bd = self
+        self.blocklist.append(block)  # add to the list of available blocks
+        if block in self.blocknames:
+            raise Warning(f"block name {block} is not unique")
+        self.blocknames[block.name] = block
+
+    def add_wire(self, wire, name=None):
+        wire.id = len(self.wirelist)
+        wire.name = name
+        # just add wire to the list, gets instantiated at compile time
+        # when add_output_wire and add_input_wire are called on the blocks
+        return self.wirelist.append(wire)
 
     # ---------------------------------------------------------------------- #
 

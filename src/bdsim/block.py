@@ -1288,13 +1288,14 @@ class Block(ABC, Port):
         ), "block must be connected to a block diagram to create an automatic constant"
 
         if isinstance(value, (int, float, str)):
-            name = "_const.{:d}({})".format(self.bd.n_auto_const, value)
+            name = "_const.{:d}({})".format(next(self.bd.n_auto_const), value)
         else:
-            name = "_const.{:d}<{}>".format(self.bd.n_auto_const, type(value).__name__)
+            name = "_const.{:d}<{}>".format(
+                next(self.bd.n_auto_const), type(value).__name__
+            )
         assert (
             self.bd is not None
         ), "block must be connected to a block diagram to create an automatic constant"
-        self.bd.n_auto_const += 1
         return self.bd.CONSTANT(value, name=name)
 
     def _autogain(self, value, **kwargs):
@@ -1303,7 +1304,7 @@ class Block(ABC, Port):
         ), "block must be connected to a block diagram to create an automatic gain"
 
         if isinstance(value, (int, float, np.ndarray)):
-            name = "_gain.{:d}({})".format(self.bd.n_auto_gain, value)
+            name = "_gain.{:d}({})".format(next(self.bd.n_auto_gain), value)
         else:
             raise TypeError(
                 f"automatic gain value must be int, float, or ndarray, got {type(value).__name__}"
@@ -1311,7 +1312,6 @@ class Block(ABC, Port):
         assert (
             self.bd is not None
         ), "block must be connected to a block diagram to create an automatic gain"
-        self.bd.n_auto_gain += 1
         return self.bd.GAIN(value, name=name, **kwargs)
 
     def _autopow(self, value, **kwargs):
@@ -1319,11 +1319,10 @@ class Block(ABC, Port):
             self.bd is not None
         ), "block must be connected to a block diagram to create an automatic power block"
 
-        name = "_pow.{:d}({})".format(self.bd.n_auto_pow, value)
+        name = "_pow.{:d}({})".format(next(self.bd.n_auto_pow), value)
         assert (
             self.bd is not None
         ), "block must be connected to a block diagram to create an automatic power block"
-        self.bd.n_auto_pow += 1
         return self.bd.POW(value, name=name, **kwargs)
 
     @oodebug
@@ -1364,8 +1363,7 @@ class Block(ABC, Port):
         assert (
             self.bd is not None
         ), "block must be connected to a block diagram to create an automatic sum block"
-        name = "_sum.{:d}".format(self.bd.n_auto_sum)
-        self.bd.n_auto_sum += 1
+        name = "_sum.{:d}".format(next(self.bd.n_auto_sum))
         if isinstance(other, (int, float, np.ndarray)):
             # block + constant, create a CONSTANT block
             other = self._autoconstant(other)
@@ -1409,8 +1407,7 @@ class Block(ABC, Port):
         assert (
             self.bd is not None
         ), "block must be connected to a block diagram to create an automatic sum block"
-        name = "_sum.{:d}".format(self.bd.n_auto_sum)
-        self.bd.n_auto_sum += 1
+        name = "_sum.{:d}".format(next(self.bd.n_auto_sum))
         if isinstance(other, (int, float, np.ndarray)):
             # constant + block, create a CONSTANT block
             other = self._autoconstant(other)
@@ -1449,8 +1446,7 @@ class Block(ABC, Port):
         assert (
             self.bd is not None
         ), "block must be connected to a block diagram to create an automatic sum block"
-        name = "_sum.{:d}".format(self.bd.n_auto_sum)
-        self.bd.n_auto_sum += 1
+        name = "_sum.{:d}".format(next(self.bd.n_auto_sum))
         if isinstance(other, (int, float, np.ndarray)):
             # block - constant, create a CONSTANT block
             other = self._autoconstant(other)
@@ -1494,8 +1490,7 @@ class Block(ABC, Port):
             self.bd is not None
         ), "block must be connected to a block diagram to create an automatic sum block"
 
-        name = "_sum.{:d}".format(self.bd.n_auto_sum)
-        self.bd.n_auto_sum += 1
+        name = "_sum.{:d}".format(next(self.bd.n_auto_sum))
         if isinstance(other, (int, float, np.ndarray)):
             # constant - block, create a CONSTANT block
             other = self._autoconstant(other)
@@ -1591,8 +1586,7 @@ class Block(ABC, Port):
             return self._autogain(other, premul=matrix, matrix=matrix, inputs=[self])
         else:
             # value * value, create a PROD block
-            name = "_prod.{:d}".format(self.bd.n_auto_prod)
-            self.bd.n_auto_prod += 1
+            name = "_prod.{:d}".format(next(self.bd.n_auto_prod))
             return Prod(
                 "**", inputs=[self, other], matrix=matrix, name=name, bd=self.bd
             )
@@ -1672,8 +1666,7 @@ class Block(ABC, Port):
             self.bd is not None
         ), "block must be connected to a block diagram to create an automatic product block"
 
-        name = "_prod.{:d}".format(self.bd.n_auto_prod)
-        self.bd.n_auto_prod += 1
+        name = "_prod.{:d}".format(next(self.bd.n_auto_prod))
         matrix = False
         if isinstance(other, (int, float, np.ndarray)):
             # block / constant, create a CONSTANT block
@@ -1718,8 +1711,7 @@ class Block(ABC, Port):
             self.bd is not None
         ), "block must be connected to a block diagram to create an automatic product block"
 
-        name = "_prod.{:d}".format(self.bd.n_auto_prod)
-        self.bd.n_auto_prod += 1
+        name = "_prod.{:d}".format(next(self.bd.n_auto_prod))
         matrix = False
         if isinstance(other, (int, float, np.ndarray)):
             # constant / block, create a CONSTANT block

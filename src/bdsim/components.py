@@ -5,6 +5,7 @@ from __future__ import annotations
 import threading
 import warnings
 import unicodedata
+import itertools
 
 import matplotlib.pyplot as plt
 import numpy as np
