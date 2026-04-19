@@ -3,10 +3,10 @@ import sys
 import traceback
 from PIL import ImageFont
 
-# PyQt5 imports
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import *
+# PySide6 imports
+from PySide6.QtGui import *
+from PySide6.QtCore import *
+from PySide6.QtWidgets import *
 
 
 # =============================================================================
@@ -87,7 +87,7 @@ class GraphicsSocket(QGraphicsItem):
         self._sign_pen.setWidthF(self.sign_width)
         self._char_font = QFont("Arial", 14)
 
-        self.setFlag(QGraphicsItem.ItemIsSelectable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
         self.setBrush()
 
         # Internal variable for catching fatal errors, and allowing user to save work before crashing

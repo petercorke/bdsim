@@ -6,11 +6,13 @@ BLACK=\033[0;30m
 help:
 	@echo "$(BLUE) make test - run all unit tests"
 	@echo " make coverage - run unit tests and coverage report"
+	@echo " make typehints - run mypy type-hint coverage report and open HTML"
 	@echo " make docs - build Sphinx documentation"
 	@echo " make docupdate - upload Sphinx documentation to GitHub pages"
 	@echo " make dist - build dist files"
 	@echo " make upload - upload to PyPI"
 	@echo " make clean - remove dist and docs build files"
+	@echo " make app   - build bdedit.app bundle and register with macOS Launch Services"
 	@echo " make help - this message$(BLACK)"
 
 test:
@@ -42,3 +44,8 @@ clean: .FORCE
 	# (cd docsrc; make clean)
 	-rm -r *.egg-info
 	-rm -r dist build
+
+app: .FORCE
+	python src/bdsim/bdedit/make_app.py
+	/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f bdedit.app
+	@echo "bdedit.app registered with Launch Services"

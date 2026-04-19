@@ -3,10 +3,10 @@ import json
 import copy
 from collections import OrderedDict
 
-# PyQt5 imports
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import *
+# PySide6 imports
+from PySide6.QtGui import *
+from PySide6.QtCore import *
+from PySide6.QtWidgets import *
 
 # BdEdit imports
 from bdsim.bdedit.interface_serialize import Serializable
@@ -156,7 +156,7 @@ class ContentWidget(QWidget):
 
         self.defaultFont = "Arial"
         self.defaultFontSize = 14
-        self.defaultWeight = QFont.Normal
+        self.defaultWeight = QFont.Weight.Normal
         self.defaultItalics = False
         self.defaultUnderline = False
         # self.defaultColor = QColor("#000000")
@@ -179,7 +179,7 @@ class ContentWidget(QWidget):
     def setup(self):
         self.text_edit.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.text_edit.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.text_edit.setFrameStyle(QFrame.NoFrame)
+        self.text_edit.setFrameStyle(QFrame.Shape.NoFrame)
         self.text_edit.setTextInteractionFlags(Qt.NoTextInteraction)
         self.text_edit.setAutoFillBackground(True)
 

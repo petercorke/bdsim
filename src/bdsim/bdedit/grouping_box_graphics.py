@@ -1,9 +1,9 @@
-# PyQt5 imports
+# PySide6 imports
 import copy
 
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import *
+from PySide6.QtGui import *
+from PySide6.QtCore import *
+from PySide6.QtWidgets import *
 
 
 # Majority of this code has been adapted with heavy inspiration from: https://stackoverflow.com/a/34442054
@@ -75,10 +75,10 @@ class GraphicsGBox(QGraphicsRectItem):
         """
         This method sets flags to allow for this Block to be movable and selectable.
         """
-        self.setFlag(QGraphicsItem.ItemIsSelectable)
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
-        self.setFlag(QGraphicsItem.ItemIsFocusable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsFocusable)
         self.setAcceptHoverEvents(True)
         self.updateHandlesPos()
         self.setZValue(-11)
@@ -379,7 +379,7 @@ class GraphicsGBox(QGraphicsRectItem):
         painter.drawRect(self.rect())
 
         if self.isSelected():
-            painter.setRenderHint(QPainter.Antialiasing)
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
             # painter.setBrush(QBrush(QColor("#FFFFA637")))
             painter.setBrush(QBrush(QColorConstants.Svg.orange))
             painter.setPen(

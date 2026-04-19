@@ -2,10 +2,10 @@
 import sys
 import traceback
 
-# PyQt5 imports
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import *
+# PySide6 imports
+from PySide6.QtGui import *
+from PySide6.QtCore import *
+from PySide6.QtWidgets import *
 
 # BdEdit imports
 from bdsim.bdedit.Icons import *
@@ -108,8 +108,8 @@ class GraphicsBlock(QGraphicsItem):
         """
         This method sets flags to allow for this Block to be movable and selectable.
         """
-        self.setFlag(QGraphicsItem.ItemIsSelectable)
-        self.setFlag(QGraphicsItem.ItemIsMovable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
         self.setAcceptHoverEvents(True)
 
     # -----------------------------------------------------------------------------
@@ -491,8 +491,8 @@ class GraphicsConnectorBlock(QGraphicsItem):
         This method sets flags to allow for this Connector Block to be movable and selectable.
         """
 
-        self.setFlag(QGraphicsItem.ItemIsSelectable)
-        self.setFlag(QGraphicsItem.ItemIsMovable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
 
         # When first created, the Connector block spawns highlighted
         self.setSelected(True)

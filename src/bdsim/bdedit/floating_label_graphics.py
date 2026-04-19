@@ -1,9 +1,9 @@
 import copy
 
-# PyQt5 imports
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
+# PySide6 imports
+from PySide6.QtWidgets import *
+from PySide6.QtCore import *
+from PySide6.QtGui import *
 
 
 class GraphicsLabel(QGraphicsItem):
@@ -27,8 +27,8 @@ class GraphicsLabel(QGraphicsItem):
         self.lastPos = self.pos()
 
     def initUI(self):
-        self.setFlag(QGraphicsItem.ItemIsSelectable)
-        self.setFlag(QGraphicsItem.ItemIsMovable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
         self.setAcceptHoverEvents(True)
 
         self.grText = QGraphicsProxyWidget(self)

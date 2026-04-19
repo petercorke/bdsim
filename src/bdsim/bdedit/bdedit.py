@@ -12,13 +12,52 @@ from pathlib import Path
 
 from colored import fg, attr
 
-# PyQt5 imports
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import QTimer
-from PyQt5.QtGui import QIcon
+# PySide6 imports
+from PySide6.QtWidgets import QApplication
+from PySide6.QtCore import QTimer, QEvent
+from PySide6.QtGui import QIcon
 
 # BdEdit imports
 from bdsim.bdedit.interface_manager import InterfaceWindow
+
+
+class _BdeditApp(QApplication):
+    """QApplication subclass that handles QFileOpenEvent (macOS open-with / drag-drop).
+
+    On macOS, files received before the window is created are queued; once the
+    window is registered via ``set_window()`` any queued file is loaded
+    immediately, and subsequent events are forwarded directly.
+    On other platforms ``QEvent.Type.FileOpen`` never fires, so this class is a
+    transparent no-op.
+    """
+
+    def __init__(self, argv):
+        super().__init__(argv)
+        self._window = None
+        self._pending: list[str] = []
+
+    def set_window(self, window):
+        self._window = window
+        # Drain any events that arrived before the window was ready
+        if self._pending:
+            self._open_file(self._pending.pop(0))
+
+    def event(self, e: QEvent) -> bool:
+        # QEvent.Type.FileOpen is a macOS-only Apple Event; harmless on other
+        # platforms as it simply never fires.
+        if e.type() == QEvent.Type.FileOpen:
+            if self._window is not None:
+                self._open_file(e.file())
+            else:
+                self._pending.append(e.file())
+            return True
+        return super().event(e)
+
+    def _open_file(self, path: str):
+        if self._window is not None:
+            self._window.loadFromFilePath(path)
+            self._window.raise_()
+            self._window.activateWindow()
 
 
 # Executable code to launch the BdEdit application window
@@ -88,7 +127,10 @@ def main():
     unparsed_args.insert(0, sys.argv[0])
 
     # A QApplication instance is made, which is the window that holds everything
-    app = QApplication(unparsed_args)
+    app = _BdeditApp(unparsed_args)
+    app.setApplicationName("bdedit")
+    app.setApplicationDisplayName("bdedit")
+    app.setOrganizationName("bdsim")
 
     # The resolution of the user's screen is extracted (used for determining
     # the size of the application window)
@@ -113,77 +155,51 @@ def main():
     window = InterfaceWindow(screen_resolution, args.debug)
     window.args = args
 
-    # Check what command line arguments have been passed, if any
-    if args.file or args.print or args.debug or args.fontsize or args.format:
+    # Apply non-file args synchronously
+    window.centralWidget().scene.block_name_fontsize = args.fontsize
+    window.centralWidget().scene.grScene.updateBackgroundMode(args.background, True)
 
-        # Call bdedit functionality based on passed args
+    # Register window with app so QFileOpenEvents load files immediately
+    app.set_window(window)
 
-        window.centralWidget().scene.block_name_fontsize = args.fontsize
-
-        if args.file is not None:
-
-            # Attempt to load the .bd file
-            if os.path.isfile(args.file):
-                window.loadFromFilePath(args.file)
-            else:
-                raise ValueError(f"bdfile {args.file} not found")
-
-        # fire up the GUI
-        window.centralWidget().scene.grScene.updateBackgroundMode(args.background, True)
+    # Load a CLI-supplied file (handles `bdedit file.bd` and `open -a App --args file.bd`)
+    if args.file:
+        if not os.path.isfile(args.file):
+            raise ValueError(f"bdfile {args.file} not found")
+        window.loadFromFilePath(args.file)
+        window.raise_()
+        window.activateWindow()
 
         if args.print is not None:
-            # render a screenshot to file
+
             def screenshot(model_path, screenshot_name):
-                # Set the background mode to white, no grid lines
                 window.centralWidget().scene.grScene.updateBackgroundMode(
                     "white", False
                 )
                 window.centralWidget().scene.grScene.checkMode()
-
-                # Hide and then unselect all connector blocks present in the model
                 window.centralWidget().scene.hide_connector_blocks = True
-
                 for block in window.centralWidget().scene.blocks:
                     if block.block_type in ["Connector", "CONNECTOR"]:
                         block.grBlock.setSelected(False)
-
-                # Update the points where wires overlap within the scene to draw the wire separations
                 if window.centralWidget().scene.wires:
                     window.centralWidget().scene.wires[0].checkIntersections()
-
-                window.centralWidget().save_image(
-                    model_path, screenshot_name
-                )  # in interface.py
+                # Resolve to absolute path so save_image doesn't join it
+                # against the model's directory
+                out_abs = str(Path(screenshot_name).resolve())
+                window.centralWidget().save_image(out_abs, picture_name="")
                 sys.exit(0)
 
-            # figure out the filename to save it as
-            file = Path(args.print)
-
             if args.print == "":
-                # no filename given on command line
-                # use the model file name, drop the path, and set extension pdf if none given
-
-                # wait till python 3.9 for the next line to work
-                # path = Path(args.file).with_stem(filename.stem + "-screenshot").with_suffix('.pdf').name
-
-                if args.format == "png":
-                    path = Path(args.file).with_suffix(".png")
-                else:
-                    path = Path(args.file).with_suffix(".pdf")
-
-                path = path.stem + path.suffix
-
+                out = Path(args.file).with_suffix(
+                    ".png" if args.format == "png" else ".pdf"
+                )
+                out = out.stem + out.suffix
             else:
-                # filename was given on command line
-                path = Path(args.print)
-                if path.suffix == "":
-                    if args.format == "png":
-                        path = path.with_suffix(".png")
-                    else:
-                        path = path.with_suffix(".pdf")
+                out = Path(args.print)
+                if out.suffix == "":
+                    out = out.with_suffix(".png" if args.format == "png" else ".pdf")
 
-            # After 100ms non-blocking delay, screenshot the model
-            QTimer.singleShot(100, lambda: screenshot(args.file, str(path)))
+            QTimer.singleShot(100, lambda: screenshot(args.file, str(out)))
 
     # run the GUI until it exits
     sys.exit(app.exec())

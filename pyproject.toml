@@ -30,7 +30,15 @@ repository = "https://github.com/petercorke/bdsim"
 
 [project.optional-dependencies]
 
-dev = ["sympy", "pytest", "pytest-timeout", "pytest-xvfb", "coverage", "flake8"]
+dev = [
+    "sympy",
+    "pytest",
+    "pytest-timeout",
+    "pytest-xvfb",
+    "pytest-qt",
+    "coverage",
+    "flake8",
+]
 
 docs = [
     "sphinx",
@@ -42,12 +50,14 @@ docs = [
     "sphinx-favicon",
 ]
 
-edit = ["PyQt5", "PIL"]
+edit = ["PySide6", "PIL"]
 
 [project.scripts]
 
 bdrun = "bdsim:bdrun"
 bdtex2icon = "bdsim.tex2icon:main"
+bdedit-app = "bdsim.bdedit.make_app:make_app"
+bdedit-associate-windows = "bdsim.bdedit.associate_bd_windows:main"
 
 [project.gui-scripts]
 
@@ -77,7 +87,6 @@ omit = [
     "src/bdsim/tex2icon.py",
     "src/bdsim/blocks/io.py",
     "src/bdsim/blocks/vision.py",
-    "src/bdsim/bdedit/*.py",
     "tk_editor/*.py",
     "examples/RVC3/*.py",
 ]

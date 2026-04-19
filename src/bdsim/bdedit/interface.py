@@ -1,11 +1,13 @@
 # Library imports
 import os
 import fnmatch
+from pathlib import Path
 
-# PyQt5 imports
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import *
+# PySide6 imports
+from PySide6.QtGui import *
+from PySide6.QtCore import *
+from PySide6.QtWidgets import *
+from PySide6.QtSvg import QSvgGenerator
 
 # BdEdit imports
 from bdsim.bdedit.block import *
@@ -26,6 +28,7 @@ from bdsim.bdedit.interface_graphics_view import GraphicsView
 # =============================================================================
 # Variable for enabling/disabling debug comments
 DEBUG = False
+
 
 # =============================================================================
 #
@@ -338,7 +341,7 @@ class Interface(QWidget):
         self.layout.addWidget(self.canvasView, 0, 1, 10, 9)
 
     # -----------------------------------------------------------------------------
-    @pyqtSlot()
+    @Slot()
     def on_click(self, scene):
         """
         This method creates a ``Wire`` instance from the ``Socket`` that was clicked
@@ -542,72 +545,134 @@ class Interface(QWidget):
     # -----------------------------------------------------------------------------
     def save_image(self, picture_path, picture_name=None, picture_format=None):
         """
-        This method takes a filename and saves a snapshot of all the items within
-        the ``Scene`` into it. Currently the resolution of this image is set to
-        4K resolution (3840 x 2160).
+        Export the diagram as a vector PDF or raster PNG.
 
-        :param picture_path: path where the given model is saved, and where the image will be saved
-        :type picture_path: path, required
-        :param picture_name: name of screenshot, same as model name if not given
-        :type picture_name: str, optional
+        When ``picture_name`` is ``""`` the caller has already resolved a full
+        output path via ``picture_path`` and it is used directly.  Otherwise
+        the path is derived by ``getScreenshotName``.
         """
-
         print("Rendering image")
 
-        # Creates an image, of defined resolution quality
-        ratio = 3
+        # Resolve the output path
+        if picture_name == "":
+            save_path = picture_path
+        else:
+            save_path = self.getScreenshotName(
+                picture_path, picture_name, picture_format
+            )
+        if save_path is None:
+            print("Export cancelled: could not determine save path.")
+            return
+
+        # Determine format from argument or file extension
+        if picture_format:
+            fmt = picture_format.lower()
+        else:
+            fmt = Path(save_path).suffix.lstrip(".").lower() or "pdf"
+
+        # Suppress background/grid during render, then restore
+        gr = self.scene.grScene
+        saved_bgcolor = getattr(gr, "bgcolor", "grey")
+        saved_grid = getattr(gr, "grid", True)
+        gr.updateBackgroundMode("white", False)
+        gr.checkMode()
+        try:
+            if fmt == "pdf":
+                self._save_as_pdf(save_path)
+            elif fmt == "svg":
+                self._save_as_svg(save_path)
+            else:
+                self._save_as_png(save_path)
+        finally:
+            gr.updateBackgroundMode(saved_bgcolor, saved_grid)
+            gr.checkMode()
+
+    def _save_as_pdf(self, save_path):
+        """Render the diagram as a vector PDF using QPdfWriter."""
+        [x, y, width, height] = self.grab_screenshot_dimensions()
+
+        # Map scene pixels → mm (assuming 96 dpi logical resolution)
+        mm_per_px = 25.4 / 96.0
+        page_w_mm = max(width, 1) * mm_per_px
+        page_h_mm = max(height, 1) * mm_per_px
+
+        pdf = QPdfWriter(save_path)
+        pdf.setResolution(96)
+        pdf.setPageLayout(
+            QPageLayout(
+                QPageSize(QSizeF(page_w_mm, page_h_mm), QPageSize.Unit.Millimeter),
+                QPageLayout.Orientation.Portrait,
+                QMarginsF(0, 0, 0, 0),
+            )
+        )
+
+        painter = QPainter(pdf)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        source = QRectF(x, y, width, height)
+        target = QRectF(0, 0, pdf.width(), pdf.height())
+        self.scene.grScene.render(painter, target, source)
+        painter.end()
+        print("PDF saved -->", save_path)
+
+    def _save_as_svg(self, save_path):
+        """Render the diagram as a vector SVG using QSvgGenerator."""
+        [x, y, width, height] = self.grab_screenshot_dimensions()
+
+        generator = QSvgGenerator()
+        generator.setFileName(save_path)
+        generator.setSize(QSize(int(width), int(height)))
+        generator.setViewBox(QRect(0, 0, int(width), int(height)))
+        generator.setTitle("bdedit diagram")
+
+        painter = QPainter(generator)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        source = QRectF(x, y, width, height)
+        target = QRectF(0, 0, width, height)
+        self.scene.grScene.render(painter, target, source)
+        painter.end()
+        print("SVG saved -->", save_path)
+
+    def _save_as_png(self, save_path):
+        """Render the diagram as a high-resolution raster PNG."""
+        [x, y, width, height] = self.grab_screenshot_dimensions()
+
+        ratio = 3  # 3× oversampling for ~288 dpi at 96 dpi screen
+        # ensure row stride (width × 3 bytes) is a multiple of 4
+        width += (width * 3) % 4
+
         output_image = QImage(
             int(self.scene.scene_width * ratio),
             int(self.scene.scene_height * ratio),
             QImage.Format_RGBA64,
         )
 
-        # Then a painter is initialized to that image
         painter = QPainter(output_image)
-        painter.setRenderHint(QPainter.Antialiasing, True)
-
-        # The canvas is rendered by the above-defined painter (into the image)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
         self.scene.grScene.render(painter)
         painter.end()
 
-        # Grab the dimensions of the space all blocks within the screen occupy
-        [x, y, width, height] = self.grab_screenshot_dimensions()
-
-        # ensure number of bytes in row (width*3) is a multiple of 4
-        width += (width * 3) % 4
-        # Scale the dimensions from above, to the image
         rect = QRect(
             int(output_image.width() / 2 + (x * ratio)),
             int(output_image.height() / 2 + (y * ratio)),
             int(width * ratio),
             int(height * ratio),
         )
+        output_image = output_image.copy(rect).convertToFormat(QImage.Format_RGB888)
 
-        # Crop the image to area of interest
-        output_image = output_image.copy(rect)
-        # by default this is in QImage.Format_RGBA64 = 26 format, convert
-        # 8-bit RGB pixels
-        #  see https://doc.qt.io/qt-5/qimage.html
-        output_image = output_image.convertToFormat(QImage.Format_RGB888)
+        from PIL import Image as PILImage
 
-        save_path = self.getScreenshotName(picture_path, picture_name, picture_format)
-
-        # use PIL to do the PDF printing
-        from PIL import Image
-
-        bytes = output_image.bits().asstring(output_image.sizeInBytes())
-        img_PIL = Image.frombuffer(
+        img_data = output_image.bits().tobytes()
+        img_pil = PILImage.frombuffer(
             "RGB",
             (output_image.width(), output_image.height()),
-            bytes,
+            img_data,
             "raw",
             "RGB",
             0,
             1,
         )
-        img_PIL.save(save_path)
-        # # And the image is saved under the given file name, as a PDF
-        print("Screenshot saved --> ", save_path)
+        img_pil.save(save_path)
+        print("PNG saved -->", save_path)
 
     # -----------------------------------------------------------------------------
     def getScreenshotName(self, picture_path, picture_name, picture_format=None):

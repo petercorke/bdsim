@@ -1,7 +1,7 @@
-# PyQt5 imports
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import QGraphicsView
+# PySide6 imports
+from PySide6.QtGui import *
+from PySide6.QtCore import *
+from PySide6.QtWidgets import QGraphicsView
 
 # BdEdit imports
 from bdsim.bdedit.block import Block

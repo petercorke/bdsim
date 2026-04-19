@@ -17,6 +17,10 @@ import bdsim
 
 
 def import_blocks(scene, window):
+    # Always start with a clean blocklist so that creating multiple
+    # InterfaceWindow instances (e.g. in tests) does not accumulate duplicate
+    # entries bound to stale scene/window closures.
+    blocklist.clear()
 
     size_map = {
         "InPort": [50, 100],
@@ -49,7 +53,7 @@ def import_blocks(scene, window):
     ]
 
     # block_list = parser.docstring_parser()
-    sim = bdsim.BDSim()  # create simulator
+    sim = bdsim.BDSim(sysargs=False)  # create simulator (skip sys.argv parsing)
 
     block_library = []
     imported_block_groups = []

@@ -3,13 +3,12 @@ import os
 import json
 import subprocess
 import datetime
-from sys import platform
 from pathlib import Path
 
-# PyQt5 imports
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import *
+# PySide6 imports
+from PySide6.QtGui import *
+from PySide6.QtCore import *
+from PySide6.QtWidgets import *
 
 # BdEdit imports
 from bdsim.bdedit.Icons import *
@@ -131,7 +130,7 @@ class InterfaceWindow(QMainWindow):
             toolTip="Delete selected items.",
             triggered=self.editDelete,
         )
-        self.actDelete.setShortcuts({QKeySequence("Delete"), QKeySequence("Backspace")})
+        self.actDelete.setShortcuts([QKeySequence("Delete"), QKeySequence("Backspace")])
 
         # Miscellaneous actions
         self.actFlipBlocks = QAction(
@@ -140,6 +139,13 @@ class InterfaceWindow(QMainWindow):
             shortcut="F",
             toolTip="Flip selected blocks.",
             triggered=self.miscFlip,
+        )
+        self.actFitView = QAction(
+            "Fit View",
+            self,
+            shortcut="V",
+            toolTip="Fit entire diagram in the canvas view.",
+            triggered=self.miscFitView,
         )
         self.actScreenshot = QAction(
             "Screenshot",
@@ -190,9 +196,15 @@ class InterfaceWindow(QMainWindow):
             toolTip="<b>Abort Button (Q)</b><p>Abort simulation of your block diagram model.</p>",
             triggered=self.abortButton,
         )
+        self.actAboutBdedit = QAction(
+            "About bdedit",
+            self,
+            toolTip="About bdedit.",
+            triggered=self.showAbout,
+        )
         self.actSimTime = self.simTimeBox.addAction(
             QIcon(":/Icons_Reference/Icons/simTime.png"),
-            self.simTimeBox.LeadingPosition,
+            self.simTimeBox.ActionPosition.LeadingPosition,
         )
         self.actSimTime.setToolTip(
             "<b>Simulation Time</b><p>Description to be added</p>"
@@ -360,6 +372,11 @@ class InterfaceWindow(QMainWindow):
         self.fileMenu.setToolTipsVisible(True)
         self.fileMenu.addAction(self.actNew)
         self.fileMenu.addAction(self.actOpen)
+
+        self.recentMenu = QMenu("Open Recent", self)
+        self.fileMenu.addMenu(self.recentMenu)
+        self.recentMenu.aboutToShow.connect(self._populateRecentMenu)
+
         self.fileMenu.addSeparator()
         self.fileMenu.addAction(self.actSave)
         self.fileMenu.addAction(self.actSaveAs)
@@ -378,7 +395,14 @@ class InterfaceWindow(QMainWindow):
             toolTip="Export model as a png.",
             triggered=lambda checked: self.exportAsToFile("png"),
         )
+        exportSVG = QAction(
+            "SVG",
+            self,
+            toolTip="Export model as an svg.",
+            triggered=lambda checked: self.exportAsToFile("svg"),
+        )
         exportMenu.addAction(exportPDF)
+        exportMenu.addAction(exportSVG)
         exportMenu.addAction(exportPNG)
         self.fileMenu.addMenu(exportMenu)
 
@@ -422,6 +446,7 @@ class InterfaceWindow(QMainWindow):
         self.toolsMenu = menubar.addMenu("Tools")
         self.toolsMenu.setToolTipsVisible(True)
         self.toolsMenu.addAction(self.actFlipBlocks)
+        self.toolsMenu.addAction(self.actFitView)
         self.toolsMenu.addAction(self.actScreenshot)
         self.toolsMenu.addSeparator()
         self.toolsMenu.addAction(self.actWireOverlaps)
@@ -466,6 +491,8 @@ class InterfaceWindow(QMainWindow):
         self.helpBar = menubar.addMenu("Help")
         self.helpBar.setToolTipsVisible(True)
         self.helpBar.addAction(self.helpButton)
+        self.helpBar.addSeparator()
+        self.helpBar.addAction(self.actAboutBdedit)
 
     def createToolbarItems(self):
         self.toolbar = self.addToolBar("ToolbarItems")
@@ -488,6 +515,76 @@ class InterfaceWindow(QMainWindow):
         self.toolbar.addSeparator()
 
     # -----------------------------------------------------------------------------
+
+    # ------------------------------------------------------------------
+    # Recent-files helpers
+    # ------------------------------------------------------------------
+    _MAX_RECENT = 10
+
+    def _recent_files(self) -> list[str]:
+        s = QSettings("bdsim", "bdedit")
+        return s.value("recentFiles", []) or []
+
+    def _record_recent(self, path: str):
+        s = QSettings("bdsim", "bdedit")
+        files: list[str] = s.value("recentFiles", []) or []
+        path = str(Path(path).resolve())
+        if path in files:
+            files.remove(path)
+        files.insert(0, path)
+        s.setValue("recentFiles", files[: self._MAX_RECENT])
+
+    def _populateRecentMenu(self):
+        self.recentMenu.clear()
+        files = self._recent_files()
+        if not files:
+            self.recentMenu.addAction("(none)").setEnabled(False)
+            return
+        for path in files:
+            label = Path(path).name
+            act = self.recentMenu.addAction(label)
+            act.setToolTip(path)
+            act.triggered.connect(lambda checked, p=path: self._openRecent(p))
+        self.recentMenu.addSeparator()
+        self.recentMenu.addAction("Clear Menu", self._clearRecent)
+
+    def _openRecent(self, path: str):
+        if not os.path.isfile(path):
+            QMessageBox.warning(
+                self, "File not found", f"{path}\n\nRemoving from recent list."
+            )
+            s = QSettings("bdsim", "bdedit")
+            files = self._recent_files()
+            files = [f for f in files if f != path]
+            s.setValue("recentFiles", files)
+            return
+        if self.exitingWithoutSave():
+            self.centralWidget().scene.loadFromFile(path)
+            self.filename = path
+            self.updateApplicationName()
+            self.centralWidget().scene.history.clear()
+            self.centralWidget().scene.history.storeInitialHistoryStamp()
+            self.runButtonParameters["SimTime"] = self.interface.scene.sim_time
+            self.simTimeBox.setText(str(self.runButtonParameters["SimTime"]))
+            self._record_recent(path)
+
+    def _clearRecent(self):
+        QSettings("bdsim", "bdedit").setValue("recentFiles", [])
+
+    def showAbout(self):
+        import bdsim
+
+        try:
+            version = bdsim.__version__
+        except AttributeError:
+            version = "(unknown)"
+        QMessageBox.about(
+            self,
+            "About bdedit",
+            f"<b>bdedit</b> — block diagram editor<br>"
+            f"Part of the <b>bdsim</b> package v{version}<br><br>"
+            f"<a href='https://github.com/petercorke/bdsim'>github.com/petercorke/bdsim</a>",
+        )
 
     def updateApplicationName(self):
         name = "bdedit - "
@@ -730,6 +827,7 @@ class InterfaceWindow(QMainWindow):
                 self.updateApplicationName()
                 self.centralWidget().scene.history.clear()
                 self.centralWidget().scene.history.storeInitialHistoryStamp()
+                self._record_recent(filepath)
 
     # -----------------------------------------------------------------------------
     def loadFromFile(self):
@@ -740,19 +838,26 @@ class InterfaceWindow(QMainWindow):
 
         if self.exitingWithoutSave():
             # The filename of the selected file is grabbed
-            fname, filter = QFileDialog.getOpenFileName(self)
-            if fname == "":
+            fname, _ = QFileDialog.getOpenFileName(
+                self,
+                "Open model",
+                "",
+                "Block diagram files (*.bd);;All files (*)",
+            )
+            if not fname:
                 return
 
             # And the method for deserializing from a file is called, feeding in the
             # extracted filename from above
-            if os.path.isfile(fname):
-                self.centralWidget().scene.loadFromFile(fname)
-                self.filename = fname
-                self.updateApplicationName()
-                # Update SimTime in runButtonParameters in case it was set in model
-                self.runButtonParameters["SimTime"] = self.interface.scene.sim_time
-                self.simTimeBox.setText(str(self.runButtonParameters["SimTime"]))
+            self.centralWidget().scene.loadFromFile(fname)
+            self.filename = fname
+            self.updateApplicationName()
+            self.centralWidget().scene.history.clear()
+            self.centralWidget().scene.history.storeInitialHistoryStamp()
+            self._record_recent(fname)
+            # Update SimTime in runButtonParameters in case it was set in model
+            self.runButtonParameters["SimTime"] = self.interface.scene.sim_time
+            self.simTimeBox.setText(str(self.runButtonParameters["SimTime"]))
 
     # -----------------------------------------------------------------------------
     def saveToFile(self):
@@ -766,6 +871,7 @@ class InterfaceWindow(QMainWindow):
         if self.filename is None:
             return self.saveAsToFile()
         self.centralWidget().scene.saveToFile(self.filename)
+        self._record_recent(self.filename)
         self.updateApplicationName()
         return True
 
@@ -795,7 +901,43 @@ class InterfaceWindow(QMainWindow):
 
     # -----------------------------------------------------------------------------
     def exportAsToFile(self, fileType):
-        self.miscScreenshot(fileType)
+        """Show a Save dialog and export the diagram as PNG or PDF."""
+        if not self.interface:
+            return
+
+        # Build a sensible default path
+        if self.filename:
+            default_dir = str(Path(self.filename).parent)
+            default_name = Path(self.filename).stem + "." + fileType
+        else:
+            default_dir = str(Path.cwd())
+            default_name = "untitled." + fileType
+
+        default_path = str(Path(default_dir) / default_name)
+
+        if fileType == "pdf":
+            filter_str = "PDF files (*.pdf)"
+        elif fileType == "svg":
+            filter_str = "SVG files (*.svg)"
+        else:
+            filter_str = "PNG images (*.png)"
+
+        # Use Qt's own dialog (not macOS native) so the filename field shows
+        # the full name including extension.
+        dialog = QFileDialog(self, f"Export as {fileType.upper()}", default_dir)
+        dialog.setAcceptMode(QFileDialog.AcceptMode.AcceptSave)
+        dialog.setNameFilter(filter_str)
+        dialog.setDefaultSuffix(fileType)
+        dialog.setOption(QFileDialog.Option.DontUseNativeDialog)
+        dialog.selectFile(default_name)
+        if dialog.exec() != QFileDialog.DialogCode.Accepted:
+            return  # user cancelled
+
+        chosen = dialog.selectedFiles()[0]
+        if not chosen.lower().endswith("." + fileType):
+            chosen += "." + fileType
+
+        self.interface.save_image(chosen, picture_name="", picture_format=fileType)
 
     # -----------------------------------------------------------------------------
     def editUndo(self):
@@ -810,6 +952,17 @@ class InterfaceWindow(QMainWindow):
             self.interface.canvasView.intersectionTest()
 
     # -----------------------------------------------------------------------------
+    def miscFitView(self):
+        if self.interface:
+            view = self.interface.canvasView
+            items_rect = view.scene().itemsBoundingRect()
+            if not items_rect.isEmpty():
+                margin = 40  # pixels of padding around the diagram
+                view.fitInView(
+                    items_rect.adjusted(-margin, -margin, margin, margin),
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                )
+
     def miscFlip(self):
         if self.interface:
             self.interface.canvasView.intersectionTest()

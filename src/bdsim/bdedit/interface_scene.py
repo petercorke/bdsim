@@ -5,10 +5,10 @@ import getpass
 from PIL import ImageFont
 from collections import OrderedDict
 
-# PyQt5 imports
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import QMessageBox, QWidget, QVBoxLayout
+# PySide6 imports
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QPixmap
+from PySide6.QtWidgets import QMessageBox, QWidget, QVBoxLayout
 
 # BdEdit imports
 from bdsim.bdedit.block import *

@@ -1,148 +1,200 @@
 
 ![block diagram](https://github.com/petercorke/bdsim/raw/master/figs/eg1-bdedit.png)
 
-`bdedit` is a multi-platform PyQt5-based graphical tool to create, edit, render and execute block diagram models.
-
+`bdedit` is a multi-platform PySide6-based graphical tool to create, edit, render and execute block diagram models.
 
 Key features include:
 
-  * allows graphical creation of block diagrams
-  * the diagram is stored in a human readable/editable JSON file with extension `.bd`
-  * creates good-quality graphics for inclusion in publications
-  * can launch `bdsim` to import and execute the model
-  * automatically discovers all bsdim and toolbbox blocks and adds them to the block library menu
-  * icons can be easily created using any image creation tool or a LaTeX expression 
+* Graphical creation of block diagrams
+* Diagrams stored as human-readable/editable JSON with extension `.bd`
+* High-quality export for publications — **vector PDF**, **vector SVG**, and high-resolution **PNG**
+* Launch `bdsim` to simulate the model directly from the editor
+* Automatically discovers all bdsim and toolbox blocks and adds them to the block library panel
+* Icons can be any PNG image or a LaTeX expression
+* Undo/redo history
+* Grouping boxes and free-text annotations
+* Open Recent file list (persisted across sessions)
 
-**Note that `PyQt5` is licenced under GPL3.**
+**PySide6 is licensed under LGPL.**
+
+# Installation
+
+```
+pip install bdsim[edit]
+```
+
+## macOS — named app bundle
+
+To have the menu bar show **bdedit** instead of **Python**, and to enable
+double-click / drag-drop file opening, build a `.app` bundle:
+
+```
+make app          # builds bdedit.app and registers it with Launch Services
+```
+
+or equivalently:
+
+```
+python src/bdsim/bdedit/make_app.py
+```
+
+Then drag `bdedit.app` to `/Applications` or keep it in the repo root and
+launch with `open bdedit.app`.  After building, `open -a bdedit file.bd` will
+open the file directly.
+
+## Windows — file association
+
+To associate `.bd` files with bdedit so they open on double-click:
+
+```
+bdedit-associate-windows          # installed as a console script by pip
+# or:
+python src/bdsim/bdedit/associate_bd_windows.py
+```
+
+Run once after installation (no admin rights needed — writes to HKCU).
+To remove: `bdedit-associate-windows --uninstall`
 
 # Getting started
 
-From the examples folder
+Open a diagram:
 ```
-% bdedit eg1.bd
+bdedit examples/eg1.bd
 ```
-will create a display like that shown above.  
 
-To run an existing `.bd` file
+Run an existing `.bd` file without the GUI:
 ```
-% bdrun eg1.bd
+bdrun eg1.bd
+bdrun +g -a eg1.bd    # enable graphics, disable animation
 ```
-which will:
 
-* parse the JSON file
-* instantiate all blocks and wires
-* compile and run the diagram
+## Command-line options
 
-It takes standard options like
+| Option | Description |
+|---|---|
+| `file` | `.bd` file to open on launch |
+| `-p [file]`, `--print [file]` | Export diagram to file and exit; defaults to same name as model (PDF) |
+| `-f png\|pdf`, `--format` | Override export format when using `--print` |
+| `-b white\|grey`, `--background` | Background colour (default: grey) |
+| `-s N`, `--fontsize N` | Block name font size (default: 12) |
+| `-d`, `--debug` | Enable debug output |
+
+Examples:
 ```
-% bdrun +g -a eg1.bd
+bdedit -p examples/eg1.bd          # saves eg1.pdf
+bdedit -p out.pdf examples/eg1.bd  # saves out.pdf (vector)
+bdedit -p out.png -f png examples/eg1.bd
 ```
-to enable graphics but disable animation.
 
-Pushing the run button, top left (triangle in circle) will save the file then spawn `bdrun` as a subprocess.
+# Keyboard shortcuts
 
-## Adding a block
+| Key | Action |
+|---|---|
+| `V` | Fit diagram to canvas |
+| `F` | Flip selected block(s) |
+| `Ctrl+Z` / `Ctrl+Y` | Undo / Redo |
+| `Del` / `Backspace` | Delete selected items |
+| `Ctrl+S` | Save |
+| `Ctrl+O` | Open |
 
-Click a block from the library panel on the left-hand side.  Each category is initially closed,
-click it, to open it and reveal the blocks within.
+# Exporting diagrams
 
-All blocks, when added are instantiated in the middle of the canvas.
+**File → Export As** offers three formats:
+
+| Format | Output |
+|---|---|
+| PDF | Vector — lines, curves, and text are fully scalable |
+| SVG | Vector — ideal for web or Inkscape editing |
+| PNG | High-resolution raster (3× oversampling, ~288 dpi) |
+
+The background and grid are automatically suppressed during export so you always
+get a clean white-background image regardless of the current display mode.
+
+The save dialog shows the full filename including extension so you always see
+what you will get.
+
+# Adding a block
+
+Click a block from the library panel on the left-hand side.  Each category is
+initially closed; click it to reveal the blocks within.
+
+All blocks are added to the centre of the canvas.
 
 The key elements of a block are:
-* input ports, small blue boxes
-* output ports, small red triangles or arrow heads
-* icon, which occupies the middle of the box (a 250x250 PNG image)
-* block label, beneath the block, must be unique in the diagram
-* block class, this appears when you hover the cursor over a block
-* port labels, small text inside the box, against input and/or output ports. 
-  Most ports don't have port labels.
-* parameters, these are set by right clicking the block, see [details here](block-parameters).
 
-Blocks can be flipped by typing "f" while the block is selected.
+* **Input ports** — small blue boxes
+* **Output ports** — small red triangles / arrow heads
+* **Icon** — centre of the block (a 250×250 PNG image)
+* **Block label** — beneath the block, must be unique in the diagram
+* **Block class** — shown on hover
+* **Port labels** — small text inside the box at input/output ports
+* **Parameters** — set by right-clicking the block
 
-## Wiring blocks together
+Blocks can be flipped by typing `F` while selected.
 
-* Click one port then click another port, or
+# Wiring blocks together
+
+* Click one port then click another, or
 * Click and drag from one port to another.
 
-An output port can connect to an arbitrary number of input ports.
+An output port can connect to any number of input ports.
 
-## Selecting and moving elements
+# Selecting and moving elements
 
-![highlighted elements](figs/Figure_2.5-Block_and_Wire_Selected.png)
-All selected elements, wires or blocks have an orange highlight when selected.
-You can drag a region to select all blocks and wires within.
+All selected elements have an orange highlight.  Drag a region to select
+everything within it.
 
-Selected items can be moved: click and drag them.  Blocks cannot be resized.
+Selected items can be moved by clicking and dragging.  Blocks cannot be resized.
 
-Selected wires can be adjusted:
-* horizontal segments can be dragged up and down, 
-* vertical segments can be dragged left or right.
+Selected wire segments can be adjusted:
+* Horizontal segments can be dragged up/down
+* Vertical segments can be dragged left/right
 
-## Connectors
+# Connectors
 
-![connectors](figs/Figure_1.2-Example_of_Block_Diagram_as_represented_in_bdedit.png)
+The wire routing is sometimes hard to control. Add a **Connector** from the
+_Canvas Items_ category: run a wire into its input and one or more wires from
+its output.  A wire can have an arbitrary number of connectors.
 
-The wire dragging is a little limited, and sometimes it is hard to get the layout you want. In this
-case try adding a "Connector" from the "Canvas Items" category.  Run a wire to the input of the connector
-and one or more wires from the output of the connector.  You can drag the connector by dragging it, click
-close to, but not on, the connector to highlight it.  A wire can have an arbitrary number of connectors in it.
+# Block parameters
 
-## Block parameters
+Right-clicking a block opens a parameter panel on the right.  Parameters are
+initialised from default values in the block's docstring.
 
-![parameter panel](figs/Figure_2.9-Parameter_Window.png)
-Right clicking a block opens a panel on the right.  The parameters are initialized to values taken
-from the docstring for the block.
+* **Update parameters** — validates types and applies changes
+* **View documentation** — opens the GitHub docs page for the block class
 
-Make changes and then click "Update parameters".  This will check validity of the types and values.
+Parameter values can be:
 
-Click "View documentation" will open a browser window at the GitHub documentation page for the block 
-class.
+* A constant: `3.14`
+* A Python expression (prefix with `=`): `=[x**2 for x in range(10)]`
+* Runtime values via a **Main** block — point it at a Python script that sets
+  up the simulation environment, for example:
 
-Block parameters can be:
+  ```python
+  from bdsim import bdload, BDSim
 
-* constants
+  sim = BDSim()
+  bd = sim.blockdiagram()
 
-* a native Python expression, prefix it with an equal sign, for example
-`=[x**2 for x in range(10)]`.  
-
-* an expression which relies on global variables or other run-time context, add a Main block
-  to the diagram.  It contain the name of a Python script (by definition, for a block diagram `model` it would be `model-main.py` which will be spawned when you hit
-  the Run button.  This can create the runtime environment, load the `.bd` file,
-  for example:
-
-    ```
-    from bdsim import bdload, BDSim
-
-    sim = BDSim() #debug='i')
-    bd = sim.blockdiagram()
-
-    lmbda = 0.08
-
-    bd = bdload(bd, "IBVS.bd", globals=globals())
-    bd.compile()
-    bd.report()
-
-    out = sim.run(bd, 100)
-    print(out)
-    ```*
-
-![parameter panel](figs/Main.png)
+  lmbda = 0.08
+  bd = bdload(bd, "model.bd", globals=globals())
+  bd.compile()
+  out = sim.run(bd, 100)
+  ```
 
 # Grouping boxes
 
-![parameter panel](figs/GroupingBoxes.png)
-
-These are transparent colored boxes that are drawn below all other graphical
-items.  They can be used to add structure to the diagrams.
+Transparent coloured boxes drawn below all other items.  Use them to add
+visual structure to large diagrams.
 
 # Free text
 
-Click `Canvas Items/Text Item` to drop a default string `Text` onto the canvas.
-Select the text to edit it.  Formatting options are in the toolbar.  Multiline
-text with left/right/centred alignment is supported.
+Click **Canvas Items → Text Item** to place a text annotation.  Select it to
+edit.  Multi-line text with left/right/centred alignment is supported.
 
 # Further details
 
-More detail about how the tool works and key datastructures are in the [technical report](TechReport.md).  This is a little dated now, and the visual appearance
-of the GUI has evolved.
+More detail about the internal data structures is in the
+[technical report](TechReport.md) (note: the visual appearance has evolved
+since that was written).

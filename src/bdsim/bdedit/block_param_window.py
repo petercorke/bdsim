@@ -2,10 +2,10 @@
 import ast
 import math
 
-# PyQt5 Imports
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import QPixmap, QDesktopServices
-from PyQt5.QtCore import Qt, QRect, QTimer, QUrl
+# PySide6 Imports
+from PySide6.QtWidgets import *
+from PySide6.QtGui import QPixmap, QDesktopServices
+from PySide6.QtCore import Qt, QRect, QTimer, QUrl
 
 # BdEdit imports
 from bdsim.bdedit.Icons import *
