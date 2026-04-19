@@ -5,7 +5,7 @@ import math
 # PyQt5 Imports
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QPixmap, QDesktopServices
-from PyQt5.QtCore import Qt, QRect
+from PyQt5.QtCore import Qt, QRect, QTimer, QUrl
 
 # BdEdit imports
 from bdsim.bdedit.Icons import *
@@ -118,7 +118,9 @@ class ParamWindow(QWidget):
         This method opens the url link associated with this blocks' documentation.
         """
 
-        QDesktopServices.openUrl(QtCore.QUrl(self.block.block_url))
+        url = self.block.block_url
+        if url:
+            QDesktopServices.openUrl(QUrl(url))
 
     # -----------------------------------------------------------------------------
     def closeQMessageBox(self):
@@ -280,18 +282,15 @@ class ParamWindow(QWidget):
                 try:
                     self.label.setToolTip(parameter[4])
                 except IndexError:
-                    print(parameter)
+                    pass  # tooltip is optional
 
                 # If the parameter type is a boolean, create the intractable space as a checkbox, otherwise
                 # make an editable line for that parameter, and populate it with the parameters' current value
                 if not issubclass(parameter[1], bool):
                     self.line = QLineEdit(str(parameter[2]))
                 else:
-                    try:
-                        self.line = QCheckBox()
-                        self.line.setChecked(parameter[2])
-                    except TypeError:
-                        print("bad thing")
+                    self.line = QCheckBox()
+                    self.line.setChecked(bool(parameter[2]) if parameter[2] is not None else False)
 
                 # Set the width of the editable line to the above-defined width (150 pixels)
                 self.line.setFixedWidth(self._parameter_line_width)
@@ -314,6 +313,7 @@ class ParamWindow(QWidget):
         # Add a button linked to the URL of this block's documentation
         self.block_url_Button = QPushButton("View documentation")
         self.block_url_Button.clicked.connect(self.displayDocumentationURL)
+        self.block_url_Button.setEnabled(bool(self.block.block_url))
         self.layout.addWidget(self.block_url_Button)
 
     # -----------------------------------------------------------------------------

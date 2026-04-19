@@ -96,7 +96,9 @@ class Floating_Label(Serializable):
         )
 
     # -----------------------------------------------------------------------------
-    def deserialize(self, data, hashmap={}):
+    def deserialize(self, data, hashmap=None):
+        if hashmap is None:
+            hashmap = {}
         # The id of this floating label is set to whatever was stored as its id in the JSON file.
         self.id = data["id"]
         self.label_text = data["text"]

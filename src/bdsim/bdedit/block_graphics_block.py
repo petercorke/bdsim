@@ -133,7 +133,7 @@ class GraphicsBlock(QGraphicsItem):
 
         # Using the font of the text and the block's title, determine the length of the
         # title in terms of pixels
-        title_pixel_len = QFontMetrics(self._title_font).width(self.block.title)
+        title_pixel_len = QFontMetrics(self._title_font).horizontalAdvance(self.block.title)
 
         # As the block width is an even number (100 pixels), to center properly, the
         # width of the title must also be even

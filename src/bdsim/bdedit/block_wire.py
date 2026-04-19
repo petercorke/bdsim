@@ -339,7 +339,9 @@ class Wire(Serializable):
         )
 
     # -----------------------------------------------------------------------------
-    def deserialize(self, data, hashmap={}):
+    def deserialize(self, data, hashmap=None):
+        if hashmap is None:
+            hashmap = {}
         """
         This method is called to reconstruct a ``Wire`` when loading a saved JSON
         file containing all relevant information to recreate the ``Scene`` with all
@@ -359,8 +361,12 @@ class Wire(Serializable):
         self.id = data["id"]
         # self.start_socket = data['start_socket']
         # self.end_socket = data['end_socket']
-        self.start_socket = hashmap[data["start_socket"]]
-        self.end_socket = hashmap[data["end_socket"]]
+        try:
+            self.start_socket = hashmap[data["start_socket"]]
+            self.end_socket = hashmap[data["end_socket"]]
+        except KeyError:
+            # One or both endpoint blocks failed to deserialize; skip this wire.
+            return False
         self.wire_type = data["wire_type"]
 
         # For newer custom routing logic. If custom_routing exists within the saved JSON

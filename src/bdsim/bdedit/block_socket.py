@@ -274,7 +274,9 @@ class Socket(Serializable):
         )
 
     # -----------------------------------------------------------------------------
-    def deserialize(self, data, hashmap={}):
+    def deserialize(self, data, hashmap=None):
+        if hashmap is None:
+            hashmap = {}
         """
         This method is called to reconstruct a ``Socket`` when loading a saved JSON
         file containing all relevant information to recreate the ``Scene`` with all

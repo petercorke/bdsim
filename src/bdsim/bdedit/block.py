@@ -785,7 +785,9 @@ class Block(Serializable):
             )
 
     # -----------------------------------------------------------------------------
-    def deserialize(self, data, hashmap={}):
+    def deserialize(self, data, hashmap=None):
+        if hashmap is None:
+            hashmap = {}
         """
         This method is called to reconstruct a ``Block`` when loading a saved JSON
         file containing all relevant information to recreate the ``Scene`` with all
@@ -841,46 +843,26 @@ class Block(Serializable):
 
             # The saved user-editable parameters associated with the Block, are written over the default ones
             # this instance of the block was created with, after reconstruction.
-            # Iterator for parameters
             if self.block_type not in ["Connector", "CONNECTOR"]:
-                i = 0
-
+                # Match saved parameters by name so that blocks whose parameter
+                # list has changed (added/removed/reordered) still load correctly.
+                # Unknown saved params are silently skipped; params not present in
+                # the saved file keep their current default value.
+                param_by_name = {p[0]: p for p in self.parameters}
                 for paramName, paramVal in data["parameters"]:
-                    # If debug mode is enabled, this code will print to console to validate that the
-                    # parameters are being overwritten into the same location they were previously stored in.
-                    if DEBUG:
-                        print("----------------------")
-                    if DEBUG:
-                        print("Cautionary check")
-                    if DEBUG:
-                        print(
-                            "current value:",
-                            [
-                                self.parameters[i][0],
-                                self.parameters[i][1],
-                                self.parameters[i][2],
-                            ],
-                        )
-                    if DEBUG:
-                        print(
-                            "setting to value:",
-                            [paramName, self.parameters[i][1], paramVal],
-                        )
-                    self.parameters[i][0] = paramName
-                    self.parameters[i][2] = paramVal
+                    if paramName not in param_by_name:
+                        continue  # param was removed from block definition
+                    p = param_by_name[paramName]
+                    p[2] = paramVal
 
                     # If there are subsystem, outport or inport blocks with labels for their sockets, extract that information into self.input_names and self.output_names as needed
                     if self.block_type in ["SUBSYSTEM", "OUTPORT", "INPORT"]:
-
                         if paramName == "inport labels":
                             if paramVal:
                                 self.input_names = [str(j) for j in paramVal]
-
                         if paramName == "outport labels":
                             if paramVal:
                                 self.output_names = [str(j) for j in paramVal]
-
-                    i += 1
 
             # And the saved (input and output) sockets are written into these lists respectively,
             # deserializing the socket-relevant information while doing so.

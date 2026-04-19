@@ -21,7 +21,9 @@ class Serializable:
         """
         raise NotImplemented()
 
-    def deserialize(self, data, hashmap={}):
+    def deserialize(self, data, hashmap=None):
+        if hashmap is None:
+            hashmap = {}
         """
         This method is inherited and overwritten by all classes that have graphical
         components related to them (``Scene``, ``Block``, ``Socket`` and ``Wire``).

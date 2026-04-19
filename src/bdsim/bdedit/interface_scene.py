@@ -247,7 +247,7 @@ class Scene(Serializable):
         :return: ``GraphicsView`` associated to this ``Scene``
         :rtype: ``QGraphicsView``
         """
-        self.grScene.views()[0]
+        return self.grScene.views()[0]
 
     # -----------------------------------------------------------------------------
     def clear(self):
@@ -385,7 +385,9 @@ class Scene(Serializable):
         )
 
     # -----------------------------------------------------------------------------
-    def deserialize(self, data, hashmap={}):
+    def deserialize(self, data, hashmap=None):
+        if hashmap is None:
+            hashmap = {}
         """
         This method is called to reconstruct a ``Scene`` and all its items when
         loading a saved JSON.

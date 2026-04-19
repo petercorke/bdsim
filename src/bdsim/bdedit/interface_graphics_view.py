@@ -95,7 +95,6 @@ class GraphicsView(QGraphicsView):
         """
         self.setRenderHints(
             QPainter.Antialiasing
-            | QPainter.HighQualityAntialiasing
             | QPainter.TextAntialiasing
             | QPainter.SmoothPixmapTransform
         )
@@ -758,42 +757,39 @@ class GraphicsView(QGraphicsView):
     # -----------------------------------------------------------------------------
     def wheelEvent(self, event):
         """
-        This is an inbuilt method of QGraphicsView, that is overwritten by
-        ``GraphicsView`` to assign logic to detected scroll wheel movement.
+        Scroll wheel / Magic Mouse behaviour:
 
-        - As the scroll wheel is moved up, this will make the zoom in on the work
-          area of the ``GraphicsScene``.
-        - As the scroll wheel is moved down, this will make the zoom out of the work
-          area of the ``GraphicsScene``.
-
-        :param event: the detected scroll wheel movement
-        :type event: QWheelEvent, automatically recognized by the inbuilt function
+        - Plain scroll (vertical or horizontal) → pan the canvas.
+        - Option (Alt) + scroll → zoom in/out.
         """
 
-        # If scroll wheel vertical motion is detected to being upward
-        if event.angleDelta().y() > 0:
-            # Set the zoom factor to 1.25, and incrementally increase the zoom step
-            zoomFactor = 1.25
-            self.zoom += self.zoomStep
+        if event.modifiers() & Qt.AltModifier:
+            # ── Option-scroll: zoom ──────────────────────────────────────────
+            if event.angleDelta().y() > 0:
+                zoomFactor = 1.25
+                self.zoom += self.zoomStep
+            else:
+                zoomFactor = 0.8
+                self.zoom -= self.zoomStep
 
-        # Else the scroll wheel is moved downwards
+            if self.zoomRange[0] - 1 <= self.zoom <= self.zoomRange[1]:
+                self.scale(zoomFactor, zoomFactor)
+            elif self.zoom < self.zoomRange[0] - 1:
+                self.zoom = self.zoomRange[0] - 1
+            elif self.zoom > self.zoomRange[1]:
+                self.zoom = self.zoomRange[1]
+
         else:
-            # Set the zoom factor to 1/1.25, and incrementally decrease the zoom step
-            zoomFactor = 0.8
-            self.zoom -= self.zoomStep
-
-        # If the current zoom is within the allowable zoom levels (0 to 10)
-        # Scale the Scene (in the x and y) by the above-set zoomFactor
-        if self.zoomRange[0] - 1 <= self.zoom <= self.zoomRange[1]:
-            self.scale(zoomFactor, zoomFactor)
-        # Otherwise if the current zoom is below the lowest allowable zoom level (0)
-        # Force the zoom level to the lowest allowable level
-        elif self.zoom < self.zoomRange[0] - 1:
-            self.zoom = self.zoomRange[0] - 1
-        # Otherwise if the current zoom is above the highest allowable zoom level (10)
-        # Force the zoom level to the highest allowable level
-        elif self.zoom > self.zoomRange[1]:
-            self.zoom = self.zoomRange[1]
+            # ── Plain scroll: pan ────────────────────────────────────────────
+            # angleDelta is in eighths of a degree; 120 units ≈ one notch.
+            # Translate to a reasonable pixel pan distance.
+            dx = event.angleDelta().x()
+            dy = event.angleDelta().y()
+            pan_scale = 1.0  # pixels per unit of angleDelta/8
+            hbar = self.horizontalScrollBar()
+            vbar = self.verticalScrollBar()
+            hbar.setValue(hbar.value() - int(dx * pan_scale))
+            vbar.setValue(vbar.value() - int(dy * pan_scale))
 
     # -----------------------------------------------------------------------------
     def mouseMoveEvent(self, event):

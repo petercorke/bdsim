@@ -578,7 +578,7 @@ class InterfaceWindow(QMainWindow):
 
     def displayHelpURL(self):
         QDesktopServices.openUrl(
-            QtCore.QUrl(
+            QUrl(
                 "https://github.com/petercorke/bdsim/blob/master/bdsim/bdedit/README.md"
             )
         )
@@ -646,18 +646,24 @@ class InterfaceWindow(QMainWindow):
         print(f"{datetime.datetime.now()}:: {' '.join(command)}")
 
         try:
-            subprocess.Popen(command, shell=False)
+            self._sim_process = subprocess.Popen(command, shell=False)
 
         except (ValueError, OSError):
             print(f"failed to spawn subprocess")
 
     # -----------------------------------------------------------------------------
     def abortButton(self):
-        # Added function for handling what the abort button does when pressed.
-        print(
-            "Abort button pressed. Functionality yet to be implemented. Function in 'interface_manager' under 'runButton' function"
-        )
-        pass
+        proc = getattr(self, "_sim_process", None)
+        if proc is None or proc.poll() is not None:
+            print("No simulation running.")
+            return
+        proc.terminate()
+        try:
+            proc.wait(timeout=3)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+        self._sim_process = None
+        print("Simulation aborted.")
 
     # -----------------------------------------------------------------------------
     def updateSimTime(self):

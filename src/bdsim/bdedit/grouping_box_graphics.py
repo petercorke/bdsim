@@ -150,7 +150,7 @@ class GraphicsGBox(QGraphicsRectItem):
             )
 
             # If user selects okay, this finalizes the color selection
-            if colorDialog.exec_() == QDialog.Accepted:
+            if colorDialog.exec() == QDialog.Accepted:
                 updateColor(colorDialog.selectedColor())
             # Otherwise, if they exit out of the color picker, the original color will be reverted to.
             else:

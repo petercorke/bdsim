@@ -119,11 +119,11 @@ def import_blocks(scene, window):
         # Grab the names of the input/output sockets
         block_input_names, block_output_names = [], []
 
-        if hasattr(block_ds["class"], "inlabels"):
+        if hasattr(block_ds["class"], "inlabels") and block_ds["class"].inlabels is not None:
             for input_socket_name in block_ds["class"].inlabels:
                 block_input_names.append(input_socket_name)
 
-        if hasattr(block_ds["class"], "outlabels"):
+        if hasattr(block_ds["class"], "outlabels") and block_ds["class"].outlabels is not None:
             for output_socket_name in block_ds["class"].outlabels:
                 block_output_names.append(output_socket_name)
 

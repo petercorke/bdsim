@@ -292,31 +292,36 @@ class GraphicsSocket(QGraphicsItem):
     # -----------------------------------------------------------------------------
     def charDimensions(self):
 
-        # Find how many pixels - height wise - this sockets' character is
-        (width, baseline), (
-            offset_x,
-            offset_y,
-        ) = self.socket.node.scene._system_font.font.getsize(self.socket.socket_sign)
+        font = self.socket.node.scene._system_font
+        char_width = QFontMetrics(self._char_font).horizontalAdvance(self.socket.socket_sign)
 
-        char_width = QFontMetrics(self._char_font).width(self.socket.socket_sign)
-        height = 5
+        # Find how many pixels - height wise - this socket's character is.
+        # Pillow < 10 exposed a low-level font.font.getsize() returning
+        # ((width, baseline), (offset_x, offset_y)); that was removed in
+        # Pillow 10.  Fall back to getbbox() which is available in all
+        # supported versions and returns (left, top, right, bottom).
+        try:
+            (width, baseline), (offset_x, offset_y) = font.font.getsize(
+                self.socket.socket_sign
+            )
+            # Empirically derived height offsets for the specific system font.
+            if baseline == 8 and offset_y == 5:
+                height = 5
+            elif baseline == 10 and offset_y == 3:
+                height = 7
+            elif baseline == 11 and offset_y == 5:
+                height = 4
+            elif baseline == 11 and offset_y == 2:
+                height = 7
+            else:
+                height = 5
+        except AttributeError:
+            # Pillow >= 10: getbbox returns (left, top, right, bottom) relative
+            # to the baseline anchor.  Use the ascender as the vertical offset.
+            left, top, right, bottom = font.getbbox(self.socket.socket_sign)
+            height = -top if top < 0 else bottom
 
-        # For letters like: a,c,e,m,n,o,r,s,u,v,w,x,z
-        if baseline == 8 and offset_y == 5:
-            height = 5
-        # For letters like: b,d,f,h,i,k,l
-        elif baseline == 10 and offset_y == 3:
-            height = 7
-        # For letters like: g,p,q,y
-        elif baseline == 11 and offset_y == 5:
-            height = 4
-        # For letter: t
-        elif baseline == 11 and offset_y == 2:
-            height = 7
-
-        dimension = [char_width, height]
-
-        return dimension
+        return [char_width, height]
 
     # -----------------------------------------------------------------------------
     def getSignPath(self, sign, multi):

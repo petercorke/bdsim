@@ -91,7 +91,7 @@ def main():
 
     # The resolution of the user's screen is extracted (used for determining
     # the size of the application window)
-    screen_resolution = app.desktop().screenGeometry()
+    screen_resolution = app.primaryScreen().availableGeometry()
 
     # Set the desktop toolbar icon for this application
     icon = Path(__file__).parent.parent / "bdedit" / "Icons" / "bdsim_logo.png"
@@ -101,9 +101,7 @@ def main():
     try:
         if platform == "win32":
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-        elif platform == "darwin":
-            ctypes.cdll.kernel32.SetCurrentProcessExplicitAppUserModelID(myappid)
-    except Exception as e:
+    except Exception:
         # Toolbar icon for application could not be set.
         pass
 
@@ -187,7 +185,7 @@ def main():
             QTimer.singleShot(100, lambda: screenshot(args.file, str(path)))
 
     # run the GUI until it exits
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":
