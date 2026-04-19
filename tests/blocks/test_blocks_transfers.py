@@ -68,10 +68,37 @@ class TransferTest(unittest.TestCase):
 
     def test_LTI_SISO(self):
 
-        block = LTI_SISO([2, 1], [2, 4, 6])
-        nt.assert_equal(block.A, np.array([[-2, -3], [1, 0]]))
-        nt.assert_equal(block.B, np.array([[1], [0]]))
-        nt.assert_equal(block.C, np.array([[1, 0.5]]))
+        from scipy.signal import ss2tf
+
+        N = [2, 1]
+        D = [2, 4, 6]
+        Nr = np.array([0, 2, 1]) / D[0]
+        Dr = np.array(D) / D[0]
+
+        block = LTI_SISO(N=N, D=D)
+        n, d = ss2tf(block.A, block.B, block.C, np.zeros((1, 1)), input=0)
+        nt.assert_almost_equal(n[0], Nr)
+        nt.assert_almost_equal(d, Dr)
+
+        block = LTI_SISO(N=N, D=D, form="ocf", order="backward")
+        n, d = ss2tf(block.A, block.B, block.C, np.zeros((1, 1)), input=0)
+        nt.assert_almost_equal(n[0], Nr)
+        nt.assert_almost_equal(d, Dr)
+
+        block = LTI_SISO(N=N, D=D, form="ocf", order="forward")
+        n, d = ss2tf(block.A, block.B, block.C, np.zeros((1, 1)), input=0)
+        nt.assert_almost_equal(n[0], Nr)
+        nt.assert_almost_equal(d, Dr)
+
+        block = LTI_SISO(N=N, D=D, form="ccf", order="backward")
+        n, d = ss2tf(block.A, block.B, block.C, np.zeros((1, 1)), input=0)
+        nt.assert_almost_equal(n[0], Nr)
+        nt.assert_almost_equal(d, Dr)
+
+        block = LTI_SISO(N=N, D=D, form="ccf", order="forward")
+        n, d = ss2tf(block.A, block.B, block.C, np.zeros((1, 1)), input=0)
+        nt.assert_almost_equal(n[0], Nr)
+        nt.assert_almost_equal(d, Dr)
 
     def test_integrator(self):
         block = Integrator(x0=30)

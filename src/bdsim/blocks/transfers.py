@@ -140,7 +140,7 @@ class Integrator(TransferBlock):
         xd = smb.getvector(u[0])
         if self.enable is not None and not self.enable(t, u, x):
             # if enable function returns False then integrator output is jammed at zero
-            self._x = np.zeros_like(x, dtype=float)
+            self.x = np.zeros_like(x, dtype=float)
             return np.zeros(x.shape)
 
         # stop integration if state is outside limits
@@ -367,17 +367,21 @@ class LTI_SISO(LTI_SS):
     Coefficients are given in the order from highest order to zeroth
     order, ie. :math:`2s^2 - 4s +3` is ``[2, -4, 3]``.
 
-    Only proper transfer functions, where order of numerator is less
-    than denominator are allowed.
-
-    The order of the states in ``x0`` is consistent with controller canonical
-    form.
+    The state-space form can be either controller canonical form or observer canonical
+    form, as specified by the ``form`` argument. For either
 
     Examples::
 
         lti = bd.LTI_SISO(N=[1, 2], D=[2, 3, -4])
 
     is the transfer function :math:`\frac{s+2}{2s^2+3s-4}`.
+
+    .. note::
+      * The state-space realization is not unique. The controller canonical form is more common
+        in control design, while the observer canonical form is more common in estimation.
+        The state ordering convention (the direction of the integrator chain) can be
+        specified by the ``order`` argument, and results in either 1s on the super-diagonal
+        or sub-diagonal of the A matrix for the controller canonical form.
     """
 
     nin = 1
@@ -388,71 +392,106 @@ class LTI_SISO(LTI_SS):
         N: Vector1D = 1,
         D: Vector1D = [1, 1],
         x0: np.ndarray | None = None,
+        form="ccf",
+        order="backward",
         **blockargs: Any,
     ) -> None:
         r"""
-        :param N: numerator coefficients, defaults to 1
-        :type N: array_like, optional
-        :param D: denominator coefficients, defaults to [1,1]
-        :type D: array_like, optional
-        :param x0: initial states, defaults to None
-        :type x0: array_like, optional
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
+        :param N: Numerator coefficients in descending powers of :math:`s`.
+        :type N: array_like
+        :param D: Denominator coefficients in descending powers of :math:`s`.
+            Does not have to be normalized.
+        :type D: array_like
+        :param form: The canonical form of the realization, defaults to 'ccf'.
+
+            * ``'ccf'`` : Controller Canonical Form. The characteristic equation
+            coefficients appear in a row of **A**. Useful for control design.
+            * ``'ocf'`` : Observer Canonical Form. The characteristic equation
+            coefficients appear in a column of **A**. Useful for estimation.
+        :type form: str, optional
+        :param order: The state ordering convention (the direction of the
+            integrator chain), defaults to 'backward'.
+
+            * ``'forward'`` : :math:`x_1` is the output of the first integrator,
+            :math:`x_n` is the last. Results in 1s on the super-diagonal for 'ccf'.
+            * ``'backward'``: :math:`x_n` is the output of the first integrator,
+            :math:`x_1` is the last. Results in 1s on the sub-diagonal for 'ccf'.
+        :type order: str, optional
         :return: LTI_SISO block
         :rtype: ``LTI_SISO`` instance
+
+        .. note::
+            - The transfer function is assumed to be strictly proper (:math:`deg(N) < deg(D)`).
+            - The default ``form='ccf', order='backward'`` corresponds to the state-space realization returned by ``scipy.signal.tf2ss`` and MATLAB's ``tf2ss``.
+            - The state-space matrices are available in the ``A``, ``B``, ``C`` and ``D`` attributes of the block.
         """
-        # print('in SISO constscutor')
 
-        N = np.array(smb.getvector(N), dtype=float).reshape(-1)
-        D = np.array(smb.getvector(D), dtype=float).reshape(-1)
+        num = smb.getvector(N, dtype="float")
+        den = smb.getvector(D, dtype="float")
 
-        n = len(D) - 1
-        nn = len(N)
+        n = len(den) - 1
+        nn = len(num)
 
-        assert nn <= n, "direct pass through is not supported"
+        assert nn <= n, "numerator order must be less than denominator order"
 
         if x0 is None:
             x0 = np.zeros((n,))
         else:
             x0 = smb.getvector(x0, n)
 
-        # convert to numpy arrays
-        # N = np.r_[np.zeros((len(D) - len(N),)), np.array(N)]
+        # normalize polynomials so leading coefficient of denominator is one
+        D0 = den[0]
+        den = den / D0
+        num = num / D0
 
-        # normalize the coefficients to obtain
-        #
-        #   b_0 s^n + b_1 s^(n-1) + ... + b_n
-        #   ---------------------------------
-        #   a_0 s^n + a_1 s^(n-1) + ....+ a_n
+        # Pad numerator to match denominator order
+        b_coeffs = np.zeros(n)
+        b_coeffs[-len(num) :] = num
+        # Denominator coefficients (ignoring leading 1)
+        a_coeffs = den[1:]
 
-        # normalize so leading coefficient of denominator is one
-        # D0 = D[0]
-        # D = D / D0
-        # N = N / D0
+        # Initialize matrices
+        A = np.zeros((n, n))
+        B = np.zeros((n, 1))
+        C = np.zeros((1, n))
+        D = np.array([[0.0]])
 
-        # A = np.eye(len(D) - 1, k=1)  # control canonic (companion matrix) form
-        # A[-1, :] = -D[1:]
+        if form == "ccf":
+            # --- Controller Canonical Form ---
+            if order == "forward":
+                # Bottom row coeffs, super-diagonal 1s
+                A[:-1, 1:] = np.eye(n - 1)
+                A[-1, :] = -a_coeffs[::-1]
+                B[-1, 0] = 1
+                C[0, :] = b_coeffs[::-1]
+            else:  # backward
+                # Top row coeffs, sub-diagonal 1s (Matlab/Scipy style)
+                A[1:, :-1] = np.eye(n - 1)
+                A[0, :] = -a_coeffs
+                B[0, 0] = 1
+                C[0, :] = b_coeffs
 
-        # B = np.zeros((n, 1))
-        # B[-1] = 1
-
-        # C = (N[1:] - N[0] * D[1:]).reshape((1, n))
-
-        A, B, C, D = scipy.signal.tf2ss(N, D)
-
-        self.num = N
-        self.den = D
-
-        if len(np.flatnonzero(D)) > 0:
-            raise ValueError("D matrix is not zero")
+        elif form == "ocf":
+            # --- Observer Canonical Form ---
+            if order == "forward":
+                # Right column coeffs, sub-diagonal 1s
+                A[1:, :-1] = np.eye(n - 1)
+                A[:, -1] = -a_coeffs[::-1]
+                B[:, 0] = b_coeffs[::-1]
+                C[0, -1] = 1
+            else:  # backward
+                # Left column coeffs, super-diagonal 1s
+                A[:-1, 1:] = np.eye(n - 1)
+                A[:, 0] = -a_coeffs
+                B[:, 0] = b_coeffs
+                C[0, 0] = 1
 
         super().__init__(A=A, B=B, C=C, x0=x0, **blockargs)
 
         if blockargs.get("verbose", False):
-            print("A=", A)
-            print("B=", B)
-            print("C=", C)
+            print("A=", np.array2string(A, prefix="A="))
+            print("B=", np.array2string(B, prefix="B="))
+            print("C=", np.array2string(C, prefix="C="))
 
         def change_param(self, param: str, newvalue: np.ndarray) -> None:
             if param == "num":
