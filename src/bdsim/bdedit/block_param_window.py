@@ -290,7 +290,9 @@ class ParamWindow(QWidget):
                     self.line = QLineEdit(str(parameter[2]))
                 else:
                     self.line = QCheckBox()
-                    self.line.setChecked(bool(parameter[2]) if parameter[2] is not None else False)
+                    self.line.setChecked(
+                        bool(parameter[2]) if parameter[2] is not None else False
+                    )
 
                 # Set the width of the editable line to the above-defined width (150 pixels)
                 self.line.setFixedWidth(self._parameter_line_width)

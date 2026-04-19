@@ -124,9 +124,9 @@ with open(OUTPUT, "w") as f:
     print(f"writing mixin --> {OUTPUT}")
     f.write(header)
 
-    assert sim._blocklibrary, "No blocks found in library"
+    assert sim.block_library, "No blocks found in library"
 
-    for block, info in sorted(sim._blocklibrary.items()):
+    for block, info in sorted(sim.block_library.items()):
         meth = info["class"]
         sig = inspect.signature(meth.__init__)
 

@@ -293,7 +293,9 @@ class GraphicsSocket(QGraphicsItem):
     def charDimensions(self):
 
         font = self.socket.node.scene._system_font
-        char_width = QFontMetrics(self._char_font).horizontalAdvance(self.socket.socket_sign)
+        char_width = QFontMetrics(self._char_font).horizontalAdvance(
+            self.socket.socket_sign
+        )
 
         # Find how many pixels - height wise - this socket's character is.
         # Pillow < 10 exposed a low-level font.font.getsize() returning

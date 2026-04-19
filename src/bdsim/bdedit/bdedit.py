@@ -20,6 +20,7 @@ from PyQt5.QtGui import QIcon
 # BdEdit imports
 from bdsim.bdedit.interface_manager import InterfaceWindow
 
+
 # Executable code to launch the BdEdit application window
 def main():
 

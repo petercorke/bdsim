@@ -433,39 +433,35 @@ class BDSim(Runner):
         if self.options.blocks:
             self.blocks()
 
-    def blockinfo(self, block=None):
-        """Return info about all blocks
+    @property
+    def block_library(self) -> dict[str, dict[str, Any]]:
+        """Read-only view of the loaded block registry.
 
-        :param block: name of block to return info for, otherwise list of info for all
-        :type block: str, optional
-        :returns: parameters of blocks
-        :rtype: dict or list of dicts
-
-        Detailed metadata about a block is obtained by introspection and parsing the block's docstring.
-
-        ==========   =====================================================
-        Key          Description
-        ==========   =====================================================
-        path         Path to the folder containing block definition
-        classname    Name of class
-        url          URL of online documentation
-        class        Reference to the class
-        module       Name of the module  package.blocks.module
-        package      Name of the package, eg. bdsim, roboticstoolbox
-        params       Dict of (type, descrip), indexed by parameter name
-        inputs       List of names of block inputs
-        outputs      List of names of block outputs
-        nin          Number of inputs, -1 if variable
-        nout         Number of outputs, -1 if variable
-        blockclass   Block class, eg. source, sink etc.
-        ==========   =====================================================
-
+        Returns a dict keyed by upper-case block name (e.g. ``"GAIN"``).
+        Each value is a metadata dict with keys: ``path``, ``classname``,
+        ``url``, ``class``, ``module``, ``package``, ``params``, ``inputs``,
+        ``outputs``, ``nin``, ``nout``, ``blockclass``.
         """
+        assert self._blocklibrary is not None, "block library not loaded"
+        return self._blocklibrary
+
+    def blockinfo(self, block=None):
+        """Return info about all blocks.
+
+        .. deprecated::
+            Use :attr:`block_library` instead.  ``sim.blockinfo()`` is
+            equivalent to ``sim.block_library``; ``sim.blockinfo(name)`` is
+            equivalent to ``sim.block_library[name]``.
+        """
+        warnings.warn(
+            "blockinfo() is deprecated; use the block_library property instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         if block is None:
-            return self._blocklibrary
+            return self.block_library
         else:
-            assert self._blocklibrary is not None
-            return self._blocklibrary[block]
+            return self.block_library[block]
 
     def _repr__(self) -> str:
         """
