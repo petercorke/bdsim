@@ -232,7 +232,7 @@ def bdrun(filename=None, globals={}, **kwargs):
 
     bd = bdload(bd, filename=filename, globalvars=globals, **kwargs)
     bd.compile()
-    bd.report()
+    bd.report_summary()
 
     out = sim.run(bd)  # simulate
     print("bdrun exiting")

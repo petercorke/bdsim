@@ -107,7 +107,10 @@ class Wire:
             d2goal[0] --> Kv[0]
         """
         return "{:s}[{:d}] --> {:s}[{:d}]".format(
-            str(self.start.block), self.start.port, str(self.end.block), self.end.port
+            str(self.start.block.name),
+            self.start.port,
+            str(self.end.block.name),
+            self.end.port,
         )
 
     def __str__(self) -> str:

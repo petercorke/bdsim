@@ -916,7 +916,7 @@ class BlockDiagram(BlockDiagramMixin):
                     if port == 0:
                         # first row for this block
                         table.row(
-                            name,
+                            b.name,
                             b.nstates,
                             b.ndstates,
                             b.type,
