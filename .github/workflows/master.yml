@@ -7,8 +7,7 @@ name: build
 on:
   push:
     branches: [ master, future ]
-#   pull_request:
-#     branches: [ master ]
+  workflow_dispatch:   # allow manual trigger from any branch
 
 jobs:
   # Run tests on different versions of python
@@ -86,7 +85,95 @@ jobs:
         # Tell GitHub not to use jekyll to compile the docs
         touch build/html/.nojekyll
         cd ../
+
+    - name: Build wheel for JupyterLite
+      run: |
+        pip install build
+        python -m build --wheel --outdir docs/lite/pypi
+
+    - name: Sync notebooks into JupyterLite content
+      run: |
+        mkdir -p docs/lite/files
+        cp examples/bouncing-ball.ipynb docs/lite/files/
+
+    - name: Adapt notebooks for JupyterLite/Pyodide
+      run: |
+        python - <<'PY'
+        import json
+        from pathlib import Path
+
+        root = Path("docs/lite/files")
+        install_src = [
+            "import micropip\n",
+            "await micropip.install('bdsim')\n",
+        ]
+
+        for nb_path in root.rglob("*.ipynb"):
+            with nb_path.open("r", encoding="utf-8") as f:
+                nb = json.load(f)
+
+            # Set Pyodide kernelspec
+            meta = nb.setdefault("metadata", {})
+            meta["kernelspec"] = {
+                "name": "python",
+                "display_name": "Python (Pyodide)",
+                "language": "python",
+            }
+            meta.setdefault("language_info", {})["name"] = "python"
+
+            # Prepend micropip install cell if not already present
+            first_code = next(
+                (c for c in nb["cells"] if c.get("cell_type") == "code"), None
+            )
+            if first_code is None or "micropip" not in "".join(
+                first_code.get("source", []) if isinstance(first_code["source"], list)
+                else [first_code["source"]]
+            ):
+                nb["cells"].insert(0, {
+                    "cell_type": "code",
+                    "id": "lite-install",
+                    "source": [
+                        "# Install bdsim in the browser-based Pyodide environment.\n",
+                        "# In a regular Jupyter server this is a no-op (micropip is not available).\n",
+                        "try:\n",
+                        "    import micropip\n",
+                        "    await micropip.install('bdsim')\n",
+                        "except ImportError:\n",
+                        "    pass  # already installed (classic Jupyter)\n",
+                    ],
+                    "metadata": {},
+                    "outputs": [],
+                    "execution_count": None,
+                })
+
+            # Drop shell-magic lines (! commands) — not available in Pyodide
+            for cell in nb["cells"]:
+                if cell.get("cell_type") != "code":
+                    continue
+                src = cell.get("source", [])
+                lines = src.splitlines(keepends=True) if isinstance(src, str) else src
+                filtered = [l for l in lines if not l.strip().startswith("!")]
+                cell["source"] = filtered if isinstance(src, list) else "".join(filtered)
+
+            with nb_path.open("w", encoding="utf-8") as f:
+                json.dump(nb, f, indent=1)
+                f.write("\n")
+        PY
+
+    - name: Build JupyterLite site
+      run: |
+        pip install jupyterlite-core jupyterlite-pyodide-kernel
+        cd docs/lite && jupyter lite build --output-dir ../build/html/lite
+
+    - name: Upload docs artifact (all branches)
+      uses: actions/upload-artifact@v4
+      with:
+        name: bdsim-docs
+        path: docs/build/html
+        retention-days: 14
+
     - name: Commit documentation changes
+      if: github.ref == 'refs/heads/master'
       run: |
         git clone https://github.com/petercorke/bdsim.git --branch gh-pages --single-branch gh-pages
         cp -r docs/build/html/* gh-pages/
@@ -98,6 +185,7 @@ jobs:
         # The above command will fail if no changes were present, so we ignore
         # that.
     - name: Push changes
+      if: github.ref == 'refs/heads/master'
       uses: ad-m/github-push-action@master
       with:
         branch: gh-pages

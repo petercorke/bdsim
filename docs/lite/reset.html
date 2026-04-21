@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Loading JupyterLite…</title>
+</head>
+
+<body>
+    <p style="font-family:sans-serif;margin:2em">Clearing service worker cache, please wait…</p>
+    <script>
+        function deleteAllIDB() {
+            return new Promise(resolve => {
+                if (!window.indexedDB) return resolve();
+                // Try the modern API first
+                if (indexedDB.databases) {
+                    indexedDB.databases().then(dbs => {
+                        const dels = dbs.map(db => new Promise(r => {
+                            const req = indexedDB.deleteDatabase(db.name);
+                            req.onsuccess = req.onerror = req.onblocked = r;
+                        }));
+                        Promise.all(dels).then(resolve);
+                    }).catch(resolve);
+                } else {
+                    // Fallback: delete known JupyterLite DB names
+                    const names = ['JupyterLite Storage', 'jupyter-lite-storage', 'lite-storage'];
+                    const dels = names.map(n => new Promise(r => {
+                        const req = indexedDB.deleteDatabase(n);
+                        req.onsuccess = req.onerror = req.onblocked = r;
+                    }));
+                    Promise.all(dels).then(resolve);
+                }
+            });
+        }
+
+        (async () => {
+            try {
+                if ('serviceWorker' in navigator) {
+                    const regs = await navigator.serviceWorker.getRegistrations();
+                    await Promise.all(regs.map(r => r.unregister()));
+                }
+                if ('caches' in window) {
+                    const keys = await caches.keys();
+                    await Promise.all(keys.map(k => caches.delete(k)));
+                }
+                await deleteAllIDB();
+            } catch (e) { /* ignore */ }
+            window.location.replace('/lite/lab/index.html');
+        })();
+    </script>
+</body>
+
+</html>
