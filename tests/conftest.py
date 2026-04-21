@@ -1,3 +1,4 @@
+import os
 import sys
 
 
@@ -10,3 +11,7 @@ def pytest_configure(config):
     -s, -v, --tb=short, etc.
     """
     sys.argv = sys.argv[:1]
+
+    # Force a non-interactive matplotlib backend for all in-process tests so
+    # that simulation runs don't open GUI windows or block on plt.show().
+    os.environ.setdefault("MPLBACKEND", "Agg")
