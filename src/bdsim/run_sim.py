@@ -1336,7 +1336,7 @@ class BDSim(Runner):
 
                     simstate.count += 1
                     eval_start = time.time()
-                    bd.evaluate([], t)
+                    bd.evaluate([], t, simstate=simstate)
                     eval_end = time.time()
                     simstate.bdtime += eval_end - eval_start
 
@@ -1376,7 +1376,7 @@ class BDSim(Runner):
 
                 simstate.count += 1
                 eval_start = time.time()
-                bd.evaluate([], t)
+                bd.evaluate([], t, simstate=simstate)
                 eval_end = time.time()
                 simstate.bdtime += eval_end - eval_start
 
