@@ -2420,6 +2420,39 @@ class GraphicsBlock(SinkBlock):
 # ----------------------- deprecated classes for backward compatibility ----------------------- #
 
 
+def deprecated_block(new_name: str):
+    """Class decorator that marks a block as deprecated.
+
+    Wraps ``__init__`` to emit a ``FutureWarning`` on instantiation.
+    The AST-based block loader detects the ``@deprecated_block`` decorator by
+    name and skips the class from menus, so no extra attribute is needed in
+    the class body.
+
+    Usage::
+
+        @deprecated_block("NewName")
+        class OldName(NewName):
+            ...
+    """
+
+    def decorator(cls):
+        orig_init = cls.__init__
+
+        def __init__(self, *args, **kwargs):
+            warnings.warn(
+                f"{cls.__name__} is deprecated; use {new_name} instead.",
+                FutureWarning,
+                stacklevel=2,
+            )
+            orig_init(self, *args, **kwargs)
+
+        cls.__init__ = __init__
+        return cls
+
+    return decorator
+
+
+@deprecated_block("ContinuousBlock")
 class TransferBlock(ContinuousBlock):
     """Deprecated alias for ContinuousBlock. Will be removed in v3.0.0."""
 
@@ -2435,6 +2468,7 @@ class TransferBlock(ContinuousBlock):
         super().__init_subclass__(**kwargs)
 
 
+@deprecated_block("SampledBlock")
 class ClockedBlock(SampledBlock):
     """Deprecated alias for SampledBlock. Will be removed in v3.0.0."""
 

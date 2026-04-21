@@ -435,15 +435,20 @@ class BDSim(Runner):
 
     @property
     def block_library(self) -> dict[str, dict[str, Any]]:
-        """Read-only view of the loaded block registry.
+        """Read-only view of the loaded block registry, excluding deprecated blocks.
 
         Returns a dict keyed by upper-case block name (e.g. ``"GAIN"``).
         Each value is a metadata dict with keys: ``path``, ``classname``,
         ``url``, ``class``, ``module``, ``package``, ``params``, ``inputs``,
         ``outputs``, ``nin``, ``nout``, ``blockclass``.
+
+        Deprecated blocks (decorated with :func:`deprecated_block`) are
+        excluded so they don't appear in editor menus.  They remain in the
+        internal registry and are still accessible as factory methods on a
+        :class:`BlockDiagram`.
         """
         assert self._blocklibrary is not None, "block library not loaded"
-        return self._blocklibrary
+        return {k: v for k, v in self._blocklibrary.items() if not v.get("deprecated")}
 
     def blockinfo(self, block=None):
         """Return info about all blocks.
@@ -1741,6 +1746,15 @@ class BDSim(Runner):
                     "outlabels": None,
                     "_blockclass": None,
                 }
+                is_deprecated = any(
+                    (isinstance(d, ast.Name) and d.id == "deprecated_block")
+                    or (
+                        isinstance(d, ast.Call)
+                        and isinstance(d.func, ast.Name)
+                        and d.func.id == "deprecated_block"
+                    )
+                    for d in class_def.decorator_list
+                )
                 init_doc = ""
 
                 for stmt in class_def.body:
@@ -1767,6 +1781,7 @@ class BDSim(Runner):
                     "name": name,
                     "base_names": base_names,
                     "class_values": class_values,
+                    "is_deprecated": is_deprecated,
                     "class_doc": ast.get_docstring(class_def) or "",
                     "init_doc": init_doc,
                 }
@@ -1850,6 +1865,7 @@ class BDSim(Runner):
                 info["nin"] = resolve_port_count(name, "nin", set())
                 info["nout"] = resolve_port_count(name, "nout", set())
                 info["blockclass"] = block_class
+                info["deprecated"] = meta["is_deprecated"]
 
                 key = blockname(name)
                 blocks[key] = info

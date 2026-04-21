@@ -19,7 +19,7 @@ import spatialmath.base as smb  # type: ignore[import-not-found]
 
 from typing import Any
 
-from bdsim.components import SampledBlock, Clock
+from bdsim.components import SampledBlock, Clock, deprecated_block
 
 # ------------------------------------------------------------------------
 
@@ -469,32 +469,14 @@ class PoseIntegrator_S(SampledBlock):
 # Compatibility shims
 
 
+@deprecated_block("Integrator_S")
 class DIntegrator(Integrator_S):
     """Deprecated: use ``Integrator_S`` instead."""
 
-    def __init__(self, *args, **kwargs):
-        import warnings
 
-        warnings.warn(
-            "DIntegrator is deprecated; use Integrator_S instead.",
-            FutureWarning,
-            stacklevel=2,
-        )
-        super().__init__(*args, **kwargs)
-
-
+@deprecated_block("PoseIntegrator_S")
 class DPoseIntegrator(PoseIntegrator_S):
     """Deprecated: use ``PoseIntegrator_S`` instead."""
-
-    def __init__(self, *args, **kwargs):
-        import warnings
-
-        warnings.warn(
-            "DPoseIntegrator is deprecated; use PoseIntegrator_S instead.",
-            FutureWarning,
-            stacklevel=2,
-        )
-        super().__init__(*args, **kwargs)
 
 
 if __name__ == "__main__":  # pragma: no cover

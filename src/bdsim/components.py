@@ -572,6 +572,7 @@ from bdsim.block import (  # noqa: E402, F401
     SampledBlock,
     ClockedBlock,
     EventSource,
+    deprecated_block,
 )
 
 
