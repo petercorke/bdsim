@@ -123,7 +123,7 @@ class TransferTest(unittest.TestCase):
         u = -2
         nt.assert_equal(block.test_deriv(u, x=x), 0)
 
-    def test_dintegrator_vec(self):
+    def test_integrator_vec(self):
 
         block = Integrator(x0=[5, 6])  # state is vector
         self.assertEqual(block.nstates, 2)

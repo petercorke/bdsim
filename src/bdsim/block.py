@@ -2113,13 +2113,18 @@ class GraphicsBlock(SinkBlock):
                     backends = getattr(matplotlib.rcsetup, "all_backends", [])
                     return name.lower() in {backend.lower() for backend in backends}
 
+            # Non-interactive backends (Agg, Svg, Pdf, …) have no display and
+            # must never be overridden by a GUI backend, regardless of platform.
+            _NON_INTERACTIVE = {"agg", "svg", "pdf", "ps", "cairo", "template"}
+
             if options.backend is None:
                 # If %matplotlib magic (or any other code) already set a notebook
-                # backend (e.g. module://matplotlib_inline... or module://ipympl...),
-                # honour it and don't override with a Qt/Tk window backend.
+                # or non-interactive backend, honour it and don't override.
                 _current_backend = matplotlib.get_backend()
                 if is_notebook_backend(_current_backend):
                     pass  # already a notebook backend, leave it alone
+                elif _current_backend.lower() in _NON_INTERACTIVE:
+                    pass  # headless/non-interactive backend, leave it alone
                 elif sys.platform == "darwin":
                     # For macOS, prefer backends that allow window placement.
                     selected = False

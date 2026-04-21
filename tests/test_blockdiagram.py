@@ -1460,6 +1460,7 @@ class AddDeleteBlockTest(unittest.TestCase):
 
     def test_add_duplicate_name_raises(self):
         from bdsim.exceptions import BlockCreationError
+
         bd = self.sim.blockdiagram()
         bd.CONSTANT(1, name="myblock")
         with self.assertRaises(BlockCreationError):
