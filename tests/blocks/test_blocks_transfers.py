@@ -75,6 +75,11 @@ class TransferTest(unittest.TestCase):
         Nr = np.array([0, 2, 1]) / D[0]
         Dr = np.array(D) / D[0]
 
+        # we test by converting the state-space matrices back to a transfer function and
+        # comparing with the original numerator and denominator coefficients, which is a
+        # more robust test than comparing the A, B, C matrices directly since there are
+        # many equivalent state-space realizations of the same transfer function.
+
         block = LTI_SISO(N=N, D=D)
         n, d = ss2tf(block.A, block.B, block.C, np.zeros((1, 1)), input=0)
         nt.assert_almost_equal(n[0], Nr)
