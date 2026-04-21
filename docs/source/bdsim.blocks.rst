@@ -11,7 +11,7 @@ the package ``bdsim.blocks``, ``roboticstoolbox.blocks``, ``machinevisiontoolbox
 
 Icons, if shown to the left of the black header bar, are as used with `bdedit <https://github.com/petercorke/bdsim/tree/master/bdsim/bdedit>`_.
 
-.. inheritance-diagram:: bdsim.components.SourceBlock bdsim.components.SinkBlock bdsim.graphics.GraphicsBlock bdsim.components.FunctionBlock bdsim.components.TransferBlock bdsim.components.SubsystemBlock
+.. inheritance-diagram:: bdsim.components.SourceBlock bdsim.components.SinkBlock bdsim.graphics.GraphicsBlock bdsim.components.FunctionBlock bdsim.components.ContinuousBlock bdsim.components.SampledBlock bdsim.components.SubsystemBlock
 
 
 Source blocks
@@ -95,17 +95,17 @@ Dynamics
 Continuous-time blocks
 ----------------------
 
-.. automodule:: bdsim.blocks.transfers
+.. automodule:: bdsim.blocks.continuous
    :members:
    :undoc-members:
    :show-inheritance:
    :special-members: __init__
    :exclude-members: output, reset, step, start, done, deriv, nin, nout, inlabels, outlabels
 
-Discrete-time blocks
---------------------
+Sampled-time blocks
+-------------------
 
-.. automodule:: bdsim.blocks.discrete
+.. automodule:: bdsim.blocks.sampled
    :members:
    :undoc-members:
    :show-inheritance:

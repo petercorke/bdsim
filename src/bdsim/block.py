@@ -7,6 +7,7 @@ import math
 import importlib
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, cast
+import warnings
 
 import matplotlib
 import matplotlib.figure
@@ -14,6 +15,8 @@ import numpy as np
 from matplotlib import animation
 
 import matplotlib.pyplot as plt
+
+# from yaml import warnings
 
 from bdsim.exceptions import BlockApiError, BlockRuntimeError
 
@@ -217,12 +220,7 @@ class Block(ABC, Port):
         # set the block type and block class
         self._type = type or self.__class__.__name__.lower()
 
-        if blockclass is None:
-            for cls in self.__class__.__bases__:
-                if cls.__name__.endswith("Block"):
-                    self._blockclass = cls.__name__[:-5].lower()
-                    break
-        else:
+        if blockclass is not None:
             self._blockclass = blockclass
         assert (
             self._blockclass is not None
@@ -335,14 +333,22 @@ class Block(ABC, Port):
 
         """
         super().__init_subclass__(**kwargs)
+
+        # Auto-derive _blockclass from class name for typed base classes (e.g.
+        # ContinuousBlock → "continuous") unless an explicit override is present.
+        if cls.__name__.endswith("Block") and "_blockclass" not in cls.__dict__:
+            cls._blockclass = cls.__name__.lower().replace("block", "")
+
         # check that the subclass does not have methods inconsistent with its class
         disallowed = {
             "SourceBlock": ["deriv", "step", "next"],
             "SinkBlock": ["deriv", "output", "next"],
             "FunctionBlock": ["deriv", "next", "step"],
-            "TransferBlock": ["next", "step"],
+            "ContinuousBlock": ["next", "step"],
+            "TransferBlock": ["next", "step"],  # deprecated alias for ContinuousBlock
             "GraphicsBlock": ["deriv", "next", "output"],
-            "ClockedBlock": ["deriv", "step"],
+            "SampledBlock": ["deriv", "step"],
+            "ClockedBlock": ["deriv", "step"],  # deprecated alias for SampledBlock
             "SubsystemBlock": ["deriv", "output", "next", "step"],
         }
         blockclass = cls.__mro__[1].__name__
@@ -1728,8 +1734,6 @@ class SinkBlock(Block):
     graphics.
     """
 
-    _blockclass = "sink"
-
     def __init__(self, **blockargs) -> None:
         """
         Create a sink block.
@@ -1754,8 +1758,6 @@ class SourceBlock(Block):
     but no inputs.  Its output is a function of parameters and time.
     """
 
-    _blockclass = "source"
-
     def __init__(self, **blockargs) -> None:
         """
         Create a source block.
@@ -1774,25 +1776,23 @@ class SourceBlock(Block):
         raise NotImplementedError
 
 
-class TransferBlock(Block):
+class ContinuousBlock(Block):
     """
-    A TransferBlock is a subclass of Block that represents a block with inputs
-    outputs and states. Typically used to describe a continuous time dynamic
+    A ContinuousBlock is a subclass of Block that represents a block with inputs,
+    outputs and states. Typically used to describe a continuous-time dynamic
     system, either linear or nonlinear.
     """
 
-    _blockclass = "transfer"
-
     def __init__(self, nstates, **blockargs) -> None:
         """
-        Create a transfer function block.
+        Create a continuous-time block.
 
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: transfer function block base class
-        :rtype: TransferBlock
+        :return: continuous-time block base class
+        :rtype: ContinuousBlock
 
-        This is the parent class of all transfer function blocks.
+        This is the parent class of all continuous-time dynamic blocks.
         """
         super().__init__(nstates=nstates, ndstates=0, **blockargs)
 
@@ -1828,8 +1828,6 @@ class FunctionBlock(Block):
     such as gain, summation or various mappings.
     """
 
-    _blockclass = "function"
-
     def __init__(self, **blockargs) -> None:
         """
         Create a function block.
@@ -1855,8 +1853,6 @@ class SubsystemBlock(Block):
     such as gain, summation or various mappings.
     """
 
-    _blockclass = "subsystem"
-
     def __init__(self, **blockargs) -> None:
         """
         Create a subsystem block.
@@ -1871,14 +1867,12 @@ class SubsystemBlock(Block):
         super().__init__(nstates=0, ndstates=0, **blockargs)
 
 
-class ClockedBlock(Block):
+class SampledBlock(Block):
     """
-    A ClockedBlock is a subclass of Block that represents a block with inputs
-    outputs and discrete states. Typically used to describe a discrete time dynamic
+    A SampledBlock is a subclass of Block that represents a block with inputs,
+    outputs and discrete states. Typically used to describe a sampled-time dynamic
     system, either linear or nonlinear.
     """
-
-    _blockclass = "clocked"
 
     def __init__(self, *, ndstates: int, clock: Clock, **blockargs) -> None:
         """
@@ -1891,9 +1885,9 @@ class ClockedBlock(Block):
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         :return: clocked block base class
-        :rtype: ClockedBlock
+        :rtype: SampledBlock
 
-        This is the parent class of all clocked blocks.
+        This is the parent class of all sampled-time blocks.
         """
         super().__init__(nstates=0, ndstates=ndstates, **blockargs)
         assert clock is not None, "clocked block must have a clock"
@@ -1976,8 +1970,6 @@ class GraphicsBlock(SinkBlock):
     but no outputs and creates/updates a graphical display.
     """
 
-    _blockclass = "graphics"
-
     def __init__(self, movie=None, **blockargs) -> None:
         """
         Create a graphical display block.
@@ -1987,7 +1979,7 @@ class GraphicsBlock(SinkBlock):
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         :return: transfer function block base class
-        :rtype: TransferBlock
+        :rtype: GraphicsBlock
 
         This is the parent class of all graphic display blocks.
         """
@@ -2423,6 +2415,39 @@ class GraphicsBlock(SinkBlock):
             "graphics", "create figure {:d} at ({:d}, {:d})", gstate.fignum, row, col
         )
         return f
+
+
+# ----------------------- deprecated classes for backward compatibility ----------------------- #
+
+
+class TransferBlock(ContinuousBlock):
+    """Deprecated alias for ContinuousBlock. Will be removed in v3.0.0."""
+
+    _blockclass = "continuous"  # name 'transfer' != 'continuous', must be explicit
+
+    def __init_subclass__(cls, **kwargs):
+        warnings.warn(
+            f"{cls.__name__} subclasses TransferBlock which is deprecated since v2.0.0 "
+            "and will be removed in v3.0.0. Subclass ContinuousBlock instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
+        super().__init_subclass__(**kwargs)
+
+
+class ClockedBlock(SampledBlock):
+    """Deprecated alias for SampledBlock. Will be removed in v3.0.0."""
+
+    _blockclass = "sampled"  # name 'clocked' != 'sampled', must be explicit
+
+    def __init_subclass__(cls, **kwargs):
+        warnings.warn(
+            f"{cls.__name__} subclasses ClockedBlock which is deprecated since v2.0.0 "
+            "and will be removed in v3.0.0. Subclass SampledBlock instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
+        super().__init_subclass__(**kwargs)
 
 
 if __name__ == "__main__":

@@ -1,11 +1,10 @@
 """
-Transfer blocks:
+Sampled-time blocks:
 
 - have inputs and outputs
 - have discrete-time state variables that are sampled/updated at the times
   specified by the associated clock
-- are a subclass of ``TransferBlock`` |rarr| ``Block``
-
+- are a subclass of ``SampledBlock`` |rarr| ``Block``
 """
 
 from __future__ import annotations
@@ -20,12 +19,12 @@ import spatialmath.base as smb  # type: ignore[import-not-found]
 
 from typing import Any
 
-from bdsim.components import ClockedBlock, Clock
+from bdsim.components import SampledBlock, Clock
 
 # ------------------------------------------------------------------------
 
 
-class ZOH(ClockedBlock):
+class ZOH(SampledBlock):
     """
     :blockname:`ZOH`
 
@@ -92,7 +91,7 @@ class ZOH(ClockedBlock):
 # ------------------------------------------------------------------------
 
 
-class DIntegrator(ClockedBlock):
+class DIntegrator(SampledBlock):
     """
     :blockname:`DINTEGRATOR`
 
@@ -192,7 +191,7 @@ class DIntegrator(ClockedBlock):
         return xnext
 
 
-class DPoseIntegrator(ClockedBlock):
+class DPoseIntegrator(SampledBlock):
     r"""
     :blockname:`DPOSEINTEGRATOR`
 

@@ -713,12 +713,12 @@ class EagerLoadingTest(unittest.TestCase):
         self.assertEqual(integrator["nout"], 1)
 
     def test_block_has_blockclass(self):
-        """Blocks should have blockclass (source, sink, transfer, etc)."""
+        """Blocks should have blockclass (source, sink, continuous, etc)."""
         constant = self.sim._blocklibrary["CONSTANT"]
         self.assertEqual(constant["blockclass"], "source")
 
         integrator = self.sim._blocklibrary["INTEGRATOR"]
-        self.assertEqual(integrator["blockclass"], "transfer")
+        self.assertEqual(integrator["blockclass"], "continuous")
 
         null = self.sim._blocklibrary["NULL"]
         self.assertEqual(null["blockclass"], "sink")

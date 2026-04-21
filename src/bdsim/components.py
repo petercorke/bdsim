@@ -565,9 +565,11 @@ from bdsim.block import Block  # noqa: E402, F401
 from bdsim.block import (  # noqa: E402, F401
     SinkBlock,
     SourceBlock,
+    ContinuousBlock,
     TransferBlock,
     FunctionBlock,
     SubsystemBlock,
+    SampledBlock,
     ClockedBlock,
     EventSource,
 )

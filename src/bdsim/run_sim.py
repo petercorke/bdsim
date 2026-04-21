@@ -1310,7 +1310,7 @@ class BDSim(Runner):
                         # Use block state after event-handler side effects.
                         x_final = np.array([])
                         for b in bd.blocklist:
-                            if b.blockclass == "transfer":
+                            if b.blockclass == "continuous":
                                 xb = b.x
                                 if xb is None:
                                     xb = b.getstate0_safe()

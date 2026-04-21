@@ -11,6 +11,7 @@ from tempfile import _TemporaryFileWrapper
 import traceback
 import warnings
 from typing import TYPE_CHECKING, Any, NoReturn
+
 if TYPE_CHECKING:
     from typing import Self
 
@@ -366,7 +367,7 @@ class BlockDiagram(BlockDiagramMixin):
 
         # visit all stateful blocks
         for b in self.blocklist:
-            if b.blockclass == "transfer":
+            if b.blockclass == "continuous":
                 self.nstates += b.nstates
                 if b._state_names is not None:
                     assert (
@@ -378,7 +379,7 @@ class BlockDiagram(BlockDiagramMixin):
                     self.statenames.extend(
                         [(b.name or "") + "x" + str(i) for i in range(0, b.nstates)]
                     )
-            if b.blockclass == "clocked":
+            if b.blockclass == "sampled":
                 self.ndstates += b.ndstates
                 if b._state_names is not None:
                     assert (
@@ -591,7 +592,7 @@ class BlockDiagram(BlockDiagramMixin):
 
             # split the state vector to stateful blocks
             for b in self.blocklist:
-                if b.blockclass == "transfer":
+                if b.blockclass == "continuous":
                     x = b.setstate(x)
 
             # split the discrete state vector to clocked blocks
@@ -682,7 +683,7 @@ class BlockDiagram(BlockDiagramMixin):
         group = []
         for b in self.blocklist:
             b._sequence = None
-            if b.blockclass in ("source", "transfer", "clocked"):
+            if b.blockclass in ("source", "continuous", "sampled"):
                 b._sequence = 0
                 group.append(b)
         plan.append(group)
@@ -754,7 +755,7 @@ class BlockDiagram(BlockDiagramMixin):
 
         # connect them to their sources, except if a transfer block
         for b in self.blocklist:
-            if not b.blockclass == "transfer":
+            if not b.blockclass == "continuous":
                 for p in b.sources:
                     file.write('\t"{:s}" -> "{:s}"\n'.format(p.name, b.name))
 
@@ -1006,7 +1007,7 @@ class BlockDiagram(BlockDiagramMixin):
                 border="thin",
             )
             for b in self.blocklist:
-                if b.blockclass == "clocked":
+                if b.blockclass == "sampled":
                     c = b._clock
                     assert c is not None
                     table.row(b.id, str(b), c.name, c.T, c.offset)
@@ -1076,7 +1077,7 @@ class BlockDiagram(BlockDiagramMixin):
         try:
             x0: np.ndarray[tuple[Any, ...], np.dtype[Any]] = np.array([])
             for b in self.blocklist:
-                if b.blockclass == "transfer":
+                if b.blockclass == "continuous":
                     x0 = np.r_[x0, b.getstate0_safe()]
             return x0
         except BlockRuntimeError as err:
@@ -1136,7 +1137,7 @@ class BlockDiagram(BlockDiagramMixin):
         try:
             YD: np.ndarray[tuple[Any, ...], np.dtype[Any]] = np.array([])
             for b in self.blocklist:
-                if b.blockclass == "transfer":
+                if b.blockclass == "continuous":
                     yd = b.deriv_safe(t, b.inport_values, b.x)
                     if not isinstance(yd, np.ndarray):
                         b._raise_runtime_error(
@@ -1204,7 +1205,7 @@ class BlockDiagram(BlockDiagramMixin):
 
     def initialstate(self) -> None:
         for b in self.blocklist:
-            if b.blockclass in ("transfer", "clocked"):
+            if b.blockclass in ("continuous", "sampled"):
                 b.x = b._x0
 
     def done(self, block=False) -> None:

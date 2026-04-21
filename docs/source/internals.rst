@@ -99,10 +99,10 @@ Function block
    :show-inheritance:
    :special-members: 
 
-Transfer function block
-^^^^^^^^^^^^^^^^^^^^^^^
+Continuous-time block
+^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: bdsim.TransferBlock
+.. autoclass:: bdsim.ContinuousBlock
    :members:
    :undoc-members:
    :show-inheritance:
@@ -130,7 +130,7 @@ Graphics block
 Discrete-time systems
 ---------------------
 
-.. autoclass:: bdsim.ClockedBlock
+.. autoclass:: bdsim.SampledBlock
    :members:
    :undoc-members:
    :show-inheritance:

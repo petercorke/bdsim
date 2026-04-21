@@ -1,10 +1,9 @@
 """
-Transfer blocks:
+Continuous-time blocks:
 
 - have inputs and outputs
 - have state variables
-- are a subclass of ``TransferBlock`` |rarr| ``Block``
-
+- are a subclass of ``ContinuousBlock`` |rarr| ``Block``
 """
 
 from __future__ import annotations
@@ -19,12 +18,12 @@ import spatialmath.base as smb  # type: ignore[import-not-found]
 from spatialmath import SE3, Twist3  # type: ignore[import-not-found]
 
 from bdsim.blockdiagram import BlockDiagram
-from bdsim.components import TransferBlock, SubsystemBlock
+from bdsim.components import ContinuousBlock, SubsystemBlock
 
 Vector1D = int | float | tuple[float, ...] | list[float] | np.ndarray
 
 
-class Integrator(TransferBlock):
+class Integrator(ContinuousBlock):
     r"""
     :blockname:`INTEGRATOR`
 
@@ -152,7 +151,7 @@ class Integrator(TransferBlock):
         return self.gain * xd
 
 
-class PoseIntegrator(TransferBlock):
+class PoseIntegrator(ContinuousBlock):
     r"""
     :blockname:`POSEINTEGRATOR`
 
@@ -219,7 +218,7 @@ class PoseIntegrator(TransferBlock):
 # ------------------------------------------------------------------------ #
 
 
-class LTI_SS(TransferBlock):
+class LTI_SS(ContinuousBlock):
     r"""
     :blockname:`LTI_SS`
 

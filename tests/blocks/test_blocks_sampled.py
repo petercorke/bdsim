@@ -5,7 +5,7 @@ import math
 
 import matplotlib.pyplot as plt
 
-from bdsim.blocks.discrete import *
+from bdsim.blocks.sampled import *
 from bdsim import Clock
 
 import unittest
