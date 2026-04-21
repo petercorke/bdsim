@@ -4,6 +4,9 @@ __pycache__/
 *$py.class
 
 untitled*.py
+*.mp4
+
+*.swp
 
 # docs
 *.pdf
@@ -42,6 +45,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+*.whl
 
 *.json
 
