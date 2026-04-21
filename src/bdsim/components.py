@@ -449,14 +449,6 @@ class Clock:
     def add_block(self, block) -> None:
         self.blocklist.append(block)
 
-    def _assign_state_slices(self) -> None:
-        """Assign each clocked block its slice into this clock's state vector."""
-        i = 0
-        for b in self.blocklist:
-            n = int(getattr(b, "ndstates", 0))
-            b._clock_state_slice = slice(i, i + n)
-            i += n
-
     def __repr__(self) -> str:
         s = f"Clock(name={self.name}, T={self.T}"
         if self.offset != 0:
@@ -466,7 +458,6 @@ class Clock:
 
     def getstate0(self) -> np.ndarray[tuple[Any, ...], np.dtype[Any]]:
         # get the state from each stateful block on this clock
-        self._assign_state_slices()
         x0: np.ndarray[tuple[Any, ...], np.dtype[Any]] = np.array([])
         for b in self.blocklist:
             x0 = np.r_[x0, b.getstate0()]
@@ -518,11 +509,9 @@ class Clock:
         return x
 
     def setstate(self, simstate: SimulationState | None = None) -> None:
-        self._assign_state_slices()
         x = self._get_runtime_state(simstate)
         for b in self.blocklist:
-            b._clock_state_vector = x
-            x = b.setstate(x)  # send it to blocks
+            x = b.setstate(x)  # bind _x_view and advance x
 
     def start(self, simstate: SimulationState) -> None:
         self._ensure_runtime(simstate)

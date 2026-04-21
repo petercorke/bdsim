@@ -116,8 +116,7 @@ class Block(ABC, Port):
 
     _output_values: list | None = None  # access by block.output_value(i)
 
-    _state_vector: np.ndarray[tuple[Any, ...], np.dtype[Any]] | None
-    _state_slice: slice | None
+    _x_view: np.ndarray | None
 
     _inport_names: list[str] | None
     _outport_names: list[str] | None
@@ -227,8 +226,9 @@ class Block(ABC, Port):
         ), f"blockclass must be specified for block {self.name}"
 
         # key simulation variables
-        self._state_vector = None  # bound simulation state vector
-        self._state_slice = None
+        self._x_view: np.ndarray | None = (
+            None  # view into engine state vector, bound at simulation start
+        )
         self._output_values = None  # cached block output values, set by output() method, accessed by outport_value()
 
         # set by add_block() when block is added to a block diagram
@@ -479,56 +479,16 @@ class Block(ABC, Port):
         return self.blockclass + "." + str(self)
 
     @property
-    def x(self) -> np.ndarray[tuple[Any, ...], np.dtype[Any]] | None:
-        """Continuous or discrete state associated with this block.
-
-        The returned value is always a view into a bound state vector when the
-        block is participating in simulation. This allows event handlers to
-        mutate state in-place and have the change persist across intervals.
-        """
-        if self._state_vector is None:
-            return None
-        if self._state_slice is None:
-            return self._state_vector
-        stop = self._state_slice.stop
-        if stop is None or self._state_vector.size < stop:
-            return None
-        return self._state_vector[self._state_slice]
+    def x(self) -> np.ndarray | None:
+        """View into the engine state vector for this block, bound at simulation start."""
+        return self._x_view
 
     @x.setter
-    def x(self, v: Any) -> None:
-        if v is None:
-            self._state_vector = None
-            self._state_slice = None
-            return
-        arr = np.atleast_1d(np.array(v))
-        if arr.ndim > 1:
-            arr = arr.reshape(-1)
-
-        if self._state_vector is not None and self._state_slice is not None:
-            stop = self._state_slice.stop
-            if stop is not None and self._state_vector.size >= stop:
-                width = max(0, stop - self._state_slice.start)
-                self._state_vector[self._state_slice] = arr[:width]
-                return
-
-        # Fallback for direct/unit-test usage outside full simulation binding.
-        self._state_vector = arr.copy()
-        self._state_slice = slice(0, arr.size)
-
-    def _bind_state_vector(
-        self,
-        vector: np.ndarray[tuple[Any, ...], np.dtype[Any]],
-        width: int,
-    ) -> np.ndarray[tuple[Any, ...], np.dtype[Any]]:
-        """Bind this block to the leading ``width`` elements of ``vector``.
-
-        Returns the unconsumed tail of the same vector.
-        """
-        assert width >= 0, "state width must be non-negative"
-        self._state_vector = vector
-        self._state_slice = slice(0, width)
-        return vector[width:]
+    def x(self, v: np.ndarray) -> None:
+        assert (
+            self._x_view is not None
+        ), "block state not bound — simulation has not been started"
+        self._x_view[:] = v
 
     # ---------------------------------------------------------------------- #
 
@@ -1800,9 +1760,8 @@ class ContinuousBlock(Block):
         super().reset()
 
     def setstate(self, x):
-        x = np.asarray(x)
-        # Bind directly to the shared solver state vector, do not copy.
-        return self._bind_state_vector(x, self.nstates)
+        self._x_view = x[: self.nstates]
+        return x[self.nstates :]
 
     def getstate0(self):
         return self._x0
@@ -1893,47 +1852,14 @@ class SampledBlock(Block):
         assert clock is not None, "clocked block must have a clock"
         self._clocked = True
         self._clock = clock
-        self._clock_state_slice: slice | None = None
-        self._clock_state_vector: np.ndarray | None = None
         clock.add_block(self)
-
-    @property
-    def x(self) -> np.ndarray[tuple[Any, ...], np.dtype[Any]] | None:
-        # Clocked block state may be bound to a per-run clock state vector.
-        if (
-            self._clock_state_vector is not None
-            and self._clock_state_slice is not None
-            and self._clock_state_slice.stop is not None
-            and self._clock_state_vector.size >= self._clock_state_slice.stop
-        ):
-            return self._clock_state_vector[self._clock_state_slice]
-        return super().x
-
-    @x.setter
-    def x(self, v: Any) -> None:
-        if v is None:
-            super().x = None
-            return
-        arr = np.array(v)
-        if arr.ndim > 1:
-            arr = arr.reshape(-1)
-        if self.ndstates > 0:
-            arr = arr[: self.ndstates]
-        super().x = arr
-        if (
-            self._clock_state_vector is not None
-            and self._clock_state_slice is not None
-            and self._clock_state_slice.stop is not None
-            and self._clock_state_vector.size >= self._clock_state_slice.stop
-        ):
-            self._clock_state_vector[self._clock_state_slice] = arr
 
     def reset(self) -> None:
         super().reset()
 
     def setstate(self, x):
-        self.x = x[: self.ndstates]  # take as much state vector as we need
-        return x[self.ndstates :]  # return the rest
+        self._x_view = x[: self.ndstates]
+        return x[self.ndstates :]
 
     def getstate0(self):
         return self._x0
@@ -1941,7 +1867,6 @@ class SampledBlock(Block):
     def check(self) -> None:
         assert len(self._x0) == self.ndstates, "incorrect length for initial state"
         assert self.nin > 0 or self.nout > 0, "no inputs or outputs specified"
-        self.x = self._x0
 
 
 class EventSource:
