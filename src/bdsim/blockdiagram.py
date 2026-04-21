@@ -10,7 +10,9 @@ import sys
 from tempfile import _TemporaryFileWrapper
 import traceback
 import warnings
-from typing import TYPE_CHECKING, Any, NoReturn, Self
+from typing import TYPE_CHECKING, Any, NoReturn
+if TYPE_CHECKING:
+    from typing import Self
 
 import numpy as np
 from ansitable import ANSITable, Column  # type: ignore[import-not-found]
