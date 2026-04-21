@@ -31,6 +31,7 @@ view:
 	open docs/build/html/index.html
 
 dist: .FORCE
+	$(MAKE) -C src/bdweb build
 	#$(MAKE) test
 	python -m build
 
@@ -42,6 +43,7 @@ install:
 
 clean: .FORCE
 	# (cd docsrc; make clean)
+	$(MAKE) -C src/bdweb clean
 	-rm -r *.egg-info
 	-rm -r dist build
 

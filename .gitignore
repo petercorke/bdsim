@@ -146,3 +146,12 @@ dmypy.json
 # Pyre type checker
 .pyre/
 .idea/
+
+# bdweb frontend artifacts
+bdweb/frontend/node_modules/
+bdweb/frontend/.svelte-kit/
+bdweb/frontend/build/
+bdweb/frontend/.output/
+bdweb/frontend/.vercel/
+bdweb/frontend/.netlify/
+bdweb/frontend/.wrangler/

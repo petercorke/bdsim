@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import {
 		SvelteFlow,
 		Controls,
@@ -18,10 +18,18 @@
 	import Palette from '$lib/Palette.svelte';
 	import BlockNode from '$lib/BlockNode.svelte';
 	import PropsPanel from '$lib/PropsPanel.svelte';
+	import FlowRef from '$lib/FlowRef.svelte';
+	import FileBrowser from '$lib/FileBrowser.svelte';
+	import ContextMenu from '$lib/ContextMenu.svelte';
+	import PropsCard from '$lib/PropsCard.svelte';
 
 	// ── Custom node type registry ───────────────────────────────────────────
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const nodeTypes: NodeTypes = { bdsimBlock: BlockNode as any };
+
+	// fitView / updateNodeInternals are set by FlowRef once SvelteFlow mounts (needs its context)
+	let fitView: (opts?: { padding?: number }) => void = () => {};
+	let updateNodeInternals: ((ids: string | string[]) => void) | null = $state(null);
 
 	// Track the SvelteFlow viewport so we can convert screen→flow coordinates
 	let viewport: Viewport = $state({ x: 0, y: 0, zoom: 1 });
@@ -51,21 +59,57 @@
 	let selectedBlockInfo: BlockInfo | null = $state(null);
 
 	// Run results modal
-	let runResult: { stdout: string; plots: string[]; error: string | null } | null = $state(null);
+	let runResult: { stdout: string; stderr: string; returncode: number } | null = $state(null);
 	let running = $state(false);
 
-	// File path for load/save
+	// File browser modal
+	let showBrowser = $state(false);
+
+	// Context menu
+	let ctxMenu: { x: number; y: number } | null = $state(null);
+
+	// Canvas wrapper ref for props card positioning
+	let canvasEl: HTMLElement | null = $state(null);
+
+	// Props card position — computed from selected node + viewport transform
+	const propCardPos = $derived(
+		(() => {
+			if (!selectedNodeId || !canvasEl) return null;
+			const node = nodes.find((n) => n.id === selectedNodeId);
+			if (!node) return null;
+			const rect = canvasEl.getBoundingClientRect();
+			const sx = rect.left + node.position.x * viewport.zoom + viewport.x;
+			const sy = rect.top  + node.position.y * viewport.zoom + viewport.y;
+			const nodeW = 130 * viewport.zoom;
+			const nodeH =  58 * viewport.zoom;
+			const CARD_W = 290;
+			let cardX = sx + nodeW + 12;
+			if (cardX + CARD_W > window.innerWidth - 10) cardX = sx - CARD_W - 12;
+			return { x: Math.max(10, cardX), y: Math.max(50, sy + nodeH / 2 - 80) };
+		})()
+	);
+
+	// File path for load/save (full absolute path, set by browser or ?load= param)
 	let filePath = $state('');
+	// Display label — just the filename without the directory
+	const fileLabel = $derived(filePath ? filePath.split('/').pop()! : '');
 
 	// Incrementing counter for unique node IDs
 	let nodeCounter = $state(0);
 
-	// ── Load block library on mount ─────────────────────────────────────────
+	// ── Load block library on mount; auto-load ?load=path if present ───────
 	onMount(async () => {
 		try {
 			library = await api.blocks();
 		} catch (e) {
 			loadError = String(e);
+			return; // no point auto-loading if we can't reach the backend
+		}
+		// Auto-load a file passed via ?load=<path> (set by `bdweb myfile.bd`)
+		const autoPath = new URLSearchParams(window.location.search).get('load');
+		if (autoPath) {
+			filePath = autoPath;
+			await handleLoad();
 		}
 	});
 
@@ -79,7 +123,7 @@
 			pos_y: n.position.y,
 			width: 120,
 			height: 80,
-			flipped: false,
+			flipped: !!(n.data.flipped),
 			inputsNum: n.data.nin,
 			outputsNum: n.data.nout,
 			parameters: n.data.params ?? []
@@ -111,6 +155,7 @@
 					url: info?.url,
 					nin: b.inputsNum,
 					nout: b.outputsNum,
+					flipped: !!b.flipped,
 					inputNames: [],
 					outputNames: [],
 					params: b.parameters
@@ -234,6 +279,7 @@
 	}
 
 	function onPaneClick() {
+		ctxMenu = null;
 		selectedNodeId = null;
 		selectedBlockType = '';
 		selectedBlockName = '';
@@ -280,7 +326,51 @@
 		selectedParams = params;
 	}
 
+	function onNodeContextMenu({ node, event }: { node: Node<BlockData>; event: MouseEvent }) {
+		event.preventDefault();
+		// Ensure the right-clicked node is selected
+		if (!node.selected) {
+			nodes = nodes.map((n) => ({ ...n, selected: n.id === node.id }));
+		}
+		ctxMenu = { x: event.clientX, y: event.clientY };
+	}
+
+	function flipSelected() {
+		const flippedIds: string[] = [];
+		nodes = nodes.map((n) => {
+			if (!n.selected) return n;
+			flippedIds.push(n.id);
+			return { ...n, data: { ...n.data, flipped: !n.data.flipped } };
+		});
+		// Tell xyflow to re-measure handles so edges follow the new positions
+		tick().then(() => updateNodeInternals?.(flippedIds));
+	}
+
+	function deleteSelected() {
+		const selectedIds = new Set(nodes.filter((n) => n.selected).map((n) => n.id));
+		if (!selectedIds.size) return;
+		nodes = nodes.filter((n) => !n.selected);
+		edges = edges.filter((e) => !selectedIds.has(e.source) && !selectedIds.has(e.target));
+		if (selectedNodeId && selectedIds.has(selectedNodeId)) onPaneClick();
+	}
+
+	function onWindowKeydown(e: KeyboardEvent) {
+		if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+		if (e.key === 'f' || e.key === 'F') { flipSelected(); return; }
+		if (e.key === 'Delete' || e.key === 'Backspace') { deleteSelected(); return; }
+	}
+
 	// ── Toolbar actions ────────────────────────────────────────────────────
+	async function handleBrowse() {
+		showBrowser = true;
+	}
+
+	async function onBrowserSelect(path: string) {
+		showBrowser = false;
+		filePath = path;
+		await handleLoad();
+	}
+
 	async function handleLoad() {
 		const path = filePath.trim();
 		if (!path) return;
@@ -288,6 +378,8 @@
 			const diagram = await api.load(path);
 			fromDiagram(diagram);
 			selectedNodeId = null;
+			await tick();
+			fitView({ padding: 0.12 });
 		} catch (e) {
 			alert('Load failed: ' + e);
 		}
@@ -295,8 +387,10 @@
 
 	async function handleSave() {
 		const path = filePath.trim();
-		if (!path) { alert('Enter a file path first.'); return; }
+		if (!path) { alert('Select a file via Browse first.'); return; }
 		try {
+			const { exists } = await api.exists(path);
+			if (exists && !confirm(`Overwrite ${path.split('/').pop()}?`)) return;
 			await api.save(path, toDiagram());
 		} catch (e) {
 			alert('Save failed: ' + e);
@@ -304,12 +398,16 @@
 	}
 
 	async function handleRun() {
+		const path = filePath.trim();
+		if (!path) { alert('Save the file via Browse + Save before running.'); return; }
 		running = true;
 		runResult = null;
 		try {
-			runResult = await api.run(toDiagram());
+			// Save first so bdrun sees the latest diagram
+			await api.save(path, toDiagram());
+			runResult = await api.run(path);
 		} catch (e) {
-			runResult = { stdout: '', plots: [], error: String(e) };
+			runResult = { stdout: '', stderr: String(e), returncode: -1 };
 		} finally {
 			running = false;
 		}
@@ -324,7 +422,7 @@
 		filePath = '';
 	}
 </script>
-
+<svelte:window onkeydown={onWindowKeydown} />
 <!-- ── Layout ─────────────────────────────────────────────────────────── -->
 <div class="app">
 	<!-- Toolbar -->
@@ -333,7 +431,8 @@
 
 		<button onclick={handleNew}>New</button>
 
-		<input class="filepath" bind:value={filePath} placeholder="path/to/file.bd" />
+		<span class="filepath" title={filePath}>{fileLabel || 'no file'}</span>
+		<button onclick={handleBrowse}>Browse…</button>
 		<button onclick={handleLoad}>Load</button>
 		<button onclick={handleSave}>Save</button>
 
@@ -353,62 +452,86 @@
 		<Palette {library} />
 
 		<!-- Canvas -->
-		<div class="canvas-wrap" role="region" ondrop={onDrop} ondragover={onDragOver}>
+		<div class="canvas-wrap" role="region" ondrop={onDrop} ondragover={onDragOver} bind:this={canvasEl}>
 			<SvelteFlow
 				bind:nodes
 				bind:edges
 				bind:viewport
 				{nodeTypes}
-				snapToGrid
 				snapGrid={[10, 10]}
 				defaultEdgeOptions={{ type: 'smoothstep' }}
+				panOnDrag={false}
+				selectionOnDrag={true}
+				panActivationKeyCode="Alt"
+				panOnScroll={true}
+				zoomOnScroll={false}
+				zoomActivationKeyCode="Alt"
+				multiSelectionKeyCode="Meta"
+				deleteKeyCode={null}
 				onnodeclick={onNodeClick}
+				onnodecontextmenu={onNodeContextMenu}
 				onpaneclick={onPaneClick}
 			>
+				<FlowRef onready={(flow, uni) => { fitView = flow.fitView; updateNodeInternals = uni; }} />
 				<Controls />
 				<Background variant={BackgroundVariant.Dots} gap={20} />
 				<MiniMap />
 			</SvelteFlow>
-
-			<div class="props-flyout" class:open={!!selectedNodeId}>
-				<div class="flyout-tab">Properties</div>
-				<PropsPanel
-					blockType={selectedBlockType}
-					blockName={selectedBlockName}
-					params={selectedParams}
-					blockInfo={selectedBlockInfo}
-					onnameupdate={onNameUpdate}
-					onupdate={onParamUpdate}
-					onapplied={onPropsApplied}
-				/>
-			</div>
 		</div>
 	</div>
 </div>
+
+<!-- Floating properties card -->
+{#if propCardPos && selectedBlockType}
+	<PropsCard
+		x={propCardPos.x}
+		y={propCardPos.y}
+		blockType={selectedBlockType}
+		blockName={selectedBlockName}
+		params={selectedParams}
+		blockInfo={selectedBlockInfo}
+		onnameupdate={onNameUpdate}
+		onupdate={onParamUpdate}
+		onapplied={onPropsApplied}
+		onclose={onPaneClick}
+	/>
+{/if}
+
+<!-- Context menu -->
+{#if ctxMenu}
+	<ContextMenu
+		x={ctxMenu.x}
+		y={ctxMenu.y}
+		onflip={flipSelected}
+		ondelete={deleteSelected}
+		onclose={() => { ctxMenu = null; }}
+	/>
+{/if}
+
+<!-- File browser modal -->
+{#if showBrowser}
+	<FileBrowser onselect={onBrowserSelect} oncancel={() => { showBrowser = false; }} />
+{/if}
 
 <!-- Run results modal -->
 {#if runResult}
 	<div class="modal-backdrop" role="dialog" aria-modal="true">
 		<div class="modal">
 			<div class="modal-header">
-				Run Results
+				Run Output {#if runResult.returncode !== 0}<span class="exit-code">(exit {runResult.returncode})</span>{/if}
 				<button onclick={() => (runResult = null)}>✕</button>
 			</div>
-
-			{#if runResult.error}
-				<pre class="error">{runResult.error}</pre>
-			{/if}
 
 			{#if runResult.stdout}
 				<pre class="stdout">{runResult.stdout}</pre>
 			{/if}
 
-			{#if runResult.plots.length}
-				<div class="plots">
-					{#each runResult.plots as src}
-						<img src="data:image/png;base64,{src}" alt="simulation plot" />
-					{/each}
-				</div>
+			{#if runResult.stderr}
+				<pre class="error">{runResult.stderr}</pre>
+			{/if}
+
+			{#if !runResult.stdout && !runResult.stderr}
+				<p class="no-output">(no output)</p>
 			{/if}
 		</div>
 	</div>
@@ -452,9 +575,14 @@
 		border: 1px solid #475569;
 		border-radius: 4px;
 		background: #0f172a;
-		color: white;
+		color: #94a3b8;
 		font-size: 13px;
-		width: 260px;
+		max-width: 200px;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		cursor: default;
+		user-select: none;
 	}
 	.spacer { flex: 1; }
 
@@ -476,91 +604,6 @@
 		flex: 1;
 		height: 100%;
 		position: relative;
-	}
-
-	.canvas-wrap::after {
-		content: '';
-		position: absolute;
-		right: 0;
-		top: 0;
-		bottom: 0;
-		width: 3px;
-		background: linear-gradient(to bottom, rgba(70, 120, 210, 0.7), rgba(70, 120, 210, 0.35));
-		pointer-events: none;
-		z-index: 14;
-	}
-
-	.props-flyout {
-		position: absolute;
-		right: 0;
-		top: 12px;
-		width: 300px;
-		max-height: calc(100% - 24px);
-		overflow: auto;
-		z-index: 15;
-		border: 1px solid #9eb8de;
-		border-right: none;
-		border-radius: 12px 0 0 12px;
-		background: linear-gradient(180deg, #ffffff, #f8fbff);
-		box-shadow: -10px 10px 30px rgba(20, 35, 60, 0.2);
-		transition: width 160ms ease, max-height 160ms ease, box-shadow 180ms ease;
-	}
-
-	.props-flyout::before {
-		content: '';
-		position: absolute;
-		left: -96px;
-		top: 14px;
-		width: 96px;
-		height: 42px;
-		background: linear-gradient(90deg, rgba(70, 120, 210, 0.14), rgba(70, 120, 210, 0.46));
-		border-radius: 16px 0 0 16px;
-		pointer-events: none;
-		opacity: 0.62;
-		transition: opacity 180ms ease;
-	}
-
-	.props-flyout.open::before {
-		opacity: 1;
-	}
-
-	.props-flyout::after {
-		content: '';
-		position: absolute;
-		left: -12px;
-		top: 10px;
-		width: 12px;
-		height: 48px;
-		background: rgba(70, 120, 210, 0.55);
-		clip-path: polygon(100% 0, 0 50%, 100% 100%);
-		pointer-events: none;
-	}
-
-	.flyout-tab {
-		position: absolute;
-		left: -94px;
-		top: 10px;
-		height: 30px;
-		padding: 0 12px;
-		display: inline-flex;
-		align-items: center;
-		font-size: 12px;
-		font-weight: 700;
-		color: #16385d;
-		background: linear-gradient(180deg, #dcebff, #bfd8ff);
-		border: 1px solid #8fb4e5;
-		border-right: none;
-		border-radius: 8px 0 0 8px;
-		box-shadow: -3px 3px 10px rgba(30, 60, 100, 0.22);
-		pointer-events: none;
-		user-select: none;
-	}
-
-	.props-flyout:not(.open) {
-		width: 260px;
-		max-height: 56px;
-		overflow: hidden;
-		box-shadow: -6px 8px 16px rgba(20, 35, 60, 0.18);
 	}
 
 	/* Run modal */
@@ -597,6 +640,6 @@
 	}
 	.error { background: #fee2e2; padding: 10px; border-radius: 4px; font-size: 12px; white-space: pre-wrap; }
 	.stdout { background: #f0fdf4; padding: 10px; border-radius: 4px; font-size: 12px; white-space: pre-wrap; }
-	.plots { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
-	.plots img { max-width: 100%; border: 1px solid #ddd; border-radius: 4px; }
+	.exit-code { font-weight: 400; color: #dc2626; margin-left: 8px; }
+	.no-output { color: #6b7280; font-style: italic; margin: 8px 0; }
 </style>

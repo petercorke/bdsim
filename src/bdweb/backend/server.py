@@ -14,6 +14,7 @@ import io
 import json
 import os
 import re
+import sys
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -39,7 +40,11 @@ app = FastAPI(title="bdweb", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=[
+        "http://localhost:5173", "http://127.0.0.1:5173",
+        "http://localhost:5174", "http://127.0.0.1:5174",
+        "http://localhost:5175", "http://127.0.0.1:5175",
+    ],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -235,6 +240,47 @@ def get_block_info(name: str) -> dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
+# Filesystem browser  (rooted at ~, serves dirs + .bd files only)
+# ---------------------------------------------------------------------------
+
+_FS_ROOT = Path.home()
+
+
+@app.get("/api/ls")
+def list_dir(dir: str = "") -> dict:
+    """List directories and .bd files under ~.
+
+    *dir* is a path relative to ~.  Returns the resolved relative path of the
+    listed directory plus its entries.  Refuses to escape ~.
+    """
+    target = (_FS_ROOT / dir).resolve() if dir else _FS_ROOT
+    # Security: never escape the home root
+    try:
+        target.relative_to(_FS_ROOT)
+    except ValueError:
+        raise HTTPException(status_code=403, detail="Path outside home directory")
+    if not target.is_dir():
+        raise HTTPException(status_code=400, detail="Not a directory")
+
+    entries = []
+    try:
+        children = sorted(target.iterdir(), key=lambda p: (p.is_file(), p.name.lower()))
+    except PermissionError:
+        raise HTTPException(status_code=403, detail="Permission denied")
+
+    for p in children:
+        if p.name.startswith("."):
+            continue  # skip hidden
+        if p.is_dir():
+            entries.append({"name": p.name, "type": "dir"})
+        elif p.is_file() and p.suffix == ".bd":
+            entries.append({"name": p.name, "type": "file", "abs": str(p)})
+
+    rel = str(target.relative_to(_FS_ROOT)) if target != _FS_ROOT else ""
+    return {"dir": rel, "abs": str(target), "entries": entries}
+
+
+# ---------------------------------------------------------------------------
 # Load / Save
 # ---------------------------------------------------------------------------
 
@@ -247,6 +293,49 @@ class SaveRequest(BaseModel):
     diagram: dict
 
 
+def _bd_to_diagram(raw: dict) -> dict:
+    """Convert raw bdedit .bd JSON to the Diagram format expected by the frontend.
+
+    The .bd wire format identifies endpoints by socket ID (a large Python
+    object id stored in each block's inputs/outputs arrays).  We build a
+    lookup map so wires can be expressed as (block_id, port_index) pairs
+    that the frontend can match against node IDs.
+
+    Block coordinates (pos_x, pos_y) are passed through unchanged — they are
+    in bdedit scene units, which are compatible with @xyflow/svelte's canvas
+    coordinate system.  fitView() re-centres on load.
+    """
+    # socket_id → {block_id, index}
+    socket_map: dict[int, dict] = {}
+    for block in raw.get("blocks", []):
+        block_id = block["id"]
+        for sock in block.get("inputs", []):
+            socket_map[sock["id"]] = {"block_id": block_id, "index": sock["index"]}
+        for sock in block.get("outputs", []):
+            socket_map[sock["id"]] = {"block_id": block_id, "index": sock["index"]}
+
+    wires: list[dict] = []
+    for wire in raw.get("wires", []):
+        start = socket_map.get(wire.get("start_socket"))
+        end = socket_map.get(wire.get("end_socket"))
+        if start is None or end is None:
+            continue  # skip wires with unresolvable socket ids
+        wires.append({
+            "id": wire["id"],
+            "start_node": start["block_id"],
+            "start_port": start["index"],
+            "end_node":   end["block_id"],
+            "end_port":   end["index"],
+        })
+
+    return {
+        "blocks":       raw.get("blocks", []),
+        "wires":        wires,
+        "scene_width":  raw.get("scene_width"),
+        "scene_height": raw.get("scene_height"),
+    }
+
+
 @app.post("/api/load")
 def load_file(req: LoadRequest) -> dict[str, Any]:
     p = Path(req.path).expanduser().resolve()
@@ -254,14 +343,100 @@ def load_file(req: LoadRequest) -> dict[str, Any]:
         raise HTTPException(status_code=404, detail=f"File not found: {p}")
     if p.suffix != ".bd":
         raise HTTPException(status_code=400, detail="Only .bd files are supported")
-    return json.loads(p.read_text())
+    raw = json.loads(p.read_text())
+    return _bd_to_diagram(raw)
+
+
+@app.get("/api/exists")
+def file_exists(path: str) -> dict[str, bool]:
+    p = Path(path).expanduser().resolve()
+    return {"exists": p.exists()}
+
+
+def _diagram_to_bd(diagram: dict) -> dict:
+    """Convert bdweb diagram format to bdedit-compatible .bd JSON.
+
+    Generates sequential integer IDs for blocks and sockets so the file
+    can be opened in bdedit and round-trips cleanly through _bd_to_diagram.
+    """
+    import time as _time
+
+    _id = iter(range(1, 10_000_000))
+
+    def nxt() -> int:
+        return next(_id)
+
+    # map frontend node id (str) → integer block id
+    block_id_map: dict[str, int] = {}
+    # map (node_id, "in"/"out", port_index) → integer socket id
+    socket_id_map: dict[tuple, int] = {}
+
+    bd_blocks = []
+    for b in diagram.get("blocks", []):
+        bid = nxt()
+        block_id_map[str(b["id"])] = bid
+
+        inputs = []
+        for i in range(b.get("inputsNum", 0)):
+            sid = nxt()
+            socket_id_map[(str(b["id"]), "in", i)] = sid
+            inputs.append({"id": sid, "index": i, "multi_wire": True,
+                           "position": 1, "socket_type": 1})
+
+        outputs = []
+        for i in range(b.get("outputsNum", 0)):
+            sid = nxt()
+            socket_id_map[(str(b["id"]), "out", i)] = sid
+            outputs.append({"id": sid, "index": i, "multi_wire": True,
+                            "position": 3, "socket_type": 2})
+
+        bd_blocks.append({
+            "id": bid,
+            "block_type": b["block_type"],
+            "title": b.get("title", b["block_type"]),
+            "pos_x": b.get("pos_x", 0.0),
+            "pos_y": b.get("pos_y", 0.0),
+            "width":  b.get("width", 100),
+            "height": b.get("height", 100),
+            "flipped": b.get("flipped", False),
+            "inputsNum":  b.get("inputsNum", 0),
+            "outputsNum": b.get("outputsNum", 0),
+            "inputs":  inputs,
+            "outputs": outputs,
+            "parameters": b.get("parameters", []),
+        })
+
+    bd_wires = []
+    for w in diagram.get("wires", []):
+        start_sid = socket_id_map.get((str(w["start_node"]), "out", w["start_port"]))
+        end_sid   = socket_id_map.get((str(w["end_node"]),   "in",  w["end_port"]))
+        if start_sid is None or end_sid is None:
+            continue
+        bd_wires.append({
+            "id": nxt(),
+            "start_socket": start_sid,
+            "end_socket":   end_sid,
+            "wire_type": 3,
+            "custom_routing": False,
+            "wire_coordinates": [],
+        })
+
+    return {
+        "id": nxt(),
+        "created_by": "bdweb",
+        "creation_time": int(_time.time()),
+        "scene_width":  diagram.get("scene_width")  or 7200.0,
+        "scene_height": diagram.get("scene_height") or 3600.0,
+        "blocks": bd_blocks,
+        "wires":  bd_wires,
+    }
 
 
 @app.post("/api/save")
 def save_file(req: SaveRequest) -> dict[str, str]:
     p = Path(req.path).expanduser().resolve()
     p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_text(json.dumps(req.diagram, indent=2))
+    p.write_text(json.dumps(_diagram_to_bd(req.diagram), indent=2))
     return {"saved": str(p)}
 
 
@@ -270,62 +445,40 @@ def save_file(req: SaveRequest) -> dict[str, str]:
 # ---------------------------------------------------------------------------
 
 class RunRequest(BaseModel):
-    diagram: dict
-    T: float = 5.0
+    path: str
+    timeout: float = 120.0
 
 
 @app.post("/api/run")
 def run_diagram(req: RunRequest) -> dict[str, Any]:
     """
-    Run the diagram, return stdout text and any matplotlib figures as base64 PNG.
+    Save already happened on the frontend.  Run bdrun as a subprocess,
+    capture its stdout+stderr, and return them for display in the UI.
+    Matplotlib windows open natively and close when bdrun exits.
     """
-    import sys
-    import tempfile
-    import traceback
-    from io import StringIO
-
-    # Write diagram to a temp .bd file so bdload can read it
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".bd", delete=False) as f:
-        json.dump(req.diagram, f)
-        tmp_path = f.name
-
-    stdout_capture = StringIO()
-    plots: list[str] = []
-    error: str | None = None
+    import subprocess
+    p = Path(req.path).expanduser().resolve()
+    if not p.exists():
+        raise HTTPException(status_code=404, detail=f"File not found: {p}")
+    if p.suffix != ".bd":
+        raise HTTPException(status_code=400, detail="Only .bd files are supported")
 
     try:
-        # Redirect stdout
-        old_stdout = sys.stdout
-        sys.stdout = stdout_capture
-
-        sim = bdsim.BDSim(banner=False)
-        bd = sim.blockdiagram()
-        bdload(bd, tmp_path)
-        bd.compile()
-        out = sim.run(bd, T=req.T)
-
-        sys.stdout = old_stdout
-
-        # Capture all open matplotlib figures
-        for fig_num in plt.get_fignums():
-            fig = plt.figure(fig_num)
-            buf = io.BytesIO()
-            fig.savefig(buf, format="png", bbox_inches="tight")
-            buf.seek(0)
-            plots.append(base64.b64encode(buf.read()).decode())
-        plt.close("all")
-
-    except Exception:
-        sys.stdout = old_stdout
-        error = traceback.format_exc()
-    finally:
-        os.unlink(tmp_path)
-
-    return {
-        "stdout": stdout_capture.getvalue(),
-        "plots": plots,
-        "error": error,
-    }
+        result = subprocess.run(
+            [sys.executable, "-m", "bdsim.bdrun", str(p)],
+            capture_output=True,
+            text=True,
+            timeout=req.timeout,
+        )
+        return {
+            "stdout":     result.stdout,
+            "stderr":     result.stderr,
+            "returncode": result.returncode,
+        }
+    except subprocess.TimeoutExpired:
+        raise HTTPException(status_code=504, detail=f"bdrun timed out after {req.timeout}s")
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
 
 
 # ---------------------------------------------------------------------------
