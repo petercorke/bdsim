@@ -1027,7 +1027,7 @@ class BlockDiagram(BlockDiagramMixin):
                 if b.blockclass == "sampled":
                     c = b._clock
                     assert c is not None
-                    table.row(b.id, str(b), c.name, c.T, c.offset)
+                    table.row(b.id, b.name, c.name, c.T, c.offset)
             table.print(**kwargs)
 
         if not self.compiled:
