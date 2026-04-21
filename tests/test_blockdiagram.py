@@ -951,6 +951,7 @@ class ImportTest(unittest.TestCase):
 
 #         bd.compile(verbose=False)
 
+
 # ---------------------------------------------------------------------------------------#
 class SetUpMixin:
     """Shared BDSim instance (no graphics, no progress, no banner)."""
@@ -1420,6 +1421,109 @@ class DotfileExtrasTest(SetUpMixin, unittest.TestCase):
         self.assertIn("pos=", f.getvalue())
 
 
+class AddDeleteBlockTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.sim = bdsim.BDSim(animation=False)
+
+    def test_add_block_increments_len(self):
+        bd = self.sim.blockdiagram()
+        self.assertEqual(len(bd), 0)
+        bd.CONSTANT(1)
+        self.assertEqual(len(bd), 1)
+        bd.CONSTANT(2)
+        self.assertEqual(len(bd), 2)
+
+    def test_add_block_unique_ids(self):
+        bd = self.sim.blockdiagram()
+        a = bd.CONSTANT(1)
+        b = bd.CONSTANT(2)
+        self.assertNotEqual(a.id, b.id)
+
+    def test_add_block_ids_survive_deletion(self):
+        # IDs from itertools.count must keep incrementing after a deletion,
+        # not revert to len(blocklist).
+        bd = self.sim.blockdiagram()
+        a = bd.CONSTANT(1)
+        b = bd.CONSTANT(2)
+        id_a, id_b = a.id, b.id
+        bd.delete_block(a)
+        c = bd.CONSTANT(3)
+        self.assertNotEqual(c.id, id_a)
+        self.assertNotEqual(c.id, id_b)
+
+    def test_add_block_name_registered(self):
+        bd = self.sim.blockdiagram()
+        a = bd.CONSTANT(1)
+        self.assertIn(a.name, bd.blocknames)
+        self.assertIs(bd.blocknames[a.name], a)
+
+    def test_add_duplicate_name_raises(self):
+        from bdsim.exceptions import BlockCreationError
+        bd = self.sim.blockdiagram()
+        bd.CONSTANT(1, name="myblock")
+        with self.assertRaises(BlockCreationError):
+            bd.CONSTANT(2, name="myblock")
+
+    def test_delete_block_removes_from_blocklist(self):
+        bd = self.sim.blockdiagram()
+        a = bd.CONSTANT(1)
+        bd.delete_block(a)
+        self.assertNotIn(a, bd.blocklist)
+        self.assertEqual(len(bd), 0)
+
+    def test_delete_block_removes_from_blocknames(self):
+        bd = self.sim.blockdiagram()
+        a = bd.CONSTANT(1, name="todelete")
+        bd.delete_block(a)
+        self.assertNotIn("todelete", bd.blocknames)
+
+    def test_delete_block_name_can_be_reused(self):
+        bd = self.sim.blockdiagram()
+        a = bd.CONSTANT(1, name="reuse")
+        bd.delete_block(a)
+        b = bd.CONSTANT(2, name="reuse")
+        self.assertIn("reuse", bd.blocknames)
+        self.assertIs(bd.blocknames["reuse"], b)
+
+    def test_delete_block_removes_connected_wires(self):
+        bd = self.sim.blockdiagram()
+        src = bd.CONSTANT(1)
+        dst = bd.NULL(1)
+        bd.connect(src, dst)
+        self.assertEqual(len(bd.wirelist), 1)
+        bd.delete_block(src)
+        self.assertEqual(len(bd.wirelist), 0)
+
+    def test_delete_block_removes_only_connected_wires(self):
+        bd = self.sim.blockdiagram()
+        src1 = bd.CONSTANT(1)
+        src2 = bd.CONSTANT(2)
+        dst = bd.NULL(2)
+        bd.connect(src1, dst[0])
+        bd.connect(src2, dst[1])
+        self.assertEqual(len(bd.wirelist), 2)
+        bd.delete_block(src1)
+        self.assertEqual(len(bd.wirelist), 1)
+        self.assertIs(bd.wirelist[0].start.block, src2)
+
+    def test_delete_nonexistent_block_raises(self):
+        bd = self.sim.blockdiagram()
+        other_bd = self.sim.blockdiagram()
+        orphan = other_bd.CONSTANT(99)
+        with self.assertRaises(ValueError):
+            bd.delete_block(orphan)
+
+    def test_wire_ids_unique_after_deletion(self):
+        bd = self.sim.blockdiagram()
+        src = bd.CONSTANT(1)
+        dst1 = bd.NULL(1)
+        dst2 = bd.NULL(1)
+        bd.connect(src, dst1)
+        w_id = bd.wirelist[0].id
+        bd.delete_block(dst1)
+        bd.connect(src, dst2)
+        self.assertNotEqual(bd.wirelist[0].id, w_id)
 
 
 if __name__ == "__main__":

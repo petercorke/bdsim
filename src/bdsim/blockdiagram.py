@@ -74,6 +74,8 @@ class BlockDiagram(BlockDiagramMixin):
         self.clocklist: list[Clock] = []  # list of all clock sources
         self.compiled = False  # network has been compiled
         self.blockcounter: defaultdict = defaultdict(itertools.count)
+        self._block_id_counter = itertools.count()
+        self._wire_id_counter = itertools.count()
         self.name: str = name
         self.nstates = 0
         self.ndstates = 0
@@ -270,7 +272,7 @@ class BlockDiagram(BlockDiagramMixin):
     def add_block(self, block) -> None:
         if block.name in self.blocknames:
             raise ValueError("block {} already added".format(block.name))
-        block.id = len(self.blocklist)
+        block.id = next(self._block_id_counter)
         if block.name is None:
             block.name = "{:s}.{:d}".format(
                 block.type, next(self.blockcounter[block.type])
@@ -282,11 +284,22 @@ class BlockDiagram(BlockDiagramMixin):
         self.blocknames[block.name] = block
 
     def add_wire(self, wire, name=None):
-        wire.id = len(self.wirelist)
+        wire.id = next(self._wire_id_counter)
         wire.name = name
         # just add wire to the list, gets instantiated at compile time
         # when add_output_wire and add_input_wire are called on the blocks
         return self.wirelist.append(wire)
+
+    def delete_block(self, block):
+        # check block is in blocklist
+        if block not in self.blocklist:
+            raise ValueError("block not in block diagram")
+        # delete a block and all wires connected to it
+        self.blocklist.remove(block)
+        self.blocknames.pop(block.name, None)
+        for w in self.wirelist[:]:
+            if w.start.block == block or w.end.block == block:
+                self.wirelist.remove(w)
 
     # ---------------------------------------------------------------------- #
 
@@ -330,7 +343,11 @@ class BlockDiagram(BlockDiagramMixin):
         self.blocknames = {}
 
         if not subsystem and verbose:
-            print("\nCompiling:")
+            if self.compiled:
+                print("\nCompiling:")
+            else:
+                print("\nRecompiling:")
+        self.compiled = False
 
         # process all subsystem imports
         # ssblocks = [b for b in self.blocklist if b.type == 'subsystem']
