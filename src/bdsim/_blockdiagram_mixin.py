@@ -122,8 +122,8 @@ class BlockDiagramMixin:
         """
         ...
 
-    # bdsim.blocks.sampled.DIntegrator
-    def DINTEGRATOR(
+    # bdsim.blocks.sampled.Integrator_S
+    def INTEGRATOR_S(
         self,
         clock: "Clock",
         x0: "int | float | np.ndarray" = 0,
@@ -148,7 +148,53 @@ class BlockDiagramMixin:
         """
         ...
 
-    # bdsim.blocks.sampled.DPoseIntegrator
+    # bdsim.blocks.sampled.DIntegrator (deprecated: use INTEGRATOR_S)
+    def DINTEGRATOR(
+        self,
+        clock: "Clock",
+        x0: "int | float | np.ndarray" = 0,
+        gain: "float" = 1.0,
+        min: "float | np.ndarray | None" = None,
+        max: "float | np.ndarray | None" = None,
+        **blockargs: "Any",
+    ) -> Any:
+        """
+        .. deprecated::
+            Use :meth:`INTEGRATOR_S` instead.
+
+        :param clock: clock source
+        :type clock: Clock
+        :param x0: Initial state, defaults to 0
+        :type x0: array_like, optional
+        :param gain: gain or scaling factor, defaults to 1
+        :type gain: float
+        :param min: Minimum value of state, defaults to None
+        :type min: float or array_like, optional
+        :param max: Maximum value of state, defaults to None
+        :type max: float or array_like, optional
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        """
+        ...
+
+    # bdsim.blocks.sampled.PoseIntegrator_S
+    def POSEINTEGRATOR_S(
+        self,
+        clock: "Clock",
+        x0: "SE3 | Twist3 | np.ndarray | None" = None,
+        **blockargs: "Any",
+    ) -> Any:
+        """
+        :param clock: clock source
+        :type clock: Clock
+        :param x0: Initial pose, defaults to null
+        :type x0: SE3, optional
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        """
+        ...
+
+    # bdsim.blocks.sampled.DPoseIntegrator (deprecated: use POSEINTEGRATOR_S)
     def DPOSEINTEGRATOR(
         self,
         clock: "Clock",
@@ -156,6 +202,9 @@ class BlockDiagramMixin:
         **blockargs: "Any",
     ) -> Any:
         """
+        .. deprecated::
+            Use :meth:`POSEINTEGRATOR_S` instead.
+
         :param clock: clock source
         :type clock: Clock
         :param x0: Initial pose, defaults to null

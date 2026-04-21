@@ -32,10 +32,10 @@ class DiscreteTest(unittest.TestCase):
         u = np.r_[1]
         nt.assert_equal(block.test_next(u), u)
 
-    def test_dintegrator(self):
+    def test_integrator_s(self):
 
         clock = Clock(2, "Hz")
-        block = DIntegrator(clock, x0=5)  # state is scalar
+        block = Integrator_S(clock, x0=5)  # state is scalar
         self.assertEqual(block.ndstates, 1)
         self.assertEqual(block.nstates, 0)
 
@@ -46,7 +46,7 @@ class DiscreteTest(unittest.TestCase):
         nt.assert_equal(block.test_output(u, x=x)[0], x)
         nt.assert_equal(block.test_next(u, x=x), x + u * clock.T)
 
-        block = DIntegrator(clock, x0=5, min=-10, max=10)  # state is scalar
+        block = Integrator_S(clock, x0=5, min=-10, max=10)  # state is scalar
         x = np.r_[10]
         u = 2
         nt.assert_equal(block.test_next(u, x=x), x)
@@ -55,10 +55,10 @@ class DiscreteTest(unittest.TestCase):
         u = -2
         nt.assert_equal(block.test_next(u, x=x), x)
 
-    def test_dintegrator_vec(self):
+    def test_integrator_s_vec(self):
 
         clock = Clock(2, "Hz")
-        block = DIntegrator(clock, x0=[5, 6])  # state is vector
+        block = Integrator_S(clock, x0=[5, 6])  # state is vector
         self.assertEqual(block.ndstates, 2)
         self.assertEqual(block.nstates, 0)
 
@@ -70,7 +70,7 @@ class DiscreteTest(unittest.TestCase):
         nt.assert_equal(block.test_next(u, x=x), x + u * clock.T)
 
         # test with limits
-        block = DIntegrator(
+        block = Integrator_S(
             clock, x0=[5, 6], min=[-5, -10], max=[5, 10]
         )  # state is vector
         x = np.r_[-5, -10]
@@ -81,11 +81,11 @@ class DiscreteTest(unittest.TestCase):
         u = np.r_[2, 3]
         nt.assert_equal(block.test_next(u, x=x), x)
 
-    def test_pose_dintegrator(self):
+    def test_pose_integrator_s(self):
 
         clock = Clock(2, "Hz")
         T = SE3.Rand()
-        block = DPoseIntegrator(clock, x0=T)
+        block = PoseIntegrator_S(clock, x0=T)
         nt.assert_equal(block.getstate0(), Twist3(T))
 
         self.assertEqual(block.ndstates, 6)

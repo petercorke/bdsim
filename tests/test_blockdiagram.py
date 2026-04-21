@@ -1291,14 +1291,14 @@ class DeepCopyTest(SetUpMixin, unittest.TestCase):
 
 # ---------------------------------------------------------------------------
 class ClockedBlockTest(SetUpMixin, unittest.TestCase):
-    """Tests using a DINTEGRATOR (clocked block) to cover clocked-specific paths."""
+    """Tests using an INTEGRATOR_S (clocked block) to cover clocked-specific paths."""
 
     def _clocked_bd(self):
-        """Compiled BD with CONSTANT → DINTEGRATOR → NULL (1 discrete state)."""
+        """Compiled BD with CONSTANT → INTEGRATOR_S → NULL (1 discrete state)."""
         bd = self.sim.blockdiagram()
         clk = bd.clock(0.1)
         src = bd.CONSTANT(1)
-        di = bd.DINTEGRATOR(clk)
+        di = bd.INTEGRATOR_S(clk)
         null = bd.NULL()
         bd.connect(src, di)
         bd.connect(di, null)

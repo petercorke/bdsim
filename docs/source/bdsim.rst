@@ -151,7 +151,7 @@ A list of available blocks can be obtained by::
       bdsim.blocks.sources....................: Constant Time WaveForm Piecewise Step Ramp 
       bdsim.blocks.sinks......................: Print Stop Null Watch 
       bdsim.blocks.continuous.................: Integrator PoseIntegrator LTI_SS LTI_SISO 
-      bdsim.blocks.sampled....................: ZOH DIntegrator DPoseIntegrator 
+      bdsim.blocks.sampled....................: ZOH Integrator_S PoseIntegrator_S 
       bdsim.blocks.linalg.....................: Inverse Transpose Norm Flatten Slice2 Slice1 Det Cond 
       bdsim.blocks.displays...................: Scope ScopeXY ScopeXY1 
       bdsim.blocks.connections................: Item Dict Mux DeMux Index SubSystem InPort OutPort 

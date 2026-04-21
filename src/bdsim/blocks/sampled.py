@@ -91,9 +91,9 @@ class ZOH(SampledBlock):
 # ------------------------------------------------------------------------
 
 
-class DIntegrator(SampledBlock):
+class Integrator_S(SampledBlock):
     """
-    :blockname:`DINTEGRATOR`
+    :blockname:`INTEGRATOR_S`
 
     Discrete-time integrator.
 
@@ -191,9 +191,9 @@ class DIntegrator(SampledBlock):
         return xnext
 
 
-class DPoseIntegrator(SampledBlock):
+class PoseIntegrator_S(SampledBlock):
     r"""
-    :blockname:`DPOSEINTEGRATOR`
+    :blockname:`POSEINTEGRATOR_S`
 
     Discrete-time spatial velocity integrator.
 
@@ -463,6 +463,38 @@ class DPoseIntegrator(SampledBlock):
 
 #         super().__init__(A=A, B=B, C=C, x0=x0, **blockargs)
 #         self.type = 'LTI'
+
+
+# ---------------------------------------------------------------------------
+# Compatibility shims
+
+
+class DIntegrator(Integrator_S):
+    """Deprecated: use ``Integrator_S`` instead."""
+
+    def __init__(self, *args, **kwargs):
+        import warnings
+
+        warnings.warn(
+            "DIntegrator is deprecated; use Integrator_S instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
+        super().__init__(*args, **kwargs)
+
+
+class DPoseIntegrator(PoseIntegrator_S):
+    """Deprecated: use ``PoseIntegrator_S`` instead."""
+
+    def __init__(self, *args, **kwargs):
+        import warnings
+
+        warnings.warn(
+            "DPoseIntegrator is deprecated; use PoseIntegrator_S instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
+        super().__init__(*args, **kwargs)
 
 
 if __name__ == "__main__":  # pragma: no cover
