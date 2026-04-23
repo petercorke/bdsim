@@ -253,7 +253,7 @@ class WaveForm(SourceBlock, EventSource):
         # t1 < t2
         T: float = 1.0 / self.freq
         if simstate is not None:
-            while t1 < simstate.T:
+            while t1 < simstate.tf:
                 simstate.declare_event(self, t1)
                 simstate.declare_event(self, t2)
                 t1 += T

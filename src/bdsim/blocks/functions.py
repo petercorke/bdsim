@@ -808,8 +808,8 @@ class Interpolate(FunctionBlock):
             if self.time:
                 assert self.xpts[0] >= 0, "interpolation not defined for t<0"
                 if self.xpts[-1] is np.inf:
-                    self.xpts[-1] = simstate.T
-                assert self.xpts[-1] >= simstate.T, "interpolation not defined for t>T"
+                    self.xpts[-1] = simstate.tf
+                assert self.xpts[-1] >= simstate.tf, "interpolation not defined for t>T"
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         if self.time:

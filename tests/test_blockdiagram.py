@@ -1325,9 +1325,11 @@ class ClockedBlockTest(SetUpMixin, unittest.TestCase):
     def test_start_with_simstate_clocked(self):
         """bd.start(simstate) invokes clock.start → declare_event (lines 1206-1209)."""
         from unittest.mock import MagicMock
+        from collections import defaultdict
 
         bd, clk, _, _, _ = self._clocked_bd()
         simstate = MagicMock()
+        simstate.clock_ticks = defaultdict(lambda: 1)
         bd.start(simstate=simstate)
         simstate.declare_event.assert_called_once_with(clk, clk.time(1))
 

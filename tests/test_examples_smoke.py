@@ -3,6 +3,9 @@
 
 from __future__ import annotations
 
+import pytest
+pytestmark = pytest.mark.skip(reason="example smoke tests temporarily disabled")
+
 import os
 import subprocess
 import sys

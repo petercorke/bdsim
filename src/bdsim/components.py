@@ -12,13 +12,25 @@ from collections import UserDict
 import matplotlib.pyplot as plt
 
 import numpy as np
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from bdsim.exceptions import BlockApiError, BlockRuntimeError, SimulationContextError
 
 if TYPE_CHECKING:
     from bdsim.blockdiagram import BlockDiagram
     from bdsim.run_context import SimulationContext
+
+
+@runtime_checkable
+class ScheduledEvent(Protocol):
+    """Protocol for objects that can be placed on the simulation event queue.
+
+    Any callable with the signature ``(t: float, simstate: SimulationState) -> None``
+    satisfies this protocol.  :class:`Clock` implements it via ``__call__``;
+    animation-frame lambdas satisfy it structurally.
+    """
+
+    def __call__(self, t: float, simstate: SimulationState) -> None: ...
 
 
 # decorator for debugging implicit block creation with operator overloading
@@ -325,7 +337,7 @@ class SimulationState:
 
     def __init__(self) -> None:
         self.x: np.ndarray | None = None
-        self.T: float | None = None
+        self.tf: float | None = None
         self.t: float | None = None
         self.fignum: int = 0
         self.stop = None
@@ -513,22 +525,31 @@ class Clock:
         for b in self.blocklist:
             x = b.setstate(x)  # bind _x_view and advance x
 
+    def __call__(self, t: float, simstate: SimulationState) -> None:
+        """Dispatch a clock tick at time *t*: save state, set runtime state, schedule next.
+
+        This makes ``Clock`` a :class:`ScheduledEvent` so the outer loop can
+        dispatch all event sources uniformly as ``source(t, simstate)`` without
+        any ``isinstance`` check.
+        """
+        self.savestate(t, simstate)
+        self._set_runtime_state(self.getstate(t), simstate)
+        self.next_event(simstate)
+
     def start(self, simstate: SimulationState) -> None:
         self._ensure_runtime(simstate)
-        i = simstate.clock_ticks[self]
-        simstate.declare_event(self, self.time(i))
-        simstate.clock_ticks[self] = i + 1
+        k = simstate.clock_ticks[self]
+        simstate.declare_event(self, self.time(k))
+        simstate.clock_ticks[self] = k + 1
 
     def next_event(self, simstate: SimulationState) -> None:
         self._ensure_runtime(simstate)
-        i = simstate.clock_ticks[self]
-        simstate.declare_event(self, self.time(i))
-        simstate.clock_ticks[self] = i + 1
+        k = simstate.clock_ticks[self]
+        simstate.declare_event(self, self.time(k))
+        simstate.clock_ticks[self] = k + 1
 
-    def time(self, i):
-        # return (math.floor((t - self.offset) / self.T) + 1) * self.T + self.offset
-        # k = int((t - self.offset) / self.T + 0.5)
-        return i * self.T + self.offset
+    def time(self, k):
+        return k * self.T + self.offset
 
     def savestate(self, t, simstate: SimulationState | None = None) -> None:
         # save clock state at time t

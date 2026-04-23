@@ -501,7 +501,7 @@ class Scope(GraphicsBlock):
             self.ax.grid(True, *self.grid)  # type: ignore[arg-type]
 
         # set limits
-        self.ax.set_xlim(0, simstate.T)
+        self.ax.set_xlim(0, simstate.tf)
 
         if self.scale != "auto":
             self.ax.set_ylim(*self.scale)  # type: ignore

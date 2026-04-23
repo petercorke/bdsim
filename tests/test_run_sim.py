@@ -203,7 +203,7 @@ class SimRunCoverageTest(unittest.TestCase):
 
     def _clocked_bd(self):
         """WAVEFORM -> ZOH(clock) -> NULL, no continuous states, with clock events."""
-        from bdsim.block_types import ClockedBlock
+        from bdsim.block import SampledBlock
 
         bd = self.sim.blockdiagram()
         clock = bd.clock(5, "Hz")
@@ -213,7 +213,7 @@ class SimRunCoverageTest(unittest.TestCase):
         bd.connect(src, zoh)
         bd.connect(zoh, sink)
         bd.compile(verbose=False)
-        self.assertIsInstance(zoh, ClockedBlock)
+        self.assertIsInstance(zoh, SampledBlock)
         return bd, clock, src, zoh, sink
 
     # ---- watchlist variants ------------------------------------------------
@@ -388,17 +388,17 @@ class SimRunCoverageTest(unittest.TestCase):
         bd, clock, src, zoh, sink = self._clocked_bd()
 
         eventq_sizes = []
-        original_run_interval = self.sim.run_interval
+        original_interval = self.sim._interval_discrete
 
-        def wrapped_run_interval(bd_arg, t0, T, x0, simstate):
+        def wrapped_interval(bd_arg, t0, T, x0, simstate):
             eventq_sizes.append(len(simstate.eventq))
-            return original_run_interval(bd_arg, t0, T, x0, simstate)
+            return original_interval(bd_arg, t0, T, x0, simstate)
 
-        self.sim.run_interval = wrapped_run_interval
+        self.sim._interval_discrete = wrapped_interval
         try:
             out = self.sim.run(bd, T=1.0)
         finally:
-            self.sim.run_interval = original_run_interval
+            self.sim._interval_discrete = original_interval
 
         self.assertIsNotNone(out.t)
         self.assertGreater(len(eventq_sizes), 0)
@@ -414,20 +414,20 @@ class SimRunCoverageTest(unittest.TestCase):
         bd, step, integ, null = self._stateful_bd()
 
         interval_calls = []
-        original_run_interval = self.sim.run_interval
+        original_interval = self.sim._interval_hybrid
 
-        def fake_run_interval(bd_arg, t0, T, x0, simstate):
+        def fake_interval(bd_arg, t0, T, x0, simstate):
             interval_calls.append((float(t0), float(T)))
             if len(interval_calls) == 1:
                 # Simulate an early stop before the target boundary due to crossing.
                 return np.array(x0), 0.2
             return np.array(x0), float(T)
 
-        self.sim.run_interval = fake_run_interval
+        self.sim._interval_hybrid = fake_interval
         try:
             out = self.sim.run(bd, T=0.5)
         finally:
-            self.sim.run_interval = original_run_interval
+            self.sim._interval_hybrid = original_interval
 
         self.assertIsNotNone(out.t)
         self.assertGreaterEqual(len(interval_calls), 2)
@@ -508,7 +508,7 @@ class SimRunCoverageTest(unittest.TestCase):
         bd.connect(integ, stop)
         bd.compile(verbose=False)
 
-        out = self.sim.run(bd, T=100.0)
+        out = self.sim.run(bd, T=5.0)  # large relative to expected stop at t≈0.2
 
         self.assertIsNotNone(out.t)
         self.assertAlmostEqual(float(out.t[-1]), 0.2, delta=1e-3)

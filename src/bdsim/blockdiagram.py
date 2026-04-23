@@ -1365,7 +1365,8 @@ class BlockDiagram(BlockDiagramMixin):
         for b in self.blocklist:
             print("Block {:s}:".format(b.name))
             print("  inputs:  ", b.inport_values)
-            print("  outputs: ", b.output_safe(t, b.inport_values, b.x))
+            if b.nout > 0:
+                print("  outputs: ", b.output_safe(t, b.inport_values, b.x))
 
 
 if __name__ == "__main__":  # pragma: no cover

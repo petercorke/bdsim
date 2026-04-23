@@ -6,6 +6,7 @@ import math
 import re
 import sys
 import time
+import warnings
 from typing import Any
 
 import numpy as np
@@ -148,12 +149,13 @@ class BDRealTime(BDSim):
     def run(
         self,
         bd,
-        T=5,
+        tf=5,
         dt=None,
         block=None,
         checkfinite=True,
         watch=[],
         samples=True,
+        T=None,
     ) -> BDStruct:
         """
         Run the block diagram
@@ -217,11 +219,19 @@ class BDRealTime(BDSim):
 
         assert bd.compiled, "Network has not been compiled"
 
+        if T is not None:
+            warnings.warn(
+                "run(T=...) is deprecated, use run(tf=...) instead",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            tf = T
+
         simstate = BDRealTimeState()
         assert self.options is not None
         options: OptionsBase = self.options.copy()
         if dt is None:
-            dt = T / 100
+            dt = tf / 100
 
         # Create per-run context
         context = SimulationContext(
@@ -230,7 +240,7 @@ class BDRealTime(BDSim):
         self._set_context(context)
 
         try:
-            simstate.T = T
+            simstate.tf = tf
             simstate.dt = dt
             simstate.options = options
 
@@ -317,7 +327,7 @@ class BDRealTime(BDSim):
 
                 # check whether to continue, and pause till next sample time
                 tnow: float = time.time() - t0
-                if tnow > T:
+                if tnow > tf:
                     break
 
                 t += dt  # time of next sample
