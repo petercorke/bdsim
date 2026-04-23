@@ -30,6 +30,7 @@ class InterfaceWindow(QMainWindow):
         # overwritten when the model is saved
         self.filename = None
         self.bgmode = 0  # default background/grid mode
+        self._autosave_interval_ms = 60000
 
         self.initUI(resolution, debug)
 
@@ -61,7 +62,71 @@ class InterfaceWindow(QMainWindow):
         # set window properties
         # self.setWindowIcon(QIcon(":/Icons_Reference/Icons/bdsim_icon.png"))
         self.updateApplicationName()
+
+        # Periodic autosave minimizes data loss for hard crashes that cannot be
+        # intercepted by Python exception handlers.
+        self._autosave_timer = QTimer(self)
+        self._autosave_timer.setInterval(self._autosave_interval_ms)
+        self._autosave_timer.timeout.connect(self._autosave_if_modified)
+        self._autosave_timer.start()
+
         self.show()
+
+    def _default_recovery_dir(self) -> Path:
+        if self.filename is not None:
+            try:
+                return Path(self.filename).resolve().parent
+            except Exception:
+                pass
+        return Path.cwd()
+
+    def _autosave_path(self) -> Path:
+        if self.filename is not None:
+            model = Path(self.filename)
+            stem = model.stem if model.stem else "untitled"
+            return model.resolve().with_name(f"{stem}.autosave.bd")
+        return self._default_recovery_dir() / "untitled.autosave.bd"
+
+    def _default_recovery_path(self, filename: str) -> Path:
+        return self._default_recovery_dir() / filename
+
+    def _write_scene_snapshot(self, path: Path) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        payload = self.centralWidget().scene.serialize()
+        path.write_text(json.dumps(payload, indent=4), encoding="utf-8")
+
+    def emergencySave(self, filename: str = "saved.bd") -> str | None:
+        """Best-effort crash save that preserves the modified flag state."""
+        try:
+            target = self._default_recovery_path(filename)
+            self._write_scene_snapshot(target)
+            return str(target)
+        except Exception as err:
+            print(f"Emergency save failed: {err}")
+            return None
+
+    def _autosave_if_modified(self):
+        if not self.isModified():
+            return
+        try:
+            self._write_scene_snapshot(self._autosave_path())
+        except Exception as err:
+            print(f"Autosave failed: {err}")
+
+    def cleanupAutosaveFiles(self):
+        """Remove autosave artifacts after a clean, user-driven exit."""
+        candidates = {
+            self._autosave_path(),
+            # Remove legacy name from older builds if present.
+            self._default_recovery_dir() / "saved.autosave.bd",
+        }
+        for path in candidates:
+            try:
+                if path.exists():
+                    path.unlink()
+            except Exception:
+                # Never block shutdown because autosave cleanup failed.
+                pass
 
     def createActions(self):
         # Creates basic actions related to saving/loading files
@@ -600,6 +665,7 @@ class InterfaceWindow(QMainWindow):
 
     def closeEvent(self, event):
         if self.exitingWithoutSave():
+            self.cleanupAutosaveFiles()
             event.accept()
         else:
             event.ignore()

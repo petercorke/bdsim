@@ -5,6 +5,8 @@ import os
 import sys
 import ctypes
 import argparse
+import threading
+import traceback
 from pathlib import Path
 
 from sys import platform
@@ -154,6 +156,25 @@ def main():
     # window = Interface(screen_resolution, args.debug)
     window = InterfaceWindow(screen_resolution, args.debug)
     window.args = args
+
+    def _handle_unhandled_exception(exc_type, exc_value, exc_tb):
+        traceback.print_exception(exc_type, exc_value, exc_tb)
+        saved_path = window.emergencySave("saved.bd")
+        if saved_path is not None:
+            print("Unhandled exception; attempted emergency save --> saved.bd")
+        else:
+            print("Unhandled exception; emergency save failed")
+
+    sys.excepthook = _handle_unhandled_exception
+
+    if hasattr(threading, "excepthook"):
+
+        def _threading_excepthook(args):
+            _handle_unhandled_exception(
+                args.exc_type, args.exc_value, args.exc_traceback
+            )
+
+        threading.excepthook = _threading_excepthook
 
     # Apply non-file args synchronously
     window.centralWidget().scene.block_name_fontsize = args.fontsize

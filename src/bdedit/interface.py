@@ -28,6 +28,44 @@ from bdsim.bdedit.interface_graphics_view import GraphicsView
 # =============================================================================
 # Variable for enabling/disabling debug comments
 DEBUG = False
+PALETTE_GROUP_STYLE = (
+    "QPushButton { text-align: left; padding-left: 12px; "
+    "padding-top: 4px; padding-bottom: 4px; }"
+)
+PALETTE_GROUP_STYLE_CORE = (
+    "QPushButton { text-align: left; padding-left: 12px; "
+    "padding-top: 4px; padding-bottom: 4px; "
+    "background-color: #dbeafe; border: 1px solid #bfd5ee; } "
+    "QPushButton:hover { background-color: #d2e8ff; }"
+)
+PALETTE_GROUP_STYLE_CANVAS = (
+    "QPushButton { text-align: left; padding-left: 12px; "
+    "padding-top: 4px; padding-bottom: 4px; "
+    "background-color: #fef3c7; border: 1px solid #e9dca8; } "
+    "QPushButton:hover { background-color: #f9eab8; }"
+)
+PALETTE_GROUP_STYLE_OTHER = (
+    "QPushButton { text-align: left; padding-left: 12px; "
+    "padding-top: 4px; padding-bottom: 4px; "
+    "background-color: #dcfce7; border: 1px solid #bfe8cd; } "
+    "QPushButton:hover { background-color: #d1f6df; }"
+)
+PALETTE_ITEM_STYLE = (
+    "QPushButton { text-align: left; padding-left: 28px; "
+    "padding-top: 4px; padding-bottom: 4px; }"
+)
+CORE_BLOCK_GROUP_ORDER = (
+    "source",
+    "function",
+    "continuous",
+    "sampled",
+    "display",
+    "sink",
+    "connection",
+    "linalg",
+    "spatial",
+)
+CORE_BLOCK_GROUP_SET = set(CORE_BLOCK_GROUP_ORDER)
 
 
 # =============================================================================
@@ -80,6 +118,54 @@ class Interface(QWidget):
         # The Scene interface is called to be initialized
         self.initUI(resolution, debug, parent)
 
+    def _style_palette_button(self, button, item=False, group_kind=None):
+        """Apply palette button text alignment without allowing row collapse."""
+        if item:
+            style = PALETTE_ITEM_STYLE
+        else:
+            if group_kind == "core":
+                style = PALETTE_GROUP_STYLE_CORE
+            elif group_kind == "canvas":
+                style = PALETTE_GROUP_STYLE_CANVAS
+            elif group_kind == "other":
+                style = PALETTE_GROUP_STYLE_OTHER
+            else:
+                style = PALETTE_GROUP_STYLE
+        button.setStyleSheet(style)
+        button.setMinimumHeight(max(button.sizeHint().height(), 34))
+
+    @staticmethod
+    def _normalize_group_name(name):
+        key = name.lower()
+        canonical = {
+            "sources": "source",
+            "source": "source",
+            "functions": "function",
+            "function": "function",
+            "continuous": "continuous",
+            "continuos": "continuous",
+            "sampled": "sampled",
+            "displays": "display",
+            "display": "display",
+            "sinks": "sink",
+            "sink": "sink",
+            "connections": "connection",
+            "connection": "connection",
+            "linalg": "linalg",
+            "spatial": "spatial",
+        }
+        key = canonical.get(key, key)
+        if key.endswith("s") and key not in {"continuous"}:
+            key = key[:-1]
+        return key
+
+    def _add_canvas_items_to_layout(self):
+        self.libraryBrowserBox.layout.addWidget(self.canvasItems_button)
+        self.libraryBrowserBox.layout.addWidget(self.text_item_button)
+        self.libraryBrowserBox.layout.addWidget(self.main_block_button)
+        self.libraryBrowserBox.layout.addWidget(self.grouping_box_button)
+        self.libraryBrowserBox.layout.addWidget(self.connector_block_button)
+
     # -----------------------------------------------------------------------------
     def initUI(self, resolution, debug, main_window):
         """
@@ -117,7 +203,8 @@ class Interface(QWidget):
         # and parameter window panels. To compensate for this, the preferred dimensions
         # of these panels as seen on the screen while being developed (2560 resolution
         # width) have been scaled to other screen sizes.
-        self.layout.scale = int(2560 / resolution.width())
+        # Keep scale as a float so wide displays do not truncate to 0 and hide the palette.
+        self.layout.scale = 2560 / max(resolution.width(), 1)
 
         # An instance of the Scene class is created, providing it the resolution of the
         # desktop screen and the application layout manager.
@@ -158,7 +245,7 @@ class Interface(QWidget):
         self.tool_logo = QLabel()
         self.tool_logo.setPixmap(
             QPixmap(":/Icons_Reference/Icons/bdsim_logo2.png").scaledToWidth(
-                230 * self.layout.scale
+                max(1, int(230 * self.layout.scale))
             )
         )
         # self.tool_logo.setPixmap(QPixmap(":/Icons_Reference/Icons/bdsim_logo2.png").scaledToHeight(40 * self.layout.scale))
@@ -182,7 +269,9 @@ class Interface(QWidget):
         # Make a button for canvas items. These items are like the auto-imported blocks,
         # but are created from definitions in bdedit, rather than from external libraries
         self.canvasItems_button = QPushButton(" + Canvas Items")
-        self.canvasItems_button.setStyleSheet("QPushButton { text-align: left }")
+        self._style_palette_button(
+            self.canvasItems_button, item=False, group_kind="canvas"
+        )
         self.canvasItems_button.clicked.connect(self.toggleCanvasItems)
         self.canvas_items_hidden = True
 
@@ -193,11 +282,14 @@ class Interface(QWidget):
         # the connector block, the main block, and the text item. As they are definied by
         # bdedit, rather than having their definitions come from an external library, the
         # buttons for these items must also be manually created within bdedit.
-        self.libraryBrowserBox.layout.addWidget(self.canvasItems_button)
         self.connector_block_button = QPushButton("Connector Block")
         self.main_block_button = QPushButton("Main Block")
         self.text_item_button = QPushButton("Text Item")
         self.grouping_box_button = QPushButton("Grouping Box")
+        self._style_palette_button(self.connector_block_button, item=True)
+        self._style_palette_button(self.main_block_button, item=True)
+        self._style_palette_button(self.text_item_button, item=True)
+        self._style_palette_button(self.grouping_box_button, item=True)
 
         self.connector_block_button.setVisible(False)
         self.main_block_button.setVisible(False)
@@ -240,11 +332,8 @@ class Interface(QWidget):
             )
         )
 
-        # Adding the buttons to the library browser's layout manager
-        self.libraryBrowserBox.layout.addWidget(self.text_item_button)
-        self.libraryBrowserBox.layout.addWidget(self.main_block_button)
-        self.libraryBrowserBox.layout.addWidget(self.grouping_box_button)
-        self.libraryBrowserBox.layout.addWidget(self.connector_block_button)
+        # Add canvas items after core bdsim groups, before external package groups.
+        canvas_items_added = False
 
         # This for loop goes through each block type (sink, source, function) that was auto
         # imported (and stored into self.blockLibrary at the Interface's initialization).
@@ -253,17 +342,20 @@ class Interface(QWidget):
             group_of_buttons = []
 
             # Grab each group that blocks belong to, and create a library panel button for those groups
-            cleaned_class_group = (
-                sub_class_group[0][:-1]
-                if sub_class_group[0].endswith("s")
-                else sub_class_group[0]
-            )
+            cleaned_class_group = sub_class_group[0]
+            normalized_group = self._normalize_group_name(cleaned_class_group)
+            if not canvas_items_added and normalized_group not in CORE_BLOCK_GROUP_SET:
+                self._add_canvas_items_to_layout()
+                canvas_items_added = True
+
+            cleaned_class_group = normalized_group
             group_button = QPushButton(
                 " + " + cleaned_class_group.capitalize() + " Blocks"
             )
 
             # Buttons' text alignment is set to be left-aligned
-            group_button.setStyleSheet("QPushButton { text-align: left }")
+            group_kind = "core" if normalized_group in CORE_BLOCK_GROUP_SET else "other"
+            self._style_palette_button(group_button, item=False, group_kind=group_kind)
 
             # The following variables control the '+,-' sign displayed alongside each
             # hide-able/expandable list section within the library browser. If below it is
@@ -284,6 +376,7 @@ class Interface(QWidget):
 
                 # Make a button with the name of the block type
                 button = QPushButton(class_block[0])
+                self._style_palette_button(button, item=True)
                 # Set the button to be invisible by default (for the list's to be hidden)
                 button.setVisible(False)
                 # Connect button to calling a new instance of the block type class
@@ -305,6 +398,9 @@ class Interface(QWidget):
             group_of_buttons.append(list_of_sub_buttons)
             self.list_of_scrollbar_buttons.append(group_of_buttons)
 
+        if not canvas_items_added:
+            self._add_canvas_items_to_layout()
+
         # All the button items are set to align to the top of the libraryBrowserBox
         self.libraryBrowserBox.layout.addStretch()
         self.libraryBrowserBox.layout.setAlignment(Qt.AlignTop)
@@ -320,7 +416,9 @@ class Interface(QWidget):
 
         # The width of the libraryBrowser widget is set to 250 pixels, and it the scroll
         # area is added to the libraryBrowser widget and set to align to the top of this widget.
-        self.libraryBrowser.setFixedWidth(250 * self.layout.scale)
+        palette_width = int(250 * self.layout.scale)
+        palette_width = max(240, min(320, palette_width))
+        self.libraryBrowser.setFixedWidth(palette_width)
         self.libraryBrowser.layout.addWidget(self.scroll)
         self.libraryBrowser.layout.setAlignment(Qt.AlignTop)
         self.libraryBrowser.setLayout(self.libraryBrowser.layout)
@@ -371,8 +469,16 @@ class Interface(QWidget):
             # Sort the blocks within each sublist (functions, sources, sinks, etc) in alphabetical order
             sub_list[1].sort(key=lambda x: x[0])
 
-        # Then sort the groups in alphabetical order too
-        self.blockLibrary.sort(key=lambda x: x[0])
+        core_order = {name: i for i, name in enumerate(CORE_BLOCK_GROUP_ORDER)}
+
+        def group_sort_key(group):
+            normalized = self._normalize_group_name(group[0])
+            if normalized in core_order:
+                return (0, core_order[normalized], "")
+            return (1, 0, normalized)
+
+        # Core bdsim groups first in fixed order, then all non-core groups alphabetically.
+        self.blockLibrary.sort(key=group_sort_key)
 
     # -----------------------------------------------------------------------------
     def clickBox(self, state):
