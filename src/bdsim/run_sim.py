@@ -464,9 +464,11 @@ class BDSim(Runner):
             stacklevel=2,
         )
         if block is None:
-            return self.block_library
+            assert self._blocklibrary is not None
+            return self._blocklibrary
         else:
-            return self.block_library[block]
+            assert self._blocklibrary is not None
+            return self._blocklibrary[block]
 
     def _repr__(self) -> str:
         """
@@ -598,6 +600,62 @@ class BDSim(Runner):
                         handler(t_crossing)
                 return
 
+    def _record_sample_and_service_hooks(
+        self,
+        bd,
+        simstate: BDSimState,
+        t: float,
+        y: np.ndarray | None = None,
+        *,
+        stop_short_circuit: bool,
+    ) -> bool:
+        """Record one accepted sample and run watch/graphics/progress/debug hooks.
+
+        :param bd: system block diagram
+        :type bd: BlockDiagram
+        :param simstate: per-run simulation state
+        :type simstate: BDSimState
+        :param t: sample time
+        :type t: float
+        :param y: continuous state sample (None for discrete-only paths)
+        :type y: ndarray | None
+        :param stop_short_circuit: if True, return immediately when stop is
+            requested before the interactive debugger hook
+        :type stop_short_circuit: bool
+        :return: True if caller should break interval processing
+        :rtype: bool
+        """
+
+        simstate.tlist.append(t)
+        if y is not None:
+            simstate.xlist.append(y)
+
+        for i, p in enumerate(simstate.watchlist):
+            b = p.block
+            out = b.output_safe(t, b.inport_values, b.x)[p.port]
+            simstate.plist[i].append(out)
+
+        if simstate.options.animation or (t - simstate.gtime) > (simstate.T / 200):
+            bd.step(t)
+            simstate.gtime = t
+
+        progress: Progress | None = self._require_context().progress
+        assert progress is not None
+        progress.update(t)
+
+        if simstate.stop is not None:
+            print(
+                fg("red") + f"\n--- stop requested at t={simstate.t:.4f} by"
+                f" {simstate.stop}" + attr(0)
+            )
+            if stop_short_circuit:
+                return True
+
+        if "i" in simstate.options.debug:
+            bd._debugger(simstate)
+
+        return False
+
     def run(
         self,
         bd,
@@ -613,11 +671,11 @@ class BDSim(Runner):
         threaded: bool = False,
     ) -> BDStruct:
         """
-        Run the block diagram
+        Run a compiled block diagram from ``t=0`` to the requested horizon.
 
-        :param T: maximum integration time, defaults to 10.0
+        :param T: simulation horizon, defaults to 5
         :type T: float, optional
-        :param dt: maximum time step
+        :param dt: maximum integration step (also used as synthetic tick period)
         :type dt: float, optional
         :param solver: solve_ivp method name, defaults to ``RK45``
         :type solver: str, optional
@@ -625,7 +683,7 @@ class BDSim(Runner):
         :type block: bool
         :param checkfinite: error if inf or nan on any wire, default True
         :type checkfinite: bool
-        :param minstepsize: minimum step length, default 1e-6
+        :param minstepsize: minimum step length guard, default 1e-12
         :type minstepsize: float
         :param watch: list of input ports to log
         :type watch: list
@@ -634,17 +692,29 @@ class BDSim(Runner):
         :return: time history of signals and states
         :rtype: Sim class
 
-        Assumes that the network has been compiled.
+        The network must already be compiled.
 
-                Integration backend contract:
+        Integration backend contract:
 
-                - Runtime always integrates with ``scipy.integrate.solve_ivp``.
-                - ``solver`` selects the solve_ivp ``method`` unless overridden by
-                    ``solver_args['method']``.
-                - Legacy ``solver_args['integrator']`` is accepted as an alias for
-                    method selection.
+        - Runtime always integrates with ``scipy.integrate.solve_ivp``.
+        - ``solver`` selects the solve_ivp ``method`` unless overridden by
+            ``solver_args['method']``.
+        - Legacy ``solver_args['integrator']`` is accepted as an alias for
+            method selection.
 
-        The system is simulated from time 0 to ``T``.
+                Runtime model:
+
+                - A single outer event loop advances from ``t=0`` to ``t=tf``.
+                - Scheduled boundaries come from ``simstate.eventq`` (clock ticks,
+                    explicit events, animation frames, and terminal marker).
+                - Each loop integrates/evaluates one interval ``[t0, t1]`` using a
+                    specialized interval handler.
+                - Zero-crossing events are detected by ``solve_ivp(events=...)`` and
+                    can terminate an interval early; the loop then continues from the
+                    reached time.
+
+                The system is simulated from time 0 to ``tf`` where ``tf`` is the
+                resolved horizon from ``T`` and optional ``--simtime`` override.
 
         The integration step time ``dt`` defaults to ``T/100`` but can be
         specified.  Finer control can be achieved using ``max_step`` and
@@ -660,11 +730,11 @@ class BDSim(Runner):
         - ``yN`` for a watched input where N is the index of the port mentioned in the ``watch`` argument
         - ``ynames`` is a list of the names of the input ports being watched, same order as in ``watch`` argument
 
-        If there are no dynamic elements in the diagram, ie. no states, then ``x`` and ``xnames`` are not
-        present.
+        If there are no dynamic elements in the diagram, ``x`` and ``xnames``
+        are not present.
 
-        The ``watch`` argument is a list of one or more input ports whose value during simulation
-        will be recorded.  The elements of the list can be:
+        The ``watch`` argument is a list of one or more input ports whose value
+        during simulation will be recorded. The elements can be:
             - a ``Block`` reference, which is interpretted as input port 0
             - a ``Plug`` reference, ie. a block with an index or attribute
             - a string of the form "block[i]" which is port i of the block named block.
@@ -674,6 +744,7 @@ class BDSim(Runner):
                 - 'p' debug network value propagation
                 - 's' debug state vector
                 - 'd' debug state derivative
+                - 'i' interactive stepping/debugger
 
         .. note:: Simulation stops if the step time falls below ``minsteplength``
             which typically indicates that the solver is struggling with a very
@@ -707,15 +778,15 @@ class BDSim(Runner):
                     "bad simtime option passed " + run_options.simtime
                 ) from exc
 
-        # final default values
-        # T = T or 5
-        # dt = dt or 0.01
+        # Resolve run horizon from arguments/options once for this run.
+        tf = T
 
         simstate = BDSimState()
-        simstate.T = T
+        simstate.T = tf
+        simstate.tf = tf
 
         if dt is None and not "max_step" in solver_args:
-            dt = T / 100
+            dt = tf / 100
         simstate.dt = dt
         simstate.count = 0
         simstate.bdtime = 0.0
@@ -802,13 +873,22 @@ class BDSim(Runner):
             simstate.watchnamelist = watchnamelist
 
             x0 = bd.getstate0()
+
             if not simstate.options.quiet:
                 print(fg("yellow"))
-                print(f">>> Start simulation: T = {T}, dt = {dt}")
-                print(f"  Continuous state variables: {bd.nstates}")
-                print("     x0 = ", x0)
-
-                print(f"  Discrete state variables:   {bd.ndstates}")
+                print(f">>> Start simulation: T = {tf}, dt = {dt}")
+                if bd.nstates > 0:
+                    s_cont = "s" if bd.nstates != 1 else ""
+                    s_disc = "s" if bd.ndstates != 1 else ""
+                    print(
+                        f"  Hybrid system solver: {bd.nstates} continuous state variable{s_cont}, {bd.ndstates} discrete state variable{s_disc}"
+                    )
+                    print("    x0 = ", x0)
+                else:
+                    s_disc = "s" if bd.ndstates != 1 else ""
+                    print(
+                        f"  Discrete system solver: {bd.ndstates} discrete state variable{s_disc}"
+                    )
 
             # get the number of discrete states from all clocks
             ndstates = 0
@@ -835,17 +915,89 @@ class BDSim(Runner):
             simstate.plist = [[] for p in simstate.watchlist]
 
             context.progress = Progress(enable=simstate.options.progress)
-            context.progress.start(T)
+            context.progress.start(tf)
 
             run_start_time = time.time()
 
+            # For pure discrete systems, evaluate at t=0 to capture initial conditions
+            # (needed for STOP blocks and other immediate triggers that must fire at t=0).
+            if bd.nstates == 0:
+                simstate.t = 0.0
+                simstate.count += 1
+                eval_start = time.time()
+                bd.evaluate([], 0.0, simstate=simstate)
+                eval_end = time.time()
+                simstate.bdtime += eval_end - eval_start
+                self._record_sample_and_service_hooks(
+                    bd, simstate, 0.0, None, stop_short_circuit=False
+                )
+                if simstate.stop is not None:
+                    # Stop triggered at t=0, early exit from run loop
+                    context.progress.end()
+                    if not simstate.options.quiet:
+                        mean_eval_ms = simstate.bdtime / max(simstate.count, 1) * 1000.0
+                        print(fg("yellow"))
+                        print("<<< Simulation complete")
+                        print(f"  block diagram evaluations: {simstate.count}")
+                        print(
+                            f"    of which ydot calls:     {simstate.stats.ydot_calls}"
+                            f"  (remaining are post-integration replay + sink passes)"
+                        )
+                        print(
+                            f"  bd.evaluate() mean time:   {mean_eval_ms:.3f} ms/call"
+                            f"  (total {simstate.bdtime * 1000:.1f} ms)"
+                        )
+                        run_wall_time = time.time() - run_start_time
+                        print(
+                            f"  clocktime speedup:         {simstate.T / max(run_wall_time, 1e-12):.2f}x"
+                            f"  (simulated {simstate.T:.3g}s in {run_wall_time*1000:.1f} ms)"
+                        )
+                        print(f"  integration time points:   {len(simstate.tlist)}")
+                        print(f"  scheduled event intervals: 0")
+                        print(attr(0))
+                    # Build output struct
+                    out = BDStruct(name="results")
+                    out["t"] = np.array(simstate.tlist)
+                    out["x"] = np.array(simstate.xlist)
+                    out["xnames"] = bd.statenames
+                    for i, c in enumerate(bd.clocklist):
+                        name = f"clock{i}"
+                        clockdata = BDStruct(name)
+                        clock_t, clock_x = c.getlog(simstate)
+                        clockdata["t"] = np.array(clock_t)
+                        clockdata["x"] = np.array(clock_x)
+                        out.add(name, clockdata)
+                        legacy_name = str(c.name).replace(".", "")
+                        if legacy_name != name and legacy_name not in out:
+                            out.add(legacy_name, clockdata)
+                    for i, p in enumerate(watchlist):
+                        out["y" + str(i)] = np.array(simstate.plist[i])
+                    out["ynames"] = watchnamelist
+                    stats = BDStruct(name="stats")
+                    stats["integration_time_points"] = len(simstate.tlist)
+                    stats["run_interval_calls"] = simstate.stats.run_interval_calls
+                    stats["ydot_calls"] = simstate.stats.ydot_calls
+                    stats["integrator_wall_time"] = simstate.stats.integrator_wall_time
+                    stats["events_detected_total"] = (
+                        simstate.stats.events_detected_total
+                    )
+                    stats["events_detected_by_source"] = dict(
+                        simstate.stats.events_detected_by_source
+                    )
+                    out[".stats"] = stats
+                    return out
+
             # Unified interval loop for both scheduled and crossing events.
-            simstate.declare_event(None, T)  # terminal boundary marker
-            tprev = 0.0
-            simstate.eventq.pop_until(tprev)
+            simstate.declare_event(None, tf)  # terminal boundary marker
+            t0 = 0.0
+            simstate.eventq.pop_until(t0)
             x = x0
             nintervals = 0
             event_tol = 1e-12
+
+            interval_handler = (
+                self._interval_hybrid if bd.nstates > 0 else self._interval_discrete
+            )
 
             # Option A: schedule animation frame events as callables in the eventq.
             # Each callback pumps the matplotlib event loop then re-schedules itself.
@@ -865,70 +1017,65 @@ class BDSim(Runner):
                         canvas = plt.figure(num).canvas
                         canvas.draw_idle()
                         canvas.flush_events()
-                    if t + _dt < T - event_tol:
+                    if t + _dt < tf - event_tol:
                         ss.declare_event(_anim_frame, t + _dt)
 
                 simstate.declare_event(_anim_frame, interactive_dt)
 
-            while tprev < T - event_tol:
+            while t0 < tf - event_tol:
                 # Next scheduled boundary (clock tick, explicit event, or terminal marker).
                 tnext, sources = simstate.eventq.pop(dt=1e-6)
                 if tnext is None:
-                    tnext = T
+                    tnext = tf
                     sources = []
 
-                interval_end = min(float(tnext), float(T))
-                if interval_end <= tprev + event_tol:
+                t1 = min(float(tnext), float(tf))
+                if t1 <= t0 + event_tol:
                     # Nothing to integrate; process due scheduled sources and continue.
                     for source in sources:
                         if isinstance(source, Clock):
-                            source.savestate(interval_end, simstate)
+                            source.savestate(t1, simstate)
                             source.next_event(simstate)
                             try:
-                                source._set_runtime_state(
-                                    source.getstate(interval_end), simstate
-                                )
+                                source._set_runtime_state(source.getstate(t1), simstate)
                             except BlockRuntimeError as err:
                                 bd._handle_block_runtime_error(err)
                         elif callable(source):
-                            source(interval_end, simstate)
-                    tprev = interval_end
+                            source(t1, simstate)
+                    t0 = t1
                     continue
 
                 # Integrate/step until the next scheduled boundary.
-                interval_result = self.run_interval(
-                    bd, tprev, interval_end, x, simstate=simstate
-                )
+                interval_result = interval_handler(bd, t0, t1, x, simstate)
                 if interval_result is None:
                     break
                 x, treached = interval_result
+                simstate.stats.run_interval_calls += 1
                 nintervals += 1
 
                 if simstate.stop is not None:
                     break
 
-                reached_boundary = treached >= interval_end - event_tol
+                reached_boundary = treached >= t1 - event_tol
                 if reached_boundary:
                     for source in sources:
                         if isinstance(source, Clock):
-                            source.savestate(interval_end, simstate)
+                            source.savestate(t1, simstate)
                             source.next_event(simstate)
                             try:
-                                source._set_runtime_state(
-                                    source.getstate(interval_end), simstate
-                                )
+                                source._set_runtime_state(source.getstate(t1), simstate)
                             except BlockRuntimeError as err:
                                 bd._handle_block_runtime_error(err)
                         elif callable(source):
-                            source(interval_end, simstate)
-                    tprev = interval_end
+                            source(t1, simstate)
+                    t0 = t1
                 else:
                     # Integration ended early (typically a crossing event). Continue from
                     # the actual stop time and revisit this scheduled boundary later.
-                    if treached <= tprev + event_tol:
-                        tprev = min(interval_end, tprev + event_tol)
+                    if treached <= t0 + event_tol:
+                        t0 = min(t1, t0 + event_tol)
                     else:
-                        tprev = treached
+                        t0 = treached
                     for source in sources:
                         simstate.declare_event(source, float(tnext))
 
@@ -957,23 +1104,27 @@ class BDSim(Runner):
                 )
                 print(f"  integration time points:   {len(simstate.tlist)}")
                 # Scheduled events (clock ticks, explicit declare_event calls) are
-                # the interval boundaries; nintervals = number of run_interval() calls.
+                # the interval boundaries; nintervals = number of interval-handler calls.
                 print(
                     f"  scheduled event intervals: {nintervals}"
-                    f"  (each bounded by a clock tick or end of simulation)"
+                    f"  (each bounded by a clock tick, scheduled event, or terminal marker)"
                 )
-                print(
-                    "  integrator wall time:      "
-                    f" {simstate.stats.integrator_wall_time:.3f} s"
-                    "  (solve_ivp only; excludes post-integration replay)"
-                )
-                # Zero-crossing events are detected by solve_ivp root-finding,
-                # distinct from the scheduled (clock/discrete) event boundaries above.
-                n_crossing = simstate.stats.events_detected_total
-                print(f"  zero-crossing events:      {n_crossing}")
-                if n_crossing > 0:
-                    for src, cnt in simstate.stats.events_detected_by_source.items():
-                        print(f"    {src}: {cnt}")
+                if bd.nstates > 0:
+                    print(
+                        "  integrator wall time:      "
+                        f" {simstate.stats.integrator_wall_time:.3f} s"
+                        "  (solve_ivp only; excludes post-integration replay)"
+                    )
+                    # Zero-crossing events are detected by solve_ivp root-finding,
+                    # distinct from the scheduled (clock/discrete) event boundaries above.
+                    n_crossing = simstate.stats.events_detected_total
+                    print(f"  zero-crossing events:      {n_crossing}")
+                    if n_crossing > 0:
+                        for (
+                            src,
+                            cnt,
+                        ) in simstate.stats.events_detected_by_source.items():
+                            print(f"    {src}: {cnt}")
                 print(attr(0))
 
             # save buffered data in a Struct
@@ -1131,291 +1282,221 @@ class BDSim(Runner):
                 f" {new_value}"
             )
 
-    def run_interval(self, bd, t0, T, x0, simstate: BDSimState):
+    def _interval_hybrid(self, bd, t0, t1, x0, simstate: BDSimState):
         """
-        Integrate system over interval
+        Integrate one hybrid (continuous/discrete) interval.
 
-        :param bd: the system blockdiagram
+        :param bd: system block diagram
         :type bd: BlockDiagram
-        :param t0: initial time
+        :param t0: interval start time
         :type t0: float
-        :param tf: final time
-        :type tf: float
-        :param x0: initial state vector
+        :param t1: interval end time
+        :type t1: float
+        :param x0: continuous state at interval start
         :type x0: ndarray(n)
-        :param simstate: simulation state object
-        :type simstate: SimState
-        :return: tuple of final state vector and final time reached
+        :param simstate: per-run simulation state
+        :type simstate: BDSimState
+        :return: final continuous state and time reached
         :rtype: tuple(ndarray(n), float)
 
-        The system is integrated from from ``x0`` to ``xf`` over the interval ``t0`` to ``tf``.
-
+        Uses scipy.integrate.solve_ivp over [t0, t1], replays accepted points
+        to update logs/watchlists/graphics, and dispatches zero-crossing handlers.
         """
-        progress: Progress | None = self._require_context().progress
-        assert progress is not None
-        simstate.stats.run_interval_calls += 1
-        try:
-            if bd.nstates > 0:
-                # system has continuous states, solve it using numerical integration
-                # print('initial state x0 = ', x0)
 
-                # block diagram contains states, solve it using numerical integration
+        def ydot(t, y):
+            # This callback is owned by SciPy's adaptive solver.
+            # Every call represents one RHS evaluation requested by the
+            # integration algorithm at an internal time/state pair.
+            simstate.t = t
+            simstate.count += 1
+            simstate.stats.ydot_calls += 1
+            eval_start = time.time()
+            yd = bd.evaluate(y, t, sinks=False, simstate=simstate)
+            eval_end = time.time()
+            simstate.bdtime += eval_end - eval_start
+            return yd
 
-                def ydot(t, y):
-                    # This callback is owned by SciPy's adaptive solver.
-                    # Every call represents one RHS evaluation requested by the
-                    # integration algorithm at an internal time/state pair.
-                    simstate.t = t
-                    simstate.count += 1
-                    simstate.stats.ydot_calls += 1
-                    eval_start = time.time()
-                    yd = bd.evaluate(y, t, sinks=False, simstate=simstate)
-                    eval_end = time.time()
-                    simstate.bdtime += eval_end - eval_start
-                    return yd
+        # Build solve_ivp kwargs from user-provided solver_args, then normalize
+        # to bdsim conventions.
+        ivp_args = dict(simstate.solver_args)
+        # Historical alias used by older call sites; we map it to method below.
+        ivp_args.pop("integrator", None)
+        if simstate.dt is not None:
+            # When caller provides dt, treat it as an upper bound on solver step.
+            ivp_args.setdefault("max_step", simstate.dt)
+        # Keep user-provided method if present; otherwise derive from run(..., solver=...).
+        ivp_args.setdefault("method", self._solve_ivp_method(simstate))
 
-                # Build solve_ivp kwargs from user-provided solver_args, then normalize
-                # to bdsim conventions.
-                ivp_args = dict(simstate.solver_args)
-                # Historical alias used by older call sites; we map it to method below.
-                ivp_args.pop("integrator", None)
-                if simstate.dt is not None:
-                    # When caller provides dt, treat it as an upper bound on solver step.
-                    ivp_args.setdefault("max_step", simstate.dt)
-                # Keep user-provided method if present; otherwise derive from run(..., solver=...).
-                ivp_args.setdefault("method", self._solve_ivp_method(simstate))
+        if len(simstate.crossing_detectors) > 0:
+            # Crossing detectors: zero-crossing callbacks registered in start().
+            # Pass to solve_ivp so root-finding is performed by SciPy.
+            ivp_args["events"] = [
+                detector for detector, _ in simstate.crossing_detectors
+            ]
 
-                if len(simstate.crossing_detectors) > 0:
-                    # Crossing detectors: zero-crossing callbacks registered in start().
-                    # Pass to solve_ivp so root-finding is performed by SciPy.
-                    ivp_args["events"] = [
-                        detector for detector, _ in simstate.crossing_detectors
-                    ]
+        # ---------------------------------------------------------------------
+        # INTEGRATOR CORE (single solve_ivp call for this interval)
+        #
+        # About solve_ivp "vectorized" mode:
+        # - "arrays of states" means y is a matrix with shape (n, k), where
+        #   each column is one candidate state vector to evaluate.
+        # - In vectorized mode, ydot(t, y) must return dydt with the same
+        #   shape (n, k), computed for all columns at once.
+        # - bdsim's evaluate path is currently scalar-state oriented:
+        #   it expects one state vector at a time and mutates block instance
+        #   state during evaluation.
+        # - Therefore this RHS callback is intentionally non-vectorized and
+        #   should be used with solve_ivp's default vectorized=False behavior.
+        # ---------------------------------------------------------------------
+        ivp_start = time.time()
+        result = integrate.solve_ivp(ydot, (t0, t1), x0, **ivp_args)
+        simstate.stats.integrator_wall_time += time.time() - ivp_start
 
-                # ---------------------------------------------------------------------
-                # INTEGRATOR CORE (single solve_ivp call for this interval)
-                #
-                # About solve_ivp "vectorized" mode:
-                # - "arrays of states" means y is a matrix with shape (n, k), where
-                #   each column is one candidate state vector to evaluate.
-                # - In vectorized mode, ydot(t, y) must return dydt with the same
-                #   shape (n, k), computed for all columns at once.
-                # - bdsim's evaluate path is currently scalar-state oriented:
-                #   it expects one state vector at a time and mutates block instance
-                #   state during evaluation.
-                # - Therefore this RHS callback is intentionally non-vectorized and
-                #   should be used with solve_ivp's default vectorized=False behavior.
-                # ---------------------------------------------------------------------
-                ivp_start = time.time()
-                result = integrate.solve_ivp(ydot, (t0, T), x0, **ivp_args)
-                simstate.stats.integrator_wall_time += time.time() - ivp_start
+        # check for integration failure
+        if not result.success:
+            raise IntegrationFailureError(
+                t0=float(t0),
+                tf=float(t1),
+                status=int(result.status),
+                message=str(result.message),
+            )
 
-                # check for integration failure
-                if not result.success:
-                    raise IntegrationFailureError(
-                        t0=float(t0),
-                        tf=float(T),
-                        status=int(result.status),
-                        message=str(result.message),
-                    )
+        # remove time overlap between integration segments
+        #
+        #   solve_ivp commonly echoes the interval start in result.t.
+        #   In multi-interval runs (clock/event queue), that point was already
+        #   recorded by the previous interval, so we skip an initial duplicate.
+        start_index = (
+            1
+            if len(result.t) > 0
+            and np.isclose(float(result.t[0]), float(t0), rtol=0.0, atol=1e-15)
+            else 0
+        )
 
-                # remove time overlap between integration segments
-                #
-                #   solve_ivp commonly echoes the interval start in result.t.
-                #   In multi-interval runs (clock/event queue), that point was already
-                #   recorded by the previous interval, so we skip an initial duplicate.
-                start_index = (
-                    1
-                    if len(result.t) > 0
-                    and np.isclose(float(result.t[0]), float(t0), rtol=0.0, atol=1e-15)
-                    else 0
+        # post-process the results for the integration segment
+        #
+        #  solve_ivp returns chunks of trajectory not each individual step, so
+        #  we need to iterate over the segment to update block states record,
+        #  watchlist ports, and dispatch eventq events.  This is necessary to
+        #  ensure that block states are consistent with the final integrated
+        #  state and  that events are dispatched at the correct times with the
+        #  correct state, even if the solver took large steps or if events were
+        #  detected between solver steps.
+        for k in range(start_index, len(result.t)):
+
+            t = float(result.t[k])
+            y = result.y[:, k]
+            simstate.t = t
+
+            simstate.count += 1
+            eval_start = time.time()
+            bd.evaluate(y, t, sinks=False, simstate=simstate)
+            eval_end = time.time()
+            simstate.bdtime += eval_end - eval_start
+
+            should_break = self._record_sample_and_service_hooks(
+                bd, simstate, t, y, stop_short_circuit=True
+            )
+            if should_break:
+                break
+
+        # Handle detected zero-crossings from continuous root-finding.
+        # solve_ivp returns crossing_times and crossing_states for each registered detector.
+        # We map detector index → owning block, update counters, then dispatch handlers
+        # with progressively permissive call signatures.
+        crossing_times_all = result.t_events if result.t_events is not None else []
+        crossing_states = result.y_events if result.y_events is not None else []
+        crossing_handled = False
+        for i, crossing_times in enumerate(crossing_times_all):
+            if len(crossing_times) == 0:
+                continue
+            _, block = simstate.crossing_detectors[i]
+            source_name = getattr(block, "name", str(block))
+            state_list = crossing_states[i] if i < len(crossing_states) else []
+            for j, t_crossing in enumerate(crossing_times):
+                crossing_handled = True
+                y_crossing = state_list[j] if j < len(state_list) else None
+                simstate.stats.events_detected_total += 1
+                simstate.stats.events_detected_by_source[source_name] += 1
+                self._dispatch_crossing_event(
+                    block, float(t_crossing), y_crossing, simstate
                 )
 
-                # post-process the results for the integration segment
-                #
-                #  solve_ivp returns chunks of trajectory not each individual step, so
-                #  we need to iterate over the segment to update block states record,
-                #  watchlist ports, and dispatch eventq events.  This is necessary to
-                #  ensure that block states are consistent with the final integrated
-                #  state and  that events are dispatched at the correct times with the
-                #  correct state, even if the solver took large steps or if events were
-                #  detected between solver steps.
-                for k in range(start_index, len(result.t)):
+        # return final continuous state and actual end time reached
+        t_final = float(result.t[-1]) if len(result.t) > 0 else float(t0)
+        if len(result.t) > 0:
+            if crossing_handled:
+                # Use block state after event-handler side effects.
+                x_final = np.array([])
+                for b in bd.blocklist:
+                    if b.blockclass == "continuous":
+                        xb = b.x
+                        if xb is None:
+                            xb = b.getstate0_safe()
+                        x_final = np.r_[x_final, np.array(xb).reshape(-1)]
 
-                    t = float(result.t[k])
-                    y = result.y[:, k]
-                    simstate.t = t
+                # Ensure logged trajectory reflects any state mutation performed by
+                # crossing handlers (for example STOP handlers that rewrite block.x).
+                if len(simstate.xlist) > 0:
+                    simstate.xlist[-1] = np.array(x_final, copy=True)
 
-                    simstate.count += 1
-                    eval_start = time.time()
-                    bd.evaluate(y, t, sinks=False, simstate=simstate)
-                    eval_end = time.time()
-                    simstate.bdtime += eval_end - eval_start
-
-                    simstate.tlist.append(t)
-                    simstate.xlist.append(y)
-
-                    for i, p in enumerate(simstate.watchlist):
-                        b = p.block
-                        out = b.output_safe(t, b.inport_values, b.x)[p.port]
-                        simstate.plist[i].append(out)
-
-                    # In animation mode each chunk covers only one frame, so update
-                    # the scope on every replay point.  Otherwise use the T/200
-                    # throttle to avoid excess canvas draws on non-animated runs.
-                    if simstate.options.animation or (t - simstate.gtime) > (
-                        simstate.T / 200
-                    ):
-                        bd.step(t)
-                        simstate.gtime = t
-
-                    progress.update(t)
-
-                    if simstate.stop is not None:
-                        print(
-                            fg("red") + f"\n--- stop requested at t={simstate.t:.4f} by"
-                            f" {simstate.stop}" + attr(0)
-                        )
-                        break
-
-                    if "i" in simstate.options.debug:
-                        # Interactive debugger still works in solve_ivp mode, but now
-                        # triggers on accepted sample points rather than every internal
-                        # trial step attempted by the integrator.
-                        bd._debugger(simstate)
-
-                # Handle detected zero-crossings from continuous root-finding.
-                # solve_ivp returns crossing_times and crossing_states for each registered detector.
-                # We map detector index → owning block, update counters, then dispatch handlers
-                # with progressively permissive call signatures.
-                crossing_times_all = (
-                    result.t_events if result.t_events is not None else []
-                )
-                crossing_states = result.y_events if result.y_events is not None else []
-                crossing_handled = False
-                for i, crossing_times in enumerate(crossing_times_all):
-                    if len(crossing_times) == 0:
-                        continue
-                    _, block = simstate.crossing_detectors[i]
-                    source_name = getattr(block, "name", str(block))
-                    state_list = crossing_states[i] if i < len(crossing_states) else []
-                    for j, t_crossing in enumerate(crossing_times):
-                        crossing_handled = True
-                        y_crossing = state_list[j] if j < len(state_list) else None
-                        simstate.stats.events_detected_total += 1
-                        simstate.stats.events_detected_by_source[source_name] += 1
-                        self._dispatch_crossing_event(
-                            block, float(t_crossing), y_crossing, simstate
-                        )
-
-                # return final continuous state and actual end time reached
-                t_final = float(result.t[-1]) if len(result.t) > 0 else float(t0)
-                if len(result.t) > 0:
-                    if crossing_handled:
-                        # Use block state after event-handler side effects.
-                        x_final = np.array([])
-                        for b in bd.blocklist:
-                            if b.blockclass == "continuous":
-                                xb = b.x
-                                if xb is None:
-                                    xb = b.getstate0_safe()
-                                x_final = np.r_[x_final, np.array(xb).reshape(-1)]
-                        return x_final, t_final
-                    return result.y[:, -1], t_final
-                # if integration produced no points, return initial state
-                return np.array(x0), t_final
-
-            elif len(bd.clocklist) == 0:
-                # block diagram has no continuous or discrete states
-
-                assert simstate.dt is not None, "if no states must specify dt"
-
-                for t in np.arange(t0, T, simstate.dt):  # step through the time range
-                    # evaluate the block diagram
-                    simstate.t = t
-
-                    simstate.count += 1
-                    eval_start = time.time()
-                    bd.evaluate([], t, simstate=simstate)
-                    eval_end = time.time()
-                    simstate.bdtime += eval_end - eval_start
-
-                    # stash the results
-                    simstate.tlist.append(t)
-
-                    # record the ports on the watchlist
-                    for i, p in enumerate(simstate.watchlist):
-                        b = p.block
-                        out = b.output_safe(t, b.inport_values, b.x)[p.port]
-                        simstate.plist[i].append(out)
-
-                    # update all blocks that need to know
-                    bd.step(t)
-
-                    progress.update(t)  # update the progress bar
-
-                    # has any block called a stop?
-                    if simstate.stop is not None:
-                        print(
-                            fg("red") + f"\n--- stop requested at t={simstate.t:.4f} by"
-                            f" {simstate.stop}" + attr(0)
-                        )
-                        break
-
-                    if "i" in simstate.options.debug:
-                        bd._debugger(simstate)
-
-                t_final = float(simstate.t) if simstate.t is not None else float(t0)
-                return np.array(x0), t_final
-
-            else:
-                # block diagram has no continuous states
-                t = t0
-                simstate.t = t
-                # evaluate the block diagram
-
-                simstate.count += 1
-                eval_start = time.time()
-                bd.evaluate([], t, simstate=simstate)
-                eval_end = time.time()
-                simstate.bdtime += eval_end - eval_start
-
-                # stash the results
-                simstate.tlist.append(t)
-
-                # record the ports on the watchlist
-                for i, p in enumerate(simstate.watchlist):
-                    b = p.block
-                    out = b.output_safe(t, b.inport_values, b.x)[p.port]
-                    simstate.plist[i].append(out)
-
-                # update all blocks that need to know
-                if (t - simstate.gtime) > (simstate.T / 200):
-                    bd.step(t)
-                    simstate.gtime = t
-                # bd.step(t)
-
-                progress.update(simstate.t)  # update the progress bar
-
-                # has any block called a stop?
-                if simstate.stop is not None:
-                    print(
-                        fg("red") + f"\n--- stop requested at t={simstate.t:.4f} by"
-                        f" {simstate.stop}" + attr(0)
+                # Move just beyond the crossing so restart does not re-trigger the same event.
+                _kick_dt = 1e-9
+                try:
+                    _kick_ydot = bd.evaluate(
+                        x_final, t_final, sinks=False, simstate=simstate
                     )
+                    _kick_arr = np.asarray(_kick_ydot)
+                    if _kick_arr.size == x_final.size:
+                        x_final = x_final + _kick_dt * _kick_arr
+                except Exception:
+                    pass
 
-                if "i" in simstate.options.debug:
-                    bd._debugger(simstate)
+                return x_final, t_final + _kick_dt
+            return result.y[:, -1], t_final
 
-                # This interval has no continuous integration, but it still spans
-                # from t0 to T and the scheduler expects us to reach the boundary.
-                # Returning t0 here causes the outer event loop to advance only by
-                # event_tol and effectively spin for large T.
-                t_final = float(T)
-                return np.array(x0), t_final
+        # if integration produced no points, return initial state
+        return np.array(x0), t_final
 
-        except BlockRuntimeError as err:
-            bd._handle_block_runtime_error(err)
+    def _interval_discrete(self, bd, t0, t1, x0, simstate: BDSimState):
+        """
+        Evaluate one discrete interval boundary at the scheduled tick time.
+
+        :param bd: system block diagram
+        :type bd: BlockDiagram
+        :param t0: interval start time (previous clock boundary)
+        :type t0: float
+        :param t1: interval end time / scheduled clock tick time for this sample
+        :type t1: float
+        :param x0: unchanged continuous state placeholder
+        :type x0: ndarray(n)
+        :param simstate: per-run simulation state
+        :type simstate: BDSimState
+        :return: unchanged state placeholder and reached boundary time
+        :rtype: tuple(ndarray(n), float)
+
+        For diagrams without continuous states, evaluate at the scheduled clock
+        tick time t1. Between ticks [t0, t1), the zero-order hold output remains
+        constant from the previous sample.
+        """
+        # block diagram has no continuous states
+        # Evaluate at the SCHEDULED TICK TIME (t1), not the start of interval (t0)
+        t = t1
+        simstate.t = t
+
+        simstate.count += 1
+        eval_start = time.time()
+        bd.evaluate([], t, simstate=simstate)
+        eval_end = time.time()
+        simstate.bdtime += eval_end - eval_start
+
+        self._record_sample_and_service_hooks(
+            bd, simstate, t, None, stop_short_circuit=False
+        )
+
+        # Report reaching the scheduled boundary at t1
+        t_final = float(t1)
+        return np.array(x0), t_final
 
     def blockdiagram(self, name="main") -> BlockDiagram:
         """
@@ -2066,6 +2147,9 @@ class BDSim(Runner):
 
 class Options(OptionsBase):
     def __init__(self, sysargs=True, **options) -> None:
+        if "interactive_rate" in options and "animation_rate" not in options:
+            options["animation_rate"] = options.pop("interactive_rate")
+
         def available_matplotlib_backends() -> list[str]:
             try:
                 from matplotlib.backends import backend_registry
