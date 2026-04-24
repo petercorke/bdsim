@@ -1955,9 +1955,8 @@ class GraphicsBlock(SinkBlock):
                 self._writer = animation.FFMpegWriter(
                     fps=10, extra_args=["-vcodec", "libx264"]
                 )
-                # Writer setup is deferred to the first step() call so that
-                # the subclass has had a chance to create self._fig.
-                self._movie_started = False
+                self._writer.setup(fig=self._fig, outfile=self._movie)  # type: ignore[union-attr]
+                self._movie_started = True
                 print("movie block", self, " --> ", self._movie)
             except FileNotFoundError:
                 self.fatal("cannot save movie, please install ffmpeg")  # type: ignore[union-attr]
@@ -1979,10 +1978,6 @@ class GraphicsBlock(SinkBlock):
 
         if self._movie is not None:
             try:
-                if not self._movie_started:
-                    # Deferred setup: figure is now guaranteed to exist.
-                    self._writer.setup(fig=self._fig, outfile=self._movie)  # type: ignore[union-attr]
-                    self._movie_started = True
                 self._writer.grab_frame()  # type: ignore[union-attr]
             except AttributeError:
                 self.fatal("cannot save movie, please install ffmpeg")  # type: ignore[union-attr]
