@@ -6,6 +6,9 @@ import sys
 # block.py imports matplotlib.pyplot at module level, which triggers backend
 # selection before any hook has a chance to run.
 os.environ["MPLBACKEND"] = "Agg"
+# Force Qt tests to use an offscreen platform so editor tests do not create
+# visible windows when running pytest locally.
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 import matplotlib
 
 matplotlib.use("Agg")
