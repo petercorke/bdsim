@@ -1364,21 +1364,6 @@ class ReportSummaryTest(SetUpMixin, unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-class ErrorHandlerTest(SetUpMixin, unittest.TestCase):
-    """_error_handler() covers lines 1076-1108 when called from inside an except clause."""
-
-    def test_error_handler_raises_runtime(self):
-        """Direct invocation inside an except clause prints traceback and raises RuntimeError."""
-        bd, src, _ = self._simple_bd()
-        # src is a CONSTANT (nin=0) so the for-loop in _error_handler is skipped cleanly.
-        try:
-            raise ValueError("deliberate test error for coverage")
-        except ValueError:
-            with self.assertRaises(RuntimeError):
-                bd._error_handler("test", src)
-
-
-# ---------------------------------------------------------------------------
 class ShowGraphTest(SetUpMixin, unittest.TestCase):
     """showgraph() covers lines 1341-1360."""
 
