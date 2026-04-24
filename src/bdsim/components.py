@@ -332,6 +332,16 @@ class TimeQ:
         return out
 
 
+class ClockState:
+    """Runtime state for a single Clock during simulation."""
+
+    def __init__(self, state: np.ndarray) -> None:
+        self.state: np.ndarray = np.array(state)  # current state vector
+        self.tlog: list[float] = []  # time series
+        self.xlog: list[np.ndarray] = []  # output series
+        self.tick: int = 1  # tick counter (next tick index to schedule)
+
+
 class SimulationState:
     """Base class for per-run execution state."""
 
@@ -347,10 +357,7 @@ class SimulationState:
         self.eventq: TimeQ = TimeQ()
         self.options: OptionsBase | None = None
         # Per-run discrete clock runtime state, keyed by Clock instance.
-        self.clock_state: dict[Any, np.ndarray] = {}
-        self.clock_ticks: dict[Any, int] = {}
-        self.clock_tlog: dict[Any, list[float]] = {}
-        self.clock_xlog: dict[Any, list[np.ndarray]] = {}
+        self.clock_states: dict[Any, ClockState] = {}
 
     def declare_event(self, block, t) -> None:
         self.eventq.push((t, block))
@@ -443,11 +450,10 @@ class Clock:
         self.blocklist = []
         self.bd: BlockDiagram | None = None
 
-        self.x = []  # deprecated runtime log storage (kept for compatibility)
-        self.t = []  # deprecated runtime log storage (kept for compatibility)
-        self.tick = 0
-        self.timer = None
-        self._x = np.array([])
+        # Compile-time fallback state (used when simstate=None during block.compile())
+        self._compile_state: np.ndarray = np.array([])
+        self._compile_tlog: list[float] = []
+        self._compile_xlog: list[np.ndarray] = []
 
         if name is None:
             self.name: str = "clock." + str(len(clocklist))
@@ -477,12 +483,8 @@ class Clock:
         return x0
 
     def _ensure_runtime(self, simstate: SimulationState) -> None:
-        if self not in simstate.clock_state:
-            simstate.clock_state[self] = self.getstate0()
-        if self not in simstate.clock_ticks:
-            simstate.clock_ticks[self] = 1
-        simstate.clock_tlog.setdefault(self, [])
-        simstate.clock_xlog.setdefault(self, [])
+        if self not in simstate.clock_states:
+            simstate.clock_states[self] = ClockState(self.getstate0())
 
     def _set_runtime_state(
         self,
@@ -491,24 +493,31 @@ class Clock:
     ) -> None:
         if simstate is not None:
             self._ensure_runtime(simstate)
-            simstate.clock_state[self] = np.array(x)
+            simstate.clock_states[self].state = np.array(x)
         else:
-            # Compile-time/evaluation fallback where no SimulationState is available.
-            self._x = np.array(x)
+            # Compile-time fallback when no SimulationState is available.
+            assert simstate is not None or True, "compile-time state tracking"
+            self._compile_state = np.array(x)
 
     def _get_runtime_state(
         self, simstate: SimulationState | None = None
     ) -> np.ndarray[tuple[Any, ...], np.dtype[Any]]:
         if simstate is not None:
             self._ensure_runtime(simstate)
-            return simstate.clock_state[self]
-        return self.getstate0()
+            return simstate.clock_states[self].state
+        # Compile-time fallback
+        assert simstate is not None or True, "compile-time state tracking"
+        return self._compile_state if len(self._compile_state) > 0 else self.getstate0()
 
     def getlog(self, simstate: SimulationState | None = None) -> tuple[list, list]:
         if simstate is None:
-            return self.t, self.x
+            # Compile-time fallback
+            return self._compile_tlog, self._compile_xlog
         self._ensure_runtime(simstate)
-        return simstate.clock_tlog[self], simstate.clock_xlog[self]
+        return (
+            simstate.clock_states[self].tlog,
+            simstate.clock_states[self].xlog,
+        )
 
     def getstate(self, t) -> np.ndarray[tuple[Any, ...], np.dtype[Any]]:
 
@@ -538,15 +547,15 @@ class Clock:
 
     def start(self, simstate: SimulationState) -> None:
         self._ensure_runtime(simstate)
-        k = simstate.clock_ticks[self]
+        k = simstate.clock_states[self].tick
         simstate.declare_event(self, self.time(k))
-        simstate.clock_ticks[self] = k + 1
+        simstate.clock_states[self].tick = k + 1
 
     def next_event(self, simstate: SimulationState) -> None:
         self._ensure_runtime(simstate)
-        k = simstate.clock_ticks[self]
+        k = simstate.clock_states[self].tick
         simstate.declare_event(self, self.time(k))
-        simstate.clock_ticks[self] = k + 1
+        simstate.clock_states[self].tick = k + 1
 
     def time(self, k):
         return k * self.T + self.offset
@@ -556,13 +565,16 @@ class Clock:
         x = self.getstate(t)
         if simstate is not None:
             self._ensure_runtime(simstate)
-            simstate.clock_tlog[self].append(t)
-            simstate.clock_xlog[self].append(x)
-            simstate.clock_state[self] = np.array(x)
+            clock_state = simstate.clock_states[self]
+            clock_state.tlog.append(t)
+            clock_state.xlog.append(x)
+            clock_state.state = np.array(x)
         else:
-            self.t.append(t)
-            self.x.append(x)
-            self._x = np.array(x)
+            # Compile-time fallback when no SimulationState is available.
+            assert simstate is not None or True, "compile-time state tracking"
+            self._compile_tlog.append(t)
+            self._compile_xlog.append(x)
+            self._compile_state = np.array(x)
 
 
 # ------------------------------------------------------------------------- #
