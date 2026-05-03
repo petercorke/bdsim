@@ -944,7 +944,7 @@ class BDSim(Runner):
                             f"  (remaining are post-integration replay + sink passes)"
                         )
                         print(
-                            f"  bd.evaluate() mean time:   {mean_eval_ms:.3f} ms/call"
+                            f"  bd.evaluate() mean time:   {mean_eval_ms*1000:.1f} μs/call"
                             f"  (total {simstate.bdtime * 1000:.1f} ms)"
                         )
                         run_wall_time = time.time() - run_start_time
@@ -1094,7 +1094,7 @@ class BDSim(Runner):
                     f"  (remaining are post-integration replay + sink passes)"
                 )
                 print(
-                    f"  bd.evaluate() mean time:   {mean_eval_ms:.3f} ms/call"
+                    f"  bd.evaluate() mean time:   {mean_eval_ms*1000:.1f} μs/call"
                     f"  (total {simstate.bdtime * 1000:.1f} ms)"
                 )
                 run_wall_time = time.time() - run_start_time

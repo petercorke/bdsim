@@ -427,7 +427,6 @@ class Runner:
 
 from bdsim.connect import EndPlug, Plug, Port, StartPlug, Wire
 
-
 # ------------------------------------------------------------------------- #
 
 clocklist = []
@@ -439,9 +438,9 @@ class Clock:
         if unit == "s":
             self.T = arg
         elif unit == "ms":
-            self.T = arg / 1000
+            self.T = arg / 1000.0
         elif unit == "Hz":
-            self.T = 1 / arg
+            self.T = 1.0 / arg
         else:
             raise ValueError("unknown clock unit", unit)
 
@@ -471,7 +470,16 @@ class Clock:
         s = f"Clock(name={self.name}, T={self.T}"
         if self.offset != 0:
             s += f", offset={self.offset}"
-        s += f", blocks={len(self.blocklist)})"
+        s += f", blocks=[{', '.join(b.name for b in self.blocklist)}])"
+        return s
+
+    def __str__(self) -> str:
+        s = f"Clock {self.name}:\n  T = {self.T}"
+        if self.offset != 0:
+            s += f"\n  offset = {self.offset}"
+        s += f"\n  blocks:\n"
+        for b in self.blocklist:
+            s += f"    {b.name}\n"
         return s
 
     def getstate0(self) -> np.ndarray[tuple[Any, ...], np.dtype[Any]]:
@@ -546,12 +554,21 @@ class Clock:
         self.next_event(simstate)
 
     def start(self, simstate: SimulationState) -> None:
-        self._ensure_runtime(simstate)
-        k = simstate.clock_states[self].tick
-        simstate.declare_event(self, self.time(k))
-        simstate.clock_states[self].tick = k + 1
+        self.next_event(simstate)
 
     def next_event(self, simstate: SimulationState) -> None:
+        """Schedule the next event
+
+        :param simstate: _description_
+        :type simstate:
+
+        The time of the k'th clock tick is
+
+            $t_k = k*T + t_o$
+
+        where 'k', the clock index, is part of the clock state within
+        the `Simstate` object.
+        """
         self._ensure_runtime(simstate)
         k = simstate.clock_states[self].tick
         simstate.declare_event(self, self.time(k))
@@ -596,7 +613,6 @@ from bdsim.block import (  # noqa: E402, F401
     EventSource,
     deprecated_block,
 )
-
 
 if __name__ == "__main__":
     try:
