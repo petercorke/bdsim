@@ -34,6 +34,23 @@ class IntegrationFailureError(BDSimError):
         self.message = message
 
 
+class EventProbeOutsideIntervalError(BDSimError):
+    """Raised when solve_ivp probes events outside the active interval.
+
+    Sampled-state values are only well-defined between the last clock tick and
+    the next scheduled boundary for the current interval.
+    """
+
+    def __init__(self, *, probe_t: float, t0: float, t1: float) -> None:
+        super().__init__(
+            "event probe time is outside the active integration interval: "
+            f"t={probe_t} not in [{t0}, {t1}]; sampled states are indeterminable"
+        )
+        self.probe_t = probe_t
+        self.t0 = t0
+        self.t1 = t1
+
+
 class BlockCreationError(BDSimError):
     """Raised when block construction fails via a runtime factory."""
 

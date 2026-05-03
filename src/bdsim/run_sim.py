@@ -43,6 +43,7 @@ from bdsim.exceptions import (
     BlockApiError,
     BlockCreationError,
     BlockRuntimeError,
+    EventProbeOutsideIntervalError,
     IntegrationFailureError,
     SimulationContextError,
 )
@@ -217,11 +218,69 @@ class BDSimState(SimulationState):
 
     Holds the mutable execution state for a single offline run, created fresh
     each time run() is called. This keeps BDSim.run() reentrant.
+
+    Inherited attributes from ``SimulationState``:
+    ``x``, ``tf``, ``t``, ``fignum``, ``stop``, ``checkfinite``, ``debugger``,
+    ``t_stop``, ``eventq``, ``options``, ``clock_states``.
+
+    Additional attributes
+    ---------------------
+    T
+        Resolved run horizon for this offline run.
+    dt
+        Optional maximum integration step (also used as synthetic tick period).
+    count
+        Total runtime callback/evaluation counter.
+    bdtime
+        Cumulative wall time spent in block-diagram evaluation.
+    gtime
+        Last time graphics were updated.
+    solver
+        Requested solver/method name.
+    solver_args
+        Keyword arguments forwarded to ``solve_ivp``.
+    minstepsize
+        Minimum step-size guard used by interval checks.
+    watchlist
+        Normalized watched plugs.
+    watchnamelist
+        Display names corresponding to ``watchlist``.
+    tlist
+        Logged simulation times.
+    xlist
+        Logged continuous state vectors.
+    plist
+        Logged watched signal values.
+    figsize
+        Figure size setting captured for run output/graphics.
+    dpi
+        Figure DPI setting.
+    backend
+        Active matplotlib backend name.
+    screensize_pix
+        Screen size in pixels for tiling/layout helpers.
+    ntiles
+        Requested figure tiling layout.
+    xoffset
+        Horizontal figure offset in pixels.
+    crossing_detectors
+        Registered solve_ivp zero-crossing detectors and owning blocks.
+    _event_probe_t
+        Last event-probe time cached for shared detector evaluation.
+    _event_probe_y
+        Last event-probe state vector cached for shared detector evaluation.
+    _event_probe_interval_start
+        Active interval start bound for valid event probes.
+    _event_probe_interval_end
+        Active interval end bound for valid event probes.
+    stats
+        RunIntervalStats counters for interval/solver diagnostics.
     """
 
     def __init__(self) -> None:
         super().__init__()
         # offline-specific fields
+        self.T: float | None = None
         self.dt: float | None = None
         self.count: int = 0
         self.bdtime: float = 0.0
@@ -243,6 +302,15 @@ class BDSimState(SimulationState):
         # Crossing detectors: zero-crossing detection callbacks for solve_ivp.
         # Distinct from scheduled_events (discrete-time), these are continuous root-finding.
         self.crossing_detectors: list[tuple[Callable[[float, Any], float], Block]] = []
+        # Per-probe cache for solve_ivp event detector group evaluation.
+        #
+        # solve_ivp may call multiple event detector callables sequentially for the
+        # same probe point (t, y). We evaluate the block diagram at most once per
+        # probe and let each detector read its already-updated input signal.
+        self._event_probe_t: float | None = None
+        self._event_probe_y: np.ndarray | None = None
+        self._event_probe_interval_start: float | None = None
+        self._event_probe_interval_end: float | None = None
         self.stats = RunIntervalStats()
 
     def __repr__(self) -> str:
@@ -263,6 +331,50 @@ class BDSimState(SimulationState):
         Distinct from scheduled discrete events; these are detected during integration.
         """
         self.crossing_detectors.append((detector, block))
+
+    def reset_event_probe_cache(self) -> None:
+        """Invalidate cached solve_ivp event-probe evaluation state."""
+        self._event_probe_t = None
+        self._event_probe_y = None
+
+    def begin_event_probe_interval(self, t0: float, t1: float) -> None:
+        """Declare the active solve_ivp interval used for event probes.
+
+        Probes outside this interval are invalid because sampled states are not
+        uniquely determined before the previous boundary or after the next one.
+        """
+        self._event_probe_interval_start = t0
+        self._event_probe_interval_end = t1
+        self.reset_event_probe_cache()
+
+    def ensure_event_probe_evaluated(
+        self, bd: BlockDiagram, t: float, y: Any
+    ) -> None:
+        """Evaluate diagram once for the current solve_ivp event probe.
+
+        Event detectors are expected to be pure readers of already-computed
+        inputs. This helper guarantees that for a given probe `(t, y)` the
+        network is propagated at most once, regardless of how many detectors
+        are invoked.
+        """
+        t0 = self._event_probe_interval_start
+        t1 = self._event_probe_interval_end
+        if t0 is not None and t1 is not None:
+            tol = 1e-12
+            if t < (t0 - tol) or t > (t1 + tol):
+                raise EventProbeOutsideIntervalError(probe_t=float(t), t0=t0, t1=t1)
+
+        y_arr = np.asarray(y)
+        if (
+            self._event_probe_t == t
+            and self._event_probe_y is not None
+            and y_arr.shape == self._event_probe_y.shape
+            and np.array_equal(y_arr, self._event_probe_y)
+        ):
+            return
+        bd.evaluate(bd.state_map(y, self), t, sinks=False)
+        self._event_probe_t = t
+        self._event_probe_y = np.array(y_arr, copy=True)
 
 
 class BDSim(Runner):
@@ -570,34 +682,34 @@ class BDSim(Runner):
         return str(simstate.solver)
 
     def _dispatch_crossing_event(
-        self, block: Block, t_crossing: float, y_crossing: Any, simstate: BDSimState
+        self,
+        block: Block,
+        t_crossing: float,
+        y_crossing: Any,
+        simstate: BDSimState,
+        state_map: dict[Block, np.ndarray],
     ) -> None:
         """Invoke a crossing event handler if one is defined on the block.
 
         Called when a zero-crossing is detected by the solver.
         """
-        # Ensure block.x references the crossing-state vector so handler-side
-        # state edits (e.g., bounce/reset logic) mutate the canonical state.
-        if y_crossing is not None:
-            try:
-                block.bd.evaluate(
-                    y_crossing, t_crossing, sinks=False, simstate=simstate
-                )
-            except Exception:
-                # If rebinding fails, keep existing behavior and still invoke handler.
-                pass
-
         for handler_name in ("event_handler", "on_event", "handle_event"):
             handler = getattr(block, handler_name, None)
             if callable(handler):
                 try:
-                    handler(t_crossing, y_crossing, simstate)
+                    handler(t_crossing, y_crossing, state_map, simstate)
                 except TypeError:
                     # Backward-compatible fallbacks for simpler signatures.
                     try:
-                        handler(t_crossing, y_crossing)
+                        handler(t_crossing, y_crossing, simstate)
                     except TypeError:
-                        handler(t_crossing)
+                        try:
+                            handler(t_crossing, y_crossing, state_map)
+                        except TypeError:
+                            try:
+                                handler(t_crossing, y_crossing)
+                            except TypeError:
+                                handler(t_crossing)
                 return
 
     def _record_sample_and_service_hooks(
@@ -632,7 +744,7 @@ class BDSim(Runner):
 
         for i, p in enumerate(simstate.watchlist):
             b = p.block
-            out = b.output_safe(t, b.inport_values, b.x)[p.port]
+            out = b.outport_value(p.port)
             simstate.plist[i].append(out)
 
         if simstate.options.animation or (t - simstate.gtime) > (simstate.T / 200):
@@ -925,7 +1037,7 @@ class BDSim(Runner):
                 simstate.t = 0.0
                 simstate.count += 1
                 eval_start = time.time()
-                bd.evaluate([], 0.0, simstate=simstate)
+                bd.evaluate(bd.state_map(np.array([]), simstate), 0.0)
                 eval_end = time.time()
                 simstate.bdtime += eval_end - eval_start
                 self._record_sample_and_service_hooks(
@@ -1037,7 +1149,10 @@ class BDSim(Runner):
                             source.savestate(t1, simstate)
                             source.next_event(simstate)
                             try:
-                                source._set_runtime_state(source.getstate(t1), simstate)
+                                source._set_runtime_state(
+                                    bd.next(t1, bd.state_map(x, simstate))[source],
+                                    simstate,
+                                )
                             except BlockRuntimeError as err:
                                 bd._handle_block_runtime_error(err)
                         elif callable(source):
@@ -1063,7 +1178,10 @@ class BDSim(Runner):
                             source.savestate(t1, simstate)
                             source.next_event(simstate)
                             try:
-                                source._set_runtime_state(source.getstate(t1), simstate)
+                                source._set_runtime_state(
+                                    bd.next(t1, bd.state_map(x, simstate))[source],
+                                    simstate,
+                                )
                             except BlockRuntimeError as err:
                                 bd._handle_block_runtime_error(err)
                         elif callable(source):
@@ -1303,6 +1421,10 @@ class BDSim(Runner):
         to update logs/watchlists/graphics, and dispatches zero-crossing handlers.
         """
 
+        # Event detector probes are valid only within this integration interval,
+        # bounded by the most recent and upcoming scheduled event boundaries.
+        simstate.begin_event_probe_interval(float(t0), float(t1))
+
         def ydot(t, y):
             # This callback is owned by SciPy's adaptive solver.
             # Every call represents one RHS evaluation requested by the
@@ -1311,7 +1433,8 @@ class BDSim(Runner):
             simstate.count += 1
             simstate.stats.ydot_calls += 1
             eval_start = time.time()
-            yd = bd.evaluate(y, t, sinks=False, simstate=simstate)
+            bd.evaluate(bd.state_map(y, simstate), t, sinks=False)
+            yd = bd.deriv(t)
             eval_end = time.time()
             simstate.bdtime += eval_end - eval_start
             return yd
@@ -1330,6 +1453,9 @@ class BDSim(Runner):
         if len(simstate.crossing_detectors) > 0:
             # Crossing detectors: zero-crossing callbacks registered in start().
             # Pass to solve_ivp so root-finding is performed by SciPy.
+            # Detector callbacks are read-only: each callback asks simstate to
+            # ensure one shared propagation for the current probe (t, y), then
+            # returns only its own scalar event metric.
             ivp_args["events"] = [
                 detector for detector, _ in simstate.crossing_detectors
             ]
@@ -1390,7 +1516,7 @@ class BDSim(Runner):
 
             simstate.count += 1
             eval_start = time.time()
-            bd.evaluate(y, t, sinks=False, simstate=simstate)
+            bd.evaluate(bd.state_map(y, simstate), t, sinks=False)
             eval_end = time.time()
             simstate.bdtime += eval_end - eval_start
 
@@ -1416,36 +1542,35 @@ class BDSim(Runner):
             for j, t_crossing in enumerate(crossing_times):
                 crossing_handled = True
                 y_crossing = state_list[j] if j < len(state_list) else None
+                crossing_state_map = bd.state_map(y_crossing, simstate)
+                bd.evaluate(crossing_state_map, float(t_crossing), sinks=False)
                 simstate.stats.events_detected_total += 1
                 simstate.stats.events_detected_by_source[source_name] += 1
                 self._dispatch_crossing_event(
-                    block, float(t_crossing), y_crossing, simstate
+                    block,
+                    float(t_crossing),
+                    y_crossing,
+                    simstate,
+                    crossing_state_map,
                 )
 
         # return final continuous state and actual end time reached
         t_final = float(result.t[-1]) if len(result.t) > 0 else float(t0)
         if len(result.t) > 0:
             if crossing_handled:
-                # Use block state after event-handler side effects.
-                x_final = np.array([])
-                for b in bd.blocklist:
-                    if b.blockclass == "continuous":
-                        xb = b.x
-                        if xb is None:
-                            xb = b.getstate0_safe()
-                        x_final = np.r_[x_final, np.array(xb).reshape(-1)]
+                x_final = bd.continuous_state_vector(crossing_state_map)
 
                 # Ensure logged trajectory reflects any state mutation performed by
-                # crossing handlers (for example STOP handlers that rewrite block.x).
+                # crossing handlers (for example STOP handlers that rewrite state).
                 if len(simstate.xlist) > 0:
                     simstate.xlist[-1] = np.array(x_final, copy=True)
 
                 # Move just beyond the crossing so restart does not re-trigger the same event.
                 _kick_dt = 1e-9
                 try:
-                    _kick_ydot = bd.evaluate(
-                        x_final, t_final, sinks=False, simstate=simstate
-                    )
+                    kick_state_map = bd.state_map(x_final, simstate)
+                    bd.evaluate(kick_state_map, t_final, sinks=False)
+                    _kick_ydot = bd.deriv(t_final)
                     _kick_arr = np.asarray(_kick_ydot)
                     if _kick_arr.size == x_final.size:
                         x_final = x_final + _kick_dt * _kick_arr
@@ -1486,7 +1611,7 @@ class BDSim(Runner):
 
         simstate.count += 1
         eval_start = time.time()
-        bd.evaluate([], t, simstate=simstate)
+        bd.evaluate(bd.state_map(np.array([]), simstate), t)
         eval_end = time.time()
         simstate.bdtime += eval_end - eval_start
 

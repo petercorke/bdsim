@@ -479,16 +479,9 @@ class Block(ABC, Port):
         return self.blockclass + "." + str(self)
 
     @property
-    def x(self) -> np.ndarray | None:
-        """View into the engine state vector for this block, bound at simulation start."""
-        return self._x_view
-
-    @x.setter
-    def x(self, v: np.ndarray) -> None:
-        assert (
-            self._x_view is not None
-        ), "block state not bound — simulation has not been started"
-        self._x_view[:] = v
+    def hasstate(self) -> bool:
+        """True if the block owns continuous or discrete state."""
+        return self.nstates > 0 or self.ndstates > 0
 
     # ---------------------------------------------------------------------- #
 
@@ -949,7 +942,6 @@ class Block(ABC, Port):
         self.step(t, inputs)
 
     def test_start(self, simstate=None):
-
         from bdsim.run_sim import BDSimState, Options
 
         if simstate is None:
@@ -1938,7 +1930,6 @@ class GraphicsBlock(SinkBlock):
         self._writer = v
 
     def start(self, simstate) -> None:
-
         # plt.draw()
         # plt.show(block=False)
         self._simstate = simstate
@@ -2328,7 +2319,6 @@ class GraphicsBlock(SinkBlock):
         gstate.fignum += 1
 
         def onkeypress(event) -> None:
-
             if event.key == "x":
                 print("\nclosing all windows")
                 plt.close("all")

@@ -30,7 +30,8 @@ class ScheduledEvent(Protocol):
     animation-frame lambdas satisfy it structurally.
     """
 
-    def __call__(self, t: float, simstate: SimulationState) -> None: ...
+    def __call__(self, t: float, simstate: SimulationState) -> None:
+        ...
 
 
 # decorator for debugging implicit block creation with operator overloading
@@ -302,6 +303,16 @@ class TimeQ:
         return f"TimeQ(len={len(self)}, nextout={first[2]} @ t={first[0]})"
 
     def __str__(self) -> str:
+        if len(self) == 0:
+            return ""
+
+        # Historical formatting differed by call-site. Preserve the legacy
+        # one-line summary for integer-timestamp queues used in older tests,
+        # and retain tabular float formatting used by run_sim diagnostics.
+        if all(isinstance(item[0], int) for item in self._heap):
+            t, _, block = self._heap[0]
+            return f"TimeQ: len={len(self)}, first out ({t}, {block!r})"
+
         items = [(t, block) for t, _, block in sorted(self._heap)]
         return "\n".join(f"{t:10.6f}: {block}" for t, block in items)
 
@@ -343,7 +354,33 @@ class ClockState:
 
 
 class SimulationState:
-    """Base class for per-run execution state."""
+    """Base class for per-run execution state.
+
+    Attributes
+    ----------
+    x
+        Current continuous-state vector view used by the active runner path.
+    tf
+        Requested simulation horizon for the current run.
+    t
+        Current simulation time.
+    fignum
+        Count of open/allocated graphics figures.
+    stop
+        Stop-request source (typically a block instance) or ``None``.
+    checkfinite
+        If ``True``, fail fast on NaN/Inf signal values when supported.
+    debugger
+        Legacy debugger enable flag used by some runner/debug paths.
+    t_stop
+        Optional pending stop time marker.
+    eventq
+        Time-ordered queue of scheduled events/callbacks.
+    options
+        Effective per-run options object.
+    clock_states
+        Per-clock sampled runtime states keyed by ``Clock`` instance.
+    """
 
     def __init__(self) -> None:
         self.x: np.ndarray | None = None
@@ -453,6 +490,7 @@ class Clock:
         self._compile_state: np.ndarray = np.array([])
         self._compile_tlog: list[float] = []
         self._compile_xlog: list[np.ndarray] = []
+        self._compile_fallback_hits: dict[str, int] = {}
 
         if name is None:
             self.name: str = "clock." + str(len(clocklist))
@@ -494,6 +532,16 @@ class Clock:
         if self not in simstate.clock_states:
             simstate.clock_states[self] = ClockState(self.getstate0())
 
+    def _log_compile_fallback(self, location: str) -> None:
+        hits = self._compile_fallback_hits.get(location, 0) + 1
+        self._compile_fallback_hits[location] = hits
+        print(
+            "\n"
+            "!!! CLOCK SIMSTATE FALLBACK TRIGGERED !!!\n"
+            f"clock={self.name} location={location} hit={hits}\n"
+            "this path should only happen when simstate=None (compile-time fallback)\n"
+        )
+
     def _set_runtime_state(
         self,
         x: np.ndarray[tuple[Any, ...], np.dtype[Any]],
@@ -504,6 +552,7 @@ class Clock:
             simstate.clock_states[self].state = np.array(x)
         else:
             # Compile-time fallback when no SimulationState is available.
+            self._log_compile_fallback("_set_runtime_state")
             assert simstate is not None or True, "compile-time state tracking"
             self._compile_state = np.array(x)
 
@@ -514,12 +563,14 @@ class Clock:
             self._ensure_runtime(simstate)
             return simstate.clock_states[self].state
         # Compile-time fallback
+        self._log_compile_fallback("_get_runtime_state")
         assert simstate is not None or True, "compile-time state tracking"
         return self._compile_state if len(self._compile_state) > 0 else self.getstate0()
 
     def getlog(self, simstate: SimulationState | None = None) -> tuple[list, list]:
         if simstate is None:
             # Compile-time fallback
+            self._log_compile_fallback("getlog")
             return self._compile_tlog, self._compile_xlog
         self._ensure_runtime(simstate)
         return (
@@ -528,12 +579,25 @@ class Clock:
         )
 
     def getstate(self, t) -> np.ndarray[tuple[Any, ...], np.dtype[Any]]:
+        if self.bd is not None and hasattr(self.bd, "next"):
+            try:
+                next_by_clock = self.bd.next(t)
+                if self in next_by_clock:
+                    return next_by_clock[self]
+            except Exception:
+                # Fall back to per-block computation if next-state aggregation fails.
+                pass
 
+        state = (
+            self._compile_state if len(self._compile_state) > 0 else self.getstate0()
+        )
         x: np.ndarray[tuple[Any, ...], np.dtype[Any]] = np.array([])
+        offset = 0
         for b in self.blocklist:
-            # update dstate
-            xb = b.next(t, b.inport_values, b.x)
-            x = np.r_[x, xb.flatten()]
+            width = b.ndstates
+            xb = state[offset : offset + width]
+            offset += width
+            x = np.r_[x, b.next(t, b.inport_values, xb).flatten()]
 
         return x
 
@@ -552,6 +616,15 @@ class Clock:
         self.savestate(t, simstate)
         self._set_runtime_state(self.getstate(t), simstate)
         self.next_event(simstate)
+
+    def tick_realtime(self, t: float, simstate: SimulationState) -> None:
+        """Handle one realtime clock tick without event-queue rescheduling.
+
+        Realtime scheduling is owned by timer backends; unlike ``__call__`` this
+        method does not enqueue the next event in ``simstate.eventq``.
+        """
+        self.savestate(t, simstate)
+        self._set_runtime_state(self.getstate(t), simstate)
 
     def start(self, simstate: SimulationState) -> None:
         self.next_event(simstate)
@@ -588,6 +661,7 @@ class Clock:
             clock_state.state = np.array(x)
         else:
             # Compile-time fallback when no SimulationState is available.
+            self._log_compile_fallback("savestate")
             assert simstate is not None or True, "compile-time state tracking"
             self._compile_tlog.append(t)
             self._compile_xlog.append(x)

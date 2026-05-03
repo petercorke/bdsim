@@ -208,7 +208,9 @@ class Stop(SinkBlock):
             def event_detector(t: float, y: Any) -> float:
                 simstate.t = t
                 simstate.count += 1
-                self.bd.evaluate(y, t, sinks=False, simstate=simstate)
+                # Runtime coordinates one propagation per solve_ivp probe point
+                # across all detectors; this callback only reads the metric.
+                simstate.ensure_event_probe_evaluated(self.bd, t, y)
                 return self._stop_metric(self.inport_values[0])
 
             event_detector.terminal = True  # type: ignore[attr-defined]
@@ -216,7 +218,13 @@ class Stop(SinkBlock):
             self._event_detector = event_detector
             simstate.declare_crossing_event(event_detector, self)
 
-    def event_handler(self, t_crossing: float, y_crossing: Any, simstate: Any) -> None:
+    def event_handler(
+        self,
+        t_crossing: float,
+        y_crossing: Any,
+        state_map: Any,
+        simstate: Any,
+    ) -> None:
         simstate.stop = self
 
     def step(self, t, inputs) -> None:
@@ -310,17 +318,22 @@ class Event(SinkBlock):
             # print("  ydot called at t =", t, "y =", y)
             simstate.t = t
             simstate.count += 1
-            # trigger evaluation of the block diagram at this time/state
-            self.bd.evaluate(y, t, sinks=False, simstate=simstate)
+            # Runtime coordinates one propagation per solve_ivp probe point
+            # across all detectors; this callback only reads the metric.
+            simstate.ensure_event_probe_evaluated(self.bd, t, y)
 
             value = self.inport_values[0]
             if isinstance(value, np.ndarray):
                 if value.size != 1:
-                    raise RuntimeError("EVENT input must be a scalar or 1-element array")
+                    raise RuntimeError(
+                        "EVENT input must be a scalar or 1-element array"
+                    )
                 return float(value.item())
             if isinstance(value, (list, tuple)):
                 if len(value) != 1:
-                    raise RuntimeError("EVENT input must be a scalar or 1-element sequence")
+                    raise RuntimeError(
+                        "EVENT input must be a scalar or 1-element sequence"
+                    )
                 return float(value[0])
             return float(value)
 
@@ -334,8 +347,17 @@ class Event(SinkBlock):
             )
         simstate.declare_crossing_event(event_detector, self)
 
-    def event_handler(self, t_crossing: float, y_crossing: Any, simstate: Any) -> None:
-        self.func(self, *self.args, **self.kwargs)
+    def event_handler(
+        self,
+        t_crossing: float,
+        y_crossing: Any,
+        state_map: Any,
+        simstate: Any,
+    ) -> None:
+        try:
+            self.func(self, state_map, *self.args, **self.kwargs)
+        except TypeError:
+            self.func(self, *self.args, **self.kwargs)
 
     def step(self, t, inputs) -> None:
         pass

@@ -88,6 +88,7 @@ class BlockDiagram(BlockDiagramMixin):
         self.n_auto_const = itertools.count()
         self.n_auto_gain = itertools.count()
         self.n_auto_pow = itertools.count()
+        self._state_map: dict[Block, np.ndarray | None] = {}
 
     def __getitem__(self, id):
         print(id)
@@ -496,11 +497,7 @@ class BlockDiagram(BlockDiagramMixin):
         self.schedule_generate()
 
         ## evaluate the network once to check out wire types
-        x: np.ndarray[tuple[Any, ...], np.dtype[Any]] | Any = self.getstate0()
-
-        for clock in self.clocklist:
-            # Keep compile-time one-shot evaluation stateless with respect to Clock.
-            clock.setstate(simstate=None)
+        state_map = self.initial_state_map()
 
         if report:
             self.report()
@@ -508,7 +505,7 @@ class BlockDiagram(BlockDiagramMixin):
 
         if not subsystem and evaluate:
             # run all the blocks for one step
-            self.evaluate(x, 0.0, sinks=False)
+            self.evaluate(state_map, 0.0, sinks=False)
 
         if error:
             # show report if there was an error
@@ -570,14 +567,76 @@ class BlockDiagram(BlockDiagramMixin):
 
     # ---------------------------------------------------------------------- #
 
-    def evaluate(
-        self, x, t, checkfinite=True, sinks=True, simstate=None
-    ) -> np.ndarray[tuple[Any, ...], np.dtype[Any]] | Any:
+    def initial_state_map(self) -> dict[Block, np.ndarray | None]:
+        """Return a one-shot state map built from each stateful block's x0."""
+        state_map: dict[Block, np.ndarray | None] = {}
+        for b in self.blocklist:
+            if b.hasstate:
+                state_map[b] = np.array(b.getstate0_safe(), copy=True)
+        return state_map
+
+    def state_map(
+        self,
+        continuous_state: np.ndarray[tuple[Any, ...], np.dtype[Any]]
+        | Any
+        | None = None,
+        simstate: SimulationState | None = None,
+    ) -> dict[Block, np.ndarray | None]:
+        """Build a unified block->state map from runtime storage."""
+        state_map: dict[Block, np.ndarray | None] = {}
+
+        continuous = np.array([], dtype=float)
+        if continuous_state is not None:
+            continuous = np.asarray(continuous_state).reshape(-1)
+
+        index = 0
+        for b in self.blocklist:
+            if b.blockclass != "continuous":
+                continue
+            width = b.nstates
+            state_map[b] = continuous[index : index + width]
+            index += width
+
+        for clock in self.clocklist:
+            if simstate is None or clock not in simstate.clock_states:
+                clock_state = np.array(clock.getstate0(), copy=True)
+            else:
+                clock_state = simstate.clock_states[clock].state
+            offset = 0
+            for b in clock.blocklist:
+                width = b.ndstates
+                state_map[b] = clock_state[offset : offset + width]
+                offset += width
+
+        return state_map
+
+    def continuous_state_vector(
+        self, state_map: dict[Block, np.ndarray | None]
+    ) -> np.ndarray[tuple[Any, ...], np.dtype[Any]]:
+        """Flatten the continuous entries of a unified state map."""
+        x = np.array([])
+        for b in self.blocklist:
+            if b.blockclass == "continuous":
+                xb = state_map.get(b)
+                assert xb is not None
+                x = np.r_[x, np.asarray(xb).reshape(-1)]
+        return x
+
+    def set_block_state(
+        self, state_map: dict[Block, np.ndarray | None], block: Block, value: Any
+    ) -> None:
+        """Write a block state back through the shared unified state map."""
+        xb = state_map.get(block)
+        if xb is None:
+            raise ValueError(f"block {block} has no state entry")
+        xb[:] = np.asarray(value).reshape(xb.shape)
+
+    def evaluate(self, state_map, t, checkfinite=True, sinks=True) -> None:
         """
         Evaluate all blocks in the network using the compiled execution schedule
 
-        :param x: state
-        :type x: ndarray
+        :param state_map: block->state map
+        :type state_map: dict
         :param t: current time
         :type t: float
         :param checkfinite: check for Inf or Nan values in block outputs
@@ -585,12 +644,10 @@ class BlockDiagram(BlockDiagramMixin):
         :param sinks: evaluate sink blocks, defaults to Trye
         :type sinks: bool, optional
         :param simstate: simulation state
-        :return: state derivative
-        :rtype: numpy.ndarray
 
         Performs the following steps:
 
-        1. Partition the state vector ``x`` to all stateful blocks
+        1. Read state values from the provided runtime state map
         2. Execute the blocks in the order given by the ``plan``. The block
            outputs are "sent" to their connected inputs.
 
@@ -602,26 +659,22 @@ class BlockDiagram(BlockDiagramMixin):
         # pull the value from connected inputs
 
         try:
-            self.runtime.DEBUG("state", ">>>>>>>>> t={}, x={} >>>>>>>>>>>>>>>>", t, x)
+            self.runtime.DEBUG(
+                "state", ">>>>>>>>> t={}, x={} >>>>>>>>>>>>>>>>", t, state_map
+            )
 
             # reset all the blocks ready for the evalation
             self.reset()
 
-            # split the state vector to stateful blocks
-            for b in self.blocklist:
-                if b.blockclass == "continuous":
-                    x = b.setstate(x)
-
-            # split the discrete state vector to clocked blocks
-            for clock in self.clocklist:
-                clock.setstate(simstate)
+            self._state_map = state_map
 
             self.runtime.DEBUG("propagate", "t={:.3f}", t)
 
             for sequence, group in enumerate(self.plan):
                 for b in group:
                     inports = None if sequence == 0 else b.inport_values
-                    out = b.output_safe(t, inports, b.x)
+                    block_state = state_map.get(b)
+                    out = b.output_safe(t, inports, block_state)
 
                     self.runtime.DEBUG("propagate", "block {:s}: output = {}", b, out)
 
@@ -633,7 +686,7 @@ class BlockDiagram(BlockDiagramMixin):
                             ),
                             t=t,
                             inputs=inports,
-                            state=b.x,
+                            state=block_state,
                         )
                     if len(out) != b.nout:
                         b._raise_runtime_error(
@@ -643,7 +696,7 @@ class BlockDiagram(BlockDiagramMixin):
                             ),
                             t=t,
                             inputs=inports,
-                            state=b.x,
+                            state=block_state,
                         )
 
                     if (
@@ -656,7 +709,7 @@ class BlockDiagram(BlockDiagramMixin):
                             RuntimeError(f"block {b} output contains NaN"),
                             t=t,
                             inputs=inports,
-                            state=b.x,
+                            state=block_state,
                         )
 
                     b._publish_output_values(out)
@@ -665,11 +718,6 @@ class BlockDiagram(BlockDiagramMixin):
                 for b in self.blocklist:
                     if isinstance(b, SinkBlock):
                         b.step_safe(t, b.inport_values)
-
-            YD: np.ndarray[tuple[Any, ...], np.dtype[Any]] | Any = self.deriv(t)
-
-            self.runtime.DEBUG("deriv", YD)
-            return YD
         except BlockRuntimeError as err:
             self._handle_block_runtime_error(err)
 
@@ -700,7 +748,7 @@ class BlockDiagram(BlockDiagramMixin):
         group = []
         for b in self.blocklist:
             b._sequence = None
-            if b.blockclass in ("source", "continuous", "sampled"):
+            if b.blockclass == "source" or b.hasstate:
                 b._sequence = 0
                 group.append(b)
         plan.append(group)
@@ -784,8 +832,8 @@ class BlockDiagram(BlockDiagramMixin):
         if simstate.t_stop is not None and simstate.t < simstate.t_stop:
             return
 
-        def print_output(b, t, inports, x) -> None:
-            out = b.output_safe(t, inports, x)
+        def print_output(b, t, inports) -> None:
+            out = [b.outport_value(i) for i in range(b.nout)]
             if len(out) == 1:
                 print(f"{b.name} = {out[0]}")
             else:
@@ -801,7 +849,7 @@ class BlockDiagram(BlockDiagramMixin):
         if self.debug_watch is not None:
             t = simstate.t
             for b in self.debug_watch:
-                print_output(b, t, b.inport_values, b.x)
+                print_output(b, t, b.inport_values)
 
         while True:
             try:
@@ -816,11 +864,11 @@ class BlockDiagram(BlockDiagramMixin):
                     if len(cmd) > 1:
                         id = int(cmd[1:])
                         b = self.blocklist[id]
-                        print_output(b, t, b.inport_values, b.x)
+                        print_output(b, t, b.inport_values)
                     else:
                         for b in self.blocklist:
                             if b.nout > 0:
-                                print_output(b, t, b.inport_values, b.x)
+                                print_output(b, t, b.inport_values)
                 elif cmd[0] == "i":
                     if integrator is None:
                         print("no active integrator")
@@ -1142,27 +1190,33 @@ class BlockDiagram(BlockDiagramMixin):
         except BlockRuntimeError as err:
             self._handle_block_runtime_error(err)
 
-    def deriv(self, t) -> np.ndarray[tuple[Any, ...], np.dtype[Any]] | Any:
+    def deriv(
+        self,
+        t,
+        state_map: dict[Block, np.ndarray | None] | None = None,
+    ) -> np.ndarray[tuple[Any, ...], np.dtype[Any]] | Any:
         """
         Harvest derivatives from all blocks.
 
         :param t: simulation time, defaults to None
         :type t: float
-        :param simstate: simulation state, defaults to None
-        :type simstate: SimState, optional
+        :param state_map: optional block->state map, defaults to most recent evaluate
+        :type state_map: dict, optional
         """
         try:
+            active_state_map = self._state_map if state_map is None else state_map
             YD: np.ndarray[tuple[Any, ...], np.dtype[Any]] = np.array([])
             for b in self.blocklist:
                 if b.blockclass == "continuous":
-                    yd = b.deriv_safe(t, b.inport_values, b.x)
+                    block_state = active_state_map.get(b)
+                    yd = b.deriv_safe(t, b.inport_values, block_state)
                     if not isinstance(yd, np.ndarray):
                         b._raise_runtime_error(
                             "deriv",
                             AssertionError(f"deriv: block {b} did not return ndarray"),
                             t=t,
                             inputs=b.inport_values,
-                            state=b.x,
+                            state=block_state,
                         )
                     if yd.ndim != 1 or yd.shape[0] != b.nstates:
                         b._raise_runtime_error(
@@ -1172,12 +1226,30 @@ class BlockDiagram(BlockDiagramMixin):
                             ),
                             t=t,
                             inputs=b.inport_values,
-                            state=b.x,
+                            state=block_state,
                         )
                     YD = np.r_[YD, yd]
+            self.runtime.DEBUG("deriv", YD)
             return YD
         except BlockRuntimeError as err:
             self._handle_block_runtime_error(err)
+
+    def next(
+        self,
+        t,
+        state_map: dict[Block, np.ndarray | None] | None = None,
+    ) -> dict[Clock, np.ndarray[tuple[Any, ...], np.dtype[Any]]]:
+        """Harvest discrete next-state values grouped by clock."""
+        active_state_map = self._state_map if state_map is None else state_map
+        clock_next: dict[Clock, np.ndarray[tuple[Any, ...], np.dtype[Any]]] = {}
+        for clock in self.clocklist:
+            x_next: np.ndarray[tuple[Any, ...], np.dtype[Any]] = np.array([])
+            for b in clock.blocklist:
+                block_state = active_state_map.get(b)
+                xb = b.next_safe(t, b.inport_values, block_state)
+                x_next = np.r_[x_next, xb.flatten()]
+            clock_next[clock] = x_next
+        return clock_next
 
     def start(self, simstate: SimulationState) -> None:
         """
@@ -1221,9 +1293,7 @@ class BlockDiagram(BlockDiagramMixin):
             self._handle_block_runtime_error(err)
 
     def initialstate(self) -> None:
-        for b in self.blocklist:
-            if b.blockclass in ("continuous", "sampled"):
-                b.x = b._x0
+        self._state_map = self.initial_state_map()
 
     def done(self, block=False) -> None:
         """
@@ -1366,7 +1436,7 @@ class BlockDiagram(BlockDiagramMixin):
             print("Block {:s}:".format(b.name))
             print("  inputs:  ", b.inport_values)
             if b.nout > 0:
-                print("  outputs: ", b.output_safe(t, b.inport_values, b.x))
+                print("  outputs: ", [b.outport_value(i) for i in range(b.nout)])
 
 
 if __name__ == "__main__":  # pragma: no cover

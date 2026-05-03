@@ -139,7 +139,7 @@ class Integrator(ContinuousBlock):
         xd = smb.getvector(u[0])
         if self.enable is not None and not self.enable(t, u, x):
             # if enable function returns False then integrator output is jammed at zero
-            self.x = np.zeros_like(x, dtype=float)
+            x[:] = 0.0
             return np.zeros(x.shape)
 
         # stop integration if state is outside limits

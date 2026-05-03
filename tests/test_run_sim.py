@@ -27,7 +27,7 @@ from types import SimpleNamespace
 import numpy as np
 
 import bdsim
-from bdsim.exceptions import IntegrationFailureError
+from bdsim.exceptions import EventProbeOutsideIntervalError, IntegrationFailureError
 from bdsim.run_sim import TimeQ, Progress, BDSimState, BDSim, Options, _LazyBlockClass
 
 
@@ -148,6 +148,20 @@ class BDSimStateTest(unittest.TestCase):
         state = BDSimState()
         state.declare_event("some_block", 1.5)
         self.assertEqual(len(state.eventq), 1)
+
+    def test_event_probe_outside_interval_raises(self):
+        state = BDSimState()
+        state.begin_event_probe_interval(0.1, 0.2)
+
+        class _DummyBD:
+            def state_map(self, y, simstate):
+                return {}
+
+            def evaluate(self, state_map, t, sinks=False):
+                return None
+
+        with self.assertRaises(EventProbeOutsideIntervalError):
+            state.ensure_event_probe_evaluated(_DummyBD(), 0.05, np.array([0.0]))
 
 
 # ---------------------------------------------------------------------------
@@ -471,16 +485,16 @@ class SimRunCoverageTest(unittest.TestCase):
         self.assertGreaterEqual(len(crossing_calls), 1)
 
     def test_stop_handler_state_mutation_persists(self):
-        """STOP crossing handler edits to block.x must persist in final state."""
+        """STOP crossing handler edits to the unified state map must persist."""
         bd = self.sim.blockdiagram()
         step = bd.STEP(T=0, off=1, on=1)
         integ = bd.INTEGRATOR(x0=0)
         stop = bd.STOP(lambda x: x - 0.2)
 
-        def stop_and_reset(t_crossing, y_crossing, simstate):
+        def stop_and_reset(t_crossing, y_crossing, state_map, simstate):
             # If this writes to a local copy, returned final state remains near 0.2.
             # Correct behavior writes through to canonical state and final state is 0.
-            integ.x = np.r_[0.0]
+            state_map[integ][:] = np.r_[0.0]
             simstate.stop = stop
 
         stop.event_handler = stop_and_reset
@@ -496,6 +510,70 @@ class SimRunCoverageTest(unittest.TestCase):
         self.assertIsNotNone(out.x)
         final_x = float(np.asarray(out.x).reshape(-1)[-1])
         self.assertAlmostEqual(final_x, 0.0, delta=1e-6)
+
+    def test_hybrid_crossing_state_map_mutation_persists_into_clock_ticks(self):
+        """Crossing-handler state_map edits should persist for continuous and sampled state.
+
+        This is an end-to-end hybrid regression:
+        - continuous state is reset via crossing handler
+        - sampled clocked state is rewritten via the same state_map
+        - subsequent clock ticks must evolve from the rewritten sampled state
+        """
+
+        bd = self.sim.blockdiagram()
+
+        # continuous path: xdot = 1, crossing at x=0.2
+        src_c = bd.CONSTANT(1.0)
+        integ = bd.INTEGRATOR(x0=0.0)
+        thresh = bd.CONSTANT(0.2)
+        err = bd.SUM("+-")
+
+        # sampled path: nominally constant at 5.0 unless crossing mutates it
+        clock = bd.clock(10, "Hz")
+        src_d = bd.CONSTANT(0.0)
+        dint = bd.INTEGRATOR_S(clock, x0=5.0)
+
+        sink_c = bd.NULL()
+        sink_d = bd.NULL()
+
+        crossing_calls = []
+
+        def on_crossing(event_block, state_map):
+            crossing_calls.append(True)
+            # reset continuous state at crossing
+            state_map[integ][:] = np.r_[0.0]
+            # force sampled state to a new baseline that should appear in clock trace
+            state_map[dint][:] = np.r_[9.0]
+
+        evt = bd.EVENT("+", on_crossing)
+
+        bd.connect(src_c, integ)
+        bd.connect(integ, sink_c)
+        bd.connect(integ, err[0])
+        bd.connect(thresh, err[1])
+        bd.connect(err, evt)
+
+        bd.connect(src_d, dint)
+        bd.connect(dint, sink_d)
+
+        bd.compile(verbose=False)
+
+        out = self.sim.run(bd, T=0.5)
+
+        self.assertGreaterEqual(len(crossing_calls), 1)
+
+        # Continuous trajectory should be well below the no-reset value (~0.5)
+        # because crossing-handler state reset(s) were applied.
+        self.assertIsNotNone(out.x)
+        final_x = float(np.asarray(out.x).reshape(-1)[-1])
+        self.assertGreater(final_x, 0.0)
+        self.assertLess(final_x, 0.25)
+
+        # Sampled clock trace should include pre-crossing state (~5) and mutated state (~9).
+        self.assertTrue(hasattr(out, "clock0"))
+        sampled_trace = np.asarray(out.clock0.x).reshape(-1)
+        self.assertTrue(np.any(np.isclose(sampled_trace, 5.0, atol=1e-9)))
+        self.assertTrue(np.any(np.isclose(sampled_trace, 9.0, atol=1e-9)))
 
     def test_stop_crossing_in_continuous_mode_stops_without_large_t_delay(self):
         """STOP should terminate near the crossing time even when T is very large."""

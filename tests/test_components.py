@@ -9,7 +9,6 @@ from bdsim import BDSim, TimeQ, BlockDiagram
 
 class WireTest(unittest.TestCase):
     def test_init(self):
-
         b1 = Constant(2, name="block1")
         b2 = Null()
 
@@ -40,7 +39,6 @@ class WireTest(unittest.TestCase):
 
 class PlugTest(unittest.TestCase):
     def test_portlist(self):
-
         block = Mux(5)
         p = Plug(block, type="end")
         p = block[3]
@@ -71,7 +69,6 @@ class BlockTest(unittest.TestCase):
         b1.info
 
     def test_predicates(self):
-
         b1 = Scope()
         b2 = Constant(2)
         b3 = ZOH(Clock(1))
@@ -144,7 +141,6 @@ class PriorityQTest(unittest.TestCase):
 
 class ClockTest(unittest.TestCase):
     def test_init(self):
-
         c = Clock(2)
         self.assertEqual(c.T, 2)
         self.assertEqual(c.offset, 0)
@@ -166,7 +162,6 @@ class ClockTest(unittest.TestCase):
         self.assertEqual(c.blocklist[0], block)
 
     def test_str(self):
-
         global clocklist
         clocklist.clear()
 
@@ -203,10 +198,7 @@ class ClockTest(unittest.TestCase):
         self.assertEqual(len(c.blocklist), 2)
         nt.assert_almost_equal(c.getstate0(), np.r_[3, 4])
 
-        c._x = np.r_[5, 6]
-        c.setstate()
-        nt.assert_almost_equal(block1.x, np.r_[5])
-        nt.assert_almost_equal(block2.x, np.r_[6])
+        c._compile_state = np.r_[5, 6]
 
         nt.assert_almost_equal(c.getstate(0.0), np.r_[13, 14])
 
@@ -231,7 +223,6 @@ class StructTest(unittest.TestCase):
         self.assertEqual(str(x), "")
 
     def test_struct(self):
-
         x = BDStruct()
         x.a = 1
         x.b = "hello"
@@ -267,7 +258,6 @@ class StructTest(unittest.TestCase):
         self.assertEqual(x["b"], "hello")
 
     def test_init(self):
-
         s = BDStruct(a=2, b=3)
         self.assertEqual(s.a, 2)
         self.assertEqual(s.b, 3)
@@ -380,7 +370,6 @@ class OptionTest(unittest.TestCase):
 
 # ---------------------------------------------------------------------------------------#
 if __name__ == "__main__":
-
     # opt = OptionsBase(dict(foo=1, bar='hello'), dict(foo=2))
 
     # opt.set(foo=3)

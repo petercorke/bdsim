@@ -4,6 +4,7 @@ import io
 import numpy as np
 import scipy.interpolate
 import math
+from types import SimpleNamespace
 
 import bdsim
 import unittest
@@ -26,7 +27,6 @@ class WiringTest(unittest.TestCase):
         cls.sim = bdsim.BDSim(animation=False)  # create simulator
 
     def test_bd(self):
-
         bd1 = self.sim.blockdiagram()
         bd2 = self.sim.blockdiagram()
         self.assertEqual(len(bd1), 0)
@@ -41,17 +41,15 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd2), 1)
 
     def test_connect_1(self):
-
         bd = self.sim.blockdiagram()
         src = bd.CONSTANT(2)
         dst = bd.NULL(1)  # 1 port
         bd.connect(src, dst)
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values[0], 2)
 
     def test_connect_2(self):
-
         bd = self.sim.blockdiagram()
         src = bd.CONSTANT(2)
         dst1 = bd.NULL(1)  # 1 port
@@ -59,26 +57,24 @@ class WiringTest(unittest.TestCase):
         bd.connect(src, dst1)
         bd.connect(src, dst2)
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst1.inport_values[0], 2)
         self.assertEqual(dst2.inport_values[0], 2)
 
     def test_wire_value_published_on_evaluate(self):
-
         bd = self.sim.blockdiagram()
         src = bd.CONSTANT(2)
         dst = bd.NULL(1)
         bd.connect(src, dst)
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
 
         inwire = dst._input_wires[0]
         assert inwire is not None
         self.assertEqual(inwire.value, 2)
 
     def test_fanout_wires_receive_same_value(self):
-
         bd = self.sim.blockdiagram()
         src = bd.CONSTANT(2)
         dst1 = bd.NULL(1)
@@ -87,14 +83,13 @@ class WiringTest(unittest.TestCase):
         bd.connect(src, dst2)
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
 
         outwires = src._output_wires[0]
         self.assertEqual(len(outwires), 2)
         self.assertTrue(all(w.value == 2 for w in outwires))
 
     def test_inport_reads_wire_value_without_source_cache(self):
-
         bd = self.sim.blockdiagram()
         src = bd.CONSTANT(2)
         dst = bd.NULL(1)
@@ -110,19 +105,17 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(dst.inport_value(0), 42)
 
     def test_multi_connect(self):
-
         bd = self.sim.blockdiagram()
         src = bd.CONSTANT(2)
         dst1 = bd.NULL(1)  # 1 port
         dst2 = bd.NULL(1)  # 1 port
         bd.connect(src, dst1, dst2)
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst1.inport_values[0], 2)
         self.assertEqual(dst2.inport_values[0], 2)
 
     def test_ports1(self):
-
         bd = self.sim.blockdiagram()
         const1 = bd.CONSTANT(2)
         const2 = bd.CONSTANT(3)
@@ -131,11 +124,10 @@ class WiringTest(unittest.TestCase):
         bd.connect(const1, dst[0])
         bd.connect(const2, dst[1])
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [2, 3])
 
     def test_ports2(self):
-
         bd = self.sim.blockdiagram()
         const = bd.CONSTANT([2, 3])
         src = bd.DEMUX(2)
@@ -147,12 +139,11 @@ class WiringTest(unittest.TestCase):
         bd.connect(src[0], dst1)
         bd.connect(src[1], dst2)
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst1.inport_values, [2])
         self.assertEqual(dst2.inport_values, [3])
 
     def test_ports3(self):
-
         bd = self.sim.blockdiagram()
 
         const = bd.CONSTANT([2, 3, 4, 5])
@@ -165,11 +156,10 @@ class WiringTest(unittest.TestCase):
         bd.connect(src[2], dst[2])
         bd.connect(src[3], dst[3])
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [2, 3, 4, 5])
 
     def test_slice1(self):
-
         bd = self.sim.blockdiagram()
 
         src = bd.CONSTANT(2)
@@ -177,11 +167,10 @@ class WiringTest(unittest.TestCase):
         bd.connect(src, dst[0])
         bd.connect(src, dst[1])
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [2, 2])
 
     def test_slice2(self):
-
         bd = self.sim.blockdiagram()
 
         const = bd.CONSTANT([2, 3, 4, 5])
@@ -191,11 +180,10 @@ class WiringTest(unittest.TestCase):
         dst = bd.NULL(4)  # 4 ports
         bd.connect(src[0:4], dst[0:4])
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [2, 3, 4, 5])
 
     def test_slice3(self):
-
         bd = self.sim.blockdiagram()
 
         const = bd.CONSTANT([2, 3, 4, 5])
@@ -205,11 +193,10 @@ class WiringTest(unittest.TestCase):
         dst = bd.NULL(4)  # 4 ports
         bd.connect(src[0:4], dst[3:-1:-1])
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [5, 4, 3, 2])
 
     def test_slice4(self):
-
         bd = self.sim.blockdiagram()
 
         const = bd.CONSTANT([2, 3, 4, 5])
@@ -219,11 +206,10 @@ class WiringTest(unittest.TestCase):
         dst = bd.NULL(4)  # 4 ports
         bd.connect(src[3:-1:-1], dst[0:4])
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [5, 4, 3, 2])
 
     def test_slice5(self):
-
         bd = self.sim.blockdiagram()
 
         const = bd.CONSTANT([2, 3, 4, 5])
@@ -234,11 +220,10 @@ class WiringTest(unittest.TestCase):
         bd.connect(src[0:4:2], dst[0:4:2])  # 0, 2
         bd.connect(src[1:4:2], dst[1:4:2])  # 1, 3
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [2, 3, 4, 5])
 
     def test_slice5a(self):
-
         bd = self.sim.blockdiagram()
 
         const = bd.CONSTANT([2, 3, 4, 5])
@@ -249,11 +234,10 @@ class WiringTest(unittest.TestCase):
         bd.connect(src[0:4:2], dst[0:2])  # 0, 2
         bd.connect(src[1:4:2], dst[2:4])  # 1, 3
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [2, 4, 3, 5])
 
     def test_slice6(self):
-
         bd = self.sim.blockdiagram()
 
         const = bd.CONSTANT([2, 3, 4, 5])
@@ -263,11 +247,10 @@ class WiringTest(unittest.TestCase):
         dst = bd.NULL(4)  # 4 ports
         bd.connect(src[3:-1:-1], dst[3:-1:-1])
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [2, 3, 4, 5])
 
     def test_assignment11(self):
-
         bd = self.sim.blockdiagram()
 
         src = bd.CONSTANT(2)
@@ -276,11 +259,10 @@ class WiringTest(unittest.TestCase):
         dst[0] = src
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values[0], 2)
 
     def test_assignment2(self):
-
         bd = self.sim.blockdiagram()
 
         const1 = bd.CONSTANT(2)
@@ -292,7 +274,7 @@ class WiringTest(unittest.TestCase):
         dst[1] = const2
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [2, 3])
 
     def test_assignment3(self):
@@ -307,7 +289,7 @@ class WiringTest(unittest.TestCase):
         dst[3:-1:-1] = src[0:4]
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [5, 4, 3, 2])
 
     def test_chain1(self):
@@ -318,7 +300,7 @@ class WiringTest(unittest.TestCase):
         dst[0] = bd.CONSTANT(2) >> bd.GAIN(3)
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [6])
 
     def test_chain2(self):
@@ -329,7 +311,7 @@ class WiringTest(unittest.TestCase):
         dst[0] = bd.CONSTANT(2) >> bd.GAIN(3) >> bd.GAIN(4)
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [24])
 
     def test_chain3(self):
@@ -345,7 +327,7 @@ class WiringTest(unittest.TestCase):
         dst[1] = src[1] >> bd.GAIN(3)
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [4, 9])
 
     def test_inline1(self):
@@ -358,7 +340,7 @@ class WiringTest(unittest.TestCase):
         dst[0] = bd.SUM("++", inputs=(const1, const2))
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [5])
 
     def test_inline2(self):
@@ -371,7 +353,7 @@ class WiringTest(unittest.TestCase):
         dst[0] = bd.SUM("++", inputs=(const1, const2)) >> bd.GAIN(2)
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [10])
 
     def test_autosum1(self):
@@ -386,7 +368,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [5])
 
     def test_autosum2a(self):
@@ -401,7 +383,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [5])
 
     def test_autosum2b(self):
@@ -416,7 +398,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [5])
 
     def test_autosum2c(self):
@@ -431,7 +413,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [5])
 
     def test_autosum3a(self):
@@ -445,7 +427,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [5])
 
     def test_autosum3b(self):
@@ -459,7 +441,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [5])
 
     # ----------------------------------------------
@@ -475,7 +457,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [-1])
 
     def test_autosub2a(self):
@@ -490,7 +472,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [-1])
 
     def test_autosub2b(self):
@@ -505,7 +487,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [-1])
 
     def test_autosub2c(self):
@@ -520,7 +502,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [-1])
 
     def test_autosub3a(self):
@@ -534,7 +516,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [-1])
 
     def test_autosub3b(self):
@@ -548,7 +530,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [-1])
 
     # ----------------------------------------------
@@ -564,7 +546,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 3)
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [-2])
 
     def test_autoneg2(self):
@@ -578,7 +560,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 3)
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [-2])
 
     # ----------------------------------------------
@@ -595,7 +577,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [6])
 
     def test_autoprod2a(self):
@@ -610,7 +592,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [1.5])
 
     def test_autoprod2b(self):
@@ -625,7 +607,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [1.5])
 
     def test_autoprod2c(self):
@@ -640,7 +622,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [1.5])
 
     def test_autoprod3a(self):
@@ -655,7 +637,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 3)
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [6])
 
     def test_autoprod3b(self):
@@ -670,7 +652,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 3)
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [6])
 
     # ----------------------------------------------
@@ -687,7 +669,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [1.5])
 
     def test_autodiv2a(self):
@@ -702,7 +684,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [1.5])
 
     def test_autodiv2b(self):
@@ -717,7 +699,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [1.5])
 
     def test_autodiv2c(self):
@@ -732,7 +714,7 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [1.5])
 
     def test_autodiv3a(self):
@@ -747,10 +729,10 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [1.5])
 
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [1.5])
 
     def test_autodiv3b(self):
@@ -765,12 +747,11 @@ class WiringTest(unittest.TestCase):
         self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [1.5])
 
 
 class LabelTest(unittest.TestCase):
-
     @unittest.skip("legacy/manual label wiring test")
     def test_label1(self):
         bd = bdsim.BDSim(animation=False).blockdiagram()
@@ -780,7 +761,6 @@ class LabelTest(unittest.TestCase):
 
     @unittest.skip("legacy manual subclass metadata test")
     def test_label2(self):
-
         # provide labels and number of ports as class variables, and check that they are captured correctly by __init_subclass__
 
         class MyBlock(bdsim.Block):
@@ -1038,7 +1018,7 @@ class ConnectVariantsTest(SetUpMixin, unittest.TestCase):
         bd.connect(src, dst[0:1])
         bd.connect(src, dst[1])
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values[0], 2)
 
     def test_connect_block_to_wide_slice_plug(self):
@@ -1051,7 +1031,7 @@ class ConnectVariantsTest(SetUpMixin, unittest.TestCase):
         # demux has nout=2; connect its outputs to dst[0:2]
         bd.connect(demux, dst[0:2])
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values[0], 7)
         self.assertEqual(dst.inport_values[1], 8)
 
@@ -1064,7 +1044,7 @@ class ConnectVariantsTest(SetUpMixin, unittest.TestCase):
         bd.connect(src[0], dst[0:1])
         bd.connect(src, dst[1])
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values[0], 2)
 
     def test_connect_slice_to_block_raises(self):
@@ -1257,8 +1237,102 @@ class StateAndResetTest(SetUpMixin, unittest.TestCase):
 
     def test_step(self):
         bd, _, _ = self._simple_bd()
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         bd.step(0.0)  # calls SinkBlock.step for each sink block
+
+
+# ---------------------------------------------------------------------------
+class StateMappingTest(SetUpMixin, unittest.TestCase):
+    """Focused tests for state vectors/maps and mutation semantics."""
+
+    def _hybrid_bd(self):
+        """Compiled BD with one continuous and one sampled state block."""
+        bd = self.sim.blockdiagram()
+        clk = bd.clock(0.1)
+        src = bd.CONSTANT(1.0)
+        cint = bd.INTEGRATOR(x0=2.0)
+        sint = bd.INTEGRATOR_S(clk, x0=3.0)
+        n1 = bd.NULL(1)
+        n2 = bd.NULL(1)
+        bd.connect(src, cint)
+        bd.connect(src, sint)
+        bd.connect(cint, n1)
+        bd.connect(sint, n2)
+        bd.compile(verbose=False)
+        return bd, clk, src, cint, sint
+
+    def test_initial_state_map_includes_only_stateful_blocks(self):
+        bd, _, src, cint, sint = self._hybrid_bd()
+
+        state_map = bd.initial_state_map()
+
+        self.assertIn(cint, state_map)
+        self.assertIn(sint, state_map)
+        self.assertNotIn(src, state_map)
+        nt.assert_almost_equal(state_map[cint], np.r_[2.0])
+        nt.assert_almost_equal(state_map[sint], np.r_[3.0])
+
+    def test_state_map_continuous_entries_are_views(self):
+        bd = self.sim.blockdiagram()
+        src = bd.CONSTANT(1.0)
+        cint = bd.INTEGRATOR(x0=0.0)
+        null = bd.NULL(1)
+        bd.connect(src, cint)
+        bd.connect(cint, null)
+        bd.compile(verbose=False)
+
+        x = np.r_[10.0]
+        state_map = bd.state_map(x)
+        state_map[cint][0] = 11.0
+
+        self.assertEqual(x[0], 11.0)
+        nt.assert_almost_equal(bd.continuous_state_vector(state_map), np.r_[11.0])
+
+    def test_state_map_sampled_entries_are_views(self):
+        bd, clk, _, cint, sint = self._hybrid_bd()
+
+        x = np.r_[20.0]
+        sampled_store = np.r_[30.0]
+        simstate = SimpleNamespace(
+            clock_states={clk: SimpleNamespace(state=sampled_store)}
+        )
+
+        state_map = bd.state_map(x, simstate)
+        state_map[cint][0] = 21.0
+        state_map[sint][0] = 31.0
+
+        self.assertEqual(x[0], 21.0)
+        self.assertEqual(sampled_store[0], 31.0)
+
+    def test_set_block_state_mutates_dict_and_rejects_stateless(self):
+        bd, _, src, cint, sint = self._hybrid_bd()
+        state_map = bd.initial_state_map()
+
+        bd.set_block_state(state_map, cint, np.r_[5.0])
+        bd.set_block_state(state_map, sint, np.r_[7.0])
+
+        nt.assert_almost_equal(state_map[cint], np.r_[5.0])
+        nt.assert_almost_equal(state_map[sint], np.r_[7.0])
+
+        with self.assertRaises(ValueError):
+            bd.set_block_state(state_map, src, np.r_[1.0])
+
+    def test_evaluate_deriv_next_with_explicit_state_map(self):
+        bd, clk, _, cint, sint = self._hybrid_bd()
+
+        x = np.r_[2.0]
+        simstate = SimpleNamespace(
+            clock_states={clk: SimpleNamespace(state=np.r_[3.0])}
+        )
+        state_map = bd.state_map(x, simstate)
+
+        bd.evaluate(state_map, 0.0, sinks=False)
+        yd = bd.deriv(0.0, state_map)
+        x_next = bd.next(0.0, state_map)
+
+        nt.assert_almost_equal(yd, np.r_[1.0])
+        self.assertIn(clk, x_next)
+        nt.assert_almost_equal(x_next[clk], np.r_[3.1])
 
 
 # ---------------------------------------------------------------------------
@@ -1267,7 +1341,7 @@ class BlockValuesTest(SetUpMixin, unittest.TestCase):
 
     def test_blockvalues_after_evaluate(self):
         bd, _, _ = self._simple_bd()
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         # blockvalues() calls b.output() for all blocks including sink blocks
         # (Null) that have no output method; tolerate that AttributeError while
         # still exercising the lines that print block names and inport_values.
@@ -1319,17 +1393,18 @@ class ClockedBlockTest(SetUpMixin, unittest.TestCase):
     def test_report_summary_clocked(self):
         """report_summary() tabulates all blocks including clocked (lines 913-973)."""
         bd, _, _, _, _ = self._clocked_bd()
-        bd.evaluate(bd.getstate0(), 0.0)
+        bd.evaluate(bd.state_map(bd.getstate0()), 0.0)
         bd.report_summary()  # should not raise
 
     def test_start_with_simstate_clocked(self):
         """bd.start(simstate) invokes clock.start → declare_event (lines 1206-1209)."""
         from unittest.mock import MagicMock
-        from collections import defaultdict
+        from bdsim.components import ClockState
 
         bd, clk, _, _, _ = self._clocked_bd()
         simstate = MagicMock()
-        simstate.clock_ticks = defaultdict(lambda: 1)
+        simstate.clock_states = {}
+        simstate.clock_states[clk] = ClockState(clk.getstate0())
         bd.start(simstate=simstate)
         simstate.declare_event.assert_called_once_with(clk, clk.time(1))
 
@@ -1340,12 +1415,12 @@ class ReportSummaryTest(SetUpMixin, unittest.TestCase):
 
     def test_report_summary_simple(self):
         bd, _, _ = self._simple_bd()
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         bd.report_summary()
 
     def test_report_summary_sortby_type(self):
         bd, _, _ = self._simple_bd()
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         bd.report_summary(sortby="type")
 
     def test_report_summary_multi_input(self):
@@ -1359,7 +1434,7 @@ class ReportSummaryTest(SetUpMixin, unittest.TestCase):
         bd.connect(b, s[1])
         bd.connect(s, null)
         bd.compile(verbose=False)
-        bd.evaluate(x=[], t=0)
+        bd.evaluate({}, 0)
         bd.report_summary()  # covers both the first-port and subsequent-port rows
 
 

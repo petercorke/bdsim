@@ -22,8 +22,8 @@ scope = bd.SCOPE(styles=["k", "r--"], loc="lower right")
 
 
 # detect when the ball hits the ground (position=0) and trigger an event
-def impact(x):
-    velocity.x *= -e  # reverse velocity and apply restitution
+def impact(event_block, state_map):
+    state_map[velocity] *= -e  # reverse velocity and apply restitution
 
 
 # connect the impact function to the event triggered when position crosses zero from above
