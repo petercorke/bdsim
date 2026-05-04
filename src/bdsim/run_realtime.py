@@ -1,22 +1,33 @@
-"""Real-time execution support for block diagrams."""
-
 from __future__ import annotations
-
-import math
-import re
+import os
+from pathlib import Path
 import sys
-import time
+import importlib
+import inspect
+from collections import Counter, namedtuple
+import argparse
+import types
 import warnings
-from typing import Any
+
+from bdsim.blockdiagram import BlockDiagram
+from bdsim.components import OptionsBase, Block, Clock, BDStruct, Plug, clocklist
+import copy
+import tempfile
+import subprocess
+import webbrowser
 
 import numpy as np
-from colored import attr, fg
+import scipy.integrate as integrate
+import matplotlib.pyplot as plt
+import re
+from colored import fg, attr
+import math
 
-from bdsim.exceptions import BlockRuntimeError
-from bdsim.components import BDStruct, Block, OptionsBase, SimulationState
-from bdsim.connect import Plug
-from bdsim.run_context import SimulationContext
-from bdsim.run_sim import BDSim
+import threading
+import time
+import threading
+
+from bdsim.run_sim import BDSim, TimeQ, blockname
 
 
 # class TimeQRT(TimeQ):
@@ -92,44 +103,56 @@ from bdsim.run_sim import BDSim
 #         self.join()
 
 
-class BDRealTimeState(SimulationState):
-    """
-    Realtime-specific simulation state, extending SimulationState
-    with realtime-specific fields.
+class BDRealTimeState:
 
-    :ivar dt: sample time interval (seconds)
-    :ivar watchlist: list of plugs to watch
-    :ivar watchnamelist: list of watch port names
-    :ivar tlist: list of time samples
-    :ivar plist: list of output port records
+    """
+    :ivar x: state vector
+    :vartype x: np.ndarray
+    :ivar T: maximum simulation time (seconds)
+    :vartype T: float
+    :ivar t: current simulation time (seconds)
+    :vartype t: float
+    :ivar fignum: number of next matplotlib figure to create
+    :vartype fignum: int
+    :ivar stop: reference to block wanting to stop simulation, else None
+    :vartype stop: Block subclass
+    :ivar checkfinite: halt simulation if any wire has inf or nan
+    :vartype checkfinite: bool
+    :ivar graphics: enable graphics
+    :vartype graphics: bool
     """
 
-    def __init__(self) -> None:
-        super().__init__()
-        # realtime-specific fields
-        self.dt: float | None = None
-        self.watchlist: list = []
-        self.watchnamelist: list = []
-        self.tlist: list = []
-        self.xlist: list = []
-        self.plist: list = []
+    def __init__(self):
+        self.x = None  # continuous state vector numpy.ndarray
+        self.T = None  # maximum.BlockDiagram time
+        self.t = None  # current time
+        self.fignum = 0
+        self.stop = None
+        self.checkfinite = True
+
+        self.debugger = True
+        self.t_stop = None  # time-based breakpoint
+        self.eventq = TimeQ()
+
+    def declare_event(self, block, t):
+        self.eventq.push((t, block))
 
 
 class SimpleStats:
-    def __init__(self) -> None:
+    def __init__(self):
         self._n = 0
         self._sum = 0
         self._sum2 = 0
         self._max = 0
 
-    def update(self, x) -> None:
+    def update(self, x):
         self._n += 1
         self._sum += x
         self._sum2 += x**2
-        self._max: int = max(self._max, x)
+        self._max = max(self._max, x)
 
     @property
-    def n(self) -> int:
+    def n(self):
         return self._n
 
     @property
@@ -137,11 +160,11 @@ class SimpleStats:
         return self._sum / self._n
 
     @property
-    def sdev(self) -> float:
+    def sdev(self):
         return math.sqrt((self._sum2 - self._sum**2 / self._n) / (self._n - 1))
 
     @property
-    def max(self) -> int:
+    def max(self):
         return self._max
 
 
@@ -149,14 +172,13 @@ class BDRealTime(BDSim):
     def run(
         self,
         bd,
-        tf=5,
+        T=5,
         dt=None,
         block=None,
         checkfinite=True,
         watch=[],
         samples=True,
-        T=None,
-    ) -> BDStruct:
+    ):
         """
         Run the block diagram
 
@@ -219,153 +241,126 @@ class BDRealTime(BDSim):
 
         assert bd.compiled, "Network has not been compiled"
 
-        if T is not None:
-            warnings.warn(
-                "run(T=...) is deprecated, use run(tf=...) instead",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            tf = T
+        state = BDRealTimeState()
+        self.state = state
+        self.bd = bd
 
-        simstate = BDRealTimeState()
-        assert self.options is not None
-        options: OptionsBase = self.options.copy()
-        if dt is None:
-            dt = tf / 100
+        state.T = T
+        state.dt = dt
+        state.options = self.options
 
-        # Create per-run context
-        context = SimulationContext(
-            bd=bd, simstate=simstate, options=options, progress=None, threaded=False
-        )
-        self._set_context(context)
+        # process the watchlist
+        #  elements can be:
+        #   - block or Plug reference
+        #   - str in the form BLOCKNAME[PORT]
+        watchlist = []
+        watchnamelist = []
+        re_block = re.compile(r"(?P<name>[^[]+)(\[(?P<port>[0-9]+)\])")
+        for w in watch:
+            if isinstance(w, str):
+                # a name was given, with optional port number
+                m = re_block.match(w)
+                if m is None:
+                    raise ValueError("watch block[port] not found: " + w)
+                name = m.group("name")
+                port = int(m.group("port"))
+                b = bd.blocknames[name]
+                plug = b[port]
+            elif isinstance(w, Block):
+                # a block was given, defaults to port 0
+                plug = w[0]
+            elif isinstance(w, Plug):
+                # a plug was given
+                plug = w
+            watchlist.append(plug)
+            watchnamelist.append(str(plug))
+        state.watchlist = watchlist
+        state.watchnamelist = watchnamelist
 
-        try:
-            simstate.tf = tf
-            simstate.dt = dt
-            simstate.options = options
+        # for clock in bd.clocklist:
+        #     clock.start(state)
 
-            # process the watchlist
-            #  elements can be:
-            #   - block or Plug reference
-            #   - str in the form BLOCKNAME[PORT]
-            watchlist = []
-            watchnamelist = []
-            re_block: re.Pattern[str] = re.compile(
-                r"(?P<name>[^[]+)(\[(?P<port>[0-9]+)\])"
-            )
-            for w in watch:
-                if isinstance(w, str):
-                    # a name was given, with optional port number
-                    m: re.Match[str] | None = re_block.match(w)
-                    if m is None:
-                        raise ValueError("watch block[port] not found: " + w)
-                    name: str | Any = m.group("name")
-                    port = int(m.group("port"))
-                    b = bd.blocknames[name]
-                    plug = b[port]
-                elif isinstance(w, Block):
-                    # a block was given, defaults to port 0
-                    plug: Plug = w[0]
-                elif isinstance(w, Plug):
-                    # a plug was given
-                    plug: Plug = w
-                watchlist.append(plug)
-                watchnamelist.append(str(plug))
-            simstate.watchlist = watchlist
-            simstate.watchnamelist = watchnamelist
+        # tell all blocks we're starting a BlockDiagram
+        bd.start(state)
 
-            # for clock in bd.clocklist:
-            #     clock.start(simstate)
+        state.tlist = []
+        state.xlist = []
+        state.plist = [[] for p in state.watchlist]
 
-            # tell all blocks we're starting a BlockDiagram
-            bd.start(simstate)
+        print("run")
+        nok = 0
+        decimate = 0
+        noverrun = 0
+        self.running = True
+        stats = SimpleStats()
+        t0 = time.time()
+        t = 0
 
-            simstate.tlist = []
-            simstate.xlist = []
-            simstate.plist = [[] for p in simstate.watchlist]
+        while self.running:
+            # evaluate the block diagram
+            te_0 = time.time()
+            bd.schedule_evaluate([], t)
 
-            print("run")
-            nok = 0
-            decimate = 0
-            noverrun = 0
-            self.running = True
-            stats = SimpleStats()
-            t0: float = time.time()
-            t = 0
+            # record the ports on the watchlist
+            for i, p in enumerate(state.watchlist):
+                b = p.block
+                output = b.output(t, b.inputs, b._x)[p.port]
+                state.plist[i].append(output)
 
-            while self.running:
-                try:
-                    # evaluate the block diagram
-                    te_0: float = time.time()
-                    bd.evaluate([], t)
+            state.tlist.append(t)
 
-                    # record the ports on the watchlist
-                    for i, p in enumerate(simstate.watchlist):
-                        b = p.block
-                        output = b.output_safe(t, b.inport_values, b.x)[p.port]
-                        simstate.plist[i].append(output)
-                except BlockRuntimeError as err:
-                    bd._handle_block_runtime_error(err)
-
-                simstate.tlist.append(t)
-
-                # check execution time for this sample step
-                te_1: float = time.time()
-                dte: float = te_1 - te_0
-                stats.update(dte)  # compute stats on time to execute the block diagram
-                if samples:
-                    if dte > dt:
-                        print("x", end="")  # overrun
-                    else:
-                        print(".", end="")
-                    sys.stdout.flush()
-
+            # check execution time for this sample step
+            te_1 = time.time()
+            dte = te_1 - te_0
+            stats.update(dte)  # compute stats on time to execute the block diagram
+            if samples:
                 if dte > dt:
-                    noverrun += 1
+                    print("x", end="")  # overrun
                 else:
-                    nok += 1
+                    print(".", end="")
+                sys.stdout.flush()
 
-                # check whether to continue, and pause till next sample time
-                tnow: float = time.time() - t0
-                if tnow > tf:
-                    break
-
-                t += dt  # time of next sample
-
-                t_sleep = t - tnow
-                if t_sleep < 0:  # be tolerant to a sample overrun
-                    t_sleep = 0
-                time.sleep(t_sleep)  # sleep till next tick
-
-            # save buffered data in a Struct
-            out = BDStruct(name="results")
-            out["t"] = np.array(simstate.tlist)
-            # out.x = np.array(simstate.xlist)
-            # out.xnames = bd.statenames
-
-            # save the watchlist into variables named y0, y1 etc.
-            for i, p in enumerate(watchlist):
-                out["y" + str(i)] = np.array(simstate.plist[i])
-            out["ynames"] = watchnamelist
-
-            if noverrun > 0:
-                print(fg("red"))
+            if dte > dt:
+                noverrun += 1
             else:
-                print(fg("yellow"))
-            print("run time performance:")
-            print(
-                f"  overrun    {noverrun} / {nok} ({noverrun/(nok+noverrun)*100:.1f}%)"
-            )
-            print(f"  t_max      {stats.max*1000:.1f} ms")
-            print(f"  t_mean     {stats.mean*1000:.1f} ms")
-            print(f"  t_sdev     {stats.sdev*1000:.1f} ms")
-            print(f"  t_max / dt {stats.max/dt*100:.1f}%")
-            print(attr(0))
+                nok += 1
 
-            return out
-        finally:
-            # Clean up context
-            self._set_context(None)
+            # check whether to continue, and pause till next sample time
+            tnow = time.time() - t0
+            if tnow > T:
+                break
+
+            t += dt  # time of next sample
+
+            t_sleep = t - tnow
+            if t_sleep < 0:  # be tolerant to a sample overrun
+                t_sleep = 0
+            time.sleep(t_sleep)  # sleep till next tick
+
+        # save buffered data in a Struct
+        out = BDStruct(name="results")
+        out.t = np.array(state.tlist)
+        # out.x = np.array(state.xlist)
+        # out.xnames = bd.statenames
+
+        # save the watchlist into variables named y0, y1 etc.
+        for i, p in enumerate(watchlist):
+            out["y" + str(i)] = np.array(state.plist[i])
+        out.ynames = watchnamelist
+
+        if noverrun > 0:
+            print(fg("red"))
+        else:
+            print(fg("yellow"))
+        print("run time performance:")
+        print(f"  overrun    {noverrun} / {nok} ({noverrun/(nok+noverrun)*100:.1f}%)")
+        print(f"  t_max      {stats.max*1000:.1f} ms")
+        print(f"  t_mean     {stats.mean*1000:.1f} ms")
+        print(f"  t_sdev     {stats.sdev*1000:.1f} ms")
+        print(f"  t_max / dt {stats.max/dt*100:.1f}%")
+        print(attr(0))
+
+        return out
 
         # assert bd.compiled, "Network has not been compiled"
 
@@ -557,12 +552,3 @@ class BDRealTime(BDSim):
         # print(f't sdev {math.sqrt((tsum2 - tsum**2/n)/(n-1)*1000):.1f} ms')
         # print(f't max {tmax*1000:.1f} ms')
         # print(attr(0))
-
-
-if __name__ == "__main__":
-    try:
-        from ._selftest import run_module_test
-    except ImportError:
-        from bdsim._selftest import run_module_test
-
-    raise SystemExit(run_module_test(__file__))
