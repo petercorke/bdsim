@@ -1,220 +1,131 @@
-"""Real-time execution support for block diagrams."""
+"""Realtime execution support for sampled/clocked block diagrams."""
 
 from __future__ import annotations
 
-import math
+import queue
 import re
-import sys
+import threading
 import time
 import warnings
+from dataclasses import dataclass, field
 from typing import Any
 
 import numpy as np
-from colored import attr, fg
 
-from bdsim.exceptions import BlockRuntimeError
 from bdsim.components import BDStruct, Block, OptionsBase, SimulationState
 from bdsim.connect import Plug
 from bdsim.run_context import SimulationContext
 from bdsim.run_sim import BDSim
-
-
-# class TimeQRT(TimeQ):
-#     """
-#     Time-ordered queue for events
-
-#     The list comprises tuples of (time, block) to reflect an event associated
-#     with the specified block at the specified time.
-
-#     The list is not ordered, and is sorted on a pop event.
-#     """
-
-#     def __init__(self):
-#         self.q = []
-#         self.dirty = False
-
-#         # super().__init__()  # init threading class
-
-#         self.sem = threading.Semaphore(0)
-#         self.done = False
-#         self.t = None
-
-#     # def wait(self):
-#     #     self.sem.acquire()
-#     #     # print(f'  wake at {self.t}')
-#     #     return self.t, self.clocks
-
-#     def run(self, callback):
-#         nok = 0
-#         noverrun = 0
-
-#         print('run')
-#         t0 = time.time()
-#         stop = t0
-#         tmax = 0
-#         while not self.done:
-#             t, clocks = self.pop()
-#             if t is None:
-#                 print('E', end='')
-#                 time.sleep(0.02)
-#                 continue
-#             # print('dequeue', t)
-#             stop = t0 + t
-#             ts = time.time()
-#             sleep_time = stop - ts
-#             if sleep_time > 0:
-#                 # print('sleeping for', sleep_time)
-#                 time.sleep(sleep_time)
-#                 tmax = max(tmax, time.time()-ts)
-#                 # if tmax > 0.2:
-#                 #     print(tmax, sleep_time)
-#                 print('.', end='')
-#                 nok += 1
-#             else:
-#                 # print('timer overrun')
-#                 print('x', end='')
-#                 noverrun += 1
-#             # self.t = t
-#             # self.clocks = clocks
-#             # self.sem.release()
-#             callback(t, clocks)
-
-#             sys.stdout.flush()
-
-#         print(fg('yellow'))
-#         print(f'tmax {tmax}')
-#         print(f'n ok      {nok} ({nok/(nok+noverrun)*100:.1f}%)')
-#         print(f'n overrun {noverrun} ({noverrun/(nok+noverrun)*100:.1f}%)')
-#         print(attr(0))
-
-#     def stop(self):
-#         self.done = True
-#         self.join()
+from bdsim.timers import create_timer_backend
 
 
 class BDRealTimeState(SimulationState):
-    """
-    Realtime-specific simulation state, extending SimulationState
-    with realtime-specific fields.
-
-    :ivar dt: sample time interval (seconds)
-    :ivar watchlist: list of plugs to watch
-    :ivar watchnamelist: list of watch port names
-    :ivar tlist: list of time samples
-    :ivar plist: list of output port records
-    """
+    """Realtime simulation state for a single run."""
 
     def __init__(self) -> None:
         super().__init__()
-        # realtime-specific fields
-        self.dt: float | None = None
-        self.watchlist: list = []
-        self.watchnamelist: list = []
-        self.tlist: list = []
-        self.xlist: list = []
-        self.plist: list = []
+        self.watchlist: list[Plug] = []
+        self.watchnamelist: list[str] = []
+        self.tlist: list[float] = []
+        self.plist: list[list[Any]] = []
 
 
-class SimpleStats:
-    def __init__(self) -> None -> None:
-        self._n: int = 0
-        self._sum: float = 0
-        self._sum2: float = 0
-        self._max: float = 0
+@dataclass
+class ClockStats:
+    fired: int = 0
+    enqueued: int = 0
+    processed: int = 0
+    dropped: int = 0
+    lateness_sum_ns: int = 0
+    lateness_max_ns: int = 0
 
-    def update(self, x: float) -> None:
-        self._n += 1
-        self._sum += x
-        self._sum2 += x**2
-        self._max: int = max(self._max, x)
 
-    @property
-    def n(self) -> int:
-        return self._n
+@dataclass
+class RTStats:
+    eval_count: int = 0
+    eval_sum_ns: int = 0
+    eval_max_ns: int = 0
+    queue_depth_max: int = 0
+    overrun_count: int = 0
+    catchup_count: int = 0
+    drop_old_count: int = 0
+    by_clock: dict[str, ClockStats] = field(default_factory=dict)
 
-    @property
-    def mean(self) -> float:
-        return self._sum / self._n
 
-    @property
-    def sdev(self) -> float:
-        return math.sqrt((self._sum2 - self._sum**2 / self._n) / (self._n - 1))
-
-    @property
-    def max(self) -> float:
-        return self._max
+@dataclass
+class _TickEvent:
+    timer_id: str
+    scheduled_ns: int
+    fired_ns: int
 
 
 class BDRealTime(BDSim):
-    def run(  # type: ignore[override]
+    """Realtime runner for sampled/clocked systems.
+
+    This runner currently uses a timer backend abstraction with a thread backend
+    fallback and executes model evaluation from a single worker thread.
+    """
+
+    def _process_watchlist(self, bd, watch: list[Any]) -> tuple[list[Plug], list[str]]:
+        watchlist: list[Plug] = []
+        watchnamelist: list[str] = []
+        re_block: re.Pattern[str] = re.compile(r"(?P<name>[^[]+)(\[(?P<port>[0-9]+)\])")
+
+        for w in watch:
+            if isinstance(w, str):
+                m: re.Match[str] | None = re_block.match(w)
+                if m is None:
+                    raise ValueError("watch block[port] not found: " + w)
+                name = m.group("name")
+                port = int(m.group("port"))
+                b = bd.blocknames[name]
+                plug = b[port]
+            elif isinstance(w, Block):
+                plug = w[0]
+            elif isinstance(w, Plug):
+                plug = w
+            else:
+                raise TypeError(f"bad watch type: {type(w)}")
+
+            watchlist.append(plug)
+            watchnamelist.append(str(plug))
+
+        return watchlist, watchnamelist
+
+    def _clock_stats(self, stats: RTStats, timer_id: str) -> ClockStats:
+        if timer_id not in stats.by_clock:
+            stats.by_clock[timer_id] = ClockStats()
+        return stats.by_clock[timer_id]
+
+    def run(
         self,
-        bd: Any,
-        T: float = 5,
-        dt: float | None = None,
-        block: bool | None = None,
+        bd,
+        tf: float = 5,
+        dt=None,
+        block=None,
         checkfinite: bool = True,
-        watch: list[Any] = [],
-        samples: bool = True,
-    ) -> Any:
+        watch=None,
+        samples=True,
+        T=None,
+        *,
+        catchup_policy: str = "catchup",
+        queue_limit: int = 4096,
+        log_signals: bool = False,
+        log_clock_state: bool = False,
+        backend: str = "auto",
+    ) -> BDStruct:
+        """Run sampled/clocked block diagram in realtime.
+
+        :param tf: run horizon in seconds
+        :param watch: optional list of watched ports
+        :param catchup_policy: "catchup" or "drop_old"
+        :param queue_limit: max realtime tick queue depth
+        :param log_signals: record t/watch logs
+        :param log_clock_state: include per-clock logs in output
+        :param backend: timer backend selector
         """
-        Run the block diagram
 
-        :param T: maximum integration time, defaults to 10.0
-        :type T: float, optional
-        :param dt: maximum time step
-        :type dt: float, optional
-        :param solver: integration method, defaults to ``RK45``
-        :type solver: str, optional
-        :param block: matplotlib block at end of run, default False
-        :type block: bool
-        :param checkfinite: error if inf or nan on any wire, default True
-        :type checkfinite: bool
-        :param minstepsize: minimum step length, default 1e-6
-        :type minstepsize: float
-        :param watch: list of input ports to log
-        :type watch: list
-        :param solver_args: arguments passed to ``scipy.integrate``
-        :type solver_args: dict
-        :return: time history of signals and states
-        :rtype: Sim class
-
-        Assumes that the network has been compiled.
-
-        The system is simulated from time 0 to ``T``.
-
-        The integration step time ``dt`` defaults to ``T/100`` but can be
-        specified.  Finer control can be achieved using ``max_step`` and
-        ``first_step`` parameters to the underlying integrator using the
-        ``solver_args`` parameter.
-
-        Results are returned in a class with attributes:
-
-        - ``t`` the time vector: ndarray, shape=(M,)
-        - ``x`` is the state vector: ndarray, shape=(M,N)
-        - ``xnames`` is a list of the names of the states corresponding to columns of `x`, eg. "plant.x0",
-            defined for the block using the ``snames`` argument
-        - ``yN`` for a watched input where N is the index of the port mentioned in the ``watch`` argument
-        - ``ynames`` is a list of the names of the input ports being watched, same order as in ``watch`` argument
-
-        If there are no dynamic elements in the diagram, ie. no states, then ``x`` and ``xnames`` are not
-        present.
-
-        The ``watch`` argument is a list of one or more input ports whose value during simulation
-        will be recorded.  The elements of the list can be:
-            - a ``Block`` reference, which is interpretted as input port 0
-            - a ``Plug`` reference, ie. a block with an index or attribute
-            - a string of the form "block[i]" which is port i of the block named block.
-
-        The debug string comprises single letter flags:
-
-                - 'p' debug network value propagation
-                - 's' debug state vector
-                - 'd' debug state derivative
-
-        .. note:: Simulation stops if the step time falls below ``minsteplength``
-            which typically indicates that the solver is struggling with a very
-            harsh non-linearity.
-        """
+        del dt, samples  # legacy args retained for compatibility
 
         assert bd.compiled, "Network has not been compiled"
 
@@ -226,13 +137,20 @@ class BDRealTime(BDSim):
             )
             tf = T
 
+        if bd.nstates > 0:
+            raise RuntimeError(
+                "BDRealTime currently supports sampled/clocked systems only"
+            )
+
+        if catchup_policy not in ("catchup", "drop_old"):
+            raise ValueError("catchup_policy must be 'catchup' or 'drop_old'")
+
+        watch = [] if watch is None else list(watch)
+
         simstate = BDRealTimeState()
         assert self.options is not None
         options: OptionsBase = self.options.copy()
-        if dt is None:
-            dt = tf / 100
 
-        # Create per-run context
         context = SimulationContext(
             bd=bd, simstate=simstate, options=options, progress=None, threaded=False
         )
@@ -240,322 +158,210 @@ class BDRealTime(BDSim):
 
         try:
             simstate.tf = tf
-            simstate.dt = dt
             simstate.options = options
+            simstate.checkfinite = checkfinite
 
-            # process the watchlist
-            #  elements can be:
-            #   - block or Plug reference
-            #   - str in the form BLOCKNAME[PORT]
-            watchlist = []
-            watchnamelist = []
-            re_block: re.Pattern[str] = re.compile(
-                r"(?P<name>[^[]+)(\[(?P<port>[0-9]+)\])"
-            )
-            for w in watch:
-                if isinstance(w, str):
-                    # a name was given, with optional port number
-                    m: re.Match[str] | None = re_block.match(w)
-                    if m is None:
-                        raise ValueError("watch block[port] not found: " + w)
-                    name: str | Any = m.group("name")
-                    port = int(m.group("port"))
-                    b = bd.blocknames[name]
-                    plug = b[port]
-                elif isinstance(w, Block):
-                    # a block was given, defaults to port 0
-                    plug: Plug = w[0]
-                elif isinstance(w, Plug):
-                    # a plug was given
-                    plug: Plug = w
-                watchlist.append(plug)
-                watchnamelist.append(str(plug))
-            simstate.watchlist = watchlist  # type: ignore[attr-defined]
-            simstate.watchnamelist = watchnamelist  # type: ignore[attr-defined]
+            watchlist, watchnamelist = self._process_watchlist(bd, watch)
+            simstate.watchlist = watchlist
+            simstate.watchnamelist = watchnamelist
+            simstate.plist = [[] for _ in watchlist]
 
-            # for clock in bd.clocklist:
-            #     clock.start(simstate)
-
-            # tell all blocks we're starting a BlockDiagram
+            # Start blocks and initialize clock runtime state.
             bd.start(simstate)
 
-        state.tlist = []  # type: ignore[attr-defined]
-        state.xlist = []  # type: ignore[attr-defined]
-        state.plist = [[] for p in state.watchlist]  # type: ignore[attr-defined]
+            timer_backend = create_timer_backend(backend)
+            start_ns = timer_backend.now_ns()
+            deadline_ns = start_ns + int(tf * 1e9)
 
-            print("run")
-            nok = 0
-            decimate = 0
-            noverrun = 0
-            self.running = True
-            stats = SimpleStats()
-            t0: float = time.time()
-            t = 0
+            tick_queue: queue.Queue[_TickEvent] = queue.Queue(maxsize=queue_limit)
+            stop_event = threading.Event()
+            stats = RTStats()
+            stats_lock = threading.Lock()
 
-            while self.running:
+            timer_to_clock = {c.name: c for c in bd.clocklist}
+
+            def on_tick(timer_id: str, scheduled_ns: int, fired_ns: int) -> None:
+                if scheduled_ns > deadline_ns or stop_event.is_set():
+                    return
+
+                with stats_lock:
+                    cs = self._clock_stats(stats, timer_id)
+                    cs.fired += 1
+
                 try:
-                    # evaluate the block diagram
-                    te_0: float = time.time()
-                    bd.evaluate([], t)
+                    tick_queue.put_nowait(_TickEvent(timer_id, scheduled_ns, fired_ns))
+                except queue.Full:
+                    with stats_lock:
+                        cs = self._clock_stats(stats, timer_id)
+                        cs.dropped += 1
+                        stats.drop_old_count += 1
+                    return
 
-                    # record the ports on the watchlist
-                    for i, p in enumerate(simstate.watchlist):
-                        b = p.block
-                        output = b.output_safe(t, b.inport_values, b.x)[p.port]
-                        simstate.plist[i].append(output)
-                except BlockRuntimeError as err:
-                    bd._handle_block_runtime_error(err)
+                with stats_lock:
+                    cs = self._clock_stats(stats, timer_id)
+                    cs.enqueued += 1
+                    lateness_ns = max(0, fired_ns - scheduled_ns)
+                    cs.lateness_sum_ns += lateness_ns
+                    cs.lateness_max_ns = max(cs.lateness_max_ns, lateness_ns)
+                    stats.queue_depth_max = max(
+                        stats.queue_depth_max, tick_queue.qsize()
+                    )
 
-            state.tlist.append(t)  # type: ignore[attr-defined]
+            for clock in bd.clocklist:
+                timer_backend.start_periodic(
+                    timer_id=clock.name,
+                    period_ns=int(clock.T * 1e9),
+                    phase_ns=int(max(0.0, float(clock.offset)) * 1e9),
+                    callback=on_tick,
+                )
 
-            # check execution time for this sample step
-            te_1 = time.time()
-            dte = te_1 - te_0
-            stats.update(dte)  # compute stats on time to execute the block diagram
-            if samples:
-                if dte > dt:  # type: ignore[operator]
-                    print("x", end="")  # overrun
-                else:
-                    print(".", end="")
-                sys.stdout.flush()
+            timer_backend.start_all()
 
-            if dte > dt:  # type: ignore[operator]
-                noverrun += 1
-            else:
-                nok += 1
+            def _record_watch(sim_t: float) -> None:
+                if not log_signals:
+                    return
+                simstate.tlist.append(sim_t)
+                for i, p in enumerate(simstate.watchlist):
+                    b = p.block
+                    output = b.outport_value(p.port)
+                    simstate.plist[i].append(output)
 
-                # check whether to continue, and pause till next sample time
-                tnow: float = time.time() - t0
-                if tnow > tf:
-                    break
+            def worker() -> None:
+                while not stop_event.is_set() or not tick_queue.empty():
+                    try:
+                        if catchup_policy == "catchup":
+                            backlog = tick_queue.qsize()
+                            if backlog > 0:
+                                with stats_lock:
+                                    stats.catchup_count += backlog
+                        event = tick_queue.get(timeout=0.05)
+                    except queue.Empty:
+                        if timer_backend.now_ns() >= deadline_ns:
+                            stop_event.set()
+                        continue
 
-            t += dt  # type: ignore[operator,assignment]  # time of next sample
+                    events: list[_TickEvent] = [event]
+                    if catchup_policy == "drop_old":
+                        latest: dict[str, _TickEvent] = {event.timer_id: event}
+                        dropped_by_timer: dict[str, int] = {}
+                        while True:
+                            try:
+                                extra = tick_queue.get_nowait()
+                            except queue.Empty:
+                                break
+                            previous = latest.get(extra.timer_id)
+                            if previous is not None:
+                                dropped_by_timer[extra.timer_id] = (
+                                    dropped_by_timer.get(extra.timer_id, 0) + 1
+                                )
+                            latest[extra.timer_id] = extra
+                        dropped = sum(dropped_by_timer.values())
+                        if dropped > 0:
+                            with stats_lock:
+                                stats.drop_old_count += dropped
+                                for timer_id, n in dropped_by_timer.items():
+                                    cs = self._clock_stats(stats, timer_id)
+                                    cs.dropped += n
+                        events = list(latest.values())
 
-                t_sleep = t - tnow
-                if t_sleep < 0:  # be tolerant to a sample overrun
-                    t_sleep = 0
-                time.sleep(t_sleep)  # sleep till next tick
+                    for ev in events:
+                        if ev.timer_id not in timer_to_clock:
+                            continue
 
-        # save buffered data in a Struct
-        out = BDStruct(name="results")
-        out.t = np.array(state.tlist)  # type: ignore[attr-defined]
-        # out.x = np.array(state.xlist)
-        # out.xnames = bd.statenames
+                        sim_t = (ev.scheduled_ns - start_ns) / 1e9
+                        if sim_t > tf + 1e-12:
+                            stop_event.set()
+                            break
 
-            # save the watchlist into variables named y0, y1 etc.
-            for i, p in enumerate(watchlist):
-                out["y" + str(i)] = np.array(simstate.plist[i])
-            out["ynames"] = watchnamelist
+                        simstate.t = sim_t
+                        clock = timer_to_clock[ev.timer_id]
+                        eval_start = time.perf_counter_ns()
+                        bd.evaluate(
+                            bd.state_map(np.array([]), simstate),
+                            sim_t,
+                            checkfinite=checkfinite,
+                        )
+                        clock.tick_realtime(sim_t, simstate)
+                        eval_ns = time.perf_counter_ns() - eval_start
 
-            if noverrun > 0:
-                print(fg("red"))
-            else:
-                print(fg("yellow"))
-            print("run time performance:")
-            print(
-                f"  overrun    {noverrun} / {nok} ({noverrun/(nok+noverrun)*100:.1f}%)"
+                        with stats_lock:
+                            stats.eval_count += 1
+                            stats.eval_sum_ns += eval_ns
+                            stats.eval_max_ns = max(stats.eval_max_ns, eval_ns)
+                            cs = self._clock_stats(stats, ev.timer_id)
+                            cs.processed += 1
+                            if eval_ns > int(clock.T * 1e9):
+                                stats.overrun_count += 1
+
+                        _record_watch(sim_t)
+
+                        if simstate.stop is not None:
+                            stop_event.set()
+                            break
+
+                    if timer_backend.now_ns() >= deadline_ns:
+                        stop_event.set()
+
+            worker_thread = threading.Thread(
+                target=worker, name="rt-worker", daemon=True
             )
-            print(f"  t_max      {stats.max*1000:.1f} ms")
-            print(f"  t_mean     {stats.mean*1000:.1f} ms")
-            print(f"  t_sdev     {stats.sdev*1000:.1f} ms")
-            print(f"  t_max / dt {stats.max/dt*100:.1f}%")
-            print(attr(0))
+            worker_thread.start()
+
+            while not stop_event.is_set():
+                if timer_backend.now_ns() >= deadline_ns:
+                    stop_event.set()
+                    break
+                time.sleep(0.01)
+
+            timer_backend.stop_all()
+            worker_thread.join(timeout=2.0)
+
+            out = BDStruct(name="results")
+            if log_signals:
+                out["t"] = np.array(simstate.tlist)
+                for i, _ in enumerate(simstate.watchlist):
+                    out["y" + str(i)] = np.array(simstate.plist[i])
+                out["ynames"] = simstate.watchnamelist
+
+            if log_clock_state:
+                for i, clock in enumerate(bd.clocklist):
+                    name = f"clock{i}"
+                    clockdata = BDStruct(name)
+                    clock_t, clock_x = clock.getlog(simstate)
+                    clockdata["t"] = np.array(clock_t)
+                    clockdata["x"] = np.array(clock_x)
+                    out.add(name, clockdata)
+
+            s = BDStruct(name="stats")
+            s["eval_count"] = stats.eval_count
+            s["eval_sum_ns"] = stats.eval_sum_ns
+            s["eval_max_ns"] = stats.eval_max_ns
+            s["eval_mean_ns"] = (
+                stats.eval_sum_ns / stats.eval_count if stats.eval_count > 0 else 0.0
+            )
+            s["queue_depth_max"] = stats.queue_depth_max
+            s["overrun_count"] = stats.overrun_count
+            s["catchup_count"] = stats.catchup_count
+            s["drop_old_count"] = stats.drop_old_count
+            s["by_clock"] = {
+                name: {
+                    "fired": c.fired,
+                    "enqueued": c.enqueued,
+                    "processed": c.processed,
+                    "dropped": c.dropped,
+                    "lateness_sum_ns": c.lateness_sum_ns,
+                    "lateness_max_ns": c.lateness_max_ns,
+                }
+                for name, c in stats.by_clock.items()
+            }
+            out[".stats"] = s
+
+            if block is not None and options.graphics:
+                self.done(bd, block=block)
 
             return out
         finally:
-            # Clean up context
             self._set_context(None)
-
-        # assert bd.compiled, "Network has not been compiled"
-
-        # state = BDRealTimeState()
-        # self.state = state
-
-        # # process the watchlist
-        # #  elements can be:
-        # #   - block or Plug reference
-        # #   - str in the form BLOCKNAME[PORT]
-        # watchlist = []
-        # watchnamelist = []
-        # re_block = re.compile(r"(?P<name>[^[]+)(\[(?P<port>[0-9]+)\])")
-        # for w in watch:
-        #     if isinstance(w, str):
-        #         # a name was given, with optional port number
-        #         m = re_block.match(w)
-        #         if m is None:
-        #             raise ValueError("watch block[port] not found: " + w)
-        #         name = m.group("name")
-        #         port = int(m.group("port"))
-        #         b = bd.blocknames[name]
-        #         plug = b[port]
-        #     elif isinstance(w, Block):
-        #         # a block was given, defaults to port 0
-        #         plug = w[0]
-        #     elif isinstance(w, Plug):
-        #         # a plug was given
-        #         plug = w
-        #     watchlist.append(plug)
-        #     watchnamelist.append(str(plug))
-        # state.watchlist = watchlist
-        # state.watchnamelist = watchnamelist
-
-        # for clock in bd.clocklist:
-        #     clock.start(state)
-
-        # state.tlist = []
-        # state.xlist = []
-        # state.plist = [[] for p in state.watchlist]
-
-        # print("run")
-        # t0 = time.time()
-        # stop = t0
-        # tmax = 0
-        # nok = 0
-        # n = 0
-        # tsum = 0
-        # tsum2 = 0
-        # tmax = 0
-        # noverrun = 0
-        # self.running = True
-        # while self.running:
-        #     tnext, sources = self.state.eventq.pop()
-
-        #     if tnext is None:
-        #         print("E", end="")
-        #         time.sleep(0.02)
-        #         continue
-
-        #     if tnext > T:
-        #         break
-
-        #     # print('dequeue', t)
-        #     stop = t0 + tnext
-        #     ts = time.time()
-        #     sleep_time = stop - ts
-        #     if sleep_time > 0:
-        #         # print('sleeping for', sleep_time)
-        #         time.sleep(sleep_time)
-        #         tmax = max(tmax, time.time() - ts)
-        #         # if tmax > 0.2:
-        #         #     print(tmax, sleep_time)
-        #         print(".", end="")
-        #         nok += 1
-        #     else:
-        #         # print('timer overrun')
-        #         print("x", end="")
-        #         noverrun += 1
-
-        #     # self.t = t
-        #     # self.clocks = clocks
-        #     # self.sem.release()
-
-        #     # evaluate the block diagram
-        #     te_0 = time.time()
-        #     bd.evaluate_plan([], tnext)
-        #     te_1 = time.time()
-
-        #     dt = te_1 - te_0
-        #     n += 1
-        #     tsum += dt
-        #     tsum2 += dt * dt
-        #     tmax = max(tmax, dt)
-
-        #     # visit all the blocks and clocks that have an event now
-        #     for source in sources:
-        #         # if isinstance(source, Clock):
-        #         #     # clock ticked, save its state
-        #         #     clock.savestate(tnext)
-        #         source.next_event(self.state)
-
-        #     # visit all the blocks and clocks that have an event now
-        #     for source in sources:
-        #         if isinstance(source, Clock):
-        #             # clock ticked, save its state
-        #             clock.savestate(tnext)
-        #             clock.next_event(self.state)
-
-        #             # get the new state
-        #             clock._x = clock.getstate()
-
-        #     # stash the results
-        #     state.tlist.append(tnext)
-
-        #     # record the ports on the watchlist
-        #     for i, p in enumerate(state.watchlist):
-        #         state.plist[i].append(p.block.output(tnext)[p.port])
-
-        #     sys.stdout.flush()
-
-        # # save buffered data in a Struct
-        # out = BDStruct(name="results")
-        # # out.t = np.array(state.tlist)
-        # # out.x = np.array(state.xlist)
-        # # out.xnames = bd.statenames
-
-        # # save clocked states
-        # for c in bd.clocklist:
-        #     name = c.name.replace(".", "")
-        #     clockdata = BDStruct(name)
-        #     clockdata.t = np.array(c.t)
-        #     clockdata.x = np.array(c.x)
-        #     out.add(name, clockdata)
-
-        # # save the watchlist into variables named y0, y1 etc.
-        # for i, p in enumerate(watchlist):
-        #     out["y" + str(i)] = np.array(state.plist[i])
-        # out.ynames = watchnamelist
-
-        # print(fg("yellow"))
-        # print(f"tmax {tmax}")
-        # print(f"n ok      {nok} ({nok/(nok+noverrun)*100:.1f}%)")
-        # print(f"n overrun {noverrun} ({noverrun/(nok+noverrun)*100:.1f}%)")
-        # print(f"t mean {tsum/n*1000:.1f} ms")
-        # print(f"t sdev {math.sqrt((tsum2 - tsum**2/n)/(n-1)*1000):.1f} ms")
-        # print(f"t max {tmax*1000:.1f} ms")
-        # print(attr(0))
-
-        # return out
-        # self.state.eventq.start()
-
-        # n = 0
-        # tsum = 0
-        # tsum2 = 0
-        # tmax = 0
-
-        # while True:
-        #     t, clocks = self.state.eventq.wait()
-        #     # print('run wakes up', t, clocks)
-        #     state.t = t
-
-        #     if t > T:
-        #         break
-
-        #     # evaluate the block diagram
-        #     t0 = time.time()
-        #     bd.evaluate_plan([], t)
-        #     t1 = time.time()
-
-        #     # visit all the blocks and clocks that have an event now
-        #     for clock in clocks:
-        #         # if isinstance(source, Clock):
-        #         #     # clock ticked, save its state
-        #         #     clock.savestate(tnext)
-        #         clock.next_event(self.state)
-
-        #     # update some stats about block diagram execution time
-        #     dt = t1 - t0
-        #     n += 1
-        #     tsum += dt
-        #     tsum2 += dt*dt
-        #     tmax = max(tmax, dt)
-
-        # self.state.eventq.stop()
-
-        # print(fg('yellow'))
-        # print(f't mean {tsum/n*1000:.1f} ms')
-        # print(f't sdev {math.sqrt((tsum2 - tsum**2/n)/(n-1)*1000):.1f} ms')
-        # print(f't max {tmax*1000:.1f} ms')
-        # print(attr(0))
 
 
 if __name__ == "__main__":
