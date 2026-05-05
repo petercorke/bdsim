@@ -362,7 +362,7 @@ class LTI_SS(ContinuousBlock):
 
 
 def _tf2ss(
-    num: Vector1d, den: Vector1d, form="ccf", order="backward", verbose=False
+    num: Vector1D, den: Vector1D, form="ccf", order="backward", verbose=False
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     r"""
     :param N: Numerator coefficients in descending powers of :math:`s`.
@@ -417,8 +417,8 @@ def _tf2ss(
         # eg. [2,[1,1], [1,2]] is the factors 2(s+1)(s+2) which are convolved to get the coefficients of 2s^2 + 6s + 4
         if isinstance(x, (int, float)):
             return np.array([x], dtype=float)
-        if all(isinstance(c, (int, float)) for c in x):
-            # array of scalars, assume it's already in the correct form
+        if smb.isvector(x):
+            # is directly equivalent to a 1D array, convert to array
             return smb.getvector(x, dtype="float")
 
         coeffs = [1]
@@ -590,7 +590,7 @@ class LTI_SISO(LTI_SS):
         :return: LTI_SISO block
         :rtype: ``LTI_SISO`` instance
 
-        Coefficients ``N`` and ``D``can be specified in the form of an array of coefficients, or an array of factors.
+        Coefficients ``N`` and ``D`` can be specified in the form of an array of coefficients, or an array of factors.
         The coefficients and factors are arrays of coefficients in decreasing powers of :math:`s`.
         For example:
 
@@ -600,17 +600,19 @@ class LTI_SISO(LTI_SS):
 
         The ``form`` of the realization can be one of:
 
-            * ``'ccf'`` : Controller Canonical Form. The characteristic equation
-            coefficients appear in a row of **A**. Useful for control design.
-            * ``'ocf'`` : Observer Canonical Form. The characteristic equation
-            coefficients appear in a column of **A**. Useful for estimation.
+                        * ``'ccf'`` : Controller Canonical Form. The characteristic equation
+                            coefficients appear in a row of **A**. Useful for control design.
+
+                        * ``'ocf'`` : Observer Canonical Form. The characteristic equation
+                            coefficients appear in a column of **A**. Useful for estimation.
 
         The ``order`` of the integrator chain can be one of:
 
-            * ``'forward'`` : :math:`x_0` is the output of the first integrator,
-            :math:`x_n-1` is the last. Results in 1s on the super-diagonal for 'ccf'.
-            * ``'backward'``: :math:`x_n-1` is the output of the first integrator,
-            :math:`x_0` is the last. Results in 1s on the sub-diagonal for 'ccf'.
+                        * ``'forward'`` : :math:`x_0` is the output of the first integrator,
+                            :math:`x_n-1` is the last. Results in 1s on the super-diagonal for ``'ccf'``.
+
+                        * ``'backward'``: :math:`x_n-1` is the output of the first integrator,
+                            :math:`x_0` is the last. Results in 1s on the sub-diagonal for ``'ccf'``.
 
         .. note::
             - The transfer function is assumed to be strictly proper (:math:`deg(N) < deg(D)`).
@@ -721,9 +723,9 @@ class Deriv2(LTI_SS):
         N = [gain * wn**2, 0]  # wn^2 s
         D = [1, 2 * zeta * wn, wn**2]  # s^2 + 2 zeta wn s + wn^2
 
-        A, B, C = _tf2ss(N, D, form="ocf")
-        # form="ccf", order="backward"
+        A, B, C, D = _tf2ss(N, D, form="ocf")
 
+        # this model is strictly proper, D is zero and can be ommitted.
         super().__init__(A=A, B=B, C=C, x0=x0, **blockargs)
 
 
@@ -1005,8 +1007,8 @@ class PID(SubsystemBlock):
     def __init__(
         self,
         P: float = 0.0,
-        D: float = 0.0,
         I: float = 0.0,
+        D: float = 0.0,
         D_pole: float = 1,
         I_limit: float | tuple[float, ...] | list[float] | None = None,
         structure: str = "parallel",

@@ -367,7 +367,7 @@ class Tf2SsTest(unittest.TestCase):
 
     def test_ccf_forward(self):
         """CCF Forward: Bottom-row coeffs, Super-diagonal 1s"""
-        A, B, C = _tf2ss(self.N, self.D, form="ccf", order="forward")
+        A, B, C, D = _tf2ss(self.N, self.D, form="ccf", order="forward")
 
         expected_A = [[0, 1, 0], [0, 0, 1], [-6, -5, -4]]  # Coeffs reversed: a3, a2, a1
         expected_B = [[0], [0], [1]]
@@ -379,7 +379,7 @@ class Tf2SsTest(unittest.TestCase):
 
     def test_ccf_backward(self):
         """CCF Backward: Top-row coeffs, Sub-diagonal 1s (Scipy/Matlab style)"""
-        A, B, C = _tf2ss(self.N, self.D, form="ccf", order="backward")
+        A, B, C, D = _tf2ss(self.N, self.D, form="ccf", order="backward")
 
         expected_A = [[-4, -5, -6], [1, 0, 0], [0, 1, 0]]  # Coeffs original: a1, a2, a3
         expected_B = [[1], [0], [0]]
@@ -391,7 +391,7 @@ class Tf2SsTest(unittest.TestCase):
 
     def test_ocf_forward(self):
         """OCF Forward: Right-column coeffs, Sub-diagonal 1s"""
-        A, B, C = _tf2ss(self.N, self.D, form="ocf", order="forward")
+        A, B, C, D = _tf2ss(self.N, self.D, form="ocf", order="forward")
 
         expected_A = [[0, 0, -6], [1, 0, -5], [0, 1, -4]]
         expected_B = [[1.5], [1.0], [0.5]]
@@ -403,7 +403,7 @@ class Tf2SsTest(unittest.TestCase):
 
     def test_ocf_backward(self):
         """OCF Backward: Left-column coeffs, Super-diagonal 1s"""
-        A, B, C = _tf2ss(self.N, self.D, form="ocf", order="backward")
+        A, B, C, D = _tf2ss(self.N, self.D, form="ocf", order="backward")
 
         expected_A = [[-4, 1, 0], [-5, 0, 1], [-6, 0, 0]]
         expected_B = [[0.5], [1.0], [1.5]]
@@ -419,7 +419,7 @@ class Tf2SsTest(unittest.TestCase):
         n_small = np.array([5])
         d_unnorm = np.array([10, 20, 30])
 
-        A, B, C = _tf2ss(n_small, d_unnorm, form="ccf", order="forward")
+        A, B, C, D = _tf2ss(n_small, d_unnorm, form="ccf", order="forward")
 
         nt.assert_array_equal(A, [[0, 1], [-3, -2]])
         nt.assert_array_equal(C, [[0.5, 0]])  # b2=0.5, b1=0
