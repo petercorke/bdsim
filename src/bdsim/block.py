@@ -1738,10 +1738,16 @@ class ContinuousBlock(Block):
     system, either linear or nonlinear.
     """
 
-    def __init__(self, nstates, **blockargs) -> None:
+    def __init__(
+        self, nstates: int, x0: Vector1d = None, feedthrough: bool = False, **blockargs
+    ) -> None:
         """
         Create a continuous-time block.
 
+        :param nstates: number of continuous-time states
+        :type nstates: int
+        :param x0: initial state vector, defaults to None
+        :type x0: Vector1d, optional
         :param feedthrough: whether the block has direct feedthrough from input to output, defaults to False
         :type feedthrough: bool, optional
         :param blockargs: |BlockOptions|
@@ -1751,6 +1757,15 @@ class ContinuousBlock(Block):
 
         This is the parent class of all continuous-time dynamic blocks.
         """
+        if x0 is not None:
+            self._x0 = smb.getvector(x0, dtype=float)
+            nstates = len(self._x0)
+        elif nstates is not None:
+            self._x0 = np.zeros(nstates)
+        else:
+            raise ValueError(
+                "must specify initial state vector or number of discrete states"
+            )
         self._feedthrough = feedthrough
         super().__init__(nstates=nstates, ndstates=0, **blockargs)
 
