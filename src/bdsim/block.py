@@ -1739,6 +1739,8 @@ class ContinuousBlock(Block):
         """
         Create a continuous-time block.
 
+        :param feedthrough: whether the block has direct feedthrough from input to output, defaults to False
+        :type feedthrough: bool, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         :return: continuous-time block base class
@@ -1746,6 +1748,7 @@ class ContinuousBlock(Block):
 
         This is the parent class of all continuous-time dynamic blocks.
         """
+        self._feedthrough = feedthrough
         super().__init__(nstates=nstates, ndstates=0, **blockargs)
 
     def reset(self) -> None:
@@ -1825,7 +1828,8 @@ class SampledBlock(Block):
     system, either linear or nonlinear.
     """
 
-    def __init__(self, *, ndstates: int, clock: Clock, **blockargs) -> None:
+        feedthrough: bool = False,
+        **blockargs,
         """
         Create a clocked block.
 
@@ -1833,6 +1837,8 @@ class SampledBlock(Block):
         :type ndstates: int
         :param clock: the clock that governs the block's discrete time updates
         :type clock: Clock
+        :param feedthrough: whether the block has direct feedthrough from input to output, defaults to False
+        :type feedthrough: bool, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         :return: clocked block base class
@@ -1844,6 +1850,7 @@ class SampledBlock(Block):
         assert clock is not None, "clocked block must have a clock"
         self._clocked = True
         self._clock = clock
+        self._feedthrough = feedthrough
         clock.add_block(self)
 
     def reset(self) -> None:

@@ -19,7 +19,10 @@ import spatialmath.base as smb  # type: ignore[import-not-found]
 
 from typing import Any
 
-from bdsim.components import SampledBlock, Clock, deprecated_block
+from bdsim.components import SampledBlock, Clock, SubsystemBlock, deprecated_block
+from bdsim.blocks.continuous import _tf2ss
+
+Vector1D = int | float | tuple[float, ...] | list[float] | np.ndarray
 
 # ------------------------------------------------------------------------
 
@@ -274,196 +277,39 @@ class PoseIntegrator_S(SampledBlock):
 # ------------------------------------------------------------------------ #
 
 
-# class LTI_SS(TransferBlock):
-#     """
-#     :blockname:`LTI_SS`
 
-#     .. table::
-#        :align: left
+        if D is None:
+            D = np.zeros((nout, nin))
+        elif len(D.shape) == 1:
+            assert len(D) == nin * nout, "D must conform to B and C dimensions"
+            D = D.reshape((nout, nin))
+        else:
+            assert D.shape == (nout, nin), "D must conform to B and C dimensions"
 
-#        +------------+---------+---------+
-#        | inputs     | outputs |  states |
-#        +------------+---------+---------+
-#        | 1          | 01      | nc      |
-#        +------------+---------+---------+
-#        | float,     | float,  |         |
-#        | A(nb,)     | A(nc,)  |         |
-#        +------------+---------+---------+
-#     """
+        self.A = A
+        self.B = B
+        self.C = C
 
-#     def __init__(self, *inputs, A=None, B=None, C=None, x0=None, verbose=False, **blockargs):
-#         r"""
-#         :param ``*inputs``: Optional incoming connections
-#         :type ``*inputs``: Block or Plug
-#         :param N: numerator coefficients, defaults to 1
-#         :type N: array_like, optional
-#         :param D: denominator coefficients, defaults to [1, 1]
-#         :type D: array_like, optional
-#         :param x0: initial states, defaults to zero
-#         :type x0: array_like, optional
-#         :param ``**blockargs``: |BlockOptions|
-#         :return: A SCOPE block
-#         :rtype: LTI_SISO instance
+        # if D is nonzero then we have feedthrough, which may create an algebraic loop, so flag this to the base class
+        if np.any(D != 0):
+            # flag we have feedthrough, which may create an algebraic loop
+            self.D = D
+            feedthrough = True
+        else:
+            self.D = None
+            feedthrough = False
 
-#         Create a state-space LTI block.
+        super().__init__(clock=clock, x0=x0, feedthrough=feedthrough, **blockargs)
 
-#         Describes the dynamics of a single-input single-output (SISO) linear
-#         time invariant (LTI) system described by numerator and denominator
-#         polynomial coefficients.
+        if self.D is not None:
+            return list(self.C @ x + self.D @ u)
+        else:
+            return list(self.C @ x)
 
-#         Coefficients are given in the order from highest order to zeroth
-#         order, ie. :math:`2s^2 - 4s +3` is ``[2, -4, 3]``.
-
-#         Only proper transfer functions, where order of numerator is less
-#         than denominator are allowed.
-
-#         The order of the states in ``x0`` is consistent with controller canonical
-#         form.
-
-#         Examples::
-
-#             LTI_SISO(N=[1,2], D=[2, 3, -4])
-
-#         is the transfer function :math:`\frac{s+2}{2s^2+3s-4}`.
-#         """
-#         #print('in SS constructor')
-#         self.type = 'LTI SS'
-
-#         assert A.shape[0] == A.shape[1], 'A must be square'
-#         n = A.shape[0]
-#         if len(B.shape) == 1:
-#             nin = 1
-#             B = B.reshape((n, 1))
-#         else:
-#             nin = B.shape[1]
-#         assert B.shape[0] == n, 'B must have same number of rows as A'
-
-#         if len(C.shape) == 1:
-#             nout = 1
-#             assert C.shape[0] == n, 'C must have same number of columns as A'
-#             C = C.reshape((1, n))
-#         else:
-#             nout = C.shape[0]
-#             assert C.shape[1] == n, 'C must have same number of columns as A'
-
-#         super().__init__(nin=nin, nout=nout, inputs=inputs, **blockargs)
-
-#         self.A = A
-#         self.B = B
-#         self.C = C
-
-#         self.nstates = A.shape[0]
-
-#         if x0 is None:
-#             self._x0 = np.zeros((self.nstates,))
-#         else:
-#             self._x0 = x0
-
-#     def output(self, t=None):
-#         return list(self.C @ self._x)
-
-#     def deriv(self):
-#         return self.A @ self._x + self.B @ np.array(self.inputs)
-# # ------------------------------------------------------------------------ #
-
-
-# class LTI_SISO(LTI_SS):
-#     """
-#     :blockname:`LTI_SISO`
-
-#     .. table::
-#        :align: left
-
-#        +------------+---------+---------+
-#        | inputs     | outputs |  states |
-#        +------------+---------+---------+
-#        | 1          | 1       | n       |
-#        +------------+---------+---------+
-#        | float      | float   |         |
-#        +------------+---------+---------+
-
-#     """
-
-#     def __init__(self, N=1, D=[1, 1], *inputs, x0=None, verbose=False, **blockargs):
-#         r"""
-#         :param N: numerator coefficients, defaults to 1
-#         :type N: array_like, optional
-#         :param D: denominator coefficients, defaults to [1, 1]
-#         :type D: array_like, optional
-#         :param ``*inputs``: Optional incoming connections
-#         :type ``*inputs``: Block or Plug
-#         :param x0: initial states, defaults to zero
-#         :type x0: array_like, optional
-#         :param ``**blockargs``: |BlockOptions|
-#         :return: A SCOPE block
-#         :rtype: LTI_SISO instance
-
-#         Create a SISO LTI block.
-
-#         Describes the dynamics of a single-input single-output (SISO) linear
-#         time invariant (LTI) system described by numerator and denominator
-#         polynomial coefficients.
-
-#         Coefficients are given in the order from highest order to zeroth
-#         order, ie. :math:`2s^2 - 4s +3` is ``[2, -4, 3]``.
-
-#         Only proper transfer functions, where order of numerator is less
-#         than denominator are allowed.
-
-#         The order of the states in ``x0`` is consistent with controller canonical
-#         form.
-
-#         Examples::
-
-#             LTI_SISO(N=[1, 2], D=[2, 3, -4])
-
-#         is the transfer function :math:`\frac{s+2}{2s^2+3s-4}`.
-#         """
-#         #print('in SISO constscutor')
-
-#         if not isinstance(N, list):
-#             N = [N]
-#         if not isinstance(D, list):
-#             D = [D]
-#         self.N = N
-#         self.D = N
-#         n = len(D) - 1
-#         nn = len(N)
-#         if x0 is None:
-#             x0 = np.zeros((n,))
-#         assert nn <= n, 'direct pass through is not supported'
-
-#         # convert to numpy arrays
-#         N = np.r_[np.zeros((len(D) - len(N),)), np.array(N)]
-#         D = np.array(D)
-
-#         # normalize the coefficients to obtain
-#         #
-#         #   b_0 s^n + b_1 s^(n-1) + ... + b_n
-#         #   ---------------------------------
-#         #   a_0 s^n + a_1 s^(n-1) + ....+ a_n
-
-#         # normalize so leading coefficient of denominator is one
-#         D0 = D[0]
-#         D = D / D0
-#         N = N / D0
-
-#         A = np.eye(len(D) - 1, k=1)  # control canonic (companion matrix) form
-#         A[-1, :] = -D[1:]
-
-#         B = np.zeros((n, 1))
-#         B[-1] = 1
-
-#         C = (N[1:] - N[0] * D[1:]).reshape((1, n))
-
-#         if verbose:
-#             print('A=', A)
-#             print('B=', B)
-#             print('C=', C)
-
-#         super().__init__(A=A, B=B, C=C, x0=x0, **blockargs)
-#         self.type = 'LTI'
-
+            - The state-space matrices are available in the ``A``, ``B``, ``C``, and ``D`` attributes of the block.
+            - If D is zero, then the block has no feedthrough and the D matrix is set to None. If D is nonzero, then the block has feedthrough and the D matrix is stored in the D attribute.
+            - The ``_feedthrough`` attribute of the block is set to True if D is nonzero. This can be used to check for feedthrough without having to check the D matrix directly, and is used
+              by the scheduler to ensure correct block evaluation order.
 
 # ---------------------------------------------------------------------------
 # Compatibility shims

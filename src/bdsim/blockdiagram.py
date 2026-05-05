@@ -479,7 +479,9 @@ class BlockDiagram(BlockDiagramMixin):
                             " - ".join([str(x) for x in path + [dest]]),
                         )
                         return True
-                    if dest.blockclass == "function":
+                    if dest.blockclass == "function" or (
+                        dest.hasstate and dest._feedthrough
+                    ):
                         return _DFS(path + [dest])  # recurse
             return False
 
@@ -748,7 +750,7 @@ class BlockDiagram(BlockDiagramMixin):
         group = []
         for b in self.blocklist:
             b._sequence = None
-            if b.blockclass == "source" or b.hasstate:
+            if b.blockclass == "source" or (b.hasstate and not b._feedthrough):
                 b._sequence = 0
                 group.append(b)
         plan.append(group)
