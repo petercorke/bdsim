@@ -116,52 +116,8 @@ Sampled-time blocks
 External Toolbox blocksets
 ==========================
 
-These blocks are defined within external Toolboxes or packages.
+External toolbox block documentation is maintained in each toolbox project.
 
-
-Robot blocks
-------------
-
-These blocks are defined within the Robotics Toolbox for Python.
-
-Arm robots
-^^^^^^^^^^
-
-.. automodule:: roboticstoolbox.blocks.arm
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :special-members: __init__
-   :exclude-members: output, reset, step, start, done, deriv, nin, nout, inlabels, outlabels
-
-Mobile robots
-^^^^^^^^^^^^^
-
-.. automodule:: roboticstoolbox.blocks.mobile
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :special-members: __init__
-   :exclude-members: output, reset, step, start, done, deriv, nin, nout, inlabels, outlabels
-
-Multi rotor flying robots
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. automodule:: roboticstoolbox.blocks.uav
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :special-members: __init__
-   :exclude-members: output, reset, step, start, done, deriv, nin, nout, inlabels, outlabels
-
-Vision blocks
--------------
-
-These blocks are defined within the Machine Vision Toolbox for Python.
-
-.. automodule:: machinevisiontoolbox.blocks
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :exclude-members: output, reset, step, start, done, nin, nout, inlabels, outlabels
+- Robotics Toolbox for Python: https://github.com/petercorke/robotics-toolbox-python
+- Machine Vision Toolbox for Python: https://github.com/petercorke/machinevision-toolbox-python
 

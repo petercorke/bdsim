@@ -1,13 +1,129 @@
 Overview
 ========
 
+Getting started
+---------------
+
+We first sketch the dynamic system we want to simulate as a block diagram, for example this simple first-order system:
+
+.. image:: ../figs/bd1-sketch.png
+   :width: 800
+
+which we can express concisely with ``bdsim`` as (see `bdsim/examples/eg1.py <https://github.com/petercorke/bdsim/blob/master/examples/eg1.py>`_):
+
+.. code-block:: python
+   :linenos:
+
+   import bdsim
+
+   sim = bdsim.BDSim()  # create simulator
+   bd = sim.blockdiagram()  # create an empty block diagram
+
+   # define the blocks
+   demand = bd.STEP(T=1, name='demand')
+   sum = bd.SUM('+-')
+   gain = bd.GAIN(10)
+   plant = bd.LTI_SISO(0.5, [2, 1], name='plant')
+   scope = bd.SCOPE(styles=['k', 'r--'], movie='eg1.mp4')
+
+   # connect the blocks
+   bd.connect(demand, sum[0], scope[1])
+   bd.connect(sum, gain)
+   bd.connect(gain, plant)
+   bd.connect(plant, sum[1], scope[0])
+
+   bd.compile()   # check the diagram
+   bd.report()    # list all blocks and wires
+
+   out = sim.run(bd, 5)  # simulate for 5s
+
+   print(out)
+
+   # sim.savefig(scope, 'scope0') # save scope figure as scope0.pdf
+   sim.done(bd, block=True)  # keep figures open on screen
+
+This example utilizes just 16 lines of executable code. The red block annotations on the hand-drawn diagram correspond to the variable names holding references to the block instances. Blocks can also have user-assigned names (see lines 8 and 11), which are essential for diagnostics and plot labels.
+
+After creating blocks, their ports must be connected. In ``bdsim``, all wires are point-to-point. A **one-to-many** connection is implemented by defining multiple wires:
+
+.. code-block:: python
+
+   bd.connect(source, dest1, dest2, ...)
+
+Ports are designated using Python indexing notation; for instance, ``block[2]`` refers to the third port of the block. Context determines if a port is an input or output: an index on the first argument of ``connect`` refers to an output, while subsequent arguments refer to inputs. If a block has only one port, the index 0 is assumed.
+
+Groups of ports can be denoted using slice notation:
+
+.. code-block:: python
+
+   bd.connect(source[2:5], dest[3:6])
+
+This connects ``source[2]`` to ``dest[3]``, ``source[3]`` to ``dest[4]``, and ``source[4]`` to ``dest[5]``.
+
+*  **Line 19** assembles the blocks, checks connectivity to create a flat wire list, and builds the dataflow execution plan.
+*  **Line 20** generates a tabular report summarizing the diagram's blocks and wires.
+*  **Line 22** executes the simulation for the specified duration (5 seconds).
+*  **Line 26** (if uncommented) saves the scope content to a file named ``scope0.pdf``.
+*  **Line 27** blocks the script execution until figure windows are closed or a SIGINT is received.
+
+The simulation results are returned in a simple container object:
+
+.. code-block:: python
+
+   >>> out
+   results:
+   t           | ndarray (67,)
+   x           | ndarray (67, 1)
+   xnames      | list              
+
+To record additional simulation variables, use a ``WATCH`` block or the ``watch`` option in ``run``:
+
+.. code-block:: python
+
+   out = sim.run(bd, 5, watch=[plant, demand])
+
+Using operator overloading
+--------------------------
+
+Wiring and arithmetic blocks like ``GAIN``, ``SUM``, and ``PROD`` can be implicitly generated using overloaded Python operators, striking a balance between block diagram logic and Pythonic programming:
+
+.. code-block:: python
+   :linenos:
+
+   import bdsim
+
+   sim = bdsim.BDSim()
+   bd = sim.blockdiagram()
+
+   # define the blocks
+   demand = bd.STEP(T=1, name='demand')
+   plant = bd.LTI_SISO(0.5, [2, 1], name='plant')
+   scope = bd.SCOPE(styles=['k', 'r--'], movie='eg1.mp4')
+
+   # connect the blocks
+   scope[0] = plant
+   scope[1] = demand
+   plant[0] = 10 * (demand - plant)
+
+   bd.compile()
+   bd.report()
+
+   out = sim.run(bd, 5)
+   print(out)
+
+   sim.done(bd, block=True)
+
+This approach is more readable and requires fewer lines of code while producing *exactly the same* underlying block diagram. Implicitly created blocks are automatically named with an underscore prefix.
+
+OLD STUFF
+============
 
 Getting started
 ---------------
 
 We first sketch the dynamic system we want to simulate as a block diagram, for example this simple first-order system
 
-.. image:: ../../figs/bd1-sketch.png
+.. image:: ../figs/bd1-sketch.png
    :width: 800
 
 which we can express concisely with `bdsim` as (see `bdsim/examples/eg1.py <https://github.com/petercorke/bdsim/blob/master/examples/eg1.py>`_)
@@ -95,7 +211,7 @@ Line 21 generates a report, in tabular form, showing a summary of the block diag
    └───┴──────┴──────┴──────────────────────────┴─────────┘
 
 
-.. image:: ../../figs/Figure_1.png
+.. image:: ../figs/Figure_1.png
    :width: 600
 
 The simulation results are returned in a simple container object::

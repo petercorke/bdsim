@@ -16,7 +16,7 @@ This class describes the run-time environment for executing a block diagram.
    :show-inheritance:
    :special-members: __init__
 
-.. autoclass:: bdsim.Struct
+.. autoclass:: bdsim.BDStruct
    :members:
    :undoc-members:
    :show-inheritance:
@@ -142,7 +142,7 @@ Discrete-time systems
    :show-inheritance:
    :special-members: __init__
 
-.. autoclass:: bdsim.PriorityQ
+.. autoclass:: bdsim.TimeQ
    :members:
    :undoc-members:
    :show-inheritance:

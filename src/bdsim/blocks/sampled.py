@@ -17,7 +17,7 @@ import inspect
 from spatialmath import Twist3, SE3  # type: ignore[import-not-found]
 import spatialmath.base as smb  # type: ignore[import-not-found]
 
-from typing import Any
+from typing import Any, Callable
 
 from bdsim.components import SampledBlock, Clock, SubsystemBlock, deprecated_block
 from bdsim.blocks.continuous import _tf2ss
@@ -63,7 +63,7 @@ class ZOH(SampledBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, clock: Clock, x0: Vector1d = 0, **blockargs: Any) -> None:
+    def __init__(self, clock: Clock, x0: Vector1D = 0, **blockargs: Any) -> None:
         r"""
         :param clock: clock source
         :type clock: Clock
@@ -151,7 +151,7 @@ class Integrator_S(SampledBlock):
     def __init__(
         self,
         clock: Clock,
-        x0: Vector1d = 0,
+        x0: Vector1D = 0,
         gain: float = 1.0,
         min: Vector1D | None = None,
         max: Vector1D | None = None,
@@ -607,17 +607,19 @@ class LTI_SISO_S(LTI_SS_S):
 
         The ``form`` of the realization can be one of:
 
-            * ``'ccf'`` : Controller Canonical Form. The characteristic equation
-            coefficients appear in a row of **A**. Useful for control design.
-            * ``'ocf'`` : Observer Canonical Form. The characteristic equation
-            coefficients appear in a column of **A**. Useful for estimation.
+                        * ``'ccf'`` : Controller Canonical Form. The characteristic equation
+                            coefficients appear in a row of **A**. Useful for control design.
+
+                        * ``'ocf'`` : Observer Canonical Form. The characteristic equation
+                            coefficients appear in a column of **A**. Useful for estimation.
 
         The ``order`` of the integrator chain can be one of:
 
-            * ``'forward'`` : :math:`x_0` is the output of the first integrator,
-            :math:`x_n-1` is the last. Results in 1s on the super-diagonal for 'ccf'.
-            * ``'backward'``: :math:`x_n-1` is the output of the first integrator,
-            :math:`x_0` is the last. Results in 1s on the sub-diagonal for 'ccf'.
+                        * ``'forward'`` : :math:`x_0` is the output of the first integrator,
+                            :math:`x_n-1` is the last. Results in 1s on the super-diagonal for ``'ccf'``.
+
+                        * ``'backward'``: :math:`x_n-1` is the output of the first integrator,
+                            :math:`x_0` is the last. Results in 1s on the sub-diagonal for ``'ccf'``.
 
         .. note::
 
