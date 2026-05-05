@@ -4,6 +4,7 @@
 import re
 import inspect
 import copy
+import ast
 import numpy as np
 import importlib.util
 import inspect
@@ -14,6 +15,88 @@ from bdsim.bdedit.block import blockname, blocklist, Block
 
 # from examples import docstring_parser as parser
 import bdsim
+
+
+def _safe_eval_type_token(token):
+    """Map docstring type tokens to Python types without using eval."""
+    token = token.strip().strip(",-.")
+    if not token:
+        return None
+
+    token_map = {
+        "int": int,
+        "float": float,
+        "str": str,
+        "string": str,
+        "bool": bool,
+        "dict": dict,
+        "list": list,
+        "tuple": tuple,
+        "set": set,
+        "ndarray": list,
+        "array_like": list,
+        "callable": str,
+        "any": str,
+    }
+
+    if token in token_map:
+        return token_map[token]
+    if token.lower() in token_map:
+        return token_map[token.lower()]
+
+    try:
+        literal = ast.literal_eval(token)
+        return type(literal)
+    except Exception:
+        return None
+
+
+def _safe_parse_default_from_text(text):
+    """Extract default from free-form doc text like 'defaults to (0, 0)'."""
+    if not text:
+        return None
+
+    m = re.search(r"defaults\s+to\s+(.+?)(?:\.|$)", text, flags=re.IGNORECASE)
+    if not m:
+        # Also support formats like: "parallel" (default)
+        m2 = re.search(
+            r"(?:\"([^\"]+)\"|'([^']+)'|([^\s,;]+))\s*\(default\)",
+            text,
+            flags=re.IGNORECASE,
+        )
+        if m2:
+            candidate = (m2.group(1) or m2.group(2) or m2.group(3) or "").strip()
+            return candidate if candidate else None
+        return None
+
+    candidate = m.group(1).strip()
+    candidate = candidate.rstrip(",.")
+
+    # Remove simple wrapping quotes.
+    if (
+        len(candidate) >= 2
+        and candidate[0] == candidate[-1]
+        and candidate[0] in ["'", '"']
+    ):
+        return candidate[1:-1]
+
+    try:
+        return ast.literal_eval(candidate)
+    except Exception:
+        return candidate
+
+
+def _parse_keyword_options_from_text(text):
+    """Extract quoted keyword options from doc text."""
+    if not text:
+        return []
+    options = [m[0] or m[1] for m in re.findall(r"\"([^\"]+)\"|'([^']+)'", text)]
+    cleaned = []
+    for option in options:
+        o = option.strip().lower()
+        if o and o not in cleaned:
+            cleaned.append(o)
+    return cleaned
 
 
 def import_blocks(scene, window):
@@ -150,6 +233,8 @@ def import_blocks(scene, window):
         for param in block_ds["params"].items():
             # Extract parameter name
             param_name = param[0]
+            param_type_text = param[1][0] or ""
+            param_value_text = param[1][1] or ""
             if param[1][1]:
                 param_tooltip = param[1][1]
             else:
@@ -160,7 +245,7 @@ def import_blocks(scene, window):
             # if one type - no white spaces
             # if multiple types - several white spaces
             try:
-                param_type_docstring = param[1][0].split()
+                param_type_docstring = param_type_text.split()
 
                 # Remove any left over commas or dashes (shouldn't be needed for type)
                 for i, item in enumerate(param_type_docstring):
@@ -196,7 +281,9 @@ def import_blocks(scene, window):
                     # Go through and try to evaluate the first type, if it works assign that as the param type
                     try:
                         # 2.
-                        param_type = eval(item)
+                        param_type = _safe_eval_type_token(item)
+                        if param_type is None:
+                            raise ValueError("unrecognized type token")
 
                         # Check to see if evaluated item is NOT a class type, e.g. NOT <class 'int'>.
                         # In this case, wrap the evaluated item in type()
@@ -233,7 +320,7 @@ def import_blocks(scene, window):
                                 if element_restriction_match:
 
                                     # If size restriction is already entered, this will stop it from being entered multiple times
-                                    restriction_to_insert = eval(
+                                    restriction_to_insert = int(
                                         element_restriction_match[0]
                                     )
                                     if (
@@ -294,11 +381,16 @@ def import_blocks(scene, window):
                 param_value = None
 
                 # Extract parameter value information
-                param_value_docstring = param[1][1].split()
+                param_value_docstring = param_value_text.split()
 
                 # String docstring of commas
                 for i, item in enumerate(param_value_docstring):
                     param_value_docstring[i] = item.strip(",.")
+
+                # Parse defaults from complete text first, to handle multi-token values like tuples.
+                parsed_default = _safe_parse_default_from_text(param_value_text)
+                if parsed_default is not None:
+                    param_value = parsed_default
 
                 # Parse the docstring ignoring words until finding a known "defaults to:"
                 for i in range(0, len(param_value_docstring) - 1):
@@ -309,7 +401,7 @@ def import_blocks(scene, window):
                         # Hence we can check if evaluating the word after range gives a list of length 2
 
                         try:
-                            next_item = eval(param_value_docstring[i + 1])
+                            next_item = ast.literal_eval(param_value_docstring[i + 1])
 
                             if isinstance(next_item, list) and len(next_item) == 2:
                                 # Add a,b of range to restriction items
@@ -353,12 +445,13 @@ def import_blocks(scene, window):
                     ] and param_value_docstring[i + 1] in ["to"]:
                         # Value only has 1 default, which should follow after the word 'to'
                         # Try to evaluate value, if successful, this is some form of non string
-                        try:
-                            param_value = eval(param_value_docstring[i + 2])
-
-                        # If unsuccesful, trying to eval a string, so set default value as str instead
-                        except NameError:
-                            param_value = param_value_docstring[i + 2]
+                        if param_value is None:
+                            try:
+                                param_value = ast.literal_eval(
+                                    param_value_docstring[i + 2]
+                                )
+                            except Exception:
+                                param_value = param_value_docstring[i + 2]
 
                     elif param_value_docstring[i] in ["one"] and param_value_docstring[
                         i + 1
@@ -374,17 +467,21 @@ def import_blocks(scene, window):
                                 )
 
                             # Check if this is the default value, (next value should say '[default]')
-                            if not found_default_value and param_value_docstring[
-                                j + 1
-                            ] in ["[default]"]:
+                            if (
+                                not found_default_value
+                                and j + 1 < len(param_value_docstring)
+                                and param_value_docstring[j + 1] in ["[default]"]
+                            ):
                                 # Default value found in list of possible values
 
                                 # Try to evaluate value, if successful, then some form of non string
                                 try:
-                                    param_value = eval(param_value_docstring[j])
+                                    param_value = ast.literal_eval(
+                                        param_value_docstring[j]
+                                    )
 
                                 # If unsuccesful, trying to eval a string, so set default value as str instead
-                                except NameError:
+                                except Exception:
                                     param_value = param_value_docstring[j]
 
                                 found_default_value = True
@@ -399,6 +496,13 @@ def import_blocks(scene, window):
                         # found the default value and the other keywords, we need to break out of the outer loop, to
                         # continue to the next parameter
                         break
+
+                # If no explicit "one of:" format was found, infer keyword restrictions
+                # from quoted alternatives in free-form tooltip text.
+                if not found_keyword_restrictions:
+                    found_keyword_restrictions = _parse_keyword_options_from_text(
+                        param_value_text
+                    )
 
                 # If any keyword restrictions were found
                 if found_keyword_restrictions:

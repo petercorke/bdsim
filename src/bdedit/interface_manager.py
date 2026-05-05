@@ -59,6 +59,9 @@ class InterfaceWindow(QMainWindow):
         self.createActions()
         self.createToolbar()
 
+        # Keep window chrome readable across system theme changes (eg. macOS auto dark mode).
+        self._applyAdaptiveChromeTheme()
+
         # set window properties
         # self.setWindowIcon(QIcon(":/Icons_Reference/Icons/bdsim_icon.png"))
         self.updateApplicationName()
@@ -71,6 +74,107 @@ class InterfaceWindow(QMainWindow):
         self._autosave_timer.start()
 
         self.show()
+
+    @staticmethod
+    def _isDarkPalette(palette):
+        """Infer dark theme from the active palette window color luminance."""
+        window_color = palette.color(QPalette.ColorRole.Window)
+        # Relative luminance proxy on [0,255].
+        luminance = (
+            0.2126 * window_color.redF()
+            + 0.7152 * window_color.greenF()
+            + 0.0722 * window_color.blueF()
+        ) * 255.0
+        return luminance < 140.0
+
+    def _applyAdaptiveChromeTheme(self):
+        """Apply a high-contrast menu/toolbar stylesheet for the current theme."""
+        dark = self._isDarkPalette(self.palette())
+
+        if dark:
+            chrome_bg = "#2b2f36"
+            chrome_fg = "#f5f7fa"
+            hover_bg = "#3a404a"
+            menu_sel_bg = "#2f6db1"
+            menu_sel_fg = "#ffffff"
+            border = "#4a515c"
+            input_bg = "#1f2329"
+            input_fg = "#f5f7fa"
+        else:
+            chrome_bg = "#f4f5f7"
+            chrome_fg = "#111827"
+            hover_bg = "#e5e7eb"
+            menu_sel_bg = "#2563eb"
+            menu_sel_fg = "#ffffff"
+            border = "#cfd3da"
+            input_bg = "#ffffff"
+            input_fg = "#111827"
+
+        menubar = self.menuBar()
+        menubar.setStyleSheet(
+            f"""
+            QMenuBar {{
+                background: {chrome_bg};
+                color: {chrome_fg};
+                border-bottom: 1px solid {border};
+            }}
+            QMenuBar::item {{
+                background: transparent;
+                color: {chrome_fg};
+                padding: 4px 8px;
+            }}
+            QMenuBar::item:selected {{
+                background: {hover_bg};
+            }}
+            QMenu {{
+                background: {chrome_bg};
+                color: {chrome_fg};
+                border: 1px solid {border};
+            }}
+            QMenu::item:selected {{
+                background: {menu_sel_bg};
+                color: {menu_sel_fg};
+            }}
+            """
+        )
+
+        self.toolbar.setStyleSheet(
+            f"""
+            QToolBar {{
+                background: {chrome_bg};
+                color: {chrome_fg};
+                border-bottom: 1px solid {border};
+                spacing: 4px;
+            }}
+            QToolBar QToolButton {{
+                color: {chrome_fg};
+                background: transparent;
+                border: 1px solid transparent;
+                padding: 3px;
+            }}
+            QToolBar QToolButton:hover {{
+                background: {hover_bg};
+                border: 1px solid {border};
+            }}
+            QToolBar QLineEdit,
+            QToolBar QSpinBox {{
+                background: {input_bg};
+                color: {input_fg};
+                border: 1px solid {border};
+                selection-background-color: {menu_sel_bg};
+                selection-color: {menu_sel_fg};
+            }}
+            """
+        )
+
+    def changeEvent(self, event):
+        """Re-apply chrome styling when the app palette/theme changes at runtime."""
+        if event.type() in {
+            QEvent.Type.PaletteChange,
+            QEvent.Type.ApplicationPaletteChange,
+        }:
+            self._applyAdaptiveChromeTheme()
+        super().changeEvent(event)
 
     def _default_recovery_dir(self) -> Path:
         if self.filename is not None:

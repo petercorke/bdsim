@@ -12,11 +12,9 @@ from pathlib import Path
 from sys import platform
 from pathlib import Path
 
-from colored import fg, attr
-
 # PySide6 imports
 from PySide6.QtWidgets import QApplication
-from PySide6.QtCore import QTimer, QEvent
+from PySide6.QtCore import QTimer, QEvent, Qt
 from PySide6.QtGui import QIcon
 
 # BdEdit imports
@@ -64,11 +62,6 @@ class _BdeditApp(QApplication):
 
 # Executable code to launch the BdEdit application window
 def main():
-
-    print(fg("red"))
-    print("bdedit is beta code and prone to random crashing, save your work often")
-    print(attr(0))
-
     # handle command line options, bdedit -h for details
     parser = argparse.ArgumentParser(description="Interactive edit for bdsim models")
     parser.add_argument(
@@ -127,6 +120,12 @@ def main():
 
     # insert argv[0] into head of list of remaining args, and hand that to Qt
     unparsed_args.insert(0, sys.argv[0])
+
+    # macOS native menu-bar ignores most Qt palette/stylesheet rules, which can
+    # make text unreadable when the system auto-switches themes. Force a Qt
+    # (in-window) menu-bar so bdedit's adaptive menu styling can be applied.
+    if platform == "darwin" and os.getenv("BDEDIT_NATIVE_MENUBAR", "0") != "1":
+        QApplication.setAttribute(Qt.ApplicationAttribute.AA_DontUseNativeMenuBar, True)
 
     # A QApplication instance is made, which is the window that holds everything
     app = _BdeditApp(unparsed_args)

@@ -35,20 +35,20 @@ PALETTE_GROUP_STYLE = (
 PALETTE_GROUP_STYLE_CORE = (
     "QPushButton { text-align: left; padding-left: 12px; "
     "padding-top: 4px; padding-bottom: 4px; "
-    "background-color: #dbeafe; border: 1px solid #bfd5ee; } "
-    "QPushButton:hover { background-color: #d2e8ff; }"
+    "background-color: #dbeafe; border: 1px solid #bfd5ee; color: #0f172a; } "
+    "QPushButton:hover { background-color: #d2e8ff; color: #0f172a; }"
 )
 PALETTE_GROUP_STYLE_CANVAS = (
     "QPushButton { text-align: left; padding-left: 12px; "
     "padding-top: 4px; padding-bottom: 4px; "
-    "background-color: #fef3c7; border: 1px solid #e9dca8; } "
-    "QPushButton:hover { background-color: #f9eab8; }"
+    "background-color: #fef3c7; border: 1px solid #e9dca8; color: #0f172a; } "
+    "QPushButton:hover { background-color: #f9eab8; color: #0f172a; }"
 )
 PALETTE_GROUP_STYLE_OTHER = (
     "QPushButton { text-align: left; padding-left: 12px; "
     "padding-top: 4px; padding-bottom: 4px; "
-    "background-color: #dcfce7; border: 1px solid #bfe8cd; } "
-    "QPushButton:hover { background-color: #d1f6df; }"
+    "background-color: #dcfce7; border: 1px solid #bfe8cd; color: #0f172a; } "
+    "QPushButton:hover { background-color: #d1f6df; color: #0f172a; }"
 )
 PALETTE_ITEM_STYLE = (
     "QPushButton { text-align: left; padding-left: 28px; "
@@ -104,6 +104,11 @@ class Interface(QWidget):
         """
         super().__init__(parent)
 
+        self._palette_group_style_core = PALETTE_GROUP_STYLE_CORE
+        self._palette_group_style_canvas = PALETTE_GROUP_STYLE_CANVAS
+        self._palette_group_style_other = PALETTE_GROUP_STYLE_OTHER
+        self._palette_item_style = PALETTE_ITEM_STYLE
+
         # The toolbar and library browser widgets are initialized
         # self.toolBar = QWidget()
         self.libraryBrowser = QWidget()
@@ -121,18 +126,85 @@ class Interface(QWidget):
     def _style_palette_button(self, button, item=False, group_kind=None):
         """Apply palette button text alignment without allowing row collapse."""
         if item:
-            style = PALETTE_ITEM_STYLE
+            style = self._palette_item_style
         else:
             if group_kind == "core":
-                style = PALETTE_GROUP_STYLE_CORE
+                style = self._palette_group_style_core
             elif group_kind == "canvas":
-                style = PALETTE_GROUP_STYLE_CANVAS
+                style = self._palette_group_style_canvas
             elif group_kind == "other":
-                style = PALETTE_GROUP_STYLE_OTHER
+                style = self._palette_group_style_other
             else:
                 style = PALETTE_GROUP_STYLE
         button.setStyleSheet(style)
         button.setMinimumHeight(max(button.sizeHint().height(), 34))
+
+    @staticmethod
+    def _is_dark_palette(palette):
+        """Infer dark mode from the current window color luminance."""
+        c = palette.color(QPalette.ColorRole.Window)
+        luminance = (
+            0.2126 * c.redF() + 0.7152 * c.greenF() + 0.0722 * c.blueF()
+        ) * 255.0
+        return luminance < 140.0
+
+    def _set_palette_styles_for_theme(self):
+        """Build palette button styles for the current light/dark theme."""
+        dark = self._is_dark_palette(self.palette())
+        if dark:
+            self._palette_group_style_core = (
+                "QPushButton { text-align: left; padding-left: 12px; "
+                "padding-top: 4px; padding-bottom: 4px; "
+                "background-color: #1f3247; border: 1px solid #3d5978; color: #f5f7fa; } "
+                "QPushButton:hover { background-color: #28415d; color: #f5f7fa; }"
+            )
+            self._palette_group_style_canvas = (
+                "QPushButton { text-align: left; padding-left: 12px; "
+                "padding-top: 4px; padding-bottom: 4px; "
+                "background-color: #4a3b17; border: 1px solid #74612b; color: #fff7d6; } "
+                "QPushButton:hover { background-color: #5a4820; color: #fff7d6; }"
+            )
+            self._palette_group_style_other = (
+                "QPushButton { text-align: left; padding-left: 12px; "
+                "padding-top: 4px; padding-bottom: 4px; "
+                "background-color: #1d3a2f; border: 1px solid #2f5f4d; color: #eafaf3; } "
+                "QPushButton:hover { background-color: #24503f; color: #eafaf3; }"
+            )
+            self._palette_item_style = (
+                "QPushButton { text-align: left; padding-left: 28px; "
+                "padding-top: 4px; padding-bottom: 4px; color: #f5f7fa; }"
+            )
+        else:
+            self._palette_group_style_core = PALETTE_GROUP_STYLE_CORE
+            self._palette_group_style_canvas = PALETTE_GROUP_STYLE_CANVAS
+            self._palette_group_style_other = PALETTE_GROUP_STYLE_OTHER
+            self._palette_item_style = PALETTE_ITEM_STYLE
+
+    def _refresh_palette_styles(self):
+        """Recompute and reapply button styles after a theme/palette change."""
+        self._set_palette_styles_for_theme()
+
+        if hasattr(self, "canvasItems_button"):
+            self._style_palette_button(
+                self.canvasItems_button, item=False, group_kind="canvas"
+            )
+
+        for attr in (
+            "connector_block_button",
+            "main_block_button",
+            "text_item_button",
+            "grouping_box_button",
+        ):
+            if hasattr(self, attr):
+                self._style_palette_button(getattr(self, attr), item=True)
+
+        for group in getattr(self, "list_of_scrollbar_buttons", []):
+            group_button = group[0][0]
+            normalized_group = self._normalize_group_name(group[0][1])
+            group_kind = "core" if normalized_group in CORE_BLOCK_GROUP_SET else "other"
+            self._style_palette_button(group_button, item=False, group_kind=group_kind)
+            for button_tuple in group[1]:
+                self._style_palette_button(button_tuple[0], item=True)
 
     @staticmethod
     def _normalize_group_name(name):
@@ -205,6 +277,9 @@ class Interface(QWidget):
         # width) have been scaled to other screen sizes.
         # Keep scale as a float so wide displays do not truncate to 0 and hide the palette.
         self.layout.scale = 2560 / max(resolution.width(), 1)
+
+        # Initialize theme-aware palette button styles before creating buttons.
+        self._set_palette_styles_for_theme()
 
         # An instance of the Scene class is created, providing it the resolution of the
         # desktop screen and the application layout manager.
@@ -437,6 +512,15 @@ class Interface(QWidget):
         # and stretched horizontally by 9 columns (to column 10)
         self.layout.addWidget(self.libraryBrowser, 0, 0, 10, 1)
         self.layout.addWidget(self.canvasView, 0, 1, 10, 9)
+
+    def changeEvent(self, event):
+        """Update palette button styling when app/system theme changes."""
+        if event.type() in {
+            QEvent.Type.PaletteChange,
+            QEvent.Type.ApplicationPaletteChange,
+        }:
+            self._refresh_palette_styles()
+        super().changeEvent(event)
 
     # -----------------------------------------------------------------------------
     @Slot()
