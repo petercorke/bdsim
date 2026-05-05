@@ -89,6 +89,7 @@ class BlockDiagram(BlockDiagramMixin):
         self.n_auto_gain = itertools.count()
         self.n_auto_pow = itertools.count()
         self._state_map: dict[Block, np.ndarray | None] = {}
+        self.compiled = False
 
     def __getitem__(self, id):
         print(id)
@@ -344,27 +345,27 @@ class BlockDiagram(BlockDiagramMixin):
         self.blocknames = {}
 
         if not subsystem and verbose:
-            if self.compiled:
-                print("\nCompiling:")
+            if not self.compiled:
+                print(f"\nCompiling blockdiagram '{self.name}':")
             else:
-                print("\nRecompiling:")
+                print(f"\nRecompiling blockdiagram '{self.name}':")
         self.compiled = False
 
-        # process all subsystem imports
-        # ssblocks = [b for b in self.blocklist if b.type == 'subsystem']
-        # for b in ssblocks:
-        #     print('  importing subsystem', b.name)
-        #     if b.ssvar is not None:
-        #         print('-- Wiring in subsystem', b, 'from module local variable ', b.ssvar)
+        # recursively instantiate all subsystem imports
         self.blocklist, self.wirelist = self._subsystem_import(
             self, None, verbose=verbose
         )
 
-        # get all the blocks ready for compilation
+        # get all the blocks in the complete wirelist ready for compilation
+        #  - create _input_wires and _output_wires lists
+        #  - create _inport_slots and _outport_slots lists
+        #  - create PortValueSlot for each output port
         for b in self.blocklist:
             b.compile()
 
         # check that wires all point to valid blocks
+        if verbose:
+            print("  ☑ checking wires and connections...")
         for w in self.wirelist:
             if w.start.block not in self.blocklist:
                 raise RuntimeError(
@@ -374,6 +375,8 @@ class BlockDiagram(BlockDiagramMixin):
                 raise RuntimeError(f"wire {w} ends at unreferenced block {w.end.block}")
 
         # run block specific checks
+        if verbose:
+            print("  ☑ checking block parameters...")
         try:
             for b in self.blocklist:
                 b.check_safe()
@@ -384,6 +387,8 @@ class BlockDiagram(BlockDiagramMixin):
         self.blocknames = {b.name: b for b in self.blocklist if b.name is not None}
 
         # visit all stateful blocks
+        if verbose:
+            print("  ☑ checking all stateful blocks...")
         for b in self.blocklist:
             if b.blockclass == "continuous":
                 self.nstates += b.nstates
@@ -411,6 +416,8 @@ class BlockDiagram(BlockDiagramMixin):
                     )
 
         # connect the source and destination blocks to each wire
+        if verbose:
+            print("  ☑ connecting wires to blocks...")
         for w in self.wirelist:
             try:
                 w.start.block.add_output_wire(w)
@@ -424,6 +431,8 @@ class BlockDiagram(BlockDiagramMixin):
 
         # check connections every block
         # determine the predecessor/parent blocks, used later to generate the schedule
+        if verbose:
+            print("  ☑ checking block inputs/outputs are connected...")
         for b in self.blocklist:
             # check all inputs are connected
             for port, w in enumerate(b._input_wires):
@@ -458,14 +467,10 @@ class BlockDiagram(BlockDiagramMixin):
                     len(b._state_names) == b.nstates
                 ), "incorrect number of state names given: " + str(b)
 
-        # bind runtime input slots to source output slots.
-        # done here after subsystem flattening, block.compile(), and wire hookup.
-        for w in self.wirelist:
-            source_slot = w.start.block.outport_slot(w.start.port)
-            w.bind_slot(source_slot)
-            w.end.block.bind_input_slot(w.end.port, source_slot)
-
         # check for cycles of function blocks
+        if verbose:
+            print("  ☑ checking for algebraic loops...")
+
         def _DFS(path):
             start = path[0]
             tail = path[-1]
@@ -496,9 +501,24 @@ class BlockDiagram(BlockDiagramMixin):
                 raise RuntimeError("could not compile system")
 
         # create the execution plan/schedule
+        if verbose:
+            print("  ☑ creating execution schedule...")
         self.schedule_generate()
 
+        # bind runtime input slots to source output slots.
+        # done here after subsystem flattening, block.compile(), and wire hookup.
+        if verbose:
+            print("  ☑ create slots to transfer data between blocks...")
+        for w in self.wirelist:
+            source_slot = w.start.block.outport_slot(w.start.port)
+            w.bind_slot(source_slot)
+            w.end.block.bind_input_slot(w.end.port, source_slot)
+
         ## evaluate the network once to check out wire types
+        if verbose:
+            print(
+                "  ☑ evaluating network with initial conditions to determine wire datatype..."
+            )
         state_map = self.initial_state_map()
 
         if report:
@@ -520,45 +540,70 @@ class BlockDiagram(BlockDiagramMixin):
 
         return self.compiled
 
-    def _subsystem_import(self, bd, sspath, verbose=False):
-        blocks = []
-        wires = bd.wirelist
+    def _subsystem_import(
+        self, bd: BlockDiagram, sspath: str, verbose: bool = False, depth: int = 0
+    ):
+        """Recursively import subsystems
+
+        :param bd: the block diagram in which to instantiate subsystems
+        :type bd: BlockDiagram
+        :param sspath: subsystem name prefix
+        :type sspath: str
+        :param verbose: print details of subsystem instantiation, defaults to False
+        :type verbose: bool, optional
+        :param depth: subsystem import recursion depth, defaults to 0
+        :type depth: int, optional
+        :return: _description_
+        :rtype: _type_
+        """
+        blocks = []  # create an empty block list
+        wires = bd.wirelist  # start with wires in the current diagram
 
         for b in bd.blocklist:
             # rename the block to include subsystem path
             if sspath is not None:
                 b.name = sspath + "/" + b.name
 
-            if isinstance(b, SubsystemBlock):
-                # deal with a subsystem
-                #  - recurse to import it
-                #  - add its blocks and wires to the set
+            if not isinstance(b, SubsystemBlock):
+                # not a Subsystem block, just add the block to the list
+                b._depth = depth
+                blocks.append(b)
+            else:
+                # Subsystem block encountered, recurse to find its constituent blocks and wires
+                # do not add it to the block list, it was just a container for the subsystem blocks and wires
                 if verbose:
-                    print("instantiating subsystem ", b.name)
-                ssb, ssw = self._subsystem_import(b.subsystem, b.name)
+                    print(f"{'  '*(depth+1)}instantiating subsystem ", b.name)
+                ssb, ssw = self._subsystem_import(
+                    b.subsystem,  # reference to the BlockDiagram that describes the subsystem
+                    b.name,  # name of the subsystem block, becomes a prefix for all blocks within the subsystem
+                    depth=depth + 1,  # increase subsystem nesting depth
+                    verbose=verbose,
+                )
+                #  add its blocks and wires to the current set
                 blocks.extend(ssb)
                 wires.extend(ssw)
 
-                # INPORT/OUTPORT blocks now become simple pass throughs
-                # same number of inputs and outputs
-                b._ss_inport.nin = b._ss_inport.nout
-                b._ss_outport.nout = b._ss_outport.nin
+                # INPORT/OUTPORT blocks now become simple pass throughs with equal numbers of input and outport ports
+                # INPORT block had nout outputs and 0 inputs
+                # OUTPORT block had 0 outputs and nin inputs
+                b.inport.nin = b.inport.nout  # num inputs <- num outputs
+                b.outport.nout = b.outport.nin  # num outputs <- num inputs
 
-                # modify the wiring, keep the INPORT/OUTPORT blocks but lose
-                # the SUBSYSTEM blocks
+                # modify the wiring, so that wires connecting to the Subsystem block are moved to
+                # the INPORT and OUTPORT blocks.
                 for w in bd.wirelist:
                     # for all wires at this level, find those that connect
-                    # to the subsystem and tweak them
+                    # to the Subsystem and tweak them
                     if w.start.block == b:
-                        # SS output
-                        w.start.block = b._ss_outport
+                        # Subsystem block output
+                        w.start.block = (
+                            b.outport
+                        )  # change to OUTPORT block, leave the port intact
                     if w.end.block == b:
-                        # SS input
-                        w.end.block = b._ss_inport
-
-            else:
-                # not a subsystem, just add the block to the list
-                blocks.append(b)
+                        # Subsystem block input
+                        w.end.block = (
+                            b.inport
+                        )  # change to INPORT block, leave the port intact
 
         # systematically renumber all blocks and wires
         for i, b in enumerate(blocks):
@@ -924,12 +969,16 @@ class BlockDiagram(BlockDiagramMixin):
 
     # ---------------------------------------------------------------------- #
 
-    def report_summary(self, sortby="name", **kwargs) -> None:
+    def report_summary(
+        self, sortby: str = "name", depth: int | None = None, **kwargs
+    ) -> None:
         """
         Print a summary of block diagram.
 
         :param sortby: sort rows by specified block attribute: "name" [default] or "type"
         :type sortby: str, optional
+        :param depth: only show blocks with subsystem depth less than or equal to this value, defaults to None (show all)
+        :type depth: int, optional
         :param style: table style, one of: ansi (default), markdown, latex
         :type style: str
 
@@ -962,6 +1011,13 @@ class BlockDiagram(BlockDiagramMixin):
         first = True
         legend = None
         for b in sorted(self.blocklist, key=sortfunc):
+            if depth is not None:
+                # show blocks with depth less than or equal to depth
+                skip = b._depth > depth
+                if b.type == "inport" and (b._depth - depth) == 1:
+                    skip = False
+                if skip:
+                    continue
             name = b.name
             if isinstance(b, EventSource):
                 name += "@"
@@ -1079,9 +1135,6 @@ class BlockDiagram(BlockDiagramMixin):
                     assert c is not None
                     table.row(b.id, b.name, c.name, c.T, c.offset)
             table.print(**kwargs)
-
-        if not self.compiled:
-            print("** System has not been compiled, or had a compile time error")
 
     def report_schedule(self, **kwargs) -> None:
         """

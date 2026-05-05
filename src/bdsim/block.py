@@ -249,6 +249,8 @@ class Block(ABC, Port):
         self._graphics = False
         self._parameters = {}
 
+        self._depth = 0  # block depth in subsystem hierarchy, set at compile time
+
         if bd is not None:
             bd.add_block(self)
 
@@ -1128,6 +1130,7 @@ class Block(ABC, Port):
 
         # used to build execution plan at compile time, set by compile() method
         self._sequence = None
+        self._depth = 0
         self._parents: list[Plug | None] = [None] * self.nin  # type: ignore[list-item]
 
     def add_output_wire(self, w) -> None:
@@ -1807,10 +1810,12 @@ class SubsystemBlock(Block):
     such as gain, summation or various mappings.
     """
 
-    def __init__(self, **blockargs) -> None:
+    def __init__(self, subsystem, **blockargs) -> None:
         """
         Create a subsystem block.
 
+        :param subsystem: the subsystem to wrap
+        :type subsystem: BlockDiagram
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         :return: subsystem block base class
@@ -1819,6 +1824,23 @@ class SubsystemBlock(Block):
         This is the parent class of all subsystem blocks.
         """
         super().__init__(nstates=0, ndstates=0, **blockargs)
+
+        # each subsystem must have exactly one INPORT and one OUTPORT block
+        inports = [b for b in subsystem.blocklist if b.type == "inport"]
+        outports = [b for b in subsystem.blocklist if b.type == "outport"]
+
+        if len(inports) == 0:
+            raise ValueError(f"Subsystem({self.name}) has no INPORT blocks")
+        if len(inports) > 1:
+            raise ValueError(f"Subsystem({self.name}) has more than 1 INPORT blocks")
+        if len(outports) == 0:
+            raise ValueError(f"Subsystem({self.name}) has no OUTPORT blocks")
+        if len(outports) > 1:
+            raise ValueError(f"Subsystem({self.name}) has more than 1 OUTPORT blocks")
+
+        self.subsystem = subsystem
+        self.inport = inports[0]
+        self.outport = outports[0]
 
 
 class SampledBlock(Block):
