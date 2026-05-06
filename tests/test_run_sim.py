@@ -287,6 +287,16 @@ class SimRunCoverageTest(unittest.TestCase):
             self.sim.options.simtime = None
         self.assertIsNotNone(out.t)
 
+    def test_run_with_dt_builds_t_eval_sampling_grid(self):
+        """run(dt=...) should produce output samples on the requested grid."""
+        bd, step, integ, null = self._stateful_bd()
+        out = self.sim.run(bd, T=0.2, dt=0.05, max_step=0.2)
+
+        self.assertIsNotNone(out.t)
+        self.assertGreater(len(out.t), 0)
+        self.assertTrue(np.allclose(np.diff(out.t), 0.05, atol=1e-9))
+        self.assertAlmostEqual(float(out.t[-1]), 0.2, delta=1e-9)
+
     # ---- debug flag -------------------------------------------------------
 
     def test_run_with_debug_flag(self):
@@ -666,16 +676,15 @@ class SimRunFunctionBDTest(unittest.TestCase):
     def setUpClass(cls):
         cls.sim = bdsim.BDSim(graphics=None, progress=False, banner=False, quiet=False)
 
-    def test_run_no_states_with_dt(self):
-        """Block diagram with no continuous states but with explicit dt."""
+    def test_run_no_states_with_max_step(self):
+        """Block diagram with no continuous states but with explicit max_step."""
         bd = self.sim.blockdiagram()
         src = bd.CONSTANT(3)
         null = bd.NULL(1)
         bd.connect(src, null)
         bd.compile(verbose=False)
-        # dt=None and no states → division would fail if dt not set.
-        # Pass dt explicitly to exercise the 'no states, no clock' path.
-        out = self.sim.run(bd, T=0.1, dt=0.02)
+        # Pass max_step explicitly to exercise the 'no states, no clock' path.
+        out = self.sim.run(bd, T=0.1, max_step=0.02)
         self.assertIsNotNone(out.t)
 
 
@@ -1200,6 +1209,89 @@ class OptionsBackendCliTest(unittest.TestCase):
         """CLI-provided non-positive animation rate should be rejected."""
         with self.assertRaises(ValueError):
             self._parse_with_argv(["prog", "--animation-rate", "0"])
+
+    def test_solve_ivp_options_from_constructor(self):
+        """BDSim/Options kwargs should store solve_ivp defaults."""
+        opts = Options(
+            sysargs=False,
+            dt=0.03,
+            atol=1e-7,
+            rtol=1e-4,
+            max_step=0.02,
+            method="DOP853",
+        )
+        self.assertEqual(float(opts.dt), 0.03)
+        self.assertEqual(float(opts.atol), 1e-7)
+        self.assertEqual(float(opts.rtol), 1e-4)
+        self.assertEqual(float(opts.max_step), 0.02)
+        self.assertEqual(opts.method, "DOP853")
+
+    def test_solve_ivp_options_from_cli(self):
+        """CLI solve_ivp options should populate runtime options."""
+        opts = self._parse_with_argv(
+            [
+                "prog",
+                "--dt",
+                "0.02",
+                "--atol",
+                "1e-8",
+                "--rtol",
+                "1e-5",
+                "--max-step",
+                "0.01",
+                "--method",
+                "BDF",
+            ]
+        )
+        self.assertEqual(float(opts.dt), 0.02)
+        self.assertEqual(float(opts.atol), 1e-8)
+        self.assertEqual(float(opts.rtol), 1e-5)
+        self.assertEqual(float(opts.max_step), 0.01)
+        self.assertEqual(opts.method, "BDF")
+
+    def test_solve_ivp_options_must_be_positive(self):
+        """dt/atol/rtol/max_step must be positive when provided."""
+        with self.assertRaises(ValueError):
+            Options(sysargs=False, dt=0)
+        with self.assertRaises(ValueError):
+            Options(sysargs=False, atol=0)
+        with self.assertRaises(ValueError):
+            Options(sysargs=False, rtol=0)
+        with self.assertRaises(ValueError):
+            Options(sysargs=False, max_step=0)
+
+    def test_help_uses_constructor_defaults(self):
+        """Argument help should display constructor-provided defaults."""
+        old_argv = sys.argv[:]
+        try:
+            sys.argv = ["prog", "-h"]
+            with contextlib.redirect_stdout(io.StringIO()) as buf:
+                with self.assertRaises(SystemExit) as cm:
+                    Options(sysargs=True, animation=True, method="Radau", rtol=1e-5)
+            self.assertEqual(cm.exception.code, 0)
+            out = buf.getvalue()
+            self.assertIn("--method NAME", out)
+            self.assertIn("--rtol RTOL", out)
+            self.assertIn("(default: Radau)", out)
+            self.assertIn("(default: 1e-05)", out)
+            self.assertIn("--animation-rate HZ", out)
+        finally:
+            sys.argv = old_argv
+
+    def test_help_shows_rk45_default_method_when_unset(self):
+        """When no method default is supplied, help should show RK45."""
+        old_argv = sys.argv[:]
+        try:
+            sys.argv = ["prog", "-h"]
+            with contextlib.redirect_stdout(io.StringIO()) as buf:
+                with self.assertRaises(SystemExit) as cm:
+                    Options(sysargs=True)
+            self.assertEqual(cm.exception.code, 0)
+            out = buf.getvalue()
+            self.assertIn("--method NAME", out)
+            self.assertIn("default: RK45", out)
+        finally:
+            sys.argv = old_argv
 
     def test_animation_rate_must_be_positive(self):
         """animation_rate <= 0 should be rejected by option sanity checks."""

@@ -719,7 +719,8 @@ class BlockDiagram(BlockDiagramMixin):
 
             for sequence, group in enumerate(self.plan):
                 for b in group:
-                    inports = None if sequence == 0 else b.inport_values
+                    # inports = None if sequence == 0 else b.inport_values
+                    inports = b.inport_values
                     block_state = state_map.get(b)
                     out = b.output_safe(t, inports, block_state)
 
@@ -1158,7 +1159,13 @@ class BlockDiagram(BlockDiagramMixin):
     # ---------------------------------------------------------------------- #
 
     def _handle_block_runtime_error(self, err: BlockRuntimeError) -> NoReturn:
-        cause = err.__cause__ if isinstance(err.__cause__, Exception) else err.cause
+        if isinstance(err.__cause__, Exception):
+            cause: Exception = err.__cause__
+        elif isinstance(err.cause, Exception):
+            cause = err.cause
+        else:
+            # Fallback so we always emit useful diagnostics.
+            cause = err
 
         print(fg("red"))
         if err.t is None:
@@ -1169,13 +1176,18 @@ class BlockDiagram(BlockDiagramMixin):
             )
 
         if cause.__traceback__ is not None:
-            frame = traceback.extract_tb(cause.__traceback__)[-1]
-            print(f'  File "{frame.filename}", line {frame.lineno}, in {frame.name}')
-            if frame.line is not None:
-                print(f"    {frame.line.strip()}")
-        print(
-            "  " + "".join(traceback.format_exception_only(type(cause), cause)).strip()
-        )
+            # Show full traceback for the originating exception so callers can
+            # identify the offending line, not just the final frame.
+            trace = "".join(
+                traceback.format_exception(type(cause), cause, cause.__traceback__)
+            ).rstrip()
+            for line in trace.splitlines():
+                print(f"  {line}")
+        else:
+            print(
+                "  "
+                + "".join(traceback.format_exception_only(type(cause), cause)).strip()
+            )
 
         if isinstance(err.inputs, (list, tuple)) and len(err.inputs) > 0:
             print()
@@ -1190,7 +1202,7 @@ class BlockDiagram(BlockDiagramMixin):
             print(f"State = {err.state}")
 
         print(attr(0))
-        raise RuntimeError("Fatal failure") from None
+        raise RuntimeError("Fatal failure") from cause
 
     def getstate0(self) -> np.ndarray[tuple[Any, ...], np.dtype[Any]] | Any:
         # get the state from each stateful block
@@ -1302,6 +1314,14 @@ class BlockDiagram(BlockDiagramMixin):
             for b in clock.blocklist:
                 block_state = active_state_map.get(b)
                 xb = b.next_safe(t, b.inport_values, block_state)
+                if not isinstance(xb, np.ndarray):
+                    b._raise_runtime_error(
+                        "next",
+                        AssertionError(f"next: block {b} did not return ndarray"),
+                        t=t,
+                        inputs=b.inport_values,
+                        state=block_state,
+                    )
                 x_next = np.r_[x_next, xb.flatten()]
             clock_next[clock] = x_next
         return clock_next

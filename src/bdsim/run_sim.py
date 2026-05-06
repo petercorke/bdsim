@@ -19,7 +19,7 @@ import time
 import traceback
 import traceback as tb
 import warnings
-from typing import Any, Callable, NoReturn
+from typing import Any, Callable, NoReturn, Sequence
 
 import matplotlib
 
@@ -228,7 +228,9 @@ class BDSimState(SimulationState):
     T
         Resolved run horizon for this offline run.
     dt
-        Optional maximum integration step (also used as synthetic tick period).
+        Optional output sample interval used to build solve_ivp ``t_eval`` grids.
+    max_step
+        Optional maximum integration step cap for solve_ivp.
     count
         Total runtime callback/evaluation counter.
     bdtime
@@ -282,6 +284,7 @@ class BDSimState(SimulationState):
         # offline-specific fields
         self.T: float | None = None
         self.dt: float | None = None
+        self.max_step: float | None = None
         self.count: int = 0
         self.bdtime: float = 0.0
         self.gtime: float = 0.0  # last graphics update
@@ -317,6 +320,8 @@ class BDSimState(SimulationState):
         s = f"BDSimState(t={self.bdtime:.3f}, count={self.count}"
         if self.dt is not None:
             s += f", dt={self.dt:.3g}"
+        if self.max_step is not None:
+            s += f", max_step={self.max_step:.3g}"
         if self.solver is not None:
             s += f", solver={self.solver}"
         if len(self.watchlist) > 0:
@@ -347,9 +352,7 @@ class BDSimState(SimulationState):
         self._event_probe_interval_end = t1
         self.reset_event_probe_cache()
 
-    def ensure_event_probe_evaluated(
-        self, bd: BlockDiagram, t: float, y: Any
-    ) -> None:
+    def ensure_event_probe_evaluated(self, bd: BlockDiagram, t: float, y: Any) -> None:
         """Evaluate diagram once for the current solve_ivp event probe.
 
         Event detectors are expected to be pure readers of already-computed
@@ -476,44 +479,58 @@ class BDSim(Runner):
         If ``sysargs`` is True, process command line arguments and passed
         options.  Command line arguments have precedence.
 
-        ===================  =========  ========  ===========================================
-        Command line switch  Argument   Default   Behaviour
-        ===================  =========  ========  ===========================================
-        --graphics, +g       graphics   True      enable graphical display
-        --animation, +a      animation  True      update graphics at each time step
-        --hold, +h           hold       True      hold graphics in done()
-        --no-graphics, -g    graphics   True      disable graphical display
-        --no-animation, -a   animation  True      don't update graphics at each time step
-        --no-hold, -H        hold       True      do not hold graphics in done()
-        --no-progress, -p    progress   True      do not display simulation progress bar
-        --backend BE         backend    'Qt5Agg'  matplotlib backend
-        --tiles SPEC, -t SPEC tiles      None      arrangement of figure tiles in one window,
-                                SPEC is RxC or one of: square, wide, tall
-        --shape WxH          shape      None      window size, default matplotlib size
-        --altscreen, +A,     altscreen  True      display plots on second monitor
-        --no-altscreen, -A   altscreen  True      do not display plots on second monitor
-        --debug F, -d F      debug      ''        debug flag string
-        --animation-rate R   animation_rate 20    animation/debugger sample rate (Hz)
-        --simtime T[,dt]     simtime    (10,)     simulation time
-        --verbose, -v        verbose    False     be verbose
-        --quiet, -q          quiet      False     suppress reports
-        -o, --out [FILE]     outfile    None      output pickled simulation results (default: bd.out)
-        -j, --json [FILE]    jsonfile   None      output JSON simulation results (default: bd.json)
-        --set P, -s P        setparam   []        override block parameter using ``P=block:param=value``
-        --global G           setglob    []        override global parameter using ``G=var=value``
-        ===================  =========  ========  ===========================================
+        =================================  ===============  =========  =====================================================
+        Command line switch                Argument         Default    Behaviour
+        =================================  ===============  =========  =====================================================
+        ``--graphics``, ``+g``             graphics         True       enable graphical display
+        ``--no-graphics``, ``-g``          graphics         True       disable graphical display
+        ``--animation``, ``+a``            animation        False      update graphics at each time step
+        ``--no-animation``, ``-a``         animation        False      don't update graphics at each time step
+        ``--hold``, ``+H``                 hold             True       hold graphics in done()
+        ``--no-hold``, ``-H``              hold             True       do not hold graphics in done()
+        ``--altscreen``, ``+A``            altscreen        True       display plots on second monitor
+        ``--no-altscreen``, ``-A``         altscreen        True       do not display plots on second monitor
+        ``--no-progress``, ``-p``          progress         True       do not display simulation progress bar
+        ``--backend BE``, ``-b BE``        backend          None       matplotlib backend
+        ``--tiles SPEC``, ``-t SPEC``      tiles            None       arrange figure tiles as RxC or square/wide/tall
+        ``--shape WxH``                    shape            None       window size (default: matplotlib default)
+        ``--blocks``                       blocks           False      display block list at startup
+        ``--debug F``, ``-d F``            debug            ``''``     debug flags: p/ropagate, s/tate, d/eriv, i/nteractive
+        ``--animation-rate R``             animation_rate   20.0       target update rate for animation/debugger (Hz)
+        ``--simtime T[,dt]``, ``-S``       simtime          None       simulation time as T or T,dt
+        ``--dt DT``                        dt               None       output sample interval (build solve_ivp t_eval)
+        ``--max-step DT``                  max_step         None       maximum solve_ivp integration step
+        ``--atol ATOL``                    atol             None       absolute tolerance for solve_ivp
+        ``--rtol RTOL``                    rtol             None       relative tolerance for solve_ivp
+        ``--method NAME``                  method           None       solve_ivp method (RK45, DOP853, Radau, BDF, LSODA)
+        ``--verbose``, ``-v``              verbose          False      be verbose
+        ``--quiet``, ``-q``               quiet            False      suppress reports
+        ``-o [FILE]``, ``--out [FILE]``    outfile          None       output pickled results (default: bd.out)
+        ``-j [FILE]``, ``--json [FILE]``   jsonfile         None       output JSON results (default: bd.json)
+        ``--set P``, ``-s P``              setparam         ``[]``     override block parameter: ``block:param=value``
+        ``--global G``                     setglob          ``[]``     override global parameter: ``var=value``
+        =================================  ===============  =========  =====================================================
 
         .. note:: ``animation`` and ``graphics`` options are coupled.  If
             ``graphics=False``, all graphics is suppressed.  If
             ``graphics=True`` then graphics are shown and the behaviour depends
             on ``animation``.  ``animation=False`` shows graphs at the end of
-            the simulation, while ``animation=True` will animate the graphs
+            the simulation, while ``animation=True`` will animate the graphs
             during simulation.
 
         :seealso: :meth:`set_globals()`
         """
 
         super().__init__()
+
+        if os.getenv("BDSIM_NO_TOOLBOXES", "").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }:
+            toolboxes = False
+
         self.packages = packages
 
         # process command line and overall options
@@ -642,18 +659,54 @@ class BDSim(Runner):
         )
 
     def _print_exception_red(
-        self, message: str, err: Exception, traceback: bool = True
+        self,
+        message: str,
+        err: Exception,
+        traceback: bool = True,
+        callsite: str | None = None,
     ) -> None:
         print(fg("red"))
         print(message)
+        if callsite is not None:
+            for line in callsite.splitlines():
+                print(
+                    f"  Triggered by: {line}"
+                    if line == callsite.splitlines()[0]
+                    else f"                {line}"
+                )
 
         if traceback and err.__traceback__ is not None:
-            frame: tb.FrameSummary = tb.extract_tb(err.__traceback__)[-1]
-            print(f'  File "{frame.filename}", line {frame.lineno}, in {frame.name}')
-            if frame.line is not None:
-                print(f"    {frame.line.strip()}")
-        print("  " + "".join(tb.format_exception_only(type(err), err)).strip())
+            # Show the full chained traceback so constructor failures include
+            # the original root cause, not just the final exception line.
+            trace = "".join(
+                tb.format_exception(type(err), err, err.__traceback__, chain=True)
+            ).rstrip()
+            for line in trace.splitlines():
+                print(f"  {line}")
+        else:
+            print("  " + "".join(tb.format_exception_only(type(err), err)).strip())
         print(attr(0))
+
+    @staticmethod
+    def _format_external_callsite() -> str | None:
+        stack = tb.extract_stack()
+        current_file = __file__
+
+        for frame in reversed(stack[:-1]):
+            if frame.filename == current_file and frame.name in {
+                "block_init_wrapper",
+                "new_method",
+                "_format_external_callsite",
+            }:
+                continue
+
+            line = frame.line.strip() if frame.line is not None else ""
+            location = f'File "{frame.filename}", line {frame.lineno}, in {frame.name}'
+            if line:
+                return f"{location}\n    {line}"
+            return location
+
+        return None
 
     @staticmethod
     def _is_solve_ivp_alias(name: str) -> bool:
@@ -680,6 +733,24 @@ class BDSim(Runner):
             return "RK45"
 
         return str(simstate.solver)
+
+    @staticmethod
+    def _build_t_eval_grid(t0: float, t1: float, dt: float) -> np.ndarray | None:
+        """Build an absolute-time t_eval grid over the closed interval [t0, t1]."""
+        tol = 1e-12
+        if dt <= 0:
+            return None
+        k0 = int(np.ceil((t0 - tol) / dt))
+        k1 = int(np.floor((t1 + tol) / dt))
+        if k1 < k0:
+            return None
+        grid = dt * np.arange(k0, k1 + 1, dtype=float)
+        grid = grid[(grid >= (t0 - tol)) & (grid <= (t1 + tol))]
+        if grid.size == 0:
+            return None
+        grid = np.clip(grid, t0, t1)
+        grid = np.unique(grid)
+        return grid if grid.size > 0 else None
 
     def _dispatch_crossing_event(
         self,
@@ -773,6 +844,7 @@ class BDSim(Runner):
         bd,
         T=5,
         dt=None,
+        max_step=None,
         solver="RK45",
         solver_args=None,
         debug="",
@@ -782,85 +854,82 @@ class BDSim(Runner):
         watch=None,
         threaded: bool = False,
     ) -> BDStruct:
-        """
-        Run a compiled block diagram from ``t=0`` to the requested horizon.
+        """Run a compiled block diagram.
 
         :param T: simulation horizon, defaults to 5
         :type T: float, optional
-        :param dt: maximum integration step (also used as synthetic tick period)
+        :param dt: output sample interval; used to build a ``t_eval`` grid for
+            ``solve_ivp`` so results are recorded at uniform steps
         :type dt: float, optional
+        :param max_step: maximum integration step passed to solve_ivp
+        :type max_step: float, optional
         :param solver: solve_ivp method name, defaults to ``RK45``
         :type solver: str, optional
-        :param block: matplotlib block at end of run, default False
+        :param solver_args: extra keyword arguments for ``scipy.integrate.solve_ivp``
+        :type solver_args: dict
+        :param debug: debug flags string (see below), defaults to ``''``
+        :type debug: str, optional
+        :param block: matplotlib block-at-end behaviour, default False
         :type block: bool
         :param checkfinite: error if inf or nan on any wire, default True
         :type checkfinite: bool
         :param minstepsize: minimum step length guard, default 1e-12
         :type minstepsize: float
-        :param watch: list of input ports to log
-        :type watch: list
-        :param solver_args: keyword arguments passed to ``scipy.integrate.solve_ivp``
-        :type solver_args: dict
-        :return: time history of signals and states
-        :rtype: Sim class
+        :param watch: list of signals to log (see below)
+        :type watch: list, optional
+        :param threaded: run in a worker thread (disables graphics), default False
+        :type threaded: bool, optional
+        :return: simulation results container
+        :rtype: BDStruct
 
-        The network must already be compiled.
+        The system is simulated from time 0 to ``T``.
 
-        Integration backend contract:
+        The integration backend is always ``scipy.integrate.solve_ivp``.  The
+        ``solver`` argument selects the method (e.g. ``RK45``, ``DOP853``,
+        ``Radau``, ``BDF``, ``LSODA``).  Finer control — tolerances, first
+        step, etc. — can be passed via ``solver_args``.
 
-        - Runtime always integrates with ``scipy.integrate.solve_ivp``.
-        - ``solver`` selects the solve_ivp ``method`` unless overridden by
-            ``solver_args['method']``.
-        - Legacy ``solver_args['integrator']`` is accepted as an alias for
-            method selection.
+        The output ``dt`` controls the time resolution of logged output.  When
+        given, ``solve_ivp`` is called with a matching ``t_eval`` grid so that
+        ``out.t`` contains uniformly-spaced points.  If omitted, ``solve_ivp``
+        chooses its own internal steps and all accepted points are recorded.
 
-                Runtime model:
+        Results are returned in a :class:`BDStruct` with attributes:
 
-                - A single outer event loop advances from ``t=0`` to ``t=tf``.
-                - Scheduled boundaries come from ``simstate.eventq`` (clock ticks,
-                    explicit events, animation frames, and terminal marker).
-                - Each loop integrates/evaluates one interval ``[t0, t1]`` using a
-                    specialized interval handler.
-                - Zero-crossing events are detected by ``solve_ivp(events=...)`` and
-                    can terminate an interval early; the loop then continues from the
-                    reached time.
+        - ``t`` — time vector: ndarray, shape=(M,)
+        - ``x`` — continuous state matrix: ndarray, shape=(M,N)
+        - ``xnames`` — list of state names corresponding to columns of ``x``,
+          e.g. ``"plant.x0"`` (set via the block's ``snames`` argument)
+        - ``clockN`` — :class:`BDStruct` for each clock (``clock0``, ``clock1``,
+          …) with sub-attributes ``t`` and ``x`` holding the discrete time
+          history; a legacy alias using the clock's name is also added when
+          possible
+        - ``yN`` — logged signal for the N-th entry in ``watch``
+        - ``ynames`` — list of names of the watched ports, same order as
+          ``watch``
+        - ``.stats`` — :class:`BDStruct` with integration statistics:
+          ``integration_time_points``, ``run_interval_calls``,
+          ``ydot_calls``, ``integrator_wall_time``,
+          ``events_detected_total``, ``events_detected_by_source``
 
-                The system is simulated from time 0 to ``tf`` where ``tf`` is the
-                resolved horizon from ``T`` and optional ``--simtime`` override.
+        The ``watch`` argument is a list of one or more signals whose value
+        during simulation will be recorded.  Each element can be:
 
-        The integration step time ``dt`` defaults to ``T/100`` but can be
-        specified.  Finer control can be achieved using ``max_step`` and
-        ``first_step`` parameters to the underlying integrator using the
-        ``solver_args`` parameter.
+        - a :class:`Block` reference, interpreted as output port 0
+        - a :class:`Plug` reference (block with port index)
+        - a string of the form ``"blockname[i]"`` — port *i* of the named block
 
-        Results are returned in a class with attributes:
+        The ``debug`` string contains single-character flags:
 
-        - ``t`` the time vector: ndarray, shape=(M,)
-        - ``x`` is the state vector: ndarray, shape=(M,N)
-        - ``xnames`` is a list of the names of the states corresponding to columns of `x`, eg. "plant.x0",
-            defined for the block using the ``snames`` argument
-        - ``yN`` for a watched input where N is the index of the port mentioned in the ``watch`` argument
-        - ``ynames`` is a list of the names of the input ports being watched, same order as in ``watch`` argument
+        - ``'p'`` — trace network value propagation
+        - ``'s'`` — trace state vector
+        - ``'d'`` — trace state derivative
+        - ``'i'`` — interactive step-by-step debugger
 
-        If there are no dynamic elements in the diagram, ``x`` and ``xnames``
-        are not present.
-
-        The ``watch`` argument is a list of one or more input ports whose value
-        during simulation will be recorded. The elements can be:
-            - a ``Block`` reference, which is interpretted as input port 0
-            - a ``Plug`` reference, ie. a block with an index or attribute
-            - a string of the form "block[i]" which is port i of the block named block.
-
-        The debug string comprises single letter flags:
-
-                - 'p' debug network value propagation
-                - 's' debug state vector
-                - 'd' debug state derivative
-                - 'i' interactive stepping/debugger
-
-        .. note:: Simulation stops if the step time falls below ``minsteplength``
-            which typically indicates that the solver is struggling with a very
-            harsh non-linearity.
+        .. note::
+            Simulation stops if the step size falls below ``minstepsize``,
+            which typically indicates the solver is struggling with a very
+            stiff or discontinuous system.
         """
 
         assert bd.compiled, "Network has not been compiled"
@@ -897,9 +966,18 @@ class BDSim(Runner):
         simstate.T = tf
         simstate.tf = tf
 
-        if dt is None and not "max_step" in solver_args:
-            dt = tf / 100
+        if dt is None:
+            dt = getattr(run_options, "dt", None)
+        if max_step is None:
+            max_step = getattr(run_options, "max_step", None)
+
+        if dt is not None and float(dt) <= 0:
+            raise ValueError("dt must be > 0")
+
+        if max_step is None and "max_step" not in solver_args:
+            max_step = tf / 100
         simstate.dt = dt
+        simstate.max_step = max_step
         simstate.count = 0
         simstate.bdtime = 0.0
         simstate.gtime = 0.0  # last graphics update
@@ -995,7 +1073,9 @@ class BDSim(Runner):
 
             if not simstate.options.quiet:
                 print(fg("yellow"))
-                print(f">>> Start simulation: T = {tf}, dt = {dt}")
+                print(
+                    f">>> Start simulation: T = {tf}, dt = {dt}, max_step = {max_step}"
+                )
                 if bd.nstates > 0:
                     s_cont = "s" if bd.nstates != 1 else ""
                     s_disc = "s" if bd.ndstates != 1 else ""
@@ -1153,19 +1233,33 @@ class BDSim(Runner):
                     # Nothing to integrate; process due scheduled sources and continue.
                     for source in sources:
                         if isinstance(source, Clock):
-                            source.savestate(t1, simstate)
-                            source.next_event(simstate)
                             try:
-                                source._set_runtime_state(
-                                    bd.next(t1, bd.state_map(x, simstate))[source],
-                                    simstate,
-                                )
+                                x_next = bd.next(t1, bd.state_map(x, simstate))[source]
                             except BlockRuntimeError as err:
                                 bd._handle_block_runtime_error(err)
+                                continue
+                            source.savestate(t1, simstate, x=x_next)
+                            source._set_runtime_state(x_next, simstate)
+                            source.next_event(simstate)
                         elif callable(source):
                             source(t1, simstate)
                     t0 = t1
                     continue
+
+                # Pure-discrete diagrams should only evaluate at actual clock ticks
+                # (and terminal boundary). Other scheduled callables such as
+                # animation/debug hooks must not trigger sampled-block output().
+                if bd.nstates == 0:
+                    has_clock_source = any(
+                        isinstance(source, Clock) for source in sources
+                    )
+                    has_terminal_marker = any(source is None for source in sources)
+                    if not has_clock_source and not has_terminal_marker:
+                        for source in sources:
+                            if callable(source):
+                                source(t1, simstate)
+                        t0 = t1
+                        continue
 
                 # Integrate/step until the next scheduled boundary.
                 interval_result = interval_handler(bd, t0, t1, x, simstate)
@@ -1182,15 +1276,14 @@ class BDSim(Runner):
                 if reached_boundary:
                     for source in sources:
                         if isinstance(source, Clock):
-                            source.savestate(t1, simstate)
-                            source.next_event(simstate)
                             try:
-                                source._set_runtime_state(
-                                    bd.next(t1, bd.state_map(x, simstate))[source],
-                                    simstate,
-                                )
+                                x_next = bd.next(t1, bd.state_map(x, simstate))[source]
                             except BlockRuntimeError as err:
                                 bd._handle_block_runtime_error(err)
+                                continue
+                            source.savestate(t1, simstate, x=x_next)
+                            source._set_runtime_state(x_next, simstate)
+                            source.next_event(simstate)
                         elif callable(source):
                             source(t1, simstate)
                     t0 = t1
@@ -1451,11 +1544,34 @@ class BDSim(Runner):
         ivp_args = dict(simstate.solver_args)
         # Historical alias used by older call sites; we map it to method below.
         ivp_args.pop("integrator", None)
+
+        option_max_step = getattr(simstate.options, "max_step", None)
+        option_method = getattr(simstate.options, "method", None)
+        option_atol = getattr(simstate.options, "atol", None)
+        option_rtol = getattr(simstate.options, "rtol", None)
+
+        if option_max_step is not None:
+            ivp_args.setdefault("max_step", float(option_max_step))
+        if simstate.max_step is not None:
+            # Caller-provided run(max_step=...) acts as an upper bound on solver step.
+            ivp_args.setdefault("max_step", simstate.max_step)
+
+        if option_atol is not None:
+            ivp_args.setdefault("atol", float(option_atol))
+        if option_rtol is not None:
+            ivp_args.setdefault("rtol", float(option_rtol))
+
         if simstate.dt is not None:
-            # When caller provides dt, treat it as an upper bound on solver step.
-            ivp_args.setdefault("max_step", simstate.dt)
-        # Keep user-provided method if present; otherwise derive from run(..., solver=...).
-        ivp_args.setdefault("method", self._solve_ivp_method(simstate))
+            t_eval = self._build_t_eval_grid(float(t0), float(t1), float(simstate.dt))
+            if t_eval is not None:
+                ivp_args.setdefault("t_eval", t_eval)
+
+        # Keep user-provided method if present; otherwise use option/default,
+        # then finally derive from run(..., solver=...).
+        if option_method is not None:
+            ivp_args.setdefault("method", str(option_method))
+        else:
+            ivp_args.setdefault("method", self._solve_ivp_method(simstate))
 
         if len(simstate.crossing_detectors) > 0:
             # Crossing detectors: zero-crossing callbacks registered in start().
@@ -1516,7 +1632,6 @@ class BDSim(Runner):
         #  correct state, even if the solver took large steps or if events were
         #  detected between solver steps.
         for k in range(start_index, len(result.t)):
-
             t = float(result.t[k])
             y = result.y[:, k]
             simstate.t = t
@@ -1666,12 +1781,16 @@ class BDSim(Runner):
                     block = cls(*args, bd=bd, **kwargs)  # call __init__ on the block
                     return block
                 except Exception as err:
+                    callsite = self._format_external_callsite()
                     self._print_exception_red(
-                        f"runtime error while creating block {cls.__name__}", err
+                        f"runtime error while creating block {cls.__name__}",
+                        err,
+                        callsite=callsite,
                     )
-                raise BlockCreationError(
-                    f"failed to create block {cls.__name__}"
-                ) from None
+                    message = f"failed to create block {cls.__name__}"
+                    if callsite is not None:
+                        message += f"\nTriggered by:\n{callsite}"
+                    raise RuntimeError(message) from None
 
             # return a function that invokes the class constructor
             f = block_init_wrapper
@@ -1779,7 +1898,7 @@ class BDSim(Runner):
 
         :param message: Error message
         :type message: str
-        :param retval: system return value (*nix only) defaults to 1
+        :param retval: system return value (``*nix`` only) defaults to 1
         :type retval: int, optional
 
         Display the error message then terminate the process.  For operating
@@ -2306,6 +2425,11 @@ class Options(OptionsBase):
             "graphics": True,
             "animation": False,
             "animation_rate": 20.0,
+            "dt": None,
+            "atol": None,
+            "rtol": None,
+            "max_step": None,
+            "method": None,
             "hold": True,
             "shape": None,
             "altscreen": True,
@@ -2339,16 +2463,52 @@ class Options(OptionsBase):
                 except KeyError:
                     print("envariable BDSIM, unknown option", key)
 
+        # Constructor-provided options should influence displayed CLI defaults
+        # (eg. `BDSim(animation=True)` then `-h` should show animation=True).
+        effective_defaults = dict(default_options)
+        for key, value in options.items():
+            if key in effective_defaults:
+                effective_defaults[key] = value
+
         unknownargs: list[str] = []
         if sysargs:
+            raw_argv = list(sys.argv[1:])
+
+            def _option_explicitly_set(option_strings: Sequence[str]) -> bool:
+                for token in raw_argv:
+                    for opt in option_strings:
+                        if token == opt or token.startswith(opt + "="):
+                            return True
+                        if (
+                            len(opt) == 2
+                            and opt.startswith("-")
+                            and not opt.startswith("--")
+                            and token.startswith(opt)
+                            and token != opt
+                        ):
+                            # short-option attached form, eg. -bTkAgg
+                            return True
+                return False
+
             # command line arguments and graphics
+            class _Fmt(
+                argparse.ArgumentDefaultsHelpFormatter,
+                argparse.RawDescriptionHelpFormatter,
+            ):
+                pass
+
             parser = argparse.ArgumentParser(
                 prefix_chars="-+",
-                formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+                formatter_class=_Fmt,
                 description="Block diagram simulation framework",
                 epilog=(
-                    "set defaults using environment variable BDSIM as a single string"
-                    " containing command line options"
+                    "Environment variables:\n"
+                    "  BDSIM              comma-separated key=value pairs that set option defaults,\n"
+                    "                     e.g. BDSIM=graphics=True,hold=True\n"
+                    "  BDSIMPATH          colon-separated list of extra paths/packages to search for blocks\n"
+                    "  BDSIM_NO_TOOLBOXES set to 1/true/yes/on to skip loading external toolboxes\n"
+                    "  BDSIM_DEBUG_LAZY_LOAD  set to any value to trace lazy block-class resolution\n"
+                    "  BDSIM_DEBUG_DISCOVERY  set to any value to trace block-package discovery\n"
                 ),
             )
             parser.add_argument(
@@ -2357,6 +2517,7 @@ class Options(OptionsBase):
                 type=str,
                 nargs="?",
                 const="list",
+                default=effective_defaults["backend"],
                 metavar="BACKEND",
                 help=(
                     "matplotlib backend to choose; use with no argument or with "
@@ -2367,12 +2528,14 @@ class Options(OptionsBase):
                 "--tiles",
                 "-t",
                 type=str,
+                default=effective_defaults["tiles"],
                 metavar="SPEC",
                 help="window tiling as RxC or one of: square, wide, tall",
             )
             parser.add_argument(
                 "--shape",
                 type=str,
+                default=effective_defaults["shape"],
                 metavar="WIDTHxHEIGHT",
                 help="window size as WxH, defaults to matplotlib default",
             )
@@ -2380,7 +2543,7 @@ class Options(OptionsBase):
                 "--blocks",
                 action="store_const",
                 const=True,
-                default=False,
+                default=effective_defaults["blocks"],
                 dest="blocks",
                 help="Display blocks at startup",
             )
@@ -2462,33 +2625,93 @@ class Options(OptionsBase):
                 "-p",
                 action="store_const",
                 const=False,
+                default=effective_defaults["progress"],
                 dest="progress",
                 help="animate graphics",
             )
             parser.add_argument(
-                "--verbose", "-v", action="store_const", const=True, help="debug flags"
+                "--verbose",
+                "-v",
+                action="store_const",
+                const=True,
+                default=effective_defaults["verbose"],
+                help="debug flags",
             )
             parser.add_argument(
                 "--debug",
                 "-d",
                 type=str,
+                default=effective_defaults["debug"],
                 metavar="[psd]",
                 help="debug flags: p/ropagate, s/tate, d/eriv, i/nteractive",
             )
             parser.add_argument(
-                "--simtime", "-S", type=str, help="simulation time: T or T,dt"
+                "--simtime",
+                "-S",
+                type=str,
+                default=effective_defaults["simtime"],
+                help="simulation time: T or T,dt",
             )
             parser.add_argument(
                 "--animation-rate",
                 type=float,
+                default=effective_defaults["animation_rate"],
                 metavar="HZ",
                 help="target interactive update cadence for animation/debugger",
+            )
+            parser.add_argument(
+                "--dt",
+                type=float,
+                default=effective_defaults["dt"],
+                metavar="DT",
+                help="output sample interval used to build solve_ivp t_eval",
+            )
+            parser.add_argument(
+                "--atol",
+                type=float,
+                default=effective_defaults["atol"],
+                metavar="ATOL",
+                help="absolute tolerance for solve_ivp",
+            )
+            parser.add_argument(
+                "--rtol",
+                type=float,
+                default=effective_defaults["rtol"],
+                metavar="RTOL",
+                help="relative tolerance for solve_ivp",
+            )
+            parser.add_argument(
+                "--max-step",
+                type=float,
+                default=effective_defaults["max_step"],
+                metavar="DT",
+                dest="max_step",
+                help="maximum solve_ivp integration step",
+            )
+            parser.add_argument(
+                "--method",
+                type=str,
+                default=(
+                    effective_defaults["method"]
+                    if effective_defaults["method"] is not None
+                    else argparse.SUPPRESS
+                ),
+                metavar="NAME",
+                help=(
+                    "solve_ivp method (eg. RK45, DOP853, Radau, BDF, LSODA)"
+                    + (
+                        " (default: RK45)"
+                        if effective_defaults["method"] is None
+                        else ""
+                    )
+                ),
             )
             parser.add_argument(
                 "--quiet",
                 "-q",
                 action="store_const",
                 const=True,
+                default=effective_defaults["quiet"],
                 help="suppress reports",
             )
             parser.add_argument(
@@ -2496,6 +2719,7 @@ class Options(OptionsBase):
                 "--out",
                 nargs="?",
                 const="bd.out",
+                default=effective_defaults["outfile"],
                 metavar="FILE",
                 dest="outfile",
                 help="output pickled simulation results (default filename: bd.out)",
@@ -2505,6 +2729,7 @@ class Options(OptionsBase):
                 "--json",
                 nargs="?",
                 const="bd.json",
+                default=effective_defaults["jsonfile"],
                 metavar="FILE",
                 dest="jsonfile",
                 help="output simulation results as JSON (default filename: bd.json)",
@@ -2514,6 +2739,7 @@ class Options(OptionsBase):
                 "-s",  # NOTE: clashes with `unittest discover -s <startdir>`; use pytest or --start-directory instead
                 dest="setparam",
                 action="append",
+                default=list(effective_defaults["setparam"]),
                 type=str,
                 help="override block parameter using block:param=value",
             )
@@ -2521,24 +2747,34 @@ class Options(OptionsBase):
                 "--global",
                 dest="setglob",
                 action="append",
+                default=list(effective_defaults["setglob"]),
                 type=str,
                 help="override global parameter using var=value",
+            )
+
+            parser.set_defaults(
+                graphics=effective_defaults["graphics"],
+                animation=effective_defaults["animation"],
+                hold=effective_defaults["hold"],
+                altscreen=effective_defaults["altscreen"],
             )
 
             argv0 = sys.argv[0] if len(sys.argv) > 0 else ""
             args, unknownargs = parser.parse_known_args()
             # Consume bdsim options from sys.argv so user code sees only its own args.
             sys.argv = [argv0, *unknownargs]
-            cmdline_options: dict[str, Any] = vars(args)  # get args as a dictionary
-            # keep only the options that are not None, ie. those that were
-            # explicitly set on the command line
-            cmdline_options = {
-                option: value
-                for option, value in cmdline_options.items()
-                if value is not None
-            }
+            parsed_options: dict[str, Any] = vars(args)
+            cmdline_options: dict[str, Any] = {}
+            for action in parser._actions:
+                if not action.option_strings:
+                    continue
+                dest = action.dest
+                if dest in ("help", argparse.SUPPRESS):
+                    continue
+                if _option_explicitly_set(action.option_strings):
+                    cmdline_options[dest] = parsed_options[dest]
 
-            backend_option = cmdline_options.get("backend")
+            backend_option = parsed_options.get("backend")
             if isinstance(backend_option, str) and backend_option.lower() in {
                 "list",
                 "help",
@@ -2549,7 +2785,7 @@ class Options(OptionsBase):
         else:
             cmdline_options = dict()  # empty dictionary
 
-        super().__init__(readonly=cmdline_options, args=default_options)
+        super().__init__(readonly=cmdline_options, args=effective_defaults)
 
         # Validate and normalize the initialized option set, including
         # command-line readonly values and environment-derived defaults.
@@ -2576,6 +2812,18 @@ class Options(OptionsBase):
 
         if "animation_rate" in options and float(options["animation_rate"]) <= 0:
             raise ValueError("animation_rate must be > 0")
+
+        if options.get("dt") is not None and float(options["dt"]) <= 0:
+            raise ValueError("dt must be > 0")
+
+        if options.get("atol") is not None and float(options["atol"]) <= 0:
+            raise ValueError("atol must be > 0")
+
+        if options.get("rtol") is not None and float(options["rtol"]) <= 0:
+            raise ValueError("rtol must be > 0")
+
+        if options.get("max_step") is not None and float(options["max_step"]) <= 0:
+            raise ValueError("max_step must be > 0")
 
         return options
 
