@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from collections import defaultdict
+import inspect
 import itertools
 from copy import deepcopy
 import io
 import json
+import os
 import sys
 from tempfile import _TemporaryFileWrapper
 import traceback
@@ -175,6 +177,8 @@ class BlockDiagram(BlockDiagramMixin):
 
         for end in ends:
             if isinstance(start, Block):
+                # connect(X, Y) or connect(X, Y[i]) or connect(X, Y[m:n])
+
                 if isinstance(end, Block):
                     # connect(X, Y)
                     # wires from all outport to all inports
@@ -285,9 +289,28 @@ class BlockDiagram(BlockDiagramMixin):
             raise Warning(f"block name {block} is not unique")
         self.blocknames[block.name] = block
 
+    _this_file = os.path.abspath(__file__)
+
+    @staticmethod
+    def _wire_loc(wire) -> str:
+        """Return 'filename:lineno' for the callsite stored on *wire*."""
+        cs = getattr(wire, "callsite", None)
+        if cs is None:
+            return wire.fullname
+        return f"{os.path.basename(cs[0])}:{cs[1]}"
+
     def add_wire(self, wire, name=None):
         wire.id = next(self._wire_id_counter)
         wire.name = name
+        # Record the user source line that triggered this wire (first frame
+        # outside blockdiagram.py), useful for compile-time error messages.
+        frame = inspect.currentframe()
+        wire.callsite = None
+        while frame is not None:
+            if os.path.abspath(frame.f_code.co_filename) != BlockDiagram._this_file:
+                wire.callsite = (frame.f_code.co_filename, frame.f_lineno)
+                break
+            frame = frame.f_back
         # just add wire to the list, gets instantiated at compile time
         # when add_output_wire and add_input_wire are called on the blocks
         return self.wirelist.append(wire)
@@ -369,10 +392,12 @@ class BlockDiagram(BlockDiagramMixin):
         for w in self.wirelist:
             if w.start.block not in self.blocklist:
                 raise RuntimeError(
-                    f"wire {w} starts at unreferenced block {w.start.block}"
+                    f"wire {w} ({self._wire_loc(w)}) starts at unreferenced block {w.start.block}"
                 )
             if w.end.block not in self.blocklist:
-                raise RuntimeError(f"wire {w} ends at unreferenced block {w.end.block}")
+                raise RuntimeError(
+                    f"wire {w} ({self._wire_loc(w)}) ends at unreferenced block {w.end.block}"
+                )
 
         # run block specific checks
         if verbose:
@@ -425,12 +450,13 @@ class BlockDiagram(BlockDiagramMixin):
 
             except:
                 print(fg("red"))
-                print("error connecting wire ", w.fullname + ": ", sys.exc_info()[1])
+                print(
+                    f"error connecting wire {w.fullname} ({self._wire_loc(w)}): {sys.exc_info()[1]}"
+                )
                 print(attr(0))
                 error = True
 
-        # check connections every block
-        # determine the predecessor/parent blocks, used later to generate the schedule
+        # check connections for every block
         if verbose:
             print("  ☑ checking block inputs/outputs are connected...")
         for b in self.blocklist:
@@ -443,7 +469,6 @@ class BlockDiagram(BlockDiagramMixin):
                         )
                     )
                     error = True
-                # b.add_parent(w.start.block)
 
             # check all outputs are connected
             for port, ws in enumerate(b._output_wires):
