@@ -6,6 +6,7 @@ from collections import defaultdict
 import itertools
 from copy import deepcopy
 import io
+import json
 import sys
 from tempfile import _TemporaryFileWrapper
 import traceback
@@ -1492,6 +1493,239 @@ class BlockDiagram(BlockDiagramMixin):
             print("  inputs:  ", b.inport_values)
             if b.nout > 0:
                 print("  outputs: ", [b.outport_value(i) for i in range(b.nout)])
+
+
+# --------------------------------------------------------------------------- #
+
+
+def bdload(
+    bd: "BlockDiagram",
+    filename: str,
+    globalvars: dict[str, Any] | None = None,
+    verbose: bool = False,
+    allow_eval: bool | None = None,
+    trace_eval: bool = False,
+    **kwargs: Any,
+) -> "BlockDiagram":
+    """
+    Load a block diagram model
+
+    :param bd: block diagram to load into
+    :type bd: BlockDiagram instance
+    :param filename: name of JSON file to load from
+    :type filename: str or Path
+    :param globalvars: global variables for evaluating expressions, defaults to {}
+    :type globalvars: dict, optional
+    :param verbose: print parameters of all blocks as they are instantiated, defaults to False
+    :type verbose: bool, optional
+    :param allow_eval: controls expression evaluation behavior. ``True`` enables
+        ``eval`` without warning, ``False`` refuses required ``=...`` expressions,
+        ``None`` (default) allows evaluation with a one-time warning.
+    :type allow_eval: bool, optional
+    :param trace_eval: print each expression before it is evaluated.
+    :type trace_eval: bool, optional
+    :raises RuntimeError: unable to load the file
+    :raises ValueError: unable to load the file
+    :return: the loaded block diagram
+    :rtype: BlockDiagram instance
+
+    Block diagrams are saved as JSON files.
+
+    A number of errors can arise at this stage:
+
+    * a parameter starting with "=" cannot be evaluated
+    * the block throws an error when instantiated, incorrect parameter values
+    * unconnected input port
+
+    If the JSON file contains a parameter of the form ``"=expression"`` then
+    it is evaluated using ``eval`` with the global name space given by
+    ``globalvars``. This means that you can embed lambda expressions that use
+    functions/classes defined in your module if ``globalvars`` is set to ``globals()``.
+
+    Since ``eval`` executes code, only load trusted model files. Set
+    ``allow_eval=False`` to refuse required ``=...`` expressions.
+
+    """
+
+    # load the JSON file
+    with open(filename, "r") as f:
+        model = json.load(f)
+
+    output_dict: dict = {}  # block output id -> Plug
+    connector_dict: dict = {}  # connector block: input socket -> output socket
+    wire_dict: dict = {}  # wire: start socket -> end socket
+    block_dict: dict = {}  # block: block id -> Block instance
+
+    if globalvars is None:
+        globalvars = {}
+
+    import math
+    _eval_ns: dict[str, Any] = {"np": np, "math": math, "pi": math.pi}
+    try:
+        from spatialmath import SE3, SE2
+        _eval_ns.update({"SE3": SE3, "SE2": SE2})
+    except ImportError:
+        pass
+    namespace = {**_eval_ns, **globalvars}
+
+    warned_eval = False
+
+    for block in model["blocks"]:
+        if block["block_type"] == "CONNECTOR":
+            start = block["inputs"][0]["id"]
+            end = block["outputs"][0]["id"]
+            connector_dict[end] = start
+
+        elif block["block_type"] == "MAIN":
+            continue
+
+        else:
+            try:
+                block_init = bd.__dict__[block["block_type"]]
+            except KeyError:
+                print(fg("red"))
+                print(f"block [{block['block_type']}] not loaded, check BDSIMPATH")
+                print(attr(0))
+
+            params = dict(block["parameters"])
+
+            if verbose:
+                print(f"[{block['title']}]:")
+
+            for key, value in params.items():
+                if verbose:
+                    print(f"    {key}: ", end="")
+
+                newvalue = None
+                if isinstance(value, str):
+                    if value[0] == "=":
+                        expr = value[1:]
+                        if allow_eval is False:
+                            raise RuntimeError(
+                                "bdload: eval disabled by allow_eval=False while "
+                                f"resolving parameter {key} for block [{block['title']}]"
+                            )
+                        if allow_eval is None and not warned_eval:
+                            warnings.warn(
+                                "bdload is evaluating model expressions using eval(); "
+                                "load only trusted .bd files. Use allow_eval=False to "
+                                "disable expression evaluation.",
+                                UserWarning,
+                                stacklevel=2,
+                            )
+                            warned_eval = True
+                        if trace_eval:
+                            print(
+                                f"[eval] block=[{block['title']}] param={key} expr={expr}"
+                            )
+                        try:
+                            newvalue = eval(expr, namespace)
+                        except (ValueError, TypeError, NameError, SyntaxError):
+                            print(fg("red"))
+                            print(
+                                f"bdload: error resolving parameter {key}: {value} for"
+                                f" block [{block['title']}]"
+                            )
+                            traceback.print_exc(limit=-1, file=sys.stderr)
+                            print(attr(0))
+                            raise RuntimeError(
+                                f"cannot instantiate block [{block['title']}] - bad"
+                                " parameters?"
+                            )
+                    else:
+                        if allow_eval is not False:
+                            if allow_eval is None and not warned_eval:
+                                warnings.warn(
+                                    "bdload is evaluating model expressions using eval(); "
+                                    "load only trusted .bd files. Use allow_eval=False to "
+                                    "disable expression evaluation.",
+                                    UserWarning,
+                                    stacklevel=2,
+                                )
+                                warned_eval = True
+                            if trace_eval:
+                                print(
+                                    f"[eval] block=[{block['title']}] param={key} expr={value}"
+                                )
+                            try:
+                                newvalue = eval(value, namespace)
+                            except (NameError, SyntaxError):
+                                pass
+                else:
+                    newvalue = value
+
+                if newvalue is None:
+                    if verbose:
+                        print(f" {value} default")
+                else:
+                    params[key] = newvalue
+                    if verbose:
+                        print(f" {value} -> {newvalue}")
+
+            try:
+                if "blockargs" in params:
+                    blockargs = params["blockargs"]
+                    del params["blockargs"]
+                else:
+                    blockargs = {}
+
+                blockargs = blockargs or {}
+
+                newblock = block_init(name=block["title"], **params, **blockargs)
+
+            except (
+                ValueError,
+                TypeError,
+                NameError,
+                SyntaxError,
+                AssertionError,
+                AttributeError,
+            ):
+                print(fg("red"))
+                print(f"bdload: error instantiating block [{block['title']}]")
+                args = ", ".join(
+                    [f"{arg[0]} = {arg[1]}" for arg in block["parameters"]]
+                )
+                print(f"  {block['block_type']}({args})")
+                print(attr(0))
+                raise RuntimeError(
+                    f"cannot instantiate block [{block['title']}] - bad parameters?"
+                )
+
+            block_dict[block["id"]] = newblock
+            for output in block["outputs"]:
+                output_dict[output["id"]] = newblock[output["index"]]
+
+    for wire in model["wires"]:
+        wire_dict[wire["end_socket"]] = wire["start_socket"]
+
+    for block in model["blocks"]:
+        if block["block_type"] == "CONNECTOR":
+            continue
+
+        id = block["id"]
+
+        for input in block["inputs"]:
+            in_id = input["id"]
+
+            if in_id not in wire_dict:
+                raise ValueError(
+                    f"bdload: error block [{block['title']}] has unconnected input port"
+                )
+
+            start_id = wire_dict[in_id]
+
+            while start_id in connector_dict:
+                start_id = wire_dict[connector_dict[start_id]]
+
+            end = block_dict[id][input["index"]]
+            start = output_dict[start_id]
+
+            if verbose:
+                print(start, " --> ", end)
+            bd.connect(start, end)
+
+    return bd
 
 
 if __name__ == "__main__":  # pragma: no cover

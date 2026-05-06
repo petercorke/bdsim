@@ -1853,6 +1853,10 @@ class SubsystemBlock(Block):
         if len(outports) > 1:
             raise ValueError(f"Subsystem({self.name}) has more than 1 OUTPORT blocks")
 
+        # the block inherits its number of inputs and outputs from the subsystem's INPORT and OUTPORT blocks
+        self.nin = inports[0].nout
+        self.nout = outports[0].nin
+
         self.subsystem = subsystem
         self.inport = inports[0]
         self.outport = outports[0]

@@ -17,11 +17,13 @@ from __future__ import annotations
 import importlib
 import types
 import copy
+from pathlib import Path
 from typing import Any, cast
 
 import numpy as np
 
 import bdsim
+from bdsim.blockdiagram import bdload
 from bdsim.blockdiagram import BlockDiagram
 from bdsim.components import SubsystemBlock, SourceBlock, SinkBlock, FunctionBlock
 
@@ -367,11 +369,22 @@ class SubSystem(SubsystemBlock):
     This block represents a subsystem in a block diagram.  The definition
     of the subsystem can be:
 
-    - the name of a module which is imported and must contain only
-      only ``BlockDiagram`` instance, or
+    - a path to a ``.bd`` JSON model file, which is loaded via :func:`~bdsim.bdload.bdload`, or
+    - the name of a Python module which is imported and must create exactly
+      one ``BlockDiagram`` instance, or
     - a ``BlockDiagram`` instance
 
-    The referenced block diagram must contain one or both of:
+    .. warning::
+
+        **Module name mode** (non-``.bd`` string): importing a module executes
+        all top-level Python code in that file. Only use this with modules you
+        trust completely.
+
+        **File mode** (``.bd`` path): loads a JSON file safely. ``eval()`` is
+        only used for parameters starting with ``"="``; control this with
+        ``allow_eval``.
+
+    The referenced block diagram must contain either or both of:
 
     - one ``InPort`` block, which has outputs but no inputs. These
       outputs are connected to the inputs to the enclosing ``SubSystem`` block.
@@ -399,88 +412,95 @@ class SubSystem(SubsystemBlock):
         subsys: str | BlockDiagram,
         nin: int = 1,
         nout: int = 1,
+        allow_eval: bool | None = None,
+        trace_eval: bool = False,
+        globalvars: dict[str, Any] | None = None,
         **blockargs: Any,
     ) -> None:
         """
-        :param subsys: Subsystem as either a filename or a ``BlockDiagram`` instance
+        :param subsys: Subsystem as a ``.bd`` filepath, module name, or ``BlockDiagram`` instance
         :type subsys: str or BlockDiagram
         :param nin: Number of input ports, defaults to 1
         :type nin: int, optional
         :param nout: Number of output ports, defaults to 1
         :type nout: int, optional
+        :param allow_eval: (``.bd`` mode only) ``True`` enables eval silently,
+            ``False`` refuses ``=...`` expressions, ``None`` (default) warns once.
+        :type allow_eval: bool, optional
+        :param trace_eval: (``.bd`` mode only) print each expression before evaluation.
+        :type trace_eval: bool, optional
+        :param globalvars: (``.bd`` mode only) extra names available when evaluating
+            ``"=..."`` parameter expressions.
+        :type globalvars: dict, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :raises ImportError: DESCRIPTION
-        :raises ValueError: DESCRIPTION
+        :raises ImportError: module not found or no BlockDiagram in it
+        :raises ValueError: invalid argument type or .bd load constraints not met
         """
-        super().__init__(**blockargs)
 
         resolved_subsys: BlockDiagram
 
+        name = None
+
         if isinstance(subsys, str):
-            # attempt to import the file
-            try:
-                module: types.ModuleType = importlib.import_module(subsys, package=".")
-            except SyntaxError as exc:
-                raise ImportError(
-                    "-- syntax error in block definiton: " + subsys
-                ) from exc
-            except ModuleNotFoundError as exc:
-                raise ImportError("-- module not found " + subsys) from exc
-            # get all the bdsim.BlockDiagram instances
-            simvars: list[str] = [
-                name
-                for name, ref in module.__dict__.items()
-                if isinstance(ref, BlockDiagram)
-            ]
-            if len(simvars) == 0:
-                raise ImportError("no bdsim.Simulation instances in imported module")
-            elif len(simvars) > 1:
-                raise ImportError(
-                    "multiple bdsim.Simulation instances in imported module"
-                    + str(simvars)
+            p = Path(subsys)
+            if p.exists() and p.suffix == ".bd":
+                # .bd file mode: safe JSON load via bdload
+
+                if self._bd is None or self._bd.runtime is None:
+                    raise ValueError(
+                        "SubSystem: loading a .bd file requires the block to be part "
+                        "of a BDSim-managed diagram (created via sim.blockdiagram())"
+                    )
+                new_subsystem = bdload(
+                    self._bd,
+                    str(p),
+                    globalvars=globalvars,
+                    allow_eval=allow_eval,
+                    trace_eval=trace_eval,
                 )
-            resolved_subsys = cast(BlockDiagram, module.__dict__[simvars[0]])
-            self.ssvar: str | None = simvars[0]
+                name = p.stem
+            else:
+                # module import mode: executes the module — use only with trusted code
+
+                try:
+                    module: types.ModuleType = importlib.import_module(
+                        subsys, package="."
+                    )
+                except SyntaxError as exc:
+                    raise ImportError(
+                        "-- syntax error in block definition: " + subsys
+                    ) from exc
+                except ModuleNotFoundError as exc:
+                    raise ImportError("-- module not found " + subsys) from exc
+                # get all bdsim.BlockDiagram instances
+                diagrams: list[str] = [
+                    name
+                    for name, ref in module.__dict__.items()
+                    if isinstance(ref, BlockDiagram)
+                ]
+                if len(diagrams) == 0:
+                    raise ImportError(
+                        "no bdsim.BlockDiagram instances in imported module"
+                    )
+                elif len(diagrams) > 1:
+                    raise ImportError(
+                        "multiple bdsim.BlockDiagram instances in imported module: "
+                        + str(diagrams)
+                    )
+                new_subsystem = cast(BlockDiagram, module.__dict__[diagrams[0]])
+                name = diagrams[0]
         elif isinstance(subsys, BlockDiagram):
             # use an in-memory diagram
-            resolved_subsys = subsys
-            self.ssvar = None
+
+            new_subsystem = copy.deepcopy(subsys) # make a snapshot copy to avoid later changes to the original affecting this block
+            name = new_subsystem.name
         else:
             raise ValueError("argument must be filename or BlockDiagram instance")
 
-        # check if valid input and output ports
-        ninp = 0
-        noutp = 0
-        for b in resolved_subsys.blocklist:
-            if b.type == "inport":
-                ninp += 1
-            elif b.type == "outport":
-                noutp += 1
-
-        if ninp > 1:
-            raise ValueError("subsystem cannot have more than one INPORT block")
-        if noutp > 1:
-            raise ValueError("subsystem cannot have more than one OUTPORT block")
-        if ninp + noutp == 0:
-            raise ValueError("subsystem cannot have zero INPORT or OUTPORT blocks")
-
-        # it's valid, make a deep copy
-        self.subsystem: Any = copy.deepcopy(resolved_subsys)
-
-        # get references to the input and output port blocks
-        self._ss_inport = None
-        self.outport = None
-        for b in self.subsystem.blocklist:
-            if b.type == "inport":
-                self._ss_inport = b
-            elif b.type == "outport":
-                self._ss_outport = b
-
-        self.ssname = resolved_subsys.name
-
-        self.nin: int = ninp
-        self.nout: int = noutp
+        if "name" not in blockargs and name is not None:
+            blockargs["name"] = name
+        super().__init__(subsystem=new_subsystem, **blockargs)
 
 
 # ------------------------------------------------------------------------ #
@@ -591,7 +611,9 @@ if __name__ == "__main__":  # pragma: no cover
     import sys
 
     root = Path(__file__).resolve().parents[3]
-    test_file = root / "tests" / "blocks" / f"test_blocks_{Path(__file__).stem.lower()}.py"
+    test_file = (
+        root / "tests" / "blocks" / f"test_blocks_{Path(__file__).stem.lower()}.py"
+    )
 
     if not test_file.exists():
         print(f"No module unit tests found for {Path(__file__).name}: {test_file}")

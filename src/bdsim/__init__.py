@@ -9,7 +9,8 @@ from .run_realtime import *
 from .blockdiagram import *
 from .components import *
 from .block_types import GraphicsBlock
-from .bdrun import bdrun, bdload
+from .blockdiagram import bdload
+from .bdrun import bdrun
 
 try:
     import importlib.metadata
