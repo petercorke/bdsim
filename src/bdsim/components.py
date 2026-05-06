@@ -30,8 +30,7 @@ class ScheduledEvent(Protocol):
     animation-frame lambdas satisfy it structurally.
     """
 
-    def __call__(self, t: float, simstate: SimulationState) -> None:
-        ...
+    def __call__(self, t: float, simstate: SimulationState) -> None: ...
 
 
 # decorator for debugging implicit block creation with operator overloading
@@ -613,8 +612,9 @@ class Clock:
         dispatch all event sources uniformly as ``source(t, simstate)`` without
         any ``isinstance`` check.
         """
-        self.savestate(t, simstate)
-        self._set_runtime_state(self.getstate(t), simstate)
+        x = self.getstate(t)
+        self.savestate(t, simstate, x=x)
+        self._set_runtime_state(x, simstate)
         self.next_event(simstate)
 
     def tick_realtime(self, t: float, simstate: SimulationState) -> None:
@@ -623,8 +623,9 @@ class Clock:
         Realtime scheduling is owned by timer backends; unlike ``__call__`` this
         method does not enqueue the next event in ``simstate.eventq``.
         """
-        self.savestate(t, simstate)
-        self._set_runtime_state(self.getstate(t), simstate)
+        x = self.getstate(t)
+        self.savestate(t, simstate, x=x)
+        self._set_runtime_state(x, simstate)
 
     def start(self, simstate: SimulationState) -> None:
         self.next_event(simstate)
@@ -650,9 +651,10 @@ class Clock:
     def time(self, k):
         return k * self.T + self.offset
 
-    def savestate(self, t, simstate: SimulationState | None = None) -> None:
+    def savestate(self, t, simstate: SimulationState | None = None, x=None) -> None:
         # save clock state at time t
-        x = self.getstate(t)
+        if x is None:
+            x = self.getstate(t)
         if simstate is not None:
             self._ensure_runtime(simstate)
             clock_state = simstate.clock_states[self]
