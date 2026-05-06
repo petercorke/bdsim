@@ -56,7 +56,7 @@ all = ["PySide6", "Pillow", "fastapi>=0.111", "uvicorn[standard]>=0.29"]
 
 [project.scripts]
 
-bdrun = "bdsim:bdrun"
+bdrun = "bdsim.bin.bdrun:bdrun"
 bdtex2icon = "bdsim.tex2icon:main"
 bdedit-app = "bdsim.bdedit.make_app:make_app"
 bdedit-associate-windows = "bdsim.bdedit.associate_bd_windows:main"

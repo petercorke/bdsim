@@ -9,6 +9,7 @@ Targets:
   - bdload() with an "=expression" parameter  (line 135)
   - bdload() with globalvars  (exercises namespace)
 """
+
 import json
 import tempfile
 import os
@@ -20,8 +21,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import bdsim
-from bdsim.bdrun import bdload, bdrun
-
+from bdsim.bin.bdrun import bdload, bdrun
 
 EXAMPLES_DIR = Path(__file__).parent.parent / "examples"
 
@@ -278,8 +278,8 @@ class BdrunCliBehaviorTest(unittest.TestCase):
         fake_bd = MagicMock()
         fake_sim.blockdiagram.return_value = MagicMock()
 
-        with patch("bdsim.bdrun.BDSim", return_value=fake_sim), patch(
-            "bdsim.bdrun.bdload", return_value=fake_bd
+        with patch("bdsim.bin.bdrun.BDSim", return_value=fake_sim), patch(
+            "bdsim.bin.bdrun.bdload", return_value=fake_bd
         ) as mock_bdload:
             with warnings.catch_warnings(record=True) as caught:
                 warnings.simplefilter("always")
@@ -297,7 +297,7 @@ class BdrunCliBehaviorTest(unittest.TestCase):
         """-h prints bdrun argparse help then invokes BDSim help path."""
         buf = io.StringIO()
         with patch("sys.argv", ["bdrun", "-h"]), patch(
-            "bdsim.bdrun.BDSim", side_effect=SystemExit
+            "bdsim.bin.bdrun.BDSim", side_effect=SystemExit
         ) as mock_bdsim:
             with redirect_stdout(buf):
                 bdrun()
@@ -312,7 +312,7 @@ class BdrunCliBehaviorTest(unittest.TestCase):
         """No-arg invocation should show the same full help/delegation path."""
         buf = io.StringIO()
         with patch("sys.argv", ["bdrun"]), patch(
-            "bdsim.bdrun.BDSim", side_effect=SystemExit
+            "bdsim.bin.bdrun.BDSim", side_effect=SystemExit
         ) as mock_bdsim:
             with redirect_stdout(buf):
                 bdrun()
