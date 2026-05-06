@@ -334,7 +334,8 @@ class Scope(GraphicsBlock):
         :type stairs: bool, optional
         :param scale: fixed y-axis scale or defaults to 'auto'
         :type scale: str or array_like(2)
-        :param labels: vertical axis labels
+        :param labels: labels for the plotted signals, defaults to block name and port of the source of each signal if not given. Used
+            for vertical axis label, legend and cursor readout.
         :type labels: sequence of strings
         :param grid: draw a grid, defaults to True. Can be boolean or a tuple of
                      options for grid()
