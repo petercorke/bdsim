@@ -594,24 +594,11 @@ class Block(ABC, Port):
         """
         values = []
         slots = getattr(self, "_inport_slots", None)
-        if slots is not None:
-            for i, slot in enumerate(slots):
-                if slot is not None:
-                    values.append(slot.value)
-                    continue
-
-                # Compatibility fallback for tests using uncompiled/manual wiring.
-                wire = self._input_wires[i]
-                assert wire is not None, f"block {self.name} has an unconnected input"
-                plug = wire.start
-                values.append(plug.block.outport_value(plug.port))
-            return values
-
-        # Compatibility path if called before compile() initialized slots.
-        for wire in self._input_wires:
-            assert wire is not None, f"block {self.name} has an unconnected input"
-            plug = wire.start
-            values.append(plug.block.outport_value(plug.port))
+        assert slots is not None, f"block {self.name} input slots not initialised"
+        for i, slot in enumerate(slots):
+            if slot is not None:
+                values.append(slot.value)
+                continue
         return values
 
     def inport_value(self, i: int) -> Any:
@@ -632,15 +619,18 @@ class Block(ABC, Port):
         :seealso: :meth:`inport_values`
         """
         slots = getattr(self, "_inport_slots", None)
+        assert slots is not None, f"block {self.name} input slots not initialised"
+
         if slots is not None:
             slot = slots[i]
             if slot is not None:
                 return slot.value
+        raise ValueError(f"block {self.name} input port {i} not connected")
 
-        wire = self._input_wires[i]
-        assert wire is not None, f"block {self.name} input port {i} not connected"
-        source = wire.start
-        return source.block.outport_value(source.port)
+        # wire = self._input_wires[i]
+        # assert wire is not None, f"block {self.name} input port {i} not connected"
+        # source = wire.start
+        # return source.block.outport_value(source.port)
 
     def inport_name(self, i: int) -> str:
         """
