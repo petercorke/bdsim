@@ -447,7 +447,7 @@ class Watch(SinkBlock):
         watch[0] = step
         watch[1] = ramp
 
-    :seealso: :method:`BDSim.run`
+    :seealso: :meth:`BDSim.run`
     """
 
     nin = 1

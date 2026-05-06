@@ -36,7 +36,6 @@ else:
 from bdsim.components import *
 from bdsim.connect import EndPlug, Plug, Port, StartPlug, Wire
 
-
 # ------------------------------------------------------------------------- #
 
 
@@ -625,9 +624,9 @@ class BlockDiagram(BlockDiagramMixin):
 
     def state_map(
         self,
-        continuous_state: np.ndarray[tuple[Any, ...], np.dtype[Any]]
-        | Any
-        | None = None,
+        continuous_state: (
+            np.ndarray[tuple[Any, ...], np.dtype[Any]] | Any | None
+        ) = None,
         simstate: SimulationState | None = None,
     ) -> dict[Block, np.ndarray | None]:
         """Build a unified block->state map from runtime storage."""
@@ -1393,7 +1392,7 @@ class BlockDiagram(BlockDiagramMixin):
 
             % dot -Tpng -o out.png dotfile.dot
 
-        .. image:: ../../figs/eg1.png
+        .. image:: ../figs/eg1.png
             :width: 600
             :alt: Block diagram represented as a mathematical graph
 
@@ -1560,9 +1559,11 @@ def bdload(
         globalvars = {}
 
     import math
+
     _eval_ns: dict[str, Any] = {"np": np, "math": math, "pi": math.pi}
     try:
         from spatialmath import SE3, SE2
+
         _eval_ns.update({"SE3": SE3, "SE2": SE2})
     except ImportError:
         pass

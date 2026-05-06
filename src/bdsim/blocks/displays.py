@@ -261,7 +261,7 @@ class Scope(GraphicsBlock):
     providing a 2-tuple ``[ymin, ymax]``. All lines are plotted against the
     same vertical scale.
 
-    .. figure:: ../../figs/Figure_1.png
+    .. figure:: ../figs/Figure_1.png
         :width: 500px
         :alt: example of generated graphic
 

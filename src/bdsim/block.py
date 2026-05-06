@@ -1755,8 +1755,6 @@ class FunctionBlock(Block):
         raise NotImplementedError
 
 
-
-
 class ContinuousBlock(Block):
     """
     A ContinuousBlock is a subclass of Block that represents a block with inputs,
@@ -1817,7 +1815,6 @@ class ContinuousBlock(Block):
     @abstractmethod
     def output(self, t: float, u: list[Any], x: np.ndarray) -> list[Any]:
         raise NotImplementedError
-
 
 
 class SampledBlock(Block):
@@ -1933,6 +1930,7 @@ class SubsystemBlock(Block):
         self.subsystem = subsystem
         self.inport = inports[0]
         self.outport = outports[0]
+
 
 class EventSource:
     pass
