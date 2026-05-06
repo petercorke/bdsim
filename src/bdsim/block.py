@@ -1869,15 +1869,24 @@ class SampledBlock(Block):
     system, either linear or nonlinear.
     """
 
+    def __init__(
+        self,
+        clock: Clock,
+        *,
+        ndstates: int | None = None,
+        x0: Vector1D | None = None,
         feedthrough: bool = False,
         **blockargs,
+    ) -> None:
         """
         Create a clocked block.
 
-        :param ndstates: number of discrete-time states
-        :type ndstates: int
-        :param clock: the clock that governs the block's discrete time updates
+            :param clock: the clock that governs the block's discrete time updates
         :type clock: Clock
+        :param ndstates: number of discrete-time states
+        :type ndstates: int, optional
+        :param x0: initial state vector, defaults to None
+        :type x0: Vector1D, optional
         :param feedthrough: whether the block has direct feedthrough from input to output, defaults to False
         :type feedthrough: bool, optional
         :param blockargs: |BlockOptions|
@@ -1887,10 +1896,20 @@ class SampledBlock(Block):
 
         This is the parent class of all sampled-time blocks.
         """
+        if x0 is not None:
+            self._x0 = smb.getvector(x0, dtype=float)
+            ndstates = len(self._x0)
+        elif ndstates is not None:
+            self._x0 = np.zeros(ndstates)
+        else:
+            raise ValueError(
+                "must specify initial state vector or number of discrete states"
+            )
+
         super().__init__(nstates=0, ndstates=ndstates, **blockargs)
-        assert clock is not None, "clocked block must have a clock"
         self._clocked = True
         self._clock = clock
+        self.T = clock.T
         self._feedthrough = feedthrough
         clock.add_block(self)
 
@@ -1905,8 +1924,13 @@ class SampledBlock(Block):
         return self._x0
 
     def check(self) -> None:
-        assert len(self._x0) == self.ndstates, "incorrect length for initial state"
-        assert self.nin > 0 or self.nout > 0, "no inputs or outputs specified"
+        assert (
+            self.ndstates > 0 and self._x0 is not None
+        ), f"sampled block must have discrete states and initial state vector, ndstates={self.ndstates}, x0={self._x0}"
+        assert (
+            len(self._x0) == self.ndstates
+        ), f"incorrect length for initial state: got {len(self._x0)}, expected {self.ndstates}"
+        assert self.nin > 0 or self.nout > 0, "block has no inputs or outputs"
 
 
 class EventSource:
