@@ -13,19 +13,18 @@ import matplotlib
 import matplotlib.figure
 import numpy as np
 from matplotlib import animation
-
 import matplotlib.pyplot as plt
 
-# from yaml import warnings
+import spatialmath.base as smb
 
 from bdsim.exceptions import BlockApiError, BlockRuntimeError
-
-
 from bdsim.components import Clock, _fixname, oodebug
 from bdsim.connect import Plug, Port, Wire
 
 if TYPE_CHECKING:
     from bdsim.blockdiagram import BlockDiagram
+
+Vector1D = int | float | tuple[float, ...] | list[float] | np.ndarray
 
 
 class PortValueSlot:
@@ -323,8 +322,8 @@ class Block(ABC, Port):
 
         :param cls: The subclass being initialized
         :type cls: class type
-        :param **kwargs: keyword args passed to subclass definition
-        :type **kwargs: dict
+        :param kwargs: keyword args passed to subclass definition
+        :type kwargs: dict
 
         This method is called when a new subclass of Block is defined, not when it is
         instantiated. Here we check that the subclass does not define methods that are
@@ -828,7 +827,7 @@ class Block(ABC, Port):
         """
         Evaluate a block for unit testing.
 
-        :param *inputs: Input port values
+        :param inputs: Input port values
         :param t: Simulation time, defaults to 0.0
         :type t: float, optional
         :param x: state vector
@@ -1034,9 +1033,9 @@ class Block(ABC, Port):
 
             y = c.v
 
-                +---+               +---+
-                | c | -v ---------> | y |
-                +---+               +---+
+                ┌───┐               ┌───┐
+                │ c ├ v ─────────▶ │ y │
+                └───┘               └───┘
 
         .. note::  this overloaded method handles all instances of ``setattr`` and
               implements normal functionality as well, only creating a wire
@@ -1682,6 +1681,30 @@ class Block(ABC, Port):
         pass
 
 
+class SourceBlock(Block):
+    """
+    A SourceBlock is a subclass of Block that represents a block that has outputs
+    but no inputs.  Its output is a function of parameters and time.
+    """
+
+    def __init__(self, **blockargs) -> None:
+        """
+        Create a source block.
+
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        :return: source block base class
+        :rtype: SourceBlock
+
+        This is the parent class of all source blocks.
+        """
+        super().__init__(nin=0, nstates=0, ndstates=0, **blockargs)
+
+    @abstractmethod
+    def output(self, t: float, u: list[Any], x: np.ndarray) -> list[Any]:
+        raise NotImplementedError
+
+
 class SinkBlock(Block):
     """
     A SinkBlock is a subclass of Block that represents a block that has inputs
@@ -1707,28 +1730,31 @@ class SinkBlock(Block):
         raise NotImplementedError
 
 
-class SourceBlock(Block):
+class FunctionBlock(Block):
     """
-    A SourceBlock is a subclass of Block that represents a block that has outputs
-    but no inputs.  Its output is a function of parameters and time.
+    A FunctionBlock is a subclass of Block that represents a block that has inputs
+    and outputs but no state variables.  Typically used to describe operations
+    such as gain, summation or various mappings.
     """
 
     def __init__(self, **blockargs) -> None:
         """
-        Create a source block.
+        Create a function block.
 
         :param blockargs: |BlockOptions|
         :type blockargs: dict
-        :return: source block base class
-        :rtype: SourceBlock
+        :return: function block base class
+        :rtype: FunctionBlock
 
-        This is the parent class of all source blocks.
+        This is the parent class of all function blocks.
         """
-        super().__init__(nin=0, nstates=0, ndstates=0, **blockargs)
+        super().__init__(nstates=0, ndstates=0, **blockargs)
 
     @abstractmethod
     def output(self, t: float, u: list[Any], x: np.ndarray) -> list[Any]:
         raise NotImplementedError
+
+
 
 
 class ContinuousBlock(Block):
@@ -1739,7 +1765,7 @@ class ContinuousBlock(Block):
     """
 
     def __init__(
-        self, nstates: int, x0: Vector1d = None, feedthrough: bool = False, **blockargs
+        self, nstates: int, x0: Vector1D = None, feedthrough: bool = False, **blockargs
     ) -> None:
         """
         Create a continuous-time block.
@@ -1747,7 +1773,7 @@ class ContinuousBlock(Block):
         :param nstates: number of continuous-time states
         :type nstates: int
         :param x0: initial state vector, defaults to None
-        :type x0: Vector1d, optional
+        :type x0: Vector1D, optional
         :param feedthrough: whether the block has direct feedthrough from input to output, defaults to False
         :type feedthrough: bool, optional
         :param blockargs: |BlockOptions|
@@ -1792,74 +1818,6 @@ class ContinuousBlock(Block):
     def output(self, t: float, u: list[Any], x: np.ndarray) -> list[Any]:
         raise NotImplementedError
 
-
-class FunctionBlock(Block):
-    """
-    A FunctionBlock is a subclass of Block that represents a block that has inputs
-    and outputs but no state variables.  Typically used to describe operations
-    such as gain, summation or various mappings.
-    """
-
-    def __init__(self, **blockargs) -> None:
-        """
-        Create a function block.
-
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        :return: function block base class
-        :rtype: FunctionBlock
-
-        This is the parent class of all function blocks.
-        """
-        super().__init__(nstates=0, ndstates=0, **blockargs)
-
-    @abstractmethod
-    def output(self, t: float, u: list[Any], x: np.ndarray) -> list[Any]:
-        raise NotImplementedError
-
-
-class SubsystemBlock(Block):
-    """
-    A SubSystem is a subclass of Block that represents a block that has inputs
-    and outputs but no state variables.  Typically used to describe operations
-    such as gain, summation or various mappings.
-    """
-
-    def __init__(self, subsystem, **blockargs) -> None:
-        """
-        Create a subsystem block.
-
-        :param subsystem: the subsystem to wrap
-        :type subsystem: BlockDiagram
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        :return: subsystem block base class
-        :rtype: SubsystemBlock
-
-        This is the parent class of all subsystem blocks.
-        """
-        super().__init__(nstates=0, ndstates=0, **blockargs)
-
-        # each subsystem must have exactly one INPORT and one OUTPORT block
-        inports = [b for b in subsystem.blocklist if b.type == "inport"]
-        outports = [b for b in subsystem.blocklist if b.type == "outport"]
-
-        if len(inports) == 0:
-            raise ValueError(f"Subsystem({self.name}) has no INPORT blocks")
-        if len(inports) > 1:
-            raise ValueError(f"Subsystem({self.name}) has more than 1 INPORT blocks")
-        if len(outports) == 0:
-            raise ValueError(f"Subsystem({self.name}) has no OUTPORT blocks")
-        if len(outports) > 1:
-            raise ValueError(f"Subsystem({self.name}) has more than 1 OUTPORT blocks")
-
-        # the block inherits its number of inputs and outputs from the subsystem's INPORT and OUTPORT blocks
-        self.nin = inports[0].nout
-        self.nout = outports[0].nin
-
-        self.subsystem = subsystem
-        self.inport = inports[0]
-        self.outport = outports[0]
 
 
 class SampledBlock(Block):
@@ -1932,6 +1890,49 @@ class SampledBlock(Block):
         ), f"incorrect length for initial state: got {len(self._x0)}, expected {self.ndstates}"
         assert self.nin > 0 or self.nout > 0, "block has no inputs or outputs"
 
+
+class SubsystemBlock(Block):
+    """
+    A SubSystem is a subclass of Block that represents a block that has inputs
+    and outputs but no state variables.  Typically used to describe operations
+    such as gain, summation or various mappings.
+    """
+
+    def __init__(self, subsystem, **blockargs) -> None:
+        """
+        Create a subsystem block.
+
+        :param subsystem: the subsystem to wrap
+        :type subsystem: BlockDiagram
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        :return: subsystem block base class
+        :rtype: SubsystemBlock
+
+        This is the parent class of all subsystem blocks.
+        """
+        super().__init__(nstates=0, ndstates=0, **blockargs)
+
+        # each subsystem must have exactly one INPORT and one OUTPORT block
+        inports = [b for b in subsystem.blocklist if b.type == "inport"]
+        outports = [b for b in subsystem.blocklist if b.type == "outport"]
+
+        if len(inports) == 0:
+            raise ValueError(f"Subsystem({self.name}) has no INPORT blocks")
+        if len(inports) > 1:
+            raise ValueError(f"Subsystem({self.name}) has more than 1 INPORT blocks")
+        if len(outports) == 0:
+            raise ValueError(f"Subsystem({self.name}) has no OUTPORT blocks")
+        if len(outports) > 1:
+            raise ValueError(f"Subsystem({self.name}) has more than 1 OUTPORT blocks")
+
+        # the block inherits its number of inputs and outputs from the subsystem's INPORT and OUTPORT blocks
+        self.nin = inports[0].nout
+        self.nout = outports[0].nin
+
+        self.subsystem = subsystem
+        self.inport = inports[0]
+        self.outport = outports[0]
 
 class EventSource:
     pass
