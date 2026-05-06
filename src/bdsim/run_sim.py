@@ -979,6 +979,13 @@ class BDSim(Runner):
                 elif isinstance(w, Plug):
                     # a plug was given
                     plug: Plug = w
+
+                if plug.block.blockclass == "subsystem":
+                    # subsystem blocks no longer exist in the wirelist, and don't have
+                    # their own outputs, so watch the corresponding port of the subsystem's
+                    # OUTPORT block instead.
+                    plug.block = plug.block.outport
+
                 watchlist.append(plug)
                 watchnamelist.append(str(plug))
             simstate.watchlist = watchlist
