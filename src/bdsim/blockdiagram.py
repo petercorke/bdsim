@@ -334,7 +334,7 @@ class BlockDiagram(BlockDiagramMixin):
         doimport: bool = True,
         evaluate: bool = True,
         report: bool = False,
-        verbose: bool = True,
+        verbose: bool = False,
     ) -> bool:
         """
         Compile the block diagram
