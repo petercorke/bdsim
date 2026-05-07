@@ -1005,12 +1005,8 @@ class IntegrationTest(unittest.TestCase):
         bd.connect(gain, null)
 
         bd.compile()
-        # Run evaluation cycle to test blocks work correctly
-        state = bd.getstate0()
-        yd = bd.evaluate(state, 0)
-
-        # Just verify evaluation completes without error
-        self.assertIsNotNone(yd)
+        # Verify evaluation completes without error (evaluate() always returns None)
+        bd.evaluate({}, 0)
 
     def test_multiple_blocks_from_same_module_resolve_once(self):
         """Multiple blocks from same module should resolve that module only once."""

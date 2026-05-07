@@ -154,7 +154,7 @@ class SinkBlockTest(unittest.TestCase):
 
         b = Stop()
         s = State()
-        b.event_handler(0.0, None, s)
+        b.event_handler(0.0, None, None, s)
         self.assertIs(s.stop, b)
 
     def test_watch(self):
@@ -192,15 +192,17 @@ class SinkBlockTest(unittest.TestCase):
     def test_event_handler_args_and_kwargs(self):
         called = {}
 
-        def callback(block, *args, **kwargs):
+        def callback(block, state_map, *args, **kwargs):
             called["block"] = block
+            called["state_map"] = state_map
             called["args"] = args
             called["kwargs"] = kwargs
 
         b = Event("+", callback, fargs=(1, 2), fkwargs={"k": 3})
-        b.event_handler(0.0, None, None)
+        b.event_handler(0.0, None, {"sentinel": True})
 
         self.assertIs(called["block"], b)
+        self.assertEqual(called["state_map"], {"sentinel": True})
         self.assertEqual(called["args"], (1, 2))
         self.assertEqual(called["kwargs"], {"k": 3})
 

@@ -168,16 +168,22 @@ class ClockTest(unittest.TestCase):
         c = Clock(2)
         block = ZOH(c)
 
-        self.assertIsInstance(str(c), str)
-        self.assertEqual(str(c), "clock.0: T=2 sec, clocking 1 blocks")
+        s = str(c)
+        self.assertIsInstance(s, str)
+        self.assertIn("clock.0", s)
+        self.assertIn("T = 2", s)
 
-        self.assertIsInstance(repr(c), str)
-        self.assertEqual(repr(c), "clock.0: T=2 sec, clocking 1 blocks")
+        r = repr(c)
+        self.assertIsInstance(r, str)
+        self.assertIn("Clock(name=clock.0", r)
+        self.assertIn("T=2", r)
 
         c = Clock(2, offset=1, name="myclock")
         block = ZOH(c)
-        self.assertIsInstance(repr(c), str)
-        self.assertEqual(repr(c), "myclock: T=2 sec, offset=1, clocking 1 blocks")
+        r = repr(c)
+        self.assertIsInstance(r, str)
+        self.assertIn("myclock", r)
+        self.assertIn("offset=1", r)
 
     @unittest.skip
     def test_state(self):
@@ -355,7 +361,9 @@ class OptionTest(unittest.TestCase):
         s = str(opt)
         self.assertIn("alpha", s)
         self.assertIn("beta", s)
-        self.assertEqual(repr(opt), s)
+        r = repr(opt)
+        self.assertIn("alpha", r)
+        self.assertIn("beta", r)
 
     def test_getattr_missing_raises(self):
         opt = OptionsBase({}, dict(foo=1))

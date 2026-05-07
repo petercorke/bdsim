@@ -58,7 +58,7 @@ def _require_qt():
 def _make_window():
     """Create an InterfaceWindow using the primary screen geometry."""
     from PySide6.QtWidgets import QApplication
-    from bdsim.bdedit.interface_manager import InterfaceWindow
+    from bdedit.interface_manager import InterfaceWindow
 
     app = QApplication.instance()
     resolution = app.primaryScreen().availableGeometry()
@@ -214,7 +214,7 @@ class TestCLI:
         cmd = [
             sys.executable,
             "-m",
-            "bdsim.bdedit.bdedit",
+            "bdedit.bdedit",
             "-p",
             str(out),
             str(EG1),
@@ -254,7 +254,7 @@ class TestCLI:
         """bdedit with no file and no --print should start (we just check it
         exits cleanly when we immediately send it SIGTERM — i.e. it starts up)."""
         proc = subprocess.Popen(
-            [sys.executable, "-m", "bdsim.bdedit.bdedit"],
+            [sys.executable, "-m", "bdedit.bdedit"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             env={**os.environ, "MPLBACKEND": "Agg"},
