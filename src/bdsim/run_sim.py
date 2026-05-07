@@ -1802,7 +1802,7 @@ class BDSim(Runner):
                     message = f"failed to create block {cls.__name__}"
                     if callsite is not None:
                         message += f"\nTriggered by:\n{callsite}"
-                    raise RuntimeError(message) from None
+                    raise BlockCreationError(message) from None
 
             # return a function that invokes the class constructor
             f = block_init_wrapper
@@ -2778,6 +2778,7 @@ class Options(OptionsBase):
                 altscreen=effective_defaults["altscreen"],
             )
 
+            self._parser = parser
             argv0 = sys.argv[0] if len(sys.argv) > 0 else ""
             args, unknownargs = parser.parse_known_args()
             # Consume bdsim options from sys.argv so user code sees only its own args.
@@ -2803,6 +2804,13 @@ class Options(OptionsBase):
                 raise SystemExit(0)
         else:
             cmdline_options = dict()  # empty dictionary
+            self._parser = None
+
+        # If CLI explicitly disables graphics, downgrade animation in the
+        # effective_defaults before the merge so sanity() doesn't see a
+        # conflict coming from kwargs vs CLI (CLI wins silently).
+        if not cmdline_options.get("graphics", True):
+            effective_defaults["animation"] = False
 
         super().__init__(readonly=cmdline_options, args=effective_defaults)
 
@@ -2810,19 +2818,33 @@ class Options(OptionsBase):
         # command-line readonly values and environment-derived defaults.
         self.data = self.sanity(dict(self.data))
 
-        # now handle the passed options
-        self.set(**options)
+        # Re-apply only options that were NOT already baked into effective_defaults
+        # (i.e. non-standard kwargs not in the registered option set).  Registered
+        # options are already present via effective_defaults and should not be
+        # re-applied here, as doing so would undo CLI-driven normalization.
+        extra_options = {k: v for k, v in options.items() if k not in default_options}
+        self.set(**extra_options)
 
         if self.verbose:
             print(self)
 
         self._argv: list[str] = unknownargs  # save non-bdsim arguments
 
+    def help(self) -> str:
+        """Return the CLI help text as a string (empty string if not in CLI mode)."""
+        if self._parser is None:
+            return ""
+        return self._parser.format_help()
+
+    def print_help(self) -> None:
+        """Print the CLI help text to stdout."""
+        print(self.help())
+
     def sanity(self, options: dict[str, Any]) -> dict[str, Any]:
         # ensure animation is disabled if graphics is disabled
         if "graphics" in options and "animation" in options:
             if options["animation"] and not options["graphics"]:
-                options["animation"] = False
+                raise ValueError("cannot enable animation but disable graphics")
         elif "graphics" in options and not options["graphics"]:
             options["animation"] = False
         elif "animation" in options and options["animation"]:
