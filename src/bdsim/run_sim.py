@@ -2310,14 +2310,14 @@ class BDSim(Runner):
         Example::
 
             73  blocks loaded
-            bdsim.blocks.functions..................: Sum Prod Gain Clip Function Interpolate
-            bdsim.blocks.sources....................: Constant Time WaveForm Piecewise Step Ramp
-            bdsim.blocks.sinks......................: Print Stop Null Watch
-            bdsim.blocks.continuous.................: Integrator PoseIntegrator LTI_SS LTI_SISO
-            bdsim.blocks.sampled....................: ZOH Integrator_S PoseIntegrator_S
-            bdsim.blocks.linalg.....................: Inverse Transpose Norm Flatten Slice2 Slice1 Det Cond
-            bdsim.blocks.displays...................: Scope ScopeXY ScopeXY1
-            bdsim.blocks.connections................: Item Dict Mux DeMux Index SubSystem InPort OutPort
+            bdsim.blocks.functions..................: SUM PROD GAIN CLIP FUNCTION INTERPOLATE
+            bdsim.blocks.sources....................: CONSTANT TIME WAVEFORM PIECEWISE STEP RAMP
+            bdsim.blocks.sinks......................: PRINT STOP NULL WATCH
+            bdsim.blocks.continuous.................: INTEGRATOR POSEINTEGRATOR LTI_SS LTI_SISO
+            bdsim.blocks.sampled....................: ZOH INTEGRATOR_S POSEINTEGRATOR_S
+            bdsim.blocks.linalg.....................: INVERSE TRANSPOSE NORM FLATTEN SLICE2 SLICE1 DET COND
+            bdsim.blocks.displays...................: SCOPE SCOPEXY SCOPEXY1
+            bdsim.blocks.connections................: ITEM DICT MUX DEMUX INDEX SUBSYSTEM INPORT OUTPORT
             roboticstoolbox.blocks.arm..............: FKine IKine Jacobian Tr2Delta Delta2Tr Point2Tr TR2T FDyn IDyn Gravload
             ........................................: Inertia Inertia_X FDyn_X ArmPlot Traj JTraj LSPB CTraj CirclePath
             roboticstoolbox.blocks.mobile...........: Bicycle Unicycle DiffSteer VehiclePlot
@@ -2336,7 +2336,7 @@ class BDSim(Runner):
                 line: str = ""
                 once = False
                 while len(v) > 0:
-                    n: str = v.pop(0) + " "
+                    n: str = v.pop(0).upper() + " "
                     if len(line + n) < 80:
                         line += n
                         continue
