@@ -4,13 +4,13 @@ from PySide6.QtCore import *
 from PySide6.QtWidgets import QGraphicsView
 
 # BdEdit imports
-from bdsim.bdedit.block import Block
-from bdsim.bdedit.block_graphics_wire import GraphicsWire
-from bdsim.bdedit.grouping_box_graphics import GraphicsGBox
-from bdsim.bdedit.block_graphics_socket import GraphicsSocket
-from bdsim.bdedit.floating_label_graphics import GraphicsLabel
-from bdsim.bdedit.block_graphics_block import GraphicsBlock, GraphicsConnectorBlock
-from bdsim.bdedit.block_wire import (
+from bdedit.block import Block
+from bdedit.block_graphics_wire import GraphicsWire
+from bdedit.grouping_box_graphics import GraphicsGBox
+from bdedit.block_graphics_socket import GraphicsSocket
+from bdedit.floating_label_graphics import GraphicsLabel
+from bdedit.block_graphics_block import GraphicsBlock, GraphicsConnectorBlock
+from bdedit.block_wire import (
     Wire,
     WIRE_TYPE_STEP,
     WIRE_TYPE_DIRECT,

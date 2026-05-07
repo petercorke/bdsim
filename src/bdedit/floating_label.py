@@ -9,8 +9,8 @@ from PySide6.QtCore import *
 from PySide6.QtWidgets import *
 
 # BdEdit imports
-from bdsim.bdedit.interface_serialize import Serializable
-from bdsim.bdedit.floating_label_graphics import GraphicsLabel
+from bdedit.interface_serialize import Serializable
+from bdedit.floating_label_graphics import GraphicsLabel
 
 
 DEBUG = False

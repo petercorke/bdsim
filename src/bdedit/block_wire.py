@@ -4,8 +4,8 @@ import copy
 from collections import OrderedDict
 
 # BdEdit imports
-from bdsim.bdedit.block_graphics_wire import *
-from bdsim.bdedit.interface_serialize import Serializable
+from bdedit.block_graphics_wire import *
+from bdedit.interface_serialize import Serializable
 
 # =============================================================================
 #

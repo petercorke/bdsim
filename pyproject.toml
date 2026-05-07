@@ -58,14 +58,14 @@ all = ["PySide6", "Pillow", "fastapi>=0.111", "uvicorn[standard]>=0.29"]
 
 bdrun = "bdsim.bin.bdrun:bdrun"
 bdtex2icon = "bdsim.tex2icon:main"
-bdedit-app = "bdsim.bdedit.make_app:make_app"
-bdedit-associate-windows = "bdsim.bdedit.associate_bd_windows:main"
+bdedit-app = "bdedit.make_app:make_app"
+bdedit-associate-windows = "bdedit.associate_bd_windows:main"
 bdweb = "bdweb.backend.__main__:main"
 
 [project.gui-scripts]
 
 # ideally this would only happen if [edit] option given
-bdedit = "bdsim.bdedit:main"
+bdedit = "bdedit.bdedit:main"
 
 
 [build-system]

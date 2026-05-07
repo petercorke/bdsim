@@ -8,7 +8,7 @@ from PySide6.QtWidgets import *
 from PySide6.QtSvg import QSvgRenderer
 
 # BdEdit imports
-from bdsim.bdedit.Icons import *
+from bdedit.Icons import *
 
 
 # =============================================================================

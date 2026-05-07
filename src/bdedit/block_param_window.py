@@ -8,7 +8,7 @@ from PySide6.QtGui import QPixmap, QDesktopServices
 from PySide6.QtCore import Qt, QRect, QTimer, QUrl
 
 # BdEdit imports
-from bdsim.bdedit.Icons import *
+from bdedit.Icons import *
 
 # =============================================================================
 #

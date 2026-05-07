@@ -11,8 +11,8 @@ from PySide6.QtCore import *
 from PySide6.QtWidgets import *
 
 # BdEdit imports
-from bdsim.bdedit.Icons import *
-from bdsim.bdedit.interface import Interface
+from bdedit.Icons import *
+from bdedit.interface import Interface
 
 
 # Todo - update documentation for this new class, handles any edits/saves/undo/redo within interface.

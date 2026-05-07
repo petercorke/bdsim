@@ -11,16 +11,16 @@ from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QMessageBox, QWidget, QVBoxLayout
 
 # BdEdit imports
-from bdsim.bdedit.block import *
-from bdsim.bdedit.Icons import *
-from bdsim.bdedit.block_wire import Wire
-from bdsim.bdedit.block_main_block import Main
-from bdsim.bdedit.grouping_box import Grouping_Box
-from bdsim.bdedit.floating_label import Floating_Label
-from bdsim.bdedit.block_connector_block import Connector
-from bdsim.bdedit.interface_serialize import Serializable
-from bdsim.bdedit.interface_scene_history import SceneHistory
-from bdsim.bdedit.interface_graphics_scene import GraphicsScene
+from bdedit.block import *
+from bdedit.Icons import *
+from bdedit.block_wire import Wire
+from bdedit.block_main_block import Main
+from bdedit.grouping_box import Grouping_Box
+from bdedit.floating_label import Floating_Label
+from bdedit.block_connector_block import Connector
+from bdedit.interface_serialize import Serializable
+from bdedit.interface_scene_history import SceneHistory
+from bdedit.interface_graphics_scene import GraphicsScene
 
 
 # =============================================================================

@@ -3,7 +3,7 @@ import sys
 import traceback
 
 # BdEdit imports
-from bdsim.bdedit.block_graphics_wire import GraphicsWire
+from bdedit.block_graphics_wire import GraphicsWire
 
 
 DEBUG = False

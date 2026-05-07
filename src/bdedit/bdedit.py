@@ -18,7 +18,7 @@ from PySide6.QtCore import QTimer, QEvent, Qt
 from PySide6.QtGui import QIcon
 
 # BdEdit imports
-from bdsim.bdedit.interface_manager import InterfaceWindow
+from bdedit.interface_manager import InterfaceWindow
 
 
 class _BdeditApp(QApplication):

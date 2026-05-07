@@ -10,16 +10,16 @@ from PySide6.QtWidgets import *
 from PySide6.QtSvg import QSvgGenerator
 
 # BdEdit imports
-from bdsim.bdedit.block import *
-from bdsim.bdedit.Icons import *
-from bdsim.bdedit.grouping_box import *
-from bdsim.bdedit.block_wire import Wire
-from bdsim.bdedit.block_importer import *
-from bdsim.bdedit.floating_label import *
-from bdsim.bdedit.block_main_block import *
-from bdsim.bdedit.interface_scene import Scene
-from bdsim.bdedit.block_connector_block import *
-from bdsim.bdedit.interface_graphics_view import GraphicsView
+from bdedit.block import *
+from bdedit.Icons import *
+from bdedit.grouping_box import *
+from bdedit.block_wire import Wire
+from bdedit.block_importer import *
+from bdedit.floating_label import *
+from bdedit.block_main_block import *
+from bdedit.interface_scene import Scene
+from bdedit.block_connector_block import *
+from bdedit.interface_graphics_view import GraphicsView
 
 # =============================================================================
 #

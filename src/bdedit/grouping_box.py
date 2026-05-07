@@ -9,8 +9,8 @@ from PySide6.QtCore import *
 from PySide6.QtWidgets import *
 
 # BdEdit imports
-from bdsim.bdedit.interface_serialize import Serializable
-from bdsim.bdedit.grouping_box_graphics import GraphicsGBox
+from bdedit.interface_serialize import Serializable
+from bdedit.grouping_box_graphics import GraphicsGBox
 
 
 DEBUG = False

@@ -8,7 +8,7 @@ from PySide6.QtCore import *
 from PySide6.QtWidgets import *
 
 # BdEdit imports
-from bdsim.bdedit.Icons import *
+from bdedit.Icons import *
 
 # =============================================================================
 #
