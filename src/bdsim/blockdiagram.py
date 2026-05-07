@@ -430,7 +430,7 @@ class BlockDiagram(BlockDiagramMixin):
                 else:
                     # create default state names
                     self.statenames.extend(
-                        [(b.name or "") + "x" + str(i) for i in range(0, b.nstates)]
+                        [(b.name or "") + ":x_" + str(i) for i in range(0, b.nstates)]
                     )
             if b.blockclass == "sampled":
                 self.ndstates += b.ndstates
@@ -441,8 +441,8 @@ class BlockDiagram(BlockDiagramMixin):
                     self.dstatenames.extend(b._state_names)
                 else:
                     # create default state names
-                    self.statenames.extend(
-                        [(b.name or "") + "X" + str(i) for i in range(0, b.nstates)]
+                    b._clock.statenames.extend(
+                        [(b.name or "") + ":X_" + str(i) for i in range(0, b.ndstates)]
                     )
 
         # connect the source and destination blocks to each wire

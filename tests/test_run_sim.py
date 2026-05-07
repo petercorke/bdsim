@@ -14,6 +14,7 @@ Targets:
   - sim.run() with outfile (pickling)
   - update_parameters()
 """
+
 import os
 import sys
 from pathlib import Path
@@ -237,32 +238,32 @@ class SimRunCoverageTest(unittest.TestCase):
         bd, step, integ, null = self._stateful_bd()
         out = self.sim.run(bd, T=1, watch=[step])
         self.assertIsNotNone(out.t)
-        self.assertIsNotNone(out.y0)
-        self.assertGreater(len(out.y0), 0)
+        self.assertIsNotNone(out.y)
+        self.assertGreater(len(out.y), 0)
 
     def test_run_watch_plug(self):
         """watch=[Plug] covers the Plug branch of watchlist processing."""
         bd, step, integ, null = self._stateful_bd()
         out = self.sim.run(bd, T=1, watch=[step[0]])
         self.assertIsNotNone(out.t)
-        self.assertIsNotNone(out.y0)
-        self.assertGreater(len(out.y0), 0)
+        self.assertIsNotNone(out.y)
+        self.assertGreater(len(out.y), 0)
 
     def test_run_watch_string_no_port(self):
         """watch=["blockname"] string with no port number."""
         bd, step, integ, null = self._stateful_bd()
         out = self.sim.run(bd, T=1, watch=["step.0"])
         self.assertIsNotNone(out.t)
-        self.assertIsNotNone(out.y0)
-        self.assertGreater(len(out.y0), 0)
+        self.assertIsNotNone(out.y)
+        self.assertGreater(len(out.y), 0)
 
     def test_run_watch_string_with_port(self):
         """watch=["blockname[port]"] string with explicit port number."""
         bd, step, integ, null = self._stateful_bd()
         out = self.sim.run(bd, T=1, watch=["step.0[0]"])
         self.assertIsNotNone(out.t)
-        self.assertIsNotNone(out.y0)
-        self.assertGreater(len(out.y0), 0)
+        self.assertIsNotNone(out.y)
+        self.assertGreater(len(out.y), 0)
 
     # ---- simtime option ----------------------------------------------------
 

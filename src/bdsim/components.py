@@ -498,6 +498,7 @@ class Clock:
 
         self.blocklist: list[Block] = []
         self.bd: BlockDiagram | None = None
+        self.statenames: list[str] = []
 
         # Compile-time fallback state (used when simstate=None during block.compile())
         self._compile_state: np.ndarray = np.array([])

@@ -233,8 +233,8 @@ class SampledSim(unittest.TestCase):
         bd.connect(integrator, sink)
         bd.compile()
         out = self.sim.run(bd, T=5, watch=[integrator])
-        nt.assert_almost_equal(out.y0[0], -1)
-        nt.assert_almost_equal(out.y0[-1], 3, decimal=2)
+        nt.assert_almost_equal(out.y[0, 0], -1)
+        nt.assert_almost_equal(out.y[-1, 0], 3, decimal=2)
 
     def test_integrator_gain(self):
         bd = self.sim.blockdiagram()
@@ -247,8 +247,8 @@ class SampledSim(unittest.TestCase):
         bd.connect(integrator, sink)
         bd.compile()
         out = self.sim.run(bd, T=5, watch=[integrator])
-        nt.assert_almost_equal(out.y0[0], -1)
-        nt.assert_almost_equal(out.y0[-1], 7, decimal=2)
+        nt.assert_almost_equal(out.y[0, 0], -1)
+        nt.assert_almost_equal(out.y[-1, 0], 7, decimal=2)
 
     def test_integrator_min(self):
         bd = self.sim.blockdiagram()
@@ -261,8 +261,8 @@ class SampledSim(unittest.TestCase):
         bd.connect(integrator, sink)
         bd.compile()
         out = self.sim.run(bd, T=5, watch=[integrator])
-        nt.assert_almost_equal(out.y0[0], 0)
-        nt.assert_almost_equal(out.y0[-1], -2, decimal=2)
+        nt.assert_almost_equal(out.y[0, 0], 0)
+        nt.assert_almost_equal(out.y[-1, 0], -2, decimal=2)
 
     def test_integrator_max(self):
         bd = self.sim.blockdiagram()
@@ -275,8 +275,8 @@ class SampledSim(unittest.TestCase):
         bd.connect(integrator, sink)
         bd.compile()
         out = self.sim.run(bd, T=5, watch=[integrator])
-        nt.assert_almost_equal(out.y0[0], 0)
-        nt.assert_almost_equal(out.y0[-1], 2, decimal=2)
+        nt.assert_almost_equal(out.y[0, 0], 0)
+        nt.assert_almost_equal(out.y[-1, 0], 2, decimal=2)
 
     def test_deriv(self):
         bd = self.sim.blockdiagram()
@@ -291,8 +291,8 @@ class SampledSim(unittest.TestCase):
         bd.report_lists()
         bd.report_schedule()
         out = self.sim.run(bd, T=5, watch=[deriv])
-        nt.assert_almost_equal(out.y0[0], 0)
-        nt.assert_almost_equal(out.y0[-1], 1, decimal=2)
+        nt.assert_almost_equal(out.y[0, 0], 0)
+        nt.assert_almost_equal(out.y[-1, 0], 1, decimal=2)
 
     def test_deriv_gain(self):
         bd = self.sim.blockdiagram()
@@ -305,8 +305,8 @@ class SampledSim(unittest.TestCase):
         bd.connect(deriv, sink)
         bd.compile()
         out = self.sim.run(bd, T=5, watch=[deriv])
-        nt.assert_almost_equal(out.y0[0], 0)
-        nt.assert_almost_equal(out.y0[-1], 2, decimal=2)
+        nt.assert_almost_equal(out.y[0, 0], 0)
+        nt.assert_almost_equal(out.y[-1, 0], 2, decimal=2)
 
     def test_pid(self):
         bd = self.sim.blockdiagram()
@@ -334,12 +334,12 @@ class SampledSim(unittest.TestCase):
         out = self.sim.run(bd, T=5, watch=[pid1, pid2, pid3])
 
         # results are not quite the same, but close enough for this test
-        nt.assert_almost_equal(out.y0[0], 0)
-        nt.assert_almost_equal(out.y0[-1], 45.4, decimal=1)
-        nt.assert_almost_equal(out.y1[0], 0)
-        nt.assert_almost_equal(out.y1[-1], 46.4, decimal=1)
-        nt.assert_almost_equal(out.y2[0], 0)
-        nt.assert_almost_equal(out.y2[-1], 45.2, decimal=1)
+        nt.assert_almost_equal(out.y[0, 0], 0)
+        nt.assert_almost_equal(out.y[-1, 0], 45.4, decimal=1)
+        nt.assert_almost_equal(out.y[0, 1], 0)
+        nt.assert_almost_equal(out.y[-1, 1], 46.4, decimal=1)
+        nt.assert_almost_equal(out.y[0, 2], 0)
+        nt.assert_almost_equal(out.y[-1, 2], 45.2, decimal=1)
 
     def test_pd(self):
         bd = self.sim.blockdiagram()
@@ -367,12 +367,12 @@ class SampledSim(unittest.TestCase):
         out = self.sim.run(bd, T=5, watch=[pid1, pid2, pid3])
 
         # results are not quite the same, but close enough for this test
-        nt.assert_almost_equal(out.y0[0], 0)
-        nt.assert_almost_equal(out.y0[-1], 22, decimal=1)
-        nt.assert_almost_equal(out.y1[0], 0)
-        nt.assert_almost_equal(out.y1[-1], 22, decimal=1)
-        nt.assert_almost_equal(out.y2[0], 0)
-        nt.assert_almost_equal(out.y2[-1], 22, decimal=1)
+        nt.assert_almost_equal(out.y[0, 0], 0)
+        nt.assert_almost_equal(out.y[-1, 0], 22, decimal=1)
+        nt.assert_almost_equal(out.y[0, 1], 0)
+        nt.assert_almost_equal(out.y[-1, 1], 22, decimal=1)
+        nt.assert_almost_equal(out.y[0, 2], 0)
+        nt.assert_almost_equal(out.y[-1, 2], 22, decimal=1)
 
     def test_pi(self):
         bd = self.sim.blockdiagram()
@@ -400,12 +400,12 @@ class SampledSim(unittest.TestCase):
         out = self.sim.run(bd, T=5, watch=[pid1, pid2, pid3])
 
         # results are not quite the same, but close enough for this test
-        nt.assert_almost_equal(out.y0[0], 0)
-        nt.assert_almost_equal(out.y0[-1], 43.4, decimal=1)
-        nt.assert_almost_equal(out.y1[0], 0)
-        nt.assert_almost_equal(out.y1[-1], 46.4, decimal=1)
-        nt.assert_almost_equal(out.y2[0], 0)
-        nt.assert_almost_equal(out.y2[-1], 43.4, decimal=1)
+        nt.assert_almost_equal(out.y[0, 0], 0)
+        nt.assert_almost_equal(out.y[-1, 0], 43.4, decimal=1)
+        nt.assert_almost_equal(out.y[0, 1], 0)
+        nt.assert_almost_equal(out.y[-1, 1], 46.4, decimal=1)
+        nt.assert_almost_equal(out.y[0, 2], 0)
+        nt.assert_almost_equal(out.y[-1, 2], 43.4, decimal=1)
 
 
 # ---------------------------------------------------------------------------------------#

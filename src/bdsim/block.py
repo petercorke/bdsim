@@ -374,7 +374,9 @@ class Block(ABC, Port):
     #         return self.blockclass + ".??"
 
     def __repr__(self) -> str:
-        s = f"({self.name}, type={self._type}, blockclass={self._blockclass}"
+        s = f"Block.{self._blockclass}('{self.name}', type={self._type}"
+        if hasattr(self, "_clock") and self._clock is not None:
+            s += f", clock={self._clock.name}"
         if self.nin > 0:
             s += f", nin={self.nin}"
         if self.nout > 0:

@@ -31,6 +31,7 @@ Created on Thu May 21 06:39:29 2020
 
 @author: Peter Corke
 """
+
 import numpy as np
 import math
 
@@ -162,8 +163,8 @@ class ContinuousSim(unittest.TestCase):
         bd.connect(integrator, sink)
         bd.compile()
         out = self.sim.run(bd, T=5, watch=[integrator])
-        nt.assert_almost_equal(out.y0[0], -1)
-        nt.assert_almost_equal(out.y0[-1], 3, decimal=2)
+        nt.assert_almost_equal(out.y[0, 0], -1)
+        nt.assert_almost_equal(out.y[-1, 0], 3, decimal=2)
 
     def test_integrator_gain(self):
         bd = self.sim.blockdiagram()
@@ -175,8 +176,8 @@ class ContinuousSim(unittest.TestCase):
         bd.connect(integrator, sink)
         bd.compile()
         out = self.sim.run(bd, T=5, watch=[integrator])
-        nt.assert_almost_equal(out.y0[0], -1)
-        nt.assert_almost_equal(out.y0[-1], 7, decimal=2)
+        nt.assert_almost_equal(out.y[0, 0], -1)
+        nt.assert_almost_equal(out.y[-1, 0], 7, decimal=2)
 
     def test_integrator_min(self):
         bd = self.sim.blockdiagram()
@@ -188,8 +189,8 @@ class ContinuousSim(unittest.TestCase):
         bd.connect(integrator, sink)
         bd.compile()
         out = self.sim.run(bd, T=5, watch=[integrator])
-        nt.assert_almost_equal(out.y0[0], 0)
-        nt.assert_almost_equal(out.y0[-1], -2, decimal=2)
+        nt.assert_almost_equal(out.y[0, 0], 0)
+        nt.assert_almost_equal(out.y[-1, 0], -2, decimal=2)
 
     def test_integrator_max(self):
         bd = self.sim.blockdiagram()
@@ -201,8 +202,8 @@ class ContinuousSim(unittest.TestCase):
         bd.connect(integrator, sink)
         bd.compile()
         out = self.sim.run(bd, T=5, watch=[integrator])
-        nt.assert_almost_equal(out.y0[0], 0)
-        nt.assert_almost_equal(out.y0[-1], 2, decimal=2)
+        nt.assert_almost_equal(out.y[0, 0], 0)
+        nt.assert_almost_equal(out.y[-1, 0], 2, decimal=2)
 
     def test_deriv(self):
         bd = self.sim.blockdiagram()
@@ -215,9 +216,9 @@ class ContinuousSim(unittest.TestCase):
         bd.compile()
         bd.report_lists()
         bd.report_schedule()
-        out = self.sim.run(bd, T=5, watch=[deriv])
-        nt.assert_almost_equal(out.y0[0], 0)
-        nt.assert_almost_equal(out.y0[-1], 1, decimal=2)
+        out = self.sim.run(bd, T=5, watch=[deriv, signal])
+        nt.assert_almost_equal(out.y[0, 0], 0)
+        nt.assert_almost_equal(out.y[-1, 0], 1, decimal=2)
 
     def test_deriv_gain(self):
         bd = self.sim.blockdiagram()
@@ -229,8 +230,8 @@ class ContinuousSim(unittest.TestCase):
         bd.connect(deriv, sink)
         bd.compile()
         out = self.sim.run(bd, T=5, watch=[deriv])
-        nt.assert_almost_equal(out.y0[0], 0)
-        nt.assert_almost_equal(out.y0[-1], 2, decimal=2)
+        nt.assert_almost_equal(out.y[0, 0], 0)
+        nt.assert_almost_equal(out.y[-1, 0], 2, decimal=2)
 
     def test_deriv2(self):
         bd = self.sim.blockdiagram()
@@ -242,8 +243,8 @@ class ContinuousSim(unittest.TestCase):
         bd.connect(deriv, sink)
         bd.compile()
         out = self.sim.run(bd, T=5, watch=[deriv])
-        nt.assert_almost_equal(out.y0[0], 0)
-        nt.assert_almost_equal(out.y0[-1], 1, decimal=2)
+        nt.assert_almost_equal(out.y[0, 0], 0)
+        nt.assert_almost_equal(out.y[-1, 0], 1, decimal=2)
 
     def test_deriv2_gain(self):
         bd = self.sim.blockdiagram()
@@ -255,8 +256,8 @@ class ContinuousSim(unittest.TestCase):
         bd.connect(deriv, sink)
         bd.compile()
         out = self.sim.run(bd, T=5, watch=[deriv])
-        nt.assert_almost_equal(out.y0[0], 0)
-        nt.assert_almost_equal(out.y0[-1], 2, decimal=2)
+        nt.assert_almost_equal(out.y[0, 0], 0)
+        nt.assert_almost_equal(out.y[-1, 0], 2, decimal=2)
 
     def test_pid(self):
         bd = self.sim.blockdiagram()
@@ -283,12 +284,12 @@ class ContinuousSim(unittest.TestCase):
         out = self.sim.run(bd, T=5, watch=[pid1, pid2, pid3])
 
         # results are not quite the same, but close enough for this test
-        nt.assert_almost_equal(out.y0[0], 0)
-        nt.assert_almost_equal(out.y0[-1], 46, decimal=1)
-        nt.assert_almost_equal(out.y1[0], 0)
-        nt.assert_almost_equal(out.y1[-1], 47, decimal=1)
-        nt.assert_almost_equal(out.y2[0], 0)
-        nt.assert_almost_equal(out.y2[-1], 44, decimal=1)
+        nt.assert_almost_equal(out.y[0, 0], 0)
+        nt.assert_almost_equal(out.y[-1, 0], 46, decimal=1)
+        nt.assert_almost_equal(out.y[0, 1], 0)
+        nt.assert_almost_equal(out.y[-1, 1], 47, decimal=1)
+        nt.assert_almost_equal(out.y[0, 2], 0)
+        nt.assert_almost_equal(out.y[-1, 2], 44, decimal=1)
 
     def test_pd(self):
         bd = self.sim.blockdiagram()
@@ -315,12 +316,12 @@ class ContinuousSim(unittest.TestCase):
         out = self.sim.run(bd, T=5, watch=[pid1, pid2, pid3])
 
         # results are not quite the same, but close enough for this test
-        nt.assert_almost_equal(out.y0[0], 0)
-        nt.assert_almost_equal(out.y0[-1], 22, decimal=1)
-        nt.assert_almost_equal(out.y1[0], 0)
-        nt.assert_almost_equal(out.y1[-1], 22, decimal=1)
-        nt.assert_almost_equal(out.y2[0], 0)
-        nt.assert_almost_equal(out.y2[-1], 22, decimal=1)
+        nt.assert_almost_equal(out.y[0, 0], 0)
+        nt.assert_almost_equal(out.y[-1, 0], 22, decimal=1)
+        nt.assert_almost_equal(out.y[0, 1], 0)
+        nt.assert_almost_equal(out.y[-1, 1], 22, decimal=1)
+        nt.assert_almost_equal(out.y[0, 2], 0)
+        nt.assert_almost_equal(out.y[-1, 2], 22, decimal=1)
 
     def test_pi(self):
         bd = self.sim.blockdiagram()
@@ -347,12 +348,12 @@ class ContinuousSim(unittest.TestCase):
         out = self.sim.run(bd, T=5, watch=[pid1, pid2, pid3])
 
         # results are not quite the same, but close enough for this test
-        nt.assert_almost_equal(out.y0[0], 0)
-        nt.assert_almost_equal(out.y0[-1], 44, decimal=1)
-        nt.assert_almost_equal(out.y1[0], 0)
-        nt.assert_almost_equal(out.y1[-1], 47, decimal=1)
-        nt.assert_almost_equal(out.y2[0], 0)
-        nt.assert_almost_equal(out.y2[-1], 44, decimal=1)
+        nt.assert_almost_equal(out.y[0, 0], 0)
+        nt.assert_almost_equal(out.y[-1, 0], 44, decimal=1)
+        nt.assert_almost_equal(out.y[0, 1], 0)
+        nt.assert_almost_equal(out.y[-1, 1], 47, decimal=1)
+        nt.assert_almost_equal(out.y[0, 2], 0)
+        nt.assert_almost_equal(out.y[-1, 2], 44, decimal=1)
 
 
 class Tf2SsTest(unittest.TestCase):
