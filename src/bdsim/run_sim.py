@@ -2822,7 +2822,7 @@ class Options(OptionsBase):
         # ensure animation is disabled if graphics is disabled
         if "graphics" in options and "animation" in options:
             if options["animation"] and not options["graphics"]:
-                raise ValueError("cannot enable animation but disable graphics")
+                options["animation"] = False
         elif "graphics" in options and not options["graphics"]:
             options["animation"] = False
         elif "animation" in options and options["animation"]:
