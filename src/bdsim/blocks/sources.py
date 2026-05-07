@@ -46,7 +46,7 @@ class Constant(SourceBlock):
     nin = 0
     nout = 1
 
-    def __init__(self, value: Any = 0, **blockargs) -> None:
+    def __init__(self, value: Any = 0, **blockargs: Any) -> None:
         """
         :param value: the constant, defaults to 0
         :type value: any, optional
@@ -61,7 +61,7 @@ class Constant(SourceBlock):
 
         self.add_param("value")
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         return [self.value]
 
 
@@ -107,7 +107,7 @@ class Time(SourceBlock):
         """
         super().__init__(**blockargs)
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         return [t]
 
 
@@ -236,7 +236,7 @@ class WaveForm(SourceBlock, EventSource):
         self.amplitude = amplitude
         self.offset = offset
 
-    def start(self, simstate) -> None:
+    def start(self, simstate: Any) -> None:
         super().start(simstate)
 
         t1: float
@@ -259,11 +259,12 @@ class WaveForm(SourceBlock, EventSource):
                 t1 += T
                 t2 += T
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         T: float = 1.0 / self.freq
         phase = (t * self.freq - self.phase) % 1.0
 
         # define all signals in the range -1 to 1
+        out: float
         if self.wave == "square":
             if phase < self.duty:
                 out = 1
@@ -277,7 +278,7 @@ class WaveForm(SourceBlock, EventSource):
             else:
                 out = -1 + 4 * (phase - 0.75)
         elif self.wave == "sine":
-            out: float = math.sin(phase * 2 * math.pi)
+            out = math.sin(phase * 2 * math.pi)
         else:
             raise ValueError("bad option for signal")
 
@@ -374,14 +375,14 @@ class Piecewise(SourceBlock, EventSource):
         self.t = [x[0] for x in _seq]
         self.y = [x[1] for x in _seq]
 
-    def start(self, simstate) -> None:
+    def start(self, simstate: Any) -> None:
         super().start(simstate)
 
         if simstate is not None:
             for t in self.t:
                 simstate.declare_event(self, t)
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         i: int = sum([1 if t >= _t else 0 for _t in self.t]) - 1
         out = self.y[i]
         # print(out)
@@ -453,10 +454,10 @@ class Step(SourceBlock, EventSource):
         self.off: float = off
         self.on: float = on
 
-    def start(self, simstate) -> None:
+    def start(self, simstate: Any) -> None:
         simstate.declare_event(self, self.T)
 
-    def output(self, t, inputs, x) -> list[float]:
+    def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[float]:
         out: float
         if t >= self.T:
             out = self.on
@@ -532,10 +533,10 @@ class Ramp(SourceBlock, EventSource):
         self.off: float = off
         self.slope: float = slope
 
-    def start(self, simstate) -> None:
+    def start(self, simstate: Any) -> None:
         simstate.declare_event(self, self.T)
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         out: float | int
         if t >= self.T:
             out = self.off + self.slope * (t - self.T)

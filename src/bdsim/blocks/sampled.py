@@ -482,7 +482,7 @@ class LTI_SS_S(SampledBlock):
         # if D is nonzero then we have feedthrough, which may create an algebraic loop, so flag this to the base class
         if np.any(D != 0):
             # flag we have feedthrough, which may create an algebraic loop
-            self.D = D
+            self.D: np.ndarray | None = D
             feedthrough = True
         else:
             self.D = None
@@ -573,9 +573,9 @@ class LTI_SISO_S(LTI_SS_S):
         N: Vector1D = 1,
         D: Vector1D = [1, 1],
         x0: np.ndarray | None = None,
-        form="ccf",
-        order="backward",
-        verbose=False,
+        form: str = "ccf",
+        order: str = "backward",
+        verbose: bool = False,
         **blockargs: Any,
     ) -> None:
         r"""
@@ -658,13 +658,13 @@ class LTI_SISO_S(LTI_SS_S):
               by the scheduler to ensure correct block evaluation order.
         """
 
-        A, B, C, D = _tf2ss(N, D, form=form, order=order, verbose=verbose)
+        A, B, C, _D = _tf2ss(N, D, form=form, order=order, verbose=verbose)
 
         n = A.shape[0]
         if x0 is None:
             x0 = np.zeros((n,))
 
-        super().__init__(clock=clock, A=A, B=B, C=C, D=D, x0=x0, **blockargs)
+        super().__init__(clock=clock, A=A, B=B, C=C, D=_D, x0=x0, **blockargs)
 
         # TODO: parameters
         # def change_param(self, param: str, newvalue: np.ndarray) -> None:
@@ -876,7 +876,7 @@ class PID_S(SubsystemBlock):
         if I != 0:
             # if the I term is required, create the block
             type += "I"
-            integ_args = {}
+            integ_args: dict[str, Any] = {}
             if isinstance(I_limit, float):
                 integ_args["min"] = -I_limit
                 integ_args["max"] = I_limit
@@ -889,7 +889,7 @@ class PID_S(SubsystemBlock):
                 def ifunc(t: float, u: list[Any], x: Any) -> bool:
                     return abs(u[0]) < I_band
 
-                integ_arg["enable"] = ifunc
+                integ_args["enable"] = ifunc
 
             Iblock = subsystem.INTEGRATOR_S(
                 clock, gain=I, name="I", **integ_args

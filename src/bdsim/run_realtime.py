@@ -8,6 +8,7 @@ from collections import Counter, namedtuple
 import argparse
 import types
 import warnings
+from typing import Any
 
 from bdsim.blockdiagram import BlockDiagram
 from bdsim.components import OptionsBase, Block, Clock, BDStruct, Plug, clocklist
@@ -122,10 +123,7 @@ class BDRealTimeState:
     :vartype graphics: bool
     """
 
-    def __init__(self):
-        self.x = None  # continuous state vector numpy.ndarray
-        self.T = None  # maximum.BlockDiagram time
-        self.t = None  # current time
+    def __init__(self) -> None:
         self.fignum = 0
         self.stop = None
         self.checkfinite = True
@@ -134,51 +132,51 @@ class BDRealTimeState:
         self.t_stop = None  # time-based breakpoint
         self.eventq = TimeQ()
 
-    def declare_event(self, block, t):
+    def declare_event(self, block: Any, t: float) -> None:
         self.eventq.push((t, block))
 
 
 class SimpleStats:
-    def __init__(self):
-        self._n = 0
-        self._sum = 0
-        self._sum2 = 0
-        self._max = 0
+    def __init__(self) -> None:
+        self._n: int = 0
+        self._sum: float = 0
+        self._sum2: float = 0
+        self._max: float = 0
 
-    def update(self, x):
+    def update(self, x: float) -> None:
         self._n += 1
         self._sum += x
         self._sum2 += x**2
         self._max = max(self._max, x)
 
     @property
-    def n(self):
+    def n(self) -> int:
         return self._n
 
     @property
-    def mean(self):
+    def mean(self) -> float:
         return self._sum / self._n
 
     @property
-    def sdev(self):
+    def sdev(self) -> float:
         return math.sqrt((self._sum2 - self._sum**2 / self._n) / (self._n - 1))
 
     @property
-    def max(self):
+    def max(self) -> float:
         return self._max
 
 
 class BDRealTime(BDSim):
-    def run(
+    def run(  # type: ignore[override]
         self,
-        bd,
-        T=5,
-        dt=None,
-        block=None,
-        checkfinite=True,
-        watch=[],
-        samples=True,
-    ):
+        bd: Any,
+        T: float = 5,
+        dt: float | None = None,
+        block: bool | None = None,
+        checkfinite: bool = True,
+        watch: list[Any] = [],
+        samples: bool = True,
+    ) -> Any:
         """
         Run the block diagram
 
@@ -245,9 +243,9 @@ class BDRealTime(BDSim):
         self.state = state
         self.bd = bd
 
-        state.T = T
-        state.dt = dt
-        state.options = self.options
+        state.T = T  # type: ignore[attr-defined]
+        state.dt = dt  # type: ignore[attr-defined]
+        state.options = self.options  # type: ignore[attr-defined]
 
         # process the watchlist
         #  elements can be:
@@ -274,8 +272,8 @@ class BDRealTime(BDSim):
                 plug = w
             watchlist.append(plug)
             watchnamelist.append(str(plug))
-        state.watchlist = watchlist
-        state.watchnamelist = watchnamelist
+        state.watchlist = watchlist  # type: ignore[attr-defined]
+        state.watchnamelist = watchnamelist  # type: ignore[attr-defined]
 
         # for clock in bd.clocklist:
         #     clock.start(state)
@@ -283,9 +281,9 @@ class BDRealTime(BDSim):
         # tell all blocks we're starting a BlockDiagram
         bd.start(state)
 
-        state.tlist = []
-        state.xlist = []
-        state.plist = [[] for p in state.watchlist]
+        state.tlist = []  # type: ignore[attr-defined]
+        state.xlist = []  # type: ignore[attr-defined]
+        state.plist = [[] for p in state.watchlist]  # type: ignore[attr-defined]
 
         print("run")
         nok = 0
@@ -302,25 +300,25 @@ class BDRealTime(BDSim):
             bd.schedule_evaluate([], t)
 
             # record the ports on the watchlist
-            for i, p in enumerate(state.watchlist):
+            for i, p in enumerate(state.watchlist):  # type: ignore[attr-defined]
                 b = p.block
                 output = b.output(t, b.inputs, b._x)[p.port]
-                state.plist[i].append(output)
+                state.plist[i].append(output)  # type: ignore[attr-defined]
 
-            state.tlist.append(t)
+            state.tlist.append(t)  # type: ignore[attr-defined]
 
             # check execution time for this sample step
             te_1 = time.time()
             dte = te_1 - te_0
             stats.update(dte)  # compute stats on time to execute the block diagram
             if samples:
-                if dte > dt:
+                if dte > dt:  # type: ignore[operator]
                     print("x", end="")  # overrun
                 else:
                     print(".", end="")
                 sys.stdout.flush()
 
-            if dte > dt:
+            if dte > dt:  # type: ignore[operator]
                 noverrun += 1
             else:
                 nok += 1
@@ -330,7 +328,7 @@ class BDRealTime(BDSim):
             if tnow > T:
                 break
 
-            t += dt  # time of next sample
+            t += dt  # type: ignore[operator,assignment]  # time of next sample
 
             t_sleep = t - tnow
             if t_sleep < 0:  # be tolerant to a sample overrun
@@ -339,13 +337,13 @@ class BDRealTime(BDSim):
 
         # save buffered data in a Struct
         out = BDStruct(name="results")
-        out.t = np.array(state.tlist)
+        out.t = np.array(state.tlist)  # type: ignore[attr-defined]
         # out.x = np.array(state.xlist)
         # out.xnames = bd.statenames
 
         # save the watchlist into variables named y0, y1 etc.
         for i, p in enumerate(watchlist):
-            out["y" + str(i)] = np.array(state.plist[i])
+            out["y" + str(i)] = np.array(state.plist[i])  # type: ignore[attr-defined]
         out.ynames = watchnamelist
 
         if noverrun > 0:
@@ -357,7 +355,7 @@ class BDRealTime(BDSim):
         print(f"  t_max      {stats.max*1000:.1f} ms")
         print(f"  t_mean     {stats.mean*1000:.1f} ms")
         print(f"  t_sdev     {stats.sdev*1000:.1f} ms")
-        print(f"  t_max / dt {stats.max/dt*100:.1f}%")
+        print(f"  t_max / dt {stats.max/dt*100:.1f}%")  # type: ignore[operator]  # type: ignore[operator]
         print(attr(0))
 
         return out

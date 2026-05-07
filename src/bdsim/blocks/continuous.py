@@ -335,7 +335,7 @@ class LTI_SS(ContinuousBlock):
 
         if np.any(D != 0):
             # flag we have feedthrough, which may create an algebraic loop
-            self.D = D
+            self.D: np.ndarray | None = D
             feedthrough = True
         else:
             self.D = None
@@ -362,8 +362,12 @@ class LTI_SS(ContinuousBlock):
 
 
 def _tf2ss(
-    num: Vector1D, den: Vector1D, form="ccf", order="backward", verbose=False
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    num: Vector1D,
+    den: Vector1D,
+    form: str = "ccf",
+    order: str = "backward",
+    verbose: bool = False,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     r"""
     :param N: Numerator coefficients in descending powers of :math:`s`.
     :type N: array_like
@@ -408,7 +412,7 @@ def _tf2ss(
     """
     # normalize polynomials so leading coefficient of denominator is one
 
-    def expand_poly(x) -> np.ndarray:
+    def expand_poly(x: Any) -> np.ndarray:
         # if x is an array of scalars, assume it's already in the correct form
         # otherwise assume it's an array of factors and convolve them together to get the coefficients
         #
@@ -421,21 +425,21 @@ def _tf2ss(
             # is directly equivalent to a 1D array, convert to array
             return smb.getvector(x, dtype="float")
 
-        coeffs = [1]
+        coeffs: Any = [1]
         for t in x:
             print(coeffs, t)
             coeffs = np.convolve(coeffs, t)
         return coeffs
 
-    num = expand_poly(num)
-    den = expand_poly(den)
+    num_arr = expand_poly(num)
+    den_arr = expand_poly(den)
 
-    D0 = den[0]
-    den = den / D0
-    num = num / D0
+    D0 = den_arr[0]
+    den_arr = den_arr / D0
+    num_arr = num_arr / D0
 
-    n = len(den) - 1
-    m = len(num) - 1
+    n = len(den_arr) - 1
+    m = len(num_arr) - 1
 
     if m > n:
         raise ValueError(
@@ -444,13 +448,13 @@ def _tf2ss(
 
     # Handle the D matrix (direct feedthrough)
     if m == n:
-        D = np.array([[num[0]]])
+        D = np.array([[num_arr[0]]])
         # Update numerator: num_new = num - D * den
         # This effectively performs the division to get the strictly proper part
-        b_coeffs_full = num - D[0, 0] * den
+        b_coeffs_full = num_arr - D[0, 0] * den_arr
     else:
         D = np.array([[0.0]])
-        b_coeffs_full = num
+        b_coeffs_full = num_arr
 
     # Pad the updated numerator to length n (the strictly proper part)
     # b_coeffs will be [b1, b2, ... bn] for the strictly proper part
@@ -462,7 +466,7 @@ def _tf2ss(
         )
 
     # Denominator coefficients (ignoring leading 1)
-    a_coeffs = den[1:]
+    a_coeffs = den_arr[1:]
 
     # Initialize matrices
     A = np.zeros((n, n))
@@ -570,9 +574,9 @@ class LTI_SISO(LTI_SS):
         N: Vector1D = 1,
         D: Vector1D = [1, 1],
         x0: np.ndarray | None = None,
-        form="ccf",
-        order="backward",
-        verbose=False,
+        form: str = "ccf",
+        order: str = "backward",
+        verbose: bool = False,
         **blockargs: Any,
     ) -> None:
         r"""
@@ -624,13 +628,13 @@ class LTI_SISO(LTI_SS):
 
         """
 
-        A, B, C, D = _tf2ss(N, D, form=form, order=order, verbose=verbose)
+        A, B, C, _D = _tf2ss(N, D, form=form, order=order, verbose=verbose)
 
         n = A.shape[0]
         if x0 is None:
             x0 = np.zeros((n,))
 
-        super().__init__(A=A, B=B, C=C, D=D, x0=x0, **blockargs)
+        super().__init__(A=A, B=B, C=C, D=_D, x0=x0, **blockargs)
 
         # TODO: param
         #  def change_param(self, param: str, newvalue: np.ndarray) -> None:
@@ -723,7 +727,7 @@ class Deriv2(LTI_SS):
         N = [gain * wn**2, 0]  # wn^2 s
         D = [1, 2 * zeta * wn, wn**2]  # s^2 + 2 zeta wn s + wn^2
 
-        A, B, C, D = _tf2ss(N, D, form="ocf")
+        A, B, C, _ = _tf2ss(N, D, form="ocf")
 
         # this model is strictly proper, D is zero and can be ommitted.
         super().__init__(A=A, B=B, C=C, x0=x0, **blockargs)

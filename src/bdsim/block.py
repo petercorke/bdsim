@@ -6,7 +6,7 @@ import sys
 import math
 import importlib
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Callable, cast
 import warnings
 
 import matplotlib
@@ -23,6 +23,7 @@ from bdsim.connect import Plug, Port, Wire
 
 if TYPE_CHECKING:
     from bdsim.blockdiagram import BlockDiagram
+    from bdsim.components import SimulationState
 
 Vector1D = int | float | tuple[float, ...] | list[float] | np.ndarray
 
@@ -232,7 +233,7 @@ class Block(ABC, Port):
 
         # set by add_block() when block is added to a block diagram
         self._bd: BlockDiagram | None = bd  # owning block diagram
-        self._id = None  # index in block diagram's blocklist
+        self._id: int | None = None  # index in block diagram's blocklist
 
         # deprecated options for graphical display
         if isinstance(pos, list):
@@ -260,7 +261,7 @@ class Block(ABC, Port):
         #  - default to None.
         #
         # _portnames is the list of all port names, used for access by name in __setattr__ and __getattr__
-        def checknames(names):
+        def checknames(names: list[str]) -> None:
             for name in names:
                 if name in self.__dict__:
                     raise ValueError(f"port name {name} conflicts with block attribute")
@@ -316,7 +317,7 @@ class Block(ABC, Port):
         self._nstates = nstates
         self._ndstates = ndstates
 
-    def __init_subclass__(cls, **kwargs) -> None:
+    def __init_subclass__(cls, **kwargs: Any) -> None:
         """
         Initialize a subclass of Block.
 
@@ -372,8 +373,8 @@ class Block(ABC, Port):
     #     else:
     #         return self.blockclass + ".??"
 
-    def __repr__(self):
-        s = f"Block(name={self._name}, type={self._type}, blockclass={self._blockclass}"
+    def __repr__(self) -> str:
+        s = f"({self.name}, type={self._type}, blockclass={self._blockclass}"
         if self.nin > 0:
             s += f", nin={self.nin}"
         if self.nout > 0:
@@ -399,17 +400,17 @@ class Block(ABC, Port):
         ]:
             print("  {:11s}{:s}".format(k + ":", str(v)))
 
-    def add_param(self, param, handler=None) -> None:
+    def add_param(self, param: str, handler: Callable[..., Any] | None = None) -> None:
         if handler is None:
 
-            def default_handler(self, name, newvalue) -> None:
+            def default_handler(self: Block, name: str, newvalue: Any) -> None:
                 setattr(self, name, newvalue)
 
             handler = default_handler
 
         self.__dict__["_parameters"][param] = handler
 
-    def set_param(self, name, newvalue) -> None:
+    def set_param(self, name: str, newvalue: Any) -> None:
         print(f"setting parameter {name} of block {self.name} to {newvalue}")
         self._parameters[name](self, name, newvalue)
 
@@ -418,7 +419,7 @@ class Block(ABC, Port):
         return self._id
 
     @id.setter
-    def id(self, v) -> None:
+    def id(self, v: int | None) -> None:
         self._id = v
 
     @property
@@ -472,7 +473,7 @@ class Block(ABC, Port):
     def name_tex(self) -> str | None:
         return self._name_tex
 
-    def state_names(self, names) -> None:
+    def state_names(self, names: list[str]) -> None:
         self._state_names = names
 
     @property
@@ -576,7 +577,7 @@ class Block(ABC, Port):
         return inports
 
     @property
-    def inport_values(self):
+    def inport_values(self) -> list[Any]:
         """
         Get inport values as a list
 
@@ -651,7 +652,7 @@ class Block(ABC, Port):
         else:
             return self._inport_names[i]
 
-    def source_name(self, port):
+    def source_name(self, port: int) -> str:
         """
         Get the name of output port driving this input port.
 
@@ -668,10 +669,12 @@ class Block(ABC, Port):
         """
 
         wire = self._input_wires[port]
+        if wire is None:
+            raise ValueError(f"block {self.name} input port {port} not connected")
         if wire.name is not None:
             return wire.name
         b = wire.start.block
-        return f"{b.name}{b.outport_name(wire.start.port)}"
+        return f"{b.name}{b.outport_name(wire.start.port)}"  # type: ignore[arg-type]
 
     # ---------------------------------------------------------------------- #
     # outputs of a block
@@ -813,7 +816,9 @@ class Block(ABC, Port):
     #  test_MMMMM is a wrapper around the normal block method MMMMM, which checks the inputs and outputs for
     #  consistency with the block definition, and is used for concise unit tests.
 
-    def test_output(self, *inputs, t=0.0, x=None):
+    def test_output(
+        self, *inputs: Any, t: float = 0.0, x: np.ndarray | None = None
+    ) -> list[Any]:
         """
         Evaluate a block for unit testing.
 
@@ -842,7 +847,9 @@ class Block(ABC, Port):
         assert len(out) == self.nout, "result list is wrong length"
         return out
 
-    def test_deriv(self, *inputs, t=0.0, x=None):
+    def test_deriv(
+        self, *inputs: Any, t: float = 0.0, x: np.ndarray | None = None
+    ) -> np.ndarray:
         """
         Evaluate a block for unit testing.
 
@@ -875,7 +882,9 @@ class Block(ABC, Port):
         assert out.shape == (self.nstates,), "result array is wrong length"
         return out
 
-    def test_next(self, *inputs, t=0.0, x=None):
+    def test_next(
+        self, *inputs: Any, t: float = 0.0, x: np.ndarray | None = None
+    ) -> np.ndarray:
         """
         Evaluate a block for unit testing.
 
@@ -910,7 +919,7 @@ class Block(ABC, Port):
         assert out.shape == (self.ndstates,), "next state array is wrong length"
         return out
 
-    def test_step(self, *inputs, t=0.0) -> None:
+    def test_step(self, *inputs: Any, t: float = 0.0) -> None:
         """
         Step a block for unit testing.
 
@@ -932,7 +941,7 @@ class Block(ABC, Port):
         # step the block
         self.step(t, inputs)
 
-    def test_start(self, simstate=None):
+    def test_start(self, simstate: SimulationState | None = None) -> SimulationState:
         from bdsim.run_sim import BDSimState, Options
 
         if simstate is None:
@@ -940,7 +949,7 @@ class Block(ABC, Port):
             class RunTime:
                 options: Options
 
-                def DEBUG(self, *args) -> None:
+                def DEBUG(self, *args: Any) -> None:
                     pass
 
             class BlockDiagram:
@@ -950,7 +959,7 @@ class Block(ABC, Port):
             runtime.options = Options()
             blockdiagram = BlockDiagram()
             blockdiagram.runtime = runtime
-            self._bd = cast("BlockDiagram", blockdiagram)
+            self._bd = cast("BlockDiagram", blockdiagram)  # type: ignore[assignment]
             simstate = BDSimState()
             simstate.options = runtime.options
             simstate.t = 0.0
@@ -962,7 +971,7 @@ class Block(ABC, Port):
     # ---------------------------------------------------------------------- #
     #  set/get items and attributes
 
-    def __getitem__(self, port) -> Plug:
+    def __getitem__(self, port: int | slice) -> Plug:
         """
         Convert a RHS block slice reference to a Plug.
 
@@ -984,7 +993,7 @@ class Block(ABC, Port):
         # print('getitem called', self, port)
         return Plug(self, port)
 
-    def __setitem__(self, port, src) -> None:
+    def __setitem__(self, port: int, src: Block | Plug) -> None:
         """
         Convert a LHS block slice reference to a wire.
 
@@ -1008,7 +1017,7 @@ class Block(ABC, Port):
         # print('connecting', src, self, port)
         return self.bd.connect(src, self[port])
 
-    def __getattr__(self, name) -> Any:
+    def __getattr__(self, name: str) -> Any:
         """
         Convert a RHS block name reference to a Plug.
 
@@ -1024,7 +1033,7 @@ class Block(ABC, Port):
             y = c.v
 
                 ┌───┐               ┌───┐
-                │ c ├ v ─────────▶ │ y │
+                │ c ├ v ──────────▶ │ y │
                 └───┘               └───┘
 
         .. note::  this overloaded method handles all instances of ``setattr`` and
@@ -1052,7 +1061,7 @@ class Block(ABC, Port):
             f"'{type(self).__name__}' object has no attribute '{name}'"
         )
 
-    def __setattr__(self, name, value) -> None:
+    def __setattr__(self, name: str, value: Any) -> None:
         """
         Convert a LHS block name reference to a wire.
 
@@ -1122,13 +1131,15 @@ class Block(ABC, Port):
         self._depth = 0
         self._parents: list[Plug | None] = [None] * self.nin  # type: ignore[list-item]
 
-    def add_output_wire(self, w) -> None:
+    def add_output_wire(self, w: Wire) -> None:
         port = w.start.port
+        assert isinstance(port, int), "output wire port must be an int"
         assert port < len(self._output_wires), "port number too big"
         self._output_wires[port].append(w)
 
-    def add_input_wire(self, w) -> None:
+    def add_input_wire(self, w: Wire) -> None:
         port = w.end.port
+        assert isinstance(port, int), "input wire port must be an int"
         assert (
             self._input_wires[port] is None
         ), "attempting to connect second wire to an input"
@@ -1139,7 +1150,7 @@ class Block(ABC, Port):
     # operator overloads for implicit wiring
 
     @oodebug
-    def __rshift__(left, right):
+    def __rshift__(left: Block, right: Block | Plug) -> Block | Plug:
         """
         Operator for implicit wiring.
 
@@ -1182,13 +1193,13 @@ class Block(ABC, Port):
             s is not None
         ), "left operand of >> operator must be a block connected to a block diagram"
         # assert isinstance(right, Block), 'arguments to * must be blocks not ports (for now)'
-        w = s.connect(left, right)  # add a wire
+        w = s.connect(left, right)  # type: ignore[func-returns-value]
         # print('block * ' + str(w))
         return right
 
         # make connection, return a plug
 
-    def _autoconstant(self, value):
+    def _autoconstant(self, value: int | float | str | np.ndarray) -> Block:
         assert (
             self.bd is not None
         ), "block must be connected to a block diagram to create an automatic constant"
@@ -1204,7 +1215,7 @@ class Block(ABC, Port):
         ), "block must be connected to a block diagram to create an automatic constant"
         return self.bd.CONSTANT(value, name=name)
 
-    def _autogain(self, value, **kwargs):
+    def _autogain(self, value: int | float | np.ndarray, **kwargs: Any) -> Block:
         assert (
             self.bd is not None
         ), "block must be connected to a block diagram to create an automatic gain"
@@ -1220,7 +1231,7 @@ class Block(ABC, Port):
         ), "block must be connected to a block diagram to create an automatic gain"
         return self.bd.GAIN(value, name=name, **kwargs)
 
-    def _autopow(self, value, **kwargs):
+    def _autopow(self, value: int | float, **kwargs: Any) -> Block:
         assert (
             self.bd is not None
         ), "block must be connected to a block diagram to create an automatic power block"
@@ -1276,7 +1287,7 @@ class Block(ABC, Port):
         return Sum("++", inputs=(self, other), name=name, bd=self.bd)
 
     @oodebug
-    def __radd__(self, other):
+    def __radd__(self, other: Block | Plug | int | float | np.ndarray) -> Block:
         """
         Overloaded + operator for implicit block creation.
 
@@ -1320,7 +1331,7 @@ class Block(ABC, Port):
         return Sum("++", inputs=(other, self), name=name, bd=self.bd)
 
     @oodebug
-    def __sub__(self, other):
+    def __sub__(self, other: Block | Plug | int | float | np.ndarray) -> Block:
         """
         Overloaded - operator for implicit block creation.
 
@@ -1359,7 +1370,7 @@ class Block(ABC, Port):
         return Sum("+-", inputs=(self, other), name=name, bd=self.bd)
 
     @oodebug
-    def __rsub__(self, other):
+    def __rsub__(self, other: Block | Plug | int | float | np.ndarray) -> Block:
         """
         Overloaded - operator for implicit block creation.
 
@@ -1449,7 +1460,7 @@ class Block(ABC, Port):
         return self._autopow(p, inputs=[self])
 
     @oodebug
-    def __mul__(self, other):
+    def __mul__(self, other: Block | Plug | int | float | np.ndarray) -> Block:
         """
         Overloaded * operator for implicit block creation.
 
@@ -1488,7 +1499,7 @@ class Block(ABC, Port):
         matrix = False
         if isinstance(other, (int, float, np.ndarray)):
             # block * constant, create a GAIN block
-            matrix: bool = isinstance(other, np.ndarray)
+            matrix: bool = isinstance(other, np.ndarray)  # type: ignore[no-redef]
             return self._autogain(other, premul=matrix, matrix=matrix, inputs=[self])
         else:
             # value * value, create a PROD block
@@ -1498,7 +1509,7 @@ class Block(ABC, Port):
             )
 
     @oodebug
-    def __rmul__(self, other):
+    def __rmul__(self, other: Block | Plug | int | float | np.ndarray) -> Block | None:
         """
         Overloaded * operator for implicit block creation.
 
@@ -1531,11 +1542,12 @@ class Block(ABC, Port):
         matrix = False
         if isinstance(other, (int, float, np.ndarray)):
             # constant * block, create a GAIN block
-            matrix: bool = isinstance(other, np.ndarray)
+            matrix: bool = isinstance(other, np.ndarray)  # type: ignore[no-redef]
             return self._autogain(other, premul=matrix, inputs=[self])
+        return None
 
     @oodebug
-    def __truediv__(self, other):
+    def __truediv__(self, other: Block | Plug | int | float | np.ndarray) -> Block:
         """
         Overloaded / operator for implicit block creation.
 
@@ -1577,11 +1589,11 @@ class Block(ABC, Port):
         if isinstance(other, (int, float, np.ndarray)):
             # block / constant, create a CONSTANT block
             other = self._autoconstant(other)
-            matrix: bool = isinstance(other, np.ndarray)
+            matrix: bool = isinstance(other, np.ndarray)  # type: ignore[no-redef]
         return Prod("*/", inputs=(self, other), matrix=matrix, name=name, bd=self.bd)
 
     @oodebug
-    def __rtruediv__(self, other):
+    def __rtruediv__(self, other: Block | Plug | int | float | np.ndarray) -> Block:
         """
         Overloaded / operator for implicit block creation.
 
@@ -1622,7 +1634,7 @@ class Block(ABC, Port):
         if isinstance(other, (int, float, np.ndarray)):
             # constant / block, create a CONSTANT block
             other = self._autoconstant(other)
-            matrix: bool = isinstance(other, np.ndarray)
+            matrix: bool = isinstance(other, np.ndarray)  # type: ignore[no-redef]
         return Prod("*/", inputs=(other, self), matrix=matrix, name=name, bd=self.bd)
 
     # TODO arithmetic with a constant, add a gain block or a constant block
@@ -1635,7 +1647,7 @@ class Block(ABC, Port):
         for slot in getattr(self, "_outport_slots", []):
             slot.value = None
 
-    def start(self, simstate) -> None:  # begin a simulation
+    def start(self, simstate: SimulationState) -> None:  # begin a simulation
         pass
 
     def check(self) -> None:  # check validity of block parameters at start
@@ -1664,10 +1676,10 @@ class Block(ABC, Port):
             hasattr(self, "_initd") and self._initd
         ), "Block superclass not initalized. was super().__init__ called?"
 
-    def done(self, **kwargs) -> None:  # end of simulation
+    def done(self, **kwargs: Any) -> None:  # end of simulation
         pass
 
-    def savefig(self, *pos, **kwargs) -> None:
+    def savefig(self, *pos: Any, **kwargs: Any) -> None:
         pass
 
 
@@ -1677,7 +1689,7 @@ class SourceBlock(Block):
     but no inputs.  Its output is a function of parameters and time.
     """
 
-    def __init__(self, **blockargs) -> None:
+    def __init__(self, **blockargs: Any) -> None:
         """
         Create a source block.
 
@@ -1702,7 +1714,7 @@ class SinkBlock(Block):
     graphics.
     """
 
-    def __init__(self, **blockargs) -> None:
+    def __init__(self, **blockargs: Any) -> None:
         """
         Create a sink block.
 
@@ -1727,7 +1739,7 @@ class FunctionBlock(Block):
     such as gain, summation or various mappings.
     """
 
-    def __init__(self, **blockargs) -> None:
+    def __init__(self, **blockargs: Any) -> None:
         """
         Create a function block.
 
@@ -1753,7 +1765,11 @@ class ContinuousBlock(Block):
     """
 
     def __init__(
-        self, nstates: int, x0: Vector1D = None, feedthrough: bool = False, **blockargs
+        self,
+        nstates: int,
+        x0: Vector1D | None = None,
+        feedthrough: bool = False,
+        **blockargs: Any,
     ) -> None:
         """
         Create a continuous-time block.
@@ -1786,11 +1802,11 @@ class ContinuousBlock(Block):
     def reset(self) -> None:
         super().reset()
 
-    def setstate(self, x):
+    def setstate(self, x: np.ndarray) -> np.ndarray:
         self._x_view = x[: self.nstates]
         return x[self.nstates :]
 
-    def getstate0(self):
+    def getstate0(self) -> np.ndarray:
         return self._x0
 
     def check(self) -> None:
@@ -1821,7 +1837,7 @@ class SampledBlock(Block):
         ndstates: int | None = None,
         x0: Vector1D | None = None,
         feedthrough: bool = False,
-        **blockargs,
+        **blockargs: Any,
     ) -> None:
         """
         Create a clocked block.
@@ -1861,11 +1877,11 @@ class SampledBlock(Block):
     def reset(self) -> None:
         super().reset()
 
-    def setstate(self, x):
+    def setstate(self, x: np.ndarray) -> np.ndarray:
         self._x_view = x[: self.ndstates]
         return x[self.ndstates :]
 
-    def getstate0(self):
+    def getstate0(self) -> np.ndarray:
         return self._x0
 
     def check(self) -> None:
@@ -1885,7 +1901,7 @@ class SubsystemBlock(Block):
     such as gain, summation or various mappings.
     """
 
-    def __init__(self, subsystem, **blockargs) -> None:
+    def __init__(self, subsystem: BlockDiagram, **blockargs: Any) -> None:
         """
         Create a subsystem block.
 
@@ -1948,7 +1964,7 @@ class GraphicsBlock(SinkBlock):
     but no outputs and creates/updates a graphical display.
     """
 
-    def __init__(self, movie=None, **blockargs) -> None:
+    def __init__(self, movie: str | None = None, **blockargs: Any) -> None:
         """
         Create a graphical display block.
 
@@ -1983,14 +1999,14 @@ class GraphicsBlock(SinkBlock):
         self._movie = v
 
     @property
-    def writer(self):
+    def writer(self) -> Any:
         return self._writer
 
     @writer.setter
-    def writer(self, v) -> None:
+    def writer(self, v: Any) -> None:
         self._writer = v
 
-    def start(self, simstate) -> None:
+    def start(self, simstate: SimulationState) -> None:
         # plt.draw()
         # plt.show(block=False)
         self._simstate = simstate
@@ -2013,7 +2029,7 @@ class GraphicsBlock(SinkBlock):
             except FileNotFoundError:
                 self.fatal("cannot save movie, please install ffmpeg")  # type: ignore[union-attr]
 
-    def step(self, t, inports) -> None:
+    def step(self, t: float, inports: list[Any]) -> None:
         # super().step(t, inports)  # type: ignore[safe-super]
 
         # bring the figure up to date in a backend-specific way
@@ -2042,7 +2058,9 @@ class GraphicsBlock(SinkBlock):
                 # self.cleanup()
             plt.show(block=block)
 
-    def savefig(self, filename=None, format="pdf", **kwargs) -> None:
+    def savefig(
+        self, filename: str | None = None, format: str = "pdf", **kwargs: Any
+    ) -> None:
         """
         Save the figure as an image file
 
@@ -2065,7 +2083,7 @@ class GraphicsBlock(SinkBlock):
         except:
             pass
 
-    def create_figure(self, state) -> matplotlib.figure.Figure:
+    def create_figure(self, state: SimulationState) -> matplotlib.figure.Figure:
         def resolve_tiles_spec(spec: str | None) -> list[int] | None:
             if spec is None:
                 return None
@@ -2102,7 +2120,9 @@ class GraphicsBlock(SinkBlock):
                 raise ValueError(f"bad tiles spec '{spec}', row/col must be > 0")
             return [rows, cols]
 
-        def move_figure(f, x, y) -> None:
+        def move_figure(
+            f: matplotlib.figure.Figure, x: int | float, y: int | float
+        ) -> None:
             """Move figure's upper left corner to pixel (x, y)"""
             backend: str = matplotlib.get_backend()
             x = int(x) + gstate.xoffset
@@ -2359,7 +2379,7 @@ class GraphicsBlock(SinkBlock):
                 # dark background makes the white subplot panels stand out.
                 f.set_constrained_layout(True)
                 try:
-                    f.get_layout_engine().set(hspace=0.08, wspace=0.06)
+                    f.get_layout_engine().set(hspace=0.08, wspace=0.06)  # type: ignore[call-arg,union-attr]
                 except Exception:
                     f.set_constrained_layout_pads(hspace=0.08, wspace=0.06)  # type: ignore[attr-defined]  # pre-3.6 fallback
                 f.patch.set_facecolor("#323232")
@@ -2379,7 +2399,7 @@ class GraphicsBlock(SinkBlock):
 
         gstate.fignum += 1
 
-        def onkeypress(event) -> None:
+        def onkeypress(event: Any) -> None:
             if event.key == "x":
                 print("\nclosing all windows")
                 plt.close("all")
@@ -2402,7 +2422,7 @@ class GraphicsBlock(SinkBlock):
 # ----------------------- deprecated classes for backward compatibility ----------------------- #
 
 
-def deprecated_block(new_name: str):
+def deprecated_block(new_name: str) -> Callable[[type], type]:
     """Class decorator that marks a block as deprecated.
 
     Wraps ``__init__`` to emit a ``FutureWarning`` on instantiation.
@@ -2417,10 +2437,10 @@ def deprecated_block(new_name: str):
             ...
     """
 
-    def decorator(cls):
+    def decorator(cls: type) -> type:
         orig_init = cls.__init__
 
-        def __init__(self, *args, **kwargs):
+        def __init__(self: Any, *args: Any, **kwargs: Any) -> None:
             warnings.warn(
                 f"{cls.__name__} is deprecated; use {new_name} instead.",
                 FutureWarning,
@@ -2440,7 +2460,7 @@ class TransferBlock(ContinuousBlock):
 
     _blockclass = "continuous"  # name 'transfer' != 'continuous', must be explicit
 
-    def __init_subclass__(cls, **kwargs):
+    def __init_subclass__(cls, **kwargs: Any) -> None:
         warnings.warn(
             f"{cls.__name__} subclasses TransferBlock which is deprecated since v2.0.0 "
             "and will be removed in v3.0.0. Subclass ContinuousBlock instead.",
@@ -2456,7 +2476,7 @@ class ClockedBlock(SampledBlock):
 
     _blockclass = "sampled"  # name 'clocked' != 'sampled', must be explicit
 
-    def __init_subclass__(cls, **kwargs):
+    def __init_subclass__(cls, **kwargs: Any) -> None:
         warnings.warn(
             f"{cls.__name__} subclasses ClockedBlock which is deprecated since v2.0.0 "
             "and will be removed in v3.0.0. Subclass SampledBlock instead.",

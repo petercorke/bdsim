@@ -68,20 +68,26 @@ class Progress:
     # https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console
     @staticmethod
     def printProgressBar(
-        fraction, prefix="", suffix="", decimals=1, length=50, fill="█", printEnd="\r"
+        fraction: float,
+        prefix: str = "",
+        suffix: str = "",
+        decimals: int = 1,
+        length: int = 50,
+        fill: str = "█",
+        printEnd: str = "\r",
     ) -> None:
         percent: str = ("{0:." + str(decimals) + "f}").format(fraction * 100)
         filledLength = int(length * fraction)
         bar: str = fill * filledLength + "-" * (length - filledLength)
         print(f"\r{prefix} |{bar}| {percent}% {suffix}", end=printEnd)
 
-    def __init__(self, enable=True) -> None:
+    def __init__(self, enable: bool = True) -> None:
         self.enable: bool = enable
         self.length = 60
         if not enable:
             return
 
-    def start(self, T) -> None:
+    def start(self, T: float) -> None:
         self.T = T
 
         if not self.enable:
@@ -108,7 +114,7 @@ class Progress:
         else:
             print("\r" + " " * (self.length + 20) + "\r")
 
-    def update(self, t) -> None:
+    def update(self, t: float) -> None:
         """
         Update progress bar
 
@@ -133,7 +139,7 @@ class Progress:
 
 # convert class name to BLOCK name
 # strip underscores and capitalize
-def blockname(name):
+def blockname(name: str) -> str:
     return name.upper()
 
 
@@ -148,11 +154,11 @@ class _LazyBlockClass:
         self._resolved: type[Block] | None = None
 
     @property
-    def __name__(self) -> str:
+    def __name__(self) -> str:  # type: ignore[override]
         return self._class_name
 
     @property
-    def __module__(self) -> str:
+    def __module__(self) -> str:  # type: ignore[override]
         return self._module_name
 
     def _resolve(self) -> type[Block]:
@@ -171,10 +177,10 @@ class _LazyBlockClass:
             self._resolved = resolved
         return self._resolved
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
         return self._resolve()(*args, **kwargs)
 
-    def __getattribute__(self, name: str):
+    def __getattribute__(self, name: str) -> Any:
         if name in {
             "_module_name",
             "_class_name",
@@ -449,7 +455,12 @@ class BDSim(Runner):
         return cls_obj
 
     def __init__(
-        self, banner=True, packages=None, load=True, toolboxes=True, **kwargs
+        self,
+        banner: bool = True,
+        packages: str | None = None,
+        load: bool = True,
+        toolboxes: bool = True,
+        **kwargs: Any,
     ) -> None:
         """
         :param banner: display docstring banner, defaults to True
@@ -468,7 +479,7 @@ class BDSim(Runner):
         :type progress: bool, optional
         :param debug: debug options, defaults to None
         :type debug: str, optional
-        :param backend: matplotlib backend, defaults to 'Qt5Agg''
+        :param backend: matplotlib backend, defaults to 'Qt5Agg'
         :type backend: str, optional
         :param tiles: figure tile layout on monitor, defaults to None
         :type tiles: str, optional
@@ -579,7 +590,7 @@ class BDSim(Runner):
         assert self._blocklibrary is not None, "block library not loaded"
         return {k: v for k, v in self._blocklibrary.items() if not v.get("deprecated")}
 
-    def blockinfo(self, block=None):
+    def blockinfo(self, block: str | None = None) -> Any:
         """Return info about all blocks.
 
         .. deprecated::
@@ -636,7 +647,9 @@ class BDSim(Runner):
     def _set_context(self, context: SimulationContext | None) -> None:
         self._context_local.current = context
 
-    def _make_run_options(self, *, threaded: bool = False, **overrides) -> OptionsBase:
+    def _make_run_options(
+        self, *, threaded: bool = False, **overrides: Any
+    ) -> OptionsBase:
         assert self.options is not None
         options: OptionsBase = self.options.copy()
         options.set(**overrides)
@@ -785,7 +798,7 @@ class BDSim(Runner):
 
     def _record_sample_and_service_hooks(
         self,
-        bd,
+        bd: Any,
         simstate: BDSimState,
         t: float,
         y: np.ndarray | None = None,
@@ -818,7 +831,7 @@ class BDSim(Runner):
             out = b.outport_value(p.port)
             simstate.plist[i].append(out)
 
-        if simstate.options.animation or (t - simstate.gtime) > (simstate.T / 200):
+        if simstate.options.animation or (t - simstate.gtime) > (simstate.T / 200):  # type: ignore[operator,union-attr]
             bd.step(t)
             simstate.gtime = t
 
@@ -834,24 +847,24 @@ class BDSim(Runner):
             if stop_short_circuit:
                 return True
 
-        if "i" in simstate.options.debug:
+        if simstate.isdebug("i"):
             bd._debugger(simstate)
 
         return False
 
     def run(
         self,
-        bd,
-        T=5,
-        dt=None,
-        max_step=None,
-        solver="RK45",
-        solver_args=None,
-        debug="",
-        block=None,
-        checkfinite=True,
-        minstepsize=1e-12,
-        watch=None,
+        bd: Any,
+        T: float = 5,
+        dt: float | None = None,
+        max_step: float | None = None,
+        solver: str = "RK45",
+        solver_args: dict[str, Any] | None = None,
+        debug: str = "",
+        block: bool | None = None,
+        checkfinite: bool = True,
+        minstepsize: float = 1e-12,
+        watch: Any = None,
         threaded: bool = False,
     ) -> BDStruct:
         """Run a compiled block diagram.
@@ -1002,7 +1015,7 @@ class BDSim(Runner):
                     simstate.options.debug += debug
 
             # turn off progress bar if any debug options are given
-            if len(simstate.options.debug) > 0:
+            if simstate.hasdebug():
                 simstate.options.progress = False
             if block is not None:
                 simstate.options.hold = block
@@ -1011,14 +1024,10 @@ class BDSim(Runner):
             # Animation uses Option-A eventq callables for frame pacing.
             # The debugger also limits max_step so single-step stays responsive.
             interactive_dt: float | None = None
-            if simstate.options.animation or "i" in simstate.options.debug:
+            if simstate.options.animation or simstate.isdebug("i"):
                 interactive_rate_hz = float(simstate.options.animation_rate)
                 interactive_dt = 1.0 / interactive_rate_hz
-            if (
-                "i" in simstate.options.debug
-                and interactive_dt is not None
-                and bd.nstates > 0
-            ):
+            if simstate.isdebug("i") and interactive_dt is not None and bd.nstates > 0:
                 current_max_step = simstate.solver_args.get("max_step")
                 if current_max_step is None or float(current_max_step) > interactive_dt:
                     simstate.solver_args["max_step"] = interactive_dt
@@ -1053,10 +1062,10 @@ class BDSim(Runner):
                     plug = b[port]
                 elif isinstance(w, Block):
                     # a block was given, defaults to port 0
-                    plug: Plug = w[0]
+                    plug: Plug = w[0]  # type: ignore[no-redef]
                 elif isinstance(w, Plug):
                     # a plug was given
-                    plug: Plug = w
+                    plug: Plug = w  # type: ignore[no-redef]
 
                 if plug.block.blockclass == "subsystem":
                     # subsystem blocks no longer exist in the wirelist, and don't have
@@ -1208,7 +1217,7 @@ class BDSim(Runner):
                 for num in plt.get_fignums():
                     plt.figure(num).canvas.flush_events()
 
-                def _anim_frame(t: float, ss, _dt: float = interactive_dt) -> None:
+                def _anim_frame(t: float, ss: Any, _dt: float = interactive_dt) -> None:
                     # Flush pending draw events for all open figures without
                     # entering a blocking event loop (plt.pause(0) hangs with
                     # Qt because start_event_loop(0) never installs a quit timer).
@@ -1424,14 +1433,14 @@ class BDSim(Runner):
         finally:
             self._set_context(previous_context)
 
-    def submit(self, bd, **kwargs) -> SimulationJob:
+    def submit(self, bd: Any, **kwargs: Any) -> SimulationJob:
         if BDSim._executor is None:
             BDSim._executor = ThreadPoolExecutor()
         kwargs.setdefault("threaded", True)
         future: Future[BDStruct] = BDSim._executor.submit(self.run, bd, **kwargs)
         return SimulationJob(future)
 
-    def update_parameters(self, bd) -> None:
+    def update_parameters(self, bd: Any) -> None:
         """
         Set value of parameters according to command line arguments
 
@@ -1500,7 +1509,9 @@ class BDSim(Runner):
                 f" {new_value}"
             )
 
-    def _interval_hybrid(self, bd, t0, t1, x0, simstate: BDSimState):
+    def _interval_hybrid(
+        self, bd: Any, t0: float, t1: float, x0: np.ndarray, simstate: BDSimState
+    ) -> tuple[np.ndarray, float]:
         """
         Integrate one hybrid (continuous/discrete) interval.
 
@@ -1525,8 +1536,7 @@ class BDSim(Runner):
         # bounded by the most recent and upcoming scheduled event boundaries.
         simstate.begin_event_probe_interval(float(t0), float(t1))
 
-        def ydot(t, y):
-            # This callback is owned by SciPy's adaptive solver.
+        def ydot(t: float, y: np.ndarray) -> np.ndarray:
             # Every call represents one RHS evaluation requested by the
             # integration algorithm at an internal time/state pair.
             simstate.t = t
@@ -1705,7 +1715,9 @@ class BDSim(Runner):
         # if integration produced no points, return initial state
         return np.array(x0), t_final
 
-    def _interval_discrete(self, bd, t0, t1, x0, simstate: BDSimState):
+    def _interval_discrete(
+        self, bd: Any, t0: float, t1: float, x0: np.ndarray, simstate: BDSimState
+    ) -> tuple[np.ndarray, float]:
         """
         Evaluate one discrete interval boundary at the scheduled tick time.
 
@@ -1745,7 +1757,7 @@ class BDSim(Runner):
         t_final = float(t1)
         return np.array(x0), t_final
 
-    def blockdiagram(self, name="main") -> BlockDiagram:
+    def blockdiagram(self, name: str = "main") -> BlockDiagram:
         """
         Instantiate a new block diagram object.
 
@@ -1769,10 +1781,10 @@ class BDSim(Runner):
         #  it includes stubs for factory methods defined in the BlockDiagramMixin class
         bd = BlockDiagram(name=name)
 
-        def new_method(block_name: str, bd):
+        def new_method(block_name: str, bd: Any) -> Any:
             # return a wrapper for the block constructor that automatically
             # adds the block to the diagram's blocklist
-            def block_init_wrapper(self, *args, **kwargs):
+            def block_init_wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
                 # we catch errors in the block constructor and print them in red to make
                 # it clear that the error is in the block definition, not in the user
                 # code that creates the block diagram
@@ -1821,7 +1833,7 @@ class BDSim(Runner):
                 # print(f"block {blockname} is not defined in the block library")
 
                 def undefined_block_factory(
-                    *args, blockname=blockname, **kwargs
+                    *args: Any, blockname: str = blockname, **kwargs: Any
                 ) -> NoReturn:
                     raise NotImplementedError(
                         f"block {blockname} is not defined in the block library: missing block definition, block path error, or syntax error in the body of the block's code."
@@ -1835,14 +1847,14 @@ class BDSim(Runner):
 
         return bd
 
-    def DEBUG(self, debug, fmt, *args) -> None:
+    def DEBUG(self, debug: str, fmt: str, *args: Any) -> None:
         context: SimulationContext | None = self._get_context()
         assert self.options is not None
         options: OptionsBase = context.options if context is not None else self.options
         if debug[0] in options.debug:
             print(f"DEBUG.{debug:s}: " + fmt.format(*args))
 
-    def done(self, bd, block=False) -> None:
+    def done(self, bd: Any, block: bool = False) -> None:
         context: SimulationContext = self._require_context()
         if context.options.hold:
             block = context.options.hold
@@ -1866,17 +1878,23 @@ class BDSim(Runner):
             plt.pause(0.1)
         context.simstate.fignum = 0  # reset figure counter
 
-    def savefig(self, block, filename=None, format="pdf", **kwargs) -> None:
+    def savefig(
+        self,
+        block: Any,
+        filename: str | None = None,
+        format: str = "pdf",
+        **kwargs: Any,
+    ) -> None:
         block.savefig(filename=filename, format=format, **kwargs)
 
-    def savefigs(self, bd, format="pdf", **kwargs) -> None:
+    def savefigs(self, bd: Any, format: str = "pdf", **kwargs: Any) -> None:
         from bdsim.block_types import GraphicsBlock
 
         for b in bd.blocklist:
             if isinstance(b, GraphicsBlock):
                 b.savefig(filename=b.name, format=format, **kwargs)
 
-    def showgraph(self, bd, **kwargs) -> None:
+    def showgraph(self, bd: Any, **kwargs: Any) -> None:
         # create the temporary dotfile
         dotfile: io.TextIOWrapper = tempfile.TemporaryFile(mode="w")
         bd.dotfile(dotfile, **kwargs)
@@ -1892,7 +1910,7 @@ class BDSim(Runner):
         webbrowser.open(f"file://{pdffile.name}")
         os.remove(pdffile.name)
 
-    def fatal(self, message, retval=1) -> NoReturn:
+    def fatal(self, message: str, retval: int = 1) -> NoReturn:
         """
         Fatal simulation error
 
@@ -1908,7 +1926,9 @@ class BDSim(Runner):
         print(message)
         sys.exit(retval)
 
-    def load_blocks(self, verbose=True, toolboxes=True) -> dict[str, dict[str, Any]]:
+    def load_blocks(
+        self, verbose: bool = True, toolboxes: bool = True
+    ) -> dict[str, dict[str, Any]]:
         """
         Dynamically load all block definitions.
 
@@ -1929,8 +1949,7 @@ class BDSim(Runner):
         - `doc` is the docstring from the class constructor
         """
 
-        def parse_docstring(ds):
-            # this should have two versions: sphinx, numpy doc styles
+        def parse_docstring(ds: str) -> dict[str, Any]:
             import re
             from collections import OrderedDict
 
@@ -1941,7 +1960,7 @@ class BDSim(Runner):
             )
 
             # a-zA-Zα-ωΑ-Ω0-9_
-            def indent(s) -> int:
+            def indent(s: str) -> int:
                 return len(s) - len(s.lstrip())
 
             fieldnames = ("param", "type", "input", "output")
@@ -2210,7 +2229,7 @@ class BDSim(Runner):
                 "machinevisiontoolbox",
             ]
         else:
-            packages: list[str] = ["bdsim"]
+            packages = ["bdsim"]  # type: ignore[no-redef]
         env: str | None = os.getenv("BDSIMPATH")
         if env is not None:
             packages += env.split(":")
@@ -2306,7 +2325,7 @@ class BDSim(Runner):
             machinevisiontoolbox.blocks.camera......: Camera Visjac_p EstPose_p ImagePlane
         """
 
-        def dots(s, n=40):
+        def dots(s: str, n: int = 40) -> str:
             return s + "." * (n - len(s))
 
         assert self._blocklibrary is not None
@@ -2335,12 +2354,12 @@ class BDSim(Runner):
                     else:
                         print(f"{dots(k)}: {line}")
 
-    def set_options(self, **options) -> None:
+    def set_options(self, **options: Any) -> None:
         assert self.options is not None
         self.options.set(**options)
         warnings.warn("use sim.options.OPT=VALUE instead", DeprecationWarning)
 
-    def set_globals(self, globs) -> None:
+    def set_globals(self, globs: dict[str, Any]) -> None:
         """
         Set globals as specified by command line
 
@@ -2367,7 +2386,7 @@ class BDSim(Runner):
             print(f"changed value of global {var} from {globs[var]} -> {new_value}")
             globs[var] = new_value
 
-    def report(self, bd, type="summary", **kwargs) -> None:
+    def report(self, bd: Any, type: str = "summary", **kwargs: Any) -> None:
         """Print block diagram report
 
         :param bd: the block diagram to be reported
@@ -2397,7 +2416,7 @@ class BDSim(Runner):
 
 
 class Options(OptionsBase):
-    def __init__(self, sysargs=True, **options) -> None:
+    def __init__(self, sysargs: bool = True, **options: Any) -> None:
         if "interactive_rate" in options and "animation_rate" not in options:
             options["animation_rate"] = options.pop("interactive_rate")
 
@@ -2799,8 +2818,7 @@ class Options(OptionsBase):
 
         self._argv: list[str] = unknownargs  # save non-bdsim arguments
 
-    def sanity(self, options):
-        # ensure graphics is enabled if animation is requested
+    def sanity(self, options: dict[str, Any]) -> dict[str, Any]:
         # ensure animation is disabled if graphics is disabled
         if "graphics" in options and "animation" in options:
             if options["animation"] and not options["graphics"]:

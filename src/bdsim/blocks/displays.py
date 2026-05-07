@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 try:
     from matplotlib.backend_tools import ToolToggleBase
 except Exception:  # pragma: no cover
-    ToolToggleBase = None  # type: ignore[assignment]
+    ToolToggleBase = None  # type: ignore[assignment,misc]
 
 import spatialmath.base as smb  # type: ignore[import-not-found]
 
@@ -60,7 +60,7 @@ _DATA_CURSOR_ICON = (
 )
 
 
-def _cursor_controller(fig):
+def _cursor_controller(fig: Any) -> dict[str, Any]:
     controller = getattr(fig, "_bdsim_cursor_controller", None)
     if controller is None:
         controller = {
@@ -74,7 +74,7 @@ def _cursor_controller(fig):
     return controller
 
 
-def _cursor_add_owner(owner) -> None:
+def _cursor_add_owner(owner: Any) -> None:
     if owner.fig is None:
         return
     controller = _cursor_controller(owner.fig)
@@ -82,13 +82,13 @@ def _cursor_add_owner(owner) -> None:
         controller["owners"].append(owner)
 
 
-def _cursor_enabled(owner) -> bool:
+def _cursor_enabled(owner: Any) -> bool:
     if owner.fig is None:
         return True
     return bool(_cursor_controller(owner.fig)["enabled"])
 
 
-def _cursor_set_enabled_for_figure(fig, enabled: bool) -> None:
+def _cursor_set_enabled_for_figure(fig: Any, enabled: bool) -> None:
     controller = _cursor_controller(fig)
     controller["enabled"] = enabled
     for owner in list(controller["owners"]):
@@ -106,11 +106,11 @@ def _cursor_set_enabled_for_figure(fig, enabled: bool) -> None:
             pass
 
 
-def _cursor_toggle_for_figure(fig) -> None:
+def _cursor_toggle_for_figure(fig: Any) -> None:
     _cursor_set_enabled_for_figure(fig, not bool(_cursor_controller(fig)["enabled"]))
 
 
-def _apply_tile_axes_style(ax) -> None:
+def _apply_tile_axes_style(ax: Any) -> None:
     """Apply white text/spine colors so plots are readable on the dark tiled background."""
     ax.set_facecolor(TILE_AXES_FACE_COLOR)
     for spine in ax.spines.values():
@@ -136,7 +136,7 @@ def _cursor_text_bbox_style() -> dict[str, Any]:
     )
 
 
-def _cursor_register_controls(owner) -> None:
+def _cursor_register_controls(owner: Any) -> None:
     if owner.fig is None:
         return
 
@@ -146,7 +146,7 @@ def _cursor_register_controls(owner) -> None:
         return
     controller["controls_registered"] = True
 
-    def _on_keypress(event) -> None:
+    def _on_keypress(event: Any) -> None:
         key = (event.key or "").lower()
         if key == "d":
             _cursor_toggle_for_figure(fig)
@@ -170,10 +170,10 @@ def _cursor_register_controls(owner) -> None:
             description = "Toggle data cursor"
             image = _DATA_CURSOR_ICON
 
-            def enable(self, *args):
+            def enable(self, *args: Any) -> None:
                 _cursor_set_enabled_for_figure(fig, True)
 
-            def disable(self, *args):
+            def disable(self, *args: Any) -> None:
                 _cursor_set_enabled_for_figure(fig, False)
 
         try:
@@ -190,7 +190,7 @@ def _cursor_register_controls(owner) -> None:
     if toolbar is not None and hasattr(toolbar, "addAction"):
         action = None
         try:
-            from matplotlib.backends.qt_compat import QtGui
+            from matplotlib.backends.qt_compat import QtGui  # type: ignore[attr-defined]
 
             icon = (
                 QtGui.QIcon(_DATA_CURSOR_ICON) if _DATA_CURSOR_ICON else QtGui.QIcon()
@@ -350,12 +350,12 @@ class Scope(GraphicsBlock):
         :type blockargs: dict
         """
 
-        def listify(s):
+        def listify(s: Any) -> list[Any]:
             # guarantee that result is a list
             if isinstance(s, str):
                 return [s]
             elif isinstance(s, (list, tuple)):
-                return s
+                return list(s)
             else:
                 raise ValueError("unknown argument to listify")
 
@@ -380,7 +380,7 @@ class Scope(GraphicsBlock):
                 raise ValueError("vector must be an int or list of indices")
 
         if styles is not None:
-            self.styles = listify(styles)
+            self.styles: list[Any] | None = listify(styles)
             if nplots is None:
                 nplots = len(self.styles)
             else:
@@ -388,7 +388,7 @@ class Scope(GraphicsBlock):
         else:
             self.styles = None
         if labels is not None:
-            self.labels = listify(labels)
+            self.labels: list[Any] | None = listify(labels)
             if nplots is None:
                 nplots = len(self.labels)
             else:
@@ -422,8 +422,8 @@ class Scope(GraphicsBlock):
 
         # Interactive cursor state (initialized in start()).
         self._cursor_x: float | None = None
-        self._cursor_line = None
-        self._cursor_text = None
+        self._cursor_line: Any = None
+        self._cursor_text: Any = None
         self._cursor_labels: list[str] = []
         self._cursor_text_xy: tuple[float, float] = (0.02, 0.98)
         self._cursor_dragging: bool = False
@@ -508,7 +508,7 @@ class Scope(GraphicsBlock):
             self.ax.set_ylim(*self.scale)  # type: ignore
         if self.labels is not None:
 
-            def fix_underscore(s):
+            def fix_underscore(s: str) -> str:
                 if s[0] == "_":
                     return "-" + s[1:]
                 else:
@@ -633,9 +633,10 @@ class Scope(GraphicsBlock):
             lines.append(f"{label}: {value:.6g}")
         self._cursor_text.set_text("\n".join(lines))
         self._cursor_text.set_visible(True)
-        self.fig.canvas.draw_idle()
+        if self.fig is not None:
+            self.fig.canvas.draw_idle()
 
-    def _cursor_on_move(self, event) -> None:
+    def _cursor_on_move(self, event: Any) -> None:
         if not self._enabled:
             return
         if not _cursor_enabled(self):
@@ -646,7 +647,7 @@ class Scope(GraphicsBlock):
             return
         self._cursor_update(float(event.xdata))
 
-    def _cursor_on_leave(self, event) -> None:
+    def _cursor_on_leave(self, event: Any) -> None:
         if not _cursor_enabled(self):
             return
         if self._cursor_dragging:
@@ -658,12 +659,12 @@ class Scope(GraphicsBlock):
         if self.fig is not None:
             self.fig.canvas.draw_idle()
 
-    def _event_to_axes(self, event) -> tuple[float, float] | None:
+    def _event_to_axes(self, event: Any) -> tuple[float, float] | np.ndarray | None:
         if self.ax is None or event.x is None or event.y is None:
             return None
         return self.ax.transAxes.inverted().transform((event.x, event.y))
 
-    def _cursor_move_textbox(self, event) -> None:
+    def _cursor_move_textbox(self, event: Any) -> None:
         if self._cursor_text is None:
             return
         point = self._event_to_axes(event)
@@ -676,7 +677,7 @@ class Scope(GraphicsBlock):
         if self.fig is not None:
             self.fig.canvas.draw_idle()
 
-    def _cursor_on_press(self, event) -> None:
+    def _cursor_on_press(self, event: Any) -> None:
         if not _cursor_enabled(self):
             return
         if self._cursor_text is None or event.button != 1:
@@ -693,7 +694,7 @@ class Scope(GraphicsBlock):
             point[1] - self._cursor_text_xy[1],
         )
 
-    def _cursor_on_release(self, event) -> None:
+    def _cursor_on_release(self, event: Any) -> None:
         if event.button == 1:
             self._cursor_dragging = False
 
@@ -782,8 +783,9 @@ class ScopeXY(GraphicsBlock):
         """
         super().__init__(inames=("x", "y"), **blockargs)
 
-        self.xdata = []
-        self.ydata = []
+        self.xdata: list[Any] = []
+        self.ydata: list[Any] = []
+        self.line: Any = None
         if init is not None:
             assert callable(init), "graphics init function must be callable"
         self.init = init
@@ -796,8 +798,8 @@ class ScopeXY(GraphicsBlock):
         self.labels = labels
 
         # Interactive cursor state (initialized in start()).
-        self._cursor_marker = None
-        self._cursor_text = None
+        self._cursor_marker: Any = None
+        self._cursor_text: Any = None
         self._cursor_index: int | None = None
         self._cursor_text_xy: tuple[float, float] = (0.02, 0.98)
         self._cursor_dragging: bool = False
@@ -902,7 +904,7 @@ class ScopeXY(GraphicsBlock):
             self._cursor_update_from_index(self._cursor_index)
         super().step(t, [])
 
-    def _xy_nearest_index(self, event) -> int | None:
+    def _xy_nearest_index(self, event: Any) -> int | None:
         if len(self.xdata) == 0 or len(self.ydata) == 0:
             return None
         if event.x is None or event.y is None:
@@ -931,14 +933,15 @@ class ScopeXY(GraphicsBlock):
         y_label = self.labels[1] if len(self.labels) > 1 else "y"
         self._cursor_text.set_text(f"{x_label}: {x:.6g}\\n{y_label}: {y:.6g}")
         self._cursor_text.set_visible(True)
-        self.fig.canvas.draw_idle()
+        if self.fig is not None:
+            self.fig.canvas.draw_idle()
 
-    def _event_to_axes(self, event) -> tuple[float, float] | None:
+    def _event_to_axes(self, event: Any) -> tuple[float, float] | np.ndarray | None:
         if self.ax is None or event.x is None or event.y is None:
             return None
         return self.ax.transAxes.inverted().transform((event.x, event.y))
 
-    def _cursor_move_textbox(self, event) -> None:
+    def _cursor_move_textbox(self, event: Any) -> None:
         if self._cursor_text is None:
             return
         point = self._event_to_axes(event)
@@ -948,9 +951,10 @@ class ScopeXY(GraphicsBlock):
         y = float(np.clip(point[1] - self._cursor_drag_offset[1], 0.01, 0.99))
         self._cursor_text_xy = (x, y)
         self._cursor_text.set_position(self._cursor_text_xy)
-        self.fig.canvas.draw_idle()
+        if self.fig is not None:
+            self.fig.canvas.draw_idle()
 
-    def _cursor_on_move(self, event) -> None:
+    def _cursor_on_move(self, event: Any) -> None:
         if not self._enabled:
             return
         if not _cursor_enabled(self):
@@ -964,7 +968,7 @@ class ScopeXY(GraphicsBlock):
             return
         self._cursor_update_from_index(idx)
 
-    def _cursor_on_leave(self, event) -> None:
+    def _cursor_on_leave(self, event: Any) -> None:
         if not _cursor_enabled(self):
             return
         if self._cursor_dragging:
@@ -976,7 +980,7 @@ class ScopeXY(GraphicsBlock):
         if self.fig is not None:
             self.fig.canvas.draw_idle()
 
-    def _cursor_on_press(self, event) -> None:
+    def _cursor_on_press(self, event: Any) -> None:
         if not _cursor_enabled(self):
             return
         if self._cursor_text is None or event.button != 1:
@@ -993,7 +997,7 @@ class ScopeXY(GraphicsBlock):
             point[1] - self._cursor_text_xy[1],
         )
 
-    def _cursor_on_release(self, event) -> None:
+    def _cursor_on_release(self, event: Any) -> None:
         if event.button == 1:
             self._cursor_dragging = False
 

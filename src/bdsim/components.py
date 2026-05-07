@@ -12,7 +12,7 @@ from collections import UserDict
 import matplotlib.pyplot as plt
 
 import numpy as np
-from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Callable, Protocol, TypeVar, runtime_checkable
 
 from bdsim.exceptions import BlockApiError, BlockRuntimeError, SimulationContextError
 
@@ -33,14 +33,17 @@ class ScheduledEvent(Protocol):
     def __call__(self, t: float, simstate: SimulationState) -> None: ...
 
 
+_F = TypeVar("_F", bound=Callable[..., Any])
+
+
 # decorator for debugging implicit block creation with operator overloading
-def oodebug(func):
-    def wrapper(*args, **kwargs):
+def oodebug(func: _F) -> _F:
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         ret = func(*args, **kwargs)
         # print(f"{func.__qualname__}{args} --> {ret}")
         return ret
 
-    return wrapper
+    return wrapper  # type: ignore[return-value]
 
 
 # remove LaTeX characters from names for use in port names, etc.
@@ -49,9 +52,9 @@ _latex_remove: dict[int, str] = str.maketrans(
 )
 
 
-def _fixname(s):
+def _fixname(s: str | list[str] | tuple[str, ...]) -> str | list[str]:
     if isinstance(s, (tuple, list)):
-        return [_fixname(x) for x in s]
+        return [str(_fixname(x)) for x in s]
     else:
         s = s.translate(_latex_remove)
         # PEP 3131: Python normalizes all identifiers to NFKC at parse time.
@@ -89,28 +92,27 @@ class BDStruct(UserDict):
         foo   = 1 (int)
     """
 
-    def __init__(self, name="BDStruct2", **kwargs) -> None:
+    def __init__(self, name: str = "BDStruct2", **kwargs: Any) -> None:
         super().__init__()
         object.__setattr__(self, "_name", str(name))
         for key, value in kwargs.items():
             self.data[key] = value
 
-    def add(self, name, value) -> None:
+    def add(self, name: str, value: Any) -> None:
         self.data[name] = value
 
     def __repr__(self) -> str:
-        return str(self)
-
-    def __len__(self) -> int:
+        visible = [k for k in self.data.keys() if not k.startswith(".")]
+        return f"BDStruct({self._name}, fields: {', '.join(visible)})"
         return len(self.data)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> Any:
         return self.data[key]
 
-    def __setitem__(self, key, value) -> None:
+    def __setitem__(self, key: str, value: Any) -> None:
         self.data[key] = value
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         if name.startswith("_"):
             raise AttributeError(name)
         try:
@@ -123,15 +125,11 @@ class BDStruct(UserDict):
         except KeyError as err:
             raise AttributeError(name) from err
 
-    def __setattr__(self, name, value) -> None:
+    def __setattr__(self, name: str, value: Any) -> None:
         if name.startswith("_") or name == "data":
             object.__setattr__(self, name, value)
         else:
             self.data[name] = value
-
-    def __repr__(self) -> str:
-        visible = [k for k in self.data.keys() if not k.startswith(".")]
-        return f"BDStruct({self._name}, fields: {', '.join(visible)})"
 
     def __str__(self) -> str:
         """
@@ -179,25 +177,25 @@ class BDStruct(UserDict):
 
         return "\n".join(rows)
 
-    def dump(self, outfile) -> None:
+    def dump(self, outfile: str) -> None:
         import pickle
 
         with open(outfile, "wb") as f:
             pickle.dump(self, f)
 
-    def dump_json(self, outfile) -> None:
+    def dump_json(self, outfile: str) -> None:
         import json
         import numpy as np
 
         class _Encoder(json.JSONEncoder):
-            def default(self, obj):
+            def default(self, obj: Any) -> Any:
                 if isinstance(obj, np.ndarray):
                     return obj.tolist()
                 if isinstance(obj, np.generic):
                     return obj.item()
                 return super().default(obj)
 
-        def _to_dict(v):
+        def _to_dict(v: Any) -> Any:
             if isinstance(v, BDStruct):
                 return {k: _to_dict(val) for k, val in v.items()}
             return v
@@ -216,16 +214,18 @@ class OptionsBase(UserDict):
     a sequence of ``option=value`` arguments.
     """
 
-    def __init__(self, readonly=None, args=None) -> None:
+    def __init__(
+        self, readonly: dict[str, Any] | None = None, args: dict[str, Any] | None = None
+    ) -> None:
         readonly = readonly or {}
         args = args or {}
         super().__init__({**args, **readonly})
         object.__setattr__(self, "_readonly", list(readonly))
 
-    def items(self):
+    def items(self) -> Any:
         return self.data.items()
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         try:
             if name.startswith("_"):
                 return self.__dict__[name]
@@ -234,7 +234,7 @@ class OptionsBase(UserDict):
         except KeyError:
             raise AttributeError(name)
 
-    def __setattr__(self, name, value) -> None:
+    def __setattr__(self, name: str, value: Any) -> None:
         if name.startswith("_") or name == "data":
             object.__setattr__(self, name, value)
         else:
@@ -243,7 +243,7 @@ class OptionsBase(UserDict):
                 updated[name] = value
                 self.data = self.sanity(updated)
 
-    def set(self, **changes) -> None:
+    def set(self, **changes: Any) -> None:
         changes = self.sanity(dict(changes))
         current = dict(self.data)
         for name, value in changes.items():
@@ -257,13 +257,13 @@ class OptionsBase(UserDict):
 
         self.data = current
 
-    def copy(self):
+    def copy(self) -> OptionsBase:
         new = self.__class__.__new__(self.__class__)
         object.__setattr__(new, "_readonly", list(self._readonly))
         UserDict.__init__(new, dict(self.data))
         return new
 
-    def sanity(self, options):
+    def sanity(self, options: dict[str, Any]) -> dict[str, Any]:
         return options
 
     def __str__(self) -> str:
@@ -315,11 +315,11 @@ class TimeQ:
         items = [(t, block) for t, _, block in sorted(self._heap)]
         return "\n".join(f"{t:10.6f}: {block}" for t, block in items)
 
-    def push(self, value) -> None:
+    def push(self, value: tuple[float, Any]) -> None:
         t, block = value
         heapq.heappush(self._heap, (t, next(self._seq), block))
 
-    def pop(self, dt: float = 0.0):
+    def pop(self, dt: float = 0.0) -> tuple[float | None, list[Any]]:
         if len(self) == 0:
             return None, []
 
@@ -331,7 +331,7 @@ class TimeQ:
             blocks.append(block)
         return t, blocks
 
-    def pop_until(self, t):
+    def pop_until(self, t: float) -> list[tuple[float, Any]]:
         if len(self) == 0:
             return []
 
@@ -395,7 +395,19 @@ class SimulationState:
         # Per-run discrete clock runtime state, keyed by Clock instance.
         self.clock_states: dict[Any, ClockState] = {}
 
-    def declare_event(self, block, t) -> None:
+    def isdebug(self, flag: str) -> bool:
+        """Return True if *flag* appears in the debug option string."""
+        if self.options is None:
+            return False
+        return flag in (getattr(self.options, "debug", "") or "")
+
+    def hasdebug(self) -> bool:
+        """Return True if any debug flags are set."""
+        if self.options is None:
+            return False
+        return bool(getattr(self.options, "debug", ""))
+
+    def declare_event(self, block: Any, t: float) -> None:
         self.eventq.push((t, block))
 
 
@@ -418,13 +430,13 @@ class Runner:
     def _set_context(self, context: SimulationContext | None) -> None:
         self._context_local.current = context
 
-    def DEBUG(self, debug, fmt, *args) -> None:
+    def DEBUG(self, debug: str, fmt: str, *args: Any) -> None:
         context = self._get_context()
         options = context.options if context is not None else self.options
         if options is not None and debug[0] in options.debug:
             print(f"DEBUG.{debug:s}: " + fmt.format(*args))
 
-    def done(self, bd, block=False) -> None:
+    def done(self, bd: BlockDiagram, block: bool = False) -> None:
         context = self._require_context()
         if context.options.hold:
             block = context.options.hold
@@ -447,7 +459,7 @@ class Runner:
             plt.pause(0.1)
         context.simstate.fignum = 0
 
-    def report(self, bd, type="summary", **kwargs) -> None:
+    def report(self, bd: BlockDiagram, type: str = "summary", **kwargs: Any) -> None:
         context = self._get_context()
         options = context.options if context is not None else self.options
         if options is not None and options.quiet:
@@ -465,11 +477,13 @@ from bdsim.connect import EndPlug, Plug, Port, StartPlug, Wire
 
 # ------------------------------------------------------------------------- #
 
-clocklist = []
+clocklist: list[Clock] = []
 
 
 class Clock:
-    def __init__(self, arg, unit="s", offset=0, name=None) -> None:
+    def __init__(
+        self, arg: float, unit: str = "s", offset: float = 0, name: str | None = None
+    ) -> None:
         global clocklist
         if unit == "s":
             self.T = arg
@@ -480,9 +494,9 @@ class Clock:
         else:
             raise ValueError("unknown clock unit", unit)
 
-        self.offset: int = offset
+        self.offset: float = offset
 
-        self.blocklist = []
+        self.blocklist: list[Block] = []
         self.bd: BlockDiagram | None = None
 
         # Compile-time fallback state (used when simstate=None during block.compile())
@@ -500,14 +514,14 @@ class Clock:
 
         # events happen at time t = kT + offset
 
-    def add_block(self, block) -> None:
+    def add_block(self, block: Block) -> None:
         self.blocklist.append(block)
 
     def __repr__(self) -> str:
         s = f"Clock(name={self.name}, T={self.T}"
         if self.offset != 0:
             s += f", offset={self.offset}"
-        s += f", blocks=[{', '.join(b.name for b in self.blocklist)}])"
+        s += f", blocks=[{', '.join(b.name for b in self.blocklist if b.name is not None)}])"
         return s
 
     def __str__(self) -> str:
@@ -577,7 +591,7 @@ class Clock:
             simstate.clock_states[self].xlog,
         )
 
-    def getstate(self, t) -> np.ndarray[tuple[Any, ...], np.dtype[Any]]:
+    def getstate(self, t: float) -> np.ndarray[tuple[Any, ...], np.dtype[Any]]:
         if self.bd is not None and hasattr(self.bd, "next"):
             try:
                 next_by_clock = self.bd.next(t)
@@ -648,10 +662,15 @@ class Clock:
         simstate.declare_event(self, self.time(k))
         simstate.clock_states[self].tick = k + 1
 
-    def time(self, k):
+    def time(self, k: int) -> float:
         return k * self.T + self.offset
 
-    def savestate(self, t, simstate: SimulationState | None = None, x=None) -> None:
+    def savestate(
+        self,
+        t: float,
+        simstate: SimulationState | None = None,
+        x: np.ndarray | None = None,
+    ) -> None:
         # save clock state at time t
         if x is None:
             x = self.getstate(t)

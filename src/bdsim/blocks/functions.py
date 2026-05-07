@@ -484,7 +484,7 @@ class Clip(FunctionBlock):
         if isinstance(input, np.ndarray):
             out = np.clip(input, self.min, self.max)
         else:
-            out = min(self.max, max(input, self.min))
+            out = min(self.max, max(input, self.min))  # type: ignore[arg-type]
         return [out]
 
 
@@ -625,7 +625,7 @@ class Function(FunctionBlock):
         elif callable(func):
             if len(fkwargs) == 0:
                 # we can check the number of arguments
-                n: int = len(inspect.signature(func).parameters)
+                n = len(inspect.signature(func).parameters)  # type: ignore[no-redef]
                 if persistent:
                     n -= 1  # discount dict if used
                 if nin + len(fargs) != n:
@@ -637,7 +637,7 @@ class Function(FunctionBlock):
 
         self.func = func
         if persistent:
-            self.userdata = dict()
+            self.userdata: dict[Any, Any] | None = dict()
             fargs += (self.userdata,)
         else:
             self.userdata = None
@@ -665,7 +665,7 @@ class Function(FunctionBlock):
                     raise RuntimeError(
                         "Function returns wrong number of arguments: " + str(self)
                     )
-                return val
+                return list(val)
             else:
                 if self.nout != 1:
                     raise RuntimeError(
@@ -825,7 +825,9 @@ if __name__ == "__main__":  # pragma: no cover
     import sys
 
     root = Path(__file__).resolve().parents[3]
-    test_file = root / "tests" / "blocks" / f"test_blocks_{Path(__file__).stem.lower()}.py"
+    test_file = (
+        root / "tests" / "blocks" / f"test_blocks_{Path(__file__).stem.lower()}.py"
+    )
 
     if not test_file.exists():
         print(f"No module unit tests found for {Path(__file__).name}: {test_file}")

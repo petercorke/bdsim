@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Any, Callable, TYPE_CHECKING, TypeVar
 
 import numpy as np
 
@@ -10,16 +10,18 @@ if TYPE_CHECKING:
     from typing import Self
     from bdsim.block import Block
 
+_F = TypeVar("_F", bound=Callable[..., Any])
+
 
 # decorator for debugging implicit block creation with operator overloading
 # kept local to avoid an import cycle with components.py
-def oodebug(func):
-    def wrapper(*args, **kwargs):
+def oodebug(func: _F) -> _F:
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         ret = func(*args, **kwargs)
         # print(f"{func.__qualname__}{args} --> {ret}")
         return ret
 
-    return wrapper
+    return wrapper  # type: ignore[return-value]
 
 
 class Wire:
@@ -55,19 +57,19 @@ class Wire:
         self.name = None
 
     @property
-    def value(self):
+    def value(self) -> Any:
         if self._slot is not None:
             return self._slot.value
         return self._value
 
     @value.setter
-    def value(self, v) -> None:
+    def value(self, v: Any) -> None:
         if self._slot is not None:
             self._slot.value = v
         else:
             self._value = v
 
-    def bind_slot(self, slot) -> None:
+    def bind_slot(self, slot: Any) -> None:
         self._slot = slot
         self._value = None
 
@@ -107,10 +109,10 @@ class Wire:
 
             d2goal[0] --> Kv[0]
         """
-        return "{:s}[{:d}] --> {:s}[{:d}]".format(
-            str(self.start.block.name),
+        return "{}[{}] --> {}[{}]".format(
+            self.start.block.name,
             self.start.port,
-            str(self.end.block.name),
+            self.end.block.name,
             self.end.port,
         )
 
@@ -170,9 +172,9 @@ class Plug(Port):
 
     __array_ufunc__ = None  # allow block operators with NumPy values
 
-    def __init__(self, block: Block, port=0, type: str | None = None) -> None:
+    def __init__(self, block: Block, port: int | slice = 0, type: str | None = None) -> None:
         self.block: Block = block
-        self.port: int = port
+        self.port: int | slice = port
         self.type: str = type or ""
 
     def __str__(self) -> str:
@@ -192,17 +194,18 @@ class Plug(Port):
         if isinstance(self.port, slice):
             start: int = self.port.start or 0
             step: int = self.port.step or 1
+            stop: int
             if self.port.stop is None:
                 if self.type == "start":
                     stop = self.block.nout
                 else:
                     stop = self.block.nin
             else:
-                stop: int = self.port.stop
+                stop = self.port.stop
             return range(start, stop, step)
         raise ValueError("bad plug index")
 
-    def __getitem__(self, i) -> Self:
+    def __getitem__(self, i: int) -> Self:
         return self.__class__(self.block, self.portlist[i])
 
     @property
@@ -219,7 +222,7 @@ class Plug(Port):
         return right
 
     @oodebug
-    def __add__(self, other):
+    def __add__(self, other: Block | Plug | int | float | np.ndarray) -> Block:
         from bdsim.blocks import Constant, Sum
 
         if isinstance(other, (int, float, np.ndarray)):
@@ -227,7 +230,7 @@ class Plug(Port):
         return Sum("++", inputs=(self, other), bd=self.block.bd)
 
     @oodebug
-    def __radd__(self, other):
+    def __radd__(self, other: Block | Plug | int | float | np.ndarray) -> Block:
         from bdsim.blocks import Constant, Sum
 
         if isinstance(other, (int, float, np.ndarray)):
@@ -235,7 +238,7 @@ class Plug(Port):
         return Sum("++", inputs=(other, self), bd=self.block.bd)
 
     @oodebug
-    def __sub__(self, other):
+    def __sub__(self, other: Block | Plug | int | float | np.ndarray) -> Block:
         from bdsim.blocks import Constant, Sum
 
         if isinstance(other, (int, float, np.ndarray)):
@@ -243,7 +246,7 @@ class Plug(Port):
         return Sum("+-", inputs=(self, other), bd=self.block.bd)
 
     @oodebug
-    def __rsub__(self, other):
+    def __rsub__(self, other: Block | Plug | int | float | np.ndarray) -> Block:
         from bdsim.blocks import Constant, Sum
 
         if isinstance(other, (int, float, np.ndarray)):
@@ -251,19 +254,19 @@ class Plug(Port):
         return Sum("+-", inputs=(other, self), bd=self.block.bd)
 
     @oodebug
-    def __neg__(self):
+    def __neg__(self) -> Block:
         from bdsim.blocks import Gain
 
         return Gain(-1, inputs=[self], bd=self.block.bd)
 
     @oodebug
-    def __pow__(self, p):
+    def __pow__(self, p: int | float) -> Block:
         from bdsim.blocks import Pow
 
         return Pow(p, inputs=[self], bd=self.block.bd)
 
     @oodebug
-    def __mul__(self, other: Block | Plug | int | float | np.ndarray):
+    def __mul__(self, other: Block | Plug | int | float | np.ndarray) -> Block:
         from bdsim.block import Block
         from bdsim.blocks import Prod
 
@@ -283,14 +286,14 @@ class Plug(Port):
         return Prod("**", matrix=True, name=name, inputs=[self, other], bd=bd)
 
     @oodebug
-    def __rmul__(self, other):
+    def __rmul__(self, other: Block | Plug | int | float | np.ndarray) -> Block | Any:
         if isinstance(other, (int, float, np.ndarray)):
             matrix: bool = isinstance(other, np.ndarray)
             return self.block._autogain(other, premul=matrix, inputs=[self])
         return NotImplemented
 
     @oodebug
-    def __truediv__(self, other):
+    def __truediv__(self, other: Block | Plug | int | float | np.ndarray) -> Block:
         from bdsim.blocks import Constant, Prod
 
         if isinstance(other, (int, float, np.ndarray)):
@@ -298,7 +301,7 @@ class Plug(Port):
         return Prod("*/", inputs=(self, other), bd=self.block.bd)
 
     @oodebug
-    def __rtruediv__(self, other):
+    def __rtruediv__(self, other: Block | Plug | int | float | np.ndarray) -> Block:
         from bdsim.blocks import Constant, Prod
 
         if isinstance(other, (int, float, np.ndarray)):
@@ -307,13 +310,13 @@ class Plug(Port):
 
 
 class StartPlug(Plug):
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, type="start", **kwargs)
+    def __init__(self, block: Block, port: int | slice = 0) -> None:
+        super().__init__(block, port, type="start")
 
 
 class EndPlug(Plug):
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, type="end", **kwargs)
+    def __init__(self, block: Block, port: int | slice = 0) -> None:
+        super().__init__(block, port, type="end")
 
 
 if __name__ == "__main__":

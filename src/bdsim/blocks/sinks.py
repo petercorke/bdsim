@@ -89,7 +89,7 @@ class Print(SinkBlock):
 
         # TODO format can be a string or function
 
-    def step(self, t, inputs) -> None:
+    def step(self, t: float, inputs: list[Any]) -> None:
         prefix: str = "{:12s}".format("PRINT({:s} (t={:.3f})".format(self.name, t))
         value = inputs[0]
         if self.format is None:
@@ -197,7 +197,7 @@ class Stop(SinkBlock):
         except Exception as exc:
             raise RuntimeError("bad input type to stop block") from exc
 
-    def start(self, simstate) -> None:
+    def start(self, simstate: Any) -> None:
         self._simstate = simstate
 
         # If runtime supports crossing detectors (offline solve_ivp), register
@@ -223,11 +223,11 @@ class Stop(SinkBlock):
         t_crossing: float,
         y_crossing: Any,
         state_map: Any,
-        simstate: Any,
+        simstate: Any = None,
     ) -> None:
         simstate.stop = self
 
-    def step(self, t, inputs) -> None:
+    def step(self, t: float, inputs: list[Any]) -> None:
         metric = self.stopfunc(inputs[0]) if self.stopfunc is not None else inputs[0]
         stop = self._metric_to_stop(metric)
 
@@ -302,7 +302,7 @@ class Event(SinkBlock):
         self.kwargs = {} if fkwargs is None else dict(fkwargs)
         self._event_detector: Callable[[float, Any], float] | None = None
 
-    def start(self, simstate) -> None:
+    def start(self, simstate: Any) -> None:
         # Build an event function from the current input value. solve_ivp reads
         # .terminal and .direction attributes directly from this callable.
         def event_detector(t: float, y: Any) -> float:
@@ -352,14 +352,14 @@ class Event(SinkBlock):
         t_crossing: float,
         y_crossing: Any,
         state_map: Any,
-        simstate: Any,
+        simstate: Any = None,
     ) -> None:
         try:
             self.func(self, state_map, *self.args, **self.kwargs)
         except TypeError:
             self.func(self, *self.args, **self.kwargs)
 
-    def step(self, t, inputs) -> None:
+    def step(self, t: float, inputs: list[Any]) -> None:
         pass
 
 
@@ -406,7 +406,7 @@ class Null(SinkBlock):
         """
         super().__init__(nin=nin, **blockargs)
 
-    def step(self, t, inputs) -> None:
+    def step(self, t: float, inputs: list[Any]) -> None:
         pass  # do nothing
 
 
@@ -462,7 +462,7 @@ class Watch(SinkBlock):
         """
         super().__init__(**blockargs)
 
-    def start(self, simstate) -> None:
+    def start(self, simstate: Any) -> None:
         # called at start of simulation, add this block to the watchlist
         plug = self.sources[0]  # start plug for input wire
 
@@ -470,7 +470,7 @@ class Watch(SinkBlock):
         simstate.watchlist.append(plug)
         simstate.watchnamelist.append(str(plug))
 
-    def step(self, t, inputs) -> None:
+    def step(self, t: float, inputs: list[Any]) -> None:
         pass  # do nothing
 
 

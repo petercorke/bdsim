@@ -70,7 +70,7 @@ class BlockDiagram(BlockDiagramMixin):
     * evaluates the entire diagram as a function to compute :meth:`\dot{x} = f(x, t)`
     """
 
-    def __init__(self, name="main", **kwargs) -> None:
+    def __init__(self, name: str = "main", **kwargs: Any) -> None:
         self.wirelist: list[Wire] = []  # list of all wires
         self.blocklist: list[Block] = []  # list of all blocks
         self.clocklist: list[Clock] = []  # list of all clock sources
@@ -93,7 +93,7 @@ class BlockDiagram(BlockDiagramMixin):
         self._state_map: dict[Block, np.ndarray | None] = {}
         self.compiled = False
 
-    def __getitem__(self, id):
+    def __getitem__(self, id: int | str) -> Block:
         print(id)
         if isinstance(id, str):
             return self.blocknames[id]
@@ -106,7 +106,7 @@ class BlockDiagram(BlockDiagramMixin):
     def __len__(self) -> int:
         return len(self.blocklist)
 
-    def __deepcopy__(self, memo) -> Self:
+    def __deepcopy__(self, memo: dict[int, Any]) -> Self:
         # deep copy a block diagram
         # retain references (don't copy) to blocks and the runtime
         cls: type[Self] = self.__class__
@@ -135,7 +135,7 @@ class BlockDiagram(BlockDiagramMixin):
     def issubsystem(self) -> bool:
         return self._issubsystem
 
-    def clock(self, *args, **kwargs) -> Clock:
+    def clock(self, *args: Any, **kwargs: Any) -> Clock:
         clock: Clock = Clock(*args, **kwargs)
         clock.bd = self
         self.clocklist.append(clock)
@@ -143,7 +143,7 @@ class BlockDiagram(BlockDiagramMixin):
 
     # ---------------------------------------------------------------------- #
 
-    def connect(self, start: Port, *ends: Port, name=None) -> None:
+    def connect(self, start: Port, *ends: Port, name: str | None = None) -> None:
         """Connect blocks
 
         :param start: The output port that the wire starts from.
@@ -275,7 +275,7 @@ class BlockDiagram(BlockDiagramMixin):
             else:
                 raise ValueError("bad start type")
 
-    def add_block(self, block) -> None:
+    def add_block(self, block: Block) -> None:
         if block.name in self.blocknames:
             raise ValueError("block {} already added".format(block.name))
         block.id = next(self._block_id_counter)
@@ -292,36 +292,36 @@ class BlockDiagram(BlockDiagramMixin):
     _this_file = os.path.abspath(__file__)
 
     @staticmethod
-    def _wire_loc(wire) -> str:
+    def _wire_loc(wire: Wire) -> str:
         """Return 'filename:lineno' for the callsite stored on *wire*."""
         cs = getattr(wire, "callsite", None)
         if cs is None:
             return wire.fullname
         return f"{os.path.basename(cs[0])}:{cs[1]}"
 
-    def add_wire(self, wire, name=None):
-        wire.id = next(self._wire_id_counter)
+    def add_wire(self, wire: Wire, name: str | None = None) -> None:
+        wire.id = next(self._wire_id_counter)  # type: ignore[assignment]
         wire.name = name
         # Record the user source line that triggered this wire (first frame
         # outside blockdiagram.py), useful for compile-time error messages.
         frame = inspect.currentframe()
-        wire.callsite = None
+        wire.callsite = None  # type: ignore[attr-defined]
         while frame is not None:
             if os.path.abspath(frame.f_code.co_filename) != BlockDiagram._this_file:
-                wire.callsite = (frame.f_code.co_filename, frame.f_lineno)
+                wire.callsite = (frame.f_code.co_filename, frame.f_lineno)  # type: ignore[attr-defined]
                 break
             frame = frame.f_back
         # just add wire to the list, gets instantiated at compile time
         # when add_output_wire and add_input_wire are called on the blocks
-        return self.wirelist.append(wire)
+        return self.wirelist.append(wire)  # type: ignore[return-value]
 
-    def delete_block(self, block):
+    def delete_block(self, block: Block) -> None:
         # check block is in blocklist
         if block not in self.blocklist:
             raise ValueError("block not in block diagram")
         # delete a block and all wires connected to it
         self.blocklist.remove(block)
-        self.blocknames.pop(block.name, None)
+        self.blocknames.pop(block.name, None)  # type: ignore[arg-type]
         for w in self.wirelist[:]:
             if w.start.block == block or w.end.block == block:
                 self.wirelist.remove(w)
@@ -329,7 +329,12 @@ class BlockDiagram(BlockDiagramMixin):
     # ---------------------------------------------------------------------- #
 
     def compile(
-        self, subsystem=False, doimport=True, evaluate=True, report=False, verbose=True
+        self,
+        subsystem: bool = False,
+        doimport: bool = True,
+        evaluate: bool = True,
+        report: bool = False,
+        verbose: bool = True,
     ) -> bool:
         """
         Compile the block diagram
@@ -376,7 +381,7 @@ class BlockDiagram(BlockDiagramMixin):
 
         # recursively instantiate all subsystem imports
         self.blocklist, self.wirelist = self._subsystem_import(
-            self, None, verbose=verbose
+            self, "", verbose=verbose
         )
 
         # get all the blocks in the complete wirelist ready for compilation
@@ -461,7 +466,7 @@ class BlockDiagram(BlockDiagramMixin):
             print("  ☑ checking block inputs/outputs are connected...")
         for b in self.blocklist:
             # check all inputs are connected
-            for port, w in enumerate(b._input_wires):
+            for port, w in enumerate(b._input_wires):  # type: ignore[assignment]
                 if w is None:
                     print(
                         "  ERROR: [{:s}] input {:d} is not connected".format(
@@ -496,7 +501,7 @@ class BlockDiagram(BlockDiagramMixin):
         if verbose:
             print("  ☑ checking for algebraic loops...")
 
-        def _DFS(path):
+        def _DFS(path: list[Block]) -> bool:
             start = path[0]
             tail = path[-1]
             for outgoing in tail._output_wires:
@@ -535,9 +540,9 @@ class BlockDiagram(BlockDiagramMixin):
         if verbose:
             print("  ☑ create slots to transfer data between blocks...")
         for w in self.wirelist:
-            source_slot = w.start.block.outport_slot(w.start.port)
+            source_slot = w.start.block.outport_slot(w.start.port)  # type: ignore[arg-type]
             w.bind_slot(source_slot)
-            w.end.block.bind_input_slot(w.end.port, source_slot)
+            w.end.block.bind_input_slot(w.end.port, source_slot)  # type: ignore[arg-type]
 
         ## evaluate the network once to check out wire types
         if verbose:
@@ -567,7 +572,7 @@ class BlockDiagram(BlockDiagramMixin):
 
     def _subsystem_import(
         self, bd: BlockDiagram, sspath: str, verbose: bool = False, depth: int = 0
-    ):
+    ) -> tuple[list[Block], list[Wire]]:
         """Recursively import subsystems
 
         :param bd: the block diagram in which to instantiate subsystems
@@ -586,7 +591,7 @@ class BlockDiagram(BlockDiagramMixin):
 
         for b in bd.blocklist:
             # rename the block to include subsystem path
-            if sspath is not None:
+            if sspath:
                 b.name = sspath + "/" + b.name
 
             if not isinstance(b, SubsystemBlock):
@@ -632,9 +637,9 @@ class BlockDiagram(BlockDiagramMixin):
 
         # systematically renumber all blocks and wires
         for i, b in enumerate(blocks):
-            b.id = i
+            b.id = i  # type: ignore[assignment]
         for i, w in enumerate(wires):
-            w.id = i
+            w.id = i  # type: ignore[assignment]
         return blocks, wires
 
     # ---------------------------------------------------------------------- #
@@ -703,7 +708,13 @@ class BlockDiagram(BlockDiagramMixin):
             raise ValueError(f"block {block} has no state entry")
         xb[:] = np.asarray(value).reshape(xb.shape)
 
-    def evaluate(self, state_map, t, checkfinite=True, sinks=True) -> None:
+    def evaluate(
+        self,
+        state_map: dict[Block, np.ndarray | None],
+        t: float,
+        checkfinite: bool = True,
+        sinks: bool = True,
+    ) -> None:
         """
         Evaluate all blocks in the network using the compiled execution schedule
 
@@ -852,7 +863,7 @@ class BlockDiagram(BlockDiagramMixin):
 
         self.plan = plan
 
-    def schedule_dotfile(self, filename) -> None:
+    def schedule_dotfile(self, filename: str | io.TextIOWrapper) -> None:
         """
         Write a GraphViz dot file representing the execution schedule
 
@@ -901,11 +912,11 @@ class BlockDiagram(BlockDiagramMixin):
 
     # ---------------------------------------------------------------------- #
 
-    def _debugger(self, simstate: SimulationState, integrator=None):
-        if simstate.t_stop is not None and simstate.t < simstate.t_stop:
+    def _debugger(self, simstate: SimulationState, integrator: Any = None) -> None:
+        if simstate.t_stop is not None and simstate.t < simstate.t_stop:  # type: ignore[operator]
             return
 
-        def print_output(b, t, inports) -> None:
+        def print_output(b: Block, t: float, inports: list[Any]) -> None:
             out = [b.outport_value(i) for i in range(b.nout)]
             if len(out) == 1:
                 print(f"{b.name} = {out[0]}")
@@ -922,7 +933,7 @@ class BlockDiagram(BlockDiagramMixin):
         if self.debug_watch is not None:
             t = simstate.t
             for b in self.debug_watch:
-                print_output(b, t, b.inport_values)
+                print_output(b, t or 0.0, b.inport_values)
 
         while True:
             try:
@@ -937,11 +948,11 @@ class BlockDiagram(BlockDiagramMixin):
                     if len(cmd) > 1:
                         id = int(cmd[1:])
                         b = self.blocklist[id]
-                        print_output(b, t, b.inport_values)
+                        print_output(b, t or 0.0, b.inport_values)
                     else:
                         for b in self.blocklist:
                             if b.nout > 0:
-                                print_output(b, t, b.inport_values)
+                                print_output(b, t or 0.0, b.inport_values)
                 elif cmd[0] == "i":
                     if integrator is None:
                         print("no active integrator")
@@ -996,7 +1007,7 @@ class BlockDiagram(BlockDiagramMixin):
     # ---------------------------------------------------------------------- #
 
     def report_summary(
-        self, sortby: str = "name", depth: int | None = None, **kwargs
+        self, sortby: str = "name", depth: int | None = None, **kwargs: Any
     ) -> None:
         """
         Print a summary of block diagram.
@@ -1030,7 +1041,7 @@ class BlockDiagram(BlockDiagramMixin):
         )
 
         if sortby == "name":
-            sortfunc = lambda x: x.name
+            sortfunc: Callable[[Block], Any] = lambda x: x.name
         elif sortby == "type":
             sortfunc = lambda x: x.type
 
@@ -1044,7 +1055,7 @@ class BlockDiagram(BlockDiagramMixin):
                     skip = False
                 if skip:
                     continue
-            name = b.name
+            name: str = b.name or ""
             if isinstance(b, EventSource):
                 name += "@"
                 legend = "Note: @ = event source"
@@ -1058,7 +1069,7 @@ class BlockDiagram(BlockDiagramMixin):
             if b.nin > 0:
                 # non source block, list all its inputs, one per row
                 for port, source in enumerate(b.inports):
-                    value = source.block.outport_value(source.port)
+                    value = source.block.outport_value(source.port)  # type: ignore[arg-type]
                     typ = type(value).__name__
                     if isinstance(value, np.ndarray):
                         typ += "{:s}.{:s}".format(str(value.shape), str(value.dtype))
@@ -1068,7 +1079,7 @@ class BlockDiagram(BlockDiagramMixin):
                     if port == 0:
                         # first row for this block
                         table.row(
-                            b.name,
+                            name,
                             b.nstates,
                             b.ndstates,
                             b.type,
@@ -1087,11 +1098,11 @@ class BlockDiagram(BlockDiagramMixin):
         if legend:
             print(legend + "\n")
 
-    def report(self, **kwargs) -> None:
+    def report(self, **kwargs: Any) -> None:
         warnings.warn("use reports_lists() method instead", DeprecationWarning)
         self.report_lists(**kwargs)
 
-    def report_lists(self, **kwargs) -> None:
+    def report_lists(self, **kwargs: Any) -> None:
         """
         Print a tabular report about the block diagram.
 
@@ -1135,7 +1146,7 @@ class BlockDiagram(BlockDiagramMixin):
             end: str = "{}[{}]".format(wire.end.block.id, wire.end.port)
 
             try:
-                value = wire.end.block.inport_value(wire.end.port)
+                value = wire.end.block.inport_value(wire.end.port)  # type: ignore[arg-type]
                 typ: str = type(value).__name__
                 if isinstance(value, np.ndarray):
                     typ += "{:s}.{:s}".format(str(value.shape), str(value.dtype))
@@ -1162,7 +1173,7 @@ class BlockDiagram(BlockDiagramMixin):
                     table.row(b.id, b.name, c.name, c.T, c.offset)
             table.print(**kwargs)
 
-    def report_schedule(self, **kwargs) -> None:
+    def report_schedule(self, **kwargs: Any) -> None:
         """
         Display execution schedule in tabular form
 
@@ -1254,7 +1265,7 @@ class BlockDiagram(BlockDiagramMixin):
         except BlockRuntimeError as err:
             self._handle_block_runtime_error(err)
 
-    def step(self, t) -> None:
+    def step(self, t: float) -> None:
         """
         Step all blocks
 
@@ -1284,7 +1295,7 @@ class BlockDiagram(BlockDiagramMixin):
 
     def deriv(
         self,
-        t,
+        t: float,
         state_map: dict[Block, np.ndarray | None] | None = None,
     ) -> np.ndarray[tuple[Any, ...], np.dtype[Any]] | Any:
         """
@@ -1328,7 +1339,7 @@ class BlockDiagram(BlockDiagramMixin):
 
     def next(
         self,
-        t,
+        t: float,
         state_map: dict[Block, np.ndarray | None] | None = None,
     ) -> dict[Clock, np.ndarray[tuple[Any, ...], np.dtype[Any]]]:
         """Harvest discrete next-state values grouped by clock."""
@@ -1395,7 +1406,7 @@ class BlockDiagram(BlockDiagramMixin):
     def initialstate(self) -> None:
         self._state_map = self.initial_state_map()
 
-    def done(self, block=False) -> None:
+    def done(self, block: bool = False) -> None:
         """
         Finishup all blocks
 
@@ -1416,7 +1427,7 @@ class BlockDiagram(BlockDiagramMixin):
         except BlockRuntimeError as err:
             self._handle_block_runtime_error(err)
 
-    def dotfile(self, filename, shapes=None) -> None:
+    def dotfile(self, filename: str | io.TextIOWrapper, shapes: Any = None) -> None:
         """
         Write a GraphViz dot file representing the network.
 
@@ -1531,7 +1542,9 @@ class BlockDiagram(BlockDiagramMixin):
         # open the PDF file in browser (hopefully portable), then cleanup
         webbrowser.open(f"file://{pdffile.name}")
 
-    def blockvalues(self, t=None, simstate=None) -> None:
+    def blockvalues(
+        self, t: float | None = None, simstate: SimulationState | None = None
+    ) -> None:
         for b in self.blocklist:
             print("Block {:s}:".format(b.name))
             print("  inputs:  ", b.inport_values)

@@ -29,9 +29,14 @@ header = '''\
 from __future__ import annotations
 
 from math import inf
-from typing import Any, Callable, Literal
+from typing import TYPE_CHECKING, Any, Callable, Literal, TextIO
 import numpy as np
+from numpy.typing import ArrayLike
 from spatialmath import SE3, Twist3
+
+if TYPE_CHECKING:
+    from bdsim.components import Clock
+    from bdsim.blockdiagram import BlockDiagram
 
 Vector1D = int | float | tuple[float, ...] | list[float] | np.ndarray
 
@@ -118,6 +123,39 @@ def _modernize_typing_syntax(text: str) -> str:
         text = text[:start] + replacement + text[inner_end + 1 :]
 
 
+def _param_to_str(p: inspect.Parameter) -> str:
+    """Stringify a parameter, defaulting missing annotations to Any."""
+    prefix = ""
+    if p.kind == inspect.Parameter.VAR_POSITIONAL:
+        prefix = "*"
+    elif p.kind == inspect.Parameter.VAR_KEYWORD:
+        prefix = "**"
+
+    has_annotation = p.annotation is not inspect.Parameter.empty
+    has_default = p.default is not inspect.Parameter.empty
+
+    if has_annotation:
+        ann = p.annotation
+        if isinstance(ann, type):
+            ann_str = ann.__name__
+        elif isinstance(ann, str):
+            ann_str = ann
+        else:
+            ann_str = str(ann)
+        # Fix double-qualified names like "typing.typing.Literal" → "Literal"
+        # and "typing.Any" → "Any"
+        ann_str = ann_str.replace("typing.typing.", "typing.").replace("typing.", "")
+        annotation = _modernize_typing_syntax(ann_str)
+    else:
+        annotation = "Any"
+
+    if has_default:
+        default_str = repr(p.default)
+        return f"{prefix}{p.name}: {annotation} = {default_str}"
+    else:
+        return f"{prefix}{p.name}: {annotation}"
+
+
 sim = bdsim.BDSim()
 
 with open(OUTPUT, "w") as f:
@@ -139,9 +177,10 @@ with open(OUTPUT, "w") as f:
 
         # Normalize legacy typing spellings that come back from inspect so the
         # generated mixin uses the project's modern ``|`` style annotations.
+        # Params without annotations default to Any.
         sig_str = (
             "("
-            + ", ".join(["self"] + [_modernize_typing_syntax(str(p)) for p in params])
+            + ", ".join(["self"] + [_param_to_str(p) for p in params])
             + ")"
         )
         doc = (meth.__init__.__doc__ or "").rstrip()
