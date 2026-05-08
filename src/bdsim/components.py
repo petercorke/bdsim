@@ -150,7 +150,7 @@ class BDStruct(UserDict):
         maxwidth: int = max([len("_name")] + [len(key) for key in visible.keys()])
         for k, v in sorted(visible.items(), key=lambda x: x[0]):
             if isinstance(v, BDStruct):
-                rows.append("{:s}.{:s}::".format(k.ljust(maxwidth), v._name))
+                rows.append("{:s}::".format(v._name.ljust(maxwidth)))
                 rows.append(
                     "\n".join(
                         [" " * (maxwidth + 3) + line for line in str(v).split("\n")]

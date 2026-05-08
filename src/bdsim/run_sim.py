@@ -1364,27 +1364,20 @@ class BDSim(Runner):
             for i, c in enumerate(bd.clocklist):
                 # Use deterministic per-diagram naming independent of global clock
                 # instance counters to keep output keys stable across runs/tests.
-                name = f"clock{i}"
+                name = c.name.replace(".", "")
                 clockdata = BDStruct(name)
                 clock_t, clock_x = c.getlog(simstate)
                 clockdata["t"] = np.array(clock_t)
-                clockdata["x"] = np.array(clock_x)
-                clockdata["xnames"] = c.statenames
+                clockdata["X"] = np.array(clock_x)
+                clockdata["Xnames"] = c.statenames
                 out.add(name, clockdata)
-
-                # Backward-compatible alias for named clocks where possible.
-                legacy_name = str(c.name).replace(".", "")
-                if legacy_name != name and legacy_name not in out:
-                    out.add(legacy_name, clockdata)
 
             # save the watchlist into variables named y0, y1 etc.
             # for i, p in enumerate(watchlist):
             #     out["y" + str(i)] = np.array(simstate.plist[i])
             if simstate.plist:
                 out["y"] = np.column_stack([np.array(p) for p in simstate.plist])
-            else:
-                out["y"] = np.empty((len(simstate.tlist), 0))
-            out["ynames"] = [p.block.name for p in watchlist]
+                out["ynames"] = [p.block.name for p in watchlist]
 
             stats = BDStruct(name="stats")
             stats["integration_time_points"] = len(simstate.tlist)
