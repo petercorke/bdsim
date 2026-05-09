@@ -388,6 +388,7 @@ class BDSimState(SimulationState):
 
 class BDSim(Runner):
     _blocklibrary: dict | None = None
+    _moduledicts: dict[str, dict[str, list[str]]] | None = None
     _executor: ThreadPoolExecutor | None = None
     _required_blockinfo_keys: tuple[str, ...] = (
         "path",
@@ -547,7 +548,6 @@ class BDSim(Runner):
 
         # process command line and overall options
         self.options = Options(**kwargs)
-        self.moduledicts: dict[str, dict[str, list[str]]] | None = None
         # self.blockdict: dict[str, Any] = {}
 
         # print docstring as a startup banner
@@ -2361,7 +2361,7 @@ class BDSim(Runner):
 
             moduledicts[package] = moduledict
 
-        self.moduledicts = moduledicts
+        BDSim._moduledicts = moduledicts
         return blocks
 
     def blocks(self) -> None:
@@ -2390,9 +2390,9 @@ class BDSim(Runner):
             return s + "." * (n - len(s))
 
         assert self._blocklibrary is not None
-        assert self.moduledicts is not None
+        assert self._moduledicts is not None
         print(len(self._blocklibrary), " blocks loaded")
-        for pkg, module_dict in self.moduledicts.items():
+        for pkg, module_dict in self._moduledicts.items():
             for k, v in module_dict.items():
                 line: str = ""
                 once = False
@@ -2866,6 +2866,7 @@ class Options(OptionsBase):
 
             if _option_explicitly_set(["-o", "--out"]):
                 import warnings as _warnings
+
                 _warnings.warn(
                     "-o/--out is deprecated; use -p/--pickle instead",
                     DeprecationWarning,
