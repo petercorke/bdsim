@@ -501,7 +501,7 @@ class BDSim(Runner):
         ``--no-hold``, ``-H``              hold             True       do not hold graphics in done()
         ``--altscreen``, ``+A``            altscreen        True       display plots on second monitor
         ``--no-altscreen``, ``-A``         altscreen        True       do not display plots on second monitor
-        ``--no-progress``, ``-p``          progress         True       do not display simulation progress bar
+        ``--no-progress``                   progress         True       do not display simulation progress bar
         ``--backend BE``, ``-b BE``        backend          None       matplotlib backend
         ``--tiles SPEC``, ``-t SPEC``      tiles            None       arrange figure tiles as RxC or square/wide/tall
         ``--shape WxH``                    shape            None       window size (default: matplotlib default)
@@ -515,8 +515,9 @@ class BDSim(Runner):
         ``--rtol RTOL``                    rtol             None       relative tolerance for solve_ivp
         ``--method NAME``                  method           None       solve_ivp method (RK45, DOP853, Radau, BDF, LSODA)
         ``--verbose``, ``-v``              verbose          False      be verbose
-        ``--quiet``, ``-q``               quiet            False      suppress reports
-        ``-o [FILE]``, ``--out [FILE]``    outfile          None       output pickled results (default: bd.out)
+        ``--quiet``, ``-q``               quiet            False      suppress reports and progress bar
+        ``-p [FILE]``, ``--pickle [FILE]`` outfile          None       output pickled results (default: bd.out)
+        ``-o [FILE]``, ``--out [FILE]``    outfile          None       *(deprecated, use -p/--pickle)*
         ``-j [FILE]``, ``--json [FILE]``   jsonfile         None       output JSON results (default: bd.json)
         ``--set P``, ``-s P``              setparam         ``[]``     override block parameter: ``block:param=value``
         ``--global G``                     setglob          ``[]``     override global parameter: ``var=value``
@@ -2639,12 +2640,11 @@ class Options(OptionsBase):
 
             parser.add_argument(
                 "--no-progress",
-                "-p",
                 action="store_const",
                 const=False,
                 default=effective_defaults["progress"],
                 dest="progress",
-                help="animate graphics",
+                help="do not display simulation progress bar",
             )
             parser.add_argument(
                 "--verbose",
@@ -2729,7 +2729,17 @@ class Options(OptionsBase):
                 action="store_const",
                 const=True,
                 default=effective_defaults["quiet"],
-                help="suppress reports",
+                help="suppress reports and progress bar",
+            )
+            parser.add_argument(
+                "-p",
+                "--pickle",
+                nargs="?",
+                const="bd.out",
+                default=effective_defaults["outfile"],
+                metavar="FILE",
+                dest="outfile",
+                help="output pickled simulation results (default filename: bd.out)",
             )
             parser.add_argument(
                 "-o",
@@ -2739,7 +2749,7 @@ class Options(OptionsBase):
                 default=effective_defaults["outfile"],
                 metavar="FILE",
                 dest="outfile",
-                help="output pickled simulation results (default filename: bd.out)",
+                help="[deprecated, use -p/--pickle] output pickled simulation results",
             )
             parser.add_argument(
                 "-j",
@@ -2792,6 +2802,14 @@ class Options(OptionsBase):
                 if _option_explicitly_set(action.option_strings):
                     cmdline_options[dest] = parsed_options[dest]
 
+            if _option_explicitly_set(["-o", "--out"]):
+                import warnings as _warnings
+                _warnings.warn(
+                    "-o/--out is deprecated; use -p/--pickle instead",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+
             backend_option = parsed_options.get("backend")
             if isinstance(backend_option, str) and backend_option.lower() in {
                 "list",
@@ -2804,11 +2822,15 @@ class Options(OptionsBase):
             cmdline_options = dict()  # empty dictionary
             self._parser = None
 
-        # If CLI explicitly disables graphics, downgrade animation in the
-        # effective_defaults before the merge so sanity() doesn't see a
-        # conflict coming from kwargs vs CLI (CLI wins silently).
+        # If CLI explicitly disables graphics, also force animation=False so
+        # that code-level animation=True (e.g. BDSim(animation=True)) doesn't
+        # conflict.  Put it in cmdline_options (readonly) so it wins over kwargs.
         if not cmdline_options.get("graphics", True):
-            effective_defaults["animation"] = False
+            cmdline_options["animation"] = False
+
+        # --quiet implies --no-progress
+        if cmdline_options.get("quiet", False):
+            cmdline_options.setdefault("progress", False)
 
         super().__init__(readonly=cmdline_options, args=effective_defaults)
 
