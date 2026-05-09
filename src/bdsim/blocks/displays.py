@@ -446,6 +446,7 @@ class Scope(GraphicsBlock):
 
         # create the figure/axes (subplot axis is pre-assigned in tiled mode)
         self.fig = self.create_figure(simstate)
+        self._start_movie()  # set up writer now that self._fig is valid
         tile_ax = getattr(self, "_tile_axes", None)
         self.ax = tile_ax if tile_ax is not None else self.fig.add_subplot(111)
 

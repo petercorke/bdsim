@@ -2020,6 +2020,9 @@ class GraphicsBlock(SinkBlock):
             )
             if not simstate.options.animation:
                 print("must enable animation to render a movie")
+
+    def _start_movie(self) -> None:
+        """Set up the FFMpeg writer once self._fig has been created."""
         if self._movie is not None:
             try:
                 self._writer = animation.FFMpegWriter(
