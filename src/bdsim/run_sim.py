@@ -1854,9 +1854,31 @@ class BDSim(Runner):
             print(f"DEBUG.{debug:s}: " + fmt.format(*args))
 
     def done(self, bd: Any, block: bool = False) -> None:
-        context: SimulationContext = self._require_context()
-        if context.options.hold:
-            block = context.options.hold
+        """Enter the matplotlib event loop and clean up after simulation.
+
+        Called after :meth:`run` to allow interactive use of displayed
+        ``SCOPE`` figures.  If the ``hold`` option is set (the default),
+        this blocks until the user closes all figure windows; otherwise it
+        returns immediately after flushing pending GUI events.
+
+        :param bd: block diagram whose blocks are to be finalised
+        :type bd: BlockDiagram
+        :param block: if ``True``, block until all figures are closed; if
+            ``False``, flush events and return immediately.  Overridden by
+            ``sim.options.hold``.
+        :type block: bool, optional
+
+        .. note::
+            This method can be called after :meth:`run` has returned (i.e.
+            outside the simulation context) — for example when the script
+            calls ``sim.run(..., block=False)`` and then does post-processing
+            before handing control back to the user.  In that case the
+            ``hold`` option is read from ``sim.options`` directly.
+        """
+        context: SimulationContext | None = self._get_context()
+        options: OptionsBase = context.options if context is not None else self.options
+        if options.hold:
+            block = options.hold
 
         try:
             plt.show(block=block)
@@ -1870,7 +1892,10 @@ class BDSim(Runner):
         plt.pause(0.5)  # let the event handler do its work
 
     def closefigs(self) -> None:
-        context: SimulationContext = self._require_context()
+        context: SimulationContext | None = self._get_context()
+        if context is None:
+            plt.close("all")
+            return
         for i in range(context.simstate.fignum):
             print("close", i + 1)
             plt.close(i + 1)
@@ -1884,9 +1909,35 @@ class BDSim(Runner):
         format: str = "pdf",
         **kwargs: Any,
     ) -> None:
+        """Save the figure from a single graphics block to a file.
+
+        :param block: graphics block whose figure is to be saved
+        :type block: GraphicsBlock
+        :param filename: output filename without extension; defaults to the
+            block's name
+        :type filename: str, optional
+        :param format: image format passed to ``matplotlib.Figure.savefig``,
+            defaults to ``'pdf'``
+        :type format: str, optional
+        :param kwargs: additional keyword arguments forwarded to the block's
+            ``savefig`` method
+        """
         block.savefig(filename=filename, format=format, **kwargs)
 
     def savefigs(self, bd: Any, format: str = "pdf", **kwargs: Any) -> None:
+        """Save figures from all graphics blocks in a block diagram.
+
+        Iterates over every block in *bd* and calls ``savefig`` on each
+        :class:`GraphicsBlock`, using the block's name as the filename stem.
+
+        :param bd: compiled block diagram
+        :type bd: BlockDiagram
+        :param format: image format passed to ``matplotlib.Figure.savefig``,
+            defaults to ``'pdf'``
+        :type format: str, optional
+        :param kwargs: additional keyword arguments forwarded to each block's
+            ``savefig`` method
+        """
         from bdsim.block_types import GraphicsBlock
 
         for b in bd.blocklist:
@@ -1894,6 +1945,17 @@ class BDSim(Runner):
                 b.savefig(filename=b.name, format=format, **kwargs)
 
     def showgraph(self, bd: Any, **kwargs: Any) -> None:
+        """Display the block diagram as a graph in the system browser.
+
+        Renders the block diagram to a Graphviz DOT file, converts it to PDF
+        using ``dot``, and opens the result in the default browser.  Requires
+        Graphviz to be installed and ``dot`` to be on ``PATH``.
+
+        :param bd: compiled block diagram to render
+        :type bd: BlockDiagram
+        :param kwargs: additional keyword arguments forwarded to
+            :meth:`BlockDiagram.dotfile`
+        """
         # create the temporary dotfile
         dotfile: io.TextIOWrapper = tempfile.TemporaryFile(mode="w")
         bd.dotfile(dotfile, **kwargs)
