@@ -102,9 +102,7 @@ class BDStruct(UserDict):
         self.data[name] = value
 
     def __repr__(self) -> str:
-        visible = [k for k in self.data.keys() if not k.startswith(".")]
-        return f"BDStruct({self._name}, fields: {', '.join(visible)})"
-        return len(self.data)
+        return self.__str__()
 
     def __getitem__(self, key: str) -> Any:
         return self.data[key]
