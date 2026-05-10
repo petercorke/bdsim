@@ -29,7 +29,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install .[dev]
+          pip install .[dev,bdedit]
 
       - name: Run tests
         env:
@@ -53,7 +53,7 @@ jobs:
       - name: Run coverage
         run: |
           python -m pip install --upgrade pip
-          pip install .[dev]
+          pip install .[dev,bdedit]
           coverage run --omit='tests/*.py' -m pytest
           coverage report
           coverage xml
