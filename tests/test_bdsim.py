@@ -87,9 +87,8 @@ class BDSimTest(unittest.TestCase):
         self.assertEqual(len(out.xnames), 1)
         self.assertEqual(out.xnames[0], "integrator.0:x_0")
 
-        self.assertTrue(hasattr(out, "ynames"))
-        self.assertIsInstance(out.ynames, list)
-        self.assertEqual(len(out.ynames), 0)
+        self.assertFalse(hasattr(out, "ynames"))
+        self.assertFalse(hasattr(out, "y"))
 
     def test_sim_implicit(self):
         # all up test
@@ -122,9 +121,8 @@ class BDSimTest(unittest.TestCase):
         self.assertEqual(len(out.xnames), 1)
         self.assertEqual(out.xnames[0], "integrator.0:x_0")
 
-        self.assertTrue(hasattr(out, "ynames"))
-        self.assertIsInstance(out.ynames, list)
-        self.assertEqual(len(out.ynames), 0)
+        self.assertFalse(hasattr(out, "ynames"))
+        self.assertFalse(hasattr(out, "y"))
 
 
 # ---------------------------------------------------------------------------------------#

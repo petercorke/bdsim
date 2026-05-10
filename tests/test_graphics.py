@@ -11,6 +11,7 @@ Targets uncovered lines:
   100-110 savefig() body
   113-288 create_figure() method
 """
+
 import io
 import os
 import tempfile
@@ -24,7 +25,6 @@ matplotlib.use("Agg")  # headless backend – must be set before pyplot imports
 import matplotlib.pyplot as plt
 
 from bdsim.block_types import GraphicsBlock
-
 
 # ---------------------------------------------------------------------------
 # Minimal concrete subclass (GraphicsBlock is abstract via SinkBlock)
@@ -72,32 +72,43 @@ class StartTest(unittest.TestCase):
         self.assertTrue(gb._enabled)
 
     def test_start_movie_animation_disabled_warning(self):
-        """start() with movie set and animation=False prints warnings (lines 44-49)."""
+        """start() with movie set and animation=False prints warnings."""
         gb = MinGB(nin=1, movie="test.mp4")
         ss = _make_simstate(graphics=True, animation=False)
-        with patch("matplotlib.animation.FFMpegWriter") as MockW:
-            MockW.return_value.setup.return_value = None
-            gb.start(ss)  # covers warning block (44-49) + success path (51-56)
-        self.assertEqual(gb._writer, MockW.return_value)
+        # start() prints warnings; _start_movie() is called later when figure exists
+        gb.start(ss)  # covers warning block
+        # Verify that movie and simstate are set, but _writer not yet (needs fig)
+        self.assertEqual(gb.movie, "test.mp4")
+        self.assertEqual(gb._simstate, ss)
 
     def test_start_movie_ffmpeg_setup_success(self):
-        """start() with movie and working FFMpeg covers setup path (lines 51-56)."""
+        """_start_movie() with working FFMpeg creates writer and calls setup()."""
         gb = MinGB(nin=1, movie="out.mp4")
         ss = _make_simstate(graphics=True, animation=True)
-        with patch("matplotlib.animation.FFMpegWriter") as MockW:
-            MockW.return_value.setup.return_value = None
-            gb.start(ss)
-        MockW.return_value.setup.assert_called_once()
+        gb.start(ss)
+        gb.fig = plt.figure()  # create figure so _start_movie() can use it
+        try:
+            with patch("matplotlib.animation.FFMpegWriter") as MockW:
+                MockW.return_value.setup.return_value = None
+                gb._start_movie()  # directly test the movie setup method
+            MockW.return_value.setup.assert_called_once()
+        finally:
+            plt.close("all")
 
     def test_start_movie_ffmpeg_not_found(self):
-        """start() catches FileNotFoundError and calls fatal (lines 57-58)."""
+        """_start_movie() catches FileNotFoundError when ffmpeg is missing."""
         gb = MinGB(nin=1, movie="out.mp4")
         ss = _make_simstate(graphics=True, animation=True)
-        with patch("matplotlib.animation.FFMpegWriter") as MockW:
-            MockW.return_value.setup.side_effect = FileNotFoundError("no ffmpeg")
-            # fatal() is not defined on a bare block → AttributeError propagates
-            with self.assertRaises(AttributeError):
-                gb.start(ss)
+        gb.start(ss)
+        gb.fig = plt.figure()  # create figure so _start_movie() can use it
+        try:
+            with patch("matplotlib.animation.FFMpegWriter") as MockW:
+                MockW.return_value.setup.side_effect = FileNotFoundError("no ffmpeg")
+                # fatal() is not defined on a bare block → AttributeError propagates
+                with self.assertRaises(AttributeError):
+                    gb._start_movie()
+        finally:
+            plt.close("all")
 
 
 # ---------------------------------------------------------------------------

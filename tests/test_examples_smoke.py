@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import pytest
+
 pytestmark = pytest.mark.skip(reason="example smoke tests temporarily disabled")
 
 import os
@@ -12,20 +13,12 @@ import sys
 import unittest
 from pathlib import Path
 
-
 EXAMPLES_DIR = Path(__file__).resolve().parents[1] / "examples"
 EXAMPLE_SCRIPTS = sorted(path.name for path in EXAMPLES_DIR.glob("*.py"))
 
 # Known non-smoke examples that currently require unavailable dependencies,
 # hardware, or hit known runtime issues outside this test's scope.
-SKIP_SCRIPTS: dict[str, str] = {
-    "deriv.py": "fails during compile with current subsystem wiring changes",
-    "eg2.py": "requires unavailable DOUT block backend",
-    "pid.py": "PID block construction currently fails",
-    "rt_step.py": "requires pyfirmata and hardware",
-    "viewsim.py": "requires pre-generated bd.out artifact",
-    "waveform.py": "intermittently hangs in headless animation mode",
-}
+SKIP_SCRIPTS: dict[str, str] = {}
 
 # Keep this list intentionally small and revisit when runtime/example fixes land.
 # When removing an entry, run just this module to validate:

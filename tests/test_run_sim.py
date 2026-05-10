@@ -221,7 +221,7 @@ class SimRunCoverageTest(unittest.TestCase):
         from bdsim.block import SampledBlock
 
         bd = self.sim.blockdiagram()
-        clock = bd.clock(5, "Hz")
+        clock = bd.clock(5, "Hz", name="myclock")
         src = bd.WAVEFORM("sine", freq=1)
         zoh = bd.ZOH(clock)
         sink = bd.NULL(1)
@@ -404,9 +404,9 @@ class SimRunCoverageTest(unittest.TestCase):
         bd, clock, src, zoh, sink = self._clocked_bd()
         out = self.sim.run(bd, T=1.0)
 
-        self.assertTrue(hasattr(out, "clock0"))
-        self.assertGreater(len(out.clock0.t), 0)
-        self.assertGreater(len(out.clock0.x), 0)
+        self.assertTrue(hasattr(out, "myclock"))
+        self.assertGreater(len(out.myclock.t), 0)
+        self.assertGreater(len(out.myclock.X), 0)
 
     def test_clocked_run_uses_event_queue(self):
         """run() for clocked systems should drive execution via simstate.eventq."""
@@ -540,7 +540,7 @@ class SimRunCoverageTest(unittest.TestCase):
         err = bd.SUM("+-")
 
         # sampled path: nominally constant at 5.0 unless crossing mutates it
-        clock = bd.clock(10, "Hz")
+        clock = bd.clock(10, "Hz", name="myclock")
         src_d = bd.CONSTANT(0.0)
         dint = bd.INTEGRATOR_S(clock, x0=5.0)
 
@@ -581,8 +581,8 @@ class SimRunCoverageTest(unittest.TestCase):
         self.assertLess(final_x, 0.25)
 
         # Sampled clock trace should include pre-crossing state (~5) and mutated state (~9).
-        self.assertTrue(hasattr(out, "clock0"))
-        sampled_trace = np.asarray(out.clock0.x).reshape(-1)
+        self.assertTrue(hasattr(out, "myclock"))
+        sampled_trace = np.asarray(out.myclock.X).reshape(-1)
         self.assertTrue(np.any(np.isclose(sampled_trace, 5.0, atol=1e-9)))
         self.assertTrue(np.any(np.isclose(sampled_trace, 9.0, atol=1e-9)))
 

@@ -247,10 +247,7 @@ class StructTest(unittest.TestCase):
         x.a = BDStruct(name="baz", a=1, b=4.56)
         self.assertEqual(
             str(x),
-            (
-                "a    .baz::\n        a     = 1 (int)\n        b     = 4.56 (float)\nf "
-                "    = 2 (int)"
-            ),
+            "baz  ::\n        a     = 1 (int)\n        b     = 4.56 (float)\nf     = 2 (int)",
         )
 
     def test_item(self):

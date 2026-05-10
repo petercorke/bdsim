@@ -2909,6 +2909,13 @@ class Options(OptionsBase):
             cmdline_options = dict()  # empty dictionary
             self._parser = None
 
+        # Detect conflicting CLI options before normalizing
+        if (
+            cmdline_options.get("animation") is True
+            and cmdline_options.get("graphics") is False
+        ):
+            raise ValueError("cannot enable animation (+a) but disable graphics (-g)")
+
         # If CLI explicitly disables graphics, also force animation=False so
         # that code-level animation=True (e.g. BDSim(animation=True)) doesn't
         # conflict.  Put it in cmdline_options (readonly) so it wins over kwargs.
