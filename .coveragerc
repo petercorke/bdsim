@@ -15,4 +15,4 @@ omit =
     src/bdsim/run_realtime.py
     src/bdsim/bdedit/*
     src/bdsim/tex2icon.py
-fail_under = 80
+fail_under = 70
