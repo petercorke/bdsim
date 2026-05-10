@@ -31,7 +31,7 @@ ${tex}$
 IMSIZE = 250
 
 
-def main():
+def main() -> None:
     des = "tex2icon, create bdedit icons from LaTeX source"
     parser = argparse.ArgumentParser(description=des)
     parser.add_argument(
@@ -124,8 +124,8 @@ def main():
         )
 
         # read image data from gs into a PIL image
-        image = Image.open(gs.stdout)
-        gs.stdout.close()
+        image = Image.open(gs.stdout)  # type: ignore[arg-type]
+        gs.stdout.close()  # type: ignore[union-attr]
 
         # display image size
         w, h = image.size
