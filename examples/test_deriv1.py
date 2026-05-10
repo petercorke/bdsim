@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Test continuous-time integrator
+Test continuous-time derivative with 1st-order smoothing with ramp input
 Copyright (c) 2026- Peter Corke
 """
 import bdsim

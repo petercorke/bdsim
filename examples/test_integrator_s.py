@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Test continuous-time integrator
+Test discrete-time integrator with step input
 Copyright (c) 2026- Peter Corke
 """
 import bdsim

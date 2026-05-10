@@ -1,23 +1,26 @@
 #!/usr/bin/env python3
 
 """
-Example with two waveform generators driving a scope
+System with no dynamics: waveform driving a scope.
+The run loop auto-enables live scope updates for stateless, clockless diagrams.
 Copyright (c) 2021- Peter Corke
 """
 
 import bdsim
 
-sim = bdsim.BDSim(animation=True)  # create simulator
-bd = sim.blockdiagram()
+sim = bdsim.BDSim()  # create simulator
+bd = sim.blockdiagram()  # create an empty block diagram
 
-wave1 = bd.WAVEFORM(wave="triangle", freq=1, phase=0.25)
-wave2 = bd.WAVEFORM(wave="square", freq=1, min=0, max=1)
-scope1 = bd.SCOPE()
-scope2 = bd.SCOPE()
+# define the blocks
+demand = bd.WAVEFORM(name="demand")
+scope = bd.SCOPE(styles=["k"])
 
-bd.connect(wave1, scope1)
-bd.connect(wave2, scope2)
+# connect the blocks
+bd.connect(demand, scope)
 
-bd.compile()
-sim.report(bd)
-out = sim.run(bd, 4, dt=0.02)
+bd.compile()  # check the diagram
+sim.report(bd)  # , format="latex")
+sim.report(bd, "schedule")
+
+out = sim.run(bd, T=5)
+print(out)

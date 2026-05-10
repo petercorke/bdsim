@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Test continuous-time system
+Test discrete-time system
 Franklin, Powell, Workman, 2nd edition, 1990, Sec 5.3
 Copyright (c) 2026- Peter Corke
 """

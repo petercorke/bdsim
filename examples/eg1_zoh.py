@@ -2,7 +2,7 @@
 
 import bdsim
 
-sim = bdsim.BDSim(animation=True)  # create simulator
+sim = bdsim.BDSim(graphics=False)  # create simulator
 bd = sim.blockdiagram()  # create an empty block diagram
 
 # define the clocks
@@ -20,18 +20,17 @@ zoh = bd.ZOH(clock=clock1)
 bd.connect(demand, sum[0], scope[1])
 bd.connect(plant, sum[1])
 bd.connect(sum, gain)
+bd.connect(plant, scope[0])
+
+# remove the direct connection from gain to plant and insert a ZOH in between
 # bd.connect(gain, plant)
 bd.connect(gain, zoh)
 bd.connect(zoh, plant)
-bd.connect(plant, scope[0])
-
 
 bd.compile()  # check the diagram
 bd.report()
 bd.report_summary()  # list all blocks and wires
 
-out = sim.run(bd, watch=[demand, sum])  # simulate for 5s
-# out = sim.run(bd, 5 watch=[plant,demand])  # simulate for 5s
+out = sim.run(bd, 5, watch=[demand, sum, zoh])  # simulate for 5s
 print(out)
 
-# sim.savefig(scope, 'scope0') # save scope figure as scope0.pdf

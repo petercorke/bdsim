@@ -17,7 +17,7 @@ which will display a graph in a new figure window.  Close the figure to allow th
 Examples provided in this folder include:
 
 - `eg1.py` the example given above
-- `waveform.py` two signal generators connected to two scopes
+- `nostates.py` two signal generators connected to two scopes
 - `vanderpol.py` a classic non-linear oscillator
 - `sine+sampler.py` a sine wave generator connected to a scope via a ZOH
 - `subsys.py` a block diagram with a subystem
@@ -31,6 +31,41 @@ Examples provided in this folder include:
 
 
   - `rvc4_11.py` Fig 4.11 a car-like vehicle driving to a pose
+
+Continuous time systems:
+
+* `eg1.py` closed-loop first-order plant
+* `eg1a.py` same as `eg1.py` but expressed using Python operators and assignments
+* `pid.py` same as `eg1.py` but with PI rather than P controller
+* `subsys.py` demonstration of subsystems
+* `bouncing-ball.py` bouncing ball demonstration with event detection and block state updating
+* `vanderpol.py` Van der Pol oscillator
+
+* `deriv.py` sine-wave response of derivative
+* `test_deriv1.py` ramp response of derivative with 1st order smoothing
+* `test_deriv2.py` ramp response of derivative with 2nd order smoothing
+* `test_integrator.py` integrator response to step
+* `test_lti_tf.py` example from Franlin, Powell, Workman 2nd ed.
+* `test_pid.py` comparison of 3 different PID structures
+
+
+Discrete-time systems:
+
+* `multi-clock.py` system with two clocks sampling sine wave
+* `test_deriv_s.py` ramp response of derivative
+* `test_integrator_s.py` integrator response to step
+* `test_lti_tf_s.py` example from Franlin, Powell, Workman 2nd ed.
+* `test_pid_s.py` comparison of 3 different PID structures
+
+Hybrid continuous-/discrete-time:
+
+* `eg1_zoh.py` same as `eg1.py` but with ZOH between controller and plant
+
+System with no states:
+
+* `waveform.py` waveform generator connected to a scope, no system dynamics
+
+
 
 All `bdsim` programs support a number of [command line switches](https://github.com/petercorke/bdsim/wiki/Runtime-options).
 

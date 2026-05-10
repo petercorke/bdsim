@@ -1,10 +1,19 @@
 #!/usr/bin/env python3
 
-import bdsim
+"""
+Example showing subsystems
+Copyright (c) 2021- Peter Corke
+"""
 
+import bdsim
 sim = bdsim.BDSim(tiles="tall")
 
-# create simple subsystem as a blockdiagram
+# -- create simple subsystem as a blockdiagram -- #
+#
+#   IN[0] ---> x^2 ---> SUM --> OUT[0]
+#                        ^
+#                        |
+#   IN[1] ---------------+
 ss = sim.blockdiagram(name="subsystem1")
 
 squarer = ss.FUNCTION(lambda x: x**2)
@@ -17,7 +26,7 @@ ss.connect(squarer, sum[0])
 ss.connect(inp[1], sum[1])
 ss.connect(sum, outp)
 
-# create main system as a blockdiagram
+# -- create main system as a blockdiagram -- #
 main = sim.blockdiagram()
 
 x = main.WAVEFORM("sine", 1, "Hz")
@@ -33,7 +42,7 @@ main.connect(subsys1, scope1)
 main.connect(subsys2, scope2)
 
 main.compile(verbose=False)
-main.report_lists()
+main.report_summary()
 
 sim.report(main)
 sim.run(main, T=5)

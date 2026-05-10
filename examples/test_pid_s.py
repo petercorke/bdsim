@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Test continuous-time integrator
+Test discrete-time PID with 3 different structures
 Copyright (c) 2026- Peter Corke
 """
 import math
