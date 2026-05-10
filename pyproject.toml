@@ -50,9 +50,12 @@ docs = [
 
 bdedit = ["PySide6", "Pillow"]
 
+jupyter = ["ipywidgets", "ipympl"]
+
+
 bdweb = ["fastapi>=0.111", "uvicorn[standard]>=0.29"]
 
-all = ["PySide6", "Pillow", "fastapi>=0.111", "uvicorn[standard]>=0.29"]
+all = ["PySide6", "Pillow", "ipywidgets", "ipympl"]
 
 [project.scripts]
 

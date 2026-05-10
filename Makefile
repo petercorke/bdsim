@@ -24,6 +24,10 @@ coverage:
 	coverage html
 	open -a Safari htmlcov/index.html
 
+typehints:
+	-mypy src/bdsim --ignore-missing-imports --html-report /tmp/mypy-typehints
+	open -a Safari /tmp/mypy-typehints/index.html
+
 docs: .FORCE
 	(cd docs; make html)
 
