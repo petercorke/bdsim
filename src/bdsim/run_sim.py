@@ -1024,8 +1024,17 @@ class BDSim(Runner):
             # Compute the animation / debugger frame interval from --animation-rate.
             # Animation uses Option-A eventq callables for frame pacing.
             # The debugger also limits max_step so single-step stays responsive.
+            # Stateless+no-clock diagrams (e.g. WAVEFORM→SCOPE) also need the
+            # frame loop so sources drive sinks live; treat them like animation=True.
+            _stateless_no_clock = (
+                bd.nstates == 0 and not bd.clocklist and simstate.options.graphics
+            )
             interactive_dt: float | None = None
-            if simstate.options.animation or simstate.isdebug("i"):
+            if (
+                simstate.options.animation
+                or simstate.isdebug("i")
+                or _stateless_no_clock
+            ):
                 interactive_rate_hz = float(simstate.options.animation_rate)
                 interactive_dt = 1.0 / interactive_rate_hz
             if simstate.isdebug("i") and interactive_dt is not None and bd.nstates > 0:
@@ -1210,7 +1219,9 @@ class BDSim(Runner):
 
             # Option A: schedule animation frame events as callables in the eventq.
             # Each callback pumps the matplotlib event loop then re-schedules itself.
-            if simstate.options.animation and interactive_dt is not None:
+            if (
+                simstate.options.animation or _stateless_no_clock
+            ) and interactive_dt is not None:
                 # Show all figures now so windows are visible before the loop starts.
                 # flush_events() only works on already-visible windows; plt.show() is
                 # not called until after the run otherwise.
@@ -1219,6 +1230,19 @@ class BDSim(Runner):
                     plt.figure(num).canvas.flush_events()
 
                 def _anim_frame(t: float, ss: Any, _dt: float = interactive_dt) -> None:
+                    # For stateless diagrams with no clocks (e.g. WAVEFORM→SCOPE),
+                    # evaluate the block diagram at this frame time so that source
+                    # blocks drive their sinks live.  Clocked diagrams are evaluated
+                    # at clock ticks by _interval_discrete; they don't need this.
+                    if bd.nstates == 0 and not bd.clocklist:
+                        ss.t = t
+                        ss.count += 1
+                        eval_start = time.time()
+                        bd.evaluate(bd.state_map(np.array([]), ss), t)
+                        ss.bdtime += time.time() - eval_start
+                        self._record_sample_and_service_hooks(
+                            bd, ss, t, None, stop_short_circuit=False
+                        )
                     # Flush pending draw events for all open figures without
                     # entering a blocking event loop (plt.pause(0) hangs with
                     # Qt because start_event_loop(0) never installs a quit timer).
