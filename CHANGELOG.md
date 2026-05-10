@@ -1,12 +1,12 @@
 
-1.1.0 April 2026
+1.2.0 May 2026
 
 * Highlights
-  - bdedit reliability improved, now uses PySide6
   - reworked integration engine to use solve_ivp from SciPy which supports events
   - more notebooks and examples
   - much faster dynamic block loading
   - type hinting throughout
+  - bdedit reliability improved, now uses PySide6
   - massive use of CoPilot
   
 * Code quality
@@ -64,10 +64,12 @@
     - mirror the full set of continuous time blocks (INTEG_S, DERIV_S, LTI_SS_S, LTI_SISO_S, POSEINTEGRATOR_S) + ZOH
 
 * Testing
-  - smoke tests for examples
+  - more testing
+  - smoke tests for examples and notebooks
 
 * bdedit
   - fix crashes, code changes, more exception catching
+  - periodic saves, crash save
   - new block_library interface
   - uses PySide6 rather than PyQt.  More permissive licence.
   - 'V' will shift and scale the diagram to fill the canvas
