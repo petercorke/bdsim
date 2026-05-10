@@ -78,7 +78,7 @@ class Print(SinkBlock):
         :type fmt: str, optional
         :param file: file to write data to, defaults to None
         :type file: file object, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         :return: A PRINT block
         :rtype: Print instance
@@ -157,7 +157,7 @@ class Stop(SinkBlock):
         """
         :param func: evaluate stop condition, defaults to None
         :type func: callable, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(**blockargs)
@@ -285,7 +285,7 @@ class Event(SinkBlock):
         :type fargs: list or tuple, optional
         :param fkwargs: extra keyword args passed to callback
         :type fkwargs: dict, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(**blockargs)
@@ -401,7 +401,7 @@ class Null(SinkBlock):
         """
         :param nin: number of input ports, defaults to 1
         :type nin: int, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(nin=nin, **blockargs)
@@ -457,7 +457,7 @@ class Watch(SinkBlock):
         """
         :param nin: number of input ports, defaults to 1
         :type nin: int, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(**blockargs)

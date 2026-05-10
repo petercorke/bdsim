@@ -54,7 +54,7 @@ if sm:
             """
             :param pose: pose to apply
             :type pose: SO2, SE2, SO3 or SE3
-            :param blockargs: |BlockOptions|
+            :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
             :type blockargs: dict
             """
             if not isinstance(pose, (SO2, SO3, SE2, SE3)):
@@ -109,7 +109,7 @@ if sm:
             """
             :param pose: pose to apply
             :type pose: SO2, SE2, SO3 or SE3
-            :param blockargs: |BlockOptions|
+            :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
             :type blockargs: dict
             """
             if not isinstance(pose, (SO2, SO3, SE2, SE3)):
@@ -162,7 +162,7 @@ if sm:
 
         def __init__(self, **blockargs: Any) -> None:
             """
-            :param blockargs: |BlockOptions|
+            :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
             :type blockargs: dict
             """
             super().__init__(nin=2, **blockargs)
@@ -210,7 +210,7 @@ if sm:
 
         def __init__(self, **blockargs: Any) -> None:
             """
-            :param blockargs: |BlockOptions|
+            :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
             :type blockargs: dict
             """
             super().__init__(**blockargs)

@@ -80,12 +80,14 @@ class Sum(FunctionBlock):
         self, signs: str = "++", mode: Optional[str] = None, **blockargs: Any
     ) -> None:
         """
-        :param signs: signs associated with input ports, accepted characters: + or -, defaults to "++"
+        :param signs: a string comprising ``+`` or ``-`` characters, defaults to ``++``
         :type signs: str, optional
         :param mode: controls addition mode, per element, string comprises ``r`` or ``c`` or ``C`` or ``L``, defaults to None
         :type mode: str, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
+
+        For example the string ``+-`` creates a 2-port block where the second input is subtracted from the first.
 
         ``mode`` controls how elements of the input vectors are added/subtracted.
         Elements which are angles must be treated specially, and this is indicated by
@@ -213,7 +215,7 @@ class Prod(FunctionBlock):
         :type inputs: Block or Plug
         :param matrix: Arguments are matrices, defaults to False
         :type matrix: bool, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
 
         """
@@ -302,7 +304,7 @@ class Gain(FunctionBlock):
         :type K: scalar, array_like
         :param premul: premultiply by constant, default is postmultiply, defaults to False
         :type premul: bool, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
 
         """
@@ -383,7 +385,7 @@ class Pow(FunctionBlock):
         :type p: scalar
         :param matrix: premultiply by constant, default is postmultiply, defaults to False
         :type matrix: bool, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
 
         """
@@ -471,7 +473,7 @@ class Clip(FunctionBlock):
         :type min: scalar or array_like, optional
         :param max: Maximum value, defaults to math.inf
         :type max: float or array_like, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(**blockargs)
@@ -592,7 +594,7 @@ class Function(FunctionBlock):
         :type fargs: list, optional
         :param fkwargs: extra keyword arguments passed to the function, defaults to {}
         :type fkwargs: dict, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict, optional
         """
         if func is None:
@@ -740,8 +742,8 @@ class Interpolate(FunctionBlock):
     (N,1) and ``y`` has a shape of (N,M).  Alternatively ``xy`` has a shape
     of (N,M+1) and the first column is the x-data.
 
-    :note: if ``time=True``.  In this case the block has no
-        input ports and is a ``Source`` not a ``Function`` block.
+    :note: if ``time=True`` then the block has no
+        input ports and acts as a ``Source`` not a ``Function`` block.
 
     :seealso: :func:`scipy.interpolate.interp1d`
     """
@@ -769,7 +771,7 @@ class Interpolate(FunctionBlock):
         :type time: bool, optional
         :param kind: interpolation method, defaults to 'linear'
         :type kind: str, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         self.time: bool = time

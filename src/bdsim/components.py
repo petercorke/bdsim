@@ -176,12 +176,26 @@ class BDStruct(UserDict):
         return "\n".join(rows)
 
     def dump(self, outfile: str) -> None:
+        """Pickle the struct to a file.
+
+        :param outfile: path to the output file
+        :type outfile: str
+        """
         import pickle
 
         with open(outfile, "wb") as f:
             pickle.dump(self, f)
 
     def dump_json(self, outfile: str) -> None:
+        """Serialise the struct to a JSON file.
+
+        NumPy arrays are converted to nested lists and NumPy scalars are
+        unwrapped to their Python equivalents.  Nested :class:`BDStruct`
+        instances are recursively converted to plain dicts.
+
+        :param outfile: path to the output file
+        :type outfile: str
+        """
         import json
         import numpy as np
 

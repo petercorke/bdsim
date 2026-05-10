@@ -76,7 +76,7 @@ class Item(FunctionBlock):
         """
         :param item: name of dictionary item
         :type item: str
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
 
@@ -140,7 +140,7 @@ class Dict(FunctionBlock):
         """
         :param keys: list of dictionary keys
         :type keys: list
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
 
@@ -195,7 +195,7 @@ class Mux(FunctionBlock):
         """
         :param nin: Number of input ports, defaults to 1
         :type nin: int, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(nin=nin, **blockargs)
@@ -253,7 +253,7 @@ class DeMux(FunctionBlock):
         """
         :param nout: number of outputs, defaults to 1
         :type nout: int, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(nout=nout, **blockargs)
@@ -312,7 +312,7 @@ class Index(FunctionBlock):
 
         :param index: elements of input array, defaults to []
         :type index: list, slice or str, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(**blockargs)
@@ -432,7 +432,7 @@ class SubSystem(SubsystemBlock):
         :param globalvars: (``.bd`` mode only) extra names available when evaluating
             ``"=..."`` parameter expressions.
         :type globalvars: dict, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         :raises ImportError: module not found or no BlockDiagram in it
         :raises ValueError: invalid argument type or .bd load constraints not met
@@ -543,7 +543,7 @@ class InPort(FunctionBlock):
         """
         :param nout: Number of output ports, defaults to 1
         :type nout: int, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(nout=nout, **blockargs)
@@ -595,7 +595,7 @@ class OutPort(FunctionBlock):
         """
         :param nin: Number of input ports, defaults to 1
         :type nin: int, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(nin=nin, **blockargs)

@@ -346,7 +346,7 @@ class Scope(GraphicsBlock):
         :type title: str
         :param loc: location of legend, see :meth:`matplotlib.pyplot.legend`, defaults to "best"
         :type loc: str
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
 
@@ -779,7 +779,7 @@ class ScopeXY(GraphicsBlock):
         :type labels: 2-element tuple or list
         :param init: function to initialize the graphics, defaults to None
         :type init: callable
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(inames=("x", "y"), **blockargs)
@@ -1074,7 +1074,7 @@ class ScopeXY1(ScopeXY):
         :type labels: 2-element tuple or list
         :param init: function to initialize the graphics, defaults to None
         :type init: callable
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(**blockargs)

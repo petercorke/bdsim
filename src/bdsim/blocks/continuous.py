@@ -105,7 +105,7 @@ class Integrator(ContinuousBlock):
         :type min: float or array_like, optional
         :param max: Maximum value of state, defaults to None
         :type max: float or array_like, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
 
@@ -200,7 +200,7 @@ class PoseIntegrator(ContinuousBlock):
         r"""
         :param x0: Initial pose, defaults to null
         :type x0: SE3, Twist3, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
 
@@ -298,7 +298,7 @@ class LTI_SS(ContinuousBlock):
         :type D: array_like, optional
         :param x0: initial states, defaults to None
         :type x0: array_like, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         # print('in SS constructor')
@@ -714,7 +714,7 @@ class Deriv2(LTI_SS):
         :type x0: array_like, optional
         :param gain: gain or scaling factor, defaults to 1
         :type gain: float, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
 
         Damping factor defaults to critical damping, which results in the fastest response without overshoot.
@@ -824,7 +824,7 @@ class Deriv(SubsystemBlock):
         :type y0: array_like
         :param gain: gain or scaling factor, defaults to 1
         :type gain: float, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
 
@@ -1032,7 +1032,7 @@ class PID(SubsystemBlock):
         :param I_limit: integral limit
         :type I_limit: float or 2-tuple
         :param structure: the structure of the PID implementation, "parallel" (default), "series", "standard|ideal"
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
 

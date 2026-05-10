@@ -53,9 +53,7 @@ class Inverse(FunctionBlock):
     non-square matrix the pseudo-inverse is used.  The condition number is
     output on the second port.
 
-    :seealso: `numpy.linalg.inv <https://numpy.org/doc/stable/reference/generated/numpy.linalg.inv.html>`_,
-        `numpy.linalg.pinv <https://numpy.org/doc/stable/reference/generated/numpy.linalg.pinv.html>`_,
-        `numpy.linalg.cond <https://numpy.org/doc/stable/reference/generated/numpy.linalg.cond.html>`_
+    :seealso: :func:`numpy.linalg.inv` :func:`numpy.linalg.pinv` :func:`numpy.linalg.cond`
     """
 
     nin = 1
@@ -67,7 +65,7 @@ class Inverse(FunctionBlock):
         """
         :param pinv: force pseudo inverse, defaults to False
         :type pinv: bool, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(**blockargs)
@@ -85,14 +83,10 @@ class Inverse(FunctionBlock):
 
             out: np.ndarray[tuple[Any, ...], np.dtype[np.float64]]
             if _pinv:
-                out = np.linalg.pinv(
-                    mat
-                )
+                out = np.linalg.pinv(mat)
             else:
                 try:
-                    out = (
-                        np.linalg.inv(mat)
-                    )
+                    out = np.linalg.inv(mat)
                 except np.linalg.LinAlgError:
                     raise RuntimeError("matrix is singular")
             return [out, np.linalg.cond(mat)]
@@ -139,7 +133,7 @@ class Transpose(FunctionBlock):
         - An input 2D-array column vector of shape (N,1) becomes a 2D-array
           row vector with shape (1,N).
 
-    :seealso: `numpy.linalg.transpose <https://numpy.org/doc/stable/reference/generated/numpy.linalg.transpose.html>`_
+    :seealso: :func:`numpy.linalg.transpose`
     """
 
     nin = 1
@@ -147,7 +141,7 @@ class Transpose(FunctionBlock):
 
     def __init__(self, **blockargs: Any) -> None:
         """
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(**blockargs)
@@ -194,7 +188,7 @@ class Norm(FunctionBlock):
 
     Computes the specified norm for a 1D- or 2D-array.
 
-    :seealso: `numpy.linalg.norm <https://numpy.org/doc/stable/reference/generated/numpy.linalg.norm.html>`_
+    :seealso: :func:`numpy.linalg.norm`
     """
 
     nin = 1
@@ -206,7 +200,7 @@ class Norm(FunctionBlock):
         :type axis: int, optional
         :param ord: Order of the norm, default to None.
         :type ord: int or str
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(**blockargs)
@@ -249,7 +243,7 @@ class Flatten(FunctionBlock):
 
     Flattens the incoming array in either row major ('C') or column major ('F') order.
 
-    :seealso: `numpy.flatten <https://numpy.org/doc/stable/reference/generated/numpy.flatten.html>`_
+    :seealso: :meth:`numpy.ndarray.flatten`
     """
 
     nin = 1
@@ -259,7 +253,7 @@ class Flatten(FunctionBlock):
         """
         :param order: flattening order, either "C" or "F", defaults to "C"
         :type order: str
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(**blockargs)
@@ -345,7 +339,7 @@ class Slice2(FunctionBlock):
         :type rows: tuple(3) or list
         :param cols: column selection, defaults to None
         :type cols: tuple(3) or list
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(**blockargs)
@@ -441,7 +435,7 @@ class Slice1(FunctionBlock):
         """
         :param index: slice, defaults to None
         :type index: tuple(3)
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(**blockargs)
@@ -491,7 +485,7 @@ class Det(FunctionBlock):
 
     Compute the matrix determinant.
 
-    :seealso: `numpy.linalg.det <https://numpy.org/doc/stable/reference/generated/numpy.linalg.det.html>`_
+    :seealso: :func:`numpy.linalg.det`
     """
 
     nin = 1
@@ -499,7 +493,7 @@ class Det(FunctionBlock):
 
     def __init__(self, **blockargs: Any) -> None:
         """
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(**blockargs)
@@ -537,7 +531,7 @@ class Cond(FunctionBlock):
             - ndarray
             - :math:`\mbox{cond}(\mathbf{A})`
 
-    :seealso: `numpy.linalg.cond <https://numpy.org/doc/stable/reference/generated/numpy.linalg.cond.html>`_
+    :seealso: :func:`numpy.linalg.cond`
     """
 
     nin = 1
@@ -545,7 +539,7 @@ class Cond(FunctionBlock):
 
     def __init__(self, **blockargs: Any) -> None:
         """
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(**blockargs)
@@ -562,7 +556,9 @@ if __name__ == "__main__":  # pragma: no cover
     import sys
 
     root = Path(__file__).resolve().parents[3]
-    test_file = root / "tests" / "blocks" / f"test_blocks_{Path(__file__).stem.lower()}.py"
+    test_file = (
+        root / "tests" / "blocks" / f"test_blocks_{Path(__file__).stem.lower()}.py"
+    )
 
     if not test_file.exists():
         print(f"No module unit tests found for {Path(__file__).name}: {test_file}")

@@ -192,6 +192,10 @@ favicons = [
     },
 ]
 
+# -------- Options inheritance-diagram -----------------------------------------------#
+
+inheritance_graph_attrs = dict(rankdir="TB")
+
 # -------- Options InterSphinx -------------------------------------------------------#
 
 intersphinx_mapping = {
@@ -200,4 +204,5 @@ intersphinx_mapping = {
     "scipy": ("https://docs.scipy.org/doc/scipy/", None),
     "matplotlib": ("https://matplotlib.org/stable/", None),
     "smtb": ("https://spatialmath-python.rai-inst.com/", None),
+    "ansitable": ("https://petercorke.github.io/ansitable/", None),
 }

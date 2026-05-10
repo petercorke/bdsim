@@ -1016,8 +1016,8 @@ class BlockDiagram(BlockDiagramMixin):
         :type sortby: str, optional
         :param depth: only show blocks with subsystem depth less than or equal to this value, defaults to None (show all)
         :type depth: int, optional
-        :param style: table style, one of: ansi (default), markdown, latex
-        :type style: str
+        :param kwargs: options passed to :meth:`ansitable.table.ANSIMatrix.print`
+        :type kwargs: dict
 
         Print a table with 4 columns:
 
@@ -1106,7 +1106,8 @@ class BlockDiagram(BlockDiagramMixin):
         """
         Print a tabular report about the block diagram.
 
-        :param kwargs: options passed to :meth:`ansitable.ANSITable.print`
+        :param kwargs: options passed to :meth:`ansitable.table.ANSIMatrix.print`
+        :type kwargs: dict
 
         Print the important lists in pretty format.
 
@@ -1177,7 +1178,8 @@ class BlockDiagram(BlockDiagramMixin):
         """
         Display execution schedule in tabular form
 
-        :param kwargs: options passed to :meth:`ansitable.ANSITable.print`
+        :param kwargs: options passed to :meth:`ansitable.table.ANSIMatrix.print`
+        :type kwargs: dict
 
         :seealso: :func:`schedule_plan`, :func:`schedule_dotfile`
         """

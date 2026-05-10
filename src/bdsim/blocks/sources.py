@@ -50,7 +50,7 @@ class Constant(SourceBlock):
         """
         :param value: the constant, defaults to 0
         :type value: any, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(**blockargs)
@@ -102,7 +102,7 @@ class Time(SourceBlock):
 
     def __init__(self, value: Any | None = None, **blockargs: Any) -> None:
         """
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(**blockargs)
@@ -200,7 +200,7 @@ class WaveForm(SourceBlock, EventSource):
         :type max: float, optional
         :param duty: duty cycle for square wave in range [0,1], defaults to 0.5
         :type duty: float, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
 
         """
@@ -339,7 +339,6 @@ class Piecewise(SourceBlock, EventSource):
         - The tuples must be ordered by monotonically increasing time.
         - There is no default initial value, the list should contain
           a tuple with time zero otherwise the output will be undefined.
-        - The 2-tuples can
 
     .. note:: The block declares an event for the start of each segment.
 
@@ -358,7 +357,7 @@ class Piecewise(SourceBlock, EventSource):
         """
         :param seq: sequence of time, value pairs
         :type seq: list of 2-element iterables
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
 
         """
@@ -445,7 +444,7 @@ class Step(SourceBlock, EventSource):
         :type off: float, optional
         :param on: final value, defaults to 1
         :type on: float, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(**blockargs)
@@ -524,7 +523,7 @@ class Ramp(SourceBlock, EventSource):
         :type off: float, optional
         :param slope: gradient of slope, defaults to 1
         :type slope: float, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(**blockargs)
@@ -553,7 +552,9 @@ if __name__ == "__main__":  # pragma: no cover
     import sys
 
     root = Path(__file__).resolve().parents[3]
-    test_file = root / "tests" / "blocks" / f"test_blocks_{Path(__file__).stem.lower()}.py"
+    test_file = (
+        root / "tests" / "blocks" / f"test_blocks_{Path(__file__).stem.lower()}.py"
+    )
 
     if not test_file.exists():
         print(f"No module unit tests found for {Path(__file__).name}: {test_file}")

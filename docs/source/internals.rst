@@ -1,12 +1,59 @@
-Supporting classes
-******************
+*******************
+Simulation-user API
+*******************
 
+This section describes the public API for users of ``bdsim``. This is the API that is
+intended to be stable and supported across versions. It includes the classes and methods
+that are used to build and simulate block diagrams.
 
-.. inheritance-diagram:: bdsim.components
+BlockDiagram class
+-------------------
+
+This class describes a block diagram, a collection of blocks and wires that
+can be "executed" by :meth:`BDSim.run`.
+
+.. autoclass:: bdsim.BlockDiagram
+   :members: compile, connect, report_summary, report_lists, dotfile, showgraph
+   :undoc-members:
+   :show-inheritance:
 
 
 BDSim class
-===========
+-----------
+
+This class describes the run-time environment for executing a block diagram.
+
+.. autoclass:: bdsim.BDSim
+   :members: blockdiagram, run, blocks, block_library, report, done
+   :undoc-members:
+   :show-inheritance:
+   :special-members: __init__
+
+BDStruct class
+---------------
+
+This class is a struct-like container for storing simulation data.  It is
+returned by :meth:`BDSim.run` and contains the time vector, state history, and any watched variables.
+
+.. autoclass:: bdsim.BDStruct
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :special-members: __init__, __str__
+
+
+
+**************
+Developer API
+**************
+
+This section describes the internal API for developers of ``bdsim``. This includes
+classes and methods that are used internally by the library, and may not be stable or
+supported across versions. It is intended for developers who want to understand or
+modify the internals of ``bdsim``.
+
+BDSim class
+=============
 
 This class describes the run-time environment for executing a block diagram.
 
@@ -22,29 +69,24 @@ This class describes the run-time environment for executing a block diagram.
    :show-inheritance:
    :special-members: __init__
 
-.. autoclass:: bdsim.BDSimState
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :special-members: __init__
 
 BlockDiagram class
-==================
+====================
 
 This class describes a block diagram, a collection of blocks and wires that
 can be "executed".
 
 .. autoclass:: bdsim.BlockDiagram
-   :members:
+   :members: compile, connect, report_summary, report_lists, dotfile, showgraph
    :undoc-members:
    :show-inheritance:
 
 Components
-==========
+===========
 
 
 Wire
-----
+-----
 
 .. autoclass:: bdsim.Wire
    :members:
@@ -53,7 +95,7 @@ Wire
    :exclude-members: __dict__, __weakref__, __array_ufunc__, __module__
 
 Plug
-----
+-----
 
 .. autoclass:: bdsim.Plug
    :members:
@@ -63,7 +105,7 @@ Plug
    :exclude-members: __dict__, __weakref__, __array_ufunc__, __module__
 
 Blocks
-------
+-------
 
 .. autoclass:: bdsim.Block
    :members:
@@ -73,7 +115,7 @@ Blocks
    :exclude-members: __dict__, __weakref__, __array_ufunc__, __module__
 
 Source block
-^^^^^^^^^^^^
+^^^^^^^^^^^^^
 
 .. autoclass:: bdsim.SourceBlock
    :members:
@@ -82,7 +124,7 @@ Source block
    :special-members: 
 
 Sink block
-^^^^^^^^^^
+^^^^^^^^^^^
 
 .. autoclass:: bdsim.SinkBlock
    :members:
@@ -91,7 +133,7 @@ Sink block
    :special-members: 
 
 Function block
-^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^
 
 .. autoclass:: bdsim.FunctionBlock
    :members:
@@ -100,35 +142,16 @@ Function block
    :special-members: 
 
 Continuous-time block
-^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: bdsim.ContinuousBlock
    :members:
    :undoc-members:
    :show-inheritance:
-   :special-members: 
+   :special-members:
 
-Subsystem block
-^^^^^^^^^^^^^^^
-
-.. autoclass:: bdsim.SubsystemBlock
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :special-members: 
-
-Graphics block
-^^^^^^^^^^^^^^
-
-.. autoclass:: bdsim.GraphicsBlock
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :special-members: 
-
-
-Discrete-time systems
----------------------
+Discrete-time block
+"""""""""""""""""""""
 
 .. autoclass:: bdsim.SampledBlock
    :members:
@@ -147,4 +170,25 @@ Discrete-time systems
    :undoc-members:
    :show-inheritance:
    :special-members: __init__
+
+Subsystem block
+^^^^^^^^^^^^^^^^
+
+.. autoclass:: bdsim.SubsystemBlock
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :special-members: 
+
+Graphics block
+^^^^^^^^^^^^^^^
+
+.. autoclass:: bdsim.GraphicsBlock
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :special-members: 
+
+
+
 

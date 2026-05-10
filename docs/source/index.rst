@@ -1,8 +1,8 @@
 .. bdsim documentation master file
 
+*******************************************
 BDSim: Block Diagram Simulation for Python
-==========================================
-
+*******************************************
 .. raw:: html
 
    <table>
@@ -46,5 +46,7 @@ environments.
    :caption: Code documentation:
 
    bdsim
+   installation
+   jupyter-notebooks
    bdsim.blocks
    internals

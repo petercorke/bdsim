@@ -69,7 +69,7 @@ class ZOH(SampledBlock):
         :type clock: Clock
         :param x0: Initial value of the hold, defaults to 0
         :type x0: array_like, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(clock=clock, nin=1, nout=1, x0=x0, **blockargs)
@@ -171,7 +171,7 @@ class Integrator_S(SampledBlock):
         :type max: float or array_like, optional
         :param enable: function to enable or disable integration
         :type enable: callable
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(clock=clock, x0=x0, **blockargs)
@@ -261,7 +261,7 @@ class PoseIntegrator_S(SampledBlock):
         :type clock: Clock
         :param x0: Initial pose, defaults to null
         :type x0: SE3, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
 
@@ -350,7 +350,7 @@ class Deriv_S(SampledBlock):
         :type x0: array_like, optional
         :param gain: gain or scaling factor, defaults to 1
         :type gain: float
-        :param kwargs: |BlockOptions|
+        :param kwargs: :meth:`common block options <bdsim.Block.__init__>`
         :type kwargs: dict
         """
         super().__init__(clock=clock, x0=x0, feedthrough=True, **blockargs)
@@ -443,7 +443,7 @@ class LTI_SS_S(SampledBlock):
         :type D: array_like, optional
         :param x0: initial states, defaults to None
         :type x0: array_like, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         # check dimensions of A, B, C, D conform
@@ -863,7 +863,7 @@ class PID_S(SubsystemBlock):
         :param I_band: band within which integral action is active
         :type I_band: float
         :param structure: the structure of the PID implementation, "parallel" (default), "series", "standard|ideal"
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
 
