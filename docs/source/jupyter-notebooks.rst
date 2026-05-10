@@ -136,7 +136,7 @@ Obtaining the notebooks
 -----------------------
 
 If you want to run the notebooks locally, you will need to obtain them from the GitHub repository.  
-You can download all the notebooks `directly from the GitHub web interface as a zip file <https://petercorke.github.io/bdsim/bdsim_notebooks.zip>`_, and extract the notebooks from the zip file.
+You can download all the notebooks `directly from the GitHub web interface as a zip file <https://github.com/petercorke/bdsim/releases/latest/download/bdsim_notebooks.zip>`_, and extract the notebooks from the zip file.
 
 Alternatively, you can clone the repository
 
@@ -145,7 +145,7 @@ Alternatively, you can clone the repository
     git clone https://github.com/petercorke/bdsim.git
 
 The notebooks are located in the ``docs/notebooks`` folder.  
-You can also navigate to `that folder on GitHub <https://github.com/petercorke/machinevision-toolbox-python/tree/main/docs/notebooks>`_ and download the notebooks individually.
+You can also navigate to `that folder on GitHub <https://github.com/petercorke/bdsim/tree/main/docs/notebooks>`_ and download the notebooks individually.
 
 
 
@@ -163,7 +163,7 @@ Examples
 to build and simulate block diagrams.  These are located in the ``examples`` folder.
 You can run these examples from the command line.
 
-You can download all the examples `directly from the GitHub web interface as a zip file <https://petercorke.github.io/bdsim/bdsim_examples.zip>`_, and extract the Python files from the zip file.
+You can download all the examples `directly from the GitHub web interface as a zip file <https://github.com/petercorke/bdsim/releases/latest/download/bdsim_examples.zip>`_, and extract the Python files from the zip file.
 
 Alternatively, you can clone the repository
 

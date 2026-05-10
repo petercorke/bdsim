@@ -16,7 +16,7 @@
     <a href="https://github.com/petercorke/bdsim">GitHub</a> •
     <a href="https://github.com/petercorke/bdsim/wiki">Wiki</a> •
     <a href="https://github.com/petercorke/bdsim/blob/main/CHANGELOG.md">Changelog</a> •
-    <a href="#installation">Installation</a>
+    <a href="https://petercorke.github.io/bdsim/installation.html">Installation</a>
   </p>
 </div>
 
@@ -26,15 +26,14 @@
 [![A Python Robotics Package](https://raw.githubusercontent.com/petercorke/robotics-toolbox-python/master/.github/svg/py_collection.min.svg)](https://github.com/petercorke/robotics-toolbox-python)
 [![QUT Centre for Robotics Open Source](https://github.com/qcr/qcr.github.io/raw/master/misc/badge.svg)](https://qcr.github.io)
 [![Build Status](https://github.com/petercorke/bdsim/actions/workflows/ci.yml/badge.svg)](https://github.com/petercorke/bdsim/actions/workflows/ci.yml)
-[![Coverage](https://codecov.io/gh/petercorke/bdsim/branch/main/graph/badge.svg)](https://codecov.io/gh/petercorke/machinevision-toolbox-python)
+[![Coverage](https://codecov.io/gh/petercorke/bdsim/branch/main/graph/badge.svg)](https://codecov.io/gh/petercorke/bdsim)
 ![Python Version](https://img.shields.io/pypi/pyversions/bdsim.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PyPI - Downloads](https://img.shields.io/pypi/dw/bdsim)](https://pypistats.org/packages/bdsim)
 
 ### Powered by
-[![Powered by Spatial Maths](https://raw.githubusercontent.com/petercorke/spatialmath-python/master/.github/svg/sm_powered.min.svg)](https://github.com/petercorke/spatialmath-python)
 [![Powered by NumPy](https://img.shields.io/badge/powered_by-NumPy-013243?logo=numpy&logoColor=white)](https://numpy.org)
-
+[![Powered by Spatial Maths](https://raw.githubusercontent.com/petercorke/spatialmath-python/master/.github/svg/sm_powered.min.svg)](https://github.com/petercorke/spatialmath-python)
 
 ## Synopsis
 
@@ -61,9 +60,9 @@ Bash
 pip install bdsim[editor]
 ```
 
-Install locally with help from the [detailed installation guide](https://petercorke.github.io/machinevision-toolbox-python/installation.html#installing-the-toolbox).
+Install locally with help from the [detailed installation guide](https://petercorke.github.io/bdsim/installation.html).
 
-Or skip setup and run the [browser-based JupyterLite examples](https://petercorke.github.io/machinevision-toolbox-python/lite/lab/index.html?path=files/index.ipynb).
+Or skip setup and run the [browser-based JupyterLite examples](https://petercorke.github.io/bdsim/lite/lab/index.html?path=index.ipynb).
 
 ## Example
 

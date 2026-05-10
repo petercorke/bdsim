@@ -32,7 +32,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install .[dev,docs]
-          pip install jupyterlite jupyter-server
+          pip install jupyterlite jupyter-server jupyterlite-pyodide-kernel
           sudo apt-get update
           sudo apt-get install -y graphviz
 
@@ -50,6 +50,14 @@ jobs:
         run: |
           cd docs/lite
           jupyter lite build --output-dir ../build/html/lite --contents files --force
+
+      - name: Validate JupyterLite kernel availability
+        run: |
+          if ! find docs/build/html/lite -type d -iname '*pyodide*kernel*' | grep -q .; then
+            echo "ERROR: JupyterLite build does not include a Pyodide kernel extension."
+            echo "Expected a directory matching '*pyodide*kernel*' under docs/build/html/lite."
+            exit 1
+          fi
 
       - name: Prepare Pages artifact
         run: |
