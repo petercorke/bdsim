@@ -90,7 +90,7 @@ jobs:
       - name: Run coverage
         run: |
           python -m pip install --upgrade pip
-          pip install .[dev,bdedit]
+          pip install -e .[dev,bdedit]
           coverage run --omit='tests/*.py' -m pytest
           coverage report
           coverage xml
