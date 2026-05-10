@@ -1,39 +1,61 @@
-# This workflows will upload a Python Package using Twine when a release is created
-# For more information see: https://help.github.com/en/actions/language-and-framework-guides/using-python-with-github-actions#publishing-to-package-registries
-
-# name: Upload Python Package
+name: Package Artifacts
 
 on:
+  push:
+    branches: [main, cleanup]
   release:
-    types: [created]
+    types: [published]
   workflow_dispatch:
 
-jobs:
-  deploy:
+permissions:
+  contents: write
 
-    runs-on: ${{ matrix.os }}
-    strategy:
-      max-parallel: 2
-      matrix:
-        os: [ubuntu-latest]
-        python-version: ['3.10']
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -U setuptools wheel twine
-    - name: Build and publish
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD_BDSIM }}
-      run: |
-        python setup.py sdist bdist_wheel
-        ls ./dist/*.whl
-        twine upload dist/*.gz
-        twine upload dist/*.whl
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.10"
+
+      - name: Install notebook/lite tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install jupyterlite
+
+      - name: Prepare JupyterLite notebooks
+        run: |
+          mkdir -p docs/lite/files
+          find docs/lite/files -name '*.ipynb' -delete
+          cp docs/notebooks/*.ipynb docs/lite/files/
+
+      - name: Create zip artifacts
+        run: |
+          mkdir -p dist
+          rm -f dist/bdsim_examples.zip dist/bdsim_notebooks.zip
+          zip -r dist/bdsim_examples.zip examples
+          zip -r dist/bdsim_notebooks.zip docs/notebooks
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: bdsim-artifacts
+          path: |
+            dist/bdsim_examples.zip
+            dist/bdsim_notebooks.zip
+
+      - name: Upload artifacts to release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/bdsim_examples.zip
+            dist/bdsim_notebooks.zip

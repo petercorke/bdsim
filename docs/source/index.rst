@@ -1,11 +1,8 @@
-.. Spatial Maths package documentation master file, created by
-   sphinx-quickstart on Sun Apr 12 15:50:23 2020.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. bdsim documentation master file
 
-Block diagrams for Python
-=========================
-
+*******************************************
+BDSim: Block Diagram Simulation for Python
+*******************************************
 .. raw:: html
 
    <table>
@@ -33,20 +30,23 @@ Block diagrams for Python
    </tr>
    </table>
 
-This Python package enables modelling and simulation of dynamic systems
-conceptualized in block diagram form, but represented in terms of Python class
-and method calls.
+Forget the frustration of dragging boxes and managing rigid GUIs. **bdsim** allows you
+to harness the full expressiveness of Python to build, simulate, and analyze dynamic
+systems. Unlike traditional tools like Simulink® or LabView®, we use a "code-first"
+approach where the system is represented through native Python class and method calls. 
 
-Unlike Simulink® or LabView®, we write Python code rather than drawing boxes and
-wires.  Wires can communicate any Python type such as scalars, strings, lists,
-dictionaries, numpy arrays, other objects, and even functions.
+This architecture means your "wires" are no longer limited to simple numeric signals. In
+``bdsim``, wires can communicate any Python type—including scalars, strings, lists,
+dictionaries, NumPy arrays, custom objects, and even functions—enabling a level of
+architectural flexibility and complexity that is difficult to achieve in graphical
+environments.
 
-    
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Code documentation:
 
    bdsim
+   installation
+   jupyter-notebooks
    bdsim.blocks
    internals
-

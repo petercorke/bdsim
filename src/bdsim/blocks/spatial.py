@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import numpy as np
+from typing import Any
+
 try:
     from spatialmath import SE2, SE3, SO2, SO3
 
@@ -47,11 +50,11 @@ if sm:
         nin = 1
         nout = 1
 
-        def __init__(self, pose=None, **blockargs) -> None:
+        def __init__(self, pose: SO2 | SO3 | SE2 | SE3 | None = None, **blockargs: Any) -> None:
             """
             :param pose: pose to apply
             :type pose: SO2, SE2, SO3 or SE3
-            :param blockargs: |BlockOptions|
+            :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
             :type blockargs: dict
             """
             if not isinstance(pose, (SO2, SO3, SE2, SE3)):
@@ -60,7 +63,7 @@ if sm:
             super().__init__(**blockargs)
             self.pose = pose
 
-        def output(self, t, inputs, x):
+        def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
             input = inputs[0]
             return [input * self.pose]
 
@@ -102,11 +105,11 @@ if sm:
         nin = 1
         nout = 1
 
-        def __init__(self, pose=None, **blockargs) -> None:
+        def __init__(self, pose: SO2 | SO3 | SE2 | SE3 | None = None, **blockargs: Any) -> None:
             """
             :param pose: pose to apply
             :type pose: SO2, SE2, SO3 or SE3
-            :param blockargs: |BlockOptions|
+            :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
             :type blockargs: dict
             """
             if not isinstance(pose, (SO2, SO3, SE2, SE3)):
@@ -115,7 +118,7 @@ if sm:
             super().__init__(**blockargs)
             self.pose = pose
 
-        def output(self, t, inputs, x):
+        def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
             input = inputs[0]
             return [self.pose * input]
 
@@ -157,14 +160,14 @@ if sm:
         nin = 2
         nout = 1
 
-        def __init__(self, **blockargs) -> None:
+        def __init__(self, **blockargs: Any) -> None:
             """
-            :param blockargs: |BlockOptions|
+            :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
             :type blockargs: dict
             """
             super().__init__(nin=2, **blockargs)
 
-        def output(self, t, inputs, x):
+        def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
             pose = inputs[0]
             if not isinstance(pose, (SO2, SO3, SE2, SE3)):
                 raise ValueError("pose must be SO2, SE2, SO3 or SE3")
@@ -205,14 +208,14 @@ if sm:
         nin = 1
         nout = 1
 
-        def __init__(self, **blockargs) -> None:
+        def __init__(self, **blockargs: Any) -> None:
             """
-            :param blockargs: |BlockOptions|
+            :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
             :type blockargs: dict
             """
             super().__init__(**blockargs)
 
-        def output(self, t, inputs, x):
+        def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
             input = inputs[0]
             return [input.inv()]
 
@@ -220,7 +223,15 @@ if sm:
 # ------------------------------------------------------------------------ #
 
 if __name__ == "__main__":  # pragma: no cover
-
     from pathlib import Path
+    import subprocess
+    import sys
 
-    exec(open(Path(__file__).parent.parent.parent / "tests" / "test_spatial.py").read())
+    root = Path(__file__).resolve().parents[3]
+    test_file = root / "tests" / "blocks" / f"test_blocks_{Path(__file__).stem.lower()}.py"
+
+    if not test_file.exists():
+        print(f"No module unit tests found for {Path(__file__).name}: {test_file}")
+        raise SystemExit(0)
+
+    raise SystemExit(subprocess.call([sys.executable, "-m", "pytest", str(test_file)]))

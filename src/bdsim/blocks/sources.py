@@ -11,8 +11,9 @@ from __future__ import annotations
 
 import numpy as np
 import math
-from bdsim.components import SourceBlock, EventSource
-from typing import Any, Optional
+from typing import Any
+
+from bdsim.components import EventSource, SourceBlock
 
 
 # ------------------------------------------------------------------------ #
@@ -45,11 +46,11 @@ class Constant(SourceBlock):
     nin = 0
     nout = 1
 
-    def __init__(self, value: Any = 0, **blockargs) -> None:
+    def __init__(self, value: Any = 0, **blockargs: Any) -> None:
         """
         :param value: the constant, defaults to 0
         :type value: any, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(**blockargs)
@@ -60,7 +61,7 @@ class Constant(SourceBlock):
 
         self.add_param("value")
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         return [self.value]
 
 
@@ -99,14 +100,14 @@ class Time(SourceBlock):
     nin = 0
     nout = 1
 
-    def __init__(self, value=None, **blockargs) -> None:
+    def __init__(self, value: Any | None = None, **blockargs: Any) -> None:
         """
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(**blockargs)
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         return [t]
 
 
@@ -169,16 +170,16 @@ class WaveForm(SourceBlock, EventSource):
 
     def __init__(
         self,
-        wave="square",
-        freq=1,
-        unit="Hz",
-        phase=0,
-        amplitude=1,
-        offset=0,
-        min=None,
-        max=None,
-        duty=0.5,
-        **blockargs,
+        wave: str = "square",
+        freq: float = 1,
+        unit: str = "Hz",
+        phase: float = 0,
+        amplitude: float = 1,
+        offset: float = 0,
+        min: float | None = None,
+        max: float | None = None,
+        duty: float = 0.5,
+        **blockargs: Any,
     ) -> None:
         """
         :param wave: type of waveform to generate, one of: 'sine', 'square' [default], 'triangle'
@@ -199,7 +200,7 @@ class WaveForm(SourceBlock, EventSource):
         :type max: float, optional
         :param duty: duty cycle for square wave in range [0,1], defaults to 0.5
         :type duty: float, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
 
         """
@@ -211,14 +212,16 @@ class WaveForm(SourceBlock, EventSource):
             self.wave: str = wave
         else:
             raise ValueError("bad waveform")
+        frequency: float
         if unit == "Hz":
-            self.freq: float = freq
+            frequency = freq
         elif unit == "rad/s":
-            self.freq: float = freq / (2 * math.pi)
+            frequency = freq / (2 * math.pi)
         else:
             raise ValueError("bad unit")
+        self.freq: float = frequency
         if 0 <= phase <= 1:
-            self.phase: int = phase
+            self.phase: float = phase
         else:
             raise ValueError("phase out of range")
         if max is not None and min is not None:
@@ -233,32 +236,35 @@ class WaveForm(SourceBlock, EventSource):
         self.amplitude = amplitude
         self.offset = offset
 
-    def start(self, simstate) -> None:
+    def start(self, simstate: Any) -> None:
         super().start(simstate)
 
+        t1: float
+        t2: float
         if self.wave == "square":
-            t1: float = self.phase / self.freq
-            t2: float = (self.duty + self.phase) / self.freq
+            t1 = self.phase / self.freq
+            t2 = (self.duty + self.phase) / self.freq
         elif self.wave == "triangle":
-            t1: float = (0.25 + self.phase) / self.freq
-            t2: float = (0.75 + self.phase) / self.freq
+            t1 = (0.25 + self.phase) / self.freq
+            t2 = (0.75 + self.phase) / self.freq
         else:
             return
 
         # t1 < t2
         T: float = 1.0 / self.freq
         if simstate is not None:
-            while t1 < simstate.T:
+            while t1 < simstate.tf:
                 simstate.declare_event(self, t1)
                 simstate.declare_event(self, t2)
                 t1 += T
                 t2 += T
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         T: float = 1.0 / self.freq
         phase = (t * self.freq - self.phase) % 1.0
 
         # define all signals in the range -1 to 1
+        out: float
         if self.wave == "square":
             if phase < self.duty:
                 out = 1
@@ -272,7 +278,7 @@ class WaveForm(SourceBlock, EventSource):
             else:
                 out = -1 + 4 * (phase - 0.75)
         elif self.wave == "sine":
-            out: float = math.sin(phase * 2 * math.pi)
+            out = math.sin(phase * 2 * math.pi)
         else:
             raise ValueError("bad option for signal")
 
@@ -333,7 +339,6 @@ class Piecewise(SourceBlock, EventSource):
         - The tuples must be ordered by monotonically increasing time.
         - There is no default initial value, the list should contain
           a tuple with time zero otherwise the output will be undefined.
-        - The 2-tuples can
 
     .. note:: The block declares an event for the start of each segment.
 
@@ -345,19 +350,20 @@ class Piecewise(SourceBlock, EventSource):
 
     def __init__(
         self,
-        *args: list[tuple[float, float]],
-        seq: Optional[list[tuple[float, float]]] = None,
-        **blockargs,
+        *args: tuple[float, float],
+        seq: list[tuple[float, float]] | None = None,
+        **blockargs: Any,
     ) -> None:
         """
         :param seq: sequence of time, value pairs
         :type seq: list of 2-element iterables
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
 
         """
         super().__init__(**blockargs)
 
+        _seq: tuple[tuple[float, float], ...] | list[tuple[float, float]] | None
         if len(args) > 0:
             _seq = args
         else:
@@ -368,14 +374,14 @@ class Piecewise(SourceBlock, EventSource):
         self.t = [x[0] for x in _seq]
         self.y = [x[1] for x in _seq]
 
-    def start(self, simstate) -> None:
+    def start(self, simstate: Any) -> None:
         super().start(simstate)
 
         if simstate is not None:
             for t in self.t:
                 simstate.declare_event(self, t)
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         i: int = sum([1 if t >= _t else 0 for _t in self.t]) - 1
         out = self.y[i]
         # print(out)
@@ -428,7 +434,9 @@ class Step(SourceBlock, EventSource):
     nin = 0
     nout = 1
 
-    def __init__(self, T=1, off=0, on=1, **blockargs) -> None:
+    def __init__(
+        self, T: float = 1, off: float = 0, on: float = 1, **blockargs: Any
+    ) -> None:
         """
         :param T: time of step, defaults to 1
         :type T: float, optional
@@ -436,23 +444,24 @@ class Step(SourceBlock, EventSource):
         :type off: float, optional
         :param on: final value, defaults to 1
         :type on: float, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(**blockargs)
 
-        self.T: int = T
-        self.off: int = off
-        self.on: int = on
+        self.T: float = T
+        self.off: float = off
+        self.on: float = on
 
-    def start(self, simstate) -> None:
+    def start(self, simstate: Any) -> None:
         simstate.declare_event(self, self.T)
 
-    def output(self, t, inputs, x) -> list[int]:
+    def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[float]:
+        out: float
         if t >= self.T:
-            out: int = self.on
+            out = self.on
         else:
-            out: int = self.off
+            out = self.off
 
         # print(out)
         return [out]
@@ -504,7 +513,9 @@ class Ramp(SourceBlock, EventSource):
     nin = 0
     nout = 1
 
-    def __init__(self, T=1, off=0, slope=1, **blockargs) -> None:
+    def __init__(
+        self, T: float = 1, off: float = 0, slope: float = 1, **blockargs: Any
+    ) -> None:
         """
         :param T: time of ramp start, defaults to 1
         :type T: float, optional
@@ -512,30 +523,41 @@ class Ramp(SourceBlock, EventSource):
         :type off: float, optional
         :param slope: gradient of slope, defaults to 1
         :type slope: float, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(**blockargs)
 
-        self.T: int = T
-        self.off: int = off
-        self.slope: int = slope
+        self.T: float = T
+        self.off: float = off
+        self.slope: float = slope
 
-    def start(self, simstate) -> None:
+    def start(self, simstate: Any) -> None:
         simstate.declare_event(self, self.T)
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
+        out: float | int
         if t >= self.T:
             out = self.off + self.slope * (t - self.T)
         else:
-            out: int = self.off
+            out = self.off
 
         # print(out)
         return [out]
 
 
 if __name__ == "__main__":  # pragma: no cover
-
     from pathlib import Path
+    import subprocess
+    import sys
 
-    exec(open(Path(__file__).parent.parent.parent / "tests" / "test_sources.py").read())
+    root = Path(__file__).resolve().parents[3]
+    test_file = (
+        root / "tests" / "blocks" / f"test_blocks_{Path(__file__).stem.lower()}.py"
+    )
+
+    if not test_file.exists():
+        print(f"No module unit tests found for {Path(__file__).name}: {test_file}")
+        raise SystemExit(0)
+
+    raise SystemExit(subprocess.call([sys.executable, "-m", "pytest", str(test_file)]))

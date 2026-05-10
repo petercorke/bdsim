@@ -1,0 +1,1392 @@
+# Library imports
+import os
+import json
+import subprocess
+import datetime
+from pathlib import Path
+
+# PySide6 imports
+from PySide6.QtGui import *
+from PySide6.QtCore import *
+from PySide6.QtWidgets import *
+
+# BdEdit imports
+from bdedit.Icons import *
+from bdedit.interface import Interface
+
+
+# Todo - update documentation for this new class, handles any edits/saves/undo/redo within interface.
+#  Also handles the run related functionality now
+# =============================================================================
+#
+#   Defining the Interface Manager Class,
+#
+# =============================================================================
+class InterfaceWindow(QMainWindow):
+    def __init__(self, resolution, debug=False):
+        super().__init__()
+
+        # The name of the current model is initially set to None, this is then
+        # overwritten when the model is saved
+        self.filename = None
+        self.bgmode = 0  # default background/grid mode
+        self._autosave_interval_ms = 60000
+
+        self.initUI(resolution, debug)
+
+    def initUI(self, resolution, debug):
+        # create node editor widget
+        self.interface = Interface(resolution, debug, self)
+        self.interface.scene.addHasBeenModifiedListener(self.updateApplicationName)
+        self.setCentralWidget(self.interface)
+
+        self.runButtonParameters = {
+            "SimTime": 10.0,
+            "Graphics": True,
+            "Animation": True,
+            "Verbose": False,
+            "Progress": True,
+            "Debug": "",
+        }
+
+        self.toolbar = QToolBar()
+        self.fontSizeBox = QSpinBox()
+        self.simTimeBox = QLineEdit()
+
+        self.floatValidator = QDoubleValidator()
+
+        # Create the toolbar action items and the toolbar itself
+        self.createActions()
+        self.createToolbar()
+
+        # Keep window chrome readable across system theme changes (eg. macOS auto dark mode).
+        self._applyAdaptiveChromeTheme()
+
+        # set window properties
+        # self.setWindowIcon(QIcon(":/Icons_Reference/Icons/bdsim_icon.png"))
+        self.updateApplicationName()
+
+        # Periodic autosave minimizes data loss for hard crashes that cannot be
+        # intercepted by Python exception handlers.
+        self._autosave_timer = QTimer(self)
+        self._autosave_timer.setInterval(self._autosave_interval_ms)
+        self._autosave_timer.timeout.connect(self._autosave_if_modified)
+        self._autosave_timer.start()
+
+        self.show()
+
+    @staticmethod
+    def _isDarkPalette(palette):
+        """Infer dark theme from the active palette window color luminance."""
+        window_color = palette.color(QPalette.ColorRole.Window)
+        # Relative luminance proxy on [0,255].
+        luminance = (
+            0.2126 * window_color.redF()
+            + 0.7152 * window_color.greenF()
+            + 0.0722 * window_color.blueF()
+        ) * 255.0
+        return luminance < 140.0
+
+    def _applyAdaptiveChromeTheme(self):
+        """Apply a high-contrast menu/toolbar stylesheet for the current theme."""
+        dark = self._isDarkPalette(self.palette())
+
+        if dark:
+            chrome_bg = "#2b2f36"
+            chrome_fg = "#f5f7fa"
+            hover_bg = "#3a404a"
+            menu_sel_bg = "#2f6db1"
+            menu_sel_fg = "#ffffff"
+            border = "#4a515c"
+            input_bg = "#1f2329"
+            input_fg = "#f5f7fa"
+        else:
+            chrome_bg = "#f4f5f7"
+            chrome_fg = "#111827"
+            hover_bg = "#e5e7eb"
+            menu_sel_bg = "#2563eb"
+            menu_sel_fg = "#ffffff"
+            border = "#cfd3da"
+            input_bg = "#ffffff"
+            input_fg = "#111827"
+
+        menubar = self.menuBar()
+        menubar.setStyleSheet(f"""
+            QMenuBar {{
+                background: {chrome_bg};
+                color: {chrome_fg};
+                border-bottom: 1px solid {border};
+            }}
+            QMenuBar::item {{
+                background: transparent;
+                color: {chrome_fg};
+                padding: 4px 8px;
+            }}
+            QMenuBar::item:selected {{
+                background: {hover_bg};
+            }}
+            QMenu {{
+                background: {chrome_bg};
+                color: {chrome_fg};
+                border: 1px solid {border};
+            }}
+            QMenu::item:selected {{
+                background: {menu_sel_bg};
+                color: {menu_sel_fg};
+            }}
+            """)
+
+        self.toolbar.setStyleSheet(f"""
+            QToolBar {{
+                background: {chrome_bg};
+                color: {chrome_fg};
+                border-bottom: 1px solid {border};
+                spacing: 4px;
+            }}
+            QToolBar QToolButton {{
+                color: {chrome_fg};
+                background: transparent;
+                border: 1px solid transparent;
+                padding: 3px;
+            }}
+            QToolBar QToolButton:hover {{
+                background: {hover_bg};
+                border: 1px solid {border};
+            }}
+            QToolBar QLineEdit,
+            QToolBar QSpinBox {{
+                background: {input_bg};
+                color: {input_fg};
+                border: 1px solid {border};
+                selection-background-color: {menu_sel_bg};
+                selection-color: {menu_sel_fg};
+            }}
+            """)
+
+    def changeEvent(self, event):
+        """Re-apply chrome styling when the app palette/theme changes at runtime."""
+        if event.type() in {
+            QEvent.Type.PaletteChange,
+            QEvent.Type.ApplicationPaletteChange,
+        }:
+            self._applyAdaptiveChromeTheme()
+        super().changeEvent(event)
+
+    def _default_recovery_dir(self) -> Path:
+        if self.filename is not None:
+            try:
+                return Path(self.filename).resolve().parent
+            except Exception:
+                pass
+        return Path.cwd()
+
+    def _autosave_path(self) -> Path:
+        if self.filename is not None:
+            model = Path(self.filename)
+            stem = model.stem if model.stem else "untitled"
+            return model.resolve().with_name(f"{stem}.autosave.bd")
+        return self._default_recovery_dir() / "untitled.autosave.bd"
+
+    def _default_recovery_path(self, filename: str) -> Path:
+        return self._default_recovery_dir() / filename
+
+    def _write_scene_snapshot(self, path: Path) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        payload = self.centralWidget().scene.serialize()
+        path.write_text(json.dumps(payload, indent=4), encoding="utf-8")
+
+    def emergencySave(self, filename: str = "saved.bd") -> str | None:
+        """Best-effort crash save that preserves the modified flag state."""
+        try:
+            target = self._default_recovery_path(filename)
+            self._write_scene_snapshot(target)
+            return str(target)
+        except Exception as err:
+            print(f"Emergency save failed: {err}")
+            return None
+
+    def _autosave_if_modified(self):
+        if not self.isModified():
+            return
+        try:
+            self._write_scene_snapshot(self._autosave_path())
+        except Exception as err:
+            print(f"Autosave failed: {err}")
+
+    def cleanupAutosaveFiles(self):
+        """Remove autosave artifacts after a clean, user-driven exit."""
+        candidates = {
+            self._autosave_path(),
+            # Remove legacy name from older builds if present.
+            self._default_recovery_dir() / "saved.autosave.bd",
+        }
+        for path in candidates:
+            try:
+                if path.exists():
+                    path.unlink()
+            except Exception:
+                # Never block shutdown because autosave cleanup failed.
+                pass
+
+    def createActions(self):
+        # Creates basic actions related to saving/loading files
+        self.actNew = QAction(
+            QIcon(":/Icons_Reference/Icons/new_file.png"),
+            "&New",
+            self,
+            shortcut="Ctrl+N",
+            toolTip="Create new model.",
+            triggered=self.newFile,
+        )
+        self.actOpen = QAction(
+            QIcon(":/Icons_Reference/Icons/open_folder.png"),
+            "&Open",
+            self,
+            shortcut="Ctrl+O",
+            toolTip="Open model.",
+            triggered=self.loadFromFile,
+        )
+        self.actSave = QAction(
+            QIcon(":/Icons_Reference/Icons/save.png"),
+            "&Save",
+            self,
+            shortcut="Ctrl+S",
+            toolTip="Save model.",
+            triggered=self.saveToFile,
+        )
+        self.actSaveAs = QAction(
+            QIcon(":/Icons_Reference/Icons/save_as.png"),
+            "&Save As",
+            self,
+            shortcut="Ctrl+Shift+S",
+            toolTip="Save model as.",
+            triggered=self.saveAsToFile,
+        )
+        self.actExit = QAction(
+            QIcon(":/Icons_Reference/Icons/quit.png"),
+            "&Quit",
+            self,
+            shortcut="Ctrl+Q",
+            toolTip="Quit bdedit.",
+            triggered=self.close,
+        )
+
+        # Actions related to editing files (undo/redo)
+        self.actUndo = QAction(
+            QIcon(":/Icons_Reference/Icons/undo.png"),
+            "&Undo",
+            self,
+            shortcut="Ctrl+Z",
+            toolTip="Undo last action.",
+            triggered=self.editUndo,
+        )
+        self.actRedo = QAction(
+            QIcon(":/Icons_Reference/Icons/redo.png"),
+            "&Redo",
+            self,
+            shortcut="Ctrl+Shift+Z",
+            toolTip="Redo last action.",
+            triggered=self.editRedo,
+        )
+        self.actDelete = QAction(
+            QIcon(":/Icons_Reference/Icons/remove.png"),
+            "&Delete",
+            self,
+            toolTip="Delete selected items.",
+            triggered=self.editDelete,
+        )
+        self.actDelete.setShortcuts([QKeySequence("Delete"), QKeySequence("Backspace")])
+
+        # Miscellaneous actions
+        self.actFlipBlocks = QAction(
+            "Flip Blocks",
+            self,
+            shortcut="F",
+            toolTip="Flip selected blocks.",
+            triggered=self.miscFlip,
+        )
+        self.actFitView = QAction(
+            "Fit View",
+            self,
+            shortcut="V",
+            toolTip="Fit entire diagram in the canvas view.",
+            triggered=self.miscFitView,
+        )
+        self.actScreenshot = QAction(
+            "Screenshot",
+            self,
+            shortcut="P",
+            toolTip="Take and save a screenshot of your diagram.",
+            triggered=lambda checked: self.miscScreenshot(None),
+        )
+        self.actWireOverlaps = QAction(
+            "Toggle Wire Overlaps",
+            self,
+            shortcut="I",
+            toolTip="Toggle markers where wires overlap.",
+            triggered=self.miscEnableOverlaps,
+            checkable=True,
+        )
+        self.actHideConnectors = QAction(
+            "Toggle Connectors",
+            self,
+            shortcut="H",
+            toolTip="Toggle visibilitiy of connector blocks (hidden/visible).",
+            triggered=self.miscHideConnectors,
+            checkable=True,
+        )
+        self.actDisableBackground = QAction(
+            "Disable Background",
+            self,
+            shortcut="T",
+            toolTip="Toggle background mode (grey with grid / white without grid).",
+            triggered=self.miscToggleBackground,
+            checkable=True,
+        )
+
+        # Actions related to model simulation
+        self.actRunButton = QAction(
+            QIcon(":/Icons_Reference/Icons/run.png"),
+            "Run",
+            self,
+            shortcut="R",
+            toolTip="<b>Run Button (R)</b><p>Simulate your block diagram model.</p>",
+            triggered=self.runButton,
+        )
+        self.actAbortButton = QAction(
+            QIcon(":/Icons_Reference/Icons/abort.png"),
+            "Abort",
+            self,
+            shortcut="Q",
+            toolTip="<b>Abort Button (Q)</b><p>Abort simulation of your block diagram model.</p>",
+            triggered=self.abortButton,
+        )
+        self.actAboutBdedit = QAction(
+            "About bdedit",
+            self,
+            toolTip="About bdedit.",
+            triggered=self.showAbout,
+        )
+        self.actSimTime = self.simTimeBox.addAction(
+            QIcon(":/Icons_Reference/Icons/simTime.png"),
+            self.simTimeBox.ActionPosition.LeadingPosition,
+        )
+        self.actSimTime.setToolTip(
+            "<b>Simulation Time</b><p>Description to be added</p>"
+        )
+        self.simTimeBox.setText(str(self.runButtonParameters["SimTime"]))
+        self.simTimeBox.setMinimumWidth(55)
+        self.simTimeBox.setMaximumWidth(75)
+        self.simTimeBox.setValidator(self.floatValidator)
+        self.simTimeBox.editingFinished.connect(self.updateSimTime)
+
+        # Actions related to formatting floating text labels
+        self.actAlignLeft = QAction(
+            QIcon(":/Icons_Reference/Icons/left_align.png"),
+            "Left",
+            self,
+            shortcut="Ctrl+Shift+L",
+            toolTip="<b>Left Align (Ctrl+Shift+L)</b><p>Left align your selected floating text.</p>",
+            triggered=lambda: self.textAlignment("AlignLeft"),
+            checkable=True,
+        )
+        self.actAlignCenter = QAction(
+            QIcon(":/Icons_Reference/Icons/center_align.png"),
+            "Center",
+            self,
+            shortcut="Ctrl+Shift+C",
+            toolTip="<b>Center (Ctrl+Shift+C)</b><p>Center your selected floating text.</p>",
+            triggered=lambda: self.textAlignment("AlignCenter"),
+            checkable=True,
+        )
+        self.actAlignRight = QAction(
+            QIcon(":/Icons_Reference/Icons/right_align.png"),
+            "Right",
+            self,
+            shortcut="Ctrl+Shift+R",
+            toolTip="<b>Right Align (Ctrl+Shift+R)</b><p>Right align your selected floating text.</p>",
+            triggered=lambda: self.textAlignment("AlignRight"),
+            checkable=True,
+        )
+
+        self.actBoldText = QAction(
+            QIcon(":/Icons_Reference/Icons/bold.png"),
+            "&Bold",
+            self,
+            shortcut="Ctrl+B",
+            toolTip="<b>Bold (Ctrl+B)</b><p>Toggle bold on selected floating text.</p>",
+            triggered=self.textBold,
+            checkable=True,
+        )
+        self.actUnderLineText = QAction(
+            QIcon(":/Icons_Reference/Icons/underline.png"),
+            "&Underline",
+            self,
+            shortcut="Ctrl+U",
+            toolTip="<b>Underline (Ctrl+U)</b><p>Toggle underline on selected floating text.</p>",
+            triggered=self.textUnderline,
+            checkable=True,
+        )
+        self.actItalicText = QAction(
+            QIcon(":/Icons_Reference/Icons/italic.png"),
+            "&Italicize",
+            self,
+            shortcut="Ctrl+I",
+            toolTip="<b>Italic (Ctrl+I)</b><p>Toggle italics on selected floating text.</p>",
+            triggered=self.textItalicize,
+            checkable=True,
+        )
+
+        self.actFontType = QAction(
+            "Font",
+            self,
+            shortcut="Ctrl+Shift+F",
+            toolTip="<b>Font (Ctrl+Shift+F)</b><p>Choose a font style for floating text.</p>",
+            triggered=self.textFontStyle,
+        )
+        self.fontSizeBox.setValue(14)
+        self.fontSizeBox.valueChanged.connect(self.textFontSize)
+        self.actTextColor = QAction(
+            QIcon(":/Icons_Reference/Icons/color_picker.png"),
+            "Text Color",
+            self,
+            toolTip="<b>Font Color</b><p>Change the color of your text.</p>",
+            triggered=self.textColor,
+        )
+        self.actRemoveFormat = QAction(
+            QIcon(":/Icons_Reference/Icons/clear_format.png"),
+            "Clear Format",
+            self,
+            toolTip="<b>Clear Text Formatting</b><p>Removes all formatting from selected floating text.</p>",
+            triggered=self.removeFormat,
+        )
+
+        self.actRunBtnOp1 = QAction(
+            "Graphics",
+            self,
+            toolTip="<b>Toggle Graphics</b><p>Description to be added</p>",
+            triggered=lambda checked: self.setRunBtnOptions("Graphics"),
+            checkable=True,
+        )
+        self.actRunBtnOp2 = QAction(
+            "Animation",
+            self,
+            toolTip="<b>Toggle Animation</b><p>Description to be added</p>",
+            triggered=lambda checked: self.setRunBtnOptions("Animation"),
+            checkable=True,
+        )
+        self.actRunBtnOp3 = QAction(
+            "Verbose",
+            self,
+            toolTip="<b>Toggle Verbose</b><p>Description to be added</p>",
+            triggered=lambda checked: self.setRunBtnOptions("Verbose"),
+            checkable=True,
+        )
+        self.actRunBtnOp4 = QAction(
+            "Progress",
+            self,
+            toolTip="<b>Toggle Progress</b><p>Description to be added</p>",
+            triggered=lambda checked: self.setRunBtnOptions("Progress"),
+            checkable=True,
+        )
+        self.actRunBtnOp5 = QAction(
+            "Debug",
+            self,
+            toolTip="<b>Debug String</b><p>Description to be added</p>",
+            triggered=lambda checked: self.setRunBtnOptions("Debug"),
+        )
+        self.actRunBtnOp6 = QAction(
+            "Simulation Time",
+            self,
+            toolTip="<b>Simulation Time</b><p>Description to be added</p>",
+            triggered=lambda checked: self.setRunBtnOptions("SimTime"),
+        )
+
+        self.helpButton = QAction(
+            QIcon(":/Icons_Reference/Icons/help.png"),
+            "Help",
+            self,
+            toolTip="<b>Help</b><p>Open BdEdit documentation.</p>",
+            triggered=self.displayHelpURL,
+        )
+
+    def createToolbar(self):
+        self.createFileMenu()
+        self.createEditMenu()
+        self.createToolsMenu()
+        self.createRunButtonParameters()
+        self.createToolbarItems()
+        self.createHelpItem()
+
+    def createFileMenu(self):
+        # self._file_menubar = QMenuBar() if platform == 'darwin' else self.menuBar()
+        # self.fileMenu = QMenu('File')
+        # self.fileMenu.setToolTipsVisible(True)
+        # self.fileMenu.addAction(self.actNew)
+        # self.fileMenu.addSeparator()
+        # self.fileMenu.addAction(self.actOpen)
+        # self.fileMenu.addAction(self.actSave)
+        # self.fileMenu.addAction(self.actSaveAs)
+        # self.fileMenu.addSeparator()
+        # self.fileMenu.addAction(self.actExit)
+        # self._file_menubar.addMenu(self.fileMenu)
+        # # self._file_menubar.setNativeMenuBar(False)
+
+        menubar = self.menuBar()
+        self.fileMenu = menubar.addMenu("File")
+        self.fileMenu.setToolTipsVisible(True)
+        self.fileMenu.addAction(self.actNew)
+        self.fileMenu.addAction(self.actOpen)
+
+        self.recentMenu = QMenu("Open Recent", self)
+        self.fileMenu.addMenu(self.recentMenu)
+        self.recentMenu.aboutToShow.connect(self._populateRecentMenu)
+
+        self.fileMenu.addSeparator()
+        self.fileMenu.addAction(self.actSave)
+        self.fileMenu.addAction(self.actSaveAs)
+
+        exportMenu = QMenu("Export As", self)
+        exportMenu.setIcon(QIcon(":/Icons_Reference/Icons/export_as.png"))
+        exportPDF = QAction(
+            "PDF",
+            self,
+            toolTip="Export model as a pdf.",
+            triggered=lambda checked: self.exportAsToFile("pdf"),
+        )
+        exportPNG = QAction(
+            "PNG",
+            self,
+            toolTip="Export model as a png.",
+            triggered=lambda checked: self.exportAsToFile("png"),
+        )
+        exportSVG = QAction(
+            "SVG",
+            self,
+            toolTip="Export model as an svg.",
+            triggered=lambda checked: self.exportAsToFile("svg"),
+        )
+        exportMenu.addAction(exportPDF)
+        exportMenu.addAction(exportSVG)
+        exportMenu.addAction(exportPNG)
+        self.fileMenu.addMenu(exportMenu)
+
+        self.fileMenu.addSeparator()
+        self.fileMenu.addAction(self.actExit)
+
+    def createEditMenu(self):
+        # self._edit_menubar.setNativeMenuBar(False)
+        #     self._edit_menubar = QMenuBar() if platform == 'darwin' else self.menuBar()
+        #     self.editMenu = QMenu('Edit')
+        #     self.editMenu.setToolTipsVisible(True)
+        #     self.editMenu.addAction(self.actUndo)
+        #     self.editMenu.addAction(self.actRedo)
+        #     self.editMenu.addSeparator()
+        #     self.editMenu.addAction(self.actDelete)
+        #     self._edit_menubar.addMenu(self.editMenu)
+        #     # self._edit_menubar.setNativeMenuBar(False)
+        menubar = self.menuBar()
+        self.editMenu = menubar.addMenu("Edit")
+        self.editMenu.setToolTipsVisible(True)
+        self.editMenu.addAction(self.actUndo)
+        self.editMenu.addAction(self.actRedo)
+        self.editMenu.addSeparator()
+        self.editMenu.addAction(self.actDelete)
+
+    def createToolsMenu(self):
+        # self._tools_menubar = QMenuBar() if platform == 'darwin' else self.menuBar()
+        # self.toolsMenu = QMenu('Tools')
+        # self.toolsMenu.setToolTipsVisible(True)
+        # self.toolsMenu.addAction(self.actFlipBlocks)
+        # self.toolsMenu.addAction(self.actScreenshot)
+        # self.toolsMenu.addSeparator()
+        # self.toolsMenu.addAction(self.actWireOverlaps)
+        # self.toolsMenu.addAction(self.actHideConnectors)
+        # self.toolsMenu.addAction(self.actDisableBackground)
+        # self.toolsMenu.addSeparator()
+        # self.toolsMenu.addAction(self.actDelete)
+        # self._tools_menubar.addMenu(self.toolsMenu)
+        # # self._tools_menubar.setNativeMenuBar(False)
+        menubar = self.menuBar()
+        self.toolsMenu = menubar.addMenu("Tools")
+        self.toolsMenu.setToolTipsVisible(True)
+        self.toolsMenu.addAction(self.actFlipBlocks)
+        self.toolsMenu.addAction(self.actFitView)
+        self.toolsMenu.addAction(self.actScreenshot)
+        self.toolsMenu.addSeparator()
+        self.toolsMenu.addAction(self.actWireOverlaps)
+        self.toolsMenu.addAction(self.actHideConnectors)
+        self.toolsMenu.addAction(self.actDisableBackground)
+        # self.toolsMenu.addSeparator()
+        # self.toolsMenu.addAction(self.actDelete)
+
+    def createRunButtonParameters(self):
+        # self._params_menubar = QMenuBar() if platform == 'darwin' else self.menuBar()
+        # self.runMenu = QMenu('Simulation')
+        # self.runMenu.setToolTipsVisible(True)
+        # self.runMenu.addAction(self.actRunBtnOp6)
+        # self.runMenu.addSeparator()
+        # self.runMenu.addAction(self.actRunBtnOp1)
+        # self.runMenu.addAction(self.actRunBtnOp2)
+        # self.runMenu.addAction(self.actRunBtnOp3)
+        # self.runMenu.addAction(self.actRunBtnOp4)
+        # self.runMenu.addSeparator()
+        # self.runMenu.addAction(self.actRunBtnOp5)
+        # self._params_menubar.addMenu(self.runMenu)
+        menubar = self.menuBar()
+        self.runMenu = menubar.addMenu("Simulation")
+        self.runMenu.setToolTipsVisible(True)
+        self.runMenu.addAction(self.actRunBtnOp6)
+        self.runMenu.addSeparator()
+        self.runMenu.addAction(self.actRunBtnOp1)
+        self.runMenu.addAction(self.actRunBtnOp2)
+        self.runMenu.addAction(self.actRunBtnOp3)
+        self.runMenu.addAction(self.actRunBtnOp4)
+        self.runMenu.addSeparator()
+        self.runMenu.addAction(self.actRunBtnOp5)
+
+    def createHelpItem(self):
+        # self._help_menubar = QMenuBar() if platform == 'darwin' else self.menuBar()
+        # self.helpBar = QMenu('Help')
+        # self.helpBar.setToolTipsVisible(True)
+        # self.helpBar.addAction(self.helpButton)
+        # self._help_menubar.addMenu(self.helpBar)
+        # # self._help_menubar.setNativeMenuBar(False)
+        menubar = self.menuBar()
+        self.helpBar = menubar.addMenu("Help")
+        self.helpBar.setToolTipsVisible(True)
+        self.helpBar.addAction(self.helpButton)
+        self.helpBar.addSeparator()
+        self.helpBar.addAction(self.actAboutBdedit)
+
+    def createToolbarItems(self):
+        self.toolbar = self.addToolBar("ToolbarItems")
+        self.toolbar.addAction(self.actRunButton)
+        self.toolbar.addAction(self.actAbortButton)
+        self.toolbar.addWidget(self.simTimeBox)
+        self.toolbar.addSeparator()
+        self.toolbar.addAction(self.actAlignLeft)
+        self.toolbar.addAction(self.actAlignCenter)
+        self.toolbar.addAction(self.actAlignRight)
+        self.toolbar.addSeparator()
+        self.toolbar.addAction(self.actBoldText)
+        self.toolbar.addAction(self.actUnderLineText)
+        self.toolbar.addAction(self.actItalicText)
+        self.toolbar.addSeparator()
+        self.toolbar.addAction(self.actFontType)
+        self.toolbar.addWidget(self.fontSizeBox)
+        self.toolbar.addAction(self.actTextColor)
+        self.toolbar.addAction(self.actRemoveFormat)
+        self.toolbar.addSeparator()
+
+    # -----------------------------------------------------------------------------
+
+    # ------------------------------------------------------------------
+    # Recent-files helpers
+    # ------------------------------------------------------------------
+    _MAX_RECENT = 10
+
+    @staticmethod
+    def _coerce_recent_files(value: object) -> list[str]:
+        # QSettings can return a plain string for single-value entries.
+        if isinstance(value, list):
+            return [str(v) for v in value if v]
+        if isinstance(value, tuple):
+            return [str(v) for v in value if v]
+        if isinstance(value, str):
+            return [value] if value else []
+        return []
+
+    def _recent_files(self) -> list[str]:
+        s = QSettings("bdsim", "bdedit")
+        return self._coerce_recent_files(s.value("recentFiles", []))
+
+    def _record_recent(self, path: str):
+        s = QSettings("bdsim", "bdedit")
+        files = self._coerce_recent_files(s.value("recentFiles", []))
+        path = str(Path(path).resolve())
+        if path in files:
+            files.remove(path)
+        files.insert(0, path)
+        s.setValue("recentFiles", files[: self._MAX_RECENT])
+
+    def _populateRecentMenu(self):
+        self.recentMenu.clear()
+        files = self._recent_files()
+        if not files:
+            self.recentMenu.addAction("(none)").setEnabled(False)
+            return
+        for path in files:
+            label = Path(path).name
+            act = self.recentMenu.addAction(label)
+            act.setToolTip(path)
+            act.triggered.connect(lambda checked, p=path: self._openRecent(p))
+        self.recentMenu.addSeparator()
+        self.recentMenu.addAction("Clear Menu", self._clearRecent)
+
+    def _openRecent(self, path: str):
+        if not os.path.isfile(path):
+            QMessageBox.warning(
+                self, "File not found", f"{path}\n\nRemoving from recent list."
+            )
+            s = QSettings("bdsim", "bdedit")
+            files = self._recent_files()
+            files = [f for f in files if f != path]
+            s.setValue("recentFiles", files)
+            return
+        if self.exitingWithoutSave():
+            self.centralWidget().scene.loadFromFile(path)
+            self.filename = path
+            self.updateApplicationName()
+            self.centralWidget().scene.history.clear()
+            self.centralWidget().scene.history.storeInitialHistoryStamp()
+            self.runButtonParameters["SimTime"] = self.interface.scene.sim_time
+            self.simTimeBox.setText(str(self.runButtonParameters["SimTime"]))
+            self._record_recent(path)
+
+    def _clearRecent(self):
+        QSettings("bdsim", "bdedit").setValue("recentFiles", [])
+
+    def showAbout(self):
+        import bdsim
+
+        try:
+            version = bdsim.__version__
+        except AttributeError:
+            version = "(unknown)"
+        QMessageBox.about(
+            self,
+            "About bdedit",
+            f"<b>bdedit</b> — block diagram editor<br>"
+            f"Part of the <b>bdsim</b> package v{version}<br><br>"
+            f"<a href='https://github.com/petercorke/bdsim'>github.com/petercorke/bdsim</a>",
+        )
+
+    def updateApplicationName(self):
+        name = "bdedit - "
+        if self.filename is None:
+            name += "untitled.bd"
+        else:
+            name += os.path.basename(self.filename)
+
+        if self.centralWidget().scene.has_been_modified:
+            name += "*"
+
+        self.setWindowTitle(name)
+
+    def closeEvent(self, event):
+        if self.exitingWithoutSave():
+            self.cleanupAutosaveFiles()
+            event.accept()
+        else:
+            event.ignore()
+
+    def isModified(self):
+        return self.centralWidget().scene.has_been_modified
+
+    def exitingWithoutSave(self):
+        if not self.isModified():
+            return True
+
+        msg_prompt = QMessageBox.warning(
+            self,
+            "Exiting without saving work.",
+            "The document has been modified.\nDo you want to save your changes?",
+            QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
+        )
+
+        if msg_prompt == QMessageBox.Save:
+            return self.saveToFile()
+        elif msg_prompt == QMessageBox.Cancel:
+            return False
+
+        return True
+
+    # -----------------------------------------------------------------------------
+    def setRunBtnOptions(self, value):
+        if value not in ["Debug", "SimTime"]:
+            self.runButtonParameters[value] = not (self.runButtonParameters[value])
+
+        elif value == "Debug":
+            arbitrary_string, done = QInputDialog.getText(
+                self, "Input Dialog", "Enter a debug string:"
+            )
+            if done:
+                self.runButtonParameters[value] = arbitrary_string
+
+        elif value == "SimTime":
+            sim_time, done = QInputDialog.getText(
+                self,
+                "Input Dialog",
+                "Enter simulation time (sec):",
+                QLineEdit.Normal,
+                str(self.runButtonParameters[value]),
+            )
+            if done:
+                try:
+                    # If simulation time is positive integer, update value
+                    if float(sim_time) > 0:
+                        self.runButtonParameters[value] = float(sim_time)
+                        self.simTimeBox.setText(str(self.runButtonParameters[value]))
+                        self.interface.scene.sim_time = float(sim_time)
+
+                    # Else return feedback
+                    else:
+                        print(
+                            "Incompatible simulation time given. Expected a positive non-zero float or integer."
+                        )
+                        self.setRunBtnOptions(value)
+
+                # If value is not an integer, return feedback
+                except ValueError as e:
+                    print(
+                        "Incompatible simulation time given. Expected a positive non-zero float or integer."
+                    )
+                    self.setRunBtnOptions(value)
+
+            else:
+                # Leave simulation time value unchanged.
+                pass
+
+        print(self.runButtonParameters)
+
+    def displayHelpURL(self):
+        QDesktopServices.openUrl(
+            QUrl(
+                "https://github.com/petercorke/bdsim/blob/master/bdsim/bdedit/README.md"
+            )
+        )
+
+    # -----------------------------------------------------------------------------
+    def runButton(self):
+        self.saveToFile()
+
+        main_block_found = False
+
+        # Go through blocks within scene, if a main block exists, extract the file_name from the main block
+        for block in self.centralWidget().scene.blocks:
+            if block.block_type in ["Main", "MAIN"]:
+                main_block_found = True
+                main_file_name = block.parameters[0][2]
+                break
+
+        # Convert the GUI simulation options to command line args
+        args = []
+        for key, value in self.runButtonParameters.items():
+            arg = key.lower()
+            if isinstance(value, bool):
+                if not arg:
+                    arg = "no-" + arg
+                args.append("--" + arg)
+            else:
+                if isinstance(value, str):
+                    if len(value) > 0:
+                        value = '"' + value + '"'
+                args.append(f"--{arg}={value}")
+        print(args)
+        print(self.args)
+
+        if main_block_found:
+
+            # Check if given file_name from the main block, contains a file extension
+
+            bdfile = Path(self.filename)
+            mainfile = Path(main_file_name)
+            if not mainfile.is_absolute():
+                mainfile = bdfile.resolve().with_name(mainfile.name)
+            mainfile = mainfile.with_suffix(".py")
+
+            # file_name, extension = os.path.splitext(main_file_name)
+            # if not extension:
+            #     main_file_name = os.path.join(main_file_name + ".py")
+            model_name = os.path.basename(self.filename)
+            if not mainfile.is_file():
+                print(f"Main block detected: file {main_file_name} could not be opened")
+                return
+
+            command = ["python"]
+            if self.args.pdb:
+                command.extend(["-m", "pdb"])
+            command.extend([str(mainfile), str(bdfile)])
+            command.extend(args)
+
+        else:
+            model_name = os.path.basename(self.filename)
+
+            command = ["bdrun", model_name]
+            command.extend(args)
+
+        print("\n" + "#" * 100)
+        print(f"{datetime.datetime.now()}:: {' '.join(command)}")
+
+        try:
+            self._sim_process = subprocess.Popen(command, shell=False)
+
+        except (ValueError, OSError):
+            print(f"failed to spawn subprocess")
+
+    # -----------------------------------------------------------------------------
+    def abortButton(self):
+        proc = getattr(self, "_sim_process", None)
+        if proc is None or proc.poll() is not None:
+            print("No simulation running.")
+            return
+        proc.terminate()
+        try:
+            proc.wait(timeout=3)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+        self._sim_process = None
+        print("Simulation aborted.")
+
+    # -----------------------------------------------------------------------------
+    def updateSimTime(self):
+        # This function is called when the Simulation Time value has been changed in the toolbar text widget.
+        sim_time = self.simTimeBox.text()
+
+        try:
+            # If simulation time is positive integer, update value
+            if float(sim_time) > 0:
+                self.runButtonParameters["SimTime"] = float(sim_time)
+                self.simTimeBox.setText(str(self.runButtonParameters["SimTime"]))
+                self.interface.scene.sim_time = float(sim_time)
+
+            # Else return feedback
+            else:
+                print(
+                    "Incompatible simulation time given. Expected a positive non-zero float or integer."
+                )
+
+        # If value is not an integer, return feedback
+        except ValueError as e:
+            print(
+                "Incompatible simulation time given. Expected a positive non-zero float or integer."
+            )
+
+        print(self.runButtonParameters)
+
+    # -----------------------------------------------------------------------------
+    def newFile(self):
+        if self.exitingWithoutSave():
+            # Clear scene and all its elements. Reset simulation time parameters
+            self.centralWidget().scene.clear()
+            self.runButtonParameters = {
+                "SimTime": 10.0,
+                "Graphics": True,
+                "Animation": True,
+                "Verbose": False,
+                "Progress": True,
+                "Debug": "",
+            }
+            self.simTimeBox.setText(str(self.runButtonParameters["SimTime"]))
+            self.interface.scene.sim_time = self.runButtonParameters["SimTime"]
+
+            # Reset filename and update GUI to display default file name
+            self.filename = None
+            self.updateApplicationName()
+
+            # Reset history stack
+            self.centralWidget().scene.history.clear()
+            self.centralWidget().scene.history.storeInitialHistoryStamp()
+
+    # -----------------------------------------------------------------------------
+    def loadFromFilePath(self, filepath):
+        """
+        This method is only used when loading a file from the command line. It will
+        check if the file at the given path exists, and if so, will load its contents.
+        """
+
+        if self.exitingWithoutSave():
+            # Check if file at given path exists, if so, run the deserializing method
+            if os.path.isfile(filepath):
+                self.centralWidget().scene.loadFromFile(filepath)
+                self.filename = filepath
+                self.updateApplicationName()
+                self.centralWidget().scene.history.clear()
+                self.centralWidget().scene.history.storeInitialHistoryStamp()
+                self._record_recent(filepath)
+
+    # -----------------------------------------------------------------------------
+    def loadFromFile(self):
+        """
+        This method opens a QFileDialog window, prompting the user to select a file
+        to load from.
+        """
+
+        if self.exitingWithoutSave():
+            # The filename of the selected file is grabbed
+            fname, _ = QFileDialog.getOpenFileName(
+                self,
+                "Open model",
+                "",
+                "Block diagram files (*.bd);;All files (*)",
+            )
+            if not fname:
+                return
+
+            # And the method for deserializing from a file is called, feeding in the
+            # extracted filename from above
+            self.centralWidget().scene.loadFromFile(fname)
+            self.filename = fname
+            self.updateApplicationName()
+            self.centralWidget().scene.history.clear()
+            self.centralWidget().scene.history.storeInitialHistoryStamp()
+            self._record_recent(fname)
+            # Update SimTime in runButtonParameters in case it was set in model
+            self.runButtonParameters["SimTime"] = self.interface.scene.sim_time
+            self.simTimeBox.setText(str(self.runButtonParameters["SimTime"]))
+
+    # -----------------------------------------------------------------------------
+    def saveToFile(self):
+        """
+        This method calls the method from within the ``Scene`` to save a copy of the
+        current Scene, with all its items under a file with the current filename. If
+        this is the first time a user is saving their file, they will be prompted to
+        name the file and to choose where it will be saved.
+        """
+
+        if self.filename is None:
+            return self.saveAsToFile()
+        self.centralWidget().scene.saveToFile(self.filename)
+        self._record_recent(self.filename)
+        self.updateApplicationName()
+        return True
+
+    # -----------------------------------------------------------------------------
+    def saveAsToFile(self):
+        """
+        This method opens a QFileDialog window, prompting the user to enter a name
+        under which the current file will be saved. This file will automatically be
+        given a .json file type.
+        """
+
+        # The allowable file types are defined below
+        file_types = "bdedit files(*.bd);;JSON files (*.json)"
+        fname, _ = QFileDialog.getSaveFileName(self, "untitled.bd", filter=file_types)
+
+        # The filename is extracted from the QFileDialog
+        if fname == "":
+            return False
+
+        # The filename of the scene is stored as a variable inside the Interface, and
+        # the self.saveToFile method is called (which will call the self.scene.saveToFile
+        # method from within the Scene, which will serialize the contents of the Scene
+        # into a JSON file with the provided file name).
+        self.filename = fname
+        self.saveToFile()
+        return True
+
+    # -----------------------------------------------------------------------------
+    def exportAsToFile(self, fileType):
+        """Show a Save dialog and export the diagram as PNG or PDF."""
+        if not self.interface:
+            return
+
+        # Build a sensible default path
+        if self.filename:
+            default_dir = str(Path(self.filename).parent)
+            default_name = Path(self.filename).stem + "." + fileType
+        else:
+            default_dir = str(Path.cwd())
+            default_name = "untitled." + fileType
+
+        default_path = str(Path(default_dir) / default_name)
+
+        if fileType == "pdf":
+            filter_str = "PDF files (*.pdf)"
+        elif fileType == "svg":
+            filter_str = "SVG files (*.svg)"
+        else:
+            filter_str = "PNG images (*.png)"
+
+        # Use Qt's own dialog (not macOS native) so the filename field shows
+        # the full name including extension.
+        dialog = QFileDialog(self, f"Export as {fileType.upper()}", default_dir)
+        dialog.setAcceptMode(QFileDialog.AcceptMode.AcceptSave)
+        dialog.setNameFilter(filter_str)
+        dialog.setDefaultSuffix(fileType)
+        dialog.setOption(QFileDialog.Option.DontUseNativeDialog)
+        dialog.selectFile(default_name)
+        if dialog.exec() != QFileDialog.DialogCode.Accepted:
+            return  # user cancelled
+
+        chosen = dialog.selectedFiles()[0]
+        if not chosen.lower().endswith("." + fileType):
+            chosen += "." + fileType
+
+        self.interface.save_image(chosen, picture_name="", picture_format=fileType)
+
+    # -----------------------------------------------------------------------------
+    def editUndo(self):
+        self.interface.scene.history.undo()
+
+    def editRedo(self):
+        self.interface.scene.history.redo()
+
+    def editDelete(self):
+        if self.interface:
+            self.interface.canvasView.deleteSelected()
+            self.interface.canvasView.intersectionTest()
+
+    # -----------------------------------------------------------------------------
+    def miscFitView(self):
+        if self.interface:
+            view = self.interface.canvasView
+            items_rect = view.scene().itemsBoundingRect()
+            if not items_rect.isEmpty():
+                margin = 40  # pixels of padding around the diagram
+                view.fitInView(
+                    items_rect.adjusted(-margin, -margin, margin, margin),
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                )
+
+    def miscFlip(self):
+        if self.interface:
+            self.interface.canvasView.intersectionTest()
+            self.interface.canvasView.flipBlockSockets()
+
+    def miscEnableOverlaps(self):
+        if self.interface:
+            self.interface.scene.grScene.enable_intersections = (
+                not self.interface.scene.grScene.enable_intersections
+            )
+
+    def miscScreenshot(self, fileType):
+        if self.interface:
+            if self.filename is None:
+                print(
+                    "Please save your model before taking a screenshot, then try again."
+                )
+                self.saveToFile()
+            else:
+                self.interface.save_image(
+                    self.filename, picture_name=None, picture_format=fileType
+                )
+
+    def miscHideConnectors(self):
+        if self.interface:
+            if self.actHideConnectors.isChecked():
+                # Set variable for hiding connector blocks to True
+                self.interface.scene.hide_connector_blocks = True
+            else:
+                # Set variable for hiding connector blocks to False
+                self.interface.scene.hide_connector_blocks = False
+
+    def miscToggleBackground(self):
+        """
+        This method is called to cycle through various background and grid
+        options.
+        """
+        # possible modes
+        modes = [("grey", True), ("white", True), ("white", False)]
+
+        self.bgmode = (self.bgmode + 1) % len(modes)  # update current mode
+        mode = modes[self.bgmode]
+        self.interface.scene.grScene.updateBackgroundMode(*mode)
+        # # For each block within the Scene, the mode of their outline is also updated
+        # for eachBlock in self.interface.scene.blocks:
+        #     # If the block has a mode (Connector Blocks do not)
+        #     if not (eachBlock.block_type == "CONNECTOR" or eachBlock.block_type == "Connector"):
+        #         # eachBlock.grBlock.updateBackgroundMode(self.actDisableBackground.isChecked())
+        #         eachBlock.grBlock.updateBackgroundMode(mode[0], mode[1])
+
+    # -----------------------------------------------------------------------------
+    def textAlignment(self, alignment):
+        if self.interface.scene.floating_labels:
+            # Make a map of alignment text to actual Qt alignments
+            map = {
+                "AlignLeft": Qt.AlignLeft,
+                "AlignCenter": Qt.AlignCenter,
+                "AlignRight": Qt.AlignRight,
+            }
+
+            # Iterate through each floating label item and if the label is selected,
+            # then set the alignment of its contents
+            for label in self.interface.scene.floating_labels:
+                if self.checkSelection(label):
+                    label.content.text_edit.setAlignment(map[alignment])
+                    self.interface.scene.has_been_modified = True
+                    self.interface.scene.history.storeHistory(
+                        "Floating label changed alignment"
+                    )
+
+            self.updateToolbarValues()
+
+    def textBold(self):
+        if self.interface.scene.floating_labels:
+            for label in self.interface.scene.floating_labels:
+                if self.checkSelection(label):
+                    if self.actBoldText.isChecked():
+                        label.content.text_edit.setFontWeight(QFont.Bold)
+                    else:
+                        label.content.text_edit.setFontWeight(QFont.Normal)
+
+                    label.content.updateShape()
+
+                    self.interface.scene.has_been_modified = True
+                    self.interface.scene.history.storeHistory(
+                        "Floating label changed boldness"
+                    )
+
+    def textUnderline(self):
+        if self.interface.scene.floating_labels:
+            for label in self.interface.scene.floating_labels:
+                if self.checkSelection(label):
+                    if self.actUnderLineText.isChecked():
+                        label.content.text_edit.setFontUnderline(True)
+                    else:
+                        label.content.text_edit.setFontUnderline(False)
+
+                    label.content.updateShape()
+
+                    self.interface.scene.has_been_modified = True
+                    self.interface.scene.history.storeHistory(
+                        "Floating label changed underline"
+                    )
+
+    def textItalicize(self):
+        if self.interface.scene.floating_labels:
+            for label in self.interface.scene.floating_labels:
+                if self.checkSelection(label):
+                    if self.actItalicText.isChecked():
+                        label.content.text_edit.setFontItalic(True)
+                    else:
+                        label.content.text_edit.setFontItalic(False)
+
+                    label.content.updateShape()
+
+                    self.interface.scene.has_been_modified = True
+                    self.interface.scene.history.storeHistory(
+                        "Floating label changed italics"
+                    )
+
+    def textFontStyle(self):
+        font, ok = QFontDialog.getFont()
+        # print("ok, font name, font size:", [ok, font.family(), font.styleName(), font.pointSize()])
+        if ok:
+            if self.interface.scene.floating_labels:
+                for label in self.interface.scene.floating_labels:
+                    if self.checkSelection(label):
+                        label.content.text_edit.setFont(font)
+                        label.content.text_edit.setFontWeight(font.weight())
+                        label.content.currentFontSize = font.pointSize()
+                        label.content.updateText()
+                        label.grContent.setLabelSizeBox()
+                        label.content.updateShape()
+
+                        self.interface.scene.has_been_modified = True
+                        self.interface.scene.history.storeHistory(
+                            "Floating label changed font style"
+                        )
+
+    def textFontSize(self):
+        if self.interface.scene.floating_labels:
+            for label in self.interface.scene.floating_labels:
+                if self.checkSelection(label):
+                    value = self.fontSizeBox.value()
+                    label.content.text_edit.setFontPointSize(value)
+                    label.content.currentFontSize = value
+                    label.content.updateShape()
+
+                    self.interface.scene.has_been_modified = True
+                    self.interface.scene.history.storeHistory(
+                        "Floating label changed font size"
+                    )
+
+    def textColor(self):
+        color = QColorDialog.getColor(options=QColorDialog.ShowAlphaChannel)
+
+        if color.isValid():
+            if self.interface.scene.floating_labels:
+                for label in self.interface.scene.floating_labels:
+                    if self.checkSelection(label):
+                        label.content.text_edit.setTextColor(color)
+
+                        self.interface.scene.has_been_modified = True
+                        self.interface.scene.history.storeHistory(
+                            "Floating label changed font color"
+                        )
+
+        # self.updateToolbarValues()     # Enable this if you ever make the font color icon update
+
+    # Clears all format on selected floating labels, reverting to default format
+    def removeFormat(self):
+        if self.interface.scene.floating_labels:
+            for label in self.interface.scene.floating_labels:
+                if self.checkSelection(label):
+                    label.content.setDefaultFormatting()
+                    label.content.updateText()
+
+                    self.interface.scene.has_been_modified = True
+                    self.interface.scene.history.storeHistory(
+                        "Floating label cleared formatting"
+                    )
+        self.updateToolbarValues()
+
+    # This function checks if the current label is selected
+    def checkSelection(self, label):
+        if label.grContent.isSelected():
+            label.content.text_edit.selectAll()
+            return True
+        return False
+
+    # This function contains the logic for when to select/unselect toolbar items
+    def updateToolbarValues(self):
+        selected_labels = []
+        any_bold = False
+        any_italics = False
+        any_underlined = False
+
+        if self.interface.scene.floating_labels:
+            for label in self.interface.scene.floating_labels:
+                if self.checkSelection(label):
+                    selected_labels.append(label)
+                    # If any label is bold, or italicized, or underlined,
+                    # when mutliple labels are selected the respective icon will be selected
+                    if label.content.text_edit.fontWeight() > 50:
+                        any_bold = True
+                    if label.content.text_edit.fontItalic():
+                        any_italics = True
+                    if label.content.text_edit.fontUnderline():
+                        any_underlined = True
+
+        if len(selected_labels) == 0:
+            # If no labels are selected, unselects all toolbar items (alignment, bold, italics, underline)
+            self.fontSizeBox.setValue(14)
+            self.actBoldText.setChecked(False)
+            self.actItalicText.setChecked(False)
+            self.actUnderLineText.setChecked(False)
+            self.unselectAlignmentIcons()
+
+        elif len(selected_labels) == 1:
+            # If only one label is selected, sets the correct values of all toolbar items based on the
+            # label's value (alignment, bold, italics, underline)
+            our_label = selected_labels[0].content
+            self.fontSizeBox.setValue(our_label.currentFontSize)
+            self.actBoldText.setChecked(our_label.text_edit.fontWeight() > 50)
+            self.actItalicText.setChecked(our_label.text_edit.fontItalic())
+            self.actUnderLineText.setChecked(our_label.text_edit.fontUnderline())
+            self.actAlignLeft.setChecked(
+                our_label.text_edit.alignment() == Qt.AlignLeft
+            )
+            self.actAlignCenter.setChecked(
+                our_label.text_edit.alignment() == Qt.AlignCenter
+            )
+            self.actAlignRight.setChecked(
+                our_label.text_edit.alignment() == Qt.AlignRight
+            )
+
+        else:
+            # If multiple labels are selected, font size box and alignment options are cleared
+            # but bold, italics, underline are selected/unselected depending on if any of the selected
+            # labels are bold, italicizied or underlined.
+            self.fontSizeBox.clear()
+            self.actBoldText.setChecked(any_bold)
+            self.actItalicText.setChecked(any_italics)
+            self.actUnderLineText.setChecked(any_underlined)
+            self.unselectAlignmentIcons()
+
+    def unselectAlignmentIcons(self):
+        self.actAlignLeft.setChecked(False)
+        self.actAlignCenter.setChecked(False)
+        self.actAlignRight.setChecked(False)

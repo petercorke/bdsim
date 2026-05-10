@@ -1,16 +1,16 @@
+*********
 Overview
-========
-
+*********
 
 Getting started
----------------
+================
 
-We first sketch the dynamic system we want to simulate as a block diagram, for example this simple first-order system
+We first sketch the dynamic system we want to simulate as a block diagram, for example this simple first-order system:
 
-.. image:: ../../figs/bd1-sketch.png
+.. image:: ../figs/bd1-sketch.png
    :width: 800
 
-which we can express concisely with `bdsim` as (see `bdsim/examples/eg1.py <https://github.com/petercorke/bdsim/blob/master/examples/eg1.py>`_)
+which we can express concisely with ``bdsim`` as (see `bdsim/examples/eg1.py <https://github.com/petercorke/bdsim/blob/master/examples/eg1.py>`_):
 
 .. code-block:: python
    :linenos:
@@ -34,153 +34,103 @@ which we can express concisely with `bdsim` as (see `bdsim/examples/eg1.py <http
    bd.connect(plant, sum[1], scope[0])
 
    bd.compile()   # check the diagram
-   bd.report()    # list all blocks and wires
+   bd.report_summary()    # list all blocks and wires
 
    out = sim.run(bd, 5)  # simulate for 5s
 
    print(out)
 
-   # sim.savefig(scope, 'scope0') # save scope figure as scope0.pdf
-   sim.done(bd, block=True)  # keep figures open on screen
 
-which is just 16 lines of executable code.
+This example utilizes just 16 lines of executable code. The red block annotations on the
+hand-drawn diagram correspond to the variable names holding references to the block
+instances. 
 
-The red block annotations on the hand-drawn diagram are used as the names of the variables holding references to the block instance. The blocks can also have user-assigned names, see lines 8 and 11, which are used in diagnostics and as labels in plots.
+* **Lines 7-11** defines the blocks used in the model. Blocks can have user-assigned names (see lines 7 and 10), which are useful for diagnostics and plot labels.
 
-After the blocks are created their input and output ports need to be connected. In `bdsim` all wires are point to point, a *one-to-many* connection is implemented by *many* wires,
-for example::
+* **Lines 14-17** connects the blocks together. In ``bdsim``, all wires are
+  point-to-point, so a **one-to-many** connection is implemented by defining multiple wires.
+  The first argument to ``connect`` is the source block, and subsequent arguments are destination blocks. 
 
-   bd.connect(source, dest1, dest2, ...)
+  .. code-block:: python
 
-creates individual wires from `source` -> `dest1`, `source` -> `dest2` and so on.
-Ports are designated using Python indexing notation, for example `block[2]` is port 2 (the third port) of `block`.  Whether it is an input or output port depends on context.
-In the example above an index on the first argument refers to an output port, while on the second (or subsequent) arguments it refers to an input port.  If a block has only a single input or output port then no index is required, 0 is assumed.
+      bd.connect(source, dest1, dest2, ...)
 
-A group of ports can be denoted using slice notation, for example::
+  Ports are designated using Python indexing notation; for instance, ``block[2]`` refers
+  to the third port of the block. Context determines if a port is an input or output: an
+  index on the first argument of ``connect`` refers to an output, while subsequent
+  arguments refer to inputs. If a block has only one port, the index 0 is assumed.
 
-   bd.connect(source[2:5], dest[3:6)
+  Groups of ports can be denoted using slice notation, for example:
 
-will connect ``source[2]`` -> ``dest[3]``, ``source[3]`` -> ``dest[4]``, ``source[4]`` -> ``dest[5]``.
-The number of wires in each slice must be consistent.  You could even do a cross over by connecting ``source[2:5]`` to ``dest[6:3:-1]``.
+  .. code-block:: python
 
-Line 20 assembles all the blocks and wires, instantiates subsystems, checks connectivity to create a flat wire list, and then builds the dataflow execution plan.
+      bd.connect(source[2:5], dest[3:6])
 
-Line 21 generates a report, in tabular form, showing a summary of the block diagram:
+  connects ``source[2]`` to ``dest[3]``, ``source[3]`` to ``dest[4]``, and ``source[4]`` to ``dest[5]``.
 
-.. code-block::
+*  **Line 19** assembles the blocks, checks connectivity to create a flat wire list, and builds the dataflow execution plan.
+*  **Line 20** generates a tabular report summarizing the diagram's blocks and wires.
 
-   Blocks::
+   .. code-block:: text
 
-   ┌───┬─────────┬─────┬──────┬────────┬─────────┬───────┐
-   │id │    name │ nin │ nout │ nstate │ ndstate │ type  │
-   ├───┼─────────┼─────┼──────┼────────┼─────────┼───────┤
-   │ 0 │  demand │   0 │    1 │      0 │       0 │ step  │
-   │ 1 │   sum.0 │   2 │    1 │      0 │       0 │ sum   │
-   │ 2 │  gain.0 │   1 │    1 │      0 │       0 │ gain  │
-   │ 3 │   plant │   1 │    1 │      1 │       0 │ LTI   │
-   │ 4 │ scope.0 │   2 │    0 │      0 │       0 │ scope │
-   └───┴─────────┴─────┴──────┴────────┴─────────┴───────┘
-
-   Wires::
-
-   ┌───┬──────┬──────┬──────────────────────────┬─────────┐
-   │id │ from │  to  │       description        │  type   │
-   ├───┼──────┼──────┼──────────────────────────┼─────────┤
-   │ 0 │ 0[0] │ 1[0] │ demand[0] --> sum.0[0]   │ int     │
-   │ 1 │ 0[0] │ 4[1] │ demand[0] --> scope.0[1] │ int     │
-   │ 2 │ 3[0] │ 1[1] │ plant[0] --> sum.0[1]    │ float64 │
-   │ 3 │ 1[0] │ 2[0] │ sum.0[0] --> gain.0[0]   │ float64 │
-   │ 4 │ 2[0] │ 3[0] │ gain.0[0] --> plant[0]   │ float64 │
-   │ 5 │ 3[0] │ 4[0] │ plant[0] --> scope.0[0]  │ float64 │
-   └───┴──────┴──────┴──────────────────────────┴─────────┘
+      ┌─────────┬────┬────┬──────────┬────────┬────────┬─────────────┐
+      │  block  │ nc │ nd │   type   │ inport │ source │ source type │
+      ├─────────┼────┼────┼──────────┼────────┼────────┼─────────────┤
+      │ demand@ │ 0  │ 0  │ step     │        │        │             │
+      ├─────────┼────┼────┼──────────┼────────┼────────┼─────────────┤
+      │ gain.0  │ 0  │ 0  │ gain     │ 0      │ sum.0  │ float64     │
+      ├─────────┼────┼────┼──────────┼────────┼────────┼─────────────┤
+      │ plant   │ 1  │ 0  │ lti_siso │ 0      │ gain.0 │ float64     │
+      ├─────────┼────┼────┼──────────┼────────┼────────┼─────────────┤
+      │ scope.0 │ 0  │ 0  │ scope    │ 0      │ plant  │ float64     │
+      │         │    │    │          │ 1      │ demand │ int         │
+      ├─────────┼────┼────┼──────────┼────────┼────────┼─────────────┤
+      │ sum.0   │ 0  │ 0  │ sum      │ 0      │ demand │ int         │
+      │         │    │    │          │ 1      │ plant  │ float64     │
+      └─────────┴────┴────┴──────────┴────────┴────────┴─────────────┘
 
 
-.. image:: ../../figs/Figure_1.png
-   :width: 600
+*  **Line 22** executes the simulation for the specified duration (5 seconds).
+*  **Line 26** (if uncommented) saves the scope content to a file named ``scope0.pdf``.
+*  **Line 27** blocks the script execution until figure windows are closed or a SIGINT is received.
 
-The simulation results are returned in a simple container object::
+The simulation results are returned in a simple container object:
 
-   >>> out
-   results:
-   t           | ndarray (67,)
-   x           | ndarray (67, 1)
-   xnames      | list              
+.. code-block:: python
 
-where
+   >>> print(out)
+   t      = ndarray:float64 (123,)
+   x      = ndarray:float64 (123, 1)
+   xnames = ['plant:x_0'] (list)      
 
-- `t` the time vector: ndarray, shape=(M,)
-- `x` is the state vector: ndarray, shape=(M,N), one row per timestep
-- `xnames` is a list of the names of the states corresponding to columns of `x`, eg. "plant.x0"
+To record additional simulation variables, use a ``WATCH`` block or the ``watch`` option in ``run``:
 
-To record additional simulation variables we "watch" them. This can be specified by
-wiring the signal to a WATCH block, or more conveniently by an additional option to
-``run``::
+.. code-block:: python
 
-   out = sim.run(bd, 5, watch=[plant,demand])  # simulate for 5s
-
-and now the result ``out`` has additional elements::
-
-   >>> out
-   results:
-   t           | ndarray (67,)
-   x           | ndarray (67, 1)
-   xnames      | list        
-   y0          | ndarray (67,)
-   y1          | ndarray (67,)
-   ynames      | list   
-
-where
-
-- `y0` is the time history of the first watched signal
-- `y1` is the time history of the second watched signal
-- `ynames` is a list of the names of the states corresponding to columns of `x`, eg. "plant[0]"
-
-Line 27 saves the content of the scope to be saved in the file called `scope0.pdf`.
-
-Line 28 blocks the script until all figure windows are closed, or the script is killed with SIGINT.
-
-Line 29 saves the scope graphics as a PDF file.
-
-Line 30 blocks until the last figure is dismissed.
-
-A list of available blocks can be obtained by::
-
-   >>> sim.blocks()
-      73  blocks loaded
-      bdsim.blocks.functions..................: Sum Prod Gain Clip Function Interpolate 
-      bdsim.blocks.sources....................: Constant Time WaveForm Piecewise Step Ramp 
-      bdsim.blocks.sinks......................: Print Stop Null Watch 
-      bdsim.blocks.transfers..................: Integrator PoseIntegrator LTI_SS LTI_SISO 
-      bdsim.blocks.discrete...................: ZOH DIntegrator DPoseIntegrator 
-      bdsim.blocks.linalg.....................: Inverse Transpose Norm Flatten Slice2 Slice1 Det Cond 
-      bdsim.blocks.displays...................: Scope ScopeXY ScopeXY1 
-      bdsim.blocks.connections................: Item Dict Mux DeMux Index SubSystem InPort OutPort 
-      roboticstoolbox.blocks.arm..............: FKine IKine Jacobian Tr2Delta Delta2Tr Point2Tr TR2T FDyn IDyn Gravload 
-      ........................................: Inertia Inertia_X FDyn_X ArmPlot Traj JTraj LSPB CTraj CirclePath 
-      roboticstoolbox.blocks.mobile...........: Bicycle Unicycle DiffSteer VehiclePlot 
-      roboticstoolbox.blocks.uav..............: MultiRotor MultiRotorMixer MultiRotorPlot 
-      machinevisiontoolbox.blocks.camera......: Camera Visjac_p EstPose_p ImagePlane 
-
-More details can be found at:
-
-- `Wiki page <https://github.com/petercorke/bdsim/wiki>`_
-   - `Adding blocks <https://github.com/petercorke/bdsim/wiki/Adding-blocks>`_
-   - `Connecting blocks <https://github.com/petercorke/bdsim/wiki/Connecting-blocks>`_
-   - `Running the simulation <https://github.com/petercorke/bdsim/wiki/Running>`_
-- :ref:`Block library`
+   >>> out = sim.run(bd, 5, watch=[plant, demand])
+   >>> print(out)
+   t      = ndarray:float64 (123,)
+   x      = ndarray:float64 (123, 1)
+   xnames = ['plant:x_0'] (list)
+   y      = ndarray:float64 (123, 2)
+   ynames = ['demand', 'sum.0'] (list)
+   >>> plt.plot(out.t, out.y[:,0], 'k', out.t, out.y[:,1], 'r--')
 
 Using operator overloading
 --------------------------
 
-Wiring, and some simple arithmetic blocks like GAIN, SUM and PROD can be implicitly generated by overloaded Python operators.  This strikes a nice balance between block diagram coding and Pythonic programming.
+Wiring and arithmetic blocks like ``GAIN``, ``SUM``, and ``PROD`` explicitly is somewhat tedious.
+An alternative is to implicitly
+generate and wire arithmetic blocks (``GAIN``, ``SUM``, ``PROD``) using overloaded Python operators, striking a balance between block diagram
+logic and Pythonic programming:
 
 .. code-block:: python
    :linenos:
 
    import bdsim
 
-   sim = bdsim.BDSim()  # create simulator
-   bd = sim.blockdiagram()  # create an empty block diagram
+   sim = bdsim.BDSim()
+   bd = sim.blockdiagram()
 
    # define the blocks
    demand = bd.STEP(T=1, name='demand')
@@ -192,29 +142,44 @@ Wiring, and some simple arithmetic blocks like GAIN, SUM and PROD can be implici
    scope[1] = demand
    plant[0] = 10 * (demand - plant)
 
-   bd.compile()   # check the diagram
-   bd.report()    # list all blocks and wires
+   bd.compile()
+   bd.report()
 
-   out = sim.run(bd, 5)  # simulate for 5s
-   # out = sim.run(bd, 5 watch=[plant,demand])  # simulate for 5s
+   out = sim.run(bd, 5)
    print(out)
 
-   # sim.savefig(scope, 'scope0') # save scope figure as scope0.pdf
-   sim.done(bd, block=True)  # keep figures open on screen
+   sim.done(bd, block=True)
 
-This requires fewer lines of code and the code is more readable. 
-Importantly, it results in in *exactly the same* block diagram in terms of blocks and wires::
+This approach requires fewer lines of code and is arguably is more readable, while
+producing *exactly the same* underlying block diagram. Implicitly created blocks are
+automatically named with an underscore prefix.
 
 
-   ┌───┬──────┬──────┬──────────────────────────────┬─────────┐
-   │id │ from │  to  │         description          │  type   │
-   ├───┼──────┼──────┼──────────────────────────────┼─────────┤
-   │ 0 │ 1[0] │ 2[0] │ plant[0] --> scope.0[0]      │ float64 │
-   │ 1 │ 0[0] │ 2[1] │ demand[0] --> scope.0[1]     │ int     │
-   │ 2 │ 0[0] │ 3[0] │ demand[0] --> _sum.0[0]      │ int     │
-   │ 3 │ 1[0] │ 3[1] │ plant[0] --> _sum.0[1]       │ float64 │
-   │ 4 │ 3[0] │ 4[0] │ _sum.0[0] --> _gain.0(10)[0] │ float64 │
-   │ 5 │ 4[0] │ 1[0] │ _gain.0(10)[0] --> plant[0]  │ float64 │
-   └───┴──────┴──────┴──────────────────────────────┴─────────┘
+A list of available blocks can be obtained by::
 
-The implicitly created blocks have names prefixed with an underscore.
+   >>> sim.blocks()
+   bdsim.blocks.connections................: ITEM DICT MUX DEMUX INDEX SUBSYSTEM INPORT OUTPORT 
+   bdsim.blocks.continuous.................: INTEGRATOR POSEINTEGRATOR LTI_SS LTI_SISO DERIV2 DERIV PID 
+   bdsim.blocks.displays...................: SCOPE SCOPEXY SCOPEXY1 
+   bdsim.blocks.functions..................: SUM PROD GAIN POW CLIP FUNCTION INTERPOLATE 
+   bdsim.blocks.linalg.....................: INVERSE TRANSPOSE NORM FLATTEN SLICE2 SLICE1 DET COND 
+   bdsim.blocks.sampled....................: ZOH INTEGRATOR_S POSEINTEGRATOR_S DERIV_S LTI_SS_S LTI_SISO_S PID_S 
+   ........................................: DPOSEINTEGRATOR 
+   bdsim.blocks.sinks......................: PRINT STOP EVENT NULL WATCH 
+   bdsim.blocks.sources....................: CONSTANT TIME WAVEFORM PIECEWISE STEP RAMP 
+   roboticstoolbox.blocks.arm..............: FKINE IKINE JACOBIAN ARMPLOT JTRAJ CTRAJ CIRCLEPATH TRAPEZOIDAL TRAJ IDYN 
+   ........................................: GRAVLOAD_X INERTIA INERTIA_X FDYN FDYN_X 
+   roboticstoolbox.blocks.mobile...........: BICYCLE UNICYCLE DIFFSTEER VEHICLEPLOT 
+   roboticstoolbox.blocks.spatial..........: TR2DELTA DELTA2TR POINT2TR TR2T 
+   roboticstoolbox.blocks.uav..............: MULTIROTOR MULTIROTORMIXER MULTIROTORPLOT 
+   machinevisiontoolbox.blocks.camera......: CAMERA VISJAC_P ESTPOSE_P IMAGEPLANE 
+
+More details can be found at:
+
+- `Wiki page <https://github.com/petercorke/bdsim/wiki>`_
+   - `Adding blocks <https://github.com/petercorke/bdsim/wiki/Adding-blocks>`_
+   - `Connecting blocks <https://github.com/petercorke/bdsim/wiki/Connecting-blocks>`_
+   - `Running the simulation <https://github.com/petercorke/bdsim/wiki/Running>`_
+- :ref:`Block library`
+
+

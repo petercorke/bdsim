@@ -1,7 +1,9 @@
-#!/usr/bin/env python
-'''
-Demonstrate derivative block
-'''
+#!/usr/bin/env python3
+
+"""
+Demonstrate derivative block driven by sine wave
+Copyright (c) 2021- Peter Corke
+"""
 import bdsim
 
 sim = bdsim.BDSim()

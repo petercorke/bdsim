@@ -16,8 +16,8 @@ Usage:
 from __future__ import annotations
 
 import inspect
-from pathlib import Path
 from math import inf
+from pathlib import Path
 
 import bdsim
 
@@ -29,11 +29,16 @@ header = '''\
 from __future__ import annotations
 
 from math import inf
-from typing import Any, Optional, Union, Callable, Literal
+from typing import TYPE_CHECKING, Any, Callable, Literal, TextIO
 import numpy as np
+from numpy.typing import ArrayLike
 from spatialmath import SE3, Twist3
 
-Vector1D = Union[int, float, tuple[float, ...], list[float], np.ndarray]
+if TYPE_CHECKING:
+    from bdsim.components import Clock
+    from bdsim.blockdiagram import BlockDiagram
+
+Vector1D = int | float | tuple[float, ...] | list[float] | np.ndarray
 
 class BlockDiagramMixin:
     """
@@ -47,15 +52,119 @@ class BlockDiagramMixin:
     """
 '''
 
+
+def _find_matching_bracket(text: str, start: int) -> int:
+    depth = 0
+
+    for index in range(start, len(text)):
+        char = text[index]
+        if char == "[":
+            depth += 1
+        elif char == "]":
+            depth -= 1
+            if depth == 0:
+                return index
+
+    raise ValueError(f"unmatched '[' in {text!r}")
+
+
+def _split_top_level_args(text: str) -> list[str]:
+    args: list[str] = []
+    start = 0
+    square_depth = 0
+    paren_depth = 0
+    brace_depth = 0
+
+    for index, char in enumerate(text):
+        if char == "[":
+            square_depth += 1
+        elif char == "]":
+            square_depth -= 1
+        elif char == "(":
+            paren_depth += 1
+        elif char == ")":
+            paren_depth -= 1
+        elif char == "{":
+            brace_depth += 1
+        elif char == "}":
+            brace_depth -= 1
+        elif char == "," and square_depth == paren_depth == brace_depth == 0:
+            args.append(text[start:index].strip())
+            start = index + 1
+
+    args.append(text[start:].strip())
+    return args
+
+
+def _modernize_typing_syntax(text: str) -> str:
+    text = text.replace("NoneType", "None")
+
+    while True:
+        optional_index = text.find("Optional[")
+        union_index = text.find("Union[")
+        candidates = [index for index in (optional_index, union_index) if index >= 0]
+
+        if not candidates:
+            return text
+
+        start = min(candidates)
+        token = "Optional" if start == optional_index else "Union"
+        inner_start = start + len(token)
+        inner_end = _find_matching_bracket(text, inner_start)
+        inner = _modernize_typing_syntax(text[inner_start + 1 : inner_end])
+
+        if token == "Optional":
+            replacement = f"{inner} | None"
+        else:
+            replacement = " | ".join(
+                _modernize_typing_syntax(part) for part in _split_top_level_args(inner)
+            )
+
+        text = text[:start] + replacement + text[inner_end + 1 :]
+
+
+def _param_to_str(p: inspect.Parameter) -> str:
+    """Stringify a parameter, defaulting missing annotations to Any."""
+    prefix = ""
+    if p.kind == inspect.Parameter.VAR_POSITIONAL:
+        prefix = "*"
+    elif p.kind == inspect.Parameter.VAR_KEYWORD:
+        prefix = "**"
+
+    has_annotation = p.annotation is not inspect.Parameter.empty
+    has_default = p.default is not inspect.Parameter.empty
+
+    if has_annotation:
+        ann = p.annotation
+        if isinstance(ann, type):
+            ann_str = ann.__name__
+        elif isinstance(ann, str):
+            ann_str = ann
+        else:
+            ann_str = str(ann)
+        # Fix double-qualified names like "typing.typing.Literal" → "Literal"
+        # and "typing.Any" → "Any"
+        ann_str = ann_str.replace("typing.typing.", "typing.").replace("typing.", "")
+        annotation = _modernize_typing_syntax(ann_str)
+    else:
+        annotation = "Any"
+
+    if has_default:
+        default_str = repr(p.default)
+        return f"{prefix}{p.name}: {annotation} = {default_str}"
+    else:
+        return f"{prefix}{p.name}: {annotation}"
+
+
 sim = bdsim.BDSim()
 
 with open(OUTPUT, "w") as f:
     print(f"writing mixin --> {OUTPUT}")
     f.write(header)
 
-    assert sim._blocklibrary, "No blocks found in library"
+    assert sim.block_library, "No blocks found in library"
 
-    for block, info in sorted(sim._blocklibrary.items()):
+    for block, info in sorted(sim.block_library.items()):
         meth = info["class"]
         sig = inspect.signature(meth.__init__)
 
@@ -66,11 +175,12 @@ with open(OUTPUT, "w") as f:
         if not has_blockargs:
             params.append(inspect.Parameter("blockargs", inspect.Parameter.VAR_KEYWORD))
 
-        # NoneType is Python's internal name for type(None); replace with None
-        # so the generated file is valid (e.g. Union[int, NoneType] -> Union[int, None]).
+        # Normalize legacy typing spellings that come back from inspect so the
+        # generated mixin uses the project's modern ``|`` style annotations.
+        # Params without annotations default to Any.
         sig_str = (
             "("
-            + ", ".join(["self"] + [str(p).replace("NoneType", "None") for p in params])
+            + ", ".join(["self"] + [_param_to_str(p) for p in params])
             + ")"
         )
         doc = (meth.__init__.__doc__ or "").rstrip()

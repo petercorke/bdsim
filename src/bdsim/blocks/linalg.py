@@ -15,6 +15,8 @@ from typing import Any
 
 from bdsim.components import FunctionBlock
 
+IndexSpec = slice | list[Any]
+
 
 class Inverse(FunctionBlock):
     r"""
@@ -51,9 +53,7 @@ class Inverse(FunctionBlock):
     non-square matrix the pseudo-inverse is used.  The condition number is
     output on the second port.
 
-    :seealso: `numpy.linalg.inv <https://numpy.org/doc/stable/reference/generated/numpy.linalg.inv.html>`_,
-        `numpy.linalg.pinv <https://numpy.org/doc/stable/reference/generated/numpy.linalg.pinv.html>`_,
-        `numpy.linalg.cond <https://numpy.org/doc/stable/reference/generated/numpy.linalg.cond.html>`_
+    :seealso: :func:`numpy.linalg.inv` :func:`numpy.linalg.pinv` :func:`numpy.linalg.cond`
     """
 
     nin = 1
@@ -61,34 +61,32 @@ class Inverse(FunctionBlock):
 
     onames = ("inv", "cond")
 
-    def __init__(self, pinv=False, **blockargs) -> None:
+    def __init__(self, pinv: bool = False, **blockargs: Any) -> None:
         """
         :param pinv: force pseudo inverse, defaults to False
         :type pinv: bool, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(**blockargs)
 
         self.pinv: bool = pinv
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         mat = inputs[0]
         if isinstance(mat, np.ndarray):
+            _pinv: bool
             if mat.shape[0] != mat.shape[1]:
-                pinv = True
+                _pinv = True
             else:
-                pinv: bool = self.pinv
+                _pinv = self.pinv
 
-            if pinv:
-                out: np.ndarray[tuple[Any, ...], np.dtype[np.float64]] = np.linalg.pinv(
-                    mat
-                )
+            out: np.ndarray[tuple[Any, ...], np.dtype[np.float64]]
+            if _pinv:
+                out = np.linalg.pinv(mat)
             else:
                 try:
-                    out: np.ndarray[tuple[Any, ...], np.dtype[np.float64]] = (
-                        np.linalg.inv(mat)
-                    )
+                    out = np.linalg.inv(mat)
                 except np.linalg.LinAlgError:
                     raise RuntimeError("matrix is singular")
             return [out, np.linalg.cond(mat)]
@@ -135,20 +133,20 @@ class Transpose(FunctionBlock):
         - An input 2D-array column vector of shape (N,1) becomes a 2D-array
           row vector with shape (1,N).
 
-    :seealso: `numpy.linalg.transpose <https://numpy.org/doc/stable/reference/generated/numpy.linalg.transpose.html>`_
+    :seealso: :func:`numpy.linalg.transpose`
     """
 
     nin = 1
     nout = 1
 
-    def __init__(self, **blockargs) -> None:
+    def __init__(self, **blockargs: Any) -> None:
         """
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(**blockargs)
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         mat = inputs[0]
 
         if mat.ndim == 1:
@@ -190,25 +188,25 @@ class Norm(FunctionBlock):
 
     Computes the specified norm for a 1D- or 2D-array.
 
-    :seealso: `numpy.linalg.norm <https://numpy.org/doc/stable/reference/generated/numpy.linalg.norm.html>`_
+    :seealso: :func:`numpy.linalg.norm`
     """
 
     nin = 1
     nout = 1
 
-    def __init__(self, ord=None, axis=None, **blockargs) -> None:
+    def __init__(self, ord: Any = None, axis: Any = None, **blockargs: Any) -> None:
         """
         :param axis: specifies the axis along which to compute the vector norms, defaults to None.
         :type axis: int, optional
         :param ord: Order of the norm, default to None.
         :type ord: int or str
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(**blockargs)
         self.args = dict(ord=ord, axis=axis)
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         vec = inputs[0]
         out = np.linalg.norm(vec, **self.args)
         return [out]
@@ -245,23 +243,23 @@ class Flatten(FunctionBlock):
 
     Flattens the incoming array in either row major ('C') or column major ('F') order.
 
-    :seealso: `numpy.flatten <https://numpy.org/doc/stable/reference/generated/numpy.flatten.html>`_
+    :seealso: :meth:`numpy.ndarray.flatten`
     """
 
     nin = 1
     nout = 1
 
-    def __init__(self, order="C", **blockargs) -> None:
+    def __init__(self, order: str = "C", **blockargs: Any) -> None:
         """
         :param order: flattening order, either "C" or "F", defaults to "C"
         :type order: str
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(**blockargs)
         self.order: str = order
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         vec = inputs[0]
         out = vec.flatten(self.order)
         return [out]
@@ -335,36 +333,36 @@ class Slice2(FunctionBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, rows=None, cols=None, **blockargs) -> None:
+    def __init__(self, rows: Any = None, cols: Any = None, **blockargs: Any) -> None:
         """
         :param rows: row selection, defaults to None
         :type rows: tuple(3) or list
         :param cols: column selection, defaults to None
         :type cols: tuple(3) or list
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(**blockargs)
 
         if rows is None:
-            self.rows: slice[Any, Any, Any] = slice(None, None, None)
+            self.rows: IndexSpec = slice(None, None, None)
         elif isinstance(rows, list):
             self.rows = rows
         elif isinstance(rows, tuple) and len(rows) == 3:
-            self.rows: slice[Any, Any, Any] = slice(*rows)
+            self.rows = slice(*rows)
         else:
             raise ValueError("bad rows specifier")
 
         if cols is None:
-            self.cols: slice[Any, Any, Any] = slice(None, None, None)
+            self.cols: IndexSpec = slice(None, None, None)
         elif isinstance(cols, list):
             self.cols = cols
         elif isinstance(cols, tuple) and len(cols) == 3:
-            self.cols: slice[Any, Any, Any] = slice(*cols)
+            self.cols = slice(*cols)
         else:
             raise ValueError("bad columns specifier")
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         array = inputs[0]
         if array.ndim != 2:
             raise RuntimeError("Slice2 block expecting 2d array")
@@ -433,25 +431,25 @@ class Slice1(FunctionBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, index, **blockargs) -> None:
+    def __init__(self, index: Any, **blockargs: Any) -> None:
         """
         :param index: slice, defaults to None
         :type index: tuple(3)
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(**blockargs)
 
         if index is None:
-            self.index: slice[Any, Any, Any] = slice(None, None, None)
+            self.index: IndexSpec = slice(None, None, None)
         elif isinstance(index, list):
             self.index = index
         elif isinstance(index, tuple) and len(index) == 3:
-            self.index: slice[Any, Any, Any] = slice(*index)
+            self.index = slice(*index)
         else:
             raise ValueError("bad index specifier")
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         array = inputs[0]
         if array.ndim != 1:
             raise RuntimeError("Slice1 block expecting 1d array")
@@ -487,20 +485,20 @@ class Det(FunctionBlock):
 
     Compute the matrix determinant.
 
-    :seealso: `numpy.linalg.det <https://numpy.org/doc/stable/reference/generated/numpy.linalg.det.html>`_
+    :seealso: :func:`numpy.linalg.det`
     """
 
     nin = 1
     nout = 1
 
-    def __init__(self, **blockargs) -> None:
+    def __init__(self, **blockargs: Any) -> None:
         """
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(**blockargs)
 
-    def output(self, t, inputs, x) -> list[Any]:
+    def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         mat = inputs[0]
         out = np.linalg.det(mat)
         return [out]
@@ -533,27 +531,37 @@ class Cond(FunctionBlock):
             - ndarray
             - :math:`\mbox{cond}(\mathbf{A})`
 
-    :seealso: `numpy.linalg.cond <https://numpy.org/doc/stable/reference/generated/numpy.linalg.cond.html>`_
+    :seealso: :func:`numpy.linalg.cond`
     """
 
     nin = 1
     nout = 1
 
-    def __init__(self, **blockargs) -> None:
+    def __init__(self, **blockargs: Any) -> None:
         """
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(**blockargs)
 
-    def output(self, t, inputs, x) -> list[Any]:
+    def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         mat = inputs[0]
         out = np.linalg.cond(mat)
         return [out]
 
 
 if __name__ == "__main__":  # pragma: no cover
-
     from pathlib import Path
+    import subprocess
+    import sys
 
-    exec(open(Path(__file__).parent.parent.parent / "tests" / "test_linalg.py").read())
+    root = Path(__file__).resolve().parents[3]
+    test_file = (
+        root / "tests" / "blocks" / f"test_blocks_{Path(__file__).stem.lower()}.py"
+    )
+
+    if not test_file.exists():
+        print(f"No module unit tests found for {Path(__file__).name}: {test_file}")
+        raise SystemExit(0)
+
+    raise SystemExit(subprocess.call([sys.executable, "-m", "pytest", str(test_file)]))

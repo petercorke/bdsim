@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Example of van der Pol oscillator
+Van der Pol oscillator
 Copyright (c) 2021- Peter Corke
 """
 

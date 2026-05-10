@@ -13,6 +13,21 @@
 #
 import os
 import sys
+import warnings
+
+# Keep docs builds focused on bdsim itself; avoid external toolbox discovery
+# side effects (extra warnings from third-party docstrings during scanning).
+os.environ.setdefault("BDSIM_NO_TOOLBOXES", "1")
+
+# Reduce non-actionable warning noise during docs builds.
+warnings.filterwarnings(
+    "ignore", message=r"invalid escape sequence", category=SyntaxWarning
+)
+warnings.filterwarnings(
+    "ignore",
+    message=r".*subclasses TransferBlock which is deprecated.*",
+    category=FutureWarning,
+)
 
 # sys.path.insert(0, os.path.abspath('.'))
 # defined relative to configuration directory which is where this file conf.py lives
@@ -61,7 +76,7 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["test_*"]
+exclude_patterns = ["test_*", "modules.rst"]
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -79,18 +94,14 @@ html_theme = "sphinx_rtd_theme"
 github_url = "https://github.com/petercorke/bdsim"
 
 html_theme_options = {
-    "github_host": "gitlab.com",
-    "github_user": "petercorke",
-    "github_repo": "bdsim",
-    "display_github": True,
-    "github_version": "HEAD",
     "logo_only": False,
-    "display_version": True,
     "prev_next_buttons_location": "both",
-    "analytics_id": "G-11Q6WJM565",
+    "collapse_navigation": False,
+    "navigation_depth": 4,
+    "titles_only": False,
 }
 
-html_logo = "../../figs/BDSimLogo_NoBackgnd@2x.png"
+html_logo = "../figs/bdsim_logo.png"
 html_last_updated_fmt = "%d-%b-%Y"
 autoclass_content = "class"
 html_show_sourcelink = True
@@ -181,12 +192,17 @@ favicons = [
     },
 ]
 
+# -------- Options inheritance-diagram -----------------------------------------------#
+
+inheritance_graph_attrs = dict(rankdir="TB")
+
 # -------- Options InterSphinx -------------------------------------------------------#
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
-    "numpy": ("http://docs.scipy.org/doc/numpy/", None),
-    "scipy": ("http://docs.scipy.org/doc/scipy/reference/", None),
-    "matplotlib": ("http://matplotlib.sourceforge.net/", None),
-    "spatialmath": ("https://petercorke.github.io/spatialmath-python/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/", None),
+    "matplotlib": ("https://matplotlib.org/stable/", None),
+    "smtb": ("https://spatialmath-python.rai-inst.com/", None),
+    "ansitable": ("https://petercorke.github.io/ansitable/", None),
 }

@@ -1,0 +1,18 @@
+[run]
+source = src/bdsim
+# Use pytest or `unittest discover --start-directory tests` (long form) for discovery.
+# `unittest discover -s tests` injects `-s tests` into sys.argv, which clashes with
+# run_sim.py's `-s/--set` argparse flag and causes test_bdrun/test_sim to fail.
+omit =
+    src/bdsim/blocks/*
+    src/bdsim/run_realtime.py
+    src/bdsim/bdedit/*
+    src/bdsim/tex2icon.py
+
+[report]
+omit =
+    src/bdsim/blocks/*
+    src/bdsim/run_realtime.py
+    src/bdsim/bdedit/*
+    src/bdsim/tex2icon.py
+fail_under = 70

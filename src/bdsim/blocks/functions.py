@@ -16,6 +16,7 @@ import math
 import inspect
 import spatialmath.base as smb
 from typing import Any, Union, Callable, Optional
+from numpy.typing import ArrayLike
 
 Vector1D = Union[int, float, tuple[float, ...], list[float], np.ndarray]
 
@@ -76,15 +77,17 @@ class Sum(FunctionBlock):
     }
 
     def __init__(
-        self, signs: str = "++", mode: Optional[str] = None, **blockargs
+        self, signs: str = "++", mode: Optional[str] = None, **blockargs: Any
     ) -> None:
         """
-        :param signs: signs associated with input ports, accepted characters: + or -, defaults to "++"
+        :param signs: a string comprising ``+`` or ``-`` characters, defaults to ``++``
         :type signs: str, optional
         :param mode: controls addition mode, per element, string comprises ``r`` or ``c`` or ``C`` or ``L``, defaults to None
         :type mode: str, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
+
+        For example the string ``+-`` creates a 2-port block where the second input is subtracted from the first.
 
         ``mode`` controls how elements of the input vectors are added/subtracted.
         Elements which are angles must be treated specially, and this is indicated by
@@ -111,7 +114,7 @@ class Sum(FunctionBlock):
         self.signs: str = signs
         self.mode: Optional[str] = mode
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         for i, input in enumerate(inputs):
             # code makes no assumption about types of inputs
             # NOTE: use sum = sum =/- input rather than sum +/-= input since
@@ -204,7 +207,7 @@ class Prod(FunctionBlock):
     nin: int = -1
     nout = 1
 
-    def __init__(self, ops: str = "**", matrix: bool = False, **blockargs) -> None:
+    def __init__(self, ops: str = "**", matrix: bool = False, **blockargs: Any) -> None:
         """
         :param ops: operations associated with input ports, accepted characters: * or /, defaults to '**'
         :type ops: str, optional
@@ -212,7 +215,7 @@ class Prod(FunctionBlock):
         :type inputs: Block or Plug
         :param matrix: Arguments are matrices, defaults to False
         :type matrix: bool, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
 
         """
@@ -222,7 +225,7 @@ class Prod(FunctionBlock):
         self.ops: str = ops
         self.matrix: bool = matrix
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         for i, input in enumerate(inputs):
             if i == 0:
                 if self.ops[i] == "*":
@@ -291,14 +294,17 @@ class Gain(FunctionBlock):
     nout = 1
 
     def __init__(
-        self, K: Union[int, float, np.ndarray] = 1, premul: bool = False, **blockargs
+        self,
+        K: Union[int, float, np.ndarray] = 1,
+        premul: bool = False,
+        **blockargs: Any,
     ) -> None:
         """
         :param K: The gain value, defaults to 1
         :type K: scalar, array_like
         :param premul: premultiply by constant, default is postmultiply, defaults to False
         :type premul: bool, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
 
         """
@@ -308,7 +314,7 @@ class Gain(FunctionBlock):
 
         self.add_param("K")
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         input = inputs[0]
 
         if isinstance(input, np.ndarray) and isinstance(self.K, np.ndarray):
@@ -372,14 +378,14 @@ class Pow(FunctionBlock):
     nout = 1
 
     def __init__(
-        self, p: Union[int, float] = 1, matrix: bool = False, **blockargs
+        self, p: Union[int, float] = 1, matrix: bool = False, **blockargs: Any
     ) -> None:
         """
         :param p: The exponent value, defaults to 1
         :type p: scalar
         :param matrix: premultiply by constant, default is postmultiply, defaults to False
         :type matrix: bool, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
 
         """
@@ -389,7 +395,7 @@ class Pow(FunctionBlock):
         self.matrix: bool = matrix
         self.add_param("p")
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         input = inputs[0]
 
         if isinstance(input, np.ndarray):
@@ -457,27 +463,30 @@ class Clip(FunctionBlock):
     nout = 1
 
     def __init__(
-        self, min: Vector1D = -math.inf, max: ArrayLike = math.inf, **blockargs
+        self,
+        min: Vector1D = -math.inf,
+        max: ArrayLike = math.inf,
+        **blockargs: Any,
     ) -> None:
         """
         :param min: Minimum value, defaults to -math.inf
         :type min: scalar or array_like, optional
         :param max: Maximum value, defaults to math.inf
         :type max: float or array_like, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(**blockargs)
         self.min = min
         self.max = max
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         input = inputs[0]
 
         if isinstance(input, np.ndarray):
             out = np.clip(input, self.min, self.max)
         else:
-            out = min(self.max, max(input, self.min))
+            out = min(self.max, max(input, self.min))  # type: ignore[arg-type]
         return [out]
 
 
@@ -560,13 +569,17 @@ class Function(FunctionBlock):
 
     def __init__(
         self,
-        func: Optional[Callable] = None,
+        func: Optional[
+            Callable[..., Any]
+            | list[Callable[..., Any]]
+            | tuple[Callable[..., Any], ...]
+        ] = None,
         nin: int = 1,
         nout: int = 1,
         persistent: bool = False,
-        fargs: Optional[list] = None,
-        fkwargs: Optional[dict] = None,
-        **blockargs,
+        fargs: Optional[list[Any]] = None,
+        fkwargs: Optional[dict[str, Any]] = None,
+        **blockargs: Any,
     ) -> None:
         """
         :param func: function or lambda, or list thereof, defaults to None
@@ -581,7 +594,7 @@ class Function(FunctionBlock):
         :type fargs: list, optional
         :param fkwargs: extra keyword arguments passed to the function, defaults to {}
         :type fkwargs: dict, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict, optional
         """
         if func is None:
@@ -614,7 +627,7 @@ class Function(FunctionBlock):
         elif callable(func):
             if len(fkwargs) == 0:
                 # we can check the number of arguments
-                n: int = len(inspect.signature(func).parameters)
+                n = len(inspect.signature(func).parameters)  # type: ignore[no-redef]
                 if persistent:
                     n -= 1  # discount dict if used
                 if nin + len(fargs) != n:
@@ -626,20 +639,20 @@ class Function(FunctionBlock):
 
         self.func = func
         if persistent:
-            self.userdata = dict()
+            self.userdata: dict[Any, Any] | None = dict()
             fargs += (self.userdata,)
         else:
             self.userdata = None
         self.args = fargs
         self.kwargs = fkwargs
 
-    def start(self, simstate) -> None:
+    def start(self, simstate: Any) -> None:
         super().start(simstate)
         if self.userdata is not None:
             self.userdata.clear()
             print("clearing user data")
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
 
         if callable(self.func):
             # single function
@@ -654,7 +667,7 @@ class Function(FunctionBlock):
                     raise RuntimeError(
                         "Function returns wrong number of arguments: " + str(self)
                     )
-                return val
+                return list(val)
             else:
                 if self.nout != 1:
                     raise RuntimeError(
@@ -729,8 +742,8 @@ class Interpolate(FunctionBlock):
     (N,1) and ``y`` has a shape of (N,M).  Alternatively ``xy`` has a shape
     of (N,M+1) and the first column is the x-data.
 
-    :note: if ``time=True``.  In this case the block has no
-        input ports and is a ``Source`` not a ``Function`` block.
+    :note: if ``time=True`` then the block has no
+        input ports and acts as a ``Source`` not a ``Function`` block.
 
     :seealso: :func:`scipy.interpolate.interp1d`
     """
@@ -740,12 +753,12 @@ class Interpolate(FunctionBlock):
 
     def __init__(
         self,
-        x: Optional[Union[list, tuple, np.ndarray]] = None,
-        y: Optional[Union[list, tuple, np.ndarray]] = None,
+        x: Optional[Union[list[Any], tuple[Any, ...], np.ndarray]] = None,
+        y: Optional[Union[list[Any], tuple[Any, ...], np.ndarray]] = None,
         xy: Optional[np.ndarray] = None,
         time: bool = False,
         kind: str = "linear",
-        **blockargs,
+        **blockargs: Any,
     ) -> None:
         """
         :param x: x-values of function, defaults to None
@@ -758,7 +771,7 @@ class Interpolate(FunctionBlock):
         :type time: bool, optional
         :param kind: interpolation method, defaults to 'linear'
         :type kind: str, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         self.time: bool = time
@@ -788,19 +801,19 @@ class Interpolate(FunctionBlock):
         self.f: scipy.interpolate.interp1d = scipy.interpolate.interp1d(
             x=x, y=y, kind=kind, axis=0
         )
-        self.x = x
+        self.xpts = x
 
-    def start(self, simstate, **blockargs) -> None:
+    def start(self, simstate: Any, **blockargs: Any) -> None:
         super().start(simstate)
 
         if simstate is not None:
             if self.time:
-                assert self.x[0] >= 0, "interpolation not defined for t<0"
-                if self.x[-1] is np.inf:
-                    self.x[-1] = simstate.T
-                assert self.x[-1] >= simstate.T, "interpolation not defined for t>T"
+                assert self.xpts[0] >= 0, "interpolation not defined for t<0"
+                if self.xpts[-1] is np.inf:
+                    self.xpts[-1] = simstate.tf
+                assert self.xpts[-1] >= simstate.tf, "interpolation not defined for t>T"
 
-    def output(self, t, inputs, x):
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         if self.time:
             xnew = t
         else:
@@ -809,9 +822,17 @@ class Interpolate(FunctionBlock):
 
 
 if __name__ == "__main__":  # pragma: no cover
-
     from pathlib import Path
+    import subprocess
+    import sys
 
-    exec(
-        open(Path(__file__).parent.parent.parent / "tests" / "test_functions.py").read()
+    root = Path(__file__).resolve().parents[3]
+    test_file = (
+        root / "tests" / "blocks" / f"test_blocks_{Path(__file__).stem.lower()}.py"
     )
+
+    if not test_file.exists():
+        print(f"No module unit tests found for {Path(__file__).name}: {test_file}")
+        raise SystemExit(0)
+
+    raise SystemExit(subprocess.call([sys.executable, "-m", "pytest", str(test_file)]))
