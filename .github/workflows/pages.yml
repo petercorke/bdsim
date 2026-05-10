@@ -1,0 +1,78 @@
+name: Docs and Pages
+
+on:
+  push:
+    branches: [main, cleanup]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-site:
+    name: build docs and jupyterlite
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install .[dev,docs]
+          pip install jupyterlite
+          sudo apt-get update
+          sudo apt-get install -y graphviz
+
+      - name: Build Sphinx docs
+        run: |
+          make -C docs html
+
+      - name: Prepare notebooks for JupyterLite
+        run: |
+          mkdir -p docs/lite/files
+          find docs/lite/files -name '*.ipynb' -delete
+          cp docs/notebooks/*.ipynb docs/lite/files/
+
+      - name: Build JupyterLite content
+        run: |
+          cd docs/lite
+          jupyter lite build --output-dir ../build/html/lite --contents files --force
+
+      - name: Prepare Pages artifact
+        run: |
+          touch docs/build/html/.nojekyll
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/build/html
+
+  deploy:
+    name: deploy to github pages
+    if: github.ref == 'refs/heads/main'
+    needs: build-site
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
