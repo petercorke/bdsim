@@ -2121,7 +2121,9 @@ class BDSim(Runner):
                 return None
 
             try:
-                mod = ast.parse(init_file.read_text(), filename=str(init_file))
+                mod = ast.parse(
+                    init_file.read_text(encoding="utf-8-sig"), filename=str(init_file)
+                )
             except OSError:
                 return None
 
@@ -2152,7 +2154,7 @@ class BDSim(Runner):
             moduledict: dict[str, list[str]],
         ) -> None:
             try:
-                source = module_file.read_text()
+                source = module_file.read_text(encoding="utf-8-sig")
                 tree = ast.parse(source, filename=str(module_file))
             except OSError:
                 return
