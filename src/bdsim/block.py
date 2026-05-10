@@ -478,6 +478,24 @@ class Block(ABC, Port):
     def state_names(self, names: list[str]) -> None:
         self._state_names = names
 
+    def inport_names(self, names: list[str] | tuple[str, ...] | str) -> None:
+        """Set input port names (legacy method for backward compatibility)."""
+        if isinstance(names, str):
+            names = [names]
+        else:
+            names = list(names)
+        names = [str(n) for n in _fixname(names)]
+        self._inport_names = names
+
+    def outport_names(self, names: list[str] | tuple[str, ...] | str) -> None:
+        """Set output port names (legacy method for backward compatibility)."""
+        if isinstance(names, str):
+            names = [names]
+        else:
+            names = list(names)
+        names = [str(n) for n in _fixname(names)]
+        self._outport_names = names
+
     @property
     def fullname(self) -> str:
         return self.blockclass + "." + str(self)
