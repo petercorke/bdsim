@@ -111,8 +111,7 @@ class InterfaceWindow(QMainWindow):
             input_fg = "#111827"
 
         menubar = self.menuBar()
-        menubar.setStyleSheet(
-            f"""
+        menubar.setStyleSheet(f"""
             QMenuBar {{
                 background: {chrome_bg};
                 color: {chrome_fg};
@@ -135,11 +134,9 @@ class InterfaceWindow(QMainWindow):
                 background: {menu_sel_bg};
                 color: {menu_sel_fg};
             }}
-            """
-        )
+            """)
 
-        self.toolbar.setStyleSheet(
-            f"""
+        self.toolbar.setStyleSheet(f"""
             QToolBar {{
                 background: {chrome_bg};
                 color: {chrome_fg};
@@ -164,8 +161,7 @@ class InterfaceWindow(QMainWindow):
                 selection-background-color: {menu_sel_bg};
                 selection-color: {menu_sel_fg};
             }}
-            """
-        )
+            """)
 
     def changeEvent(self, event):
         """Re-apply chrome styling when the app palette/theme changes at runtime."""
@@ -690,13 +686,24 @@ class InterfaceWindow(QMainWindow):
     # ------------------------------------------------------------------
     _MAX_RECENT = 10
 
+    @staticmethod
+    def _coerce_recent_files(value: object) -> list[str]:
+        # QSettings can return a plain string for single-value entries.
+        if isinstance(value, list):
+            return [str(v) for v in value if v]
+        if isinstance(value, tuple):
+            return [str(v) for v in value if v]
+        if isinstance(value, str):
+            return [value] if value else []
+        return []
+
     def _recent_files(self) -> list[str]:
         s = QSettings("bdsim", "bdedit")
-        return s.value("recentFiles", []) or []
+        return self._coerce_recent_files(s.value("recentFiles", []))
 
     def _record_recent(self, path: str):
         s = QSettings("bdsim", "bdedit")
-        files: list[str] = s.value("recentFiles", []) or []
+        files = self._coerce_recent_files(s.value("recentFiles", []))
         path = str(Path(path).resolve())
         if path in files:
             files.remove(path)
@@ -1254,7 +1261,7 @@ class InterfaceWindow(QMainWindow):
                     )
 
     def textFontStyle(self):
-        (font, ok) = QFontDialog.getFont()
+        font, ok = QFontDialog.getFont()
         # print("ok, font name, font size:", [ok, font.family(), font.styleName(), font.pointSize()])
         if ok:
             if self.interface.scene.floating_labels:
