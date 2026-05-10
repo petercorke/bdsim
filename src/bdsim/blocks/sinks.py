@@ -453,22 +453,28 @@ class Watch(SinkBlock):
     nin = 1
     nout = 0
 
-    def __init__(self, **blockargs: Any) -> None:
+    def __init__(self, nin: int = 1, **blockargs: Any) -> None:
         """
         :param nin: number of input ports, defaults to 1
         :type nin: int, optional
         :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
-        super().__init__(**blockargs)
+        super().__init__(nin=nin, **blockargs)
 
     def start(self, simstate: Any) -> None:
         # called at start of simulation, add this block to the watchlist
-        plug = self.sources[0]  # start plug for input wire
 
-        # append to the watchlist, bdsim.run() will do the rest
-        simstate.watchlist.append(plug)
-        simstate.watchnamelist.append(str(plug))
+        for i in range(self.nin):
+            if not self.sources[i]:
+                raise RuntimeError(
+                    f"WATCH block '{self.name}' input port {i} is not connected"
+                )
+            plug = self.sources[i]  # start plug for input wire
+
+            # append to the watchlist, bdsim.run() will do the rest
+            simstate.watchlist.append(plug)
+            simstate.watchnamelist.append(str(plug))
 
     def step(self, t: float, inputs: list[Any]) -> None:
         pass  # do nothing
