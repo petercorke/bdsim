@@ -65,7 +65,7 @@ jobs:
 
   deploy:
     name: deploy to github pages
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/cleanup'
     needs: build-site
     runs-on: ubuntu-latest
     environment:
