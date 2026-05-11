@@ -30,6 +30,13 @@ def _add_bdrun_cli_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--force-eval", action="store_true", dest="force_eval")
     parser.add_argument("--trace-eval", action="store_true", dest="trace_eval")
     parser.add_argument("filename", nargs="?")
+    parser.add_argument(
+        "-l",
+        "--list",
+        action="store_true",
+        dest="list_diagram",
+        help="show diagram block and wire list, then exit",
+    )
 
 
 def _parse_bdrun_args(argv: list[str]) -> tuple[argparse.Namespace, list[str]]:
@@ -148,8 +155,13 @@ def bdrun(
         globalvars=globalvars,
         allow_eval=allow_eval,
         trace_eval=trace_eval,
+        verbose=True,
         **kwargs,
     )
+    if parsed.list_diagram:
+        bd.report_lists()
+        return
+
     bd.compile()
     bd.report_summary()
 

@@ -387,6 +387,11 @@ class Block(Serializable):
                     # the number of signs to display), the number of input sockets will always
                     # exactly match the number of signs stored within the parameter.
                     for sign in parameter[2]:
+                        if index >= len(self.inputs):
+                            # During dynamic block import, parsed default signs/ops can
+                            # temporarily disagree with the provisional input count.
+                            # Deserialization will restore the exact sockets from file.
+                            break
                         self.inputs[index].socket_sign = sign
                         index += 1
 
@@ -476,7 +481,6 @@ class Block(Serializable):
                 else:
                     return "@InvalidType@"
 
-    # -----------------------------------------------------------------------------
     def setDefaultTitle(self, name, increment=None):
         """
         This method is called to give a block a generic name, and if that name
@@ -921,6 +925,13 @@ class Block(Serializable):
                     )
                 new_socket.deserialize(socket_data, hashmap)
                 self.outputs.append(new_socket)
+
+            # Synchronize inputsNum and outputsNum to match actual socket counts
+            # This prevents mismatches when blocks with variable input counts are
+            # loaded and resaved (e.g., SCOPE with different nin values)
+            if self.block_type not in ["Connector", "CONNECTOR"]:
+                self.inputsNum = len(self.inputs)
+                self.outputsNum = len(self.outputs)
 
             if self.block_type not in ["Connector", "CONNECTOR"]:
                 if self.parameters:

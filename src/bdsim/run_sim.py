@@ -2281,7 +2281,9 @@ class BDSim(Runner):
                 if block_class is None:
                     continue
 
-                ds = meta["class_doc"] + meta["init_doc"]
+                ds = "\n\n".join(
+                    part for part in (meta["class_doc"], meta["init_doc"]) if part
+                )
                 param_dict = parse_docstring(ds)
 
                 info: dict[str, Any] = {}

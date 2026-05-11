@@ -1732,6 +1732,13 @@ def bdload(
 
                 blockargs = blockargs or {}
 
+                # Handle blocks with variable input/output counts (nin=-1 or nout=-1).
+                # When bdedit saves a block with inputsNum=2, but SCOPE constructor
+                # doesn't get "nin" in the parameters, it defaults to nin=1.
+                # Fix: pass the inputsNum/outputsNum from JSON for known variable blocks.
+                if block["block_type"] == "SCOPE" and "nin" not in params:
+                    params["nin"] = block.get("inputsNum", 1)
+
                 newblock = block_init(name=block["title"], **params, **blockargs)
 
             except (
