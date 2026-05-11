@@ -15,7 +15,6 @@ import tempfile
 import os
 import io
 import unittest
-import warnings
 from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -272,26 +271,31 @@ class BdloadExprParamTest(unittest.TestCase):
 class BdrunCliBehaviorTest(unittest.TestCase):
     """Test bdrun argument plumbing and compatibility behavior."""
 
-    def test_globals_alias_warns_and_is_forwarded(self):
-        """Deprecated globals alias emits warning and maps to globalvars."""
+    def test_verbose_flag_is_forwarded_to_bdload(self):
+        """-v/--verbose should set bdload(verbose=True)."""
         fake_sim = MagicMock()
         fake_bd = MagicMock()
         fake_sim.blockdiagram.return_value = MagicMock()
 
-        with patch("bdsim.bin.bdrun.BDSim", return_value=fake_sim), patch(
-            "bdsim.bin.bdrun.bdload", return_value=fake_bd
-        ) as mock_bdload:
-            with warnings.catch_warnings(record=True) as caught:
-                warnings.simplefilter("always")
-                bdrun(filename="dummy.bd", globals={"myvar": 42})
+        with patch("sys.argv", ["bdrun", "dummy.bd", "-v"]), patch(
+            "bdsim.bin.bdrun.BDSim", return_value=fake_sim
+        ), patch("bdsim.bin.bdrun.bdload", return_value=fake_bd) as mock_bdload:
+            bdrun()
 
-        self.assertTrue(any(w.category is DeprecationWarning for w in caught))
-        self.assertEqual(mock_bdload.call_args.kwargs["globalvars"], {"myvar": 42})
+        self.assertTrue(mock_bdload.call_args.kwargs["verbose"])
 
-    def test_globals_and_globalvars_together_error(self):
-        """Passing both names is ambiguous and should fail early."""
-        with self.assertRaises(ValueError):
-            bdrun(filename="dummy.bd", globalvars={}, globals={})
+    def test_verbose_defaults_to_false_without_flag(self):
+        """Without -v/--verbose, bdload should receive verbose=False."""
+        fake_sim = MagicMock()
+        fake_bd = MagicMock()
+        fake_sim.blockdiagram.return_value = MagicMock()
+
+        with patch("sys.argv", ["bdrun", "dummy.bd"]), patch(
+            "bdsim.bin.bdrun.BDSim", return_value=fake_sim
+        ), patch("bdsim.bin.bdrun.bdload", return_value=fake_bd) as mock_bdload:
+            bdrun()
+
+        self.assertFalse(mock_bdload.call_args.kwargs["verbose"])
 
     def test_help_uses_argparse_and_delegates_to_bdsim(self):
         """-h prints bdrun argparse help then invokes BDSim help path."""
