@@ -35,7 +35,7 @@ view:
 	open docs/build/html/index.html
 
 dist: .FORCE
-	$(MAKE) -C src/bdweb build
+	#$(MAKE) -C src/bdweb build
 	#$(MAKE) test
 	python -m build
 

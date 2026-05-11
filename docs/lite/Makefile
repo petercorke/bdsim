@@ -34,7 +34,7 @@ notebook:
 	python3 adapt_nb.py
 
 ## Build the JupyterLite site into $(OUTDIR)
-build: notebook
+build: notebook wheel
 	jupyter lite build --output-dir $(OUTDIR) --contents ../notebooks --force
 
 ## Build wheel for local pypi and regenerate the piplite index

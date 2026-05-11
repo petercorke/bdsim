@@ -32,9 +32,19 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install .[dev,docs]
+          pip install build
           pip install jupyterlite jupyter-server jupyterlite-pyodide-kernel
           sudo apt-get update
           sudo apt-get install -y graphviz
+
+      - name: Build local bdsim wheel for JupyterLite
+        run: |
+          cd docs/lite
+          rm -f pypi/*.whl pypi/all.json
+          python -m build --wheel --outdir pypi ../..
+          python gen_index.py
+          echo "Using piplite index:"
+          cat pypi/all.json
 
       - name: Build Sphinx docs
         run: |
