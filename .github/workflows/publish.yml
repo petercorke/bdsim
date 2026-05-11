@@ -52,6 +52,19 @@ jobs:
             dist/bdsim_examples.zip
             dist/bdsim_notebooks.zip
 
+      - name: Upload artifacts to rolling release (push to main)
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest-main
+          name: "Latest build from main"
+          body: "Automatically updated on every push to the main branch."
+          prerelease: false
+          make_latest: true
+          files: |
+            dist/bdsim_examples.zip
+            dist/bdsim_notebooks.zip
+
       - name: Upload artifacts to release
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
