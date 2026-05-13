@@ -13,6 +13,7 @@ from typing import Any
 import numpy as np
 
 from bdsim.components import BDStruct, Block, OptionsBase, SimulationState
+from bdsim.blocks.io_base import IOProvider
 from bdsim.connect import Plug
 from bdsim.run_context import SimulationContext
 from bdsim.run_sim import BDSim
@@ -65,6 +66,21 @@ class BDRealTime(BDSim):
     This runner currently uses a timer backend abstraction with a thread backend
     fallback and executes model evaluation from a single worker thread.
     """
+
+    def __init__(
+        self,
+        *args: Any,
+        io_provider: IOProvider | str | None = None,
+        io_provider_kwargs: dict[str, Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        if isinstance(io_provider, str):
+            self.io_provider = IOProvider.create(
+                io_provider, **(io_provider_kwargs or {})
+            )
+        else:
+            self.io_provider = io_provider
 
     def _process_watchlist(self, bd, watch: list[Any]) -> tuple[list[Plug], list[str]]:
         watchlist: list[Plug] = []
@@ -356,11 +372,27 @@ class BDRealTime(BDSim):
             }
             out[".stats"] = s
 
+            if not options.quiet:
+                print("<<< Realtime simulation complete")
+                print(f"  block diagram evaluations: {stats.eval_count}")
+                print(f"  max eval time:             {stats.eval_max_ns} ns")
+                print(f"  mean eval time:            {s['eval_mean_ns']:.1f} ns")
+                print(f"  overrun count:             {stats.overrun_count}")
+                print(f"  max queue depth:           {stats.queue_depth_max}")
+                for name, c in stats.by_clock.items():
+                    print(
+                        f"  clock {name}: fired={c.fired} processed={c.processed} "
+                        f"dropped={c.dropped} lateness_max_ns={c.lateness_max_ns}"
+                    )
+
             if block is not None and options.graphics:
                 self.done(bd, block=block)
 
             return out
         finally:
+            provider = getattr(self, "io_provider", None)
+            if provider is not None:
+                provider.close()
             self._set_context(None)
 
 

@@ -2,7 +2,36 @@
 
 Status: Drafted 2026-04-24
 
+Session update: 2026-05-13
+
 This plan captures agreed direction for a new realtime runner with sampled-only scope, portable timer backends, optional logging, and robust timing stats.
+
+## 0. Implemented Since Draft
+
+The following items are now implemented in code:
+
+- Generic I/O public blocks in `src/bdsim/blocks/io.py`, including `PWMOUT`.
+- Provider base and contracts in `src/bdsim/blocks/io_base.py`.
+- Mock provider in `src/bdsim/blocks/io_mock.py` with deterministic behavior:
+    - inputs return `0`
+    - outputs discard values quietly
+- `BDRealTime` accepts `io_provider` as either:
+    - provider instance, or
+    - provider name string resolved by registry (`IOProvider.create(...)`)
+- Provider registry uses subclass auto-registration via
+    `IOProvider.__init_subclass__` keyed by provider `name` plus optional
+    `aliases`.
+- `BDRealTime.run()` now prints realtime stats before return when not quiet.
+- Mac-safe I/O tests are in `tests/blocks/test_blocks_io.py`.
+
+## 0.1 Near-Term Testing Focus (Next Session)
+
+Priority for next session is first Raspberry Pi testing:
+
+1. Keep desktop/mock tests as fast regression gate.
+2. Add Pi-target smoke path for concrete provider wiring and startup.
+3. Validate `PWMOUT` and sampled input/output behavior on target hardware.
+4. Capture jitter/overrun baseline stats from `BDRealTime.run()` output.
 
 ## 1. Architectural Decisions
 
@@ -292,6 +321,15 @@ def run(
     backend: str = "auto",             # "auto" | "posix" | "gcd" | "thread"
 ) -> BDStruct:
     ...
+```
+
+Current constructor shape now in use:
+
+```python
+rt = BDRealTime(
+    io_provider="mock",                  # or IOProvider instance
+    io_provider_kwargs=None,              # kwargs used for string provider lookup
+)
 ```
 
 Output (`BDStruct`) should include:
