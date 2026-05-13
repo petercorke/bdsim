@@ -229,3 +229,38 @@ class DigitalOut(_IOBlockMixin, SinkBlock):
 
     def step(self, t, inputs) -> None:
         self._io_handle.write(inputs[0])
+
+
+class PWMOut(AnalogOut):
+    """
+    :blockname:`PWMOUT`
+
+    PWM-flavoured analog output.
+
+    This block maps to the analog-output provider capability and is intended
+    for backends where analog output is realized via PWM. The ``clock``
+    argument is currently advisory and retained for API consistency with
+    sampled I/O examples.
+
+    :inputs: 1
+    :outputs: 0
+    :states: 0
+    """
+
+    def __init__(
+        self,
+        clock: Any | None = None,
+        channel: Any = None,
+        device: str | None = None,
+        io_options: dict[str, Any] | None = None,
+        **blockargs: Any,
+    ) -> None:
+        options = {} if io_options is None else dict(io_options)
+        options.setdefault("mode", "pwm")
+        self.clock = clock
+        super().__init__(
+            channel=channel,
+            device=device,
+            io_options=options,
+            **blockargs,
+        )

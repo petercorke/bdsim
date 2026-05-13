@@ -8,7 +8,8 @@ by the realtime runtime.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Protocol, runtime_checkable
+import importlib
+from typing import Any, ClassVar, Protocol, runtime_checkable
 
 
 class IOProviderError(RuntimeError):
@@ -66,6 +67,58 @@ class IOProvider:
     """
 
     name = "base"
+    aliases: ClassVar[tuple[str, ...]] = ()
+    _registry: ClassVar[dict[str, type["IOProvider"]]] = {}
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+
+        name = getattr(cls, "name", None)
+        if not isinstance(name, str) or name in {"", "base"}:
+            return
+
+        keys = [name, *getattr(cls, "aliases", ())]
+        for key in keys:
+            normalized = str(key).strip().lower()
+            if not normalized:
+                continue
+            existing = IOProvider._registry.get(normalized)
+            if existing is not None and existing is not cls:
+                raise ValueError(
+                    f"duplicate I/O provider key {normalized!r}: "
+                    f"{existing.__name__} and {cls.__name__}"
+                )
+            IOProvider._registry[normalized] = cls
+
+    @classmethod
+    def _load_builtin_providers(cls) -> None:
+        # Import known provider modules once so subclasses can self-register.
+        for module_name in (
+            "bdsim.blocks.io_mock",
+            "bdsim.blocks.io_firmata",
+            "bdsim.blocks.io_arduio",
+        ):
+            try:
+                importlib.import_module(module_name)
+            except Exception:
+                continue
+
+    @classmethod
+    def create(cls, provider: str, **kwargs: Any) -> "IOProvider":
+        cls._load_builtin_providers()
+        key = provider.strip().lower()
+        impl = cls._registry.get(key)
+        if impl is None:
+            known = ", ".join(sorted(cls._registry))
+            raise IOProviderError(
+                f"unknown I/O provider {provider!r}; known providers: {known}"
+            )
+        return impl(**kwargs)
+
+    @classmethod
+    def registered_names(cls) -> tuple[str, ...]:
+        cls._load_builtin_providers()
+        return tuple(sorted(cls._registry))
 
     def open_analog_input(self, spec: IOBlockSpec) -> AnalogInputHandle:
         raise UnsupportedIOBlockError(
