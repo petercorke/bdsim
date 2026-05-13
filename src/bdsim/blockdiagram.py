@@ -510,8 +510,8 @@ class BlockDiagram(BlockDiagramMixin):
                     dest = w.end.block
                     if dest == start:
                         print(
-                            "  ERROR: cycle found: ",
-                            " - ".join([str(x) for x in path + [dest]]),
+                            "  ERROR: cycle found:\n   ",
+                            "\n    ".join([str(x) for x in path + [dest]]),
                         )
                         return True
                     if dest.blockclass == "function" or (
@@ -861,6 +861,11 @@ class BlockDiagram(BlockDiagramMixin):
             plan.append(group)
             sequence += 1
 
+        if any(b._sequence is None for b in self.blocklist):
+            raise RuntimeError(
+                "could not create execution plan, check for algebraic loops"
+            )
+
         self.plan = plan
 
     def schedule_dotfile(self, filename: str | io.TextIOWrapper) -> None:
@@ -1128,8 +1133,14 @@ class BlockDiagram(BlockDiagramMixin):
             Column("type", headalign="^", colalign="<"),
             border="thin",
         )
+        nstates = 0
+        ndstates = 0
         for b in self.blocklist:
             table.row(b.id, b.name, b.nin, b.nout, b.nstates, b.ndstates, b.type)
+            nstates += b.nstates
+            ndstates += b.ndstates
+        table.rule()
+        table.row("", "total", "", "", nstates, ndstates, "")
         table.print(**kwargs)
 
         # print all the wires
@@ -1463,7 +1474,13 @@ class BlockDiagram(BlockDiagramMixin):
         :seealso: :meth:`showgraph`
         """
         if shapes is None:
-            shapes = dict(source="record", sink="Mrecord", graphics="Mrecord")
+            shapes = dict(
+                source="record",
+                sink="Mrecord",
+                graphics="Mrecord",
+                continuous="box3d",
+                sampled="box3d",
+            )
 
         if isinstance(filename, str):
             file: io.TextIOWrapper = open(filename, "w")
