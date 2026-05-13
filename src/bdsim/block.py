@@ -1224,7 +1224,9 @@ class Block(ABC, Port):
             self.bd is not None
         ), "block must be connected to a block diagram to create an automatic constant"
 
-        if isinstance(value, (int, float, str)):
+        if isinstance(value, (int, float)):
+            name = "_const.{:d}({:.3g})".format(next(self.bd.n_auto_const), value)
+        elif isinstance(value, str):
             name = "_const.{:d}({})".format(next(self.bd.n_auto_const), value)
         else:
             name = "_const.{:d}<{}>".format(
@@ -1240,7 +1242,9 @@ class Block(ABC, Port):
             self.bd is not None
         ), "block must be connected to a block diagram to create an automatic gain"
 
-        if isinstance(value, (int, float, np.ndarray)):
+        if isinstance(value, (int, float)):
+            name = "_gain.{:d}({:.3g})".format(next(self.bd.n_auto_gain), value)
+        elif isinstance(value, np.ndarray):
             name = "_gain.{:d}({})".format(next(self.bd.n_auto_gain), value)
         else:
             raise TypeError(
@@ -1256,7 +1260,7 @@ class Block(ABC, Port):
             self.bd is not None
         ), "block must be connected to a block diagram to create an automatic power block"
 
-        name = "_pow.{:d}({})".format(next(self.bd.n_auto_pow), value)
+        name = "_pow.{:d}({:.3g})".format(next(self.bd.n_auto_pow), value)
         assert (
             self.bd is not None
         ), "block must be connected to a block diagram to create an automatic power block"
