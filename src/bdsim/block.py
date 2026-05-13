@@ -1661,7 +1661,36 @@ class Block(ABC, Port):
             matrix: bool = isinstance(other, np.ndarray)  # type: ignore[no-redef]
         return Prod("*/", inputs=(other, self), matrix=matrix, name=name, bd=self.bd)
 
-    # TODO arithmetic with a constant, add a gain block or a constant block
+    @oodebug
+    def __rshift__(self, other):
+        """
+        Overloaded >> operator for implicit wiring.
+
+        :param self: A source (block) to be wired from
+        :type self: Block
+        :param other: A destination (block or plug) to be wired to
+        :type other: Block or Plug
+        :return: the destination block
+        :rtype: Block subclass
+
+        This method is implicitly invoked by the >> operator
+        when the right operand is a ``Block``
+        and the left operand is a ``Block``t::
+
+            result = X >> Y
+            result = X >> Y >> Z
+
+        where ``X``, ``Y``, and ``Z`` are blocks.
+
+        Creates a wire from the output of the left operand to the input of the right operand.
+
+        :seealso: :meth:`BlockDiagram.connect`
+        """
+        assert (
+            self.bd is not None
+        ), "block must be connected to a block diagram to create an automatic connection"
+        self.bd.connect(self, other)
+        return other
 
     # ---------------------------------------------------------------------- #
 
