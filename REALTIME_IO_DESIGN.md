@@ -3,6 +3,10 @@
 This note records the current design direction for realtime input/output blocks.
 It is intended as a stable reference for future implementation work.
 
+Related notes:
+
+- [TELEMETRY_CONTROL_DESIGN.md](TELEMETRY_CONTROL_DESIGN.md) for telemetry/control protocol and roadmap.
+
 ## Goal
 
 Support realtime I/O blocks whose concrete behavior depends on the operating
@@ -121,6 +125,12 @@ The current base concepts are:
 ## Runtime Integration
 
 The realtime runtime is expected to choose and expose the active provider.
+
+Preferred user-facing import path for realtime code:
+
+```python
+from bdsim.realtime import BDRealTime
+```
 
 The generic blocks currently look for one of these runtime hooks:
 

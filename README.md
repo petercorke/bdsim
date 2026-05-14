@@ -105,6 +105,29 @@ In contrast to traditional graphical simulation tools, bdsim treats modelling as
 
 * Scalability: Programmatically generate massive block diagrams or run large-scale batch simulations on headless servers.
 
+## Startup and Tooling Metadata
+
+Block discovery supports two metadata modes:
+
+* `block_metadata="minimal"`: faster startup for runtime/realtime use; skips help-oriented metadata such as parsed docstrings and documentation URLs.
+* `block_metadata="full"`: richer metadata for tooling such as `bdedit`, menus, and help screens.
+
+Example:
+
+```python
+import bdsim
+
+sim = bdsim.BDSim(block_metadata="minimal")
+```
+
+The realtime entry point defaults to minimal metadata, while editor-style tooling should request full metadata explicitly.
+
+For realtime applications, prefer the dedicated import path:
+
+```python
+from bdsim.realtime import BDRealTime
+```
+
 ## 📚 Documentation
 Full Documentation: https://petercorke.github.io/bdsim/
 

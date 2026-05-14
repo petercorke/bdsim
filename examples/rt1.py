@@ -5,8 +5,10 @@ Real-time system, waveform generator driving an LED
 Copyright (c) 2026- Peter Corke
 """
 
-import bdsim
 import platform
+
+from bdsim.realtime import BDRealTime
+
 
 def _select_io_provider() -> str:
     machine = platform.machine().lower()
@@ -18,6 +20,8 @@ def _select_io_provider() -> str:
     }:
         return "rpi"
     return "mock"
+
+
 rt = BDRealTime(
     io_provider=_select_io_provider(),
     toolboxes=False,
@@ -36,11 +40,15 @@ led = bd.PWMOUT(
 bd.connect(demand, led)
 
 bd.compile()  # check the diagram
+
 bd.report_summary()
 
-out = rt.run(bd, tf=20)  # simulate for 20s
+out = rt.run(bd, tf=20, log_gc=True)  # simulate for 20s
 print(out)
-# stats = out.stats
+stats = out.stats
+print(stats)
+if "gc" in stats:
+    print("gc:", stats["gc"])
 # print(
 #     f"eval_count={stats.eval_count} "
 #     f"overrun_count={stats.overrun_count} "

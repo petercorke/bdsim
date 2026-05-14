@@ -6,9 +6,9 @@ Pi use case needed by the realtime LED example:
 - analog output via PWM
 - digital input/output via GPIO pins
 
-The provider tries ``RPi.GPIO`` first and falls back to ``gpiozero`` if it is
-available. Importing this module does not require either library; the backend is
-selected when the provider is instantiated.
+The provider uses ``gpiozero`` for digital I/O and MCP3008 ADC access. For
+PWM output it prefers ``pigpio`` hardware PWM on supported pins and falls back
+to ``gpiozero.PWMOutputDevice`` if pigpio is unavailable.
 """
 
 from __future__ import annotations
@@ -70,21 +70,45 @@ class RpiGPIOProvider(IOProvider):
 
     def __init__(self, *, pwm_frequency: float = 1000.0) -> None:
         self.pwm_frequency = pwm_frequency
-        self._gpio = None
         self._gpiozero = None
+        self._pigpio = None
         self._gpiozero_devices: list[Any] = []
-        self._pwm_devices: list[Any] = []
+        self._hw_pwm_pins: set[int] = set()
         self._mode = self._configure_backend()
+
+    @staticmethod
+    def _supports_hardware_pwm(pin: int) -> bool:
+        # Raspberry Pi hardware PWM-capable GPIO pins.
+        return pin in {12, 13, 18, 19}
+
+    def _get_pigpio(self):
+        if self._pigpio is not None:
+            return self._pigpio
+
+        try:
+            import pigpio  # type: ignore[import-not-found]
+
+            pi = pigpio.pi()
+            if not pi.connected:
+                return None
+            self._pigpio = pi
+            return pi
+        except Exception:
+            return None
 
     def _configure_backend(self) -> str:
         try:
             from gpiozero import DigitalInputDevice, DigitalOutputDevice, PWMOutputDevice  # type: ignore[import-not-found]
-            from gpiozero.pins.lgpio import LGPIOFactory  # type: ignore[import-not-found]
 
-            # Set up lgpio as the pin factory (prefers lgpio > native > RPi.GPIO)
+            # Use lgpio backend when available; otherwise retain gpiozero default.
             import gpiozero
 
-            gpiozero.Device.pin_factory = LGPIOFactory()
+            try:
+                from gpiozero.pins.lgpio import LGPIOFactory  # type: ignore[import-not-found]
+
+                gpiozero.Device.pin_factory = LGPIOFactory()
+            except Exception:
+                pass
 
             self._gpiozero = {
                 "DigitalInputDevice": DigitalInputDevice,
@@ -92,19 +116,9 @@ class RpiGPIOProvider(IOProvider):
                 "PWMOutputDevice": PWMOutputDevice,
             }
             return "gpiozero"
-        except Exception:
-            pass
-
-        try:
-            import RPi.GPIO as gpio  # type: ignore[import-not-found]
-
-            gpio.setwarnings(False)
-            gpio.setmode(gpio.BCM)
-            self._gpio = gpio
-            return "rpi_gpio"
         except Exception as err:
             raise IOProviderError(
-                "RpiGPIOProvider requires either gpiozero or RPi.GPIO to be installed"
+                "RpiGPIOProvider requires gpiozero to be installed"
             ) from err
 
     def _spec_pin(self, spec: IOBlockSpec) -> int:
@@ -160,17 +174,21 @@ class RpiGPIOProvider(IOProvider):
         frequency = float(options.get("frequency", self.pwm_frequency))
         active_high = bool(options.get("active_high", True))
 
-        if self._gpio is not None:
-            gpio = self._gpio
-            gpio.setup(pin, gpio.OUT)
-            pwm = gpio.PWM(pin, frequency)
-            pwm.start(0.0)
-            self._pwm_devices.append(pwm)
+        # Prefer hardware PWM where available for accurate/high carrier rates.
+        hw_pwm_requested = bool(options.get("hardware_pwm", True))
+        if hw_pwm_requested and self._supports_hardware_pwm(pin):
+            pi = self._get_pigpio()
+            if pi is not None:
+                freq_hz = max(1, int(round(frequency)))
 
-            def write(value: Any) -> None:
-                pwm.ChangeDutyCycle(_clamp01(value) * 100.0)
+                def write(value: Any) -> None:
+                    duty = int(round(_clamp01(value) * 1_000_000.0))
+                    pi.hardware_PWM(pin, freq_hz, duty)
 
-            return _CallableOutputHandle(write)
+                # Initialize at 0% duty and track pin for close().
+                pi.hardware_PWM(pin, freq_hz, 0)
+                self._hw_pwm_pins.add(pin)
+                return _CallableOutputHandle(write)
 
         assert self._gpiozero is not None
         pwm_output_device = self._gpiozero["PWMOutputDevice"](
@@ -189,13 +207,6 @@ class RpiGPIOProvider(IOProvider):
         options = spec.options or {}
         pull_up = bool(options.get("pull_up", False))
 
-        if self._gpio is not None:
-            gpio = self._gpio
-            gpio.setup(
-                pin, gpio.IN, pull_up_down=gpio.PUD_UP if pull_up else gpio.PUD_DOWN
-            )
-            return _CallableInputHandle(lambda: gpio.input(pin))
-
         assert self._gpiozero is not None
         input_device = self._gpiozero["DigitalInputDevice"](pin, pull_up=pull_up)
         self._gpiozero_devices.append(input_device)
@@ -205,13 +216,6 @@ class RpiGPIOProvider(IOProvider):
         pin = self._spec_pin(spec)
         options = spec.options or {}
         active_high = bool(options.get("active_high", True))
-
-        if self._gpio is not None:
-            gpio = self._gpio
-            gpio.setup(pin, gpio.OUT)
-            return _CallableOutputHandle(
-                lambda value: gpio.output(pin, 1 if value else 0)
-            )
 
         assert self._gpiozero is not None
         output_device = self._gpiozero["DigitalOutputDevice"](
@@ -225,13 +229,20 @@ class RpiGPIOProvider(IOProvider):
         )
 
     def close(self) -> None:
-        if self._gpio is not None:
-            self._gpio.cleanup()
+        if self._pigpio is not None:
+            for pin in self._hw_pwm_pins:
+                try:
+                    self._pigpio.hardware_PWM(pin, 0, 0)
+                except Exception:
+                    pass
+            self._hw_pwm_pins.clear()
+            try:
+                self._pigpio.stop()
+            except Exception:
+                pass
+            self._pigpio = None
+
         for device in self._gpiozero_devices:
             close = getattr(device, "close", None)
             if callable(close):
                 close()
-        for pwm in self._pwm_devices:
-            stop = getattr(pwm, "stop", None)
-            if callable(stop):
-                stop()

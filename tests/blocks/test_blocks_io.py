@@ -1,9 +1,11 @@
 import os
 import platform
 import unittest
+import json
 
 import bdsim
-from bdsim.blocks.io import AnalogIn, AnalogOut, DigitalIn, DigitalOut
+import numpy as np
+from bdsim.blocks.io import AnalogIn, AnalogOut, DigitalIn, DigitalOut, Telemetry
 from bdsim.blocks.io_mock import MockIOProvider
 from bdsim.blocks.io_base import (
     IOBlockSpec,
@@ -29,6 +31,18 @@ class _FakeOutputHandle:
 
     def write(self, value):
         self.writes.append(value)
+
+
+class _FakeDatagramSocket:
+    def __init__(self):
+        self.sent = []
+        self.closed = False
+
+    def sendto(self, payload: bytes, addr):
+        self.sent.append((payload, addr))
+
+    def close(self):
+        self.closed = True
 
 
 class _FakeProvider(IOProvider):
@@ -189,6 +203,74 @@ class IOMacSafeTest(unittest.TestCase):
     def test_provider_create_unknown_raises(self):
         with self.assertRaises(IOProviderError):
             IOProvider.create("definitely-unknown-provider")
+
+    def test_telemetry_emits_schema_and_sample(self):
+        block = Telemetry(clock=object(), port=5001, nin=2, bd=self.bd)
+        block._sock = _FakeDatagramSocket()
+        block.start(self.simstate)
+
+        self.assertGreaterEqual(len(block._sock.sent), 1)
+        schema_payload = json.loads(block._sock.sent[0][0].decode("utf-8"))
+        self.assertEqual(schema_payload["type"], "schema")
+        self.assertEqual(len(schema_payload["signals"]), 2)
+
+        block.step(0.1, [1.5, -2.0])
+        sample_payload = json.loads(block._sock.sent[-1][0].decode("utf-8"))
+        self.assertEqual(sample_payload["type"], "sample")
+        self.assertEqual(sample_payload["seq"], 0)
+        self.assertEqual(sample_payload["values"], [1.5, -2.0])
+
+        block.done(self.simstate)
+        self.assertTrue(block._sock is None)
+
+    def test_telemetry_encodes_ndarray(self):
+        block = Telemetry(clock=object(), port=5001, nin=1, bd=self.bd)
+        block._sock = _FakeDatagramSocket()
+        block.start(self.simstate)
+
+        block.step(0.2, [np.array([1.0, 2.0, 3.0])])
+        sample_payload = json.loads(block._sock.sent[-1][0].decode("utf-8"))
+        encoded = sample_payload["values"][0]
+        self.assertEqual(encoded["kind"], "ndarray")
+        self.assertEqual(encoded["shape"], [3])
+        self.assertEqual(encoded["data"], [1.0, 2.0, 3.0])
+
+    def test_telemetry_signal_names_must_match_nin(self):
+        block = Telemetry(
+            clock=object(),
+            port=5001,
+            nin=2,
+            signal_names=["a"],
+            bd=self.bd,
+        )
+        with self.assertRaises(ValueError):
+            block.start(self.simstate)
+
+    def test_telemetry_accepts_endpoint(self):
+        block = Telemetry(
+            clock=object(), endpoint="192.168.100.1:6001", nin=1, bd=self.bd
+        )
+        self.assertEqual(block.host, "192.168.100.1")
+        self.assertEqual(block.port, 6001)
+
+    def test_telemetry_rejects_bad_endpoint(self):
+        with self.assertRaises(ValueError):
+            Telemetry(
+                clock=object(), endpoint="not-a-valid-endpoint", nin=1, bd=self.bd
+            )
+
+    def test_telemetry_uses_endpoint_env_when_arg_missing(self):
+        prev = os.environ.get("BDSIM_TELEMETRY")
+        try:
+            os.environ["BDSIM_TELEMETRY"] = "192.168.100.1:7001"
+            block = Telemetry(clock=object(), nin=1, bd=self.bd)
+            self.assertEqual(block.host, "192.168.100.1")
+            self.assertEqual(block.port, 7001)
+        finally:
+            if prev is None:
+                os.environ.pop("BDSIM_TELEMETRY", None)
+            else:
+                os.environ["BDSIM_TELEMETRY"] = prev
 
     @unittest.skipUnless(platform.system() == "Linux", "Pi hardware tests run on Linux")
     def test_pi_hardware_placeholder(self):

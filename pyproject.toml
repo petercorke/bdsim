@@ -69,6 +69,7 @@ all = ["PySide6", "Pillow", "ipywidgets", "ipympl"]
 
 bdsim = "bdsim.__main__:main"
 bdrun = "bdsim.bin.bdrun:bdrun"
+bdsim-telemetry-client = "bdsim.bin.telemetry_client:main"
 bdtex2icon = "bdsim.tex2icon:main"
 bdedit-app = "bdedit.make_app:make_app"
 bdedit-associate-windows = "bdedit.associate_bd_windows:main"
