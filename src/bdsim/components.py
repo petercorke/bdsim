@@ -2,21 +2,54 @@
 
 from __future__ import annotations
 
+import importlib
+import os
 import re
 import threading
+import time
 import warnings
 import unicodedata
 import heapq
 from collections import UserDict
 
 import numpy as np
+
+# def _env_true(name: str) -> bool:
+#     return os.getenv(name, "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+# _IMPORT_TIMING = _env_true("BDSIM_IMPORT_TIMING")
+
+
+# def _timed_import(module_name: str, label: str) -> Any:
+#     # Keep import timing instrumentation centralized so startup profiling is
+#     # available without sprinkling print/debug code through module bodies.
+#     t0 = time.perf_counter() if _IMPORT_TIMING else 0.0
+#     module = importlib.import_module(module_name)
+#     if _IMPORT_TIMING:
+#         print(f"bdsim import: components->{label}={time.perf_counter() - t0:.3f}s")
+#     return module
+
+# np = _timed_import("numpy", "numpy")
+
 from typing import TYPE_CHECKING, Any, Callable, Protocol, TypeVar, runtime_checkable
 
-from bdsim.exceptions import BlockApiError, BlockRuntimeError, SimulationContextError
+_m_ex = _timed_import("bdsim.exceptions", "exceptions")
+BlockApiError = _m_ex.BlockApiError
+BlockRuntimeError = _m_ex.BlockRuntimeError
+SimulationContextError = _m_ex.SimulationContextError
 
 if TYPE_CHECKING:
     from bdsim.blockdiagram import BlockDiagram
     from bdsim.run_context import SimulationContext
+
+
+def _get_pyplot() -> Any:
+    # pyplot import can initialize GUI backends; defer until plotting is used
+    # so non-graphics and realtime code paths avoid this startup overhead.
+    import matplotlib.pyplot as plt
+
+    return plt
 
 
 @runtime_checkable
@@ -735,21 +768,32 @@ class Clock:
 
 
 # Block moved to bdsim.block to separate core block API from other components.
-from bdsim.block import Block  # noqa: E402, F401
+_BLOCK_EXPORTS = {
+    "Block",
+    "SinkBlock",
+    "SourceBlock",
+    "ContinuousBlock",
+    "TransferBlock",
+    "FunctionBlock",
+    "SubsystemBlock",
+    "SampledBlock",
+    "ClockedBlock",
+    "EventSource",
+    "deprecated_block",
+}
 
-# Re-export block type subclasses defined in block.py
-from bdsim.block import (  # noqa: E402, F401
-    SinkBlock,
-    SourceBlock,
-    ContinuousBlock,
-    TransferBlock,
-    FunctionBlock,
-    SubsystemBlock,
-    SampledBlock,
-    ClockedBlock,
-    EventSource,
-    deprecated_block,
-)
+
+def _load_block_exports() -> None:
+    block_module = _timed_import("bdsim.block", "block")
+    globals().update({name: getattr(block_module, name) for name in _BLOCK_EXPORTS})
+
+
+def __getattr__(name: str) -> Any:
+    if name in _BLOCK_EXPORTS:
+        _load_block_exports()
+        return globals()[name]
+    raise AttributeError(name)
+
 
 if __name__ == "__main__":
     try:

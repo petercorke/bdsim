@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import gc
+import importlib
 import queue
 import re
 import threading
@@ -12,12 +14,38 @@ from typing import Any
 
 import numpy as np
 
-from bdsim.components import BDStruct, Block, OptionsBase, SimulationState
-from bdsim.blocks.io_base import IOProvider
-from bdsim.connect import Plug
-from bdsim.run_context import SimulationContext
-from bdsim.run_sim import BDSim
-from bdsim.timers import create_timer_backend
+
+def _env_true(name: str) -> bool:
+    import os
+
+    return os.getenv(name, "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+_IMPORT_TIMING = _env_true("BDSIM_IMPORT_TIMING")
+
+
+def _timed_module(module_name: str):
+    # Realtime startup cost is dominated by imports on low-power targets.
+    # Keep heavyweight modules out of module scope and import them only when
+    # needed, while retaining optional timing visibility for profiling.
+    t0 = time.perf_counter() if _IMPORT_TIMING else 0.0
+    module = importlib.import_module(module_name)
+    if _IMPORT_TIMING:
+        print(
+            f"bdsim import: run_realtime->{module_name}={time.perf_counter() - t0:.3f}s"
+        )
+    return module
+
+
+_m_components = _timed_module("bdsim.components")
+BDStruct = _m_components.BDStruct
+OptionsBase = _m_components.OptionsBase
+SimulationState = _m_components.SimulationState
+
+IOProvider = _timed_module("bdsim.blocks.io_base").IOProvider
+Plug = _timed_module("bdsim.connect").Plug
+SimulationContext = _timed_module("bdsim.run_context").SimulationContext
+create_timer_backend = _timed_module("bdsim.timers").create_timer_backend
 
 
 class BDRealTimeState(SimulationState):
@@ -38,6 +66,7 @@ class ClockStats:
     processed: int = 0
     dropped: int = 0
     lateness_sum_ns: int = 0
+    lateness_sum_sq_ns2: int = 0
     lateness_max_ns: int = 0
 
 
@@ -45,6 +74,7 @@ class ClockStats:
 class RTStats:
     eval_count: int = 0
     eval_sum_ns: int = 0
+    eval_sum_sq_ns2: int = 0
     eval_max_ns: int = 0
     queue_depth_max: int = 0
     overrun_count: int = 0
@@ -60,7 +90,7 @@ class _TickEvent:
     fired_ns: int
 
 
-class BDRealTime(BDSim):
+class BDRealTime:
     """Realtime runner for sampled/clocked systems.
 
     This runner currently uses a timer backend abstraction with a thread backend
@@ -74,7 +104,13 @@ class BDRealTime(BDSim):
         io_provider_kwargs: dict[str, Any] | None = None,
         **kwargs: Any,
     ) -> None:
-        super().__init__(*args, **kwargs)
+        # Realtime mode does not need block metadata/doc harvesting during
+        # startup, so default to the minimal path unless explicitly overridden.
+        kwargs.setdefault("block_metadata", "minimal")
+        # Import BDSim on demand so `from bdsim.realtime import BDRealTime`
+        # stays cheap until an instance is actually constructed.
+        bdsim_cls = _timed_module("bdsim.run_sim").BDSim
+        self._sim = bdsim_cls(*args, **kwargs)
         if isinstance(io_provider, str):
             self.io_provider = IOProvider.create(
                 io_provider, **(io_provider_kwargs or {})
@@ -82,10 +118,22 @@ class BDRealTime(BDSim):
         else:
             self.io_provider = io_provider
 
+    def __getattr__(self, name: str) -> Any:
+        # Delegate shared runtime API (options, blockdiagram(), context helpers,
+        # done(), etc.) to the underlying BDSim instance.
+        return getattr(self._sim, name)
+
+    def blockdiagram(self, *args: Any, **kwargs: Any) -> Any:
+        """Create a block diagram bound to this realtime runtime wrapper."""
+        bd = self._sim.blockdiagram(*args, **kwargs)
+        bd.runtime = self
+        return bd
+
     def _process_watchlist(self, bd, watch: list[Any]) -> tuple[list[Plug], list[str]]:
         watchlist: list[Plug] = []
         watchnamelist: list[str] = []
         re_block: re.Pattern[str] = re.compile(r"(?P<name>[^[]+)(\[(?P<port>[0-9]+)\])")
+        block_type: type[Any] | None = None
 
         for w in watch:
             if isinstance(w, str):
@@ -96,12 +144,21 @@ class BDRealTime(BDSim):
                 port = int(m.group("port"))
                 b = bd.blocknames[name]
                 plug = b[port]
-            elif isinstance(w, Block):
-                plug = w[0]
             elif isinstance(w, Plug):
                 plug = w
             else:
-                raise TypeError(f"bad watch type: {type(w)}")
+                # Resolve Block type lazily so realtime startup doesn't import
+                # the heavy bdsim.block module unless watch values require it.
+                if block_type is None:
+                    try:
+                        block_module = _timed_module("bdsim.block")
+                        block_type = getattr(block_module, "Block", None)
+                    except Exception:
+                        block_type = None
+                if block_type is not None and isinstance(w, block_type):
+                    plug = w[0]
+                else:
+                    raise TypeError(f"bad watch type: {type(w)}")
 
             watchlist.append(plug)
             watchnamelist.append(str(plug))
@@ -128,6 +185,7 @@ class BDRealTime(BDSim):
         queue_limit: int = 4096,
         log_signals: bool = False,
         log_clock_state: bool = False,
+        log_gc: bool = False,
         backend: str = "auto",
     ) -> BDStruct:
         """Run sampled/clocked block diagram in realtime.
@@ -138,6 +196,7 @@ class BDRealTime(BDSim):
         :param queue_limit: max realtime tick queue depth
         :param log_signals: record t/watch logs
         :param log_clock_state: include per-clock logs in output
+        :param log_gc: include Python GC activity and pause stats in output
         :param backend: timer backend selector
         """
 
@@ -175,6 +234,55 @@ class BDRealTime(BDSim):
             bd=bd, simstate=simstate, options=options, progress=None, threaded=False
         )
         self._set_context(context)
+
+        gc_metrics: dict[str, Any] | None = None
+        gc_cb = None
+        if log_gc:
+            before_stats = gc.get_stats()
+            gc_metrics = {
+                "collections": 0,
+                "collected": 0,
+                "uncollectable": 0,
+                "collections_by_gen": {0: 0, 1: 0, 2: 0},
+                "collected_by_gen": {0: 0, 1: 0, 2: 0},
+                "uncollectable_by_gen": {0: 0, 1: 0, 2: 0},
+                "pause_sum_ns": 0,
+                "pause_max_ns": 0,
+                "_start_ns": {},
+                "count_before": gc.get_count(),
+                "stats_before": before_stats,
+            }
+
+            def _gc_callback(phase: str, info: dict[str, Any]) -> None:
+                if gc_metrics is None:
+                    return
+                gen = int(info.get("generation", 0))
+                gen = 0 if gen < 0 else (2 if gen > 2 else gen)
+                if phase == "start":
+                    gc_metrics["_start_ns"][gen] = time.perf_counter_ns()
+                    return
+                if phase != "stop":
+                    return
+
+                gc_metrics["collections"] += 1
+                gc_metrics["collections_by_gen"][gen] += 1
+                collected = int(info.get("collected", 0))
+                uncollectable = int(info.get("uncollectable", 0))
+                gc_metrics["collected"] += collected
+                gc_metrics["uncollectable"] += uncollectable
+                gc_metrics["collected_by_gen"][gen] += collected
+                gc_metrics["uncollectable_by_gen"][gen] += uncollectable
+
+                start_ns = gc_metrics["_start_ns"].pop(gen, None)
+                if start_ns is not None:
+                    pause_ns = time.perf_counter_ns() - start_ns
+                    gc_metrics["pause_sum_ns"] += pause_ns
+                    gc_metrics["pause_max_ns"] = max(
+                        gc_metrics["pause_max_ns"], pause_ns
+                    )
+
+            gc_cb = _gc_callback
+            gc.callbacks.append(gc_cb)
 
         try:
             simstate.tf = tf
@@ -222,6 +330,7 @@ class BDRealTime(BDSim):
                     cs.enqueued += 1
                     lateness_ns = max(0, fired_ns - scheduled_ns)
                     cs.lateness_sum_ns += lateness_ns
+                    cs.lateness_sum_sq_ns2 += lateness_ns * lateness_ns
                     cs.lateness_max_ns = max(cs.lateness_max_ns, lateness_ns)
                     stats.queue_depth_max = max(
                         stats.queue_depth_max, tick_queue.qsize()
@@ -307,6 +416,7 @@ class BDRealTime(BDSim):
                         with stats_lock:
                             stats.eval_count += 1
                             stats.eval_sum_ns += eval_ns
+                            stats.eval_sum_sq_ns2 += eval_ns * eval_ns
                             stats.eval_max_ns = max(stats.eval_max_ns, eval_ns)
                             cs = self._clock_stats(stats, ev.timer_id)
                             cs.processed += 1
@@ -355,9 +465,21 @@ class BDRealTime(BDSim):
             s = BDStruct(name="stats")
             s["eval_count"] = stats.eval_count
             s["eval_sum_ns"] = stats.eval_sum_ns
+            s["eval_sum_sq_ns2"] = stats.eval_sum_sq_ns2
             s["eval_max_ns"] = stats.eval_max_ns
             s["eval_mean_ns"] = (
                 stats.eval_sum_ns / stats.eval_count if stats.eval_count > 0 else 0.0
+            )
+            s["eval_stddev_ns"] = (
+                np.sqrt(
+                    max(
+                        0.0,
+                        (stats.eval_sum_sq_ns2 / stats.eval_count)
+                        - (s["eval_mean_ns"] * s["eval_mean_ns"]),
+                    )
+                )
+                if stats.eval_count > 0
+                else 0.0
             )
             s["queue_depth_max"] = stats.queue_depth_max
             s["overrun_count"] = stats.overrun_count
@@ -370,10 +492,63 @@ class BDRealTime(BDSim):
                     "processed": c.processed,
                     "dropped": c.dropped,
                     "lateness_sum_ns": c.lateness_sum_ns,
+                    "lateness_sum_sq_ns2": c.lateness_sum_sq_ns2,
+                    "lateness_mean_ns": (
+                        c.lateness_sum_ns / c.enqueued if c.enqueued > 0 else 0.0
+                    ),
+                    "lateness_stddev_ns": (
+                        np.sqrt(
+                            max(
+                                0.0,
+                                (c.lateness_sum_sq_ns2 / c.enqueued)
+                                - (
+                                    (c.lateness_sum_ns / c.enqueued)
+                                    * (c.lateness_sum_ns / c.enqueued)
+                                ),
+                            )
+                        )
+                        if c.enqueued > 0
+                        else 0.0
+                    ),
                     "lateness_max_ns": c.lateness_max_ns,
                 }
                 for name, c in stats.by_clock.items()
             }
+
+            if log_gc and gc_metrics is not None:
+                after_stats = gc.get_stats()
+                gc_by_gen = {}
+                for i in range(min(len(after_stats), 3)):
+                    before = gc_metrics["stats_before"][i]
+                    after = after_stats[i]
+                    gc_by_gen[str(i)] = {
+                        "collections": int(after.get("collections", 0))
+                        - int(before.get("collections", 0)),
+                        "collected": int(after.get("collected", 0))
+                        - int(before.get("collected", 0)),
+                        "uncollectable": int(after.get("uncollectable", 0))
+                        - int(before.get("uncollectable", 0)),
+                    }
+
+                gc_summary = {
+                    "count_before": gc_metrics["count_before"],
+                    "count_after": gc.get_count(),
+                    "collections": gc_metrics["collections"],
+                    "collected": gc_metrics["collected"],
+                    "uncollectable": gc_metrics["uncollectable"],
+                    "collections_by_gen": gc_metrics["collections_by_gen"],
+                    "collected_by_gen": gc_metrics["collected_by_gen"],
+                    "uncollectable_by_gen": gc_metrics["uncollectable_by_gen"],
+                    "pause_sum_ns": gc_metrics["pause_sum_ns"],
+                    "pause_max_ns": gc_metrics["pause_max_ns"],
+                    "pause_mean_ns": (
+                        gc_metrics["pause_sum_ns"] / gc_metrics["collections"]
+                        if gc_metrics["collections"] > 0
+                        else 0.0
+                    ),
+                    "get_stats_delta_by_gen": gc_by_gen,
+                }
+                s["gc"] = gc_summary
             out[".stats"] = s
 
             if not options.quiet:
@@ -381,12 +556,43 @@ class BDRealTime(BDSim):
                 print(f"  block diagram evaluations: {stats.eval_count}")
                 print(f"  max eval time:             {stats.eval_max_ns / 1000:.1f} µs")
                 print(f"  mean eval time:            {s['eval_mean_ns'] / 1000:.1f} µs")
+                print(
+                    f"  stddev eval time:          {s['eval_stddev_ns'] / 1000:.1f} µs"
+                )
                 print(f"  overrun count:             {stats.overrun_count}")
                 print(f"  max queue depth:           {stats.queue_depth_max}")
                 for name, c in stats.by_clock.items():
+                    lateness_mean_ns = (
+                        c.lateness_sum_ns / c.enqueued if c.enqueued > 0 else 0.0
+                    )
+                    lateness_stddev_ns = (
+                        np.sqrt(
+                            max(
+                                0.0,
+                                (c.lateness_sum_sq_ns2 / c.enqueued)
+                                - (lateness_mean_ns * lateness_mean_ns),
+                            )
+                        )
+                        if c.enqueued > 0
+                        else 0.0
+                    )
                     print(
                         f"  clock {name}: fired={c.fired} processed={c.processed} "
-                        f"dropped={c.dropped} lateness_max_ns={c.lateness_max_ns / 1000:.1f} µs"
+                        f"dropped={c.dropped} "
+                        f"lateness_mean_ns={lateness_mean_ns / 1000:.1f} µs "
+                        f"lateness_stddev_ns={lateness_stddev_ns / 1000:.1f} µs "
+                        f"lateness_max_ns={c.lateness_max_ns / 1000:.1f} µs"
+                    )
+                if log_gc and "gc" in s:
+                    g = s["gc"]
+                    print(
+                        f"  gc: collections={g['collections']} "
+                        f"collected={g['collected']} "
+                        f"uncollectable={g['uncollectable']}"
+                    )
+                    print(
+                        f"  gc pause: mean={g['pause_mean_ns'] / 1000:.1f} µs "
+                        f"max={g['pause_max_ns'] / 1000:.1f} µs"
                     )
 
             if block is not None and options.graphics:
@@ -394,6 +600,11 @@ class BDRealTime(BDSim):
 
             return out
         finally:
+            if gc_cb is not None:
+                try:
+                    gc.callbacks.remove(gc_cb)
+                except ValueError:
+                    pass
             provider = getattr(self, "io_provider", None)
             if provider is not None:
                 provider.close()

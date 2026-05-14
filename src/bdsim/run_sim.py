@@ -22,12 +22,7 @@ import traceback as tb
 import warnings
 from typing import Any, Callable, NoReturn, Sequence
 
-import matplotlib
-
-import matplotlib.pyplot as plt
 import numpy as np
-import scipy.integrate as integrate
-import spatialmath.base as smb  # type: ignore[import-not-found]
 from colored import attr, fg
 
 from bdsim.components import (
@@ -67,6 +62,55 @@ try:
     _FillingCirclesBar = True
 except ImportError:
     _FillingCirclesBar = False
+
+
+_MATPLOTLIB_MODULE: Any | None = None
+_PYPLOT_MODULE: Any | None = None
+_SCIPY_INTEGRATE_MODULE: Any | None = None
+_SPATIALMATH_BASE_MODULE: Any | None = None
+
+
+def _get_matplotlib_module() -> Any:
+    # Defer optional plotting stack imports so simulation-only CLI paths and
+    # realtime wrappers do not pay this import cost up front.
+    global _MATPLOTLIB_MODULE
+    if _MATPLOTLIB_MODULE is None:
+        import matplotlib as _matplotlib
+
+        _MATPLOTLIB_MODULE = _matplotlib
+    return _MATPLOTLIB_MODULE
+
+
+def _get_pyplot() -> Any:
+    global _PYPLOT_MODULE
+    if _PYPLOT_MODULE is None:
+        # pyplot is intentionally imported on first use; importing it at module
+        # load can pull GUI backends and add measurable startup latency.
+        import matplotlib.pyplot as _plt
+
+        _PYPLOT_MODULE = _plt
+    return _PYPLOT_MODULE
+
+
+def _get_scipy_integrate() -> Any:
+    global _SCIPY_INTEGRATE_MODULE
+    if _SCIPY_INTEGRATE_MODULE is None:
+        # solve_ivp and friends are only needed for integration paths.
+        import scipy.integrate as _integrate
+
+        _SCIPY_INTEGRATE_MODULE = _integrate
+    return _SCIPY_INTEGRATE_MODULE
+
+
+def _get_spatialmath_base() -> Any:
+    global _SPATIALMATH_BASE_MODULE
+    if _SPATIALMATH_BASE_MODULE is None:
+        # SpatialMath is optional for many block sets; keep import lazy to
+        # avoid slowing down minimal startup configurations.
+        import spatialmath.base as _smb  # type: ignore[import-not-found]
+
+        _SPATIALMATH_BASE_MODULE = _smb
+    return _SPATIALMATH_BASE_MODULE
 
 
 class Progress:
@@ -184,7 +228,11 @@ def _store_watch_output(
 
 
 class _LazyBlockClass:
-    """Proxy object that resolves a block class on first use."""
+    """Proxy object that resolves a block class on first use.
+
+    load_blocks() can register many classes; delaying module import here keeps
+    block library discovery cheap while preserving the same public API.
+    """
 
     __slots__ = ("_module_name", "_class_name", "_resolved")
 
@@ -430,6 +478,7 @@ class BDSimState(SimulationState):
 
 class BDSim(Runner):
     _blocklibrary: dict | None = None
+    _blocklibrary_metadata: str | None = None
     _moduledicts: dict[str, dict[str, list[str]]] | None = None
     _executor: ThreadPoolExecutor | None = None
     _required_blockinfo_keys: tuple[str, ...] = (
@@ -530,6 +579,7 @@ class BDSim(Runner):
         packages: str | None = None,
         load: bool = True,
         toolboxes: bool = True,
+        block_metadata: str = "full",
         **kwargs: Any,
     ) -> None:
         """
@@ -539,6 +589,10 @@ class BDSim(Runner):
         :type packages: str
         :param load: dynamically load blocks from libraries, defaults to True
         :type load: bool,optional
+        :param block_metadata: amount of block metadata to parse, ``"full"``
+            for docs/UI tooling or ``"minimal"`` for faster startup,
+            defaults to ``"full"``
+        :type block_metadata: str, optional
         :param sysargs: process options from sys.argv, defaults to True
         :type sysargs: bool, optional
         :param graphics: enable graphics, defaults to True
@@ -607,6 +661,10 @@ class BDSim(Runner):
 
         super().__init__()
 
+        if block_metadata not in {"minimal", "full"}:
+            raise ValueError("block_metadata must be 'minimal' or 'full'")
+        self.block_metadata = block_metadata
+
         if os.getenv("BDSIM_NO_TOOLBOXES", "").strip().lower() in {
             "1",
             "true",
@@ -637,11 +695,38 @@ class BDSim(Runner):
                     pass
 
         # load modules from the blocks folder
-        if BDSim._blocklibrary is None and load:
+        startup_timing = os.getenv("BDSIM_STARTUP_TIMING", "").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+        t_load0 = time.perf_counter() if startup_timing else 0.0
+        need_load = BDSim._blocklibrary is None
+        if (
+            load
+            and not need_load
+            and self.block_metadata == "full"
+            and BDSim._blocklibrary_metadata == "minimal"
+        ):
+            # Upgrade cached minimal metadata to full when requested.
+            need_load = True
+
+        if need_load and load:
             BDSim._blocklibrary = self.load_blocks(
-                self.options.verbose, toolboxes=toolboxes
+                self.options.verbose,
+                toolboxes=toolboxes,
+                metadata=self.block_metadata,
             )
+            BDSim._blocklibrary_metadata = self.block_metadata
             self._validate_blocklibrary_contract(BDSim._blocklibrary)
+            if startup_timing:
+                print(
+                    f"startup: load_blocks={time.perf_counter() - t_load0:.3f}s "
+                    f"(toolboxes={'on' if toolboxes else 'off'})"
+                )
+        elif startup_timing and load:
+            print("startup: load_blocks=0.000s (cached)")
         if self.options.blocks:
             self.blocks()
 
@@ -1838,7 +1923,7 @@ class BDSim(Runner):
 
             try:
                 if ";" in value:
-                    new_value = smb.str2array(value)
+                    new_value = _get_spatialmath_base().str2array(value)
                 else:
                     try:
                         new_value = int(value)
@@ -1952,7 +2037,7 @@ class BDSim(Runner):
         #   should be used with solve_ivp's default vectorized=False behavior.
         # ---------------------------------------------------------------------
         ivp_start = time.time()
-        result = integrate.solve_ivp(ydot, (t0, t1), x0, **ivp_args)
+        result = _get_scipy_integrate().solve_ivp(ydot, (t0, t1), x0, **ivp_args)
         simstate.stats.integrator_wall_time += time.time() - ivp_start
 
         # check for integration failure
@@ -2235,6 +2320,7 @@ class BDSim(Runner):
         options: OptionsBase = context.options if context is not None else self.options
         if options.hold:
             block = options.hold
+        plt = _get_pyplot()
 
         try:
             plt.show(block=block)
@@ -2249,6 +2335,7 @@ class BDSim(Runner):
 
     def closefigs(self) -> None:
         context: SimulationContext | None = self._get_context()
+        plt = _get_pyplot()
         if context is None:
             plt.close("all")
             return
@@ -2344,10 +2431,18 @@ class BDSim(Runner):
         sys.exit(retval)
 
     def load_blocks(
-        self, verbose: bool = True, toolboxes: bool = True
+        self,
+        verbose: bool = True,
+        toolboxes: bool = True,
+        metadata: str = "full",
     ) -> dict[str, dict[str, Any]]:
         """
         Dynamically load all block definitions.
+
+        :param metadata: metadata loading mode, ``"full"`` parses docs/URLs/
+            parameter help and ``"minimal"`` loads only runtime-essential
+            metadata for faster startup
+        :type metadata: str, optional
 
         :raises ImportError: module could not be imported
         :return: dictionary of block metadata
@@ -2364,7 +2459,23 @@ class BDSim(Runner):
         - ``url`` of online documentation for the block
         - ``package`` containing the block
         - `doc` is the docstring from the class constructor
+
+        In ``metadata="minimal"`` mode, documentation-centric fields such as
+        ``url``, ``doc``, and parsed ``params`` are intentionally left empty so
+        command-line and realtime callers avoid UI/help parsing overhead.
         """
+
+        if metadata not in {"minimal", "full"}:
+            raise ValueError("metadata must be 'minimal' or 'full'")
+
+        fast_blocks = metadata == "minimal" or os.getenv(
+            "BDSIM_FAST_BLOCKS", ""
+        ).strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
 
         def parse_docstring(ds: str) -> dict[str, Any]:
             import re
@@ -2613,10 +2724,14 @@ class BDSim(Runner):
                 if block_class is None:
                     continue
 
-                ds = "\n\n".join(
-                    part for part in (meta["class_doc"], meta["init_doc"]) if part
-                )
-                param_dict = parse_docstring(ds)
+                if fast_blocks:
+                    ds = ""
+                    param_dict = {}
+                else:
+                    ds = "\n\n".join(
+                        part for part in (meta["class_doc"], meta["init_doc"]) if part
+                    )
+                    param_dict = parse_docstring(ds)
 
                 info: dict[str, Any] = {}
                 info["path"] = [blocks_path]
@@ -2703,7 +2818,7 @@ class BDSim(Runner):
 
             moduledict: dict[str, list[str]] = {}
             for blocks_path in module_paths:
-                package_url = get_package_url(blocks_path)
+                package_url = None if fast_blocks else get_package_url(blocks_path)
                 for module_file in sorted(Path(blocks_path).glob("*.py")):
                     stem = module_file.stem
                     if stem.startswith("_"):
@@ -2847,6 +2962,7 @@ class Options(OptionsBase):
 
                 backends = list(backend_registry.list_builtin())
             except Exception:
+                matplotlib = _get_matplotlib_module()
                 backends = list(getattr(matplotlib.rcsetup, "all_backends", []))
 
             # Preserve order while removing duplicates case-insensitively.

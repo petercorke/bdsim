@@ -140,7 +140,10 @@ def import_blocks(scene, window):
     ]
 
     # block_list = parser.docstring_parser()
-    sim = bdsim.BDSim(sysargs=False)  # create simulator (skip sys.argv parsing)
+    sim = bdsim.BDSim(
+        sysargs=False,
+        block_metadata="full",
+    )  # create simulator (skip sys.argv parsing)
 
     block_library = []
     imported_block_groups = []

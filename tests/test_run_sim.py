@@ -892,6 +892,79 @@ class EagerLoadingTest(unittest.TestCase):
         self.assertEqual(null["blockclass"], "sink")
 
 
+class BlockMetadataModeTest(unittest.TestCase):
+    """Tests for minimal/full block metadata loading modes."""
+
+    def setUp(self):
+        self._orig_blocklibrary = BDSim._blocklibrary
+        self._orig_blocklibrary_metadata = getattr(
+            BDSim, "_blocklibrary_metadata", None
+        )
+        self._orig_moduledicts = BDSim._moduledicts
+        BDSim._blocklibrary = None
+        BDSim._blocklibrary_metadata = None
+        BDSim._moduledicts = None
+
+    def tearDown(self):
+        BDSim._blocklibrary = self._orig_blocklibrary
+        BDSim._blocklibrary_metadata = self._orig_blocklibrary_metadata
+        BDSim._moduledicts = self._orig_moduledicts
+
+    def test_load_blocks_minimal_has_sparse_metadata(self):
+        sim = BDSim(
+            graphics=None,
+            progress=False,
+            banner=False,
+            toolboxes=False,
+            load=False,
+        )
+        blocks = sim.load_blocks(verbose=False, toolboxes=False, metadata="minimal")
+
+        self.assertGreater(len(blocks), 0)
+        self.assertTrue(all(info["doc"] == "" for info in blocks.values()))
+        self.assertTrue(all(info["params"] == {} for info in blocks.values()))
+        self.assertTrue(all(info["url"] is None for info in blocks.values()))
+
+    def test_load_blocks_full_has_rich_metadata(self):
+        sim = BDSim(
+            graphics=None,
+            progress=False,
+            banner=False,
+            toolboxes=False,
+            load=False,
+        )
+        blocks = sim.load_blocks(verbose=False, toolboxes=False, metadata="full")
+
+        self.assertGreater(len(blocks), 0)
+        self.assertTrue(any(bool(info["doc"]) for info in blocks.values()))
+        self.assertTrue(any(bool(info["params"]) for info in blocks.values()))
+
+    def test_full_metadata_upgrades_cached_minimal_library(self):
+        sim_min = BDSim(
+            graphics=None,
+            progress=False,
+            banner=False,
+            toolboxes=False,
+            block_metadata="minimal",
+        )
+        self.assertEqual(BDSim._blocklibrary_metadata, "minimal")
+        self.assertTrue(
+            all(info["doc"] == "" for info in sim_min._blocklibrary.values())
+        )
+
+        sim_full = BDSim(
+            graphics=None,
+            progress=False,
+            banner=False,
+            toolboxes=False,
+            block_metadata="full",
+        )
+        self.assertEqual(BDSim._blocklibrary_metadata, "full")
+        self.assertTrue(
+            any(bool(info["doc"]) for info in sim_full._blocklibrary.values())
+        )
+
+
 class LazyBlockClassTest(unittest.TestCase):
     """Tests for _LazyBlockClass - lazy proxy that defers import."""
 
