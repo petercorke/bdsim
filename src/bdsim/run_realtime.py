@@ -145,6 +145,10 @@ class BDRealTime(BDSim):
 
         assert bd.compiled, "Network has not been compiled"
 
+        # Ensure runtime-visible provider lookup resolves against the realtime
+        # wrapper (not the internal BDSim helper instance).
+        bd.runtime = self
+
         if T is not None:
             warnings.warn(
                 "run(T=...) is deprecated, use run(tf=...) instead",
@@ -375,14 +379,14 @@ class BDRealTime(BDSim):
             if not options.quiet:
                 print("<<< Realtime simulation complete")
                 print(f"  block diagram evaluations: {stats.eval_count}")
-                print(f"  max eval time:             {stats.eval_max_ns} ns")
-                print(f"  mean eval time:            {s['eval_mean_ns']:.1f} ns")
+                print(f"  max eval time:             {stats.eval_max_ns / 1000:.1f} µs")
+                print(f"  mean eval time:            {s['eval_mean_ns'] / 1000:.1f} µs")
                 print(f"  overrun count:             {stats.overrun_count}")
                 print(f"  max queue depth:           {stats.queue_depth_max}")
                 for name, c in stats.by_clock.items():
                     print(
                         f"  clock {name}: fired={c.fired} processed={c.processed} "
-                        f"dropped={c.dropped} lateness_max_ns={c.lateness_max_ns}"
+                        f"dropped={c.dropped} lateness_max_ns={c.lateness_max_ns / 1000:.1f} µs"
                     )
 
             if block is not None and options.graphics:

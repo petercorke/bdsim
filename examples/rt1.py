@@ -8,16 +8,29 @@ Copyright (c) 2026- Peter Corke
 import bdsim
 import platform
 
-rt = bdsim.BDRealTime(
-    io_provider="mock" if platform.system() != "Linux" else None,
+def _select_io_provider() -> str:
+    machine = platform.machine().lower()
+    if platform.system() == "Linux" and machine in {
+        "arm64",
+        "armv6l",
+        "armv7l",
+        "aarch64",
+    }:
+        return "rpi"
+    return "mock"
+rt = BDRealTime(
+    io_provider=_select_io_provider(),
+    toolboxes=False,
 )  # create real-time framework
 
 bd = rt.blockdiagram()  # create an empty block diagram
 
 # define the blocks
 clock = bd.clock(50, "Hz", name="clock")
-demand = bd.WAVEFORM(wave="triangle", freq=1, unit="Hz", name="demand")
-led = bd.PWMOUT(clock, channel="led", name="LED")  # type: ignore[attr-defined]
+demand = bd.WAVEFORM(wave="triangle", freq=1, unit="Hz", min=0, max=1, name="demand")
+led = bd.PWMOUT(
+    clock, channel=18, name="LED"
+)  # BCM GPIO 18 (physical pin 12)  # type: ignore[attr-defined]
 
 # connect the blocks
 bd.connect(demand, led)

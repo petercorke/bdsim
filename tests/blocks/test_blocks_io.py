@@ -179,6 +179,9 @@ class IOMacSafeTest(unittest.TestCase):
         provider = IOProvider.create("mock")
         self.assertIsInstance(provider, MockIOProvider)
 
+    def test_rpi_provider_is_registered(self):
+        self.assertIn("rpi", IOProvider.registered_names())
+
     def test_provider_create_by_alias(self):
         provider = IOProvider.create("registered-alias")
         self.assertIsInstance(provider, _RegisteredProvider)

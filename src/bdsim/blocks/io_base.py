@@ -95,6 +95,7 @@ class IOProvider:
         # Import known provider modules once so subclasses can self-register.
         for module_name in (
             "bdsim.blocks.io_mock",
+            "bdsim.blocks.io_rpi_gpio",
             "bdsim.blocks.io_firmata",
             "bdsim.blocks.io_arduio",
         ):
