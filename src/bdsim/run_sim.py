@@ -49,6 +49,11 @@ from bdsim.exceptions import (
 )
 from bdsim.blockdiagram import BlockDiagram
 from bdsim.run_context import SimulationContext, SimulationJob
+from bdsim.display import DisplayManager
+from bdsim.notebook_patches import (
+    patch_roboticstoolbox_armplot_for_notebook,
+    patch_roboticstoolbox_pyplot_launch_for_notebook,
+)
 
 import tempfile
 import re
@@ -305,9 +310,11 @@ class BDSimState(SimulationState):
         self.figsize: list = []
         self.dpi: float = 100.0
         self.backend: str = ""
+        self.notebook_backend: bool = False
         self.screensize_pix: tuple = ()
         self.ntiles: list = []
         self.xoffset: int = 0
+        self.display_manager: DisplayManager | None = None
         # Crossing detectors: zero-crossing detection callbacks for solve_ivp.
         # Distinct from scheduled_events (discrete-time), these are continuous root-finding.
         self.crossing_detectors: list[tuple[Callable[[float, Any], float], Block]] = []
@@ -805,6 +812,7 @@ class BDSim(Runner):
         y: np.ndarray | None = None,
         *,
         stop_short_circuit: bool,
+        run_graphics: bool = True,
     ) -> bool:
         """Record one accepted sample and run watch/graphics/progress/debug hooks.
 
@@ -832,7 +840,12 @@ class BDSim(Runner):
             out = b.outport_value(p.port)
             simstate.plist[i].append(out)
 
-        if simstate.options.animation or (t - simstate.gtime) > (simstate.T / 200):  # type: ignore[operator,union-attr]
+        run_animation = bool(getattr(simstate.options, "animation", False))
+        run_horizon = float(simstate.T) if simstate.T is not None else 0.0
+        periodic_update = run_horizon > 0.0 and (t - simstate.gtime) > (
+            run_horizon / 200.0
+        )
+        if run_graphics and (run_animation or periodic_update):
             bd.step(t)
             simstate.gtime = t
 
@@ -1003,6 +1016,20 @@ class BDSim(Runner):
         simstate.options = run_options
         simstate.t_stop = None
 
+        # Detect active matplotlib backend and mark notebook frontends so
+        # notebook-specific display and ArmPlot patch paths are enabled.
+        backend_name = ""
+        try:
+            backend_name = str(matplotlib.get_backend())
+        except Exception:
+            backend_name = ""
+        simstate.backend = backend_name
+        backend_lower = backend_name.lower()
+        simstate.notebook_backend = any(
+            token in backend_lower
+            for token in ("inline", "widget", "ipympl", "nbagg", "notebook")
+        )
+
         context: SimulationContext = self._make_context(
             bd, simstate, run_options, threaded=threaded
         )
@@ -1124,8 +1151,16 @@ class BDSim(Runner):
             # update block parameters given on command line
             self.update_parameters(bd)
 
+            if bool(getattr(simstate, "notebook_backend", False)):
+                patch_roboticstoolbox_pyplot_launch_for_notebook()
+                patch_roboticstoolbox_armplot_for_notebook()
+
             # tell all blocks we're starting a BlockDiagram
             bd.start(simstate)
+
+            simstate.display_manager = DisplayManager.create(
+                notebook_backend=bool(getattr(simstate, "notebook_backend", False))
+            )
 
             # initialize list of time and states
             simstate.tlist = []
@@ -1222,12 +1257,22 @@ class BDSim(Runner):
             if (
                 simstate.options.animation or _stateless_no_clock
             ) and interactive_dt is not None:
-                # Show all figures now so windows are visible before the loop starts.
-                # flush_events() only works on already-visible windows; plt.show() is
-                # not called until after the run otherwise.
-                plt.show(block=False)
-                for num in plt.get_fignums():
-                    plt.figure(num).canvas.flush_events()
+                notebook_backend = bool(getattr(simstate, "notebook_backend", False))
+                display_manager: DisplayManager
+                if simstate.display_manager is None:
+                    simstate.display_manager = DisplayManager.create(
+                        notebook_backend=notebook_backend
+                    )
+                display_manager = simstate.display_manager
+
+                # Ensure figures are visible before frame callbacks begin.
+                display_manager.show_initial()
+                backend_name = str(getattr(simstate, "backend", "")).lower()
+                if "inline" in backend_name and interactive_dt is not None:
+                    notebook_min_refresh_dt = interactive_dt
+                else:
+                    notebook_min_refresh_dt = 1.0 / 6.0
+                last_notebook_refresh_t = -1e9
 
                 def _anim_frame(t: float, ss: Any, _dt: float = interactive_dt) -> None:
                     # For stateless diagrams with no clocks (e.g. WAVEFORM→SCOPE),
@@ -1243,16 +1288,21 @@ class BDSim(Runner):
                         self._record_sample_and_service_hooks(
                             bd, ss, t, None, stop_short_circuit=False
                         )
-                    # Flush pending draw events for all open figures without
-                    # entering a blocking event loop (plt.pause(0) hangs with
-                    # Qt because start_event_loop(0) never installs a quit timer).
-                    for num in plt.get_fignums():
-                        canvas = plt.figure(num).canvas
-                        canvas.draw_idle()
-                        canvas.flush_events()
+                    # Keep figure outputs current for the active backend.
+                    if not notebook_backend:
+                        display_manager.refresh()
+                    else:
+                        nonlocal last_notebook_refresh_t
+                        # Notebook rendering is expensive; limit display updates
+                        # to a practical UI frame rate while simulation can run faster.
+                        if t - last_notebook_refresh_t >= notebook_min_refresh_dt:
+                            display_manager.refresh()
+                            last_notebook_refresh_t = t
                     if t + _dt < tf - event_tol:
                         ss.declare_event(_anim_frame, t + _dt)
 
+                # Schedule frame callbacks for all animated runs; notebook mode
+                # relies on these callbacks to refresh inline figure output.
                 simstate.declare_event(_anim_frame, interactive_dt)
 
             while t0 < tf - event_tol:
@@ -1265,18 +1315,21 @@ class BDSim(Runner):
                 t1 = min(float(tnext), float(tf))
                 if t1 <= t0 + event_tol:
                     # Nothing to integrate; process due scheduled sources and continue.
-                    for source in sources:
-                        if isinstance(source, Clock):
-                            try:
-                                x_next = bd.next(t1, bd.state_map(x, simstate))[source]
-                            except BlockRuntimeError as err:
-                                bd._handle_block_runtime_error(err)
-                                continue
-                            source.savestate(t1, simstate, x=x_next)
-                            source._set_runtime_state(x_next, simstate)
-                            source.next_event(simstate)
-                        elif callable(source):
-                            source(t1, simstate)
+                    clock_sources = [s for s in sources if isinstance(s, Clock)]
+                    callable_sources = [
+                        s for s in sources if callable(s) and not isinstance(s, Clock)
+                    ]
+                    for source in clock_sources:
+                        try:
+                            x_next = bd.next(t1, bd.state_map(x, simstate))[source]
+                        except BlockRuntimeError as err:
+                            bd._handle_block_runtime_error(err)
+                            continue
+                        source.savestate(t1, simstate, x=x_next)
+                        source._set_runtime_state(x_next, simstate)
+                        source.next_event(simstate)
+                    for source in callable_sources:
+                        source(t1, simstate)
                     t0 = t1
                     continue
 
@@ -1308,18 +1361,21 @@ class BDSim(Runner):
 
                 reached_boundary = treached >= t1 - event_tol
                 if reached_boundary:
-                    for source in sources:
-                        if isinstance(source, Clock):
-                            try:
-                                x_next = bd.next(t1, bd.state_map(x, simstate))[source]
-                            except BlockRuntimeError as err:
-                                bd._handle_block_runtime_error(err)
-                                continue
-                            source.savestate(t1, simstate, x=x_next)
-                            source._set_runtime_state(x_next, simstate)
-                            source.next_event(simstate)
-                        elif callable(source):
-                            source(t1, simstate)
+                    clock_sources = [s for s in sources if isinstance(s, Clock)]
+                    callable_sources = [
+                        s for s in sources if callable(s) and not isinstance(s, Clock)
+                    ]
+                    for source in clock_sources:
+                        try:
+                            x_next = bd.next(t1, bd.state_map(x, simstate))[source]
+                        except BlockRuntimeError as err:
+                            bd._handle_block_runtime_error(err)
+                            continue
+                        source.savestate(t1, simstate, x=x_next)
+                        source._set_runtime_state(x_next, simstate)
+                        source.next_event(simstate)
+                    for source in callable_sources:
+                        source(t1, simstate)
                     t0 = t1
                 else:
                     # Integration ended early (typically a crossing event). Continue from
@@ -1441,17 +1497,22 @@ class BDSim(Runner):
 
             # pause until all graphics blocks close
 
-            if simstate.options.graphics and simstate.options.hold:
-                self.done(bd, block=simstate.options.hold)
-            elif simstate.options.graphics and getattr(
-                simstate, "notebook_backend", False
+            notebook_backend = bool(getattr(simstate, "notebook_backend", False))
+            if (
+                simstate.options.graphics
+                and simstate.options.hold
+                and not notebook_backend
             ):
-                # In a notebook, plt.draw() flushes pending updates so the
-                # inline/widget backend captures the final figure state.
-                try:
-                    plt.draw()
-                except Exception:
-                    pass
+                self.done(bd, block=simstate.options.hold)
+            elif simstate.options.graphics and notebook_backend:
+                display_manager = simstate.display_manager
+                if display_manager is not None:
+                    display_manager.finalize(hold=False)
+                else:
+                    try:
+                        plt.draw()
+                    except Exception:
+                        pass
             return out
         finally:
             self._set_context(previous_context)
@@ -1675,8 +1736,14 @@ class BDSim(Runner):
             eval_end = time.time()
             simstate.bdtime += eval_end - eval_start
 
+            is_interval_endpoint = k == (len(result.t) - 1)
             should_break = self._record_sample_and_service_hooks(
-                bd, simstate, t, y, stop_short_circuit=True
+                bd,
+                simstate,
+                t,
+                y,
+                stop_short_circuit=True,
+                run_graphics=is_interval_endpoint,
             )
             if should_break:
                 break

@@ -767,7 +767,6 @@ class ScopeXY(GraphicsBlock):
         aspect: str = "equal",
         labels: list[str] = ["X", "Y"],
         init: Callable | None = None,
-        nin: int = 2,
         **blockargs: Any,
     ) -> None:
         """
@@ -775,6 +774,8 @@ class ScopeXY(GraphicsBlock):
         :type style: optional str or dict
         :param scale: fixed y-axis scale or defaults to 'auto'
         :type scale: str or array_like(2) or array_like(4)
+        :param aspect: aspect ratio, defaults to "equal"
+        :type aspect: str
         :param labels: axis labels (xlabel, ylabel), defaults to ["X","Y"]
         :type labels: 2-element tuple or list
         :param init: function to initialize the graphics, defaults to None

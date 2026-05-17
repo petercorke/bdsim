@@ -453,8 +453,12 @@ class Runner:
         if context.options.hold:
             block = context.options.hold
 
+        display_manager = getattr(context.simstate, "display_manager", None)
         try:
-            plt.show(block=block)
+            if display_manager is not None:
+                display_manager.finalize(hold=block)
+            else:
+                plt.show(block=block)
         except KeyboardInterrupt:
             print("bdsim: closing all windows")
             plt.close("all")

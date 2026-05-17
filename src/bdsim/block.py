@@ -148,6 +148,7 @@ class Block(ABC, Port):
         nout: int | None = None,
         nstates: int = 0,
         ndstates: int = 0,
+        x0: Vector1D | None = None,
         inputs: Block | tuple[Block | Plug, ...] | list[Block | Plug] | None = None,
         inames: list[str] | None = None,
         onames: list[str] | None = None,
@@ -1786,7 +1787,7 @@ class ContinuousBlock(Block):
 
     def __init__(
         self,
-        nstates: int,
+        nstates: int = 0,
         x0: Vector1D | None = None,
         feedthrough: bool = False,
         **blockargs: Any,
@@ -1807,15 +1808,21 @@ class ContinuousBlock(Block):
 
         This is the parent class of all continuous-time dynamic blocks.
         """
+        if x0 is None:
+            # use the old protocol, initial state vector is _x0 attribute
+            x0 = self._x0 if hasattr(self, "_x0") else None
+            
         if x0 is not None:
             self._x0 = smb.getvector(x0, dtype=float)
             nstates = len(self._x0)
-        elif nstates is not None:
+        elif nstates > 0:
+            # set initial state vector to zero if not specified
             self._x0 = np.zeros(nstates)
         else:
-            raise ValueError(
-                "must specify initial state vector or number of discrete states"
-            )
+            # raise ValueError(
+            #     "must specify initial state vector or number of discrete states"
+            # )
+            pass
         self._feedthrough = feedthrough
         super().__init__(nstates=nstates, ndstates=0, **blockargs)
 
@@ -2057,7 +2064,11 @@ class GraphicsBlock(SinkBlock):
 
         # bring the figure up to date in a backend-specific way
         if self._simstate.options.animation:
-            if self._simstate.backend == "TkAgg":
+            notebook_backend = bool(getattr(self._simstate, "notebook_backend", False))
+            if notebook_backend:
+                # Notebook refresh is coordinated centrally by DisplayManager.
+                pass
+            elif self._simstate.backend == "TkAgg":
                 self._fig.canvas.flush_events()  # type: ignore[union-attr]
                 plt.show(block=False)
                 plt.show(block=False)
@@ -2075,11 +2086,17 @@ class GraphicsBlock(SinkBlock):
 
     def done(self, block=False, **kwargs) -> None:
         if self._fig is not None:
-            self._fig.canvas.start_event_loop(0.001)  # type: ignore[union-attr]
+            simstate = getattr(self, "_simstate", None)
+            notebook_backend = bool(getattr(simstate, "notebook_backend", False))
+            if not notebook_backend:
+                self._fig.canvas.start_event_loop(0.001)  # type: ignore[union-attr]
             if self._movie is not None:
                 self._writer.finish()  # type: ignore[union-attr]
                 # self.cleanup()
-            plt.show(block=block)
+            if notebook_backend:
+                self._fig.canvas.draw_idle()  # type: ignore[union-attr]
+            else:
+                plt.show(block=block)
 
     def savefig(
         self, filename: str | None = None, format: str = "pdf", **kwargs: Any

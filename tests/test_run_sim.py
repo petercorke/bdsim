@@ -26,6 +26,7 @@ import contextlib
 from types import SimpleNamespace
 
 import numpy as np
+from matplotlib import animation
 
 import bdsim
 from bdsim.exceptions import EventProbeOutsideIntervalError, IntegrationFailureError
@@ -240,6 +241,44 @@ class SimRunCoverageTest(unittest.TestCase):
         self.assertIsNotNone(out.t)
         self.assertIsNotNone(out.y)
         self.assertGreater(len(out.y), 0)
+
+    def test_scope_movie_writes_nonempty_mp4(self):
+        """A Scope with movie=... should emit a non-empty mp4 when ffmpeg is available."""
+        if not animation.FFMpegWriter.isAvailable():
+            self.skipTest("ffmpeg is not available")
+
+        sim = bdsim.BDSim(
+            graphics=True,
+            animation=True,
+            hold=False,
+            backend="Agg",
+            progress=False,
+            banner=False,
+            quiet=True,
+            sysargs=False,
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            movie_path = os.path.join(tmpdir, "scope.mp4")
+
+            bd = sim.blockdiagram()
+            demand = bd.STEP(T=0.05)
+            plant = bd.LTI_SISO(0.5, [2, 1], name="plant")
+            scope = bd.SCOPE(styles=["k", "r--"], movie=movie_path)
+            sumblk = bd.SUM("+-")
+            gain = bd.GAIN(10)
+
+            bd.connect(demand, sumblk[0], scope[1])
+            bd.connect(plant, sumblk[1])
+            bd.connect(sumblk, gain)
+            bd.connect(gain, plant)
+            bd.connect(plant, scope[0])
+            bd.compile(verbose=False)
+
+            sim.run(bd, T=0.2)
+
+            self.assertTrue(os.path.exists(movie_path))
+            self.assertGreater(os.path.getsize(movie_path), 0)
 
     def test_run_watch_plug(self):
         """watch=[Plug] covers the Plug branch of watchlist processing."""
