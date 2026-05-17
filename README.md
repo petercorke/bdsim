@@ -132,3 +132,8 @@ from bdsim.realtime import BDRealTime
 Full Documentation: https://petercorke.github.io/bdsim/
 
 Wiki: Access the community wiki for deep dives into specific block behaviours and tutorials.
+
+### References
+
+* [A journey toward open-source block diagram simulation](https://www.linkedin.com/pulse/journey-toward-open-source-block-diagram-simulation-peter-corke/), LinkedIn article, July 2022.
+* [A new Python-based tool for simulation of dynamical systems](https://ieeexplore.ieee.org/xpl/RecentIssue.jsp?punumber=5488303), IEEE Control Systems, June 2026.

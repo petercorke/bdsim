@@ -75,6 +75,46 @@ Fixed in 1.3.0.
 * fixed notebook URLs; zip files now built on every push ([4528e53](https://github.com/petercorke/bdsim/commit/4528e53c89f1ea057e724382ffd3c8d00c15d4f6))
 
 
+1.3.0 REAL-TIME SUPPORT May 2026
+
+* Highlights
+  - bdsim can run in real-time, good performance upto tens of Hz
+  - same programming model
+  - various configurations including native Raspberry Pi, or serial-connected Arduino
+  - `TELEMETRY` block and `telemetry_client` supports remote real-time viewing of i/o signals
+
+* Code
+  - bdsim refactor in `BDSim()` and `BDRealTime()` runners
+  - same block factory model
+  - started refactor to avoid importing heavy packages like MPL unless absolutely needed.
+  - timing controlled by thread timers, POSIX timers or GCD (MacOS)
+  - analytics on sample latency and skips
+  - block metadata interface used by editors (bdedit) has changed, this is a heavyweight operation that is now
+    longer routinely performed by bdsim
+
+* i/o provider framework
+  - exposes generic ANALOGIN, ANALOGOUT, DIGITALIN, DIGTIALOUT, PWMOUT blocks
+  - provider framework provides hardware specific coding, eg. pyserial for serial-connected devices,
+    gpiozero, pigpio, etc. for Raspberry Pi
+  - configured using a .toml file to keep device specific params away from the user's model
+  - "mock" provider allows code to be run on a device with no i/o for testing purposes, outputs are lost, inputs are all zero.
+  - safe shutdown attempts to catch all terminating signals and set specifified outputs to specified values.
+  - currently supports:
+    - Raspberry Pi hardware: native PWM (GPIO18), analog input via MC3008 SPI-connected ADC
+    - TCLab serial protocol
+    - Firmata sketches serial protocol
+
+* Telemetry
+  - `Matplotlib` is not suitable for embedded control on a Raspberry Pi, too heavyweight, might be no screen, forwarding
+    a graphics window is expensive.
+  - `TELEMETRY` block sends data at sample rate as line JSON (JSONL) over UDP, periodically sends the data schema as JSON to be robust to lossy connections
+  - `telemetry_client` is a TkInter app that receives telemetry data and displays it with a scope-like interface.  It listens on a specific port, and 
+    on commencement of packets starts plotting.  `TELEMETRY` block points to the client's listen port, via block parameter, config tile or environent variable.
+
+1.2.1
+
+* fix bug in bdedit roundtrip, load then save gave a broken model
+
 1.2.0 May 2026
 
 * Highlights
@@ -168,4 +208,145 @@ Fixed in 1.3.0.
   - dialogs for export save
   - SVG output
   - handle dark/light themes
-  - can be packaged as an app bundle.
+  - distributed as an app bundle.
+
+1.1.0 May 2023
+
+## 2021-06-06
+
+* arithmetic operators autogenerate blocks
+* `*` operator replaced by `>>` operator, thanks to [Cal Hays](https://github.com/CallumJHays) for both suggestions
+* simple [event handling](Event-handling) allow more accurate results for discontinuous inputs, eg. STEP block
+* new RAMP and NULL block, the latter useful for testing
+* new DICT block, like a mux but with names, works with ITEM block
+* PRINT block now has better formatting
+* SCOPEXY block has named input ports now: `x` and `y`
+* unit tests working again
+* `len(blockdiagram)` is the number of blocks
+* fix bug with `BDSim()` being instantiated multiple times
+* new way to schedule execution of blocks, now a [data flow graph](Evaluation)
+* updates to wiki documentation, some documentation polish
+
+
+Coming soon, a GUI-based editor.
+
+## 2021-03-28  commit 2296858
+
+### Major syntax change. 
+
+The old syntax
+
+```python
+import bdsim
+
+bd = bdsim.BlockDiagram()  # create an empty block diagram
+
+ .
+ .
+ .
+out = bd(5)  # simulate the model
+```
+
+is now
+
+```python
+import bdsim
+
+sim = bdsim.BDSim(animation=True)  # create simulator
+bd = sim.blockdiagram()  # create an empty block diagram
+
+ .
+ .
+ .
+out = sim.run(bd, 5)  # simulate the model
+```
+
+Trying to separate out all the operating specific stuff (matplotlib, argparse, SciPy) from the blocks and wires.  Longer term aim is to make the blocks stateless, but not there yet.
+
+### Clocked blocks
+
+```python
+clock = bd.clock(2, 'Hz')  # create a 2Hz clock
+zoh = bd.ZOH(clock)  # create a ZOH block that samples on this clock
+```
+
+A clock can drive multiple clocked blocks.  The discrete state associated with a particular clock is kept within the `Clock` block.# Getting started
+
+# 1.0.0 Jan 2023
+
+# 0.9.0 July 2022
+
+
+# 2021-06-06
+
+* arithmetic operators autogenerate blocks
+* `*` operator replaced by `>>` operator, thanks to [Cal Hays](https://github.com/CallumJHays) for both suggestions
+* simple [event handling](Event-handling) allow more accurate results for discontinuous inputs, eg. STEP block
+* new RAMP and NULL block, the latter useful for testing
+* new DICT block, like a mux but with names, works with ITEM block
+* PRINT block now has better formatting
+* SCOPEXY block has named input ports now: `x` and `y`
+* unit tests working again
+* `len(blockdiagram)` is the number of blocks
+* fix bug with `BDSim()` being instantiated multiple times
+* new way to schedule execution of blocks, now a [data flow graph](Evaluation)
+* updates to wiki documentation, some documentation polish
+
+# 2021-03-28  commit 2296858
+
+### Major syntax change. 
+
+The old syntax
+
+```python
+import bdsim
+
+bd = bdsim.BlockDiagram()  # create an empty block diagram
+
+ .
+ .
+ .
+out = bd(5)  # simulate the model
+```
+
+is now
+
+```python
+import bdsim
+
+sim = bdsim.BDSim(animation=True)  # create simulator
+bd = sim.blockdiagram()  # create an empty block diagram
+
+ .
+ .
+ .
+out = sim.run(bd, 5)  # simulate the model
+```
+
+Trying to separate out all the operating specific stuff (matplotlib, argparse, SciPy) from the blocks and wires.  Longer term aim is to make the blocks stateless, but not there yet.
+
+### Clocked blocks
+
+```python
+clock = bd.clock(2, 'Hz')  # create a 2Hz clock
+zoh = bd.ZOH(clock)  # create a ZOH block that samples on this clock
+```
+
+A clock can drive multiple clocked blocks.  The discrete state associated with a particular clock is kept within the `Clock` block.# Getting started
+
+
+# 0.7.0 June 2020
+
+* New blocks: PRINT, INTEGRATOR, MUX, DEMUX, MULTIROTOR, MULTIROTORPLOT
+* top level block diagram class becomes BlockDiagram
+
+# 0.6.0 June 2020
+
+* movie generation
+* LTI_SS, LTI_SS_SISO, CLIP, PROD
+* update examples, create RVC2 examples
+
+# 0.5.0 May 2020
+
+* First release to PyPI
+
