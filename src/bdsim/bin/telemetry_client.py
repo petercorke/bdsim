@@ -2,7 +2,7 @@
 """Simple Tkinter strip-chart client for bdsim TELEMETRY UDP packets.
 
 Usage:
-    bdsim-telemetry-client --listen 0.0.0.0:5001
+    telemetry-client --listen 0.0.0.0:5001
 """
 
 from __future__ import annotations
@@ -17,7 +17,10 @@ import time
 from collections import deque
 from typing import Any
 
-import tkinter as tk
+try:
+    import tkinter as tk
+except ImportError:
+    tk = None  # type: ignore
 
 
 class StripChartApp:
@@ -424,6 +427,18 @@ class StripChartApp:
 
 
 def main() -> int:
+    if tk is None:
+        import sys
+
+        print(
+            "Error: tkinter not available in this Python environment.\n"
+            "To fix, install tkinter in your conda environment:\n"
+            "  conda install tk\n"
+            "Then reinstall bdsim or restart your shell.",
+            file=sys.stderr,
+        )
+        return 1
+
     def parse_endpoint(text: str) -> tuple[str, int]:
         host, sep, port_text = text.strip().rpartition(":")
         if not sep or not host or not port_text.isdigit():
