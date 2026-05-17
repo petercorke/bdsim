@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
+"""
+Bicycle-model vehicle with control to drive to a point
+Robotics, Vision & Control: 2nd edition, Fig 4.4
+"""
 
-# run with command line -a switch to show animation
+# run with command line +a switch to show animation
 
 import bdsim
 import math

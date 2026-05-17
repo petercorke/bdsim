@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
+"""
+Bicycle-model vehicle with control to drive along a line
+Robotics, Vision & Control: 2nd edition, Fig 4.6
+"""
 
-# run with command line -a switch to show animation
+# run with command line +a switch to show animation
 
 import bdsim
 import math
@@ -26,6 +30,7 @@ def plot_homline(ax, line, *args, xlim, ylim, **kwargs):
 def background_graphics(ax):
     plot_homline(ax, L, "r--", xlim=np.r_[0, 10], ylim=np.r_[0, 10])
     ax.plot(x0[0], x0[1], "o")
+
 
 speed = bd.CONSTANT(0.5)
 slope = bd.CONSTANT(math.atan2(-L[0], L[1]))

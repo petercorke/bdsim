@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+"""
+Bicycle-model vehicle with piecewise steering and constant speed
+Robotics, Vision & Control: 2nd edition, Fig 4.2
+"""
+
 # run with command line -a switch to show animation
 
 import bdsim

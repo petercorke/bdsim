@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
+"""
+Bicycle-model vehicle with control to drive to a pose
+Robotics, Vision & Control: 2nd edition, Fig 4.11
+"""
 
-# run with command line -a switch to show animation
+# run with command line +a switch to show animation
 
 import bdsim
 from math import pi, sqrt, atan, atan2
@@ -19,6 +23,7 @@ x0 = [5, 2, 0]
 x0 = [5, 9, 0]
 
 x0 = [8, 5, pi / 2]
+
 
 # annotate the graphics
 def background_graphics(ax):

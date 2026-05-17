@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
+"""
+Bicycle-model vehicle with control to pursue a point on a trajectory
+Robotics, Vision & Control: 2nd edition, Fig 4.8
+"""
 
-# run with command line -a switch to show animation
+# run with command line +a switch to show animation
 
 import bdsim
 import numpy as np
 import math
 import roboticstoolbox as rtb
-
 
 # parameters for the path
 look_ahead = 5
