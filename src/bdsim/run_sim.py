@@ -2249,6 +2249,11 @@ class BDSim(Runner):
 
             return f
 
+        bd.runtime = self
+
+        if self._blocklibrary is None:
+            return bd
+
         # bind the block constructors as new methods on this instance
         assert self._blocklibrary is not None
         for blockname, info in self._blocklibrary.items():
@@ -2280,10 +2285,6 @@ class BDSim(Runner):
                     )
 
                 setattr(bd, blockname, undefined_block_factory)
-
-        # add a clone of the options
-        # bd.options = copy.copy(self.options)
-        bd.runtime = self
 
         return bd
 
