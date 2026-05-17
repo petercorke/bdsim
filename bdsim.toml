@@ -1,0 +1,95 @@
+# bdsim I/O device configuration
+# This file specifies providers, devices, channels, and scaling for realtime I/O.
+
+[io]
+config_version = 1
+default_provider = "serial"
+
+# Provider-level settings (behavior, timeouts, signal handling)
+[providers.serial]
+type = "serial"
+shutdown_on_signal = true
+safe_shutdown_timeout_s = 0.5
+
+[providers.rpi]
+type = "rpi"
+shutdown_on_signal = true
+safe_shutdown_timeout_s = 1.0
+
+# Device definitions: TCLab connected via serial
+[devices.tclab0]
+provider = "serial"
+driver = "tclab"
+port = "/dev/ttyACM0"
+baud = 115200
+startup_probe = true
+startup_timeout_s = 2.0
+
+# Device-level parameters (shared across all channels of this device)
+[devices.tclab0.params]
+heater_limit_pct = 80.0
+fan_enable = false
+units = "C"
+
+# Channel definitions for TCLab
+# Heater outputs (Q1, Q2) -- 0-100% drive
+[devices.tclab0.channels.q1]
+direction = "out"
+kind = "analog"
+address = "Q1"
+eng_units = "%"
+eng_min = 0.0
+eng_max = 100.0
+safe = 0.0
+
+[devices.tclab0.channels.q2]
+direction = "out"
+kind = "analog"
+address = "Q2"
+eng_units = "%"
+eng_min = 0.0
+eng_max = 100.0
+safe = 0.0
+
+# Temperature inputs (T1, T2) -- linear scaling
+[devices.tclab0.channels.t1]
+direction = "in"
+kind = "analog"
+address = "T1"
+eng_units = "C"
+scale = 1.0
+offset = 0.0
+
+[devices.tclab0.channels.t2]
+direction = "in"
+kind = "analog"
+address = "T2"
+eng_units = "C"
+scale = 1.0
+offset = 0.0
+
+# Example GPIO device on Raspberry Pi (for future use)
+# Generalized structure: supports pin aliases, scaling, PWM modes, ADC channels
+[devices.rpi0]
+provider = "rpi"
+driver = "gpio"
+
+[devices.rpi0.channels.led]
+direction = "out"
+kind = "analog"
+pin = 18
+mode = "pwm"
+frequency_hz = 10000
+eng_min = 0.0
+eng_max = 1.0
+safe = 0.0
+alias = "actuator_led"
+
+[devices.rpi0.channels.pot]
+direction = "in"
+kind = "analog"
+adc = "mcp3008"
+channel = 1
+scale = 3.3
+offset = 0.0
+alias = "plant_sensor"
