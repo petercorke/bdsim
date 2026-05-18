@@ -141,7 +141,10 @@ class Integrator(ContinuousBlock):
         # # print("nstates", self.nstates)
 
     def output(self, t: float, u: list[Any], x: np.ndarray) -> list[Any]:
-        return [x]
+        result = x
+        if isinstance(result, np.ndarray) and result.ndim == 1 and result.size == 1:
+            result = result.item()
+        return [result]
 
     def deriv(self, t: float, u: list[Any], x: np.ndarray) -> np.ndarray:
         xd = smb.getvector(u[0])
@@ -341,13 +344,17 @@ class LTI_SS(ContinuousBlock):
             self.D = None
             feedthrough = False
 
-        super().__init__(nstates=n, x0=x0, feedthrough=feedthrough, **blockargs)
+        super().__init__(
+            nstates=n, nin=nin, nout=nout, x0=x0, feedthrough=feedthrough, **blockargs
+        )
 
     def output(self, t: float, u: list[Any], x: np.ndarray) -> list[Any]:
+        y = self.C @ x
         if self.D is not None:
-            return list(self.C @ x + self.D @ u)
-        else:
-            return list(self.C @ x)
+            y = y + self.D @ np.array(u)
+        if y.size == 1:
+            return [y.item()]
+        return [y]
 
     def deriv(self, t: float, u: list[Any], x: np.ndarray) -> np.ndarray:
         # Reshape u and x to (N,1), i.e. column vectors, so

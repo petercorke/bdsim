@@ -78,6 +78,8 @@ class ZOH(SampledBlock):
 
     def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         # print('* output, x is ', self._x)
+        if x.size == 1:
+            return [x.item()]
         return [x]
 
     def next(self, t: float, inputs: list[Any], x: np.ndarray) -> np.ndarray:
@@ -191,7 +193,10 @@ class Integrator_S(SampledBlock):
             raise ValueError("enable must be callable")
 
     def output(self, t: float, u: list[Any], x: np.ndarray) -> list[Any]:
-        return [x]
+        result = x
+        if isinstance(result, np.ndarray) and result.ndim == 1 and result.size == 1:
+            result = result.item()
+        return [result]
 
     def next(self, t: float, u: list[Any], x: np.ndarray) -> np.ndarray:
         # compute next state
@@ -357,9 +362,10 @@ class Deriv_S(SampledBlock):
         self.gain = gain
 
     def output(self, t: float, u: list[Any], x: np.ndarray) -> list[Any]:
-        return [
-            self.gain * (u[0] - x) / self.T
-        ]  # output is current input minus previous input (state)
+        result = self.gain * (u[0] - x) / self.T
+        if isinstance(result, np.ndarray) and result.ndim == 1 and result.size == 1:
+            result = result.item()
+        return [result]
 
     def next(self, t: float, u: list[Any], x: np.ndarray) -> np.ndarray:
         # next state is current input, so output is difference between current and previous input
@@ -488,13 +494,23 @@ class LTI_SS_S(SampledBlock):
             self.D = None
             feedthrough = False
 
-        super().__init__(clock=clock, x0=x0, feedthrough=feedthrough, **blockargs)
+        super().__init__(
+            clock=clock,
+            ndstates=n,
+            nin=nin,
+            nout=nout,
+            x0=x0,
+            feedthrough=feedthrough,
+            **blockargs,
+        )
 
     def output(self, t: float, u: list[Any], x: np.ndarray) -> list[Any]:
+        y = self.C @ x
         if self.D is not None:
-            return list(self.C @ x + self.D @ u)
-        else:
-            return list(self.C @ x)
+            y = y + self.D @ np.array(u)
+        if y.size == 1:
+            return [y.item()]
+        return [y]
 
     def next(self, t: float, u: list[Any], x: np.ndarray) -> np.ndarray:
         # Reshape u and x to (N,1), i.e. column vectors, so
