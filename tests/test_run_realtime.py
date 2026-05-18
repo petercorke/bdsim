@@ -28,7 +28,7 @@ class BDRealTimeTest(unittest.TestCase):
 
     def _continuous_bd(self):
         bd = self.sim.blockdiagram()
-        src = bd.STEP(t=0.1)
+        src = bd.STEP(T=0.1)
         integ = bd.INTEGRATOR()
         sink = bd.NULL()
         bd.connect(src, integ)
@@ -68,10 +68,10 @@ class BDRealTimeTest(unittest.TestCase):
         )
 
         self.assertTrue(hasattr(out, "t"))
-        self.assertTrue(hasattr(out, "y0"))
+        self.assertTrue(hasattr(out, "y"))
         self.assertTrue(hasattr(out, "ynames"))
         self.assertGreaterEqual(len(out.t), 1)
-        self.assertEqual(len(out.t), len(out.y0))
+        self.assertEqual(len(out.t), len(out.y))
 
     def test_run_with_clock_logging(self):
         bd, _, _ = self._sampled_bd()

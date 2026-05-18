@@ -28,6 +28,23 @@ from .components import *
 # _IMPORT_TIMING = _env_true("BDSIM_IMPORT_TIMING")
 # _IMPORT_T0 = time.perf_counter() if _IMPORT_TIMING else 0.0
 
+# ===
+# # Public package-level exports. Values are (module_name, attr_name).
+# # Keep this as static metadata only: populating __all__ from this dict is cheap
+# # and does not import submodules. Actual imports happen in __getattr__.
+# _PUBLIC_EXPORTS: dict[str, tuple[str, str | None]] = {
+#     "BDSim": ("bdsim.run_sim", "BDSim"),
+#     "BDRealTime": ("bdsim.run_realtime", "BDRealTime"),
+#     "BDRealTimeState": ("bdsim.run_realtime", "BDRealTimeState"),
+#     "Block": ("bdsim.block", "Block"),
+#     "BlockDiagram": ("bdsim.blockdiagram", "BlockDiagram"),
+#     "bdload": ("bdsim.blockdiagram", "bdload"),
+#     "GraphicsBlock": ("bdsim.block_types", "GraphicsBlock"),
+#     "bdrun": ("bdsim.bin.bdrun", "bdrun"),
+#     "components": ("bdsim.components", None),
+# }
+
+# __all__ = sorted(_PUBLIC_EXPORTS.keys())
 
 # # Public package-level exports. Values are (module_name, attr_name).
 # # Keep this as static metadata only: populating __all__ from this dict is cheap

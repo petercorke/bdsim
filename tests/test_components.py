@@ -1,10 +1,12 @@
 import unittest
+import bdsim
 import numpy.testing as nt
 import tempfile
 import os
 from bdsim.components import *
 from bdsim.blocks import *
-from bdsim import BDSim, TimeQ, BlockDiagram
+from bdsim import BDSim, BlockDiagram
+from bdsim.components import TimeQ
 
 
 class WireTest(unittest.TestCase):

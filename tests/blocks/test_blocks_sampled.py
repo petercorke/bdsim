@@ -6,7 +6,7 @@ import math
 import matplotlib.pyplot as plt
 
 from bdsim.blocks.sampled import *
-from bdsim import Clock
+from bdsim.components import Clock
 
 import unittest
 import numpy.testing as nt

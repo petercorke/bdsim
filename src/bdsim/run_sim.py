@@ -25,9 +25,9 @@ from typing import Any, Callable, NoReturn, Sequence
 import numpy as np
 from colored import attr, fg
 
+from bdsim.block import Block
 from bdsim.components import (
     BDStruct,
-    Block,
     Clock,
     OptionsBase,
     Plug,
@@ -1368,6 +1368,16 @@ class BDSim(Runner):
                     # their own outputs, so watch the corresponding port of the subsystem's
                     # OUTPORT block instead.
                     plug.block = plug.block.outport
+
+                # Watchlists are always output ports.  Pointing at a block
+                # with no output (e.g. a sink) is a user error.
+                if plug.port >= plug.block.nout:
+                    raise ValueError(
+                        f"Watch {w!r}: block {plug.block.name!r} has {plug.block.nout} "
+                        f"output port(s), so port {plug.port} does not exist. "
+                        "Watch lists must reference output ports. "
+                        "For a sink block, watch the upstream block that drives it."
+                    )
 
                 watchlist.append(plug)
                 watchnamelist.append(str(plug))

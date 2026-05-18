@@ -709,7 +709,7 @@ class SimRunCoverageTest(unittest.TestCase):
             message="forced failure for regression test",
         )
 
-        with patch("bdsim.run_sim.integrate.solve_ivp", return_value=failed_result):
+        with patch("scipy.integrate.solve_ivp", return_value=failed_result):
             with self.assertRaises(IntegrationFailureError):
                 self.sim.run(bd, T=0.5)
 
@@ -728,7 +728,7 @@ class SimRunCoverageTest(unittest.TestCase):
             message="step size too small",
         )
 
-        with patch("bdsim.run_sim.integrate.solve_ivp", return_value=failed_result):
+        with patch("scipy.integrate.solve_ivp", return_value=failed_result):
             with self.assertRaises(IntegrationFailureError) as cm:
                 self.sim.run(bd, T=0.5)
 

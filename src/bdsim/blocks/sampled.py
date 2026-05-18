@@ -780,6 +780,7 @@ class PID_S(SubsystemBlock):
         I_limit: float | tuple[float, ...] | list[float] | None = None,
         I_band: float | None = None,
         structure: str = "parallel",
+        alpha: float | None = None,
         **blockargs: Any,
     ) -> None:
         r"""
@@ -797,6 +798,8 @@ class PID_S(SubsystemBlock):
         :type I_limit: float or 2-tuple
         :param I_band: band within which integral action is active
         :type I_band: float
+        :param alpha: smoothing factor for derivative term, defaults to None (no smoothing)
+        :type alpha: float, optional
         :param structure: the structure of the PID implementation, "parallel" (default), "series", "standard|ideal"
         :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
@@ -834,6 +837,19 @@ class PID_S(SubsystemBlock):
             type += "D"
             # if the D term is required, create the blocks
             Dblock = subsystem.DERIV_S(clock, gain=D)  # derivative block
+            Din = Dblock
+            Dout = Dblock
+            if alpha is not None:
+                # if smoothing is required, create the smoothing block
+                Dfilter = subsystem.LTI_SISO_S(
+                    clock,
+                    N=[1 - alpha],
+                    D=[1, -alpha],
+                    name="D_smooth",
+                )
+                Din = Dblock
+                Dout = Dfilter
+                subsystem.connect(Dblock, Dfilter)
 
         error_sum = subsystem.SUM("-+", name="errsum")  # error summing junction
         inp = subsystem.INPORT(2)  # PID block inputs
@@ -845,10 +861,10 @@ class PID_S(SubsystemBlock):
         if structure == "parallel":
             if type == "PID":
                 out_sum = subsystem.SUM("+++", name="SUM")
-                subsystem.connect(error_sum, Pblock, Dblock, Iblock)
+                subsystem.connect(error_sum, Pblock, Din, Iblock)
                 subsystem.connect(Pblock, out_sum[0])
                 subsystem.connect(Iblock, out_sum[1])
-                subsystem.connect(Dblock, out_sum[2])
+                subsystem.connect(Dout, out_sum[2])
             elif type == "PI":
                 out_sum = subsystem.SUM("++", name="SUM")
                 subsystem.connect(error_sum, Pblock, Iblock)
@@ -856,9 +872,12 @@ class PID_S(SubsystemBlock):
                 subsystem.connect(Iblock, out_sum[1])
             elif type == "PD":
                 out_sum = subsystem.SUM("++", name="SUM")
-                subsystem.connect(error_sum, Pblock, Dblock)
+                subsystem.connect(error_sum, Pblock, Din)
                 subsystem.connect(Pblock, out_sum[0])
-                subsystem.connect(Dblock, out_sum[1])
+                subsystem.connect(Dout, out_sum[1])
+            elif type == "P":
+                subsystem.connect(error_sum, Pblock)
+                out_sum = Pblock
 
             subsystem.connect(out_sum, outp)
 
@@ -878,8 +897,8 @@ class PID_S(SubsystemBlock):
 
             if "D" in type:
                 sum2 = subsystem.SUM("++", name="SUM_D")
-                subsystem.connect(I_out, Dblock, sum2[1])
-                subsystem.connect(Dblock, sum2[0])
+                subsystem.connect(I_out, Din, sum2[1])
+                subsystem.connect(Dout, sum2[0])
                 D_out = sum2
             else:
                 D_out = I_out
@@ -891,9 +910,9 @@ class PID_S(SubsystemBlock):
             if type == "PID":
                 out_sum = subsystem.SUM("+++", name="SUM")
                 subsystem.connect(error_sum, Pblock)
-                subsystem.connect(Pblock, out_sum[0], Iblock, Dblock)
+                subsystem.connect(Pblock, out_sum[0], Iblock, Din)
                 subsystem.connect(Iblock, out_sum[1])
-                subsystem.connect(Dblock, out_sum[2])
+                subsystem.connect(Dout, out_sum[2])
             elif type == "PI":
                 out_sum = subsystem.SUM("++", name="SUM")
                 subsystem.connect(error_sum, Pblock)
@@ -902,8 +921,10 @@ class PID_S(SubsystemBlock):
             elif type == "PD":
                 out_sum = subsystem.SUM("++", name="SUM")
                 subsystem.connect(error_sum, Pblock)
-                subsystem.connect(Pblock, out_sum[0], Dblock)
-                subsystem.connect(Dblock, out_sum[1])
+                subsystem.connect(Pblock, out_sum[0], Din)
+                subsystem.connect(Dout, out_sum[1])
+            elif type == "P":
+                out_sum = Pblock
 
             subsystem.connect(out_sum, outp)
 

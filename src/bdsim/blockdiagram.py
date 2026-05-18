@@ -44,6 +44,7 @@ else:
             # the real block factories are still attached during block loading.
             class BlockDiagramMixin:  # type: ignore[no-redef]
                 pass
+
     else:
         # Default to the lazy path: block factories are attached by block-module
         # decorators during load_blocks(), so realtime and runtime startup do not
@@ -52,6 +53,7 @@ else:
             pass
 
 
+from bdsim.block import Block, EventSource, SinkBlock, SubsystemBlock
 from bdsim.components import *
 from bdsim.components import Counter
 from bdsim.connect import EndPlug, Plug, Port, StartPlug, Wire
@@ -161,7 +163,7 @@ class BlockDiagram(BlockDiagramMixin):
 
     # ---------------------------------------------------------------------- #
 
-    def connect(self, start: Port, *ends: Port, name: str | None = None) -> None:
+    def connect(self, start: Port | str, *ends: Port, name: str | None = None) -> None:
         """Connect blocks
 
         :param start: The output port that the wire starts from.
@@ -254,6 +256,35 @@ class BlockDiagram(BlockDiagramMixin):
                     ), "can only connect output port to an input port slice of width 1"
                     end.type = "end"
                     wire = Wire(start, end[0], name)
+                    self.add_wire(wire)
+
+                else:
+                    raise ValueError("bad end type")
+
+            elif isinstance(start, str):
+                # connect(X, Y) or connect(X, Y[i]) or connect(X, Y[m:n])
+
+                import re
+
+                re_block = re.compile(r"^([\w_][\w_/]*)(\[\d*\])?")
+                m = re_block.match(start)
+                if m is None:
+                    raise ValueError(f"invalid start block name: {start}")
+                start_block_name = m.group(1)
+
+                if isinstance(end, Block):
+                    # connect(X, Y)
+                    # wires from all outport to all inports
+                    for i in range(end.nin):
+                        wire = Wire(
+                            StartPlug(start_block_name, i), EndPlug(end, i), name
+                        )
+                        self.add_wire(wire)
+
+                elif isinstance(end, Plug) and not end.isslice:
+                    # connect(X, Y[i])
+                    end.type = "end"
+                    wire = Wire(StartPlug(start_block_name, 0), end, name)
                     self.add_wire(wire)
 
                 else:
@@ -433,11 +464,23 @@ class BlockDiagram(BlockDiagramMixin):
         for b in self.blocklist:
             b.compile()
 
+        # build a dictionary of all block names
+        self.blocknames = {b.name: b for b in self.blocklist if b.name is not None}
+
         # check that wires all point to valid blocks
         if verbose:
             print("  ☑ checking wires and connections...")
         for w in self.wirelist:
-            if w.start.block not in self.blocklist:
+            if isinstance(w.start.block, str):
+                # wires from connect(X, Y) style connections have start as a string
+                # which is resolved to a block during compilation
+                try:
+                    w.start.block = self.blocknames[w.start.block]
+                except KeyError:
+                    raise RuntimeError(
+                        f"wire {w} late-bound start block '{w.start.block}' is unknown"
+                    )
+            elif w.start.block not in self.blocklist:
                 raise RuntimeError(
                     f"wire {w} ({self._wire_loc(w)}) starts at unreferenced block {w.start.block}"
                 )
@@ -454,9 +497,6 @@ class BlockDiagram(BlockDiagramMixin):
                 b.check_safe()
         except BlockRuntimeError as err:
             self._handle_block_runtime_error(err)
-
-        # build a dictionary of all block names
-        self.blocknames = {b.name: b for b in self.blocklist if b.name is not None}
 
         # visit all stateful blocks
         if verbose:
@@ -590,6 +630,7 @@ class BlockDiagram(BlockDiagramMixin):
 
         if error:
             if not subsystem:
+                self.report_lists()
                 raise RuntimeError("could not compile system")
 
         # create the execution plan/schedule
@@ -613,18 +654,18 @@ class BlockDiagram(BlockDiagramMixin):
             )
         state_map = self.initial_state_map()
 
-        if report:
-            self.report()
-            self.report_schedule()
-
         if not subsystem and evaluate:
             # run all the blocks for one step
             self.evaluate(state_map, 0.0, sinks=False)
 
+        if report:
+            self.report_summary()
+            self.report_schedule()
+
         if error:
             # show report if there was an error
             if not report:
-                self.report()
+                self.report_lists()
             if not subsystem:
                 raise RuntimeError("could not compile system")
         else:
