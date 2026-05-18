@@ -48,7 +48,7 @@ class FunctionBlockTest(unittest.TestCase):
             np.array([[19, 22], [43, 50]]),
         )
 
-        block = Gain(np.array([[1, 2], [3, 4]]), order="postmul")
+        block = Gain(np.array([[1, 2], [3, 4]]), premul=False)
         out = block.test_output(np.array([[5, 6], [7, 8]]))
         nt.assert_array_almost_equal(out[0], np.array([[23, 34], [31, 46]]))
 

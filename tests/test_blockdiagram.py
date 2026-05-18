@@ -726,7 +726,7 @@ class WiringTest(unittest.TestCase):
 
         dst[0] = const1 / const2
 
-        self.assertEqual(len(bd), 4)
+        self.assertEqual(len(bd), 3)
 
         bd.compile(verbose=False)
         bd.evaluate({}, 0)
@@ -744,7 +744,7 @@ class WiringTest(unittest.TestCase):
 
         dst[0] = const1 / const2
 
-        self.assertEqual(len(bd), 4)
+        self.assertEqual(len(bd), 3)
 
         bd.compile(verbose=False)
         bd.evaluate({}, 0)
@@ -952,7 +952,7 @@ class SetUpMixin:
     def _stateful_bd(self):
         """Compiled BD with STEP -> INTEGRATOR -> NULL (has 1 continuous state)."""
         bd = self.sim.blockdiagram()
-        step = bd.STEP(t=1)
+        step = bd.STEP(T=1)
         integ = bd.INTEGRATOR()
         null = bd.NULL()
         bd.connect(step, integ)

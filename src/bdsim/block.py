@@ -193,6 +193,11 @@ class Block(ABC, Port):
 
         """
 
+        if kwargs:
+            raise ValueError(
+                f"unexpected keyword arguments {list(kwargs.keys())} in block {name}"
+            )
+
         # print('Block constructor, bd = ', bd)
 
         def normalized_port_names(
@@ -1506,8 +1511,8 @@ class Block(ABC, Port):
 
         For the third case, create a ``GAIN(C)`` block named ``_gain.N``.
 
-        .. note:: Signals are assumed to be scalars, but if ``C`` is a NumPy
-            array then the option ``matrix`` is set to True.
+        .. note:: ``C'' can be a scalar or ndarray.
+
 
         :seealso: :meth:`Block.__rmul__` :meth:`Plug.__mul__`
         """
@@ -1517,17 +1522,13 @@ class Block(ABC, Port):
             self.bd is not None
         ), "block must be connected to a block diagram to create an automatic product block"
 
-        matrix = False
         if isinstance(other, (int, float, np.ndarray)):
             # block * constant, create a GAIN block
-            matrix: bool = isinstance(other, np.ndarray)  # type: ignore[no-redef]
-            return self._autogain(other, premul=matrix, matrix=matrix, inputs=[self])
+            return self._autogain(other, premul=False, inputs=[self])
         else:
             # value * value, create a PROD block
             name = "_prod.{:d}".format(next(self.bd.n_auto_prod))
-            return Prod(
-                "**", inputs=[self, other], matrix=matrix, name=name, bd=self.bd
-            )
+            return Prod("**", inputs=[self, other], name=name, bd=self.bd)
 
     @oodebug
     def __rmul__(self, other: Block | Plug | int | float | np.ndarray) -> Block | None:
@@ -1555,16 +1556,14 @@ class Block(ABC, Port):
 
         For the third case, create a ``GAIN(C)`` block named ``_gain.N``.
 
-        .. note:: Signals are assumed to be scalars, but if ``C`` is a NumPy
-            array then the option ``matrix`` is set to True.
+        .. note:: ``C'' can be a scalar or ndarray.
+
 
         :seealso: :meth:`Block.__mul__` :meth:`Plug.__rmul__`
         """
-        matrix = False
         if isinstance(other, (int, float, np.ndarray)):
             # constant * block, create a GAIN block
-            matrix: bool = isinstance(other, np.ndarray)  # type: ignore[no-redef]
-            return self._autogain(other, premul=matrix, inputs=[self])
+            return self._autogain(other, premul=True, inputs=[self])
         return None
 
     @oodebug
@@ -1593,8 +1592,7 @@ class Block(ABC, Port):
 
         For the third case, create a ``GAIN(1/C)`` block named ``_gain.N``.
 
-        .. note:: Signals are assumed to be scalars, but if ``C`` is a NumPy
-            array then the option ``matrix`` is set to True.
+        .. note:: ``C'' can be a scalar or ndarray.
 
         :seealso: :meth:`Block.__rtruediv__` :meth:`Plug.__truediv__`
         """
@@ -1606,12 +1604,17 @@ class Block(ABC, Port):
         ), "block must be connected to a block diagram to create an automatic product block"
 
         name = "_prod.{:d}".format(next(self.bd.n_auto_prod))
-        matrix = False
         if isinstance(other, (int, float, np.ndarray)):
-            # block / constant, create a CONSTANT block
-            other = self._autoconstant(other)
-            matrix: bool = isinstance(other, np.ndarray)  # type: ignore[no-redef]
-        return Prod("*/", inputs=(self, other), matrix=matrix, name=name, bd=self.bd)
+            # block / constant, create a GAIN block
+            if isinstance(other, np.ndarray):
+                inverse = np.linalg.inv(other)
+            else:
+                inverse = 1.0 / other
+            return self._autogain(inverse, premul=False, inputs=[self])
+        else:
+            # value * value, create a PROD block
+            name = "_prod.{:d}".format(next(self.bd.n_auto_prod))
+            return Prod("*/", inputs=[self, other], name=name, bd=self.bd)
 
     @oodebug
     def __rtruediv__(self, other: Block | Plug | int | float | np.ndarray) -> Block:
@@ -1638,8 +1641,8 @@ class Block(ABC, Port):
         left and right operands.  For the third case, a new CONSTANT block
         named ``_const.N`` is also created.
 
-        .. note:: Signals are assumed to be scalars, but if ``C`` is a NumPy
-            array then the option ``matrix`` is set to True.
+        .. note:: ``C'' can be a scalar or ndarray.
+
 
         :seealso: :meth:`Block.__truediv__` :meth:`Plug.__rtruediv__`
         """
@@ -1651,14 +1654,15 @@ class Block(ABC, Port):
         ), "block must be connected to a block diagram to create an automatic product block"
 
         name = "_prod.{:d}".format(next(self.bd.n_auto_prod))
-        matrix = False
-        if isinstance(other, (int, float, np.ndarray)):
-            # constant / block, create a CONSTANT block
-            other = self._autoconstant(other)
-            matrix: bool = isinstance(other, np.ndarray)  # type: ignore[no-redef]
-        return Prod("*/", inputs=(other, self), matrix=matrix, name=name, bd=self.bd)
 
-    # TODO arithmetic with a constant, add a gain block or a constant block
+        if isinstance(other, (int, float, np.ndarray)):
+            if isinstance(other, np.ndarray):
+                inverse = np.linalg.inv(other)
+            else:
+                inverse = 1.0 / other
+            # constant * block, create a GAIN block
+            return self._autogain(inverse, premul=True, inputs=[self])
+        return None
 
     # ---------------------------------------------------------------------- #
 

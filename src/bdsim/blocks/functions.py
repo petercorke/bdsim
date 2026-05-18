@@ -207,14 +207,12 @@ class Prod(FunctionBlock):
     nin: int = -1
     nout = 1
 
-    def __init__(self, ops: str = "**", matrix: bool = False, **blockargs: Any) -> None:
+    def __init__(self, ops: str = "**", **blockargs: Any) -> None:
         """
         :param ops: operations associated with input ports, accepted characters: * or /, defaults to '**'
         :type ops: str, optional
         :param inputs: Optional incoming connections
         :type inputs: Block or Plug
-        :param matrix: Arguments are matrices, defaults to False
-        :type matrix: bool, optional
         :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
 
@@ -223,7 +221,6 @@ class Prod(FunctionBlock):
         assert isinstance(ops, str), "first argument must be signs string"
         assert all([x in "*/" for x in ops]), "invalid op"
         self.ops: str = ops
-        self.matrix: bool = matrix
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         for i, input in enumerate(inputs):
@@ -231,17 +228,18 @@ class Prod(FunctionBlock):
                 if self.ops[i] == "*":
                     prod = input
                 else:
-                    if self.matrix:
+                    if isinstance(input, np.ndarray):
                         prod = np.linalg.inv(input)
-                    prod = 1.0 / input
+                    else:
+                        prod = 1.0 / input
             else:
                 if self.ops[i] == "*":
-                    if self.matrix:
+                    if isinstance(input, np.ndarray):
                         prod = prod @ input
                     else:
                         prod = prod * input
                 else:
-                    if self.matrix:
+                    if isinstance(input, np.ndarray):
                         prod = prod @ np.linalg.inv(input)
                     else:
                         prod = prod / input
