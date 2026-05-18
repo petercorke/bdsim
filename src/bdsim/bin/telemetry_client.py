@@ -2,7 +2,7 @@
 """Simple Tkinter strip-chart client for bdsim TELEMETRY UDP packets.
 
 Usage:
-    telemetry-client --listen 0.0.0.0:5001
+    telemetry-client --listen 127.0.0.1:5001
 """
 
 from __future__ import annotations
@@ -25,10 +25,10 @@ except ImportError:
 
 class StripChartApp:
     COLORS = [
-        "#1f77b4",
-        "#d62728",
-        "#2ca02c",
-        "#ff7f0e",
+        "#0072B2",
+        "#E69F00",
+        "#56B4E9",
+        "#CC79A7",
         "#17becf",
         "#9467bd",
         "#8c564b",
@@ -364,7 +364,8 @@ class StripChartApp:
                 pts.extend([x_of(t), y_of(v)])
             self.canvas.create_line(*pts, fill=color, width=2, tags=("trace",))
 
-        self.canvas.tag_lower("grid", "trace")
+        if self.canvas.find_withtag("trace"):
+            self.canvas.tag_lower("grid", "trace")
 
         x_legend = pad + 5
         y_legend = h - pad + 6
@@ -443,7 +444,7 @@ def main() -> int:
         host, sep, port_text = text.strip().rpartition(":")
         if not sep or not host or not port_text.isdigit():
             raise argparse.ArgumentTypeError(
-                "endpoint must be 'host:port' (eg 0.0.0.0:5001)"
+                "endpoint must be 'host:port' (eg 127.0.0.1:5001)"
             )
         port = int(port_text)
         if not (0 <= port <= 65535):
@@ -471,7 +472,7 @@ def main() -> int:
         "--listen",
         "--endpoint",
         type=parse_endpoint,
-        default=("0.0.0.0", 5001),
+        default=("127.0.0.1", 5001),
         metavar="host:port",
         help="UDP bind endpoint for this client (interface address + port)",
     )
