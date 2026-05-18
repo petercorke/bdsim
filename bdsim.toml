@@ -17,13 +17,14 @@ shutdown_on_signal = true
 safe_shutdown_timeout_s = 1.0
 
 # Device definitions: TCLab connected via serial
+# To find your port:  macOS: ls /dev/cu.usbmodem*   Linux: ls /dev/ttyACM*
 [devices.tclab0]
 provider = "serial"
 driver = "tclab"
-port = "/dev/ttyACM0"
+port = "/dev/cu.usbmodem111401" # <-- update to match your system
 baud = 115200
 startup_probe = true
-startup_timeout_s = 2.0
+startup_timeout_s = 4.0
 
 # Device-level parameters (shared across all channels of this device)
 [devices.tclab0.params]

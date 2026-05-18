@@ -32,11 +32,28 @@ from bdsim.blocks.io_base import (
 )
 from bdsim.config import ChannelConfig, DeviceConfig, IOConfig
 
-# Import builtin device drivers so they auto-register
-try:
-    import bdsim.blocks.io_tclab  # noqa: F401
-except ImportError:
-    pass
+
+def _find_config(explicit: str | None = None) -> str | None:
+    """Return the first existing config path from the search order:
+
+    1. The explicit path if given.
+    2. ``./bdsim.toml`` (current working directory).
+    3. ``~/.bdsim.toml`` (user home directory, dot-file convention).
+
+    Returns *None* if no file is found.
+    """
+    from pathlib import Path
+
+    candidates: list[Path] = []
+    if explicit is not None:
+        candidates.append(Path(explicit))
+    candidates.append(Path.cwd() / "bdsim.toml")
+    candidates.append(Path.home() / ".bdsim.toml")
+
+    for p in candidates:
+        if p.exists():
+            return str(p)
+    return None
 
 
 @dataclass
@@ -105,11 +122,11 @@ class SerialDeviceSession(ABC):
 
         try:
             self.port = serial.Serial(port_name, baudrate=baud, timeout=timeout)
-            # Reset Arduino/device on connect (DTR toggle)
+            # TCLab/Arduino resets on DTR toggle; must wait ~2 s for boot.
             self.port.dtr = False
             time.sleep(0.1)
             self.port.dtr = True
-            time.sleep(0.2)  # Wait for device to reset and become ready
+            time.sleep(2.0)  # match official tclab library boot wait
         except Exception as e:
             raise RuntimeError(
                 f"Failed to open serial port {port_name} at {baud} baud: {e}"
@@ -147,30 +164,20 @@ class SerialDeviceSession(ABC):
         self.close_port()
 
     def _read_until(self, end_marker: bytes, timeout_s: float = 1.0) -> bytes:
-        """Read from serial port until end_marker or timeout."""
+        """Read from serial port until end_marker or timeout.
+
+        Uses pyserial's read_until() so the OS delivers all bytes in one call
+        rather than polling one byte at a time (avoids repeated USB CDC latency
+        penalties on macOS).
+        """
         if self.port is None:
             raise RuntimeError("Serial port not open")
 
-        result = b""
-        deadline = time.time() + timeout_s
-
-        while True:
-            remaining = deadline - time.time()
-            if remaining <= 0:
-                raise TimeoutError(f"No response from device (waited {timeout_s}s)")
-
-            self.port.timeout = min(remaining, 0.1)
-            try:
-                chunk = self.port.read(1)
-            except Exception:
-                chunk = b""
-
-            if not chunk:
-                continue
-
-            result += chunk
-            if result.endswith(end_marker):
-                return result
+        self.port.timeout = timeout_s
+        result = self.port.read_until(end_marker)
+        if not result.endswith(end_marker):
+            raise TimeoutError(f"No response from device (waited {timeout_s}s)")
+        return result
 
     def _write(self, data: bytes) -> None:
         """Write bytes to serial port."""
@@ -219,8 +226,26 @@ class SerialIOProvider(IOProvider):
     def __init__(
         self, config_path: str | None = None, auto_shutdown: bool = True
     ) -> None:
-        self.config_path = config_path or "bdsim.toml"
-        self.io_config = IOConfig.from_file(self.config_path)
+        resolved = _find_config(config_path)
+        self.config_path = resolved
+        if resolved:
+            self.io_config = IOConfig.from_file(resolved)
+        else:
+            import warnings
+            from pathlib import Path
+
+            searched = [
+                str(Path.cwd() / "bdsim.toml"),
+                str(Path.home() / ".bdsim.toml"),
+            ]
+            warnings.warn(
+                "SerialIOProvider: no config file found. "
+                f"Searched: {searched}. "
+                "Create bdsim.toml in your working directory or "
+                "~/.bdsim.toml for a personal config.",
+                stacklevel=2,
+            )
+            self.io_config = IOConfig()
         self.sessions: dict[str, SerialDeviceSession] = {}
         self._lock = threading.RLock()
 
@@ -248,7 +273,18 @@ class SerialIOProvider(IOProvider):
                 # Create new session
                 device_config = self.io_config.get_device(device_id)
                 if device_config is None:
-                    raise ValueError(f"device {device_id!r} not found in config")
+                    cfg_hint = (
+                        f"loaded from {self.config_path!r}"
+                        if self.config_path
+                        else "no config file was found"
+                    )
+                    raise ValueError(
+                        f"device {device_id!r} not found in config "
+                        f"({cfg_hint}). "
+                        "Check that bdsim.toml exists in your working "
+                        "directory or in ~/.bdsim.toml and defines a "
+                        f"[devices.{device_id}] section."
+                    )
 
                 session = self._create_session(device_config)
                 self.sessions[device_id] = session
@@ -342,4 +378,11 @@ class SerialIOProvider(IOProvider):
 
 
 # Register this provider so it can be discovered
+# Import builtin device drivers after all classes are defined so that
+# circular-import lookups (e.g. io_tclab -> SerialDeviceSession) succeed.
+try:
+    import bdsim.blocks.io_tclab  # noqa: F401
+except ImportError:
+    pass
+
 IOProvider._load_builtin_providers()

@@ -160,6 +160,22 @@ class BDRealTime:
                 else:
                     raise TypeError(f"bad watch type: {type(w)}")
 
+            if plug.block.blockclass == "subsystem":
+                # subsystem blocks no longer exist in the wirelist and don't
+                # have their own output values; redirect to the subsystem's
+                # OUTPORT block so outport_value() succeeds.
+                plug.block = plug.block.outport
+
+            # Watchlists are always output ports.  Pointing at a block
+            # with no output (e.g. a sink like ANALOGOUT) is a user error.
+            if plug.port >= plug.block.nout:
+                raise ValueError(
+                    f"Watch {w!r}: block {plug.block.name!r} has {plug.block.nout} "
+                    f"output port(s), so port {plug.port} does not exist. "
+                    "Watch lists must reference output ports. "
+                    "For a sink block, watch the upstream block that drives it."
+                )
+
             watchlist.append(plug)
             watchnamelist.append(str(plug))
 
@@ -285,6 +301,14 @@ class BDRealTime:
             gc.callbacks.append(gc_cb)
 
         try:
+            from colored import attr as _attr, fg as _fg
+
+            _fg_yellow = _fg("yellow")
+            _attr_reset = _attr(0)
+        except Exception:
+            _fg_yellow = _attr_reset = ""
+
+        try:
             simstate.tf = tf
             simstate.options = options
             simstate.checkfinite = checkfinite
@@ -293,6 +317,17 @@ class BDRealTime:
             simstate.watchlist = watchlist
             simstate.watchnamelist = watchnamelist
             simstate.plist = [[] for _ in watchlist]
+
+            if not options.quiet:
+                print(_fg_yellow)
+                print(f">>> Start realtime simulation: T = {tf}")
+                s_disc = "s" if bd.ndstates != 1 else ""
+                print(
+                    f"  Discrete system: {bd.ndstates} discrete state variable{s_disc}"
+                )
+                for clock in bd.clocklist:
+                    print(f"    {clock.name} (T={clock.T}s): x0 = ", clock.getstate0())
+                print(_attr_reset)
 
             # Start blocks and initialize clock runtime state.
             bd.start(simstate)
@@ -448,10 +483,18 @@ class BDRealTime:
 
             out = BDStruct(name="results")
             if log_signals:
-                out["t"] = np.array(simstate.tlist)
-                for i, _ in enumerate(simstate.watchlist):
-                    out["y" + str(i)] = np.array(simstate.plist[i])
-                out["ynames"] = simstate.watchnamelist
+                if simstate.plist:
+                    # Trim to min recorded length in case the worker thread
+                    # crashed mid-tick, leaving some channels one entry short.
+                    min_len = min(len(p) for p in simstate.plist)
+                    out["t"] = np.array(simstate.tlist[:min_len])
+                    if min_len > 0:
+                        out["y"] = np.column_stack(
+                            [np.array(p[:min_len]) for p in simstate.plist]
+                        )
+                else:
+                    out["t"] = np.array(simstate.tlist)
+                out["ynames"] = [p.block.name for p in simstate.watchlist]
 
             if log_clock_state:
                 for i, clock in enumerate(bd.clocklist):
@@ -552,6 +595,7 @@ class BDRealTime:
             out[".stats"] = s
 
             if not options.quiet:
+                print(_fg_yellow)
                 print("<<< Realtime simulation complete")
                 print(f"  block diagram evaluations: {stats.eval_count}")
                 print(f"  max eval time:             {stats.eval_max_ns / 1000:.1f} µs")
@@ -576,9 +620,10 @@ class BDRealTime:
                         if c.enqueued > 0
                         else 0.0
                     )
+                    abandoned = c.fired - c.processed - c.dropped
                     print(
                         f"  clock {name}: fired={c.fired} processed={c.processed} "
-                        f"dropped={c.dropped} "
+                        f"dropped={c.dropped} abandoned={abandoned} "
                         f"lateness_mean_ns={lateness_mean_ns / 1000:.1f} µs "
                         f"lateness_stddev_ns={lateness_stddev_ns / 1000:.1f} µs "
                         f"lateness_max_ns={c.lateness_max_ns / 1000:.1f} µs"
@@ -594,9 +639,20 @@ class BDRealTime:
                         f"  gc pause: mean={g['pause_mean_ns'] / 1000:.1f} µs "
                         f"max={g['pause_max_ns'] / 1000:.1f} µs"
                     )
+                print(_attr_reset)
 
             if block is not None and options.graphics:
                 self.done(bd, block=block)
+
+            if options.outfile is not None:
+                out.dump(options.outfile)
+                if not options.quiet:
+                    print("simulation results pickled --> ", options.outfile)
+
+            if options.jsonfile is not None:
+                out.dump_json(options.jsonfile)
+                if not options.quiet:
+                    print("simulation results JSON --> ", options.jsonfile)
 
             return out
         finally:

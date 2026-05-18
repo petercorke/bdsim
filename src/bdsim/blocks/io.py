@@ -50,17 +50,9 @@ class _IOBlockMixin:
         return get_runtime_io_provider(runtime)
 
     def _try_bind(self, opener_name: str) -> bool:
-        if self._io_handle is not None:
-            return True
-
-        runtime = getattr(self.bd, "runtime", None)
-        if runtime is None:
-            # Compile-time/type-propagation path: no runtime/provider yet.
-            return False
-
-        provider = get_runtime_io_provider(runtime)
-        opener = getattr(provider, opener_name)
-        self._io_handle = opener(self._spec())
+        # Returns True only if start() has already bound a handle.
+        # Hardware binding is deferred to start(); calling the opener here
+        # would crash during bd.compile() before any device is ready.
         return self._io_handle is not None
 
 

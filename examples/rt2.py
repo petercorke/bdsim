@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Real-time system, waveform generator driving an LED
+Real-time system, waveform generator driving a second-order filter
 Copyright (c) 2026- Peter Corke
 """
 
@@ -36,29 +36,38 @@ reference = bd.WAVEFORM(
 )
 
 u = bd.PWMOUT(
-    clock, channel=18, freq=10_000, name="u"
+    clock, channel=18, freq=20_000, name="u"
 )  # BCM GPIO 18 (physical pin 12)  # plant input
 
 y = bd.ANALOGIN(clock, channel=1, name="y")  # plant output
 yref = bd.ANALOGIN(clock, channel=0, name="yref")  # reference input for telemetry
+clipper = bd.CLIP(min=0, max=1, name="u_clipped")
 telemetry = bd.TELEMETRY(
     clock,
-    nin=3,
+    nin=4,
     name="telemetry",
     schema_period=0,
     decimation=1,
 )
 
-# connect the blocks
-bd.connect(reference, u, telemetry[0])
-bd.connect(y, telemetry[1])
-bd.connect(yref, telemetry[2])
+control = bd.PID_S(clock, P=5, D=0.1, I=2, alpha=0.2, structure="parallel", name="PID")
 
-bd.compile()  # check the diagram
+# connect the blocks
+bd.connect(reference, control[1], telemetry[0])
+bd.connect(y, control[0], telemetry[1])
+bd.connect(control, clipper)
+bd.connect(clipper, u)
+bd.connect(clipper, telemetry[2])
+bd.connect(
+    "PID/I", telemetry[3]
+)  # utilize late binding to monitor output of integrator term
+# bd.connect(control.subsystem.blocknames["I"], telemetry[2])  # connect the I term to telemetry
+
+bd.compile(verbose=True)  # check the diagram
 bd.report_summary()
 print(f"telemetry destination: {telemetry.host}:{telemetry.port}")
 
 
-out = rt.run(bd, tf=30)  # simulate for 20s
+out = rt.run(bd, tf=40, watch=[y, yref, control, "PID/I[0]"], log_signals=True, log_clock_state=True)  # simulate
 
 print(out)

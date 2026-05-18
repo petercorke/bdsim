@@ -9,32 +9,36 @@ This diagram demonstrates:
 
 To run this example:
 1. Connect a TCLab device via USB serial port
-2. Update bdsim.toml with your serial port (e.g., /dev/ttyACM0)
+2. Edit bdsim.toml in the repo root — set the correct serial port
+   under [devices.tclab0] (e.g. /dev/ttyACM0 on Linux,
+   /dev/cu.usbmodem* on macOS)
 3. Run: python examples/eg_tclab_rt.py
 
 The telemetry client can visualize the temperatures in real-time:
-   telemetry-client --listen 0.0.0.0:5001
+   telemetry-client --listen 127.0.0.1:5001
 """
 
 import os
 
 from bdsim.realtime import BDRealTime
 
-# Create realtime runner with serial I/O provider
-# Load device config from bdsim.toml (or environment)
-rt = BDRealTime(
-    io_provider="serial",
-    io_provider_kwargs={"config_path": "bdsim.toml"},
-)
+# bdsim.toml is searched automatically: CWD first, then ~/bdsim.toml.
+# Place it in the repo root (or your home directory) and update the port.
+rt = BDRealTime(io_provider="serial")
+
+target_temperature = 40.0  # °C  (keep ≥15°C below the 55°C firmware alarm)
+Kp = 5.0  # proportional gain
+telemetry_endpoint = os.getenv("BDSIM_TELEMETRY", "127.0.0.1:5001")
+max_heater = 75.0  # % (TCLab heaters are 0-100% but we limit to 75% for safety)
 
 # Create block diagram
 bd = rt.blockdiagram(name="TCLab Temperature Control")
 
-# Input: constant reference temperature (set to 35°C for T1)
-t_ref = bd.CONSTANT(value=35.0, name="T_ref")
+clock = bd.clock(2, "Hz", name="main")  # Clock: sample at 2 Hz
 
-# Clock: sample at 10 Hz
-clock = bd.CLOCK(name="main", T=0.1)
+t_ref = bd.CONSTANT(
+    target_temperature, name="T_ref"
+)  # Input: constant reference temperature
 
 # Analog input: Read T1 temperature from TCLab
 t1_block = bd.ANALOGIN(
@@ -43,20 +47,6 @@ t1_block = bd.ANALOGIN(
     device="tclab0",
     name="T1",
 )
-
-# Simple proportional controller: error = t_ref - t1
-error = bd.SUM("+-", name="Error")
-bd.connect(t_ref[0], error[0])
-bd.connect(t1_block[0], error[1])
-
-# Proportional gain (Kp = 0.5)
-gain = bd.GAIN(value=0.5, name="Kp")
-bd.connect(error[0], gain[0])
-
-# Clamp output to valid heater range (0-100%)
-saturation = bd.SATURATION(lower=0.0, upper=100.0, name="Saturation")
-bd.connect(gain[0], saturation[0])
-
 # Analog output: Write Q1 command to TCLab
 q1_block = bd.ANALOGOUT(
     clock=clock,
@@ -64,37 +54,41 @@ q1_block = bd.ANALOGOUT(
     device="tclab0",
     name="Q1",
 )
-bd.connect(saturation[0], q1_block[0])
 
 # Telemetry: Send temperature and heater signals to UDP client
-# (Requires TELEMETRY block; optional)
-try:
-    telemetry_endpoint = os.getenv("BDSIM_TELEMETRY", "127.0.0.1:5001")
-    telemetry = bd.TELEMETRY(
-        clock,
-        [t1_block[0], q1_block[0]],
-        name="Telemetry",
-        endpoint=telemetry_endpoint,
-    )
-except Exception:
-    pass  # TELEMETRY optional if not available
+telemetry = bd.TELEMETRY(
+    clock,
+    nin=2,
+    name="Telemetry",
+    endpoint=telemetry_endpoint,
+)
+
+# controller components
+error = bd.SUM("+-", name="Error")  # Error: reference - measured
+gain = bd.GAIN(Kp, name="P")  # Proportional gain block
+saturation = bd.CLIP(
+    min=0.0, max=max_heater, name="Saturation"
+)  # clamp heater command to valid range (0-70% for TCLab)
+
+# Simple proportional controller: error = t_ref - t1
+bd.connect(t_ref, error[0])
+bd.connect(t1_block, error[1])
+bd.connect(error, gain)  # Control signal: proportional gain * error
+bd.connect(gain, saturation)
+bd.connect(saturation, q1_block)
+bd.connect(t1_block, telemetry[0])  # T1 temperature
+bd.connect(saturation, telemetry[1])  # Heater command (Q1)
 
 # Compile and run
-bd.compile()
-print(f"Starting TCLab temperature control loop (10 Hz, 30 second duration)...")
-print(f"Target temperature: 35°C on T1")
-print(
-    f"Serial port: {rt.io_config.get_device('tclab0').port if hasattr(rt, 'io_config') else '/dev/ttyACM0'}"
-)
-print()
+bd.compile(verbose=True)
+bd.report_summary()
 
-try:
-    result = rt.run(bd, tf=30.0, watch=["T1[0]", "Q1[0]"], log_signals=True)
-    print("\n<<< Simulation completed successfully")
-    print(f"Final T1 value: {result['y0'][-1]:.2f}°C")
-    print(f"Final Q1 value: {result['y1'][-1]:.1f}%")
-except KeyboardInterrupt:
-    print("\n<<< Interrupted by user")
-except Exception as e:
-    print(f"\n<<< Error: {e}")
-    raise
+print(f"Starting TCLab temperature control loop (10 Hz, 30 second duration)...")
+print(f"Target temperature: {target_temperature}°C on T1")
+
+result = rt.run(bd, tf=60.0, watch=["T1[0]", "Saturation[0]"], log_signals=True)
+if "y" in result and result["y"].shape[1] >= 2:
+    t1_start = result["y"][0, 0]
+    t1_end = result["y"][-1, 0]
+    print(f"T1: {t1_start:.2f}°C → {t1_end:.2f}°C  (Δ{t1_end - t1_start:+.2f}°C)")
+    print(f"Final Q1 command: {result['y'][-1, 1]:.1f}%")

@@ -98,6 +98,7 @@ class IOProvider:
             "bdsim.blocks.io_rpi_gpio",
             "bdsim.blocks.io_firmata",
             "bdsim.blocks.io_arduio",
+            "bdsim.blocks.io_serial",
         ):
             try:
                 importlib.import_module(module_name)
