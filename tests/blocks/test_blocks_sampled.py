@@ -6,7 +6,9 @@ import math
 import matplotlib.pyplot as plt
 
 from bdsim.blocks.sampled import *
+from bdsim.blocks.spatial import PoseIntegrator_S
 from bdsim.components import Clock
+from spatialmath import SE3, Twist3
 
 import unittest
 import numpy.testing as nt
