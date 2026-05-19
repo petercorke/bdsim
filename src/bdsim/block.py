@@ -1654,15 +1654,10 @@ class Block(ABC, Port):
         ), "block must be connected to a block diagram to create an automatic product block"
 
         name = "_prod.{:d}".format(next(self.bd.n_auto_prod))
-
         if isinstance(other, (int, float, np.ndarray)):
-            if isinstance(other, np.ndarray):
-                inverse = np.linalg.inv(other)
-            else:
-                inverse = 1.0 / other
-            # constant * block, create a GAIN block
-            return self._autogain(inverse, premul=True, inputs=[self])
-        return None
+            # constant / block, create a CONSTANT block
+            other = self._autoconstant(other)
+        return Prod("*/", inputs=(other, self), name=name, bd=self.bd)
 
     # ---------------------------------------------------------------------- #
 
@@ -1815,7 +1810,7 @@ class ContinuousBlock(Block):
         if x0 is None:
             # use the old protocol, initial state vector is _x0 attribute
             x0 = self._x0 if hasattr(self, "_x0") else None
-            
+
         if x0 is not None:
             self._x0 = smb.getvector(x0, dtype=float)
             nstates = len(self._x0)

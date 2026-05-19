@@ -198,7 +198,7 @@ class SimRunCoverageTest(unittest.TestCase):
     def _stateful_bd(self):
         """STEP -> INTEGRATOR -> NULL, 1 continuous state."""
         bd = self.sim.blockdiagram()
-        step = bd.STEP(t=0.5)
+        step = bd.STEP(0.5)
         integ = bd.INTEGRATOR()
         null = bd.NULL()
         bd.connect(step, integ)
@@ -1016,7 +1016,7 @@ class IntegrationTest(unittest.TestCase):
         bd = self.sim.blockdiagram()
 
         # Create blocks (triggers lazy resolution)
-        step = bd.STEP(t=1)
+        step = bd.STEP(1)
         integ = bd.INTEGRATOR()
         null = bd.NULL()
 
@@ -1076,7 +1076,7 @@ class IntegrationTest(unittest.TestCase):
         )
 
         bd = self.sim.blockdiagram()
-        step = bd.STEP(t=1)
+        step = bd.STEP(1)
         lti = bd.LTI_SISO(0.5, [2, 1])
         null = bd.NULL()
 

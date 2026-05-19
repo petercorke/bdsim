@@ -63,7 +63,7 @@ class BDSimTest(unittest.TestCase):
         bd = sim.blockdiagram()
 
         integ = bd.INTEGRATOR()
-        step = bd.STEP(t=1)
+        step = bd.STEP(1)
         null = bd.NULL()
         bd.connect(step, integ)
         bd.connect(integ, null)
@@ -97,7 +97,7 @@ class BDSimTest(unittest.TestCase):
         bd = sim.blockdiagram()
 
         integ = bd.INTEGRATOR()
-        step = bd.STEP(t=1)
+        step = bd.STEP(1)
         null = bd.NULL()
         integ[0] = step
         null[0] = integ

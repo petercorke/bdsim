@@ -13,6 +13,8 @@ import numpy.testing as nt
 
 import bdsim
 from bdsim.blocks.sampled import *
+from bdsim.blocks.spatial import PoseIntegrator_S
+from spatialmath import SE3, Twist3
 
 
 class DiscreteTest(unittest.TestCase):

@@ -744,7 +744,7 @@ class WiringTest(unittest.TestCase):
 
         dst[0] = const1 / const2
 
-        self.assertEqual(len(bd), 3)
+        self.assertEqual(len(bd), 4)
 
         bd.compile(verbose=False)
         bd.evaluate({}, 0)
