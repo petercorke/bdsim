@@ -320,7 +320,7 @@ class BDRealTime:
 
             if not options.quiet:
                 print(_fg_yellow)
-                print(f">>> Start realtime simulation: T = {tf}")
+                print(f">>> Start realtime control: T = {tf}")
                 s_disc = "s" if bd.ndstates != 1 else ""
                 print(
                     f"  Discrete system: {bd.ndstates} discrete state variable{s_disc}"
