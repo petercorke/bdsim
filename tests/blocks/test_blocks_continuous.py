@@ -39,7 +39,9 @@ import matplotlib.pyplot as plt
 
 import bdsim
 from bdsim.blocks.continuous import *
+from bdsim.blocks.spatial import PoseIntegrator
 from bdsim.blocks.continuous import _tf2ss
+from spatialmath import SE3, Twist3
 
 import unittest
 import numpy.testing as nt
@@ -144,6 +146,22 @@ class TransferTest(unittest.TestCase):
         x = np.r_[6, 11]
         u = np.r_[2, 3]
         nt.assert_equal(block.test_deriv(u, x=x), [0, 0])
+
+    def test_pose_integrator_s(self):
+
+        T = SE3.Rand()
+        block = PoseIntegrator(x0=T)
+        nt.assert_equal(block.getstate0(), Twist3(T))
+
+        self.assertEqual(block.nstates, 6)
+        self.assertEqual(block.ndstates, 0)
+
+        x = block.getstate0()
+        u = np.r_[1, 2, 3, 4, 5, 6]
+
+        nt.assert_equal(block.test_output(u, x=x)[0], T)
+
+        nt.assert_almost_equal(block.test_deriv(u, x=x), u)
 
 
 class ContinuousSim(unittest.TestCase):

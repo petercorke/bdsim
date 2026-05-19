@@ -15,8 +15,6 @@ import scipy.signal
 import math
 from math import sin, cos, atan2, sqrt, pi
 import spatialmath.base as smb  # type: ignore[import-not-found]
-from spatialmath import SE3, Twist3  # type: ignore[import-not-found]
-
 from bdsim.blockdiagram import BlockDiagram
 from bdsim.components import ContinuousBlock, SubsystemBlock
 
@@ -161,70 +159,6 @@ class Integrator(ContinuousBlock):
             xd[x > self.max] = 0
 
         return self.gain * xd
-
-
-class PoseIntegrator(ContinuousBlock):
-    r"""
-    :blockname:`POSEINTEGRATOR`
-
-    Continuous-time pose integrator
-
-    :inputs: 1
-    :outputs: 1
-    :states: 6
-
-    .. list-table::
-        :header-rows: 1
-
-        *   - Port type
-            - Port number
-            - Types
-            - Description
-        *   - Input
-            - 0
-            - ndarray(6,)
-            - :math:`x`
-        *   - Output
-            - 0
-            - SE3
-            - :math:`y`
-
-    This block integrates spatial velocity over time. The block input is a spatial
-    velocity as a 6-vector :math:`(v_x, v_y, v_z, \omega_x, \omega_y, \omega_z)` and the
-    output is pose as an ``SE3`` instance.
-
-    .. note:: The state vector is a velocity twist.
-    """
-
-    nin = 1
-    nout = 1
-
-    def __init__(self, x0: SE3 | Twist3 | None = None, **blockargs: Any) -> None:
-        r"""
-        :param x0: Initial pose, defaults to null
-        :type x0: SE3, Twist3, optional
-        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
-        :type blockargs: dict
-        """
-
-        if x0 is None:
-            _x0 = np.zeros((6,))
-        elif isinstance(x0, SE3):
-            _x0 = Twist3(x0).A
-        elif isinstance(x0, Twist3):
-            _x0 = x0.A
-
-        nstates = len(_x0)
-
-        super().__init__(nstates=nstates, **blockargs)
-
-        self._x0 = _x0
-
-    def output(self, t: float, u: list[Any], x: np.ndarray) -> list[SE3]:
-        return [Twist3(x).SE3(1)]
-
-    def deriv(self, t: float, u: list[Any], x: np.ndarray) -> Any:
-        return u[0]
 
 
 # ------------------------------------------------------------------------ #
