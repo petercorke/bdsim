@@ -391,6 +391,12 @@ class Block(ABC, Port):
             s += f", nstates={self.nstates}"
         if self._ndstates > 0:
             s += f", ndstates={self.ndstates}"
+        if self._inport_names is not None:
+            s += f", inames={self._inport_names}"
+        if self._outport_names is not None:
+            s += f", onames={self._outport_names}"
+        if self._state_names is not None:
+            s += f", snames={self._state_names}"
         return s + ")"
 
     @property
@@ -1062,9 +1068,10 @@ class Block(ABC, Port):
                 │ c ├ v ──────────▶ │ y │
                 └───┘               └───┘
 
-        .. note::  this overloaded method handles all instances of ``setattr`` and
-              implements normal functionality as well, only creating a wire
-              if ``name`` is a known port name.
+        Also used for assignments using ``connect``, for example::
+
+            bd.connect(x, c.v)  # connect output of x to input port v of block c
+            bd.connect(c.v, x)  # connect output port v of block c to input of x
 
         .. warning:: to avoid infinite recursion, this method must use
             ``super().__getattribute__`` to access attributes of the block, and only
@@ -1077,12 +1084,18 @@ class Block(ABC, Port):
         # we have to use self.__dict__.get() to avoid infinite recursion, since the port
         # names are stored in attributes of the block
 
-        # on the RHS the ports must be output ports
+        # is it an output port name?
         outport_names = self.__dict__.get("_outport_names")
-
         if outport_names is not None and name in outport_names:
             port = outport_names.index(name)
             return Plug(self, port)
+
+        # is it an input port name?
+        inport_names = self.__dict__.get("_inport_names")
+        if inport_names is not None and name in inport_names:
+            port = inport_names.index(name)
+            return Plug(self, port)
+
         raise AttributeError(
             f"'{type(self).__name__}' object has no attribute '{name}'"
         )
@@ -2443,7 +2456,15 @@ class GraphicsBlock(SinkBlock):
         gstate.fignum += 1
 
         def onkeypress(event: Any) -> None:
-            if event.key == "x":
+            if event.key == "q":
+                plt.close(f)
+            elif event.key == "Q":
+                print("\nclosing all windows")
+                simstate = getattr(self, "_simstate", None)
+                if simstate is not None:
+                    simstate.stop = self
+                plt.close("all")
+            elif event.key == "x":
                 print("\nclosing all windows")
                 plt.close("all")
             elif event.key == "ctrl+c":
