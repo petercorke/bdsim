@@ -1736,14 +1736,13 @@ class BDSim(Runner):
             eval_end = time.time()
             simstate.bdtime += eval_end - eval_start
 
-            is_interval_endpoint = k == (len(result.t) - 1)
             should_break = self._record_sample_and_service_hooks(
                 bd,
                 simstate,
                 t,
                 y,
                 stop_short_circuit=True,
-                run_graphics=is_interval_endpoint,
+                run_graphics=True,
             )
             if should_break:
                 break
