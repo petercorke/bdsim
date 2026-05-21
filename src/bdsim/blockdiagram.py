@@ -1416,6 +1416,12 @@ class BlockDiagram(BlockDiagramMixin):
         except BlockRuntimeError as err:
             self._handle_block_runtime_error(err)
 
+        try:
+            for b in self.blocklist:
+                b.validate_start_safe()
+        except BlockRuntimeError as err:
+            self._handle_block_runtime_error(err)
+
     def initialstate(self) -> None:
         self._state_map = self.initial_state_map()
 

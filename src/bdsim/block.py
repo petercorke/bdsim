@@ -836,6 +836,12 @@ class Block(ABC, Port):
         except Exception as err:
             self._raise_runtime_error("start", err)
 
+    def validate_start_safe(self) -> None:
+        try:
+            self.validate_start()
+        except Exception as err:
+            self._raise_runtime_error("start", err)
+
     def done_safe(self, **kwargs: Any) -> None:
         try:
             self.done(**kwargs)
@@ -1687,6 +1693,10 @@ class Block(ABC, Port):
     def start(self, simstate: SimulationState) -> None:  # begin a simulation
         pass
 
+    def validate_start(self) -> None:
+        """Validate block initialization completed after ``start``."""
+        pass
+
     def check(self) -> None:  # check validity of block parameters at start
         assert hasattr(self, "nin"), f"block {self.name} has no nin specified"
         assert hasattr(self, "nout"), f"block {self.name} has no nout specified"
@@ -2007,6 +2017,8 @@ class GraphicsBlock(SinkBlock):
     but no outputs and creates/updates a graphical display.
     """
 
+    AXES_POLICY = "subplot"
+
     def __init__(self, movie: str | None = None, **blockargs: Any) -> None:
         """
         Create a graphical display block.
@@ -2023,7 +2035,9 @@ class GraphicsBlock(SinkBlock):
         super().__init__(**blockargs)
         self._graphics = True
         self._fig: matplotlib.figure.Figure | None = None
+        self.ax: Any = None
         self._movie = movie
+        self._movie_started = False
 
     @property
     def fig(self) -> matplotlib.figure.Figure | None:
@@ -2032,6 +2046,8 @@ class GraphicsBlock(SinkBlock):
     @fig.setter
     def fig(self, v: matplotlib.figure.Figure | None) -> None:
         self._fig = v
+        if v is not None and self._movie is not None:
+            self._start_movie()
 
     @property
     def movie(self) -> str | None:
@@ -2040,6 +2056,7 @@ class GraphicsBlock(SinkBlock):
     @movie.setter
     def movie(self, v: str | None) -> None:
         self._movie = v
+        self._movie_started = False
 
     @property
     def writer(self) -> Any:
@@ -2062,8 +2079,42 @@ class GraphicsBlock(SinkBlock):
             if not simstate.options.animation:
                 print("must enable animation to render a movie")
 
+        if self._enabled:
+            self.fig = self.create_figure(simstate)
+            self.ax = self._create_default_axes()
+
+    def validate_start(self) -> None:
+        if not getattr(self, "_enabled", False):
+            return
+
+        if self.fig is None:
+            raise RuntimeError("graphics start did not create a figure")
+
+        if self.AXES_POLICY == "delegate" and self.ax is None:
+            raise RuntimeError(
+                "AXES_POLICY='delegate' requires subclass start() to set self.ax"
+            )
+
+    def _create_default_axes(self) -> Any:
+        if self.fig is None:
+            return None
+
+        tile_ax = getattr(self, "_tile_axes", None)
+        if tile_ax is not None:
+            return tile_ax
+
+        policy = self.AXES_POLICY
+        if policy in (None, "delegate"):
+            return None
+        if policy == "gca":
+            return self.fig.gca()
+        return self.fig.add_subplot(111)
+
     def _start_movie(self) -> None:
         """Set up the FFMpeg writer once self._fig has been created."""
+        if self._movie_started:
+            return
+
         if self._movie is not None:
             try:
                 self._writer = animation.FFMpegWriter(
@@ -2106,8 +2157,9 @@ class GraphicsBlock(SinkBlock):
             notebook_backend = bool(getattr(simstate, "notebook_backend", False))
             if not notebook_backend:
                 self._fig.canvas.start_event_loop(0.001)  # type: ignore[union-attr]
-            if self._movie is not None:
+            if self._movie is not None and self._movie_started:
                 self._writer.finish()  # type: ignore[union-attr]
+                self._movie_started = False
                 # self.cleanup()
             if notebook_backend:
                 self._fig.canvas.draw_idle()  # type: ignore[union-attr]

@@ -41,7 +41,17 @@ def _make_simstate(graphics=True, animation=False, backend="agg"):
     ss = MagicMock()
     ss.options.graphics = graphics
     ss.options.animation = animation
+    ss.options.backend = None
+    ss.options.tiles = None
+    ss.options.shape = None
+    ss.options.altscreen = False
     ss.backend = backend
+    ss.fignum = 0
+    ss.figsize = None
+    ss.dpi = None
+    ss.ntiles = None
+    ss.xoffset = 0
+    ss.screensize_pix = None
     return ss
 
 
@@ -64,16 +74,22 @@ def _make_gstate(tiles=None):
 class StartTest(unittest.TestCase):
     """GraphicsBlock.start() coverage."""
 
+    def _attach_bd(self, gb):
+        gb._bd = MagicMock()
+        gb._bd.runtime.DEBUG = lambda *a, **kw: None
+        gb._bd.blocklist = [gb]
+        return gb
+
     def test_start_no_movie(self):
         """start() with movie=None sets _enabled from simstate (lines 41-42)."""
-        gb = MinGB(nin=1)
+        gb = self._attach_bd(MinGB(nin=1))
         ss = _make_simstate(graphics=True, animation=False)
         gb.start(ss)
         self.assertTrue(gb._enabled)
 
     def test_start_movie_animation_disabled_warning(self):
         """start() with movie set and animation=False prints warnings."""
-        gb = MinGB(nin=1, movie="test.mp4")
+        gb = self._attach_bd(MinGB(nin=1, movie="test.mp4"))
         ss = _make_simstate(graphics=True, animation=False)
         # start() prints warnings; _start_movie() is called later when figure exists
         gb.start(ss)  # covers warning block
@@ -83,30 +99,26 @@ class StartTest(unittest.TestCase):
 
     def test_start_movie_ffmpeg_setup_success(self):
         """_start_movie() with working FFMpeg creates writer and calls setup()."""
-        gb = MinGB(nin=1, movie="out.mp4")
+        gb = self._attach_bd(MinGB(nin=1, movie="out.mp4"))
         ss = _make_simstate(graphics=True, animation=True)
-        gb.start(ss)
-        gb.fig = plt.figure()  # create figure so _start_movie() can use it
         try:
             with patch("matplotlib.animation.FFMpegWriter") as MockW:
                 MockW.return_value.setup.return_value = None
-                gb._start_movie()  # directly test the movie setup method
+                gb.start(ss)  # figure/movie are set up during start()
             MockW.return_value.setup.assert_called_once()
         finally:
             plt.close("all")
 
     def test_start_movie_ffmpeg_not_found(self):
         """_start_movie() catches FileNotFoundError when ffmpeg is missing."""
-        gb = MinGB(nin=1, movie="out.mp4")
+        gb = self._attach_bd(MinGB(nin=1, movie="out.mp4"))
         ss = _make_simstate(graphics=True, animation=True)
-        gb.start(ss)
-        gb.fig = plt.figure()  # create figure so _start_movie() can use it
         try:
             with patch("matplotlib.animation.FFMpegWriter") as MockW:
                 MockW.return_value.setup.side_effect = FileNotFoundError("no ffmpeg")
                 # fatal() is not defined on a bare block → AttributeError propagates
                 with self.assertRaises(AttributeError):
-                    gb._start_movie()
+                    gb.start(ss)
         finally:
             plt.close("all")
 
