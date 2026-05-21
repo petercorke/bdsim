@@ -1095,6 +1095,93 @@ class ScopeXY1(ScopeXY):
         super()._step(x, y, t)
 
 
+class Animation(GraphicsBlock):
+    """
+    :blockname:`ANIMATION`
+
+    Create an animation from user-defined functions.
+
+    :inputs: 1
+    :outputs: 0
+    :states: 0
+
+    The animation is defined by two user-provided functions:
+
+    1. Animation setup function ``init`` with signature::
+
+            init(block, fig, ax)
+
+        * ``block`` is the animation block instance
+        * ``fig`` is the Matplotlib figure object for the animation
+        * ``ax`` is the Matplotlib axes object for the animation
+
+    2. Animation update function ``update`` with signature::
+
+            update(block, t, inports)
+
+
+        * ``block`` is the animation block instance
+        * ``t`` is the current time
+        * ``inports`` is a list of values applied to the block's input ports at the
+          current time
+
+    Matplotlib artist handles created in ``init`` can be stored as attributes of the
+    block instance and used in the ``update`` function. Note that attributes ``fig`` and
+    ``ax`` are reserved for the figure and axes objects and will be set by the block
+    before calling ``init``.
+
+    The animation will run when the block diagram is executed with animation enabled.
+    The ``movie`` block option can be used to save the animation to a file as well as displaying it on screen.
+    """
+
+    nin = 1
+    nout = 0
+
+    def __init__(self, init: Callable, update: Callable, **blockargs: Any) -> None:
+        """
+        :param init: initialization function with signature init(fig, ax)
+        :type init: callable
+        :param update: update function with signature update(frame, fig, ax)
+        :type update: callable
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        :type blockargs: dict
+        """
+        super().__init__(**blockargs)
+        if not callable(init):
+            raise ValueError("init must be callable")
+        if not callable(update):
+            raise ValueError("update must be callable")
+        self.init = init
+        self.update = update
+
+    def start(self, simstate: Any) -> None:
+        super().start(simstate)
+
+        if not self._enabled:
+            return
+
+        self.fig = self.create_figure(simstate)
+        tile_ax = getattr(self, "_tile_axes", None)
+        self.ax = tile_ax if tile_ax is not None else self.fig.add_subplot(111)
+
+        # Apply dark-theme text styling when inside a tiled (shared-figure) layout.
+        if getattr(self, "_tile_axes", None) is not None:
+            _apply_tile_axes_style(self.ax)
+
+        self.init(
+            self, self.fig, self.ax
+        )  # call user init function with block as first argument
+
+    def step(self, t: float, inports: list[Any]) -> None:
+        if not self._enabled:
+            return
+
+        self.update(
+            self, t, inports
+        )  # call user update function with block as first argument, then time and inputs
+        super().step(t, inports)
+
+
 # ------------------------------------------------------------------------ #
 
 

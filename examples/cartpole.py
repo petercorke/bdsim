@@ -23,12 +23,12 @@ import matplotlib.transforms as transforms
 # position and pole angle can increase linearly with time.
 
 
-def cartpole_init(self):
+def cartpole_init(self, fig, ax):
     # 1. Setup the figure and axis
-    self.ax.set_xlim(-5, 5)
-    self.ax.set_ylim(-2, 4)
-    self.ax.set_aspect("equal")
-    self.ax.grid(True, linestyle="--")
+    ax.set_xlim(-5, 5)
+    ax.set_ylim(-2, 4)
+    ax.set_aspect("equal")
+    ax.grid(True, linestyle="--")
 
     # Draw the horizontal track
     self.ax.axhline(0, color="black", lw=1.5)
@@ -62,8 +62,8 @@ def cartpole_init(self):
         facecolor="salmon",
     )
 
-    self.ax.add_patch(cart)
-    self.ax.add_patch(pole)
+    ax.add_patch(cart)
+    ax.add_patch(pole)
 
     self.cart = cart
     self.pole = pole
@@ -159,7 +159,7 @@ anim = bd.ANIMATION(
 )
 
 bd.report()
-bd.dotfile("cartpole.dot")  # write graphviz dot file for visualization
+bd.graph("mermaid", "cartpole.md")  # write mermaid file for visualization
 bd.compile()  # check the diagram
 bd.report_schedule()
 bd.report_summary()
