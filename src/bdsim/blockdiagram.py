@@ -1471,7 +1471,7 @@ class BlockDiagram(BlockDiagramMixin):
             maps block class (sink, source, graphics, function, transfer) to the names
             of GraphViz shapes.
 
-        :seealso: :meth:`showgraph`
+        :seealso: :meth:`graph` :meth:`showgraph`
         """
         if shapes is None:
             shapes = dict(
@@ -1532,11 +1532,232 @@ class BlockDiagram(BlockDiagramMixin):
 
         file.write("}\n")
 
+    def graph(
+        self,
+        format: str = "dot",
+        filename: str | io.TextIOWrapper | None = None,
+        shapes: Any = None,
+    ) -> str:
+        """Render diagram text in DOT, Mermaid, GraphML, or ELK JSON format.
+
+        :param format: graph output format: ``"dot"``, ``"mermaid"``, ``"graphml"`` or
+            ``"elk"``
+        :type format: str, optional
+        :param filename: destination path or open text stream, defaults to None
+        :type filename: str | file handle | None, optional
+        :param shapes: optional DOT block shape mapping (DOT output only)
+        :type shapes: dict, optional
+        :return: rendered graph text
+        :rtype: str
+
+        If ``filename`` is provided the rendered text is also written to it.
+
+        Mermaid format can be rendered in Markdown files and on GitHub, and GraphML and
+        ELK JSON can be imported into graph visualization tools such as yEd and Eclipse
+        ELK respectively.
+
+        :seealso: :func:`dotfile`
+        """
+
+        graph_format = format.lower()
+        if graph_format == "dot":
+            stream: Any = io.StringIO()
+            self.dotfile(stream, shapes=shapes)
+            text = stream.getvalue()
+        elif graph_format == "mermaid":
+            lines = ["flowchart LR"]
+            node_ids: dict[Any, str] = {}
+
+            for i, b in enumerate(self.blocklist):
+                node_id = f"b{i}"
+                node_ids[b] = node_id
+                label_raw = b.name if b.name is not None else f"{b.type}_{i}"
+                label = label_raw.replace('"', r"\"")
+                lines.append(f'    {node_id}["{label}"]')
+
+            for w in self.wirelist:
+                start = node_ids[w.start.block]
+                end = node_ids[w.end.block]
+                edge_label = ""
+                if w.end.block.type == "sum":
+                    edge_label = str(w.end.block.signs[w.end.port])
+                elif w.end.block.type == "prod":
+                    edge_label = str(w.end.block.ops[w.end.port])
+
+                if edge_label:
+                    edge_label = edge_label.replace('"', r"\"")
+                    lines.append(f'    {start} -->|"{edge_label}"| {end}')
+                else:
+                    lines.append(f"    {start} --> {end}")
+
+            text = "\n".join(lines) + "\n"
+        elif graph_format == "graphml":
+            node_ids: dict[Any, str] = {}
+
+            def _xml_escape(value: str) -> str:
+                return (
+                    value.replace("&", "&amp;")
+                    .replace("<", "&lt;")
+                    .replace(">", "&gt;")
+                    .replace('"', "&quot;")
+                    .replace("'", "&apos;")
+                )
+
+            lines = [
+                '<?xml version="1.0" encoding="UTF-8"?>',
+                '<graphml xmlns="http://graphml.graphdrawing.org/xmlns"',
+                '         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"',
+                '         xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns',
+                '         http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">',
+                '  <key id="node_label" for="node" attr.name="label" attr.type="string"/>',
+                '  <key id="node_type" for="node" attr.name="type" attr.type="string"/>',
+                '  <key id="node_class" for="node" attr.name="class" attr.type="string"/>',
+                '  <key id="edge_label" for="edge" attr.name="label" attr.type="string"/>',
+                '  <graph id="G" edgedefault="directed">',
+            ]
+
+            for i, b in enumerate(self.blocklist):
+                node_id = f"n{i}"
+                node_ids[b] = node_id
+                label_raw = b.name if b.name is not None else f"{b.type}_{i}"
+                lines.extend(
+                    [
+                        f'    <node id="{node_id}">',
+                        f'      <data key="node_label">{_xml_escape(label_raw)}</data>',
+                        f'      <data key="node_type">{_xml_escape(b.type)}</data>',
+                        f'      <data key="node_class">{_xml_escape(b.blockclass)}</data>',
+                        "    </node>",
+                    ]
+                )
+
+            for i, w in enumerate(self.wirelist):
+                source = node_ids[w.start.block]
+                target = node_ids[w.end.block]
+                edge_label = ""
+                if w.end.block.type == "sum":
+                    edge_label = str(w.end.block.signs[w.end.port])
+                elif w.end.block.type == "prod":
+                    edge_label = str(w.end.block.ops[w.end.port])
+
+                lines.append(
+                    f'    <edge id="e{i}" source="{source}" target="{target}">'
+                )
+                if edge_label:
+                    lines.append(
+                        f'      <data key="edge_label">{_xml_escape(edge_label)}</data>'
+                    )
+                lines.append("    </edge>")
+
+            lines.extend(["  </graph>", "</graphml>"])
+            text = "\n".join(lines) + "\n"
+        elif graph_format == "elk":
+            node_ids: dict[Any, str] = {}
+            port_ids: dict[tuple[Any, str, int], str] = {}
+
+            children = []
+            edges = []
+
+            for i, b in enumerate(self.blocklist):
+                node_id = f"n{i}"
+                node_ids[b] = node_id
+                label_raw = b.name if b.name is not None else f"{b.type}_{i}"
+
+                ports = []
+                for p in range(b.nin):
+                    pid = f"{node_id}:in{p}"
+                    port_ids[(b, "in", p)] = pid
+                    ports.append(
+                        {
+                            "id": pid,
+                            "properties": {
+                                "org.eclipse.elk.port.side": "WEST",
+                            },
+                        }
+                    )
+
+                for p in range(b.nout):
+                    pid = f"{node_id}:out{p}"
+                    port_ids[(b, "out", p)] = pid
+                    ports.append(
+                        {
+                            "id": pid,
+                            "properties": {
+                                "org.eclipse.elk.port.side": "EAST",
+                            },
+                        }
+                    )
+
+                children.append(
+                    {
+                        "id": node_id,
+                        "labels": [{"text": label_raw}],
+                        "width": 120,
+                        "height": 50,
+                        "ports": ports,
+                        "properties": {
+                            "bdsim.type": b.type,
+                            "bdsim.class": b.blockclass,
+                        },
+                    }
+                )
+
+            for i, w in enumerate(self.wirelist):
+                if not isinstance(w.start.port, int) or not isinstance(w.end.port, int):
+                    continue
+
+                source_port = port_ids.get((w.start.block, "out", w.start.port))
+                target_port = port_ids.get((w.end.block, "in", w.end.port))
+                if source_port is None or target_port is None:
+                    continue
+
+                edge: dict[str, Any] = {
+                    "id": f"e{i}",
+                    "sources": [source_port],
+                    "targets": [target_port],
+                }
+
+                edge_label = ""
+                if w.end.block.type == "sum":
+                    edge_label = str(w.end.block.signs[w.end.port])
+                elif w.end.block.type == "prod":
+                    edge_label = str(w.end.block.ops[w.end.port])
+                if edge_label:
+                    edge["labels"] = [{"text": edge_label}]
+
+                edges.append(edge)
+
+            elk_graph = {
+                "id": "root",
+                "layoutOptions": {
+                    "org.eclipse.elk.algorithm": "layered",
+                    "org.eclipse.elk.direction": "RIGHT",
+                    "org.eclipse.elk.layered.nodePlacement.strategy": "NETWORK_SIMPLEX",
+                    "org.eclipse.elk.edgeRouting": "ORTHOGONAL",
+                },
+                "children": children,
+                "edges": edges,
+            }
+            text = json.dumps(elk_graph, indent=2) + "\n"
+        else:
+            raise ValueError(
+                "unsupported graph format "
+                f"'{format}', expected 'dot', 'mermaid', 'graphml' or 'elk'"
+            )
+
+        if filename is not None:
+            if isinstance(filename, str):
+                with open(filename, "w") as file:
+                    file.write(text)
+            else:
+                filename.write(text)
+
+        return text
+
     def showgraph(self) -> None:
         """
         Display diagram as a graph in browser tab
 
-        :seealso: :meth:`dotfile`
+        :seealso: :meth:`dotfile` :meth:`graph`
         """
 
         # Lazy import
