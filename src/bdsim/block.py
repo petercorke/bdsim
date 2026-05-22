@@ -2018,14 +2018,14 @@ class GraphicsBlock(SinkBlock):
     """
 
     AXES_POLICY = "subplot"
-    MOVIE_TIMESTAMP = False
-    MOVIE_TIMESTAMP_FORMAT = "t={t:.3f}"
+    TIMESTAMP = False
+    TIMESTAMP_FORMAT = "t={t:.3f}"
 
     def __init__(
         self,
         movie: str | None = None,
-        movie_timestamp: bool | None = None,
-        movie_timestamp_fmt: str | None = None,
+        timestamp: bool | None = None,
+        timestamp_fmt: str | None = None,
         **blockargs: Any,
     ) -> None:
         """
@@ -2033,12 +2033,12 @@ class GraphicsBlock(SinkBlock):
 
         :param movie: Save animation in this file in MP4 format, defaults to None
         :type movie: str, optional
-        :param movie_timestamp: Overlay simulation time in movie frames; if None,
-            use class variable ``MOVIE_TIMESTAMP``
-        :type movie_timestamp: bool, optional
-        :param movie_timestamp_fmt: Format string used for timestamp text,
-            defaults to ``MOVIE_TIMESTAMP_FORMAT``
-        :type movie_timestamp_fmt: str, optional
+        :param timestamp: Overlay simulation time on rendered graphics frames;
+            if None, use class variable ``TIMESTAMP``
+        :type timestamp: bool, optional
+        :param timestamp_fmt: Format string used for timestamp text,
+            defaults to ``TIMESTAMP_FORMAT``
+        :type timestamp_fmt: str, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         :return: transfer function block base class
@@ -2052,15 +2052,11 @@ class GraphicsBlock(SinkBlock):
         self.ax: Any = None
         self._movie = movie
         self._movie_started = False
-        self._movie_timestamp = (
-            self.MOVIE_TIMESTAMP if movie_timestamp is None else bool(movie_timestamp)
+        self._timestamp = self.TIMESTAMP if timestamp is None else bool(timestamp)
+        self._timestamp_fmt = (
+            self.TIMESTAMP_FORMAT if timestamp_fmt is None else str(timestamp_fmt)
         )
-        self._movie_timestamp_fmt = (
-            self.MOVIE_TIMESTAMP_FORMAT
-            if movie_timestamp_fmt is None
-            else str(movie_timestamp_fmt)
-        )
-        self._movie_time_artist: Any = None
+        self._timestamp_artist: Any = None
 
     @property
     def fig(self) -> matplotlib.figure.Figure | None:
@@ -2146,12 +2142,12 @@ class GraphicsBlock(SinkBlock):
             except FileNotFoundError:
                 self.fatal("cannot save movie, please install ffmpeg")  # type: ignore[union-attr]
 
-    def _update_movie_timestamp(self, t: float) -> None:
-        if not self._movie_timestamp or self._fig is None:
+    def _update_timestamp(self, t: float) -> None:
+        if not self._timestamp or self._fig is None:
             return
 
-        if self._movie_time_artist is None:
-            self._movie_time_artist = self._fig.text(
+        if self._timestamp_artist is None:
+            self._timestamp_artist = self._fig.text(
                 0.01,
                 0.01,
                 "",
@@ -2168,13 +2164,19 @@ class GraphicsBlock(SinkBlock):
             )
 
         try:
-            label = self._movie_timestamp_fmt.format(t=float(t))
+            label = self._timestamp_fmt.format(t=float(t))
         except Exception:
             label = f"t={float(t):.3f}"
-        self._movie_time_artist.set_text(label)
+        self._timestamp_artist.set_text(label)
 
     def step(self, t: float, inports: list[Any]) -> None:
         # super().step(t, inports)  # type: ignore[safe-super]
+
+        simstate = getattr(self, "_simstate", None)
+        if simstate is not None and bool(getattr(simstate, "_stop_requested", False)):
+            return
+
+        self._update_timestamp(t)
 
         # bring the figure up to date in a backend-specific way
         if self._simstate.options.animation:
@@ -2194,7 +2196,6 @@ class GraphicsBlock(SinkBlock):
 
         if self._movie is not None:
             try:
-                self._update_movie_timestamp(t)
                 self._writer.grab_frame()  # type: ignore[union-attr]
             except AttributeError:
                 self.fatal("cannot save movie, please install ffmpeg")  # type: ignore[union-attr]
@@ -2208,7 +2209,7 @@ class GraphicsBlock(SinkBlock):
             if self._movie is not None and self._movie_started:
                 self._writer.finish()  # type: ignore[union-attr]
                 self._movie_started = False
-                self._movie_time_artist = None
+                self._timestamp_artist = None
                 # self.cleanup()
             if notebook_backend:
                 self._fig.canvas.draw_idle()  # type: ignore[union-attr]
@@ -2557,22 +2558,28 @@ class GraphicsBlock(SinkBlock):
         gstate.fignum += 1
 
         def onkeypress(event: Any) -> None:
-            if event.key == "q":
+            key = str(getattr(event, "key", ""))
+            key_l = key.lower()
+
+            if key_l == "q" and key != "Q":
                 plt.close(f)
-            elif event.key == "Q":
+            elif key_l == "q":
                 print("\nclosing all windows")
                 simstate = getattr(self, "_simstate", None)
                 if simstate is not None:
                     simstate.stop = self
+                    simstate._stop_requested = True
+                    if getattr(simstate, "options", None) is not None:
+                        simstate.options.hold = False
                 plt.close("all")
-            elif event.key == "x":
+            elif key_l == "x":
                 print("\nclosing all windows")
                 plt.close("all")
-            elif event.key == "ctrl+c":
+            elif key_l == "ctrl+c":
                 print("\nterminating bdsim")
                 sys.exit(1)
             else:
-                print("key pressed", event.key)
+                print("key pressed", key)
 
         if not getattr(f, "_bdsim_global_keys", False):
             f.canvas.mpl_connect("key_press_event", onkeypress)

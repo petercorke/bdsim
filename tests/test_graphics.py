@@ -157,17 +157,17 @@ class StepTest(unittest.TestCase):
         with self.assertRaises(AttributeError):
             gb.step(0.0, [1.0])
 
-    def test_step_movie_timestamp_overlay_updates(self):
-        """step() updates movie timestamp text before grabbing a frame."""
-        gb = MinGB(nin=1, movie="out.mp4", movie_timestamp=True)
+    def test_step_timestamp_overlay_updates(self):
+        """step() updates the timestamp text and then grabs a movie frame."""
+        gb = MinGB(nin=1, movie="out.mp4", timestamp=True)
         ss = _make_simstate(animation=False)
         gb._simstate = ss
         gb.fig = plt.figure()
         gb.writer = MagicMock()
         try:
             gb.step(1.2345, [1.0])
-            self.assertIsNotNone(gb._movie_time_artist)
-            self.assertEqual(gb._movie_time_artist.get_text(), "t=1.234")
+            self.assertIsNotNone(gb._timestamp_artist)
+            self.assertEqual(gb._timestamp_artist.get_text(), "t=1.234")
             gb.writer.grab_frame.assert_called_once()
         finally:
             plt.close("all")

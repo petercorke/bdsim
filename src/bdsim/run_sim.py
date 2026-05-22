@@ -1385,6 +1385,9 @@ class BDSim(Runner):
                 last_notebook_refresh_t = -1e9
 
                 def _anim_frame(t: float, ss: Any, _dt: float = interactive_dt) -> None:
+                    if getattr(ss, "stop", None) is not None:
+                        return
+
                     # For stateless diagrams with no clocks (e.g. WAVEFORM→SCOPE),
                     # evaluate the block diagram at this frame time so that source
                     # blocks drive their sinks live.  Clocked diagrams are evaluated
@@ -1398,6 +1401,8 @@ class BDSim(Runner):
                         self._record_sample_and_service_hooks(
                             bd, ss, t, None, stop_short_circuit=False
                         )
+                        if getattr(ss, "stop", None) is not None:
+                            return
                     # Keep figure outputs current for the active backend.
                     if not notebook_backend:
                         display_manager.refresh()
@@ -1408,6 +1413,8 @@ class BDSim(Runner):
                         if t - last_notebook_refresh_t >= notebook_min_refresh_dt:
                             display_manager.refresh()
                             last_notebook_refresh_t = t
+                    if getattr(ss, "stop", None) is not None:
+                        return
                     if t + _dt < tf - event_tol:
                         ss.declare_event(_anim_frame, t + _dt)
 
@@ -1440,6 +1447,8 @@ class BDSim(Runner):
                         source.next_event(simstate)
                     for source in callable_sources:
                         source(t1, simstate)
+                    if simstate.stop is not None:
+                        break
                     t0 = t1
                     continue
 
@@ -1455,6 +1464,8 @@ class BDSim(Runner):
                         for source in sources:
                             if callable(source):
                                 source(t1, simstate)
+                        if simstate.stop is not None:
+                            break
                         t0 = t1
                         continue
 
@@ -1486,6 +1497,8 @@ class BDSim(Runner):
                         source.next_event(simstate)
                     for source in callable_sources:
                         source(t1, simstate)
+                    if simstate.stop is not None:
+                        break
                     t0 = t1
                 else:
                     # Integration ended early (typically a crossing event). Continue from

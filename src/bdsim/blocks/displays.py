@@ -755,7 +755,7 @@ class ScopeXY(GraphicsBlock):
 
     nin = 2
     nout = 0
-    MOVIE_TIMESTAMP = True
+    TIMESTAMP = True
 
     def __init__(
         self,
@@ -1131,7 +1131,7 @@ class Animation(GraphicsBlock):
 
     nin = 1
     nout = 0
-    MOVIE_TIMESTAMP = True
+    TIMESTAMP = True
 
     def __init__(self, init: Callable, update: Callable, **blockargs: Any) -> None:
         """
