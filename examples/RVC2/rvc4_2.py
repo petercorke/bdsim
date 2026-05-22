@@ -19,8 +19,9 @@ q = bd.DEMUX(3)
 
 tscope = bd.SCOPE(name="theta")
 vplot = bd.VEHICLEPLOT(
-    scale=[0, 10, -5, 5], size=0.7, shape="box"
-)  # , movie='rvc4_2.mp4')
+    scale=[0, 10, -5, 5],
+    size=0.7,
+)
 
 bd.connect(bike, q, vplot)
 bd.connect(speed, bike[0])

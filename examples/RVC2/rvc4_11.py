@@ -9,7 +9,7 @@ Robotics, Vision & Control: 2nd edition, Fig 4.11
 import bdsim
 from math import pi, sqrt, atan, atan2
 
-sim = bdsim.BDSim()
+sim = bdsim.BDSim(animation=True)
 bd = sim.blockdiagram()
 
 # parameters
@@ -94,7 +94,7 @@ heading_sum = bd.SUM("++")
 gsum = bd.SUM("++")
 
 # displays
-vplot = bd.VEHICLEPLOT(scale=[0, 10], size=0.7, shape="box", init=background_graphics)
+vplot = bd.VEHICLEPLOT(scale=[0, 10], size=0.7, init=background_graphics)
 # , movie="rvc4_11.mp4")
 ascope = bd.SCOPE(name=r"$\alpha$")
 bscope = bd.SCOPE(name=r"$\beta$")

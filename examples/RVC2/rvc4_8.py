@@ -13,7 +13,7 @@ import roboticstoolbox as rtb
 
 # parameters for the path
 look_ahead = 5
-speed = 1
+speed = 4
 dt = 0.1
 tacc = 1
 
@@ -23,12 +23,14 @@ path = np.array([[10, 10], [10, 60], [80, 80], [50, 10]])
 robot_traj = rtb.mstraj(path[1:, :], qdmax=speed, q0=path[0, :], dt=0.1, tacc=tacc).q
 total_time = robot_traj.shape[0] * dt + look_ahead / speed
 
-sim = bdsim.BDSim(graphics=True)
+sim = bdsim.BDSim(animation=True)
 bd = sim.blockdiagram()
 
 
 def background_graphics(ax):
-    ax.plot(path[:, 0], path[:, 1], "r", linewidth=3, alpha=0.7)
+    ax.plot(
+        path[:, 0], path[:, 1], "r", linewidth=3, alpha=0.7, zorder=0.8
+    )  # behind patch (1), in front of grid (0)
 
 
 def pure_pursuit(cp, R=None, traj=None):
@@ -56,7 +58,7 @@ heading_error = bd.SUM("+-", mode="c", name="herr")
 Kh = bd.GAIN(0.5, name="Kh")
 bike = bd.BICYCLE(x0=[2, 2, 0])
 vplot = bd.VEHICLEPLOT(
-    scale=[0, 80, 0, 80], size=0.7, shape="box", init=background_graphics
+    scale=[0, 80, 0, 80], size=3, init=background_graphics
 )  # , movie='rvc4_8.mp4')
 sscope = bd.SCOPE(name="steer angle")
 hscope = bd.SCOPE(name="heading angle")
