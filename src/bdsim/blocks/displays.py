@@ -780,7 +780,9 @@ class ScopeXY(GraphicsBlock):
         :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
-        super().__init__(inames=("x", "y"), **blockargs)
+
+        # handle SCOPEXY1 case (nin=1) or SCOPEXY case (nin=2)
+        super().__init__(inames=("xy",) if self.nin == 1 else ("x", "y"), **blockargs)
 
         self.xdata: list[Any] = []
         self.ydata: list[Any] = []
@@ -1058,7 +1060,9 @@ class ScopeXY1(ScopeXY):
     nin = 1
     nout = 0
 
-    def __init__(self, indices: list[int] = [0, 1], **blockargs: Any) -> None:
+    def __init__(
+        self, indices: list[int] = [0, 1], labels=("x", "y"), **blockargs: Any
+    ) -> None:
         """
         :param indices: indices of elements to select from block input vector, defaults to [0,1]
         :type indices: array_like(2)
@@ -1073,8 +1077,9 @@ class ScopeXY1(ScopeXY):
         :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
-        super().__init__(**blockargs)
-        self.inport_names(("xy",))
+        super().__init__(
+            labels=labels, **blockargs
+        )  # delegate to ScopeXY for blockargs and labels handling
         if len(indices) != 2:
             raise ValueError("indices must have 2 elements")
         self.indices = [int(x) for x in indices]
