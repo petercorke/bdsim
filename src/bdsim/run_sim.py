@@ -10,6 +10,7 @@ import io
 import inspect
 import os
 from pathlib import Path
+import shutil
 import sys
 import importlib
 import importlib.util
@@ -513,6 +514,8 @@ class BDSim(Runner):
         ``--backend BE``, ``-b BE``        backend          None       matplotlib backend
         ``--tiles SPEC``, ``-t SPEC``      tiles            None       arrange figure tiles as RxC or square/wide/tall
         ``--shape WxH``                    shape            None       window size (default: matplotlib default)
+        ``--movies [DIR]``, ``-m [DIR]``   movies           None       record all graphics blocks to MP4 files in DIR (default: .), sampled at ``animation_rate``
+        ``--no-movies``                    movies           None       disable automatic movie recording
         ``--blocks``                       blocks           False      display block list at startup
         ``--debug F``, ``-d F``            debug            ``''``     debug flags: p/ropagate, s/tate, d/eriv, i/nteractive
         ``--animation-rate R``             animation_rate   20.0       target update rate for animation/debugger (Hz)
@@ -666,6 +669,100 @@ class BDSim(Runner):
             options.animation = False
             options.hold = False
         return options
+
+    @staticmethod
+    def _sanitize_movie_stem(raw: str) -> str:
+        name = raw.strip()
+        name = re.sub(r"\s+", "_", name, flags=re.UNICODE)
+        # Keep unicode word chars, period, underscore and hyphen.
+        name = re.sub(r"[^\w.\-]+", "_", name, flags=re.UNICODE)
+        name = re.sub(r"_+", "_", name).strip(" ._-")
+        name = name.rstrip(" .")
+        if not name:
+            name = "block"
+
+        reserved = {
+            "CON",
+            "PRN",
+            "AUX",
+            "NUL",
+            "COM1",
+            "COM2",
+            "COM3",
+            "COM4",
+            "COM5",
+            "COM6",
+            "COM7",
+            "COM8",
+            "COM9",
+            "LPT1",
+            "LPT2",
+            "LPT3",
+            "LPT4",
+            "LPT5",
+            "LPT6",
+            "LPT7",
+            "LPT8",
+            "LPT9",
+        }
+        if Path(name).stem.upper() in reserved:
+            name += "_"
+
+        return name
+
+    @classmethod
+    def _program_movie_stem(cls) -> str:
+        if len(sys.argv) == 0:
+            return "bdsim"
+        stem = Path(sys.argv[0]).stem
+        return cls._sanitize_movie_stem(stem if stem else "bdsim")
+
+    @staticmethod
+    def _check_ffmpeg_preflight() -> None:
+        writer_available = bool(matplotlib.animation.writers.is_available("ffmpeg"))
+        binary_available = shutil.which("ffmpeg") is not None
+        if writer_available and binary_available:
+            return
+
+        reasons: list[str] = []
+        if not writer_available:
+            reasons.append("matplotlib ffmpeg writer unavailable")
+        if not binary_available:
+            reasons.append("'ffmpeg' executable not found on PATH")
+        reason_text = "; ".join(reasons)
+        raise RuntimeError(
+            "movies requested but ffmpeg is unavailable: "
+            + reason_text
+            + ". Install ffmpeg and ensure matplotlib can use it."
+        )
+
+    def _assign_auto_movies(self, bd: BlockDiagram, movies_dir: str) -> int:
+        outdir = Path(movies_dir).expanduser()
+        outdir.mkdir(parents=True, exist_ok=True)
+
+        prefix = self._program_movie_stem()
+        used: set[str] = set()
+        count = 0
+
+        for b in bd.blocklist:
+            if not bool(getattr(b, "isgraphics", False)):
+                continue
+
+            block_name = str(getattr(b, "name", None) or b.type or b)
+            block_stem = self._sanitize_movie_stem(block_name)
+            base = f"{prefix}-{block_stem}"
+
+            candidate = outdir / f"{base}.mp4"
+            i = 1
+            while str(candidate) in used or candidate.exists():
+                candidate = outdir / f"{base}-{i}.mp4"
+                i += 1
+
+            used.add(str(candidate))
+            b.movie = str(candidate)
+            count += 1
+
+        return count
 
     def _make_context(
         self,
@@ -840,7 +937,10 @@ class BDSim(Runner):
             out = b.outport_value(p.port)
             simstate.plist[i].append(out)
 
-        run_animation = bool(getattr(simstate.options, "animation", False))
+        movies_enabled = getattr(simstate.options, "movies", None) is not None
+        run_animation = bool(getattr(simstate.options, "animation", False)) or bool(
+            movies_enabled
+        )
         run_horizon = float(simstate.T) if simstate.T is not None else 0.0
         periodic_update = run_horizon > 0.0 and (t - simstate.gtime) > (
             run_horizon / 200.0
@@ -995,6 +1095,9 @@ class BDSim(Runner):
 
         if dt is None:
             dt = getattr(run_options, "dt", None)
+        movies_enabled = getattr(run_options, "movies", None) is not None
+        if movies_enabled and dt is None:
+            dt = 1.0 / float(getattr(run_options, "animation_rate", 20.0))
         if max_step is None:
             max_step = getattr(run_options, "max_step", None)
 
@@ -1154,6 +1257,13 @@ class BDSim(Runner):
             if bool(getattr(simstate, "notebook_backend", False)):
                 patch_roboticstoolbox_pyplot_launch_for_notebook()
                 patch_roboticstoolbox_armplot_for_notebook()
+
+            movies_dir = getattr(simstate.options, "movies", None)
+            if movies_dir is not None:
+                self._check_ffmpeg_preflight()
+                n_movies = self._assign_auto_movies(bd, str(movies_dir))
+                if not simstate.options.quiet:
+                    print(f"  movies: enabled for {n_movies} graphics block(s)")
 
             # tell all blocks we're starting a BlockDiagram
             bd.start(simstate)
@@ -2598,6 +2708,7 @@ class Options(OptionsBase):
             "tiles": None,
             "graphics": True,
             "animation": False,
+            "movies": None,
             "animation_rate": 20.0,
             "dt": None,
             "atol": None,
@@ -2756,6 +2867,25 @@ class Options(OptionsBase):
                 const=True,
                 dest="animation",
                 help="animate graphics (implies --graphics)",
+            )
+
+            m_group = parser.add_mutually_exclusive_group()
+            m_group.add_argument(
+                "-m",
+                "--movies",
+                nargs="?",
+                const=".",
+                default=effective_defaults["movies"],
+                metavar="DIR",
+                dest="movies",
+                help="record all graphics blocks to MP4 files in DIR (default: .)",
+            )
+            m_group.add_argument(
+                "--no-movies",
+                action="store_const",
+                const=None,
+                dest="movies",
+                help="disable automatic movie recording",
             )
 
             h_group = parser.add_mutually_exclusive_group()
@@ -2986,11 +3116,23 @@ class Options(OptionsBase):
         ):
             raise ValueError("cannot enable animation (+a) but disable graphics (-g)")
 
+        if (
+            cmdline_options.get("movies") is not None
+            and cmdline_options.get("graphics") is False
+        ):
+            raise ValueError(
+                "cannot enable movies (-m/--movies) but disable graphics (-g)"
+            )
+
         # If CLI explicitly disables graphics, also force animation=False so
         # that code-level animation=True (e.g. BDSim(animation=True)) doesn't
         # conflict.  Put it in cmdline_options (readonly) so it wins over kwargs.
         if not cmdline_options.get("graphics", True):
             cmdline_options["animation"] = False
+
+        # --movies implies graphics. Animation cadence is handled at runtime.
+        if cmdline_options.get("movies") is not None:
+            cmdline_options["graphics"] = True
 
         # --quiet implies --no-progress
         if cmdline_options.get("quiet", False):
@@ -3025,6 +3167,19 @@ class Options(OptionsBase):
         print(self.help())
 
     def sanity(self, options: dict[str, Any]) -> dict[str, Any]:
+        # normalize movies option shape
+        movies_opt = options.get("movies", None)
+        if movies_opt is True:
+            movies_opt = "."
+        elif movies_opt in (False, ""):
+            movies_opt = None
+        options["movies"] = None if movies_opt is None else os.fspath(movies_opt)
+
+        # movies imply graphics. Runtime sampling cadence for movies is
+        # handled by run() and _record_sample_and_service_hooks().
+        if options["movies"] is not None:
+            options["graphics"] = True
+
         # ensure animation is disabled if graphics is disabled
         if "graphics" in options and "animation" in options:
             if options["animation"] and not options["graphics"]:

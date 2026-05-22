@@ -7,6 +7,9 @@ import bdsim
 import unittest
 import numpy.testing as nt
 from pathlib import Path
+from unittest.mock import patch
+
+from bdsim.run_sim import Options
 
 
 class BDSimTest(unittest.TestCase):
@@ -40,8 +43,27 @@ class BDSimTest(unittest.TestCase):
         self.assertFalse(sim.options.graphics)
         self.assertFalse(sim.options.animation)
 
+        sim.options.set(movies=".")
+        self.assertEqual(sim.options.movies, ".")
+        self.assertTrue(sim.options.graphics)
+        self.assertFalse(sim.options.animation)
+
+        sim.options.set(movies=None)
+        self.assertIsNone(sim.options.movies)
+
         with self.assertRaises(ValueError):
             sim.options.set(graphics=False, animation=True)
+
+    def test_options_cli_movies_conflicts(self):
+        with patch("sys.argv", ["bdsim", "-m", "-g"]):
+            with self.assertRaises(ValueError):
+                Options()
+
+        with patch("sys.argv", ["bdsim", "-m", "-a"]):
+            opts = Options()
+            self.assertEqual(opts.movies, ".")
+            self.assertTrue(opts.graphics)
+            self.assertFalse(opts.animation)
 
     def test_bdrun(self):
 

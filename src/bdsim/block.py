@@ -2018,13 +2018,27 @@ class GraphicsBlock(SinkBlock):
     """
 
     AXES_POLICY = "subplot"
+    MOVIE_TIMESTAMP = False
+    MOVIE_TIMESTAMP_FORMAT = "t={t:.3f}"
 
-    def __init__(self, movie: str | None = None, **blockargs: Any) -> None:
+    def __init__(
+        self,
+        movie: str | None = None,
+        movie_timestamp: bool | None = None,
+        movie_timestamp_fmt: str | None = None,
+        **blockargs: Any,
+    ) -> None:
         """
         Create a graphical display block.
 
         :param movie: Save animation in this file in MP4 format, defaults to None
         :type movie: str, optional
+        :param movie_timestamp: Overlay simulation time in movie frames; if None,
+            use class variable ``MOVIE_TIMESTAMP``
+        :type movie_timestamp: bool, optional
+        :param movie_timestamp_fmt: Format string used for timestamp text,
+            defaults to ``MOVIE_TIMESTAMP_FORMAT``
+        :type movie_timestamp_fmt: str, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         :return: transfer function block base class
@@ -2038,6 +2052,15 @@ class GraphicsBlock(SinkBlock):
         self.ax: Any = None
         self._movie = movie
         self._movie_started = False
+        self._movie_timestamp = (
+            self.MOVIE_TIMESTAMP if movie_timestamp is None else bool(movie_timestamp)
+        )
+        self._movie_timestamp_fmt = (
+            self.MOVIE_TIMESTAMP_FORMAT
+            if movie_timestamp_fmt is None
+            else str(movie_timestamp_fmt)
+        )
+        self._movie_time_artist: Any = None
 
     @property
     def fig(self) -> matplotlib.figure.Figure | None:
@@ -2071,13 +2094,6 @@ class GraphicsBlock(SinkBlock):
         # plt.show(block=False)
         self._simstate = simstate
         self._enabled = simstate.options.graphics
-
-        if self._movie is not None and not simstate.options.animation:
-            print(
-                "enabling global animation option to allow movie option on block", self
-            )
-            if not simstate.options.animation:
-                print("must enable animation to render a movie")
 
         if self._enabled:
             self.fig = self.create_figure(simstate)
@@ -2117,14 +2133,45 @@ class GraphicsBlock(SinkBlock):
 
         if self._movie is not None:
             try:
+                fps = float(getattr(self._simstate.options, "animation_rate", 10.0))
+                if fps <= 0:
+                    fps = 10.0
+                fps_int = max(1, int(round(fps)))
                 self._writer = animation.FFMpegWriter(
-                    fps=10, extra_args=["-vcodec", "libx264"]
+                    fps=fps_int, extra_args=["-vcodec", "libx264"]
                 )
                 self._writer.setup(fig=self._fig, outfile=self._movie)  # type: ignore[union-attr]
                 self._movie_started = True
                 print("movie block", self, " --> ", self._movie)
             except FileNotFoundError:
                 self.fatal("cannot save movie, please install ffmpeg")  # type: ignore[union-attr]
+
+    def _update_movie_timestamp(self, t: float) -> None:
+        if not self._movie_timestamp or self._fig is None:
+            return
+
+        if self._movie_time_artist is None:
+            self._movie_time_artist = self._fig.text(
+                0.01,
+                0.01,
+                "",
+                ha="left",
+                va="bottom",
+                fontsize=9,
+                color="white",
+                bbox={
+                    "facecolor": "black",
+                    "alpha": 0.55,
+                    "pad": 2,
+                    "edgecolor": "none",
+                },
+            )
+
+        try:
+            label = self._movie_timestamp_fmt.format(t=float(t))
+        except Exception:
+            label = f"t={float(t):.3f}"
+        self._movie_time_artist.set_text(label)
 
     def step(self, t: float, inports: list[Any]) -> None:
         # super().step(t, inports)  # type: ignore[safe-super]
@@ -2147,6 +2194,7 @@ class GraphicsBlock(SinkBlock):
 
         if self._movie is not None:
             try:
+                self._update_movie_timestamp(t)
                 self._writer.grab_frame()  # type: ignore[union-attr]
             except AttributeError:
                 self.fatal("cannot save movie, please install ffmpeg")  # type: ignore[union-attr]
@@ -2160,6 +2208,7 @@ class GraphicsBlock(SinkBlock):
             if self._movie is not None and self._movie_started:
                 self._writer.finish()  # type: ignore[union-attr]
                 self._movie_started = False
+                self._movie_time_artist = None
                 # self.cleanup()
             if notebook_backend:
                 self._fig.canvas.draw_idle()  # type: ignore[union-attr]

@@ -41,6 +41,7 @@ def _make_simstate(graphics=True, animation=False, backend="agg"):
     ss = MagicMock()
     ss.options.graphics = graphics
     ss.options.animation = animation
+    ss.options.animation_rate = 20.0
     ss.options.backend = None
     ss.options.tiles = None
     ss.options.shape = None
@@ -88,10 +89,10 @@ class StartTest(unittest.TestCase):
         self.assertTrue(gb._enabled)
 
     def test_start_movie_animation_disabled_warning(self):
-        """start() with movie set and animation=False prints warnings."""
+        """start() with movie set and animation=False still prepares block state."""
         gb = self._attach_bd(MinGB(nin=1, movie="test.mp4"))
         ss = _make_simstate(graphics=True, animation=False)
-        # start() prints warnings; _start_movie() is called later when figure exists
+        # _start_movie() is called later when figure exists
         gb.start(ss)  # covers warning block
         # Verify that movie and simstate are set, but _writer not yet (needs fig)
         self.assertEqual(gb.movie, "test.mp4")
@@ -101,11 +102,13 @@ class StartTest(unittest.TestCase):
         """_start_movie() with working FFMpeg creates writer and calls setup()."""
         gb = self._attach_bd(MinGB(nin=1, movie="out.mp4"))
         ss = _make_simstate(graphics=True, animation=True)
+        ss.options.animation_rate = 33.0
         try:
             with patch("matplotlib.animation.FFMpegWriter") as MockW:
                 MockW.return_value.setup.return_value = None
                 gb.start(ss)  # figure/movie are set up during start()
             MockW.return_value.setup.assert_called_once()
+            self.assertEqual(MockW.call_args.kwargs["fps"], 33)
         finally:
             plt.close("all")
 
@@ -153,6 +156,21 @@ class StepTest(unittest.TestCase):
         # self._writer never set → AttributeError from grab_frame except block → fatal() → AttributeError
         with self.assertRaises(AttributeError):
             gb.step(0.0, [1.0])
+
+    def test_step_movie_timestamp_overlay_updates(self):
+        """step() updates movie timestamp text before grabbing a frame."""
+        gb = MinGB(nin=1, movie="out.mp4", movie_timestamp=True)
+        ss = _make_simstate(animation=False)
+        gb._simstate = ss
+        gb.fig = plt.figure()
+        gb.writer = MagicMock()
+        try:
+            gb.step(1.2345, [1.0])
+            self.assertIsNotNone(gb._movie_time_artist)
+            self.assertEqual(gb._movie_time_artist.get_text(), "t=1.234")
+            gb.writer.grab_frame.assert_called_once()
+        finally:
+            plt.close("all")
 
 
 # ---------------------------------------------------------------------------
