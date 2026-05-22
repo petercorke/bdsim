@@ -930,7 +930,7 @@ class ScopeXY(GraphicsBlock):
 
         x_label = self.labels[0] if len(self.labels) > 0 else "x"
         y_label = self.labels[1] if len(self.labels) > 1 else "y"
-        self._cursor_text.set_text(f"{x_label}: {x:.6g}\\n{y_label}: {y:.6g}")
+        self._cursor_text.set_text(f"{x_label}: {x:.6g}\n{y_label}: {y:.6g}")
         self._cursor_text.set_visible(True)
         if self.fig is not None:
             self.fig.canvas.draw_idle()
