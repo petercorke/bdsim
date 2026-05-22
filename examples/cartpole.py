@@ -158,10 +158,7 @@ anim = bd.ANIMATION(
     init=cartpole_init, update=cartpole_update, nin=2, inputs=[x, theta]
 )
 
-bd.report()
-bd.graph("mermaid", "cartpole.md")  # write mermaid file for visualization
 bd.compile()  # check the diagram
-bd.report_schedule()
 bd.report_summary()
 
 out = sim.run(bd, T=20, watch=[F, x, theta])  # simulate for 5s
