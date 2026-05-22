@@ -153,6 +153,8 @@ class Sum(FunctionBlock):
 
                 else:
                     raise ValueError("expecting 1D or 2D array")
+                if len(sum) == 1:
+                    sum = sum.item()  # convert 1-element array to scalar
             else:
                 # sum is a scalar
                 sum = self._modefuncs[self.mode[0]](sum)
