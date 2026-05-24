@@ -764,8 +764,16 @@ class Interface(QWidget):
         gr = self.scene.grScene
         saved_bgcolor = getattr(gr, "bgcolor", "grey")
         saved_grid = getattr(gr, "grid", True)
+        saved_hide_connectors = self.scene.hide_connector_blocks
         gr.updateBackgroundMode("white", False)
         gr.checkMode()
+        # Hide connector blocks so they render as pass-through wires;
+        # also deselect them so no orange selection outline appears.
+        self.scene.hide_connector_blocks = True
+        for block in self.scene.blocks:
+            if block.block_type in ["Connector", "CONNECTOR"]:
+                block.grBlock.setSelected(False)
+        self.scene.grScene.update()
         try:
             if fmt == "pdf":
                 self._save_as_pdf(save_path)
@@ -774,6 +782,7 @@ class Interface(QWidget):
             else:
                 self._save_as_png(save_path)
         finally:
+            self.scene.hide_connector_blocks = saved_hide_connectors
             gr.updateBackgroundMode(saved_bgcolor, saved_grid)
             gr.checkMode()
 

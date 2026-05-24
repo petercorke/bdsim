@@ -6,7 +6,6 @@ from PySide6.QtGui import *
 from PySide6.QtCore import *
 from PySide6.QtWidgets import *
 
-
 # Majority of this code has been adapted with heavy inspiration from: https://stackoverflow.com/a/34442054
 
 
@@ -117,7 +116,11 @@ class GraphicsGBox(QGraphicsRectItem):
     def _setCursorIfChanged(self, cursor_shape):
         """Avoid redundant cursor updates that can stress native cursor registration."""
         app = QApplication.instance()
-        if sys.platform == "darwin" and app is not None and app.activePopupWidget() is not None:
+        if (
+            sys.platform == "darwin"
+            and app is not None
+            and app.activePopupWidget() is not None
+        ):
             # Avoid native cursor updates while a popup menu is active on macOS.
             return
         if cursor_shape != self._current_cursor_shape:

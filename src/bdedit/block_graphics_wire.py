@@ -246,7 +246,7 @@ class GraphicsWire(QGraphicsPathItem):
             width = 8
 
             self.wire_points = []
-            (p1x, p1y) = self.wire.wire_coordinates[0]
+            p1x, p1y = self.wire.wire_coordinates[0]
             self.wire_points.append(QPointF(p1x, p1y))
 
             for i, (x, y) in enumerate(self.wire.wire_coordinates):
@@ -459,7 +459,11 @@ class GraphicsWire(QGraphicsPathItem):
     def _setCursorIfChanged(self, cursor_shape):
         """Avoid redundant cursor updates that can stress native cursor registration."""
         app = QApplication.instance()
-        if sys.platform == "darwin" and app is not None and app.activePopupWidget() is not None:
+        if (
+            sys.platform == "darwin"
+            and app is not None
+            and app.activePopupWidget() is not None
+        ):
             # Avoid native cursor updates while a popup menu is active on macOS.
             return
         if cursor_shape != self._current_cursor_shape:
