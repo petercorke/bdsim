@@ -9,8 +9,24 @@ from types import SimpleNamespace
 import bdsim
 import unittest
 import numpy.testing as nt
+from contextlib import redirect_stdout
 
 from bdsim.blocks import Gain
+from bdsim.block_types import ContinuousBlock
+
+
+class FeedthroughContinuous(ContinuousBlock):
+    nin = 1
+    nout = 1
+
+    def __init__(self, **blockargs):
+        super().__init__(nstates=1, x0=[0.0], feedthrough=True, **blockargs)
+
+    def output(self, t, u, x):
+        return [u[0]]
+
+    def deriv(self, t, u, x):
+        return np.zeros((1,))
 
 
 class BlockTest(unittest.TestCase):
@@ -978,6 +994,54 @@ class GetitemTest(SetUpMixin, unittest.TestCase):
         bd, src, dst = self._simple_bd()
         with self.assertRaises(ValueError):
             _ = bd[9999]
+
+
+class AlgebraicLoopTest(SetUpMixin, unittest.TestCase):
+    """Compile-time algebraic loop detection."""
+
+    def test_compile_detects_branched_function_loop(self):
+        """A loop should be found even if a block's first algebraic branch is acyclic."""
+        bd = self.sim.blockdiagram()
+        const = bd.CONSTANT(1)
+        sumblk = bd.SUM("++")
+        branch = bd.GAIN(4)
+        gain1 = bd.GAIN(2)
+        gain2 = bd.GAIN(3)
+        sink = bd.NULL(2)
+
+        bd.connect(const, sumblk[0])
+        bd.connect(sumblk, branch)
+        bd.connect(branch, sink[0])
+        bd.connect(sumblk, gain1)
+        bd.connect(gain1, gain2)
+        bd.connect(gain2, sumblk[1])
+        bd.connect(gain2, sink[1])
+
+        output = io.StringIO()
+        with redirect_stdout(output):
+            with self.assertRaises(RuntimeError):
+                bd.compile(verbose=False)
+
+        self.assertIn("cycle found", output.getvalue())
+
+    def test_compile_detects_feedthrough_state_loop(self):
+        """A direct-feedthrough dynamic loop should be reported without relying on function blocks."""
+        bd = self.sim.blockdiagram()
+        a = FeedthroughContinuous(name="a")
+        b = FeedthroughContinuous(name="b")
+
+        bd.connect(a, b)
+        bd.connect(b, a)
+
+        self.assertIn(a, bd.blocklist)
+        self.assertIn(b, bd.blocklist)
+
+        output = io.StringIO()
+        with redirect_stdout(output):
+            with self.assertRaises(RuntimeError):
+                bd.compile(verbose=False)
+
+        self.assertIn("cycle found", output.getvalue())
 
 
 # ---------------------------------------------------------------------------

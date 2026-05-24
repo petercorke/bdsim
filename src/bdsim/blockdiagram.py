@@ -169,10 +169,10 @@ class BlockDiagram(BlockDiagramMixin):
         # ensure all blocks are in the blocklist
         for x in [start, *ends]:
             if isinstance(x, Block):
-                if x.bd is None:
+                if x._bd is None:
                     self.add_block(x)
             elif isinstance(x, Plug):
-                if x.block.bd is None:
+                if x.block._bd is None:
                     self.add_block(x.block)
 
         for end in ends:
@@ -501,30 +501,50 @@ class BlockDiagram(BlockDiagramMixin):
         if verbose:
             print("  ☑ checking for algebraic loops...")
 
-        def _DFS(path: list[Block]) -> bool:
-            start = path[0]
-            tail = path[-1]
-            for outgoing in tail._output_wires:
-                # for every port on this block
-                for w in outgoing:
-                    dest = w.end.block
-                    if dest == start:
-                        print(
-                            "  ERROR: cycle found:\n   ",
-                            "\n    ".join([str(x) for x in path + [dest]]),
-                        )
-                        return True
-                    if dest.blockclass == "function" or (
-                        dest.hasstate and dest._feedthrough
-                    ):
-                        return _DFS(path + [dest])  # recurse
+        def _is_algebraic_participant(block: Block) -> bool:
+            return block.blockclass == "function" or (
+                block.hasstate and block._feedthrough
+            )
+
+        visited: set[Block] = set()
+        active_path: list[Block] = []
+        active_set: set[Block] = set()
+
+        def _dfs_upstream(block: Block) -> bool:
+            # Walk upstream through each input source because algebraic loops are
+            # dependency cycles: a block can only be in the same algebraic loop as
+            # the blocks that feed its current inputs.  We traverse only function
+            # blocks and stateful blocks with direct feedthrough, since those are
+            # the only blocks whose outputs depend on current-time input values.
+            visited.add(block)
+            active_path.append(block)
+            active_set.add(block)
+
+            for source in block.sources:
+                if not _is_algebraic_participant(source):
+                    continue
+
+                if source in active_set:
+                    cycle_start = active_path.index(source)
+                    cycle = active_path[cycle_start:] + [source]
+                    print(
+                        "  ERROR: cycle found:\n   ",
+                        "\n    ".join(str(node) for node in cycle),
+                    )
+                    return True
+
+                if source not in visited and _dfs_upstream(source):
+                    return True
+
+            active_set.remove(block)
+            active_path.pop()
             return False
 
         for b in self.blocklist:
-            if b.blockclass == "function":
-                # do depth first search looking for a cycle
-                if _DFS([b]):
+            if _is_algebraic_participant(b) and b not in visited:
+                if _dfs_upstream(b):
                     error = True
+                    break
 
         if error:
             if not subsystem:
