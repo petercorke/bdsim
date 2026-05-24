@@ -2050,6 +2050,8 @@ class GraphicsBlock(SinkBlock):
         self._graphics = True
         self._fig: matplotlib.figure.Figure | None = None
         self.ax: Any = None
+        self._tile_axes: Any = None
+        self._tile_subplotspec: Any = None
         self._movie = movie
         self._movie_started = False
         self._timestamp = self.TIMESTAMP if timestamp is None else bool(timestamp)
@@ -2181,18 +2183,30 @@ class GraphicsBlock(SinkBlock):
         # bring the figure up to date in a backend-specific way
         if self._simstate.options.animation:
             notebook_backend = bool(getattr(self._simstate, "notebook_backend", False))
+            tiled = getattr(self._simstate, "ntiles", None) not in (None, [], [1, 1])
+            draw_key = float(t)
+            already_drawn = bool(
+                tiled
+                and self._fig is not None
+                and getattr(self._fig, "_bdsim_last_draw_t", None) == draw_key
+            )
+
             if notebook_backend:
                 # Notebook refresh is coordinated centrally by DisplayManager.
                 pass
-            elif self._simstate.backend == "TkAgg":
-                self._fig.canvas.flush_events()  # type: ignore[union-attr]
-                plt.show(block=False)
-                plt.show(block=False)
-            elif self._simstate.backend == "Qt5Agg":
-                self._fig.canvas.flush_events()  # type: ignore[union-attr]
-                self._fig.canvas.draw()  # type: ignore[union-attr]
-            else:
-                self._fig.canvas.draw()  # type: ignore[union-attr]
+            elif not already_drawn:
+                if tiled and self._fig is not None:
+                    self._fig._bdsim_last_draw_t = draw_key
+
+                if self._simstate.backend == "TkAgg":
+                    self._fig.canvas.flush_events()  # type: ignore[union-attr]
+                    plt.show(block=False)
+                    plt.show(block=False)
+                elif self._simstate.backend == "Qt5Agg":
+                    self._fig.canvas.flush_events()  # type: ignore[union-attr]
+                    self._fig.canvas.draw()  # type: ignore[union-attr]
+                else:
+                    self._fig.canvas.draw()  # type: ignore[union-attr]
 
         if self._movie is not None:
             try:
@@ -2316,8 +2330,9 @@ class GraphicsBlock(SinkBlock):
         row = 0
         col = 0
 
-        # Reset per-block subplot assignment each start.
+        # Reset per-block tile assignment each start.
         self._tile_axes = None
+        self._tile_subplotspec = None
 
         self.bd.runtime.DEBUG(  # type: ignore[attr-defined]
             "graphics", "{} matplotlib figures exist", len(plt.get_fignums())
@@ -2456,22 +2471,15 @@ class GraphicsBlock(SinkBlock):
                     dpiscale = 1
                     screen_width, screen_height = f.get_size_inches() * f.dpi
 
-                # Compute figure size from screen tiles, but avoid giant windows.
-                # For a single tile, preserve matplotlib's default figure size.
+                # Shared tiled mode uses one figure containing multiple subplots,
+                # so preserve the normal figure size instead of shrinking the
+                # container to a single-tile window.
                 default_figsize = list(f.get_size_inches())
                 effective_dpi = dpi * dpiscale
                 if ntiles is None or ntiles == [1, 1]:
                     figsize = default_figsize
                 else:
-                    tile_figsize = [
-                        screen_width / ntiles[1] / effective_dpi,
-                        screen_height / ntiles[0] / effective_dpi,
-                    ]
-                    max_scale = 1.5
-                    figsize = [
-                        min(tile_figsize[0], default_figsize[0] * max_scale),
-                        min(tile_figsize[1], default_figsize[1] * max_scale),
-                    ]
+                    figsize = default_figsize
 
             else:
                 # shape is given explictly
@@ -2541,10 +2549,15 @@ class GraphicsBlock(SinkBlock):
                 except Exception:
                     f.set_constrained_layout_pads(hspace=0.08, wspace=0.06)  # type: ignore[attr-defined]  # pre-3.6 fallback
                 f.patch.set_facecolor("#323232")
+                gstate.tile_gridspec = f.add_gridspec(rows, cols)
 
             row = gstate.fignum // cols
             col = gstate.fignum % cols
-            self._tile_axes = f.add_subplot(rows, cols, gstate.fignum + 1)
+            subplotspec = gstate.tile_gridspec[row, col]
+            if self.AXES_POLICY == "delegate":
+                self._tile_subplotspec = subplotspec
+            else:
+                self._tile_axes = f.add_subplot(subplotspec)
 
         # move figure windows only when not using shared tiled subplots,
         # and only when a real window manager is available (not notebook backends)
