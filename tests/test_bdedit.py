@@ -18,6 +18,7 @@ import json
 import os
 import subprocess
 import sys
+import re
 from pathlib import Path
 
 import pytest
@@ -28,6 +29,7 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[1]
 EXAMPLES_DIR = REPO_ROOT / "examples"
 EG1 = EXAMPLES_DIR / "eg1.bd"
+RRMC2 = EXAMPLES_DIR / "RVC3" / "RRMC2.bd"
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -63,6 +65,14 @@ def _make_window():
     app = QApplication.instance()
     resolution = app.primaryScreen().availableGeometry()
     return InterfaceWindow(resolution, debug=False)
+
+
+def _find_block_class(win, block_type):
+    for _group_name, group_blocks in win.centralWidget().blockLibrary:
+        for _label, block_class in group_blocks:
+            if getattr(block_class, "block_type", None) == block_type:
+                return block_class
+    raise AssertionError(f"block class {block_type} not found")
 
 
 # ===========================================================================
@@ -130,6 +140,42 @@ class TestQtSmoke:
         finally:
             win.close()
 
+    def test_main_parameter_window_updates(self):
+        """Main block settings should update without assuming a 5-field parameter spec."""
+        _require_qt()
+        win = _make_window()
+        try:
+            from bdedit.block_main_block import Main
+
+            main = Main(win.centralWidget().scene, win.centralWidget().layout)
+            assert main.parameterWindow.width() > 300
+            assert win.centralWidget().layout.columnMinimumWidth(10) >= main.parameterWindow.width()
+            main.parameterWindow.updateBlockParameters()
+        finally:
+            win.close()
+
+    def test_scope_none_parameters_display_blank_and_save_none(self):
+        """Optional Scope list parameters should show blank and round-trip as None."""
+        _require_qt()
+        win = _make_window()
+        try:
+            scope_class = _find_block_class(win, "SCOPE")
+            scope = scope_class()
+
+            param_index = {param[0]: idx for idx, param in enumerate(scope.parameters)}
+            labels_widget = scope.parameterWindow.parameter_values[param_index["labels"]]
+            styles_widget = scope.parameterWindow.parameter_values[param_index["styles"]]
+
+            assert labels_widget.text() == ""
+            assert styles_widget.text() == ""
+
+            scope.parameterWindow.updateBlockParameters()
+
+            assert scope.parameters[param_index["labels"]][2] is None
+            assert scope.parameters[param_index["styles"]][2] is None
+        finally:
+            win.close()
+
     def test_scene_save_reload(self, tmp_path):
         """Save to a temp file; verify the JSON round-trip preserves block/wire counts."""
         _require_qt()
@@ -147,6 +193,93 @@ class TestQtSmoke:
             saved = json.loads(out.read_text())
             assert len(saved["blocks"]) == n_blocks, "block count changed on save"
             assert len(saved["wires"]) == n_wires, "wire count changed on save"
+        finally:
+            win.close()
+
+    def test_scene_load_skips_unresolvable_wire(self, tmp_path, capsys):
+        """Legacy wire entries with missing endpoints should be dropped during load."""
+        _require_qt()
+        broken = json.loads(EG1.read_text())
+        broken["wires"] = broken["wires"][:1]
+        broken["wires"][0]["end_socket"] = 999999999
+        path = tmp_path / "broken.bd"
+        path.write_text(json.dumps(broken, indent=4))
+
+        win = _make_window()
+        try:
+            win.loadFromFilePath(str(path))
+            captured = capsys.readouterr()
+            assert "BdEdit warning: dropping unresolvable wire during load" in captured.err
+            assert re.search(r"start=[^,]+ \(id \d+\)", captured.err)
+            assert "end=socket id 999999999" in captured.err
+            scene = win.centralWidget().scene
+            assert all(wire.start_socket is not None for wire in scene.wires)
+            assert all(wire.end_socket is not None for wire in scene.wires)
+        finally:
+            win.close()
+
+    def test_rrmc2_renamed_deprecated_blocks_load(self, capsys):
+        """RRMC2.bd should map legacy integrator block names to the renamed classes."""
+        _require_qt()
+        win = _make_window()
+        try:
+            win.loadFromFilePath(str(RRMC2))
+            captured = capsys.readouterr()
+            assert "renamed deprecated block type during load" in captured.err
+            scene = win.centralWidget().scene
+            assert any(
+                block.block_type == "INTEGRATOR_S" or block.title == "Integrator_S Block"
+                for block in scene.blocks
+            )
+        finally:
+            win.close()
+
+    def test_load_from_file_path_skips_duplicate_reload(self, capsys):
+        """Loading the same file twice should not repeat the deprecated rename warning."""
+        _require_qt()
+        win = _make_window()
+        try:
+            win.loadFromFilePath(str(RRMC2))
+            capsys.readouterr()
+            win.loadFromFilePath(str(RRMC2))
+            captured = capsys.readouterr()
+            assert "renamed deprecated block type during load" not in captured.err
+        finally:
+            win.close()
+
+    def test_scene_load_reports_unknown_block_types(self, tmp_path, capsys):
+        """Unknown block types should be reported with enough context to fix the file."""
+        _require_qt()
+        data = json.loads(EG1.read_text())
+        data["blocks"].append(
+            {
+                "id": 999999,
+                "block_type": "WEIRD_BLOCK",
+                "title": "Mystery Block",
+                "pos_x": 0,
+                "pos_y": 0,
+                "width": 100,
+                "height": 100,
+                "flipped": False,
+                "inputsNum": 0,
+                "outputsNum": 0,
+                "inputs": [],
+                "outputs": [],
+                "parameters": [],
+            }
+        )
+        path = tmp_path / "unknown.bd"
+        path.write_text(json.dumps(data, indent=4))
+
+        win = _make_window()
+        try:
+            win.loadFromFilePath(str(path))
+            captured = capsys.readouterr()
+            assert "unknown block types encountered during load (1):" in captured.err
+            assert "WEIRD_BLOCK" in captured.err
+            assert "Mystery Block" in captured.err
+            scene = win.centralWidget().scene
+            assert len(scene.blocks) > 0
         finally:
             win.close()
 

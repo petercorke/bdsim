@@ -999,6 +999,12 @@ class InterfaceWindow(QMainWindow):
         if self.exitingWithoutSave():
             # Check if file at given path exists, if so, run the deserializing method
             if os.path.isfile(filepath):
+                if self.filename is not None:
+                    try:
+                        if Path(self.filename).resolve() == Path(filepath).resolve() and not self.isModified():
+                            return
+                    except OSError:
+                        pass
                 self.centralWidget().scene.loadFromFile(filepath)
                 self.filename = filepath
                 self.updateApplicationName()

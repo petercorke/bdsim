@@ -1,5 +1,6 @@
 # Library imports
 import json
+import sys
 import time
 import getpass
 from PIL import ImageFont
@@ -30,6 +31,15 @@ from bdedit.interface_graphics_scene import GraphicsScene
 #
 # =============================================================================
 class Scene(Serializable):
+    _LEGACY_BLOCK_TYPES = {
+        "DINTEGRATOR": "INTEGRATOR_S",
+        "DPOSEINTEGRATOR": "POSEINTEGRATOR_S",
+    }
+    _LEGACY_BLOCK_TITLES = {
+        "DINTEGRATOR": "Integrator_S Block",
+        "DPOSEINTEGRATOR": "PoseIntegrator_S Block",
+    }
+
     """
     The ``Scene`` Class extends the ``Serializable`` Class from BdEdit, and holds
     the information of all the ``Block`` and ``Wire`` instances that are within it.
@@ -421,17 +431,27 @@ class Scene(Serializable):
             pass
 
         hashmap = {}
+        unknown_blocks = []
 
         # All the blocks which were saved, are re-created from the JSON file
         # For each block from the saved blocks
         for block_data in data["blocks"]:
             block_type = block_data["block_type"]
+            normalized_block_type = Scene._LEGACY_BLOCK_TYPES.get(block_type, block_type)
+            if normalized_block_type != block_type:
+                print(
+                    "BdEdit warning: renamed deprecated block type during load: "
+                    f"{block_type} -> {normalized_block_type}; "
+                    f"title={block_data.get('title')!r} -> {Scene._LEGACY_BLOCK_TITLES.get(block_type, block_data.get('title'))!r}, "
+                    f"id={block_data.get('id')}",
+                    file=sys.stderr,
+                )
             # If a block is one that is manually defined by bdedit (such as the connector
             # or main blocks, or the text item), they must manaully be re-created.
-            if block_type == "CONNECTOR" or block_type == "Connector":
+            if normalized_block_type == "CONNECTOR" or normalized_block_type == "Connector":
                 Connector(self, self.window).deserialize(block_data, hashmap)
 
-            elif block_type == "MAIN" or block_type == "Main":
+            elif normalized_block_type == "MAIN" or normalized_block_type == "Main":
                 Main(self, self.window).deserialize(block_data, hashmap)
 
             # Otherwise if it is any other block (will be an auto-imported block)
@@ -444,11 +464,37 @@ class Scene(Serializable):
                     # The block_class.__name__ supports older files which would of used self.__class__.__name__
                     # to define the block type
                     if (
-                        block_type == blockname(block_class)
-                        or block_type == block_class.__name__
+                        normalized_block_type == blockname(block_class)
+                        or normalized_block_type == block_class.__name__
                     ):
+                        block_data = dict(block_data)
+                        if normalized_block_type != block_type:
+                            block_data["title"] = block_class.title
                         block_class().deserialize(block_data, hashmap)
                         break
+                else:
+                    unknown_blocks.append(
+                        {
+                            "block_type": block_type,
+                            "title": block_data.get("title"),
+                            "id": block_data.get("id"),
+                        }
+                    )
+
+        if unknown_blocks:
+            print(
+                "BdEdit warning: unknown block types encountered during load "
+                f"({len(unknown_blocks)}):",
+                file=sys.stderr,
+            )
+            for block_info in unknown_blocks:
+                print(
+                    "  - "
+                    f"block_type={block_info['block_type']!r}, "
+                    f"title={block_info['title']!r}, "
+                    f"id={block_info['id']}",
+                    file=sys.stderr,
+                )
 
         # Next recreate all the wires that were saved
         for wire_data in data["wires"]:

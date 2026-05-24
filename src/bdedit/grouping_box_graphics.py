@@ -1,5 +1,6 @@
 # PySide6 imports
 import copy
+import sys
 
 from PySide6.QtGui import *
 from PySide6.QtCore import *
@@ -43,6 +44,7 @@ class GraphicsGBox(QGraphicsRectItem):
         self.handleSelected = None
         self.mousePressPos = None
         self.mousePressRect = None
+        self._current_cursor_shape = Qt.ArrowCursor
 
         # Inherit properties from parent grouping box
         self.grouping_box = gbox
@@ -102,15 +104,25 @@ class GraphicsGBox(QGraphicsRectItem):
         if self.isSelected():
             handle = self.handleAt(moveEvent.pos())
             cursor = Qt.ArrowCursor if handle is None else self.handleCursors[handle]
-            self.setCursor(cursor)
+            self._setCursorIfChanged(cursor)
         super().hoverMoveEvent(moveEvent)
 
     def hoverLeaveEvent(self, moveEvent):
         """
         Executed when the mouse leaves the shape (NOT PRESSED).
         """
-        self.setCursor(Qt.ArrowCursor)
+        self._setCursorIfChanged(Qt.ArrowCursor)
         super().hoverLeaveEvent(moveEvent)
+
+    def _setCursorIfChanged(self, cursor_shape):
+        """Avoid redundant cursor updates that can stress native cursor registration."""
+        app = QApplication.instance()
+        if sys.platform == "darwin" and app is not None and app.activePopupWidget() is not None:
+            # Avoid native cursor updates while a popup menu is active on macOS.
+            return
+        if cursor_shape != self._current_cursor_shape:
+            self.setCursor(cursor_shape)
+            self._current_cursor_shape = cursor_shape
 
     def mousePressEvent(self, mouseEvent):
         """

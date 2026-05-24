@@ -78,11 +78,14 @@ class ParamWindow(QWidget):
         self.layout = QVBoxLayout()
 
         # Definition of with of the parameter window, and the lines holding
-        # the block parameters inside it. The width is fixed to 300 pixels, scaled
-        # to what 300 pixels should look like on 2560 screen width resolution
-        self._parameter_line_width = 150
-        self._width = 300 * self.block.window.scale
+        # the block parameters inside it. The width is fixed to 390 pixels, scaled
+        # to what 390 pixels should look like on 2560 screen width resolution.
+        # This keeps the RHS popout about 30% wider than before.
+        self._parameter_line_width = 195
+        self._width = 390 * self.block.window.scale
         self.setFixedWidth(self._width)
+        self.setMinimumWidth(int(self._width))
+        self.block.window.setColumnMinimumWidth(10, int(self._width))
 
         # Variable to update title of model when parameter values have been changed,
         # to indicate that there is unsaved progress
@@ -287,7 +290,7 @@ class ParamWindow(QWidget):
                 # If the parameter type is a boolean, create the intractable space as a checkbox, otherwise
                 # make an editable line for that parameter, and populate it with the parameters' current value
                 if not issubclass(parameter[1], bool):
-                    self.line = QLineEdit(str(parameter[2]))
+                    self.line = QLineEdit("" if parameter[2] is None else str(parameter[2]))
                 else:
                     self.line = QCheckBox()
                     self.line.setChecked(
@@ -398,6 +401,14 @@ class ParamWindow(QWidget):
 
             return message
 
+        def allows_none(options):
+            if not options:
+                return False
+            for option in options:
+                if option[0] == "type" and type(None) in option[1]:
+                    return True
+            return False
+
         # Update the title
         duplicate_title = []
         # UpdateName is returned as None if there are no issues with setting a title
@@ -423,29 +434,48 @@ class ParamWindow(QWidget):
         if self.parameters:
 
             # For each definition of a parameter, in the blocks' defined parameters
-            for [paramName, paramType, paramVal, paramOptions, _] in self.parameters:
+            for parameter in self.parameters:
+                if len(parameter) == 5:
+                    paramName, paramType, paramVal, paramOptions, _ = parameter
+                elif len(parameter) == 4:
+                    paramName, paramType, paramVal, paramOptions = parameter
+                else:
+                    raise ValueError(
+                        f"Unsupported parameter spec for {self.block.block_type}: {parameter!r}"
+                    )
                 i += 1
 
                 # If parameter type is boolean, then retrieve checked state of checkbox, otherwise
                 # extract the text from the editable line as the value to set the parameter to
                 if not issubclass(paramType, bool):
-                    inputValue = self.parameter_values[i].text()
+                    inputValue = self.parameter_values[i].text().strip()
                 else:
                     inputValue = str(self.parameter_values[i].isChecked())
 
                 # If a value has been provided for that parameter, perform sanity checking on that input
-                if inputValue:
-                    if self.parameters[i][0] in ["nin", "ops", "signs", "nout"]:
-                        inputInCompatibleFormat = self.getSafeValue(
-                            inputValue, paramType, paramOptions
-                        )
-                    else:
-                        if inputValue.startswith("="):
-                            inputInCompatibleFormat = inputValue
-                        else:
+                if inputValue or (not issubclass(paramType, bool) and (paramVal is None or allows_none(paramOptions))):
+                    if (
+                        not issubclass(paramType, bool)
+                        and inputValue == ""
+                        and (paramVal is None or allows_none(paramOptions))
+                    ):
+                        inputInCompatibleFormat = None
+                    elif not issubclass(paramType, bool):
+                        if self.parameters[i][0] in ["nin", "ops", "signs", "nout"]:
                             inputInCompatibleFormat = self.getSafeValue(
                                 inputValue, paramType, paramOptions
                             )
+                        else:
+                            if inputValue.startswith("="):
+                                inputInCompatibleFormat = inputValue
+                            else:
+                                inputInCompatibleFormat = self.getSafeValue(
+                                    inputValue, paramType, paramOptions
+                                )
+                    else:
+                        inputInCompatibleFormat = self.getSafeValue(
+                            inputValue, paramType, paramOptions
+                        )
 
                     # If in DEBUG mode, this code will return the name, type, current value of the parameter attempting to update
                     # and then for the value that will override the parameter, the value, type(of the value), and whether it is or isn't compatible

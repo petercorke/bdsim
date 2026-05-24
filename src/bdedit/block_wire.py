@@ -1,4 +1,5 @@
 # Library imports
+import sys
 import time
 import copy
 from collections import OrderedDict
@@ -20,6 +21,14 @@ WIRE_TYPE_STEP = 3
 # Variable for enabling/disabling debug comments
 DEBUG = False
 DEBUG_OVERLAP = False
+
+
+def _describe_socket_ref(socket_obj, socket_id):
+    if socket_obj is None:
+        return f"socket id {socket_id}"
+    block = socket_obj.node
+    block_name = getattr(block, "title", None) or getattr(block, "block_type", None) or block.__class__.__name__
+    return f"{block_name} (id {block.id})"
 
 
 # =============================================================================
@@ -361,11 +370,22 @@ class Wire(Serializable):
         self.id = data["id"]
         # self.start_socket = data['start_socket']
         # self.end_socket = data['end_socket']
-        try:
-            self.start_socket = hashmap[data["start_socket"]]
-            self.end_socket = hashmap[data["end_socket"]]
-        except KeyError:
-            # One or both endpoint blocks failed to deserialize; skip this wire.
+        start_socket_id = data.get("start_socket")
+        end_socket_id = data.get("end_socket")
+        self.start_socket = hashmap.get(start_socket_id)
+        self.end_socket = hashmap.get(end_socket_id)
+        if self.start_socket is None or self.end_socket is None:
+            print(
+                "BdEdit warning: dropping unresolvable wire during load; "
+                f"wire_id={data.get('id')}, "
+                f"start={_describe_socket_ref(self.start_socket, start_socket_id)}, "
+                f"end={_describe_socket_ref(self.end_socket, end_socket_id)}, "
+                f"wire_data={data}",
+                file=sys.stderr,
+            )
+            # One or both endpoint blocks failed to deserialize; drop this wire so
+            # later scene serialisation/history snapshots do not see a half-built edge.
+            self.remove()
             return False
         self.wire_type = data["wire_type"]
 
