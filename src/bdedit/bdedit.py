@@ -7,6 +7,7 @@ import ctypes
 import argparse
 import threading
 import traceback
+import faulthandler
 from pathlib import Path
 
 from sys import platform
@@ -165,6 +166,12 @@ def main():
             print("Unhandled exception; emergency save failed")
 
     sys.excepthook = _handle_unhandled_exception
+
+    # Enable faulthandler so that if a C/native library crashes (e.g. AppKit
+    # NSCursor, OpenGL driver) Python prints a full traceback to stderr before
+    # the process dies.  sys.excepthook cannot catch native crashes — they are
+    # SIGSEGV/SIGABRT signals raised inside C code, not Python exceptions.
+    faulthandler.enable()
 
     if hasattr(threading, "excepthook"):
 
