@@ -64,6 +64,6 @@ bd.connect(bike, xy, theta, vplot)
 bd.connect(theta, hscope)
 
 bd.compile()
-bd.report_summary()
 
+sim.report(bd)
 out = sim.run(bd, 20)

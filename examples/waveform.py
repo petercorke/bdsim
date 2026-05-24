@@ -20,7 +20,6 @@ bd.connect(demand, scope)
 
 bd.compile()  # check the diagram
 sim.report(bd)  # , format="latex")
-sim.report(bd, "schedule")
 
 out = sim.run(bd, T=5)
 print(out)

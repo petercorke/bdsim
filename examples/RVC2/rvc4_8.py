@@ -83,8 +83,6 @@ bd.connect(bike, xy, theta, vplot)
 bd.connect(xy, pp, error[1])
 
 bd.compile()
-bd.report_summary()
 
-print("\nSimulating for ", total_time, " seconds")
-
+sim.report(bd)
 out = sim.run(bd, T=total_time)

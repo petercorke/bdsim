@@ -29,6 +29,6 @@ bd.connect(steer, bike[1])
 bd.connect(q[2], tscope)
 
 bd.compile()
-bd.report()
 
+sim.report(bd)
 out = sim.run(bd, 10, dt=0.05)

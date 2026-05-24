@@ -32,8 +32,6 @@ bd.compile()  # check the diagram
 bd.report()  # list all blocks and wires
 bd.report_schedule()  # list all blocks and wires in execution order
 
-print(clock1)
-print(clock2)
 out = sim.run(bd, 5, block=True)  # simulate for 5s and hold graphics
 
 print(out)

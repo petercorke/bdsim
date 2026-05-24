@@ -4,6 +4,7 @@
 Test discrete-time integrator with step input
 Copyright (c) 2026- Peter Corke
 """
+
 import bdsim
 
 sim = bdsim.BDSim(animation=True)  # create simulator
@@ -20,5 +21,6 @@ bd.connect(demand, integrator, scope[0])
 bd.connect(integrator, scope[1])
 
 bd.compile()  # check the diagram
+sim.report(bd)
 
 out = sim.run(bd, T=5)

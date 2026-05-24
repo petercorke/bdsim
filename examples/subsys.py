@@ -6,6 +6,7 @@ Copyright (c) 2021- Peter Corke
 """
 
 import bdsim
+
 sim = bdsim.BDSim(tiles="tall")
 
 # -- create simple subsystem as a blockdiagram -- #
@@ -42,7 +43,6 @@ main.connect(subsys1, scope1)
 main.connect(subsys2, scope2)
 
 main.compile(verbose=False)
-main.report_summary()
-
 sim.report(main)
+
 sim.run(main, T=5)

@@ -26,7 +26,7 @@ bd.connect(gain, plant)
 bd.connect(plant, scope[0])
 
 bd.compile()  # check the diagram
-bd.report_summary()
+sim.report(bd)
 
 out = sim.run(bd, T=5, watch=[demand, plant])  # simulate for 5s
 print(out)

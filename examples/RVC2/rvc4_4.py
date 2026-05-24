@@ -45,8 +45,7 @@ bd.connect(heading_error, hscope)
 bd.connect(heading_error, Kh)
 bd.connect(Kh, bike[1])
 
-
 bd.compile()
-bd.report()
 
+sim.report(bd)
 out = sim.run(bd)

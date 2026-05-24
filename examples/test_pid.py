@@ -4,6 +4,7 @@
 Test continuous-time PID with 3 different structures
 Copyright (c) 2026- Peter Corke
 """
+
 import math
 import bdsim
 
@@ -29,7 +30,6 @@ bd.connect(pid2, scope[2])
 bd.connect(pid3, scope[3])
 
 bd.compile()  # check the diagram
-
-bd.report_summary(depth=0)
+sim.report(bd, depth=0)
 
 out = sim.run(bd, T=5)

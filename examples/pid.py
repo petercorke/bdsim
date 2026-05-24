@@ -21,5 +21,6 @@ bd.connect(controller, plant)
 bd.connect(plant, controller[0], scope[1])
 
 bd.compile()
+sim.report(bd)
 out = sim.run(bd, 10)
 print(out)

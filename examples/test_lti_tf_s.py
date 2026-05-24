@@ -5,6 +5,7 @@ Test discrete-time system
 Franklin, Powell, Workman, 2nd edition, 1990, Sec 5.3
 Copyright (c) 2026- Peter Corke
 """
+
 import bdsim
 
 sim = bdsim.BDSim(animation=True)  # create simulator
@@ -30,5 +31,6 @@ bd.connect(D, G, scope[2])
 bd.connect(G, sum[1], scope[1])
 
 bd.compile()  # check the diagram
+sim.report(bd)
 
 out = sim.run(bd, T=5)

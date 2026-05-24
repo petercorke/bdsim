@@ -4,6 +4,7 @@
 Test continuous-time derivative with 1st-order smoothing with ramp input
 Copyright (c) 2026- Peter Corke
 """
+
 import bdsim
 
 sim = bdsim.BDSim(animation=True)  # create simulator
@@ -18,8 +19,7 @@ scope = bd.SCOPE(styles=["k", "r--"], loc="lower right")
 bd.connect(demand, deriv, scope[0])
 bd.connect(deriv, scope[1])
 
-
 bd.compile()  # check the diagram
-bd.report_summary(depth=0)  # print block report lists
+sim.report(bd)
 
 out = sim.run(bd, T=5)

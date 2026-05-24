@@ -28,9 +28,7 @@ bd.connect(gain, zoh)
 bd.connect(zoh, plant)
 
 bd.compile()  # check the diagram
-bd.report()
-bd.report_summary()  # list all blocks and wires
+sim.report(bd)
 
 out = sim.run(bd, 5, watch=[demand, sum, zoh])  # simulate for 5s
 print(out)
-

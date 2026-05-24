@@ -33,7 +33,7 @@ bd.connect(f, y)
 # scope[1] = y
 
 bd.compile()  # check the diagram
-bd.report_summary()  # list all blocks and wires
+sim.report(bd)
 
 # probably needs a stiff integrator
 out = sim.run(bd, T=20, solver="BDF")  # , watch=[demand, sum])  # simulate for 5s

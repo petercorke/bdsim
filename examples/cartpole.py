@@ -159,7 +159,7 @@ anim = bd.ANIMATION(
 )
 
 bd.compile()  # check the diagram
-bd.report_summary()
+sim.report(bd)
 
 out = sim.run(bd, T=20, watch=[F, x, theta])  # simulate for 5s
 print(out)
