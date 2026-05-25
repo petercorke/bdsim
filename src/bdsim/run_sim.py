@@ -463,6 +463,33 @@ class BDSim(Runner):
             return resolved
         return cls_obj
 
+    @staticmethod
+    def _is_notebook_frontend() -> bool:
+        """Return True when running under a notebook/IPython frontend.
+
+        This is used to suppress startup docstring banners that are noisy in
+        IPython/Jupyter (for example: "Automatically created module for
+        IPython interactive environment").
+        """
+        try:
+            backend = str(matplotlib.get_backend()).lower()
+        except Exception:
+            backend = ""
+
+        if any(token in backend for token in ("inline", "widget", "ipympl", "nbagg")):
+            return True
+
+        try:
+            from IPython.core.getipython import get_ipython
+
+            shell = get_ipython()
+            if shell is not None and getattr(shell, "kernel", None) is not None:
+                return True
+        except Exception:
+            pass
+
+        return False
+
     def __init__(
         self,
         banner: bool = True,
@@ -517,7 +544,7 @@ class BDSim(Runner):
         ``--movies [DIR]``, ``-m [DIR]``   movies           None       record all graphics blocks to MP4 files in DIR (default: .), sampled at ``animation_rate``
         ``--no-movies``                    movies           None       disable automatic movie recording
         ``--blocks``                       blocks           False      display block list at startup
-        ``--debug F``, ``-d F``            debug            ``''``     debug flags: p/ropagate, s/tate, d/eriv, i/nteractive
+        ``--debug F``, ``-d F``            debug            ``''``     debug flags: p/ropagate, s/tate, d/eriv, i/nteractive, g/raphics-diagnostics
         ``--animation-rate R``             animation_rate   20.0       target update rate for animation/debugger (Hz)
         ``--simtime T[,dt]``, ``-S``       simtime          None       simulation time as T or T,dt
         ``--dt DT``                        dt               None       output sample interval (build solve_ivp t_eval)
@@ -561,7 +588,7 @@ class BDSim(Runner):
         # self.blockdict: dict[str, Any] = {}
 
         # print docstring as a startup banner
-        if banner and not self.options.quiet:
+        if banner and not self.options.quiet and not self._is_notebook_frontend():
             current_frame: types.FrameType | None = inspect.currentframe()
             calling_frame: types.FrameType | None = (
                 current_frame.f_back if current_frame is not None else None
@@ -1052,6 +1079,7 @@ class BDSim(Runner):
         - ``'s'`` — trace state vector
         - ``'d'`` — trace state derivative
         - ``'i'`` — interactive step-by-step debugger
+        - ``'g'`` — graphics/window diagnostics (figure creation, tiling, notebook display handles)
 
         .. note::
             Simulation stops if the step size falls below ``minstepsize``,
@@ -1256,7 +1284,7 @@ class BDSim(Runner):
 
             if bool(getattr(simstate, "notebook_backend", False)):
                 patch_roboticstoolbox_pyplot_launch_for_notebook()
-                patch_roboticstoolbox_armplot_for_notebook()
+            patch_roboticstoolbox_armplot_for_notebook()
 
             movies_dir = getattr(simstate.options, "movies", None)
             if movies_dir is not None:
@@ -1265,11 +1293,21 @@ class BDSim(Runner):
                 if not simstate.options.quiet:
                     print(f"  movies: enabled for {n_movies} graphics block(s)")
 
+            # Defensive reset for long-lived notebook kernels: clear per-block
+            # graphics run markers so each run starts from a clean slate.
+            for b in bd.blocklist:
+                if not bool(getattr(b, "isgraphics", False)):
+                    continue
+                b._graphics_start_run_id = None
+                b._graphics_start_in_progress = False
+                b._graphics_start_in_progress_run_id = None
+                b._tile_subplotspec = None
+
             # tell all blocks we're starting a BlockDiagram
             bd.start(simstate)
 
             simstate.display_manager = DisplayManager.create(
-                notebook_backend=bool(getattr(simstate, "notebook_backend", False))
+                notebook_backend=bool(getattr(simstate, "notebook_backend", False)),
             )
 
             # initialize list of time and states
@@ -1371,7 +1409,7 @@ class BDSim(Runner):
                 display_manager: DisplayManager
                 if simstate.display_manager is None:
                     simstate.display_manager = DisplayManager.create(
-                        notebook_backend=notebook_backend
+                        notebook_backend=notebook_backend,
                     )
                 display_manager = simstate.display_manager
 
@@ -1382,6 +1420,10 @@ class BDSim(Runner):
                     notebook_min_refresh_dt = interactive_dt
                 else:
                     notebook_min_refresh_dt = 1.0 / 6.0
+                if sys.platform == "emscripten":
+                    # JupyterLite needs a modest frame cadence so the browser can
+                    # paint progressive updates while the simulation is running.
+                    notebook_min_refresh_dt = max(notebook_min_refresh_dt, 1.0 / 12.0)
                 last_notebook_refresh_t = -1e9
 
                 def _anim_frame(t: float, ss: Any, _dt: float = interactive_dt) -> None:
@@ -1413,6 +1455,10 @@ class BDSim(Runner):
                         if t - last_notebook_refresh_t >= notebook_min_refresh_dt:
                             display_manager.refresh()
                             last_notebook_refresh_t = t
+                            if sys.platform == "emscripten":
+                                # Yield briefly so JupyterLite can process display
+                                # updates instead of coalescing all frames at cell end.
+                                time.sleep(min(notebook_min_refresh_dt, 0.05))
                     if getattr(ss, "stop", None) is not None:
                         return
                     if t + _dt < tf - event_tol:

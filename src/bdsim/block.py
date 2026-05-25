@@ -2017,7 +2017,7 @@ class GraphicsBlock(SinkBlock):
     but no outputs and creates/updates a graphical display.
     """
 
-    AXES_POLICY = "subplot"
+    PLOT3D = False
     TIMESTAMP = False
     TIMESTAMP_FORMAT = "t={t:.3f}"
 
@@ -2050,7 +2050,6 @@ class GraphicsBlock(SinkBlock):
         self._graphics = True
         self._fig: matplotlib.figure.Figure | None = None
         self.ax: Any = None
-        self._tile_axes: Any = None
         self._tile_subplotspec: Any = None
         self._movie = movie
         self._movie_started = False
@@ -2090,12 +2089,34 @@ class GraphicsBlock(SinkBlock):
     def start(self, simstate: SimulationState) -> None:
         # plt.draw()
         # plt.show(block=False)
+        run_id = id(simstate)
+
+        if (
+            getattr(self, "_graphics_start_in_progress", False)
+            and getattr(self, "_graphics_start_in_progress_run_id", None) == run_id
+        ):
+            raise RuntimeError("re-entrant graphics start detected for block")
+
+        if getattr(self, "_graphics_start_run_id", None) == run_id:
+            raise RuntimeError("duplicate graphics start detected for block")
+
         self._simstate = simstate
         self._enabled = simstate.options.graphics
 
-        if self._enabled:
-            self.fig = self.create_figure(simstate)
-            self.ax = self._create_default_axes()
+        self._graphics_start_in_progress = True
+        self._graphics_start_in_progress_run_id = run_id
+        try:
+            if self._enabled:
+                # Fresh graphics setup once per run.
+                self.fig = None
+                self.ax = None
+                self.fig = self.create_figure(simstate)
+                self.ax = self._create_default_axes()
+        finally:
+            self._graphics_start_in_progress = False
+            self._graphics_start_in_progress_run_id = None
+
+        self._graphics_start_run_id = run_id
 
     def validate_start(self) -> None:
         if not getattr(self, "_enabled", False):
@@ -2104,24 +2125,21 @@ class GraphicsBlock(SinkBlock):
         if self.fig is None:
             raise RuntimeError("graphics start did not create a figure")
 
-        if self.AXES_POLICY == "delegate" and self.ax is None:
-            raise RuntimeError(
-                "AXES_POLICY='delegate' requires subclass start() to set self.ax"
-            )
+        if self.ax is None:
+            raise RuntimeError("graphics start did not create axes")
 
     def _create_default_axes(self) -> Any:
         if self.fig is None:
             return None
 
-        tile_ax = getattr(self, "_tile_axes", None)
-        if tile_ax is not None:
-            return tile_ax
+        tile_subplotspec = getattr(self, "_tile_subplotspec", None)
+        if tile_subplotspec is not None:
+            if bool(getattr(self, "PLOT3D", False)):
+                return self.fig.add_subplot(tile_subplotspec, projection="3d")
+            return self.fig.add_subplot(tile_subplotspec)
 
-        policy = self.AXES_POLICY
-        if policy in (None, "delegate"):
-            return None
-        if policy == "gca":
-            return self.fig.gca()
+        if bool(getattr(self, "PLOT3D", False)):
+            return self.fig.add_subplot(111, projection="3d")
         return self.fig.add_subplot(111)
 
     def _start_movie(self) -> None:
@@ -2330,8 +2348,10 @@ class GraphicsBlock(SinkBlock):
         row = 0
         col = 0
 
+        if not hasattr(gstate, "_graphics_slot_claims"):
+            gstate._graphics_slot_claims = []
+
         # Reset per-block tile assignment each start.
-        self._tile_axes = None
         self._tile_subplotspec = None
 
         self.bd.runtime.DEBUG(  # type: ignore[attr-defined]
@@ -2531,44 +2551,78 @@ class GraphicsBlock(SinkBlock):
             # Tiled mode: one shared figure with subplots; each block gets a tile.
             rows, cols = gstate.ntiles
             max_tiles = rows * cols
-            if gstate.fignum >= max_tiles:
+            claims_all = list(getattr(gstate, "_graphics_slot_claims", []))
+            # Robustly derive occupied tiles from unique non-self claimants.
+            # This tolerates stale/duplicate claim entries without overcounting.
+            claimed_by_other: list[dict[str, Any]] = []
+            seen_block_ids: set[int] = set()
+            for claim in claims_all:
+                bid = int(claim.get("block_id", -1))
+                if bid < 0 or bid == id(self) or bid in seen_block_ids:
+                    continue
+                seen_block_ids.add(bid)
+                claimed_by_other.append(claim)
+            # In tiled mode, choose tile index by number of blocks that already
+            # claimed a slot in this run, not by the global fignum counter.
+            # This avoids false overflow if fignum drifts in notebook backends.
+            tile_index = len(claimed_by_other)
+            if tile_index >= max_tiles:
                 raise ValueError(
                     "tile specification "
                     f"'{options.tiles}' has {max_tiles} tile(s) but "
-                    f"requires at least {gstate.fignum + 1}"
+                    f"requires at least {tile_index + 1}."
                 )
 
-            if gstate.fignum == 0:
+            if tile_index == 0:
                 gstate.tiled_figure = f
                 f.clf()
-                # Constrained layout prevents title/xlabel overlap between tiles;
-                # dark background makes the white subplot panels stand out.
-                f.set_constrained_layout(True)
-                try:
-                    f.get_layout_engine().set(hspace=0.08, wspace=0.06)  # type: ignore[call-arg,union-attr]
-                except Exception:
-                    f.set_constrained_layout_pads(hspace=0.08, wspace=0.06)  # type: ignore[attr-defined]  # pre-3.6 fallback
-                f.patch.set_facecolor("#323232")
-                gstate.tile_gridspec = f.add_gridspec(rows, cols)
+                base_w = float(gstate.figsize[0])
+                base_h = float(gstate.figsize[1])
+                fig_w = max(base_w, 4.0 * cols)
+                fig_h = max(base_h, 3.0 * rows)
+                f.set_size_inches(fig_w, fig_h, forward=True)
+                gstate.figsize = [fig_w, fig_h]
+                gstate.tile_gridspec = f.add_gridspec(
+                    rows, cols, wspace=0.25, hspace=0.30
+                )
 
-            row = gstate.fignum // cols
-            col = gstate.fignum % cols
+            row = tile_index // cols
+            col = tile_index % cols
             subplotspec = gstate.tile_gridspec[row, col]
-            if self.AXES_POLICY == "delegate":
-                self._tile_subplotspec = subplotspec
-            else:
-                self._tile_axes = f.add_subplot(subplotspec)
+            self._tile_subplotspec = subplotspec
 
         # move figure windows only when not using shared tiled subplots,
         # and only when a real window manager is available (not notebook backends)
         if not _notebook:
             if gstate.ntiles is not None:
-                if gstate.fignum == 0:
+                if row == 0 and col == 0:
                     move_figure(f, 0, 0)
             else:
                 move_figure(f, 0, 0)
 
         gstate.fignum += 1
+        if gstate.ntiles is None:
+            slot = gstate.fignum
+        else:
+            slot = row * cols + col + 1
+
+        claims = getattr(gstate, "_graphics_slot_claims", [])
+        claim_data = {
+            "slot": slot,
+            "name": str(getattr(self, "name", "") or "<unnamed>"),
+            "type": str(getattr(self, "type", type(self).__name__)),
+            "class": type(self).__name__,
+            "block_id": id(self),
+            "simstate_id": id(gstate),
+        }
+        existing_idx = next(
+            (i for i, c in enumerate(claims) if int(c.get("block_id", -1)) == id(self)),
+            None,
+        )
+        if existing_idx is None:
+            claims.append(claim_data)
+        else:
+            claims[existing_idx] = claim_data
 
         def onkeypress(event: Any) -> None:
             key = str(getattr(event, "key", ""))

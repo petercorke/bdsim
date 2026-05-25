@@ -37,25 +37,6 @@ class MinGB(GraphicsBlock):
     nout = 0
 
 
-class DelegateGB(GraphicsBlock):
-    """Minimal delegate-axes graphics block for tiled-layout tests."""
-
-    nin = 1
-    nout = 0
-    AXES_POLICY = "delegate"
-
-    def start(self, simstate):
-        super().start(simstate)
-        if not self._enabled:
-            return
-
-        slot = getattr(self, "_tile_subplotspec", None)
-        if slot is None:
-            self.ax = self.fig.add_subplot(111, projection="3d")
-        else:
-            self.ax = self.fig.add_subplot(slot, projection="3d")
-
-
 def _make_simstate(graphics=True, animation=False, backend="agg"):
     ss = MagicMock()
     ss.options.graphics = graphics
@@ -326,22 +307,8 @@ class CreateFigureTest(unittest.TestCase):
         f2 = gb2.create_figure(state)
 
         self.assertEqual(f1.number, f2.number)
-        self.assertIsNotNone(getattr(gb1, "_tile_axes", None))
-        self.assertIsNotNone(getattr(gb2, "_tile_axes", None))
-        plt.close("all")
-
-    def test_create_figure_tiled_delegate_reserves_subplotspec(self):
-        """Delegate blocks in tiled mode receive a reserved tile slot, not a prebuilt axes."""
-        gb = DelegateGB(nin=1)
-        gb._bd = MagicMock()
-        gb._bd.runtime.DEBUG = lambda *a, **kw: None
-        gb._bd.blocklist = [gb]
-        state = _make_gstate(tiles="2x2")
-
-        gb.create_figure(state)
-
-        self.assertIsNone(getattr(gb, "_tile_axes", None))
-        self.assertIsNotNone(getattr(gb, "_tile_subplotspec", None))
+        self.assertIsNotNone(getattr(gb1, "_tile_subplotspec", None))
+        self.assertIsNotNone(getattr(gb2, "_tile_subplotspec", None))
         plt.close("all")
 
     def test_create_figure_tiled_preserves_default_figsize(self):
@@ -353,28 +320,11 @@ class CreateFigureTest(unittest.TestCase):
 
         gb.create_figure(state)
 
-        self.assertEqual(state.figsize, default_figsize)
-        plt.close("all")
-
-    def test_delegate_start_consumes_reserved_tile_slot(self):
-        """A delegate block should create its own axes from the reserved tiled SubplotSpec."""
-        gb = DelegateGB(nin=1)
-        gb._bd = MagicMock()
-        gb._bd.runtime.DEBUG = lambda *a, **kw: None
-        gb._bd.blocklist = [gb]
-        ss = _make_simstate(graphics=True, animation=False)
-        ss.options.tiles = "1x1"
-        ss.fignum = 0
-        ss.figsize = None
-        ss.dpi = None
-        ss.ntiles = None
-        ss.tiled_figure = None
-
-        gb.start(ss)
-        gb.validate_start()
-
-        self.assertIsNotNone(gb.ax)
-        self.assertEqual(type(gb.ax).__name__, "Axes3D")
+        # Tiled mode must not shrink the figure below the default size.  For a
+        # 2x2 grid the figure is typically expanded, so use assertGreaterEqual
+        # rather than assertEqual.
+        self.assertGreaterEqual(state.figsize[0], default_figsize[0])
+        self.assertGreaterEqual(state.figsize[1], default_figsize[1])
         plt.close("all")
 
     def test_create_figure_tiled_overflow_raises(self):

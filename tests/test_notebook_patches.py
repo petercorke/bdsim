@@ -55,13 +55,17 @@ class _FakePyPlot:
     def __init__(self):
         self.launch_calls = []
         self.add_calls = []
+        self._inline_is_jl = False
 
-    def launch(self, name=None, fig=None, limits=None, **kwargs):
+    def launch(self, name=None, fig=None, ax=None, limits=None, **kwargs):
         import matplotlib.pyplot as _plt
 
-        # Mimic the real PyPlot.launch(): call plt.ion() then fig.canvas.draw()
+        # Mimic the real PyPlot.launch(): call plt.ion() then set _inline_is_jl
+        # as the real launch does (sys.platform == "emscripten").
         _plt.ion()
-        self.launch_calls.append({"name": name, "fig": fig, "limits": limits})
+        # Simulate JupyterLite: pretend platform is emscripten.
+        self._inline_is_jl = True
+        self.launch_calls.append({"name": name, "fig": fig, "ax": ax, "limits": limits})
 
     def add(self, ob, **kwargs):
         import matplotlib.pyplot as _plt
@@ -102,6 +106,41 @@ def test_pyplot_launch_patch_suppresses_ion(monkeypatch):
     instance.launch(name="test")
 
     assert not matplotlib.is_interactive(), "plt.ion() should have been suppressed"
+
+
+def test_pyplot_launch_patch_reuses_existing_3d_axes(monkeypatch):
+    """If the figure already has 3D axes, patched_launch passes them to original launch."""
+    cls = type("PyPlot", (_FakePyPlot,), {})
+    _install_fake_pyplot(monkeypatch, cls)
+
+    nbp = _fresh_nbp()
+    nbp.patch_roboticstoolbox_pyplot_launch_for_notebook()
+
+    fig = plt.figure()
+    ax3d = fig.add_subplot(111, projection="3d")
+    instance = cls()
+    instance.launch(name="test", fig=fig)
+
+    assert (
+        instance.launch_calls[0]["ax"] is ax3d
+    ), "Existing 3D axes should have been injected into launch() call"
+    plt.close("all")
+
+
+def test_pyplot_launch_patch_clears_inline_is_jl(monkeypatch):
+    """patched_launch forces _inline_is_jl=False even if original_launch set it True."""
+    cls = type("PyPlot", (_FakePyPlot,), {})
+    _install_fake_pyplot(monkeypatch, cls)
+
+    nbp = _fresh_nbp()
+    nbp.patch_roboticstoolbox_pyplot_launch_for_notebook()
+
+    instance = cls()
+    instance.launch(name="test")
+
+    assert (
+        instance._inline_is_jl is False
+    ), "patched_launch must reset _inline_is_jl to False after original_launch"
 
 
 def test_pyplot_add_patch_suppresses_show_and_draw(monkeypatch):
@@ -233,8 +272,11 @@ def test_armplot_patch_notebook_syncs_robot_q(monkeypatch):
     assert np.allclose(instance.env.robots[0].robot.q, q)
 
 
-def test_armplot_patch_notebook_calls_display_refresh(monkeypatch):
-    """In notebook mode, patched step calls display_manager.refresh()."""
+def test_armplot_patch_notebook_refresh_nontiled(monkeypatch):
+    """Non-tiled notebook mode: patched step calls display_manager.refresh() so
+    that SCOPE and other bdsim-managed pyplot figures get updated.  RTB manages
+    env.fig via its own _push_inline_frame handle, so refresh_figure is NOT called.
+    """
     import numpy as np
 
     cls = type("ArmPlot", (_FakeArmPlot,), {})
@@ -243,17 +285,125 @@ def test_armplot_patch_notebook_calls_display_refresh(monkeypatch):
     nbp = _fresh_nbp()
     nbp.patch_roboticstoolbox_armplot_for_notebook()
 
-    dm = SimpleNamespace(refresh=MagicMock())
+    dm = SimpleNamespace(refresh=MagicMock(), refresh_figure=MagicMock())
     simstate = _make_simstate(notebook_backend=True)
     simstate.display_manager = dm
+    # ntiles absent (or None) → non-tiled
+    simstate.ntiles = None
 
     instance = cls()
     instance._simstate = simstate
     instance.env.step = MagicMock()
+    instance.env.fig = object()
 
     instance.step(0.0, [np.zeros(6)])
 
     dm.refresh.assert_called_once()
+    dm.refresh_figure.assert_not_called()
+
+
+def test_armplot_patch_notebook_refresh_figure_tiled(monkeypatch):
+    """Tiled notebook mode: patched step calls display_manager.refresh_figure(env.fig)
+    to update the shared figure containing ArmPlot and SCOPE subplots.
+    refresh() must NOT be called (env.fig is not in pyplot registry).
+    """
+    import numpy as np
+
+    cls = type("ArmPlot", (_FakeArmPlot,), {})
+    _install_fake_armplot(monkeypatch, cls)
+
+    nbp = _fresh_nbp()
+    nbp.patch_roboticstoolbox_armplot_for_notebook()
+
+    dm = SimpleNamespace(refresh=MagicMock(), refresh_figure=MagicMock())
+    simstate = _make_simstate(notebook_backend=True)
+    simstate.display_manager = dm
+    simstate.ntiles = [2, 2]  # tiled → shared figure
+
+    instance = cls()
+    instance._simstate = simstate
+    instance.env.step = MagicMock()
+    fig = object()
+    instance.env.fig = fig
+
+    instance.step(0.0, [np.zeros(6)])
+
+    dm.refresh_figure.assert_called_once_with(fig)
+    dm.refresh.assert_not_called()
+
+
+def test_armplot_patch_notebook_clears_jl_flag_nontiled(monkeypatch):
+    """Non-tiled notebook mode: env._inline_is_jl is forced to False so that
+    RTB uses display-id animation instead of clear_output(), which would destroy
+    other blocks' (e.g. SCOPE's) output display slots.
+    """
+    import numpy as np
+
+    cls = type("ArmPlot", (_FakeArmPlot,), {})
+    _install_fake_armplot(monkeypatch, cls)
+
+    nbp = _fresh_nbp()
+    nbp.patch_roboticstoolbox_armplot_for_notebook()
+
+    dm = SimpleNamespace(refresh=MagicMock(), refresh_figure=MagicMock())
+    simstate = _make_simstate(notebook_backend=True)
+    simstate.display_manager = dm
+    simstate.ntiles = None
+
+    instance = cls()
+    instance._simstate = simstate
+    instance.env.step = MagicMock()
+    instance.env._inline_is_jl = True  # simulate JupyterLite
+
+    instance.step(0.0, [np.zeros(6)])
+
+    assert (
+        instance.env._inline_is_jl is False
+    ), "patched_step must clear _inline_is_jl so RTB uses display-id, not clear_output()"
+
+
+def test_armplot_patch_notebook_suppresses_push_inline_frame_tiled(monkeypatch):
+    """Tiled notebook mode: env._push_inline_frame is suppressed during env.step()
+    and restored afterwards, so RTB does not create a competing display slot for
+    the shared figure that bdsim drives via display_manager.refresh_figure().
+    """
+    import numpy as np
+
+    cls = type("ArmPlot", (_FakeArmPlot,), {})
+    _install_fake_armplot(monkeypatch, cls)
+
+    nbp = _fresh_nbp()
+    nbp.patch_roboticstoolbox_armplot_for_notebook()
+
+    original_push = MagicMock()
+    push_seen_during_step: list[Any] = []
+
+    def recording_step(dt=None):
+        # Capture whatever _push_inline_frame is at call time
+        push_seen_during_step.append(instance.env._push_inline_frame)
+
+    dm = SimpleNamespace(refresh=MagicMock(), refresh_figure=MagicMock())
+    simstate = _make_simstate(notebook_backend=True)
+    simstate.display_manager = dm
+    simstate.ntiles = [2, 2]
+
+    instance = cls()
+    instance._simstate = simstate
+    instance.env.step = recording_step
+    instance.env._push_inline_frame = original_push
+    instance.env.fig = object()
+
+    instance.step(0.0, [np.zeros(6)])
+
+    # During env.step(), _push_inline_frame must have been replaced (not the original)
+    assert len(push_seen_during_step) == 1
+    assert (
+        push_seen_during_step[0] is not original_push
+    ), "_push_inline_frame should be suppressed during env.step() in tiled mode"
+    # After step(), _push_inline_frame must be restored
+    assert (
+        instance.env._push_inline_frame is original_push
+    ), "_push_inline_frame must be restored after patched_step()"
 
 
 def test_armplot_patch_notebook_suppresses_plt_draw(monkeypatch):

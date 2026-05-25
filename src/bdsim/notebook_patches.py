@@ -86,7 +86,7 @@ def patch_roboticstoolbox_pyplot_launch_for_notebook() -> None:
     except Exception:
         return
 
-    patch_version = 1
+    patch_version = 3
     if getattr(PyPlot, "_bdsim_launch_patch_version", 0) >= patch_version:
         return
 
@@ -104,10 +104,35 @@ def patch_roboticstoolbox_pyplot_launch_for_notebook() -> None:
         _orig_ion = _plt.ion
         # Also suppress plt.ion() so the launch body cannot re-enable it.
         _plt.ion = lambda: None
+
+        # If the caller supplied a matplotlib Figure that already has 3D axes
+        # (because bdsim's create_figure() created them via PLOT3D=True),
+        # inject those axes into the launch kwargs so RTB reuses them instead
+        # of creating a new subplot at position 111.  Without this,
+        # BaseRobot.plot() passes `ax` only to env.add(), not env.launch(),
+        # so RTB creates a second 3D subplot that orphans the bdsim axes and
+        # the arm artists end up on the wrong (invisible) axes.
+        if fig is not None and "ax" not in kwargs:
+            existing_3d = next(
+                (ax for ax in getattr(fig, "axes", []) if hasattr(ax, "get_zlim")),
+                None,
+            )
+            if existing_3d is not None:
+                kwargs["ax"] = existing_3d
+
         try:
             original_launch(self, name=name, fig=fig, limits=limits, **kwargs)
         finally:
             _plt.ion = _orig_ion
+
+        # Force display-id path even on JupyterLite (_inline_is_jl is set to
+        # True inside original_launch on emscripten).  This ensures that the
+        # env.step() call inside BaseRobot.plot() — which runs during
+        # ArmPlot.start() — uses _push_inline_frame's persistent display-id
+        # handle rather than a one-shot clear_output()+display(), which would
+        # create a rogue static slot that can never be updated in-place.
+        self._inline_is_jl = False
+
         # Keep non-interactive after launch so that env.add() artist
         # creation is also protected.
         _plt.ioff()
@@ -124,7 +149,23 @@ def patch_roboticstoolbox_pyplot_launch_for_notebook() -> None:
         _plt.show = lambda block=None: None
         _plt.draw = lambda: None
         try:
-            return original_add(self, ob, **kwargs)
+            # Compatibility with older roboticstoolbox backends: some
+            # PyPlot.add() versions do not accept an ``ax`` keyword.
+            # Keep the requested axes by assigning self.ax when provided,
+            # then retry without ``ax``.
+            try:
+                return original_add(self, ob, **kwargs)
+            except TypeError as err:
+                if "unexpected keyword argument 'ax'" not in str(err):
+                    raise
+                kwargs_no_ax = dict(kwargs)
+                requested_ax = kwargs_no_ax.pop("ax", None)
+                if requested_ax is not None and hasattr(self, "ax"):
+                    try:
+                        self.ax = requested_ax
+                    except Exception:
+                        pass
+                return original_add(self, ob, **kwargs_no_ax)
         finally:
             _plt.show = _orig_show
             _plt.draw = _orig_draw
@@ -179,7 +220,9 @@ def patch_roboticstoolbox_armplot_for_notebook() -> None:
     except Exception:
         return
 
-    patch_version = 5
+    ArmPlot.PLOT3D = True
+
+    patch_version = 7
     if getattr(ArmPlot, "_bdsim_notebook_patch_version", 0) >= patch_version:
         return
 
@@ -196,7 +239,7 @@ def patch_roboticstoolbox_armplot_for_notebook() -> None:
             return original_step(self, t, inports)
 
         # Notebook-only step path: keep backend robot reference synchronized,
-        # drive env with explicit dt, then force canvas/output refresh.
+        # drive env with explicit dt, then coordinate display refresh.
         q = np.array(inports[0], copy=True)
         self.robot.q = q
 
@@ -209,18 +252,36 @@ def patch_roboticstoolbox_armplot_for_notebook() -> None:
                     backend_robot.q = q
 
         prev_t = getattr(self, "_bdsim_nb_prev_t", None)
-        if prev_t is None:
-            dt = 0.0
-        else:
-            dt = max(float(t) - float(prev_t), 0.0)
+        dt = 0.0 if prev_t is None else max(float(t) - float(prev_t), 0.0)
         self._bdsim_nb_prev_t = float(t)
+
+        # Detect tiled mode: all graphics blocks share one figure.
+        tiled = getattr(simstate, "ntiles", None) not in (None, [], [1, 1])
+
+        # Non-tiled notebook mode: RTB's _push_inline_frame() manages env.fig
+        # via its own display-id handle.  On JupyterLite the default is
+        # clear_output()+display() which wipes the entire cell output (including
+        # SCOPE's display slot) on every step.  Forcing _inline_is_jl=False
+        # makes RTB use the display-id path instead, so both ArmPlot and SCOPE
+        # can coexist in the same cell without interference.
+        if not tiled and env is not None:
+            env._inline_is_jl = False
+
+        # Tiled notebook mode: env.fig is the shared figure containing ArmPlot
+        # and SCOPE subplots.  Suppress RTB's own _push_inline_frame so it does
+        # not create a competing display slot; bdsim's display_manager drives
+        # the shared figure via refresh_figure() after env.step().
+        _orig_push = None
+        if tiled and env is not None:
+            _orig_push = getattr(env, "_push_inline_frame", None)
+            if _orig_push is not None:
+                env._push_inline_frame = lambda: None
 
         # Suppress plt.pause(), plt.draw(), and time.sleep() during env.step().
         # plt.pause() / plt.draw(): in a notebook the PyPlot backend's calls
         #   route through draw_if_interactive() which auto-displays and closes
-        #   the figure, breaking our display_id handle mechanism.
-        # time.sleep(): real-time pacing is unnecessary in a notebook; the
-        #   display_manager.refresh() call already throttles by doing real I/O.
+        #   the figure, breaking the display-id handle mechanism.
+        # time.sleep(): real-time pacing is unnecessary in a notebook.
         import matplotlib.pyplot as _plt
         import time as _time
 
@@ -231,30 +292,38 @@ def patch_roboticstoolbox_armplot_for_notebook() -> None:
         _plt.draw = lambda: None
         _time.sleep = lambda _dt=None: None
         try:
-            try:
-                self.env.step(dt)
-            except TypeError:
-                self.env.step()
+            if env is not None:
+                try:
+                    env.step(dt)
+                except TypeError:
+                    env.step()
         finally:
             _plt.pause = _orig_pause
             _plt.draw = _orig_draw
             _time.sleep = _orig_sleep
+            if _orig_push is not None and env is not None:
+                env._push_inline_frame = _orig_push
 
-        # Ensure visible run time in notebook snapshots even when the backend
-        # itself does not render a persistent timer text artist.
-        ax = getattr(env, "ax", None)
-        if ax is not None:
-            try:
-                ax.set_title(f"t={float(t):.2f}")
-            except Exception:
-                pass
-
-        # Push the updated 3D figure directly to the notebook output slot.
-        # This is tightly coupled to each ArmPlot step rather than relying
-        # on the animation frame callback timing.
+        # Drive display refresh for bdsim-managed figures.
+        #
+        # Non-tiled: RTB already pushed env.fig via _push_inline_frame with its
+        #   own display-id handle.  RTB also closed env.fig from pyplot's
+        #   registry in launch(), so display_manager.refresh() iterates only the
+        #   remaining pyplot figures (e.g. SCOPE) and leaves env.fig alone.
+        #
+        # Tiled: env.fig is the shared figure for all subplots (ArmPlot + SCOPE).
+        #   RTB closed it from pyplot, so refresh_figure() targets it directly.
         display_manager = getattr(simstate, "display_manager", None)
         if display_manager is not None:
-            display_manager.refresh()
+            if tiled:
+                fig = getattr(env, "fig", None)
+                refresh_one = getattr(display_manager, "refresh_figure", None)
+                if fig is not None and callable(refresh_one):
+                    refresh_one(fig)
+                else:
+                    display_manager.refresh()
+            else:
+                display_manager.refresh()
 
         return None
 

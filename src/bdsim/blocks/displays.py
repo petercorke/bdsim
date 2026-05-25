@@ -519,11 +519,11 @@ class Scope(GraphicsBlock):
             self._cursor_labels = [f"y{i}" for i in range(self.nplots)]
 
         # Apply dark-theme text styling when inside a tiled (shared-figure) layout.
-        if getattr(self, "_tile_axes", None) is not None:
+        if getattr(self, "_tile_subplotspec", None) is not None:
             _apply_tile_axes_style(self.ax)
         cursor_color = (
             CURSOR_COLOR_DARK
-            if getattr(self, "_tile_axes", None) is not None
+            if getattr(self, "_tile_subplotspec", None) is not None
             else CURSOR_COLOR_LIGHT
         )
 
@@ -838,11 +838,11 @@ class ScopeXY(GraphicsBlock):
             self.init(self.ax)
 
         # Apply dark-theme text styling when inside a tiled (shared-figure) layout.
-        if getattr(self, "_tile_axes", None) is not None:
+        if getattr(self, "_tile_subplotspec", None) is not None:
             _apply_tile_axes_style(self.ax)
         cursor_color = (
             CURSOR_COLOR_DARK
-            if getattr(self, "_tile_axes", None) is not None
+            if getattr(self, "_tile_subplotspec", None) is not None
             else CURSOR_COLOR_LIGHT
         )
 
@@ -1163,7 +1163,7 @@ class Animation(GraphicsBlock):
         assert self.fig is not None and self.ax is not None
 
         # Apply dark-theme text styling when inside a tiled (shared-figure) layout.
-        if getattr(self, "_tile_axes", None) is not None:
+        if getattr(self, "_tile_subplotspec", None) is not None:
             _apply_tile_axes_style(self.ax)
 
         self.init(

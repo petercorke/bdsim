@@ -114,6 +114,10 @@ class DisplayManager:
         """Perform final display update at end-of-run."""
         raise NotImplementedError()
 
+    def refresh_figure(self, fig: Any) -> None:
+        """Refresh a specific figure according to backend policy."""
+        raise NotImplementedError()
+
 
 class NotebookDisplayManager(DisplayManager):
     """Display policy for ``%matplotlib inline`` and similar notebook backends.
@@ -148,8 +152,42 @@ class NotebookDisplayManager(DisplayManager):
 
     def __init__(self) -> None:
         super().__init__()
-        # Maps fig.number → IPython DisplayHandle (has .update(obj) method)
+        # Maps id(fig) → IPython DisplayHandle (has .update(obj) method).
+        # Figure numbers are not stable identities in notebook backends:
+        # a closed figure can be replaced by a new figure with the same number.
         self._display_handles: dict[int, Any] = {}
+        self._warned_missing_handle: set[int] = set()
+
+    @staticmethod
+    def _figure_key(fig: Any) -> int:
+        return id(fig)
+
+    @staticmethod
+    def _display_figure(fig: Any) -> Any:
+        """Return an IPython display handle for *fig*, or None if unavailable."""
+        try:
+            from IPython.display import display
+        except ImportError:
+            return None
+        return display(fig, display_id=True)
+
+    def _ensure_handle(self, fig: Any) -> Any:
+        """Get or lazily create a display handle for *fig*."""
+        key = self._figure_key(fig)
+        handle = self._display_handles.get(key)
+        if handle is not None:
+            return handle
+
+        try:
+            fig.canvas.draw()
+            handle = self._display_figure(fig)
+        except Exception:
+            handle = None
+
+        if handle is not None:
+            self._display_handles[key] = handle
+            self._warned_missing_handle.discard(key)
+        return handle
 
     def show_initial(self) -> None:
         """Register each open figure with a ``display_id`` and show it.
@@ -163,18 +201,8 @@ class NotebookDisplayManager(DisplayManager):
         """
         if self._shown_once:
             return
-        try:
-            from IPython.display import display
-        except ImportError:
-            return
         for fig in self._iter_display_figures():
-            try:
-                fig.canvas.draw()
-                handle = display(fig, display_id=True)
-                if handle is not None:
-                    self._display_handles[fig.number] = handle
-            except Exception:
-                pass
+            self._ensure_handle(fig)
         self._shown_once = True
 
     def refresh(self) -> None:
@@ -189,14 +217,31 @@ class NotebookDisplayManager(DisplayManager):
         skipped (e.g. figures created after the initial call).
         """
         for fig in self._iter_display_figures():
-            handle = self._display_handles.get(fig.number)
+            handle = self._ensure_handle(fig)
             if handle is None:
+                key = self._figure_key(fig)
+                if key not in self._warned_missing_handle:
+                    self._warned_missing_handle.add(key)
                 continue
             try:
                 fig.canvas.draw()
                 handle.update(fig)
             except Exception:
                 pass
+
+    def refresh_figure(self, fig: Any) -> None:
+        """Refresh one figure, including figures not listed by pyplot."""
+        handle = self._ensure_handle(fig)
+        if handle is None:
+            key = self._figure_key(fig)
+            if key not in self._warned_missing_handle:
+                self._warned_missing_handle.add(key)
+            return
+        try:
+            fig.canvas.draw()
+            handle.update(fig)
+        except Exception:
+            pass
 
     def finalize(self, hold: bool = False) -> None:
         """Render a final frame and close all registered figures.
@@ -234,6 +279,10 @@ class MatplotlibDisplayManager(DisplayManager):
         for fig in self._iter_figures():
             fig.canvas.draw_idle()
             fig.canvas.flush_events()
+
+    def refresh_figure(self, fig: Any) -> None:
+        fig.canvas.draw_idle()
+        fig.canvas.flush_events()
 
     def finalize(self, hold: bool = False) -> None:
         if hold:
