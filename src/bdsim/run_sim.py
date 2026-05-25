@@ -2809,44 +2809,9 @@ class Options(OptionsBase):
                     "  BDSIM_DEBUG_DISCOVERY  set to any value to trace block-package discovery\n"
                 ),
             )
-            parser.add_argument(
-                "--backend",
-                "-b",
-                type=str,
-                nargs="?",
-                const="list",
-                default=effective_defaults["backend"],
-                metavar="BACKEND",
-                help=(
-                    "matplotlib backend to choose; use with no argument or with "
-                    "'list'/'help' to print available backends"
-                ),
-            )
-            parser.add_argument(
-                "--tiles",
-                "-t",
-                type=str,
-                default=effective_defaults["tiles"],
-                metavar="SPEC",
-                help="window tiling as RxC or one of: square, wide, tall",
-            )
-            parser.add_argument(
-                "--shape",
-                type=str,
-                default=effective_defaults["shape"],
-                metavar="WIDTHxHEIGHT",
-                help="window size as WxH, defaults to matplotlib default",
-            )
-            parser.add_argument(
-                "--blocks",
-                action="store_const",
-                const=True,
-                default=effective_defaults["blocks"],
-                dest="blocks",
-                help="Display blocks at startup",
-            )
+            gfx = parser.add_argument_group("Graphics Options")
 
-            g_group = parser.add_mutually_exclusive_group()
+            g_group = gfx.add_mutually_exclusive_group()
             g_group.add_argument(
                 "-g",
                 "--no-graphics",
@@ -2864,7 +2829,7 @@ class Options(OptionsBase):
                 help="enable graphic display",
             )
 
-            a_group = parser.add_mutually_exclusive_group()
+            a_group = gfx.add_mutually_exclusive_group()
             a_group.add_argument(
                 "-a",
                 "--no-animation",
@@ -2882,7 +2847,37 @@ class Options(OptionsBase):
                 help="animate graphics (implies --graphics)",
             )
 
-            m_group = parser.add_mutually_exclusive_group()
+            gfx.add_argument(
+                "--backend",
+                "-b",
+                type=str,
+                nargs="?",
+                const="list",
+                default=effective_defaults["backend"],
+                metavar="BACKEND",
+                help=(
+                    "matplotlib backend to choose; use with no argument or with "
+                    "'list'/'help' to print available backends"
+                ),
+            )
+            gfx.add_argument(
+                "--tiles",
+                "--tile",  # accept singular form (parse_known_args skips abbrev expansion)
+                "-t",
+                type=str,
+                default=effective_defaults["tiles"],
+                metavar="SPEC",
+                help="window tiling as RxC or one of: square, wide, tall",
+            )
+            gfx.add_argument(
+                "--shape",
+                type=str,
+                default=effective_defaults["shape"],
+                metavar="WIDTHxHEIGHT",
+                help="window size as WxH, defaults to matplotlib default",
+            )
+
+            m_group = gfx.add_mutually_exclusive_group()
             m_group.add_argument(
                 "-m",
                 "--movies",
@@ -2901,7 +2896,7 @@ class Options(OptionsBase):
                 help="disable automatic movie recording",
             )
 
-            h_group = parser.add_mutually_exclusive_group()
+            h_group = gfx.add_mutually_exclusive_group()
             h_group.add_argument(
                 "-H",
                 "--no-hold",
@@ -2919,7 +2914,7 @@ class Options(OptionsBase):
                 help="hold graphics in done()",
             )
 
-            alt_group = parser.add_mutually_exclusive_group()
+            alt_group = gfx.add_mutually_exclusive_group()
             alt_group.add_argument(
                 "+A",
                 "--altscreen",
@@ -2937,15 +2932,48 @@ class Options(OptionsBase):
                 help="do not display plots on second monitor",
             )
 
-            parser.add_argument(
-                "--no-progress",
-                action="store_const",
-                const=False,
-                default=effective_defaults["progress"],
-                dest="progress",
-                help="do not display simulation progress bar",
+            gfx.add_argument(
+                "--animation-rate",
+                type=float,
+                default=effective_defaults["animation_rate"],
+                metavar="HZ",
+                help="target interactive update cadence for animation/debugger",
             )
-            parser.add_argument(
+
+            sim = parser.add_argument_group("Simulation Control")
+            sim.add_argument(
+                "--simtime",
+                "-S",
+                type=str,
+                default=effective_defaults["simtime"],
+                help="simulation time: T or T,dt",
+            )
+            sim.add_argument(
+                "--set",
+                "-s",  # NOTE: clashes with `unittest discover -s <startdir>`; use pytest or --start-directory instead
+                dest="setparam",
+                action="append",
+                default=list(effective_defaults["setparam"]),
+                type=str,
+                help="override block parameter using block:param=value",
+            )
+            sim.add_argument(
+                "--global",
+                dest="setglob",
+                action="append",
+                default=list(effective_defaults["setglob"]),
+                type=str,
+                help="override global parameter using var=value",
+            )
+            sim.add_argument(
+                "--blocks",
+                action="store_const",
+                const=True,
+                default=effective_defaults["blocks"],
+                dest="blocks",
+                help="Display blocks at startup",
+            )
+            sim.add_argument(
                 "--verbose",
                 "-v",
                 action="store_const",
@@ -2953,50 +2981,89 @@ class Options(OptionsBase):
                 default=effective_defaults["verbose"],
                 help="debug flags",
             )
-            parser.add_argument(
+            sim.add_argument(
+                "--quiet",
+                "-q",
+                action="store_const",
+                const=True,
+                default=effective_defaults["quiet"],
+                help="suppress reports and progress bar",
+            )
+            sim.add_argument(
+                "--no-progress",
+                action="store_const",
+                const=False,
+                default=effective_defaults["progress"],
+                dest="progress",
+                help="do not display simulation progress bar",
+            )
+            sim.add_argument(
                 "--debug",
                 "-d",
                 type=str,
                 default=effective_defaults["debug"],
                 metavar="[psd]",
-                help="debug flags: p/ropagate, s/tate, d/eriv, i/nteractive",
+                help=(
+                    "debug flags: p/ropagate, s/tate, d/eriv, i/nteractive, "
+                    "g/raphics-diagnostics"
+                ),
             )
-            parser.add_argument(
-                "--simtime",
-                "-S",
-                type=str,
-                default=effective_defaults["simtime"],
-                help="simulation time: T or T,dt",
+
+            out = parser.add_argument_group("Simulation Output")
+            out.add_argument(
+                "-p",
+                "--pickle",
+                nargs="?",
+                const="bd.out",
+                default=effective_defaults["outfile"],
+                metavar="FILE",
+                dest="outfile",
+                help="output pickled simulation results (default filename: bd.out)",
             )
-            parser.add_argument(
-                "--animation-rate",
-                type=float,
-                default=effective_defaults["animation_rate"],
-                metavar="HZ",
-                help="target interactive update cadence for animation/debugger",
+            out.add_argument(
+                "-o",
+                "--out",
+                nargs="?",
+                const="bd.out",
+                default=effective_defaults["outfile"],
+                metavar="FILE",
+                dest="outfile",
+                help="[deprecated, use -p/--pickle] output pickled simulation results",
             )
-            parser.add_argument(
+            out.add_argument(
+                "-j",
+                "--json",
+                nargs="?",
+                const="bd.json",
+                default=effective_defaults["jsonfile"],
+                metavar="FILE",
+                dest="jsonfile",
+                help="output simulation results as JSON (default filename: bd.json)",
+            )
+
+            sol = parser.add_argument_group("Solver")
+            sol.add_argument(
                 "--dt",
                 type=float,
                 default=effective_defaults["dt"],
                 metavar="DT",
                 help="output sample interval used to build solve_ivp t_eval",
             )
-            parser.add_argument(
+            sol.add_argument(
                 "--atol",
                 type=float,
                 default=effective_defaults["atol"],
                 metavar="ATOL",
                 help="absolute tolerance for solve_ivp",
             )
-            parser.add_argument(
+            sol.add_argument(
                 "--rtol",
                 type=float,
                 default=effective_defaults["rtol"],
                 metavar="RTOL",
                 help="relative tolerance for solve_ivp",
             )
-            parser.add_argument(
+            sol.add_argument(
                 "--max-step",
                 type=float,
                 default=effective_defaults["max_step"],
@@ -3004,7 +3071,7 @@ class Options(OptionsBase):
                 dest="max_step",
                 help="maximum solve_ivp integration step",
             )
-            parser.add_argument(
+            sol.add_argument(
                 "--method",
                 type=str,
                 default=(
@@ -3022,61 +3089,6 @@ class Options(OptionsBase):
                     )
                 ),
             )
-            parser.add_argument(
-                "--quiet",
-                "-q",
-                action="store_const",
-                const=True,
-                default=effective_defaults["quiet"],
-                help="suppress reports and progress bar",
-            )
-            parser.add_argument(
-                "-p",
-                "--pickle",
-                nargs="?",
-                const="bd.out",
-                default=effective_defaults["outfile"],
-                metavar="FILE",
-                dest="outfile",
-                help="output pickled simulation results (default filename: bd.out)",
-            )
-            parser.add_argument(
-                "-o",
-                "--out",
-                nargs="?",
-                const="bd.out",
-                default=effective_defaults["outfile"],
-                metavar="FILE",
-                dest="outfile",
-                help="[deprecated, use -p/--pickle] output pickled simulation results",
-            )
-            parser.add_argument(
-                "-j",
-                "--json",
-                nargs="?",
-                const="bd.json",
-                default=effective_defaults["jsonfile"],
-                metavar="FILE",
-                dest="jsonfile",
-                help="output simulation results as JSON (default filename: bd.json)",
-            )
-            parser.add_argument(
-                "--set",
-                "-s",  # NOTE: clashes with `unittest discover -s <startdir>`; use pytest or --start-directory instead
-                dest="setparam",
-                action="append",
-                default=list(effective_defaults["setparam"]),
-                type=str,
-                help="override block parameter using block:param=value",
-            )
-            parser.add_argument(
-                "--global",
-                dest="setglob",
-                action="append",
-                default=list(effective_defaults["setglob"]),
-                type=str,
-                help="override global parameter using var=value",
-            )
 
             parser.set_defaults(
                 graphics=effective_defaults["graphics"],
@@ -3088,6 +3100,25 @@ class Options(OptionsBase):
             self._parser = parser
             argv0 = sys.argv[0] if len(sys.argv) > 0 else ""
             args, unknownargs = parser.parse_known_args()
+
+            # Warn about unrecognised --flag tokens that closely resemble a
+            # known bdsim option — catches typos that parse_known_args silently
+            # passes through to the user script (e.g. --animaton, --backand).
+            import difflib as _dl
+
+            _known_opts = [s for a in parser._actions for s in a.option_strings]
+            for _tok in unknownargs:
+                if not _tok.startswith("--"):
+                    continue
+                _flag = _tok.split("=")[0]
+                _close = _dl.get_close_matches(_flag, _known_opts, n=1, cutoff=0.7)
+                if _close:
+                    print(
+                        f"bdsim: warning: unrecognised option '{_flag}'"
+                        f" (did you mean '{_close[0]}'?)",
+                        file=sys.stderr,
+                    )
+
             # Consume bdsim options from sys.argv so user code sees only its own args.
             sys.argv = [argv0, *unknownargs]
             parsed_options: dict[str, Any] = vars(args)
