@@ -1,0 +1,51 @@
+{
+    "id": 1,
+    "created_by": "bdsim-test-fixture",
+    "creation_time": "2026-05-26 00:00:00",
+    "scene_width": 32000,
+    "scene_height": 32000,
+    "blocks": [
+        {
+            "id": 1001,
+            "block_type": "INTEGRATOR_S",
+            "title": "Integrator_S Block",
+            "pos_x": 100.0,
+            "pos_y": 100.0,
+            "width": 100,
+            "height": 100,
+            "flipped": false,
+            "inputsNum": 1,
+            "outputsNum": 1,
+            "inputs": [
+                {
+                    "id": 2001,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 1,
+                    "socket_type": 1
+                }
+            ],
+            "outputs": [
+                {
+                    "id": 2002,
+                    "index": 0,
+                    "multi_wire": true,
+                    "position": 3,
+                    "socket_type": 2
+                }
+            ],
+            "parameters": [
+                ["clock", null],
+                ["x0", null],
+                ["gain", 1],
+                ["min", null],
+                ["max", null],
+                ["enable", null],
+                ["blockargs", null]
+            ]
+        }
+    ],
+    "wires": [],
+    "labels": [],
+    "grouping_boxes": []
+}

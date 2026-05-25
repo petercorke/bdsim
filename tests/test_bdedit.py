@@ -29,7 +29,10 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[1]
 EXAMPLES_DIR = REPO_ROOT / "examples"
 EG1 = EXAMPLES_DIR / "eg1.bd"
-RRMC2 = EXAMPLES_DIR / "RVC3" / "RRMC2.bd"
+# Minimal fixture with one INTEGRATOR_S block — used to test deprecated-block
+# renaming.  The full RVC3/RRMC2.bd lives in a separate repo (symlinked locally)
+# so we keep a self-contained copy in tests/fixtures/.
+RRMC2 = Path(__file__).parent / "fixtures" / "has_integrator_s.bd"
 
 # ---------------------------------------------------------------------------
 # Helpers
