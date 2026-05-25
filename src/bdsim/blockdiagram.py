@@ -315,10 +315,34 @@ class BlockDiagram(BlockDiagramMixin):
         # when add_output_wire and add_input_wire are called on the blocks
         return self.wirelist.append(wire)  # type: ignore[return-value]
 
-    def delete_block(self, block: Block) -> None:
+    def delete_block(self, block: Block | str) -> None:
+        """
+        Delete a block and all wires connected to it.
+
+        :param block: the block to delete, or its name
+        :type block: Block or str
+
+        Before delete:    [A] ---> [B] ---> [C]
+        After delete(B):  [A]               [C]
+        Alternative:      [A] ------------> [C]
+
+        TODO: param to control alternative mode of deletion.  Can only work if B.nin=B.nout
+        """
+
         # check block is in blocklist
-        if block not in self.blocklist:
-            raise ValueError("block not in block diagram")
+        if isinstance(block, str):
+            # cannot assume self.blocknames is created yet, so search through blocklist for a block with the given name
+            for b in self.blocklist:
+                if b.name == block:
+                    block = b
+                    break
+            else:
+                raise ValueError("block not found")
+        elif isinstance(block, Block):
+            if block not in self.blocklist:
+                raise ValueError("block not in block diagram")
+        else:
+            raise ValueError("block must be a Block instance or block name")
         # delete a block and all wires connected to it
         self.blocklist.remove(block)
         self.blocknames.pop(block.name, None)  # type: ignore[arg-type]
