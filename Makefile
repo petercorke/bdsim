@@ -40,11 +40,13 @@ dist: .FORCE
 	python -m build
 
 upload: .FORCE
+	#$(MAKE) test
 	$(eval VERSION := $(shell grep '^version' pyproject.toml | sed 's/version = "\(.*\)"/\1/'))
 	@echo "Uploading version $(VERSION) to PyPI"
 	twine upload dist/*
 	git tag v$(VERSION)
 	git push origin v$(VERSION)
+	@echo "Tagged and pushed v$(VERSION)"
 
 install:
 	pip install -e .
