@@ -149,7 +149,10 @@ class TestQtSmoke:
 
             main = Main(win.centralWidget().scene, win.centralWidget().layout)
             assert main.parameterWindow.width() > 300
-            assert win.centralWidget().layout.columnMinimumWidth(10) >= main.parameterWindow.width()
+            assert (
+                win.centralWidget().layout.columnMinimumWidth(10)
+                >= main.parameterWindow.width()
+            )
             # Avoid GUI popup/timer paths in headless test runs.
             main.parameterWindow.displayPopUpMessage = lambda *args, **kwargs: None
             main.parameterWindow.updateBlockParameters()
@@ -167,7 +170,9 @@ class TestQtSmoke:
                 raise AssertionError("QMessageBox.warning should not be called")
 
             monkeypatch.setenv("QT_QPA_PLATFORM", "offscreen")
-            monkeypatch.setattr("bdedit.interface_manager.QMessageBox.warning", _should_not_be_called)
+            monkeypatch.setattr(
+                "bdedit.interface_manager.QMessageBox.warning", _should_not_be_called
+            )
 
             assert win.exitingWithoutSave() is True
         finally:
@@ -182,8 +187,12 @@ class TestQtSmoke:
             scope = scope_class()
 
             param_index = {param[0]: idx for idx, param in enumerate(scope.parameters)}
-            labels_widget = scope.parameterWindow.parameter_values[param_index["labels"]]
-            styles_widget = scope.parameterWindow.parameter_values[param_index["styles"]]
+            labels_widget = scope.parameterWindow.parameter_values[
+                param_index["labels"]
+            ]
+            styles_widget = scope.parameterWindow.parameter_values[
+                param_index["styles"]
+            ]
 
             assert labels_widget.text() == ""
             assert styles_widget.text() == ""
@@ -230,7 +239,9 @@ class TestQtSmoke:
         try:
             win.loadFromFilePath(str(path))
             captured = capsys.readouterr()
-            assert "BdEdit warning: dropping unresolvable wire during load" in captured.err
+            assert (
+                "BdEdit warning: dropping unresolvable wire during load" in captured.err
+            )
             assert re.search(r"start=[^,]+ \(id \d+\)", captured.err)
             assert "end=socket id 999999999" in captured.err
             scene = win.centralWidget().scene
@@ -260,7 +271,8 @@ class TestQtSmoke:
             assert "renamed deprecated block type during load" in captured.err
             scene = win.centralWidget().scene
             assert any(
-                block.block_type == "INTEGRATOR_S" or block.title == "Integrator_S Block"
+                block.block_type == "INTEGRATOR_S"
+                or block.title == "Integrator_S Block"
                 for block in scene.blocks
             )
         finally:
