@@ -4,7 +4,8 @@
 # from bdsim.block_types import GraphicsBlock
 
 from .run_sim import *
-from .run_realtime import *
+
+# from .run_realtime import *
 from .blockdiagram import *
 from .components import *
 from .block_types import GraphicsBlock
