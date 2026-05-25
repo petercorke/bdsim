@@ -38,6 +38,7 @@ dev = [
     "pytest-qt",
     "coverage",
     "flake8",
+    "ipython",
 ]
 
 docs = [

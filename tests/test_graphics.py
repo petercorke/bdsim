@@ -96,11 +96,14 @@ class StartTest(unittest.TestCase):
         """start() with movie set and animation=False still prepares block state."""
         gb = self._attach_bd(MinGB(nin=1, movie="test.mp4"))
         ss = _make_simstate(graphics=True, animation=False)
-        # _start_movie() is called later when figure exists
-        gb.start(ss)  # covers warning block
-        # Verify that movie and simstate are set, but _writer not yet (needs fig)
-        self.assertEqual(gb.movie, "test.mp4")
-        self.assertEqual(gb._simstate, ss)
+        try:
+            with patch("matplotlib.animation.FFMpegWriter") as MockW:
+                MockW.return_value.setup.return_value = None
+                gb.start(ss)
+            self.assertEqual(gb.movie, "test.mp4")
+            self.assertEqual(gb._simstate, ss)
+        finally:
+            plt.close("all")
 
     def test_start_movie_ffmpeg_setup_success(self):
         """_start_movie() with working FFMpeg creates writer and calls setup()."""
@@ -192,8 +195,10 @@ class StepTest(unittest.TestCase):
         gb = MinGB(nin=1, movie="out.mp4", timestamp=True)
         ss = _make_simstate(animation=False)
         gb._simstate = ss
-        gb.fig = plt.figure()
-        gb.writer = MagicMock()
+        # Bypass the fig setter (which would trigger _start_movie() and require
+        # ffmpeg) by assigning directly to the private attribute.
+        gb._fig = plt.figure()
+        gb._writer = MagicMock()
         try:
             gb.step(1.2345, [1.0])
             self.assertIsNotNone(gb._timestamp_artist)
