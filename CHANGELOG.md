@@ -8,6 +8,7 @@
   - type hinting throughout
   - bdedit reliability improved, now uses PySide6
   - massive use of CoPilot
+  - runs in Jupyter and JupyterLite
   
 * Code quality
   - more unit tests
@@ -18,18 +19,23 @@
   - custom exceptions
   - all data attributes in Block are now protected (prefixed by _).  The only public attributes are set by block constructors.  This allows for discovery of parameters for possible run-time changing.
 
-* Runtime
+* Option handling
   - sys.argv passed through to user code
+  - better -h display: use option grouping and subheadings
   - better argparse handling, use exclusive options to simplify
+  - unused options are passed through to user code in sys.argv
+  - attempt to catch mispelt options 
+
+  * Runtime
   - lazy block loading, greatly speeds startup
-  - better -h display
   - better tracebacks for run-time errors
   - more options can be passed to integration engine
   - can save results to JSON
 
 * Compile
   - wire errors include the file:linenum where the offending wire was created
-  - schedule allows feedthrough blocks
+  - scheduler now allows feedthrough blocks
+  - reworked the algebraic loop detector, previously could miss a loop or recurse infinitely
   - depth option on report_summary
 
 * Subsystem
@@ -37,12 +43,20 @@
 
 * bdload safety checks
 
+* examples and notebooks
+
+  - added cart pole demo
+  - added bouncing ball demo to showcase EVENT block
+  - lots more examples, with minimum documentation
+  - set of notebooks that can be run in JupyterLite with animations
+
 * Graphics
   - tiling, wide/tall options
   - tiles within a container window
   - data cursor
   - dark styling
   - MPL backend handling, works with %matplotlib in Jupyter
+  - animations work in JupyterLite
 
 * Integration engine
   - using `solve_ivp`
@@ -55,6 +69,7 @@
 * Blocks
   - EVENT uses the crossing-event machinery
   - STOP now uses the crossing-event machinery
+  - ANIMATION block for simple custom graphics
   - added _safe methods
   - state handling x
   - continuous time
@@ -73,8 +88,8 @@
   - new block_library interface
   - uses PySide6 rather than PyQt.  More permissive licence.
   - 'V' will shift and scale the diagram to fill the canvas
-  - uses block_library interface
+  - uses new block_library interface
   - dialogs for export save
   - SVG output
   - handle dark/light themes
-  - distributed as an app bundle.
+  - can be packaged as an app bundle.
