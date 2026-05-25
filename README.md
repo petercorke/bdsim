@@ -94,7 +94,7 @@ In contrast to traditional graphical simulation tools, bdsim treats modelling as
 
 * Better Version Control: No more opaque binary blobs. Your models are searchable, diffable text.
 
-* Seamless Integration: Incorporate SciPy solvers, PyTorch models, or custom computer vision pipelines directly into your simulation loops.
+* Seamless Integration: Incorporate SciPy solvers, PyTorch models, or custom robotic vision pipelines directly into your simulation loops.
 
 * Scalability: Programmatically generate massive block diagrams or run large-scale batch simulations on headless servers.
 
