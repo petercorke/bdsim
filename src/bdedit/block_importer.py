@@ -83,7 +83,11 @@ def _safe_parse_default_from_text(text):
     try:
         return ast.literal_eval(candidate)
     except Exception:
-        return candidate
+        # Ignore prose defaults like "defaults to block name ..." and only
+        # accept simple single-token identifiers (for example: auto).
+        if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", candidate):
+            return candidate
+        return None
 
 
 def _parse_keyword_options_from_text(text):
@@ -445,7 +449,7 @@ def import_blocks(scene, window):
                     ] and param_value_docstring[i + 1] in ["to"]:
                         # Value only has 1 default, which should follow after the word 'to'
                         # Try to evaluate value, if successful, this is some form of non string
-                        if param_value is None:
+                        if param_value is None and (i + 3) >= len(param_value_docstring):
                             try:
                                 param_value = ast.literal_eval(
                                     param_value_docstring[i + 2]

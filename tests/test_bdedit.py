@@ -150,7 +150,26 @@ class TestQtSmoke:
             main = Main(win.centralWidget().scene, win.centralWidget().layout)
             assert main.parameterWindow.width() > 300
             assert win.centralWidget().layout.columnMinimumWidth(10) >= main.parameterWindow.width()
+            # Avoid GUI popup/timer paths in headless test runs.
+            main.parameterWindow.displayPopUpMessage = lambda *args, **kwargs: None
             main.parameterWindow.updateBlockParameters()
+        finally:
+            win.close()
+
+    def test_close_modified_window_skips_modal_prompt_in_headless(self, monkeypatch):
+        """In offscreen/test mode, closing a modified window must not open QMessageBox."""
+        _require_qt()
+        win = _make_window()
+        try:
+            win.centralWidget().scene.has_been_modified = True
+
+            def _should_not_be_called(*args, **kwargs):
+                raise AssertionError("QMessageBox.warning should not be called")
+
+            monkeypatch.setenv("QT_QPA_PLATFORM", "offscreen")
+            monkeypatch.setattr("bdedit.interface_manager.QMessageBox.warning", _should_not_be_called)
+
+            assert win.exitingWithoutSave() is True
         finally:
             win.close()
 
@@ -169,6 +188,8 @@ class TestQtSmoke:
             assert labels_widget.text() == ""
             assert styles_widget.text() == ""
 
+            # Avoid GUI popup/timer paths in headless test runs.
+            scope.parameterWindow.displayPopUpMessage = lambda *args, **kwargs: None
             scope.parameterWindow.updateBlockParameters()
 
             assert scope.parameters[param_index["labels"]][2] is None
@@ -218,12 +239,23 @@ class TestQtSmoke:
         finally:
             win.close()
 
-    def test_rrmc2_renamed_deprecated_blocks_load(self, capsys):
+    def test_rrmc2_renamed_deprecated_blocks_load(self, tmp_path, capsys):
         """RRMC2.bd should map legacy integrator block names to the renamed classes."""
         _require_qt()
+        data = json.loads(RRMC2.read_text())
+        for block in data.get("blocks", []):
+            if block.get("block_type") == "INTEGRATOR_S":
+                block["block_type"] = "DINTEGRATOR"
+                break
+        else:
+            raise AssertionError("RRMC2 fixture no longer contains INTEGRATOR_S")
+
+        legacy_file = tmp_path / "RRMC2_legacy.bd"
+        legacy_file.write_text(json.dumps(data, indent=4))
+
         win = _make_window()
         try:
-            win.loadFromFilePath(str(RRMC2))
+            win.loadFromFilePath(str(legacy_file))
             captured = capsys.readouterr()
             assert "renamed deprecated block type during load" in captured.err
             scene = win.centralWidget().scene
@@ -234,14 +266,25 @@ class TestQtSmoke:
         finally:
             win.close()
 
-    def test_load_from_file_path_skips_duplicate_reload(self, capsys):
+    def test_load_from_file_path_skips_duplicate_reload(self, tmp_path, capsys):
         """Loading the same file twice should not repeat the deprecated rename warning."""
         _require_qt()
+        data = json.loads(RRMC2.read_text())
+        for block in data.get("blocks", []):
+            if block.get("block_type") == "INTEGRATOR_S":
+                block["block_type"] = "DINTEGRATOR"
+                break
+        else:
+            raise AssertionError("RRMC2 fixture no longer contains INTEGRATOR_S")
+
+        legacy_file = tmp_path / "RRMC2_legacy.bd"
+        legacy_file.write_text(json.dumps(data, indent=4))
+
         win = _make_window()
         try:
-            win.loadFromFilePath(str(RRMC2))
+            win.loadFromFilePath(str(legacy_file))
             capsys.readouterr()
-            win.loadFromFilePath(str(RRMC2))
+            win.loadFromFilePath(str(legacy_file))
             captured = capsys.readouterr()
             assert "renamed deprecated block type during load" not in captured.err
         finally:

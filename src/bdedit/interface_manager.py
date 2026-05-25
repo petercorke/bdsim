@@ -784,8 +784,36 @@ class InterfaceWindow(QMainWindow):
     def isModified(self):
         return self.centralWidget().scene.has_been_modified
 
+    @staticmethod
+    def _headless_or_test_mode() -> bool:
+        """Return True when GUI modal prompts should be suppressed.
+
+        Modal QMessageBox dialogs during window teardown can crash some Qt
+        backends in offscreen/headless pytest runs.
+        """
+        if os.environ.get("PYTEST_CURRENT_TEST"):
+            return True
+
+        app = QApplication.instance()
+        platform_name = ""
+        if app is not None:
+            try:
+                platform_name = str(app.platformName()).lower()
+            except Exception:
+                platform_name = ""
+
+        if platform_name in {"offscreen", "minimal"}:
+            return True
+
+        qpa = str(os.environ.get("QT_QPA_PLATFORM", "")).strip().lower()
+        return qpa in {"offscreen", "minimal"}
+
     def exitingWithoutSave(self):
         if not self.isModified():
+            return True
+
+        if self._headless_or_test_mode():
+            # Non-interactive context: treat close as discard to avoid dialogs.
             return True
 
         msg_prompt = QMessageBox.warning(
