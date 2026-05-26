@@ -53,7 +53,7 @@ install:
 
 clean: .FORCE
 	# (cd docsrc; make clean)
-	$(MAKE) -C src/bdweb clean
+	-$(MAKE) -C src/bdweb clean
 	-rm -r *.egg-info
 	-rm -r dist build
 
