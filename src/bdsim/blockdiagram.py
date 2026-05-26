@@ -1590,8 +1590,8 @@ class BlockDiagram(BlockDiagramMixin):
     ) -> str:
         """Render diagram text in DOT, Mermaid, GraphML, or ELK JSON format.
 
-        :param format: graph output format: ``"dot"``, ``"mermaid"``, ``"graphml"`` or
-            ``"elk"``
+        :param format: graph output format: ``"dot"``, ``"mermaid"``,
+            ``"mermaid_fenced"``, ``"graphml"`` or ``"elk"``
         :type format: str, optional
         :param filename: destination path or open text stream, defaults to None
         :type filename: str | file handle | None, optional
@@ -1602,9 +1602,47 @@ class BlockDiagram(BlockDiagramMixin):
 
         If ``filename`` is provided the rendered text is also written to it.
 
+        ``"mermaid_fenced"`` is identical to ``"mermaid"`` but wraps the output in
+        a ``\`\`\`mermaid`` fenced code block, ready to paste into Markdown or a
+        Jupyter notebook cell.
+
         Mermaid format can be rendered in Markdown files and on GitHub, and GraphML and
         ELK JSON can be imported into graph visualization tools such as yEd and Eclipse
         ELK respectively.
+
+        **Node shapes by block kind** (``dot`` and ``mermaid`` only)
+
+        .. list-table::
+           :header-rows: 1
+
+           * - Block kind
+             - DOT shape
+             - Mermaid shape
+           * - source
+             - ``record``
+             - rectangle ``[label]``
+           * - stateful (continuous, sampled, or ``hasstate``)
+             - ``box3d``
+             - subroutine ``[[label]]``
+           * - sum / prod
+             - (default ellipse)
+             - circle ``((label))``
+           * - graphics / display
+             - ``Mrecord``
+             - asymmetric ``>label]``
+           * - sink
+             - ``Mrecord``
+             - rectangle ``[label]``
+           * - function / other
+             - (default ellipse)
+             - rectangle ``[label]``
+
+        In a Jupyter notebook, the graph can be rendered directly by exporting in `mermaid_fenced` format
+        and using using IPython's ``display`` function::
+
+            from IPython.display import Markdown, display
+
+            display(Markdown(bd.graph(format="mermaid_fenced"))) # Render dynamically via Jupyter's built-in Mermaid engine
 
         :seealso: :func:`dotfile`
         """
@@ -1614,7 +1652,7 @@ class BlockDiagram(BlockDiagramMixin):
             stream: Any = io.StringIO()
             self.dotfile(stream, shapes=shapes)
             text = stream.getvalue()
-        elif graph_format == "mermaid":
+        elif graph_format in ("mermaid", "mermaid_fenced"):
             lines = ["flowchart LR"]
             node_ids: dict[Any, str] = {}
 
@@ -1623,7 +1661,18 @@ class BlockDiagram(BlockDiagramMixin):
                 node_ids[b] = node_id
                 label_raw = b.name if b.name is not None else f"{b.type}_{i}"
                 label = label_raw.replace('"', r"\"")
-                lines.append(f'    {node_id}["{label}"]')
+                if b.type == "sum":
+                    # circle
+                    node_str = f'{node_id}(("{label}"))'
+                elif b.isgraphics:
+                    # asymmetric (display/sink)
+                    node_str = f'{node_id}>"{label}"]'
+                elif b.hasstate:
+                    # subroutine-style (stateful)
+                    node_str = f'{node_id}[["{label}"]]'
+                else:
+                    node_str = f'{node_id}["{label}"]'
+                lines.append(f"    {node_str}")
 
             for w in self.wirelist:
                 start = node_ids[w.start.block]
@@ -1641,6 +1690,8 @@ class BlockDiagram(BlockDiagramMixin):
                     lines.append(f"    {start} --> {end}")
 
             text = "\n".join(lines) + "\n"
+            if graph_format == "mermaid_fenced":
+                text = "```mermaid\n" + text + "```\n"
         elif graph_format == "graphml":
             node_ids: dict[Any, str] = {}
 
@@ -1791,7 +1842,7 @@ class BlockDiagram(BlockDiagramMixin):
         else:
             raise ValueError(
                 "unsupported graph format "
-                f"'{format}', expected 'dot', 'mermaid', 'graphml' or 'elk'"
+                f"'{format}', expected 'dot', 'mermaid', 'mermaid_fenced', 'graphml' or 'elk'"
             )
 
         if filename is not None:
