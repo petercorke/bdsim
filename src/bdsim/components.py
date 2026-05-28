@@ -34,10 +34,10 @@ import numpy as np
 
 from typing import TYPE_CHECKING, Any, Callable, Protocol, TypeVar, runtime_checkable
 
-_m_ex = _timed_import("bdsim.exceptions", "exceptions")
-BlockApiError = _m_ex.BlockApiError
-BlockRuntimeError = _m_ex.BlockRuntimeError
-SimulationContextError = _m_ex.SimulationContextError
+# _m_ex = _timed_import("bdsim.exceptions", "exceptions")
+# BlockApiError = _m_ex.BlockApiError
+# BlockRuntimeError = _m_ex.BlockRuntimeError
+# SimulationContextError = _m_ex.SimulationContextError
 
 if TYPE_CHECKING:
     from bdsim.blockdiagram import BlockDiagram

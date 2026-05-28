@@ -7,28 +7,31 @@ from typing import TYPE_CHECKING, Any, Callable, cast
 import warnings
 
 import numpy as np
+import spatialmath.base as smb
+
+# not sure this is really a great idea, it makes execution time non deterministic.
 
 
-class _LazyModule:
-    """Import-on-first-use proxy for optional/heavy modules."""
+# class _LazyModule:
+#     """Import-on-first-use proxy for optional/heavy modules."""
 
-    def __init__(self, module_name: str) -> None:
-        self._module_name = module_name
-        self._module: Any | None = None
+#     def __init__(self, module_name: str) -> None:
+#         self._module_name = module_name
+#         self._module: Any | None = None
 
-    def _resolve(self) -> Any:
-        if self._module is None:
-            self._module = importlib.import_module(self._module_name)
-        return self._module
+#     def _resolve(self) -> Any:
+#         if self._module is None:
+#             self._module = importlib.import_module(self._module_name)
+#         return self._module
 
-    def __getattr__(self, name: str) -> Any:
-        return getattr(self._resolve(), name)
+#     def __getattr__(self, name: str) -> Any:
+#         return getattr(self._resolve(), name)
 
 
-matplotlib = _LazyModule("matplotlib")
-animation = _LazyModule("matplotlib.animation")
-plt = _LazyModule("matplotlib.pyplot")
-smb = _LazyModule("spatialmath.base")
+# matplotlib = _LazyModule("matplotlib")
+# animation = _LazyModule("matplotlib.animation")
+# plt = _LazyModule("matplotlib.pyplot")
+# smb = _LazyModule("spatialmath.base")
 
 from bdsim.exceptions import BlockApiError, BlockRuntimeError
 from bdsim.components import Clock, _fixname, oodebug
