@@ -9,8 +9,6 @@ import heapq
 import itertools
 from collections import UserDict
 
-import matplotlib.pyplot as plt
-
 import numpy as np
 from typing import TYPE_CHECKING, Any, Callable, Protocol, TypeVar, runtime_checkable
 
@@ -452,28 +450,10 @@ class Runner:
         context = self._require_context()
         if context.options.hold:
             block = context.options.hold
-
-        display_manager = getattr(context.simstate, "display_manager", None)
-        try:
-            if display_manager is not None:
-                display_manager.finalize(hold=block)
-            else:
-                plt.show(block=block)
-        except KeyboardInterrupt:
-            print("bdsim: closing all windows")
-            plt.close("all")
-            return
         bd.done()
-        plt.close("all")
-        plt.pause(0.5)
 
     def closefigs(self) -> None:
-        context = self._require_context()
-        for i in range(context.simstate.fignum):
-            print("close", i + 1)
-            plt.close(i + 1)
-            plt.pause(0.1)
-        context.simstate.fignum = 0
+        pass
 
     def report(self, bd: BlockDiagram, type: str = "summary", **kwargs: Any) -> None:
         context = self._get_context()

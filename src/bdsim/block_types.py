@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 """Compatibility shim for moved block classes.
 
-Block and concrete block subclasses now live in bdsim.block.
+Core block classes (Block, SinkBlock, SourceBlock, …) live in bdsim.block.
+GraphicsBlock and notebook/MPL support live in bdsim.graphics_block.
 """
 
 from bdsim.block import (
@@ -14,8 +15,8 @@ from bdsim.block import (
     SubsystemBlock,
     SampledBlock,
     EventSource,
-    GraphicsBlock,
 )
+from bdsim.graphics_block import GraphicsBlock
 
 __all__ = [
     "Block",
