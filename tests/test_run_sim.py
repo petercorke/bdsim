@@ -1410,6 +1410,38 @@ class HybridSimSampleGridTest(unittest.TestCase):
         out = self._run(T=1.0, dt=0.1, fps=3, max_step=1e-3)
         self.assertEqual(len(out.t), 13)  # 11 dt-grid + 2 anim_frame boundaries
 
+    def test_no_empty_grid_sample_explosion(self):
+        """An interval with no `k*dt` multiple inside (here the final
+        `[1/3, 0.34]`) does not dump every integrator step into out.t."""
+        out = self._run(T=0.34, dt=0.1, fps=3, max_step=1e-3)
+        self.assertEqual(len(out.t), 6)  # 0, 0.1, 0.2, 0.3, 1/3, 0.34
+
+
+# ---------------------------------------------------------------------------
+class BuildTEvalGridTest(unittest.TestCase):
+    """Unit tests for `BDSim._build_t_eval_grid`.
+
+    Contract: returns a non-empty `np.ndarray` containing exactly the endpoints
+    `t0` and `t1` plus any `k*dt` multiples strictly between them, sorted and
+    deduplicated.
+    """
+
+    def test_endpoints_only_when_no_multiple_fits(self):
+        """`t1 - t0 < dt` and no `k*dt` in `[t0, t1]` → grid is `[t0, t1]`."""
+        grid = BDSim._build_t_eval_grid(0.333, 0.34, 0.1)
+        np.testing.assert_allclose(grid, [0.333, 0.34])
+
+    def test_aligned_endpoints_no_duplicate(self):
+        """`t0 == k*dt` and `t1 == (k+n)*dt` → clean dt-aligned sequence,
+        endpoint inclusion does not introduce duplicates."""
+        grid = BDSim._build_t_eval_grid(0.0, 0.3, 0.1)
+        np.testing.assert_allclose(grid, [0.0, 0.1, 0.2, 0.3])
+
+    def test_endpoints_with_interior_multiples(self):
+        """Non-aligned endpoints with `k*dt` points between."""
+        grid = BDSim._build_t_eval_grid(0.123, 0.456, 0.1)
+        np.testing.assert_allclose(grid, [0.123, 0.2, 0.3, 0.4, 0.456])
+
 
 if __name__ == "__main__":
     unittest.main()

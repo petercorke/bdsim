@@ -880,22 +880,23 @@ class BDSim(Runner):
         return str(simstate.solver)
 
     @staticmethod
-    def _build_t_eval_grid(t0: float, t1: float, dt: float) -> np.ndarray | None:
-        """Build an absolute-time t_eval grid over the closed interval [t0, t1]."""
+    def _build_t_eval_grid(t0: float, t1: float, dt: float) -> np.ndarray:
+        """Build an absolute-time t_eval grid over the closed interval [t0, t1].
+
+        The grid always contains the endpoints `t0` and `t1` plus any `k*dt`
+        multiples that land strictly between them. `dt > 0` and `t0 < t1` are
+        guaranteed by the caller.
+        """
         tol = 1e-12
-        if dt <= 0:
-            return None
         k0 = int(np.ceil((t0 - tol) / dt))
         k1 = int(np.floor((t1 + tol) / dt))
-        if k1 < k0:
-            return None
-        grid = dt * np.arange(k0, k1 + 1, dtype=float)
-        grid = grid[(grid >= (t0 - tol)) & (grid <= (t1 + tol))]
-        if grid.size == 0:
-            return None
-        grid = np.clip(grid, t0, t1)
-        grid = np.unique(grid)
-        return grid if grid.size > 0 else None
+        if k1 >= k0:
+            interior = dt * np.arange(k0, k1 + 1, dtype=float)
+            interior = interior[(interior >= (t0 - tol)) & (interior <= (t1 + tol))]
+            interior = np.clip(interior, t0, t1)
+        else:
+            interior = np.array([], dtype=float)
+        return np.unique(np.concatenate([[t0], interior, [t1]]))
 
     def _dispatch_crossing_event(
         self,
@@ -1849,16 +1850,7 @@ class BDSim(Runner):
 
         if simstate.dt is not None:
             t_eval = self._build_t_eval_grid(float(t0), float(t1), float(simstate.dt))
-            if t_eval is not None:
-                # Always include t1 so boundary events at non-dt-multiple
-                # times (clock ticks, _anim_frame callables) get a sink-tick
-                # — otherwise sinks freeze at the last dt-grid sample.
-                if not np.isclose(float(t_eval[-1]), float(t1), rtol=0.0, atol=1e-12):
-                    t_eval = np.concatenate([
-                        t_eval,
-                        np.array([float(t1)])
-                    ])
-                ivp_args.setdefault("t_eval", t_eval)
+            ivp_args.setdefault("t_eval", t_eval)
 
         # Keep user-provided method if present; otherwise use option/default,
         # then finally derive from run(..., solver=...).
