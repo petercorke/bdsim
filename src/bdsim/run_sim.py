@@ -1849,6 +1849,14 @@ class BDSim(Runner):
         if simstate.dt is not None:
             t_eval = self._build_t_eval_grid(float(t0), float(t1), float(simstate.dt))
             if t_eval is not None:
+                # Always include t1 so boundary events at non-dt-multiple
+                # times (clock ticks, _anim_frame callables) get a sink-tick
+                # — otherwise sinks freeze at the last dt-grid sample.
+                if not np.isclose(float(t_eval[-1]), float(t1), rtol=0.0, atol=1e-12):
+                    t_eval = np.concatenate([
+                        t_eval,
+                        np.array([float(t1)])
+                    ])
                 ivp_args.setdefault("t_eval", t_eval)
 
         # Keep user-provided method if present; otherwise use option/default,
@@ -1966,8 +1974,14 @@ class BDSim(Runner):
                     crossing_state_map,
                 )
 
-        # return final continuous state and actual end time reached
-        t_final = float(result.t[-1]) if len(result.t) > 0 else float(t0)
+        # return final continuous state and actual end time reached.
+        # `result.t[-1]` is the last OUTPUT sample, not the integrator's
+        # reach; on natural completion it can undershoot t1 and trigger a
+        # spurious residual call. Use t1 directly when status == 0.
+        if result.status == 0:
+            t_final = float(t1)
+        else:
+            t_final = float(result.t[-1]) if len(result.t) > 0 else float(t0)
         if len(result.t) > 0:
             if crossing_handled:
                 x_final = bd.continuous_state_vector(crossing_state_map)
