@@ -2157,6 +2157,8 @@ class GraphicsBlock(SinkBlock):
                     fps=fps_int, extra_args=["-vcodec", "libx264"]
                 )
                 self._writer.setup(fig=self._fig, outfile=self._movie)  # type: ignore[union-attr]
+                # Attach writer to figure so DisplayManager.refresh() can find it for fps-paced grabs.
+                self._fig._bdsim_movie_writer = self._writer  # type: ignore[union-attr]
                 self._movie_started = True
                 print("movie block", self, " --> ", self._movie)
             except FileNotFoundError:
@@ -2225,12 +2227,6 @@ class GraphicsBlock(SinkBlock):
                     self._fig.canvas.draw()  # type: ignore[union-attr]
                 else:
                     self._fig.canvas.draw()  # type: ignore[union-attr]
-
-        if self._movie is not None:
-            try:
-                self._writer.grab_frame()  # type: ignore[union-attr]
-            except AttributeError:
-                self.fatal("cannot save movie, please install ffmpeg")  # type: ignore[union-attr]
 
     def done(self, block=False, **kwargs) -> None:
         if self._fig is not None:

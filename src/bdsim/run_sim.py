@@ -1462,8 +1462,9 @@ class BDSim(Runner):
                     if getattr(ss, "stop", None) is not None:
                         return
                     # Schedule the next anim_frame on the canonical k*_dt grid.
+                    # `<= tf + tol` so a frame landing exactly on tf still fires.
                     next_t = (round(t / _dt) + 1) * _dt
-                    if next_t < tf - event_tol:
+                    if next_t <= tf + event_tol:
                         ss.declare_event(_anim_frame, next_t)
 
                 # Schedule frame callbacks for all animated runs; notebook mode
