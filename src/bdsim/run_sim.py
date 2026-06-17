@@ -1470,6 +1470,26 @@ class BDSim(Runner):
                 # relies on these callbacks to refresh inline figure output.
                 simstate.declare_event(_anim_frame, interactive_dt)
 
+            # Mirror the discrete-only t=0 pre-pass so hybrid diagrams capture
+            # the IC sample (the per-interval dedup skips result.t[0]=0).
+            if bd.nstates > 0:
+                simstate.t = 0.0
+                simstate.count += 1
+                eval_start = time.time()
+                bd.evaluate(bd.state_map(x0, simstate), 0.0, sinks=False)
+                simstate.bdtime += time.time() - eval_start
+                self._record_sample_and_service_hooks(
+                    bd, simstate, 0.0, x0, stop_short_circuit=False,
+                )
+                # refresh() (present + grab_frame) only fires from _anim_frame
+                # at t=interactive_dt — call it once so the IC reaches the live
+                # window and the movie writer.
+                if (
+                    simstate.options.animation
+                    and simstate.display_manager is not None
+                ):
+                    simstate.display_manager.refresh()
+
             while t0 < tf - event_tol:
                 # Next scheduled boundary (clock tick, explicit event, or terminal marker).
                 tnext, sources = simstate.eventq.pop(dt=1e-6)
