@@ -1461,8 +1461,10 @@ class BDSim(Runner):
                                 time.sleep(min(notebook_min_refresh_dt, 0.05))
                     if getattr(ss, "stop", None) is not None:
                         return
-                    if t + _dt < tf - event_tol:
-                        ss.declare_event(_anim_frame, t + _dt)
+                    # Schedule the next anim_frame on the canonical k*_dt grid.
+                    next_t = (round(t / _dt) + 1) * _dt
+                    if next_t < tf - event_tol:
+                        ss.declare_event(_anim_frame, next_t)
 
                 # Schedule frame callbacks for all animated runs; notebook mode
                 # relies on these callbacks to refresh inline figure output.
