@@ -1364,5 +1364,52 @@ class OptionsBackendCliTest(unittest.TestCase):
         self.assertEqual(opts.setglob, [])
 
 
+# ---------------------------------------------------------------------------
+class HybridSimSampleGridTest(unittest.TestCase):
+    """Regression tests for the per-interval sample grid in hybrid runs.
+
+    Each test sets up a trivial `CONSTANT → INTEGRATOR` diagram with
+    animation enabled. The integrator gives the diagram continuous state
+    (so `_interval_hybrid` is exercised); the diagram itself is trivial
+    so the sample grid is determined entirely by `dt`, the anim_frame
+    cadence, and the integration loop's sample-logging behavior.
+    """
+
+    @staticmethod
+    def _run(T: float, dt: float, fps: float, **run_kwargs):
+        sim = bdsim.BDSim(animation=True, animation_rate=fps, quiet=True)
+        bd = sim.blockdiagram()
+        bd.connect(bd.CONSTANT(1.0), bd.INTEGRATOR(0.0))
+        bd.compile()
+        return sim.run(bd, T=T, dt=dt, **run_kwargs)
+
+    def test_out_t_starts_at_zero(self):
+        """The IC sample at t=0 lands in out.t."""
+        out = self._run(T=1.0, dt=1 / 30, fps=30)
+        self.assertEqual(float(out.t[0]), 0.0)
+
+    def test_no_drift_doubled_samples(self):
+        """Past the FP drift threshold, out.t still has the expected inclusive
+        dt-grid count and contains no duplicate timestamps."""
+        out = self._run(T=3.5, dt=1 / 30, fps=30)
+        self.assertEqual(len(out.t), 106)  # 3.5 * 30 + 1
+        self.assertGreater(float(np.diff(out.t).min()), 0.0)
+
+    def test_anim_frame_boundary_in_tlist(self):
+        """Non-`dt`-aligned anim_frame boundaries land in out.t."""
+        out = self._run(T=1.0, dt=0.1, fps=3)
+        for boundary in (1 / 3, 2 / 3):
+            self.assertTrue(
+                np.any(np.isclose(out.t, boundary, atol=1e-9)),
+                f"expected t={boundary:.4f} in out.t, got {list(out.t)}",
+            )
+
+    def test_no_residual_sample_explosion(self):
+        """Small `max_step` on a non-`dt`-aligned boundary does not dump every
+        integrator step into out.t."""
+        out = self._run(T=1.0, dt=0.1, fps=3, max_step=1e-3)
+        self.assertEqual(len(out.t), 13)  # 11 dt-grid + 2 anim_frame boundaries
+
+
 if __name__ == "__main__":
     unittest.main()
