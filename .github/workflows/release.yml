@@ -1,0 +1,85 @@
+# Build and publish to PyPI on GitHub release creation or manual trigger.
+# Uses OIDC trusted publishing — no stored PyPI token required.
+# Pure Python package — a universal wheel suffices; no cibuildwheel needed.
+
+name: Release
+
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  verify_version:
+    name: Verify tag matches package version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check version
+        # Skip check on manual workflow_dispatch runs (no release tag exists)
+        if: github.event_name == 'release'
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          echo "Tag version    : $TAG"
+          echo "Package version: $PKG"
+          [ "$TAG" = "$PKG" ] || { echo "ERROR: tag v$TAG does not match pyproject.toml version $PKG"; exit 1; }
+
+  build:
+    name: Build sdist and wheel
+    needs: verify_version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Build sdist and wheel
+        run: pipx run build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  smoke_test:
+    name: Smoke-test wheel
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Install wheel (pulls deps from PyPI)
+        run: pip install --find-links dist bdsim
+
+      - name: Smoke test
+        run: python -c "import bdsim; print('OK', bdsim.__version__)"
+
+  upload_pypi:
+    name: Publish to PyPI
+    needs: [build, smoke_test]
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write   # required for OIDC trusted publishing
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip_existing: true
