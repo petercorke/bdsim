@@ -2,7 +2,7 @@ name: Package Artifacts
 
 on:
   push:
-    branches: [main, cleanup]
+    branches: [main]
   release:
     types: [published]
   workflow_dispatch:

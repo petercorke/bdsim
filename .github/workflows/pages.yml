@@ -2,7 +2,7 @@ name: Docs and Pages
 
 on:
   push:
-    branches: [main, cleanup]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -85,7 +85,7 @@ jobs:
 
   deploy:
     name: deploy to github pages
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/cleanup'
+    if: github.ref == 'refs/heads/main'
     needs: build-site
     runs-on: ubuntu-latest
     environment:
