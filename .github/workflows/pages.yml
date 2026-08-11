@@ -52,9 +52,11 @@ jobs:
 
       - name: Prepare notebooks for JupyterLite
         run: |
-          mkdir -p docs/lite/files
-          find docs/lite/files -name '*.ipynb' -delete
-          cp docs/notebooks/*.ipynb docs/lite/files/
+          mkdir -p docs/lite/files/notebooks docs/lite/files/figs
+          find docs/lite/files/notebooks -name '*.ipynb' -delete
+          rm -f docs/lite/files/figs/*
+          cp docs/notebooks/*.ipynb docs/lite/files/notebooks/
+          cp docs/figs/*.png docs/figs/*.svg docs/lite/files/figs/
 
       - name: Build JupyterLite content
         run: |
