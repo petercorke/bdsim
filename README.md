@@ -2,7 +2,7 @@
 
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/petercorke/bdsim/master/figs/BDSimLogo_NoBackgnd@2x.png" width="500" alt="bdsim logo">
+  <img src="https://raw.githubusercontent.com/petercorke/bdsim/main/docs/figs/bdsim_logo.png" width="500" alt="bdsim logo">
   <br>
   <strong>A Pythonic block-diagram environment for the simulation and analysis of dynamic systems.</strong>
   <br><br>
@@ -20,7 +20,7 @@
 
 
 [![JupyterLite](https://img.shields.io/badge/Try_it_Now-JupyterLite-orange?style=for-the-badge&logo=jupyter)](https://petercorke.github.io/bdsim/lite/lab?path=index.ipynb)
-  [![PyPI version](https://img.shields.io/pypi/v/machinevision-toolbox-python?style=for-the-badge&color=blue)](https://pypi.org/project/bdsim/)
+  [![PyPI version](https://img.shields.io/pypi/v/bdsim?style=for-the-badge&color=blue)](https://pypi.org/project/bdsim/)
   [![Documentation](https://img.shields.io/badge/Docs-View_Online-blue?style=for-the-badge)](https://petercorke.github.io/bdsim/)
 
   <p>
@@ -66,9 +66,11 @@ You can install `bdsim` directly from PyPI:
 
 ```bash
 pip install bdsim
+```
+
 To include the graphical editor (bdedit) and its dependencies:
 
-Bash
+```bash
 pip install bdsim[editor]
 ```
 
@@ -81,7 +83,6 @@ Or skip setup and run the [browser-based JupyterLite examples](https://petercork
 The power of bdsim lies in its conciseness. The step response of a simple first-order system can be defined and simulated in just a few lines of code:
 
 ```python
-Python
 import bdsim
 
 sim = bdsim.BDSim()
