@@ -159,3 +159,10 @@ bdweb/frontend/.output/
 bdweb/frontend/.vercel/
 bdweb/frontend/.netlify/
 bdweb/frontend/.wrangler/
+
+# scratch/working files not meant for the repo
+/UNTRACKED
+
+# local symlinks to sibling repos
+/wiki
+/examples/RVC3
