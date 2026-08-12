@@ -37,7 +37,7 @@ sys.path.append(os.path.abspath("exts"))
 # -- Project information -----------------------------------------------------
 
 project = "Block diagram simulation"
-copyright = "2020-, Peter Corke."
+copyright = "2020-present, Peter Corke"
 author = "Peter Corke"
 
 try:
@@ -103,6 +103,7 @@ html_theme_options = {
 
 html_logo = "../figs/bdsim_logo.png"
 html_last_updated_fmt = "%d-%b-%Y"
+show_authors = True
 autoclass_content = "class"
 html_show_sourcelink = True
 
