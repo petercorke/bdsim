@@ -22,20 +22,23 @@
   </p>
 </div>
 
-
-
 ---
-### Status & Ecosystem
+### Status & Project Health
+[![Build Status](https://github.com/petercorke/bdsim/actions/workflows/ci.yml/badge.svg)](https://github.com/petercorke/bdsim/actions/workflows/ci.yml)
+[![Downloads](https://static.pepy.tech/badge/bdsim/month)](https://pepy.tech/projects/bdsim)
+![Python Version](https://img.shields.io/pypi/pyversions/bdsim.svg)
+[![Coverage](https://codecov.io/gh/petercorke/bdsim/branch/main/graph/badge.svg)](https://codecov.io/gh/petercorke/bdsim)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+
+
+### Ecosystem & Dependencies
 [![A Python Robotics Package](https://raw.githubusercontent.com/petercorke/robotics-toolbox-python/master/.github/svg/py_collection.min.svg)](https://github.com/petercorke/robotics-toolbox-python)
 [![QUT Centre for Robotics Open Source](https://github.com/qcr/qcr.github.io/raw/master/misc/badge.svg)](https://qcr.github.io)
-[![Build Status](https://github.com/petercorke/bdsim/actions/workflows/ci.yml/badge.svg)](https://github.com/petercorke/bdsim/actions/workflows/ci.yml)
-[![Coverage](https://codecov.io/gh/petercorke/bdsim/branch/main/graph/badge.svg)](https://codecov.io/gh/petercorke/bdsim)
-![Python Version](https://img.shields.io/pypi/pyversions/bdsim.svg)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![PyPI - Downloads](https://img.shields.io/pypi/dw/bdsim)](https://pypistats.org/packages/bdsim)
 
-### Powered by
-[![Powered by NumPy](https://img.shields.io/badge/powered_by-NumPy-013243?logo=numpy&logoColor=white)](https://numpy.org)
+[![powered by NumPy](https://img.shields.io/badge/powered_by-NumPy-013243?logo=numpy&logoColor=white)](https://numpy.org)
+[![powered by SciPy](https://img.shields.io/badge/powered_by-SciPy-0054a6?logo=scipy&logoColor=white)](https://scipy.org)
+[![powered by Matplotlib](https://img.shields.io/badge/powered_by-Matplotlib-11557c?logo=matplotlib&logoColor=white)](https://matplotlib.org)
 [![Powered by Spatial Maths](https://raw.githubusercontent.com/petercorke/spatialmath-python/master/.github/svg/sm_powered.min.svg)](https://github.com/petercorke/spatialmath-python)
 
 ## Synopsis
