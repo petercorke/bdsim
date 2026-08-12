@@ -38,3 +38,6 @@ jobs:
           gh workflow run release.yml --ref "$tag"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # No checkout step in this job, so gh can't auto-detect the repo
+          # from a local git remote -- tell it explicitly.
+          GH_REPO: ${{ github.repository }}
