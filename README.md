@@ -7,16 +7,7 @@
   <strong>A Pythonic block-diagram environment for the simulation and analysis of dynamic systems.</strong>
   <br><br>
 
-<table align="center" style="border: none; border-collapse: collapse;">
-  <tr>
-    <td style="border: none; font-size: 1.5em; padding: 2px 8px;">🧠</td>
-    <td style="border: none; font-size: 1.5em; padding: 2px 8px;">Block diagram thinking</td>
-  </tr>
-  <tr>
-    <td style="border: none; font-size: 1.5em; padding: 2px 8px;">🐍</td>
-    <td style="border: none; font-size: 1.5em; padding: 2px 8px;">Python coding</td>
-  </tr>
-</table>
+<p style="font-size: 1.5em;"><em>Block diagram thinking → Python coding</em></p>
 
 
 [![JupyterLite](https://img.shields.io/badge/Try_it_Now-JupyterLite-orange?style=for-the-badge&logo=jupyter)](https://petercorke.github.io/bdsim/lite/lab?path=notebooks/index.ipynb)
