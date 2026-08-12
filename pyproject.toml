@@ -84,6 +84,10 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/bdsim", "src/bdedit", "src/bdweb"]
+exclude = [
+    "src/bdedit/figs/**",
+    "src/bdedit/Bdedit Technical Report.pdf",
+]
 
 [tool.hatch.build.targets.sdist]
 include = ["src/", "tests/", "README.md", "LICENSE"]
