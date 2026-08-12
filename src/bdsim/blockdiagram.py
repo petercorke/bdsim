@@ -1588,7 +1588,7 @@ class BlockDiagram(BlockDiagramMixin):
         filename: str | io.TextIOWrapper | None = None,
         shapes: Any = None,
     ) -> str:
-        """Render diagram text in DOT, Mermaid, GraphML, or ELK JSON format.
+        r"""Render diagram text in DOT, Mermaid, GraphML, or ELK JSON format.
 
         :param format: graph output format: ``"dot"``, ``"mermaid"``,
             ``"mermaid_fenced"``, ``"graphml"`` or ``"elk"``
