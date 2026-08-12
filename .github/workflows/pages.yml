@@ -59,6 +59,19 @@ jobs:
           cp docs/figs/*.png docs/figs/*.svg docs/lite/files/figs/
 
       - name: Build JupyterLite content
+        # docs/lite/jupyter-lite.json sets loadPyodideOptions.enableRunUntilComplete
+        # to false. Pyodide 0.27.7 (2025-06-04) turned this on by default, which
+        # makes any synchronous run_until_complete() call use WebAssembly JSPI
+        # ("stack switching") -- and hard-crash the kernel on browsers that don't
+        # support it, rather than the old harmless no-op. Chrome/Edge shipped JSPI;
+        # Firefox has it behind a flag; Safari has no support yet (dropped its
+        # standards objection in late 2025, so this may change). Since this repo
+        # installs jupyterlite-pyodide-kernel unpinned, any future "latest" bump
+        # picks up whatever Pyodide version ships that day -- this setting is what
+        # keeps the kernel usable in Safari regardless of that drift, at the cost
+        # of losing genuine synchronous-blocking semantics inside a cell (bdsim's
+        # notebooks don't need those). Once Safari (and Firefox out-of-flag) ship
+        # JSPI, flip this back to true -- don't just delete it silently.
         run: |
           cd docs/lite
           jupyter lite build --output-dir ../build/html/lite --contents files --force
