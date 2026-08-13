@@ -31,8 +31,14 @@ jobs:
       # `pypi` deploy environment's protection rules only allow deploys
       # from refs matching `v*` (a tag), so `--ref main` gets rejected at
       # the publish step even though build/smoke-test pass.
+      # release-please-action always sets releases_created to the literal
+      # string "true"/"false" (core.setOutput stringifies a JS boolean) --
+      # never unset. In an `if:` expression only "" is falsy, so a bare
+      # `${{ steps.release.outputs.releases_created }}` is truthy on every
+      # push, not just when a release was actually created. Must compare
+      # explicitly against the string 'true'.
       - name: Trigger PyPI publish
-        if: ${{ steps.release.outputs.releases_created }}
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
         run: |
           tag=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
           gh workflow run release.yml --ref "$tag"
