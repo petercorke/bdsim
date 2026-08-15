@@ -102,7 +102,7 @@ html_theme_options = {
 }
 
 html_logo = "../figs/bdsim_logo.png"
-html_last_updated_fmt = "%d-%b-%Y"
+html_last_updated_fmt = "%Y-%m-%d"
 show_authors = True
 autoclass_content = "class"
 html_show_sourcelink = True
@@ -159,6 +159,7 @@ mathjax3_config = {
 # -------- Options favicon -------------------------------------------------------#
 
 html_static_path = ["_static"]
+html_css_files = ["custom.css"]
 # create favicons online using https://favicon.io/favicon-converter/
 favicons = [
     {
