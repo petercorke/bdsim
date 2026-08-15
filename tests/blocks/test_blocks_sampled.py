@@ -13,7 +13,7 @@ import numpy.testing as nt
 
 import bdsim
 from bdsim.blocks.sampled import *
-from bdsim.blocks.spatial import PoseIntegrator_S
+from bdsim.blocks.spatial import PoseIntegrator_S, DPoseIntegrator
 from spatialmath import SE3, Twist3
 
 
@@ -104,6 +104,16 @@ class DiscreteTest(unittest.TestCase):
         nt.assert_almost_equal(
             block.test_next(u, x=x), Twist3(T * SE3.Delta(u * clock.T))
         )
+
+    def test_pose_integrator_s_default_x0(self):
+
+        clock = Clock(2, "Hz")
+        block = PoseIntegrator_S(clock)  # x0 defaults to None -> null twist
+        nt.assert_equal(block.getstate0(), np.zeros(6))
+
+        with self.assertWarns(FutureWarning):
+            deprecated_block = DPoseIntegrator(clock)
+        nt.assert_equal(deprecated_block.getstate0(), np.zeros(6))
 
 
 class DiscreteTransferTest(unittest.TestCase):

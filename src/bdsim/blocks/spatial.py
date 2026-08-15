@@ -336,7 +336,7 @@ class PoseIntegrator_S(SampledBlock):
         """
 
         if x0 is None:
-            x0 = Twist3()
+            x0 = Twist3().A
         elif isinstance(x0, SE3):
             x0 = Twist3(x0).A
         elif hasattr(x0, "A"):
