@@ -554,7 +554,7 @@ class Scope(GraphicsBlock):
         _cursor_register_controls(self)
 
         if self.watch:
-            for wire in self.input_wires:  # type: ignore[attr-defined]
+            for wire in self._input_wires:  # type: ignore[attr-defined]
                 plug = wire.start  # start plug for input wire
 
                 # append to the watchlist, bdsim.run() will do the rest
