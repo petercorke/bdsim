@@ -6,7 +6,6 @@ import threading
 import warnings
 import unicodedata
 import heapq
-import itertools
 from collections import UserDict
 
 import numpy as np
@@ -288,6 +287,27 @@ class OptionsBase(UserDict):
         return f"{self.__class__.__name__}({', '.join(f'{k}={v}' for k, v in self.data.items())})"
 
 
+class Counter:
+    """Simple auto-incrementing counter, a deepcopy-safe drop-in replacement
+    for ``itertools.count()``.
+
+    Python 3.14 removed pickle/copy/deepcopy support from itertools
+    iterators (deprecated since at least 3.12); a plain object with an int
+    attribute has no such restriction, since it goes through the default
+    ``__dict__``-copying path rather than itertools' C-level reduction.
+    """
+
+    __slots__ = ("_next",)
+
+    def __init__(self, start: int = 0) -> None:
+        self._next = start
+
+    def __next__(self) -> int:
+        value = self._next
+        self._next += 1
+        return value
+
+
 class TimeQ:
     """
     Time-ordered queue for events.
@@ -300,7 +320,7 @@ class TimeQ:
 
     def __init__(self) -> None:
         self._heap: list[tuple[float, int, Any]] = []
-        self._seq = itertools.count()
+        self._seq = Counter()
 
     def __len__(self) -> int:
         return len(self._heap)
