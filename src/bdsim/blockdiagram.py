@@ -35,6 +35,7 @@ else:
 
 
 from bdsim.components import *
+from bdsim.components import Counter
 from bdsim.connect import EndPlug, Plug, Port, StartPlug, Wire
 
 # ------------------------------------------------------------------------- #
