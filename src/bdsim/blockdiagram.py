@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections import defaultdict
 import inspect
-import itertools
 from copy import deepcopy
 import io
 import json
@@ -56,7 +55,7 @@ class BlockDiagram(BlockDiagramMixin):
     :ivar compiled: diagram has successfully compiled
     :vartype compiled: bool
     :ivar blockcounter: unique counter for each block type
-    :vartype blockcounter: defaultdict of itertools.count
+    :vartype blockcounter: defaultdict of Counter
     :ivar blockdict: index of all blocks by category
     :vartype blockdict: dict of lists
     :ivar name: name of this diagram
@@ -75,9 +74,9 @@ class BlockDiagram(BlockDiagramMixin):
         self.blocklist: list[Block] = []  # list of all blocks
         self.clocklist: list[Clock] = []  # list of all clock sources
         self.compiled = False  # network has been compiled
-        self.blockcounter: defaultdict = defaultdict(itertools.count)
-        self._block_id_counter = itertools.count()
-        self._wire_id_counter = itertools.count()
+        self.blockcounter: defaultdict = defaultdict(Counter)
+        self._block_id_counter = Counter()
+        self._wire_id_counter = Counter()
         self.name: str = name
         self.nstates = 0
         self.ndstates = 0
@@ -85,11 +84,11 @@ class BlockDiagram(BlockDiagramMixin):
         self.blocknames: dict[str, Any] = {}
         self.options = None
         self.runtime: Any = None  # set by BDSim before compilation
-        self.n_auto_sum = itertools.count()
-        self.n_auto_prod = itertools.count()
-        self.n_auto_const = itertools.count()
-        self.n_auto_gain = itertools.count()
-        self.n_auto_pow = itertools.count()
+        self.n_auto_sum = Counter()
+        self.n_auto_prod = Counter()
+        self.n_auto_const = Counter()
+        self.n_auto_gain = Counter()
+        self.n_auto_pow = Counter()
         self._state_map: dict[Block, np.ndarray | None] = {}
         self.compiled = False
 
