@@ -1188,11 +1188,19 @@ class BDSim(Runner):
             _stateless_no_clock = (
                 bd.nstates == 0 and not bd.clocklist and simstate.options.graphics
             )
+            # A movie can be requested globally (-m/--movies) or per graphics
+            # block (movie=... kwarg) without also enabling live animation.
+            # Frame grabs happen from the same fps-paced refresh hook as live
+            # display, so the frame loop must run even in that headless case.
+            _movies_active = bool(getattr(simstate.options, "movies", None)) or any(
+                getattr(blk, "_movie", None) is not None for blk in bd.blocklist
+            )
             interactive_dt: float | None = None
             if (
                 simstate.options.animation
                 or simstate.isdebug("i")
                 or _stateless_no_clock
+                or _movies_active
             ):
                 interactive_rate_hz = float(simstate.options.animation_rate)
                 interactive_dt = 1.0 / interactive_rate_hz
@@ -1404,7 +1412,7 @@ class BDSim(Runner):
             # Option A: schedule animation frame events as callables in the eventq.
             # Each callback pumps the matplotlib event loop then re-schedules itself.
             if (
-                simstate.options.animation or _stateless_no_clock
+                simstate.options.animation or _stateless_no_clock or _movies_active
             ) and interactive_dt is not None:
                 notebook_backend = bool(getattr(simstate, "notebook_backend", False))
                 display_manager: DisplayManager
@@ -1487,10 +1495,17 @@ class BDSim(Runner):
                 # at t=interactive_dt — call it once so the IC reaches the live
                 # window and the movie writer.
                 if (
-                    simstate.options.animation
-                    and simstate.display_manager is not None
-                ):
+                    simstate.options.animation or _movies_active
+                ) and simstate.display_manager is not None:
                     simstate.display_manager.refresh()
+                if simstate.stop is not None:
+                    # Stop triggered at t=0: clamp the run horizon so the
+                    # interval loop below is skipped entirely. The existing
+                    # end-of-run output construction reads only tlist/xlist,
+                    # which already hold just the t=0 sample, so this mirrors
+                    # the nstates==0 early-exit above without duplicating its
+                    # output-struct-building code.
+                    tf = 0.0
 
             while t0 < tf - event_tol:
                 # Next scheduled boundary (clock tick, explicit event, or terminal marker).

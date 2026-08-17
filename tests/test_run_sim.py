@@ -1418,6 +1418,88 @@ class HybridSimSampleGridTest(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
+class HybridSimGraphicsRegressionTest(unittest.TestCase):
+    """Regression tests for two graphics-loop bugs found in review of the
+    hybrid-sim per-interval sample-grid fixes above: headless movie
+    recording (movies/`movie=` without live `animation`) and honoring a
+    STOP condition already true at t=0 for a continuous-state diagram.
+    """
+
+    def test_headless_movie_records_frames(self):
+        """A movie block should still grab frames when animation=False.
+
+        Frame grabbing lives in display._grab_movie_frame, called from the
+        fps-paced _anim_frame loop -- which must run even without live
+        animation whenever a graphics block has a movie configured.
+        """
+        import subprocess
+        import tempfile
+        from pathlib import Path
+
+        def init(block, fig, ax):
+            ax.set_xlim(0, 1)
+            ax.set_ylim(-1, 2)
+            (block.dot,) = ax.plot([], [], "ro")
+
+        def update(block, t, inports):
+            block.dot.set_data([t], [inports[0]])
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            movie_path = Path(tmpdir) / "out.mp4"
+            sim = bdsim.BDSim(animation=False, backend="Agg", quiet=True)
+            bd = sim.blockdiagram()
+            integ = bd.INTEGRATOR(0.0)
+            bd.connect(bd.CONSTANT(1.0), integ)
+            anim = bd.ANIMATION(init, update, movie=str(movie_path))
+            bd.connect(integ, anim)
+            bd.compile()
+            sim.run(bd, T=1.0, dt=0.1)
+            bd.done()
+
+            self.assertTrue(movie_path.exists())
+            res = subprocess.run(
+                [
+                    "ffprobe", "-v", "error", "-select_streams", "v:0",
+                    "-count_frames", "-show_entries", "stream=nb_read_frames",
+                    "-of", "default=noprint_wrappers=1:nokey=1", str(movie_path),
+                ],
+                capture_output=True, text=True,
+            )
+            n_frames = int(res.stdout.strip() or 0)
+            self.assertGreater(n_frames, 0)
+
+    def test_stop_at_t0_honored_for_hybrid_diagram(self):
+        """A STOP condition already true at t=0 should exit immediately for a
+        continuous-state (hybrid) diagram, matching the discrete-only path.
+
+        animation=True is required so bd.step() (Stop's step() fallback
+        detector) actually runs during the shared t=0 IC pre-pass --
+        _record_sample_and_service_hooks's periodic_update is False at
+        t=0 (t - gtime == 0) regardless of diagram shape, so this is what
+        isolates the hybrid-vs-discrete difference.
+        """
+        common = dict(animation=True, backend="Agg", quiet=True)
+
+        sim_discrete = bdsim.BDSim(**common)
+        bd_discrete = sim_discrete.blockdiagram()
+        bd_discrete.connect(bd_discrete.CONSTANT(1), bd_discrete.STOP())
+        bd_discrete.compile()
+        out_discrete = sim_discrete.run(bd_discrete, T=5.0, dt=0.1)
+        self.assertEqual(len(out_discrete.t), 1)
+        self.assertEqual(float(out_discrete.t[0]), 0.0)
+
+        sim_hybrid = bdsim.BDSim(**common)
+        bd_hybrid = sim_hybrid.blockdiagram()
+        integ = bd_hybrid.INTEGRATOR(0.0)
+        bd_hybrid.connect(bd_hybrid.CONSTANT(1.0), integ)
+        bd_hybrid.connect(bd_hybrid.CONSTANT(1), bd_hybrid.STOP())
+        bd_hybrid.compile()
+        out_hybrid = sim_hybrid.run(bd_hybrid, T=5.0, dt=0.1)
+        self.assertEqual(len(out_hybrid.t), 1)
+        self.assertEqual(float(out_hybrid.t[0]), 0.0)
+
+
+# ---------------------------------------------------------------------------
 class BuildTEvalGridTest(unittest.TestCase):
     """Unit tests for `BDSim._build_t_eval_grid`.
 

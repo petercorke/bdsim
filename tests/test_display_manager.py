@@ -31,14 +31,19 @@ def test_grab_movie_frame_with_writer_grabs_once() -> None:
     writer.grab_frame.assert_called_once()
 
 
-def test_grab_movie_frame_swallows_attribute_error() -> None:
-    """If the writer is broken (no grab_frame), the helper stays quiet."""
+def test_grab_movie_frame_raises_on_broken_writer() -> None:
+    """A broken writer (no grab_frame) must surface a clear error, not be swallowed."""
     # Object without a grab_frame attribute raises AttributeError when called.
     class BrokenWriter:
         pass
 
     fig = SimpleNamespace(_bdsim_movie_writer=BrokenWriter())
-    _grab_movie_frame(fig)  # must not raise
+    try:
+        _grab_movie_frame(fig)
+    except RuntimeError as exc:
+        assert "ffmpeg" in str(exc)
+    else:
+        raise AssertionError("expected RuntimeError for a broken movie writer")
 
 
 def test_factory_returns_notebook_manager() -> None:

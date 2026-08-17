@@ -69,8 +69,8 @@ def _grab_movie_frame(fig: Any) -> None:
         return
     try:
         writer.grab_frame()
-    except AttributeError:
-        pass
+    except AttributeError as exc:
+        raise RuntimeError("cannot save movie, please install ffmpeg") from exc
 
 
 class DisplayManager:
