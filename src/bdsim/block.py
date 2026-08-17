@@ -1138,7 +1138,7 @@ class Block(ABC, Port):
         if inport_names is not None and name in (inport_names or []):
             # we're doing wiring
             port = inport_names.index(name)
-            self.bd.connect(value, Plug(value, port=0))
+            self.bd.connect(value, Plug(self, port=port))
         else:
             # regular case, add attribute
             super().__setattr__(name, value)
