@@ -133,7 +133,7 @@ class Dict(FunctionBlock):
     :seealso: :class:`Item` :class:`Mux`
     """
 
-    nin = 1  # type: ignore[assignment]
+    nin: int = -1
     nout = 1  # type: ignore[assignment]
 
     def __init__(self, keys: list[str], **blockargs: Any) -> None:
@@ -144,11 +144,11 @@ class Dict(FunctionBlock):
         :type blockargs: dict
         """
 
-        super().__init__(**blockargs)
+        super().__init__(nin=len(keys), **blockargs)
         self.keys: list[str] = keys
 
-    def output(self, t: float, inputs: list[Any], x: Any) -> Any:
-        return {key: inputs[i] for i, key in enumerate(self.keys)}
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
+        return [{key: inputs[i] for i, key in enumerate(self.keys)}]
 
 
 # ------------------------------------------------------------------------ #
