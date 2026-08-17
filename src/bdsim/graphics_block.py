@@ -57,6 +57,7 @@ class GraphicsBlock(SinkBlock):
         movie: str | None = None,
         timestamp: bool | None = None,
         timestamp_fmt: str | None = None,
+        watch: bool = False,
         **blockargs: Any,
     ) -> None:
         """
@@ -70,6 +71,9 @@ class GraphicsBlock(SinkBlock):
         :param timestamp_fmt: Format string used for timestamp text,
             defaults to ``TIMESTAMP_FORMAT``
         :type timestamp_fmt: str, optional
+        :param watch: add this block's input signal(s) to the watchlist,
+            defaults to False
+        :type watch: bool, optional
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         :return: transfer function block base class
@@ -81,6 +85,7 @@ class GraphicsBlock(SinkBlock):
         self._graphics = True
         self._fig: matplotlib.figure.Figure | None = None
         self.ax: Any = None
+        self.watch = watch
         self._tile_subplotspec: Any = None
         self._movie = movie
         self._movie_started = False
@@ -133,6 +138,20 @@ class GraphicsBlock(SinkBlock):
 
         self._simstate = simstate
         self._enabled = simstate.options.graphics
+
+        if self.watch:
+            # watch-list registration is a data-collection concern, not a
+            # graphics one -- must happen even when graphics is disabled
+            # (eg. BDSIM_NO_GRAPHICS=1), otherwise out.y silently ends up
+            # empty instead of containing the watched signals. Lives here
+            # rather than in each subclass's start() so every GraphicsBlock
+            # gets it for free.
+            for wire in self._input_wires:  # type: ignore[attr-defined]
+                plug = wire.start  # start plug for input wire
+
+                # append to the watchlist, bdsim.run() will do the rest
+                simstate.watchlist.append(plug)
+                simstate.watchnamelist.append(str(plug))
 
         self._graphics_start_in_progress = True
         self._graphics_start_in_progress_run_id = run_id

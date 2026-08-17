@@ -317,7 +317,6 @@ class Scope(GraphicsBlock):
         scale: Literal["auto"] | float = "auto",
         labels: list[str] | None = None,
         grid: bool | list | tuple = True,
-        watch: bool = False,
         title: str | None = None,
         loc: str = "best",
         **blockargs: Any,
@@ -340,13 +339,11 @@ class Scope(GraphicsBlock):
         :param grid: draw a grid, defaults to True. Can be boolean or a tuple of
                      options for grid()
         :type grid: bool or sequence
-        :param watch: add these signals to the watchlist, defaults to False
-        :type watch: bool, optional
         :param title: title of plot
         :type title: str
         :param loc: location of legend, see :meth:`matplotlib.pyplot.legend`, defaults to "best"
         :type loc: str
-        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        :param blockargs: |GraphicsBlockOptions|
         :type blockargs: dict
         """
 
@@ -416,7 +413,6 @@ class Scope(GraphicsBlock):
         self.line: list = [None] * nplots
         self.scale = scale
 
-        self.watch = watch
         self.title = title
         self.loc = loc
 
@@ -553,13 +549,6 @@ class Scope(GraphicsBlock):
         _cursor_add_owner(self)
         _cursor_register_controls(self)
 
-        if self.watch:
-            for wire in self._input_wires:  # type: ignore[attr-defined]
-                plug = wire.start  # start plug for input wire
-
-                # append to the watchlist, bdsim.run() will do the rest
-                simstate.watchlist.append(plug)
-                simstate.watchnamelist.append(str(plug))
         plt.draw()
 
     def step(self, t: float, inports: list[Any]) -> None:
@@ -777,7 +766,7 @@ class ScopeXY(GraphicsBlock):
         :type labels: 2-element tuple or list
         :param init: function to initialize the graphics, defaults to None
         :type init: callable
-        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        :param blockargs: |GraphicsBlockOptions|
         :type blockargs: dict
         """
 
@@ -1074,7 +1063,7 @@ class ScopeXY1(ScopeXY):
         :type labels: 2-element tuple or list
         :param init: function to initialize the graphics, defaults to None
         :type init: callable
-        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        :param blockargs: |GraphicsBlockOptions|
         :type blockargs: dict
         """
         super().__init__(
@@ -1144,7 +1133,7 @@ class Animation(GraphicsBlock):
         :type init: callable
         :param update: update function with signature update(frame, fig, ax)
         :type update: callable
-        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        :param blockargs: |GraphicsBlockOptions|
         :type blockargs: dict
         """
         super().__init__(**blockargs)
