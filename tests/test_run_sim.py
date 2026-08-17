@@ -1364,5 +1364,75 @@ class OptionsBackendCliTest(unittest.TestCase):
         self.assertEqual(opts.setglob, [])
 
 
+class OptionsNoGraphicsEnvTest(unittest.TestCase):
+    """Tests for the BDSIM_NO_GRAPHICS override (highest priority: beats
+    code kwargs, the BDSIM envariable, and explicit CLI flags alike)."""
+
+    def _parse_with_argv(self, argv):
+        old_argv = sys.argv[:]
+        try:
+            sys.argv = argv
+            return Options(sysargs=True)
+        finally:
+            sys.argv = old_argv
+
+    def _set_env(self, value):
+        old = os.environ.get("BDSIM_NO_GRAPHICS")
+        os.environ["BDSIM_NO_GRAPHICS"] = value
+        return old
+
+    def _restore_env(self, old):
+        if old is None:
+            os.environ.pop("BDSIM_NO_GRAPHICS", None)
+        else:
+            os.environ["BDSIM_NO_GRAPHICS"] = old
+
+    def test_unset_does_not_affect_graphics(self):
+        """Without the env var, graphics kwarg should be respected as normal."""
+        self.assertNotIn("BDSIM_NO_GRAPHICS", os.environ)
+        opts = Options(sysargs=False, graphics=True)
+        self.assertTrue(bool(opts.graphics))
+
+    def test_overrides_constructor_kwargs(self):
+        """Env var should force graphics/animation off even if code requests them."""
+        old = self._set_env("1")
+        try:
+            opts = Options(sysargs=False, graphics=True, animation=True)
+            self.assertFalse(bool(opts.graphics))
+            self.assertFalse(bool(opts.animation))
+            self.assertIsNone(opts.movies)
+        finally:
+            self._restore_env(old)
+
+    def test_overrides_explicit_cli_flags_without_raising(self):
+        """+g/+a on the CLI would normally conflict; the env var should win silently."""
+        old = self._set_env("true")
+        try:
+            opts = self._parse_with_argv(["prog", "+a"])
+            self.assertFalse(bool(opts.graphics))
+            self.assertFalse(bool(opts.animation))
+        finally:
+            self._restore_env(old)
+
+    def test_blocks_later_programmatic_set(self):
+        """graphics stays read-only afterwards, same as CLI-set options."""
+        old = self._set_env("yes")
+        try:
+            opts = Options(sysargs=False, graphics=True)
+            opts.set(graphics=True)
+            self.assertFalse(bool(opts.graphics))
+        finally:
+            self._restore_env(old)
+
+    def test_falsey_value_does_not_disable_graphics(self):
+        """An empty/unrecognised value should not trigger the override."""
+        old = self._set_env("0")
+        try:
+            opts = Options(sysargs=False, graphics=True)
+            self.assertTrue(bool(opts.graphics))
+        finally:
+            self._restore_env(old)
+
+
 if __name__ == "__main__":
     unittest.main()

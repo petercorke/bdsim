@@ -2875,6 +2875,8 @@ class Options(OptionsBase):
                     "Environment variables:\n"
                     "  BDSIM              comma-separated key=value pairs that set option defaults,\n"
                     "                     e.g. BDSIM=graphics=True,hold=True\n"
+                    "  BDSIM_NO_GRAPHICS  set to 1/true/yes/on to force graphics off, overriding\n"
+                    "                     code, BDSIM, and CLI args alike (e.g. for CI runs)\n"
                     "  BDSIMPATH          colon-separated list of extra paths/packages to search for blocks\n"
                     "  BDSIM_NO_TOOLBOXES set to 1/true/yes/on to skip loading external toolboxes\n"
                     "  BDSIM_DEBUG_LAZY_LOAD  set to any value to trace lazy block-class resolution\n"
@@ -3224,6 +3226,23 @@ class Options(OptionsBase):
         else:
             cmdline_options = dict()  # empty dictionary
             self._parser = None
+
+        # BDSIM_NO_GRAPHICS: unconditional override that forces graphics off,
+        # taking precedence over everything else -- code (BDSim(graphics=True)),
+        # the BDSIM envariable, and CLI args (+g/+a/-m) alike. Folded into
+        # cmdline_options (readonly) rather than default_options above, since
+        # readonly options can't be changed later via .set() or attribute
+        # assignment. Intended for CI / headless runs of example scripts that
+        # hard-code graphics=True.
+        if os.getenv("BDSIM_NO_GRAPHICS", "").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }:
+            cmdline_options["graphics"] = False
+            cmdline_options["animation"] = False
+            cmdline_options["movies"] = None
 
         # Detect conflicting CLI options before normalizing
         if (
