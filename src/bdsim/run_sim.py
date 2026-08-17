@@ -149,6 +149,40 @@ def blockname(name: str) -> str:
     return name.upper()
 
 
+def _store_watch_output(
+    out: BDStruct,
+    watchlist: list[Plug],
+    watchnamelist: list[str],
+    plist: list[list[Any]],
+) -> None:
+    """Save watched-signal data into ``out.y``/``out.ynames``.
+
+    :param out: results struct being built for :meth:`BDSim.run`
+    :type out: BDStruct
+    :param watchlist: watched plugs, in column order
+    :type watchlist: list of Plug
+    :param watchnamelist: display name for each entry in ``watchlist``
+    :type watchnamelist: list of str
+    :param plist: per-signal logged samples, one list per ``watchlist`` entry
+    :type plist: list of list
+
+    ``out.y`` column-stacks every watched signal into one array (a signal
+    logging ``ndarray(k)`` samples contributes ``k`` columns), with
+    ``out.ynames`` giving the watched-plug name for each contributing
+    signal. The pre-stack, per-signal arrays are also kept (hidden) so that
+    the legacy ``out.y0``, ``out.y1``, ... accessors -- one array per
+    watched signal, replaced when watched signals were combined into
+    ``out.y`` -- keep working via :meth:`BDStruct.__getattr__`, with a
+    deprecation warning.
+    """
+    if not plist:
+        return
+    ywatch = [np.array(p) for p in plist]
+    out["y"] = np.column_stack(ywatch)
+    out["ynames"] = list(watchnamelist)
+    out[".ywatch"] = ywatch
+
+
 class _LazyBlockClass:
     """Proxy object that resolves a block class on first use."""
 
@@ -1371,9 +1405,7 @@ class BDSim(Runner):
                         legacy_name = str(c.name).replace(".", "")
                         if legacy_name != name and legacy_name not in out:
                             out.add(legacy_name, clockdata)
-                    for i, p in enumerate(watchlist):
-                        out["y" + str(i)] = np.array(simstate.plist[i])
-                    out["ynames"] = watchnamelist
+                    _store_watch_output(out, watchlist, watchnamelist, simstate.plist)
                     stats = BDStruct(name="stats")
                     stats["integration_time_points"] = len(simstate.tlist)
                     stats["run_interval_calls"] = simstate.stats.run_interval_calls
@@ -1622,12 +1654,7 @@ class BDSim(Runner):
                 clockdata["Xnames"] = c.statenames
                 out.add(name, clockdata)
 
-            # save the watchlist into variables named y0, y1 etc.
-            # for i, p in enumerate(watchlist):
-            #     out["y" + str(i)] = np.array(simstate.plist[i])
-            if simstate.plist:
-                out["y"] = np.column_stack([np.array(p) for p in simstate.plist])
-                out["ynames"] = [p.block.name for p in watchlist]
+            _store_watch_output(out, watchlist, watchnamelist, simstate.plist)
 
             stats = BDStruct(name="stats")
             stats["integration_time_points"] = len(simstate.tlist)

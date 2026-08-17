@@ -26,6 +26,7 @@ import contextlib
 from types import SimpleNamespace
 
 import numpy as np
+import numpy.testing as nt
 from matplotlib import animation
 
 import bdsim
@@ -303,6 +304,45 @@ class SimRunCoverageTest(unittest.TestCase):
         self.assertIsNotNone(out.t)
         self.assertIsNotNone(out.y)
         self.assertGreater(len(out.y), 0)
+
+    def test_run_watch_legacy_yN_attrs_match_y_columns(self):
+        """out.y0, out.y1, ... (pre-out.y column-stacking API) must still
+        work, warning DeprecationWarning, and match the corresponding
+        column of out.y; an out-of-range index still raises AttributeError."""
+        bd, step, integ, null = self._stateful_bd()
+        out = self.sim.run(bd, T=1, watch=[step, integ])
+
+        with self.assertWarns(DeprecationWarning):
+            y0 = out.y0
+        with self.assertWarns(DeprecationWarning):
+            y1 = out.y1
+        nt.assert_array_equal(y0, out.y[:, 0])
+        nt.assert_array_equal(y1, out.y[:, 1])
+
+        with self.assertRaises(AttributeError):
+            out.y2
+
+    def test_run_watch_pure_discrete_early_exit_uses_y_not_yN(self):
+        """A STOP that fires at t=0 (no continuous state) takes a separate
+        early-return path that used to build out.y0, out.y1, ... directly
+        instead of out.y (regression: diverged from the normal-exit path,
+        so the same watch= feature behaved differently depending on when
+        the simulation stopped)."""
+        bd = self.sim.blockdiagram()
+        clock = bd.clock(10, "Hz")
+        src = bd.WAVEFORM("sine", freq=1.0, offset=1.0, clock=clock)
+        stop = bd.STOP(lambda x: x > 0.5)
+
+        bd.connect(src, stop)
+        bd.compile(verbose=False)
+
+        out = self.sim.run(bd, T=10.0, watch=[src])
+
+        self.assertEqual(len(out.t), 1)
+        self.assertIsNotNone(out.y)
+        with self.assertWarns(DeprecationWarning):
+            y0 = out.y0
+        nt.assert_array_equal(y0, out.y[:, 0])
 
     # ---- simtime option ----------------------------------------------------
 

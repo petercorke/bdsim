@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import threading
 import warnings
 import unicodedata
@@ -41,6 +42,9 @@ def oodebug(func: _F) -> _F:
         return ret
 
     return wrapper  # type: ignore[return-value]
+
+
+_legacy_watch_attr_re = re.compile(r"^y(\d+)$")
 
 
 # remove LaTeX characters from names for use in port names, etc.
@@ -117,8 +121,29 @@ class BDStruct(UserDict):
         # Allow attribute access to dot-prefixed hidden fields, e.g. out.stats → out[".stats"]
         try:
             return self.data["." + name]
-        except KeyError as err:
-            raise AttributeError(name) from err
+        except KeyError:
+            pass
+        # Deprecated per-signal watch attributes. out.y0, out.y1, ... used to
+        # each hold one watched signal's samples; they were replaced by
+        # out.y (all watched signals column-stacked into one array, see
+        # out.ynames for column order). Kept working here, against the
+        # pre-stack arrays saved under ".ywatch", so old scripts don't break
+        # outright.
+        m = _legacy_watch_attr_re.match(name)
+        if m is not None and ".ywatch" in self.data:
+            index = int(m.group(1))
+            ywatch = self.data[".ywatch"]
+            if 0 <= index < len(ywatch):
+                warnings.warn(
+                    f"out.{name} is deprecated and will be removed in a "
+                    f"future release; use out.y[:, {index}] instead "
+                    "(out.ynames gives the column order for multi-signal "
+                    "watches).",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+                return ywatch[index]
+        raise AttributeError(name)
 
     def __setattr__(self, name: str, value: Any) -> None:
         if name.startswith("_") or name == "data":
