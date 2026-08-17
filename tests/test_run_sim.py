@@ -16,6 +16,7 @@ Targets:
 """
 
 import os
+import shutil
 import sys
 from pathlib import Path
 import importlib.util
@@ -1425,6 +1426,10 @@ class HybridSimGraphicsRegressionTest(unittest.TestCase):
     STOP condition already true at t=0 for a continuous-state diagram.
     """
 
+    @unittest.skipUnless(
+        shutil.which("ffmpeg") and shutil.which("ffprobe"),
+        "ffmpeg/ffprobe not installed (needed to record + verify the MP4)",
+    )
     def test_headless_movie_records_frames(self):
         """A movie block should still grab frames when animation=False.
 
