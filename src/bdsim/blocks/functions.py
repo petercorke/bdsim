@@ -14,6 +14,7 @@ from scipy import linalg
 import scipy.interpolate
 import math
 import inspect
+import warnings
 import spatialmath.base as smb
 from typing import Any, Union, Callable, Optional
 from numpy.typing import ArrayLike
@@ -199,22 +200,25 @@ class Prod(FunctionBlock):
     is a 3-input product junction which computes ``in[0] / in[1] * in[2]``.
 
     :note: By default the ``*`` and ``/`` operators are used which perform element-wise
-        operations.
-
-    :note: The option ``matrix`` will instead use ``@`` and ``@ np.linalg.inv()``. The
-        shapes of matrices must conform.  A matrix on a ``/`` input must be square and
-        non-singular.  Matrices are multiplied in ascending port order.
+        operations.  If an input is a Numpy array, ``@`` and ``@ np.linalg.inv()`` are used
+        instead.  The shapes of matrices must conform.  A matrix on a ``/`` input must be
+        square and non-singular.  Matrices are multiplied in ascending port order.
     """
 
     nin: int = -1
     nout = 1
 
-    def __init__(self, ops: str = "**", **blockargs: Any) -> None:
+    def __init__(
+        self, ops: str = "**", matrix: bool | None = None, **blockargs: Any
+    ) -> None:
         """
         :param ops: operations associated with input ports, accepted characters: * or /, defaults to '**'
         :type ops: str, optional
         :param inputs: Optional incoming connections
         :type inputs: Block or Plug
+        :param matrix: deprecated, matrix vs elementwise operation is now auto-detected
+            from the input type and this argument has no effect
+        :type matrix: bool, optional
         :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
 
@@ -223,6 +227,13 @@ class Prod(FunctionBlock):
         assert isinstance(ops, str), "first argument must be signs string"
         assert all([x in "*/" for x in ops]), "invalid op"
         self.ops: str = ops
+        if matrix is not None:
+            warnings.warn(
+                "the 'matrix' argument to PROD is deprecated and has no effect; "
+                "matrix vs elementwise operation is now auto-detected from the input type",
+                DeprecationWarning,
+                stacklevel=2,
+            )
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         for i, input in enumerate(inputs):

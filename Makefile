@@ -10,7 +10,6 @@ help:
 	@echo " make docs - build Sphinx documentation"
 	@echo " make docupdate - upload Sphinx documentation to GitHub pages"
 	@echo " make dist - build dist files"
-	@echo " make upload - upload to PyPI"
 	@echo " make clean - remove dist and docs build files"
 	@echo " make app   - build bdedit.app bundle and register with macOS Launch Services"
 	@echo " make help - this message$(BLACK)"
@@ -38,15 +37,6 @@ dist: .FORCE
 	#$(MAKE) -C src/bdweb build
 	#$(MAKE) test
 	python -m build
-
-upload: .FORCE
-	#$(MAKE) test
-	$(eval VERSION := $(shell grep '^version' pyproject.toml | sed 's/version = "\(.*\)"/\1/'))
-	@echo "Uploading version $(VERSION) to PyPI"
-	twine upload dist/*
-	git tag v$(VERSION)
-	git push origin v$(VERSION)
-	@echo "Tagged and pushed v$(VERSION)"
 
 install:
 	pip install -e .

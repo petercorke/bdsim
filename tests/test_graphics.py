@@ -383,7 +383,7 @@ class CreateFigureTest(unittest.TestCase):
         self.assertIn("can't select matplotlib backend", str(cm.exception))
 
 
-from bdsim.block import is_notebook_backend
+from bdsim.graphics_block import is_notebook_backend
 
 
 # ---------------------------------------------------------------------------

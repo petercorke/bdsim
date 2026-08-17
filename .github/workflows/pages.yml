@@ -2,7 +2,7 @@ name: Docs and Pages
 
 on:
   push:
-    branches: [main, cleanup]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -24,16 +24,38 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.10"
 
       - name: Install dependencies
+        # jupyterlite-pyodide-kernel is pinned deliberately -- NOT for wasm-ABI
+        # matching (bdsim is pure Python, unlike RTB's compiled-extension pin of
+        # the same version, for a different reason). Newer kernel releases bundle
+        # Pyodide >=0.27.7, which turned WebAssembly JSPI ("stack switching") on
+        # by default for run_until_complete(). Browsers without JSPI support
+        # (Safari has none as of 2026-08; Firefox only behind a flag) used to
+        # hard-crash the kernel outright on this. Passing
+        # loadPyodideOptions.enableRunUntilComplete: false avoids the crash, but
+        # turns run_until_complete into a fire-and-forget no-op instead of a
+        # genuine synchronous wait -- and the kernel's own cell-execution driver
+        # relies on that wait actually completing before running a cell's
+        # auto-detected package/dynamic-library imports. Confirmed live: with
+        # that workaround, `import bdsim` intermittently failed with
+        # ModuleNotFoundError for matplotlib even though the preceding piplite
+        # install cell had already reported success -- the install just hadn't
+        # actually finished landing yet. jupyterlite-pyodide-kernel==0.6.1 bundles
+        # Pyodide 0.27.6, genuinely predating this whole mechanism, restoring
+        # correct (if slower) blocking behaviour -- matches RTB's existing pin.
+        # Installing jupyterlite-core directly rather than the jupyterlite
+        # metapackage: the metapackage requires jupyterlite-core>=0.8.1, which
+        # conflicts with this pin's jupyterlite-core<0.7.0 requirement.
+        # Once Safari (and Firefox out-of-flag) ship JSPI, revisit this pin.
         run: |
           python -m pip install --upgrade pip
           pip install .[dev,docs]
           pip install build
-          pip install jupyterlite jupyter-server jupyterlite-pyodide-kernel
+          pip install jupyterlite-core "jupyterlite-pyodide-kernel==0.6.1" jupyter-server
           sudo apt-get update
           sudo apt-get install -y graphviz
 
@@ -52,9 +74,11 @@ jobs:
 
       - name: Prepare notebooks for JupyterLite
         run: |
-          mkdir -p docs/lite/files
-          find docs/lite/files -name '*.ipynb' -delete
-          cp docs/notebooks/*.ipynb docs/lite/files/
+          mkdir -p docs/lite/files/notebooks docs/lite/files/figs
+          find docs/lite/files/notebooks -name '*.ipynb' -delete
+          rm -f docs/lite/files/figs/*
+          cp docs/notebooks/*.ipynb docs/lite/files/notebooks/
+          cp docs/figs/*.png docs/figs/*.svg docs/lite/files/figs/
 
       - name: Build JupyterLite content
         run: |
@@ -83,7 +107,7 @@ jobs:
 
   deploy:
     name: deploy to github pages
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/cleanup'
+    if: github.ref == 'refs/heads/main'
     needs: build-site
     runs-on: ubuntu-latest
     environment:

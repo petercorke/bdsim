@@ -25,6 +25,5 @@ for whl in sorted(pypi.glob("*.whl")):
     index.setdefault(name, []).append(entry)
 
 (pypi / "all.json").write_text(json.dumps(index, indent=2) + "\n")
-print(
-    f"wrote pypi/all.json ({', '.join(f'{k} {v[0]['version']}' for k, v in index.items())})"
-)
+summary = ", ".join(f"{k} {v[0]['version']}" for k, v in index.items())
+print(f"wrote pypi/all.json ({summary})")

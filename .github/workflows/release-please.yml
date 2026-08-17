@@ -1,0 +1,49 @@
+name: Release Please
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+      # release-please-action authenticates with GITHUB_TOKEN, and GitHub
+      # Actions doesn't let events triggered by GITHUB_TOKEN (like the
+      # `release` this action creates) start other workflows -- only
+      # workflow_dispatch/repository_dispatch are exempt from that
+      # anti-recursion rule. So dispatch release.yml explicitly here
+      # instead of relying on its `on: release: types: [created]` trigger,
+      # which never fires as a result.
+      #
+      # Must dispatch against the release tag, not the main branch: the
+      # `pypi` deploy environment's protection rules only allow deploys
+      # from refs matching `v*` (a tag), so `--ref main` gets rejected at
+      # the publish step even though build/smoke-test pass.
+      # release-please-action always sets releases_created to the literal
+      # string "true"/"false" (core.setOutput stringifies a JS boolean) --
+      # never unset. In an `if:` expression only "" is falsy, so a bare
+      # `${{ steps.release.outputs.releases_created }}` is truthy on every
+      # push, not just when a release was actually created. Must compare
+      # explicitly against the string 'true'.
+      - name: Trigger PyPI publish
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        run: |
+          tag=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
+          gh workflow run release.yml --ref "$tag"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # No checkout step in this job, so gh can't auto-detect the repo
+          # from a local git remote -- tell it explicitly.
+          GH_REPO: ${{ github.repository }}

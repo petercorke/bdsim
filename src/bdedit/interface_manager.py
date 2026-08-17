@@ -1029,7 +1029,10 @@ class InterfaceWindow(QMainWindow):
             if os.path.isfile(filepath):
                 if self.filename is not None:
                     try:
-                        if Path(self.filename).resolve() == Path(filepath).resolve() and not self.isModified():
+                        if (
+                            Path(self.filename).resolve() == Path(filepath).resolve()
+                            and not self.isModified()
+                        ):
                             return
                     except OSError:
                         pass
