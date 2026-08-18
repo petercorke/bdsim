@@ -16,6 +16,7 @@ Targets:
 """
 
 import os
+import shutil
 import sys
 from pathlib import Path
 import importlib.util
@@ -1404,6 +1405,172 @@ class OptionsBackendCliTest(unittest.TestCase):
         self.assertEqual(opts.setglob, [])
 
 
+# ---------------------------------------------------------------------------
+class HybridSimSampleGridTest(unittest.TestCase):
+    """Regression tests for the per-interval sample grid in hybrid runs.
+
+    Each test sets up a trivial `CONSTANT → INTEGRATOR` diagram with
+    animation enabled. The integrator gives the diagram continuous state
+    (so `_interval_hybrid` is exercised); the diagram itself is trivial
+    so the sample grid is determined entirely by `dt`, the anim_frame
+    cadence, and the integration loop's sample-logging behavior.
+    """
+
+    @staticmethod
+    def _run(T: float, dt: float, fps: float, **run_kwargs):
+        sim = bdsim.BDSim(animation=True, animation_rate=fps, quiet=True)
+        bd = sim.blockdiagram()
+        bd.connect(bd.CONSTANT(1.0), bd.INTEGRATOR(0.0))
+        bd.compile()
+        return sim.run(bd, T=T, dt=dt, **run_kwargs)
+
+    def test_out_t_starts_at_zero(self):
+        """The IC sample at t=0 lands in out.t."""
+        out = self._run(T=1.0, dt=1 / 30, fps=30)
+        self.assertEqual(float(out.t[0]), 0.0)
+
+    def test_no_drift_doubled_samples(self):
+        """Past the FP drift threshold, out.t still has the expected inclusive
+        dt-grid count and contains no duplicate timestamps."""
+        out = self._run(T=3.5, dt=1 / 30, fps=30)
+        self.assertEqual(len(out.t), 106)  # 3.5 * 30 + 1
+        self.assertGreater(float(np.diff(out.t).min()), 0.0)
+
+    def test_anim_frame_boundary_in_tlist(self):
+        """Non-`dt`-aligned anim_frame boundaries land in out.t."""
+        out = self._run(T=1.0, dt=0.1, fps=3)
+        for boundary in (1 / 3, 2 / 3):
+            self.assertTrue(
+                np.any(np.isclose(out.t, boundary, atol=1e-9)),
+                f"expected t={boundary:.4f} in out.t, got {list(out.t)}",
+            )
+
+    def test_no_residual_sample_explosion(self):
+        """Small `max_step` on a non-`dt`-aligned boundary does not dump every
+        integrator step into out.t."""
+        out = self._run(T=1.0, dt=0.1, fps=3, max_step=1e-3)
+        self.assertEqual(len(out.t), 13)  # 11 dt-grid + 2 anim_frame boundaries
+
+    def test_no_empty_grid_sample_explosion(self):
+        """An interval with no `k*dt` multiple inside (here the final
+        `[1/3, 0.34]`) does not dump every integrator step into out.t."""
+        out = self._run(T=0.34, dt=0.1, fps=3, max_step=1e-3)
+        self.assertEqual(len(out.t), 6)  # 0, 0.1, 0.2, 0.3, 1/3, 0.34
+
+
+# ---------------------------------------------------------------------------
+class HybridSimGraphicsRegressionTest(unittest.TestCase):
+    """Regression tests for two graphics-loop bugs found in review of the
+    hybrid-sim per-interval sample-grid fixes above: headless movie
+    recording (movies/`movie=` without live `animation`) and honoring a
+    STOP condition already true at t=0 for a continuous-state diagram.
+    """
+
+    @unittest.skipUnless(
+        shutil.which("ffmpeg") and shutil.which("ffprobe"),
+        "ffmpeg/ffprobe not installed (needed to record + verify the MP4)",
+    )
+    def test_headless_movie_records_frames(self):
+        """A movie block should still grab frames when animation=False.
+
+        Frame grabbing lives in display._grab_movie_frame, called from the
+        fps-paced _anim_frame loop -- which must run even without live
+        animation whenever a graphics block has a movie configured.
+        """
+        import subprocess
+        import tempfile
+        from pathlib import Path
+
+        def init(block, fig, ax):
+            ax.set_xlim(0, 1)
+            ax.set_ylim(-1, 2)
+            (block.dot,) = ax.plot([], [], "ro")
+
+        def update(block, t, inports):
+            block.dot.set_data([t], [inports[0]])
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            movie_path = Path(tmpdir) / "out.mp4"
+            sim = bdsim.BDSim(animation=False, backend="Agg", quiet=True)
+            bd = sim.blockdiagram()
+            integ = bd.INTEGRATOR(0.0)
+            bd.connect(bd.CONSTANT(1.0), integ)
+            anim = bd.ANIMATION(init, update, movie=str(movie_path))
+            bd.connect(integ, anim)
+            bd.compile()
+            sim.run(bd, T=1.0, dt=0.1)
+            bd.done()
+
+            self.assertTrue(movie_path.exists())
+            res = subprocess.run(
+                [
+                    "ffprobe", "-v", "error", "-select_streams", "v:0",
+                    "-count_frames", "-show_entries", "stream=nb_read_frames",
+                    "-of", "default=noprint_wrappers=1:nokey=1", str(movie_path),
+                ],
+                capture_output=True, text=True,
+            )
+            n_frames = int(res.stdout.strip() or 0)
+            self.assertGreater(n_frames, 0)
+
+    def test_stop_at_t0_honored_for_hybrid_diagram(self):
+        """A STOP condition already true at t=0 should exit immediately for a
+        continuous-state (hybrid) diagram, matching the discrete-only path.
+
+        animation=True is required so bd.step() (Stop's step() fallback
+        detector) actually runs during the shared t=0 IC pre-pass --
+        _record_sample_and_service_hooks's periodic_update is False at
+        t=0 (t - gtime == 0) regardless of diagram shape, so this is what
+        isolates the hybrid-vs-discrete difference.
+        """
+        common = dict(animation=True, backend="Agg", quiet=True)
+
+        sim_discrete = bdsim.BDSim(**common)
+        bd_discrete = sim_discrete.blockdiagram()
+        bd_discrete.connect(bd_discrete.CONSTANT(1), bd_discrete.STOP())
+        bd_discrete.compile()
+        out_discrete = sim_discrete.run(bd_discrete, T=5.0, dt=0.1)
+        self.assertEqual(len(out_discrete.t), 1)
+        self.assertEqual(float(out_discrete.t[0]), 0.0)
+
+        sim_hybrid = bdsim.BDSim(**common)
+        bd_hybrid = sim_hybrid.blockdiagram()
+        integ = bd_hybrid.INTEGRATOR(0.0)
+        bd_hybrid.connect(bd_hybrid.CONSTANT(1.0), integ)
+        bd_hybrid.connect(bd_hybrid.CONSTANT(1), bd_hybrid.STOP())
+        bd_hybrid.compile()
+        out_hybrid = sim_hybrid.run(bd_hybrid, T=5.0, dt=0.1)
+        self.assertEqual(len(out_hybrid.t), 1)
+        self.assertEqual(float(out_hybrid.t[0]), 0.0)
+
+
+# ---------------------------------------------------------------------------
+class BuildTEvalGridTest(unittest.TestCase):
+    """Unit tests for `BDSim._build_t_eval_grid`.
+
+    Contract: returns a non-empty `np.ndarray` containing exactly the endpoints
+    `t0` and `t1` plus any `k*dt` multiples strictly between them, sorted and
+    deduplicated.
+    """
+
+    def test_endpoints_only_when_no_multiple_fits(self):
+        """`t1 - t0 < dt` and no `k*dt` in `[t0, t1]` → grid is `[t0, t1]`."""
+        grid = BDSim._build_t_eval_grid(0.333, 0.34, 0.1)
+        np.testing.assert_allclose(grid, [0.333, 0.34])
+
+    def test_aligned_endpoints_no_duplicate(self):
+        """`t0 == k*dt` and `t1 == (k+n)*dt` → clean dt-aligned sequence,
+        endpoint inclusion does not introduce duplicates."""
+        grid = BDSim._build_t_eval_grid(0.0, 0.3, 0.1)
+        np.testing.assert_allclose(grid, [0.0, 0.1, 0.2, 0.3])
+
+    def test_endpoints_with_interior_multiples(self):
+        """Non-aligned endpoints with `k*dt` points between."""
+        grid = BDSim._build_t_eval_grid(0.123, 0.456, 0.1)
+        np.testing.assert_allclose(grid, [0.123, 0.2, 0.3, 0.4, 0.456])
+
+
+# ---------------------------------------------------------------------------
 class OptionsNoGraphicsEnvTest(unittest.TestCase):
     """Tests for the BDSIM_NO_GRAPHICS override (highest priority: beats
     code kwargs, the BDSIM envariable, and explicit CLI flags alike)."""

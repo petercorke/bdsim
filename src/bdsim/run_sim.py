@@ -914,22 +914,23 @@ class BDSim(Runner):
         return str(simstate.solver)
 
     @staticmethod
-    def _build_t_eval_grid(t0: float, t1: float, dt: float) -> np.ndarray | None:
-        """Build an absolute-time t_eval grid over the closed interval [t0, t1]."""
+    def _build_t_eval_grid(t0: float, t1: float, dt: float) -> np.ndarray:
+        """Build an absolute-time t_eval grid over the closed interval [t0, t1].
+
+        The grid always contains the endpoints `t0` and `t1` plus any `k*dt`
+        multiples that land strictly between them. `dt > 0` and `t0 < t1` are
+        guaranteed by the caller.
+        """
         tol = 1e-12
-        if dt <= 0:
-            return None
         k0 = int(np.ceil((t0 - tol) / dt))
         k1 = int(np.floor((t1 + tol) / dt))
-        if k1 < k0:
-            return None
-        grid = dt * np.arange(k0, k1 + 1, dtype=float)
-        grid = grid[(grid >= (t0 - tol)) & (grid <= (t1 + tol))]
-        if grid.size == 0:
-            return None
-        grid = np.clip(grid, t0, t1)
-        grid = np.unique(grid)
-        return grid if grid.size > 0 else None
+        if k1 >= k0:
+            interior = dt * np.arange(k0, k1 + 1, dtype=float)
+            interior = interior[(interior >= (t0 - tol)) & (interior <= (t1 + tol))]
+            interior = np.clip(interior, t0, t1)
+        else:
+            interior = np.array([], dtype=float)
+        return np.unique(np.concatenate([[t0], interior, [t1]]))
 
     def _dispatch_crossing_event(
         self,
@@ -1221,11 +1222,19 @@ class BDSim(Runner):
             _stateless_no_clock = (
                 bd.nstates == 0 and not bd.clocklist and simstate.options.graphics
             )
+            # A movie can be requested globally (-m/--movies) or per graphics
+            # block (movie=... kwarg) without also enabling live animation.
+            # Frame grabs happen from the same fps-paced refresh hook as live
+            # display, so the frame loop must run even in that headless case.
+            _movies_active = bool(getattr(simstate.options, "movies", None)) or any(
+                getattr(blk, "_movie", None) is not None for blk in bd.blocklist
+            )
             interactive_dt: float | None = None
             if (
                 simstate.options.animation
                 or simstate.isdebug("i")
                 or _stateless_no_clock
+                or _movies_active
             ):
                 interactive_rate_hz = float(simstate.options.animation_rate)
                 interactive_dt = 1.0 / interactive_rate_hz
@@ -1435,7 +1444,7 @@ class BDSim(Runner):
             # Option A: schedule animation frame events as callables in the eventq.
             # Each callback pumps the matplotlib event loop then re-schedules itself.
             if (
-                simstate.options.animation or _stateless_no_clock
+                simstate.options.animation or _stateless_no_clock or _movies_active
             ) and interactive_dt is not None:
                 notebook_backend = bool(getattr(simstate, "notebook_backend", False))
                 display_manager: DisplayManager
@@ -1493,12 +1502,42 @@ class BDSim(Runner):
                                 time.sleep(min(notebook_min_refresh_dt, 0.05))
                     if getattr(ss, "stop", None) is not None:
                         return
-                    if t + _dt < tf - event_tol:
-                        ss.declare_event(_anim_frame, t + _dt)
+                    # Schedule the next anim_frame on the canonical k*_dt grid.
+                    # `<= tf + tol` so a frame landing exactly on tf still fires.
+                    next_t = (round(t / _dt) + 1) * _dt
+                    if next_t <= tf + event_tol:
+                        ss.declare_event(_anim_frame, next_t)
 
                 # Schedule frame callbacks for all animated runs; notebook mode
                 # relies on these callbacks to refresh inline figure output.
                 simstate.declare_event(_anim_frame, interactive_dt)
+
+            # Mirror the discrete-only t=0 pre-pass so hybrid diagrams capture
+            # the IC sample (the per-interval dedup skips result.t[0]=0).
+            if bd.nstates > 0:
+                simstate.t = 0.0
+                simstate.count += 1
+                eval_start = time.time()
+                bd.evaluate(bd.state_map(x0, simstate), 0.0, sinks=False)
+                simstate.bdtime += time.time() - eval_start
+                self._record_sample_and_service_hooks(
+                    bd, simstate, 0.0, x0, stop_short_circuit=False,
+                )
+                # refresh() (present + grab_frame) only fires from _anim_frame
+                # at t=interactive_dt — call it once so the IC reaches the live
+                # window and the movie writer.
+                if (
+                    simstate.options.animation or _movies_active
+                ) and simstate.display_manager is not None:
+                    simstate.display_manager.refresh()
+                if simstate.stop is not None:
+                    # Stop triggered at t=0: clamp the run horizon so the
+                    # interval loop below is skipped entirely. The existing
+                    # end-of-run output construction reads only tlist/xlist,
+                    # which already hold just the t=0 sample, so this mirrors
+                    # the nstates==0 early-exit above without duplicating its
+                    # output-struct-building code.
+                    tf = 0.0
 
             while t0 < tf - event_tol:
                 # Next scheduled boundary (clock tick, explicit event, or terminal marker).
@@ -1879,8 +1918,7 @@ class BDSim(Runner):
 
         if simstate.dt is not None:
             t_eval = self._build_t_eval_grid(float(t0), float(t1), float(simstate.dt))
-            if t_eval is not None:
-                ivp_args.setdefault("t_eval", t_eval)
+            ivp_args.setdefault("t_eval", t_eval)
 
         # Keep user-provided method if present; otherwise use option/default,
         # then finally derive from run(..., solver=...).
@@ -1997,8 +2035,14 @@ class BDSim(Runner):
                     crossing_state_map,
                 )
 
-        # return final continuous state and actual end time reached
-        t_final = float(result.t[-1]) if len(result.t) > 0 else float(t0)
+        # return final continuous state and actual end time reached.
+        # `result.t[-1]` is the last OUTPUT sample, not the integrator's
+        # reach; on natural completion it can undershoot t1 and trigger a
+        # spurious residual call. Use t1 directly when status == 0.
+        if result.status == 0:
+            t_final = float(t1)
+        else:
+            t_final = float(result.t[-1]) if len(result.t) > 0 else float(t0)
         if len(result.t) > 0:
             if crossing_handled:
                 x_final = bd.continuous_state_vector(crossing_state_map)

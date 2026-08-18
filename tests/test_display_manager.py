@@ -7,11 +7,43 @@ import matplotlib.pyplot as plt
 
 matplotlib.use("Agg")
 
+from unittest.mock import MagicMock
+
 from bdsim.display import (
     DisplayManager,
     MatplotlibDisplayManager,
     NotebookDisplayManager,
+    _grab_movie_frame,
 )
+
+
+def test_grab_movie_frame_no_writer_is_noop() -> None:
+    """A figure with no `_bdsim_movie_writer` attribute is a silent no-op."""
+    fig = SimpleNamespace()
+    _grab_movie_frame(fig)  # must not raise
+
+
+def test_grab_movie_frame_with_writer_grabs_once() -> None:
+    """When a writer is attached, `_grab_movie_frame` calls `grab_frame()` once."""
+    writer = MagicMock()
+    fig = SimpleNamespace(_bdsim_movie_writer=writer)
+    _grab_movie_frame(fig)
+    writer.grab_frame.assert_called_once()
+
+
+def test_grab_movie_frame_raises_on_broken_writer() -> None:
+    """A broken writer (no grab_frame) must surface a clear error, not be swallowed."""
+    # Object without a grab_frame attribute raises AttributeError when called.
+    class BrokenWriter:
+        pass
+
+    fig = SimpleNamespace(_bdsim_movie_writer=BrokenWriter())
+    try:
+        _grab_movie_frame(fig)
+    except RuntimeError as exc:
+        assert "ffmpeg" in str(exc)
+    else:
+        raise AssertionError("expected RuntimeError for a broken movie writer")
 
 
 def test_factory_returns_notebook_manager() -> None:

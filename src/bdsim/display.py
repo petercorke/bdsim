@@ -55,6 +55,24 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 
+def _grab_movie_frame(fig: Any) -> None:
+    """Grab one frame for any MP4 writer attached to ``fig``.
+
+    The writer is set on ``fig._bdsim_movie_writer`` by
+    ``GraphicsBlock._start_movie`` when a movie path is configured. Co-locating
+    the grab with the display refresh keeps the movie's frame cadence on the
+    fps grid (the same hook that drives ``flush_events()`` for live windows),
+    regardless of how many sink ticks the integrator emits in between.
+    """
+    writer = getattr(fig, "_bdsim_movie_writer", None)
+    if writer is None:
+        return
+    try:
+        writer.grab_frame()
+    except AttributeError as exc:
+        raise RuntimeError("cannot save movie, please install ffmpeg") from exc
+
+
 class DisplayManager:
     """Abstract base class and factory for bdsim display managers.
 
@@ -228,6 +246,7 @@ class NotebookDisplayManager(DisplayManager):
                 handle.update(fig)
             except Exception:
                 pass
+            _grab_movie_frame(fig)
 
     def refresh_figure(self, fig: Any) -> None:
         """Refresh one figure, including figures not listed by pyplot."""
@@ -242,6 +261,7 @@ class NotebookDisplayManager(DisplayManager):
             handle.update(fig)
         except Exception:
             pass
+        _grab_movie_frame(fig)
 
     def finalize(self, hold: bool = False) -> None:
         """Render a final frame and close all registered figures.
@@ -279,10 +299,12 @@ class MatplotlibDisplayManager(DisplayManager):
         for fig in self._iter_figures():
             fig.canvas.draw_idle()
             fig.canvas.flush_events()
+            _grab_movie_frame(fig)
 
     def refresh_figure(self, fig: Any) -> None:
         fig.canvas.draw_idle()
         fig.canvas.flush_events()
+        _grab_movie_frame(fig)
 
     def finalize(self, hold: bool = False) -> None:
         if hold:

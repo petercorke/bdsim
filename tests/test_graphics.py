@@ -181,17 +181,8 @@ class StepTest(unittest.TestCase):
         finally:
             plt.close("all")
 
-    def test_step_movie_no_writer_attribute_error(self):
-        """step() with movie set but no writer → AttributeError in grab_frame (lines 75-79)."""
-        gb = MinGB(nin=1, movie="out.mp4")
-        ss = _make_simstate(animation=False)
-        gb._simstate = ss
-        # self._writer never set → AttributeError from grab_frame except block → fatal() → AttributeError
-        with self.assertRaises(AttributeError):
-            gb.step(0.0, [1.0])
-
     def test_step_timestamp_overlay_updates(self):
-        """step() updates the timestamp text and then grabs a movie frame."""
+        """step() updates the timestamp text artist."""
         gb = MinGB(nin=1, movie="out.mp4", timestamp=True)
         ss = _make_simstate(animation=False)
         gb._simstate = ss
@@ -203,7 +194,6 @@ class StepTest(unittest.TestCase):
             gb.step(1.2345, [1.0])
             self.assertIsNotNone(gb._timestamp_artist)
             self.assertEqual(gb._timestamp_artist.get_text(), "t=1.234")
-            gb.writer.grab_frame.assert_called_once()
         finally:
             plt.close("all")
 
