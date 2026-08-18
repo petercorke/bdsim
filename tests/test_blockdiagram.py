@@ -308,6 +308,44 @@ class WiringTest(unittest.TestCase):
         bd.evaluate({}, 0)
         self.assertEqual(dst.inport_values, [5, 4, 3, 2])
 
+    def test_named_port_assignment_block(self):
+        """dst.portname = block must wire block's output to dst's named
+        input port (regression: it wired the block's own output back into
+        its own input instead, leaving dst unconnected)."""
+        bd = self.sim.blockdiagram()
+
+        const = bd.CONSTANT(5)
+        src = bd.GAIN(2)
+        bd.connect(const, src)
+        other = bd.CONSTANT(9)
+
+        dst = bd.NULL(2, inames=("x", "y"))
+        dst.x = src
+        dst.y = other
+
+        bd.compile(verbose=False)
+        bd.evaluate({}, 0)
+        self.assertEqual(dst.inport_values, [10, 9])
+
+    def test_named_port_assignment_plug(self):
+        """dst.portname = block[port] must wire the given output port to
+        dst's named input port (regression: AttributeError, since the Plug
+        being assigned was wrapped inside another Plug instead of being
+        connected to dst's named port)."""
+        bd = self.sim.blockdiagram()
+
+        const = bd.CONSTANT([2, 3, 4, 5])
+        src = bd.DEMUX(4)
+        bd.connect(const, src)
+
+        dst = bd.NULL(2, inames=("x", "y"))
+        dst.x = src[1]
+        dst.y = src[3]
+
+        bd.compile(verbose=False)
+        bd.evaluate({}, 0)
+        self.assertEqual(dst.inport_values, [3, 5])
+
     def test_chain1(self):
         bd = self.sim.blockdiagram()
 
