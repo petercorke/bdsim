@@ -560,40 +560,40 @@ class BDSim(Runner):
         If ``sysargs`` is True, process command line arguments and passed
         options.  Command line arguments have precedence.
 
-        =================================  ===============  =========  =====================================================
-        Command line switch                Argument         Default    Behaviour
-        =================================  ===============  =========  =====================================================
-        ``--graphics``, ``+g``             graphics         True       enable graphical display
-        ``--no-graphics``, ``-g``          graphics         True       disable graphical display
-        ``--animation``, ``+a``            animation        False      update graphics at each time step
-        ``--no-animation``, ``-a``         animation        False      don't update graphics at each time step
-        ``--hold``, ``+H``                 hold             True       hold graphics in done()
-        ``--no-hold``, ``-H``              hold             True       do not hold graphics in done()
-        ``--altscreen``, ``+A``            altscreen        True       display plots on second monitor
-        ``--no-altscreen``, ``-A``         altscreen        True       do not display plots on second monitor
-        ``--no-progress``                   progress         True       do not display simulation progress bar
-        ``--backend BE``, ``-b BE``        backend          None       matplotlib backend
-        ``--tiles SPEC``, ``-t SPEC``      tiles            None       arrange figure tiles as RxC or square/wide/tall
-        ``--shape WxH``                    shape            None       window size (default: matplotlib default)
-        ``--movies [DIR]``, ``-m [DIR]``   movies           None       record all graphics blocks to MP4 files in DIR (default: .), sampled at ``animation_rate``
-        ``--no-movies``                    movies           None       disable automatic movie recording
-        ``--blocks``                       blocks           False      display block list at startup
-        ``--debug F``, ``-d F``            debug            ``''``     debug flags: p/ropagate, s/tate, d/eriv, i/nteractive, g/raphics-diagnostics
-        ``--animation-rate R``             animation_rate   20.0       target update rate for animation/debugger (Hz)
-        ``--simtime T[,dt]``, ``-S``       simtime          None       simulation time as T or T,dt
-        ``--dt DT``                        dt               None       output sample interval (build solve_ivp t_eval)
-        ``--max-step DT``                  max_step         None       maximum solve_ivp integration step
-        ``--atol ATOL``                    atol             None       absolute tolerance for solve_ivp
-        ``--rtol RTOL``                    rtol             None       relative tolerance for solve_ivp
-        ``--method NAME``                  method           None       solve_ivp method (RK45, DOP853, Radau, BDF, LSODA)
-        ``--verbose``, ``-v``              verbose          False      be verbose
-        ``--quiet``, ``-q``               quiet            False      suppress reports and progress bar
-        ``-p [FILE]``, ``--pickle [FILE]`` outfile          None       output pickled results (default: bd.out)
-        ``-o [FILE]``, ``--out [FILE]``    outfile          None       *(deprecated, use -p/--pickle)*
-        ``-j [FILE]``, ``--json [FILE]``   jsonfile         None       output JSON results (default: bd.json)
-        ``--set P``, ``-s P``              setparam         ``[]``     override block parameter: ``block:param=value``
-        ``--global G``                     setglob          ``[]``     override global parameter: ``var=value``
-        =================================  ===============  =========  =====================================================
+        ==================================  ==============  =======  ==========================================================================================
+        Command line switch                 Argument        Default  Behaviour
+        ==================================  ==============  =======  ==========================================================================================
+        ``--graphics``, ``+g``              graphics        True     enable graphical display
+        ``--no-graphics``, ``-g``           graphics        True     disable graphical display
+        ``--animation``, ``+a``             animation       False    update graphics at each time step
+        ``--no-animation``, ``-a``          animation       False    don't update graphics at each time step
+        ``--hold``, ``+H``                  hold            True     hold graphics in done()
+        ``--no-hold``, ``-H``               hold            True     do not hold graphics in done()
+        ``--altscreen``, ``+A``             altscreen       True     display plots on second monitor
+        ``--no-altscreen``, ``-A``          altscreen       True     do not display plots on second monitor
+        ``--no-progress``                   progress        True     do not display simulation progress bar
+        ``--backend BE``, ``-b BE``         backend         None     matplotlib backend
+        ``--tiles SPEC``, ``-t SPEC``       tiles           None     arrange figure tiles as RxC or square/wide/tall
+        ``--shape WxH``                     shape           None     window size (default: matplotlib default)
+        ``--movies [DIR]``, ``-m [DIR]``    movies          None     record all graphics blocks to MP4 files in DIR (default: .), sampled at ``animation_rate``
+        ``--no-movies``                     movies          None     disable automatic movie recording
+        ``--blocks``                        blocks          False    display block list at startup
+        ``--debug F``, ``-d F``             debug           ``''``   debug flags: p/ropagate, s/tate, d/eriv, i/nteractive, g/raphics-diagnostics
+        ``--animation-rate R``              animation_rate  20.0     target update rate for animation/debugger (Hz)
+        ``--simtime T[,dt]``, ``-S``        simtime         None     simulation time as T or T,dt
+        ``--dt DT``                         dt              None     output sample interval (build solve_ivp t_eval)
+        ``--max-step DT``                   max_step        None     maximum solve_ivp integration step
+        ``--atol ATOL``                     atol            None     absolute tolerance for solve_ivp
+        ``--rtol RTOL``                     rtol            None     relative tolerance for solve_ivp
+        ``--method NAME``                   method          None     solve_ivp method (RK45, DOP853, Radau, BDF, LSODA)
+        ``--verbose``, ``-v``               verbose         False    be verbose
+        ``--quiet``, ``-q``                 quiet           False    suppress reports and progress bar
+        ``-p [FILE]``, ``--pickle [FILE]``  outfile         None     output pickled results (default: bd.out)
+        ``-o [FILE]``, ``--out [FILE]``     outfile         None     *(deprecated, use -p/--pickle)*
+        ``-j [FILE]``, ``--json [FILE]``    jsonfile        None     output JSON results (default: bd.json)
+        ``--set P``, ``-s P``               setparam        ``[]``   override block parameter: ``block:param=value``
+        ``--global G``                      setglob         ``[]``   override global parameter: ``var=value``
+        ==================================  ==============  =======  ==========================================================================================
 
         .. note:: ``animation`` and ``graphics`` options are coupled.  If
             ``graphics=False``, all graphics is suppressed.  If
