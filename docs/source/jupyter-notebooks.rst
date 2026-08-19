@@ -91,9 +91,11 @@ In the browser using Jupyter lite
 Jupyter lite is a version of Jupyter that runs entirely in the browser, without the need
 for a server.  The environment supports NumPy and Matplotlib all compiled for the web.
 It is a great option for quickly trying out the notebooks without
-installing anything on your local machine.  To use it, just click the "Launch in Jupyter
-Lite" button at the top of each notebook page, and it will open the notebook in a new
-browser tab running Jupyter lite.
+installing anything on your local machine.  To use it, click the "open" link in the
+JupyterLite column of the table below, and it will open that notebook in a new
+browser tab running Jupyter lite. You can also start from the `index page
+<https://petercorke.github.io/bdsim/lite/lab/index.html?path=notebooks/index.ipynb>`_,
+also linked from the badge at the top of the project's README.
 
 
 In the cloud using Google Colab
@@ -126,17 +128,17 @@ Provided notebooks
    :widths: 28, 16, 16, 40
 
    "Notebook", "|jupyterlite_image|", "|colab_image|", "Description"
-   "`Introduction <https://github.com/petercorke/bdsim/blob/main/docs/notebooks/getting-started.ipynb>`_", "`open <https://petercorke.github.io/bdsim/lite/lab/index.html?path=notebooks/getting-started.ipynb>`_", "`open <https://colab.research.google.com/github/petercorke/bdsim/blob/main/docs/notebooks/getting-started.ipynb>`_", "A quick introduction to the package."
-   "`Discrete & hybrid systems <https://github.com/petercorke/bdsim/blob/main/docs/notebooks/discrete-time%2Bhybrid.ipynb>`_", "`open <https://petercorke.github.io/bdsim/lite/lab/index.html?path=notebooks/discrete-time%2Bhybrid.ipynb>`_", "`open <https://colab.research.google.com/github/petercorke/bdsim/blob/main/docs/notebooks/discrete-time%2Bhybrid.ipynb>`_", "Simulating discrete-time and mixed discrete-/continuous-time systems."
-   "`Event-based systems <https://github.com/petercorke/bdsim/blob/main/docs/notebooks/bouncing-ball.ipynb>`_", "`open <https://petercorke.github.io/bdsim/lite/lab/index.html?path=notebooks/bouncing-ball.ipynb>`_", "`open <https://colab.research.google.com/github/petercorke/bdsim/blob/main/docs/notebooks/bouncing-ball.ipynb>`_", "The classic bouncing ball example."
-   "`Advanced topics <https://github.com/petercorke/bdsim/blob/main/docs/notebooks/advanced-topics.ipynb>`_", "`open <https://petercorke.github.io/bdsim/lite/lab/index.html?path=notebooks/advanced-topics.ipynb>`_", "`open <https://colab.research.google.com/github/petercorke/bdsim/blob/main/docs/notebooks/advanced-topics.ipynb>`_", "Advanced options: options, movies, animation, block loading."
+   "`Introduction <https://github.com/petercorke/bdsim/blob/main/docs/notebooks/getting-started.ipynb>`_", "`open <https://petercorke.github.io/bdsim/lite/lab/index.html?path=notebooks/getting-started.ipynb>`__", "`open <https://colab.research.google.com/github/petercorke/bdsim/blob/main/docs/notebooks/getting-started.ipynb>`__", "A quick introduction to the package."
+   "`Discrete & hybrid systems <https://github.com/petercorke/bdsim/blob/main/docs/notebooks/discrete-time%2Bhybrid.ipynb>`_", "`open <https://petercorke.github.io/bdsim/lite/lab/index.html?path=notebooks/discrete-time%2Bhybrid.ipynb>`__", "`open <https://colab.research.google.com/github/petercorke/bdsim/blob/main/docs/notebooks/discrete-time%2Bhybrid.ipynb>`__", "Simulating discrete-time and mixed discrete-/continuous-time systems."
+   "`Event-based systems <https://github.com/petercorke/bdsim/blob/main/docs/notebooks/bouncing-ball.ipynb>`_", "`open <https://petercorke.github.io/bdsim/lite/lab/index.html?path=notebooks/bouncing-ball.ipynb>`__", "`open <https://colab.research.google.com/github/petercorke/bdsim/blob/main/docs/notebooks/bouncing-ball.ipynb>`__", "The classic bouncing ball example."
+   "`Advanced topics <https://github.com/petercorke/bdsim/blob/main/docs/notebooks/advanced-topics.ipynb>`_", "`open <https://petercorke.github.io/bdsim/lite/lab/index.html?path=notebooks/advanced-topics.ipynb>`__", "`open <https://colab.research.google.com/github/petercorke/bdsim/blob/main/docs/notebooks/advanced-topics.ipynb>`__", "Advanced options: options, movies, animation, block loading."
 
 
 Obtaining the notebooks
 -----------------------
 
 If you want to run the notebooks locally, you will need to obtain them from the GitHub repository.  
-You can download all the notebooks `directly from the GitHub web interface as a zip file <https://github.com/petercorke/bdsim/releases/latest/download/bdsim_notebooks.zip>`_, and extract the notebooks from the zip file.
+You can download all the notebooks `directly from the GitHub web interface as a zip file <https://github.com/petercorke/bdsim/releases/latest/download/bdsim_notebooks.zip>`__, and extract the notebooks from the zip file.
 
 Alternatively, you can clone the repository
 
@@ -145,7 +147,7 @@ Alternatively, you can clone the repository
     git clone https://github.com/petercorke/bdsim.git
 
 The notebooks are located in the ``docs/notebooks`` folder.  
-You can also navigate to `that folder on GitHub <https://github.com/petercorke/bdsim/tree/main/docs/notebooks>`_ and download the notebooks individually.
+You can also navigate to `that folder on GitHub <https://github.com/petercorke/bdsim/tree/main/docs/notebooks>`__ and download the notebooks individually.
 
 
 
@@ -163,7 +165,7 @@ Examples
 to build and simulate block diagrams.  These are located in the ``examples`` folder.
 You can run these examples from the command line.
 
-You can download all the examples `directly from the GitHub web interface as a zip file <https://github.com/petercorke/bdsim/releases/latest/download/bdsim_examples.zip>`_, and extract the Python files from the zip file.
+You can download all the examples `directly from the GitHub web interface as a zip file <https://github.com/petercorke/bdsim/releases/latest/download/bdsim_examples.zip>`__, and extract the Python files from the zip file.
 
 Alternatively, you can clone the repository
 
@@ -172,4 +174,4 @@ Alternatively, you can clone the repository
     git clone https://github.com/petercorke/bdsim.git
 
 The examples are located in the ``examples`` folder.  
-You can also navigate to `that folder on GitHub <https://github.com/petercorke/bdsim/tree/main/examples>`_ and download the examples individually.
+You can also navigate to `that folder on GitHub <https://github.com/petercorke/bdsim/tree/main/examples>`__ and download the examples individually.

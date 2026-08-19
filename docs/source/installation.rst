@@ -14,7 +14,7 @@ You can also install the latest development version from GitHub using:
 
 .. code-block:: bash
 
-	$ pip install git+https://github.com/machinevision-toolbox/bdsim.git
+	$ pip install git+https://github.com/petercorke/bdsim.git
 
 .. warning:: The GitHub version may be unstable and is not recommended for production use. It may contain bugs or incomplete features. Use it at your own risk.
 
@@ -50,7 +50,7 @@ including them in square brackets after the package name.
 
 .. code-block:: bash
 
-	$ pip install machinevision-toolbox-python[extra]
+	$ pip install bdsim[extra]
 
 
 The available extras are:
@@ -67,7 +67,9 @@ The available extras are:
 +--------------+-------------------------------------------+
 | ``bdedit``   | PySide6 graphic editor support            |
 +--------------+-------------------------------------------+
-| ``all``      | All of the above                          |
+| ``all``      | All of the optional runtime extras        |
+|              | (``bdedit`` + ``jupyter``) — not ``dev``  |
+|              | or ``docs``, which are developer-only     |
 +--------------+-------------------------------------------+
 
 For example, to install the jupyter support extras, you would run:

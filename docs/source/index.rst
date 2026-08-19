@@ -41,6 +41,9 @@ dictionaries, NumPy arrays, custom objects, and even functions—enabling a leve
 architectural flexibility and complexity that is difficult to achieve in graphical
 environments.
 
+This site is the class and method API reference. For tutorials, worked examples, and "under the
+hood" design notes, see the `bdsim wiki <https://github.com/petercorke/bdsim/wiki>`_.
+
 .. toctree::
    :maxdepth: 3
    :caption: Code documentation:
