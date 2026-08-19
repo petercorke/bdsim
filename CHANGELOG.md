@@ -1,5 +1,43 @@
 # Changelog
 
+## [1.4.0](https://github.com/petercorke/bdsim/compare/v1.3.0...v1.4.0) (2026-08-19)
+
+
+### Features
+
+* add BDSIM_NO_GRAPHICS envariable to force-disable graphics ([f157f63](https://github.com/petercorke/bdsim/commit/f157f63bc1516f94cc3589e41b967a4df24952eb))
+* add BDSIM_NO_GRAPHICS envariable to force-disable graphics ([4eeb711](https://github.com/petercorke/bdsim/commit/4eeb711dc70f798cfdb8e7d4a189efa499ba1929))
+* add python -m bdsim and bdsim console script ([6ebeb22](https://github.com/petercorke/bdsim/commit/6ebeb2283aca18cd2a7b23b36154d294e77aed1b))
+
+
+### Bug Fixes
+
+* **blocks:** Dict block exposes N inputs and returns list ([208e4c6](https://github.com/petercorke/bdsim/commit/208e4c6c9611afe17a613d02f73dd4567e080eb7))
+* **ci:** guard release-please's PyPI-publish trigger against the truthy-string bug ([#66](https://github.com/petercorke/bdsim/issues/66)) ([0ca95f7](https://github.com/petercorke/bdsim/commit/0ca95f7f1c87960122dd62e1eb605e51296513c6))
+* deprecate out.y0/y1/... cleanly instead of breaking silently ([21ef612](https://github.com/petercorke/bdsim/commit/21ef6125862db68ef121b6e59be52f81e7983d64))
+* explicitly import Counter to satisfy F405 lint ([aa6164a](https://github.com/petercorke/bdsim/commit/aa6164acba00b5943d8da12ddd1b9b2baad733c1))
+* five hybrid-sim per-interval sample-grid bugs ([#36](https://github.com/petercorke/bdsim/issues/36)) ([cf46985](https://github.com/petercorke/bdsim/commit/cf469852ee0a60c875db8e82b7168d82b648730b))
+* named-port assignment (block.portname = value) wired the wrong plug ([4d66715](https://github.com/petercorke/bdsim/commit/4d667156d8573728fb83e7a5fa342299baff7e16))
+* PoseIntegrator_S/DPoseIntegrator crash with default x0 ([c8c6069](https://github.com/petercorke/bdsim/commit/c8c6069e1c37f114c5fc7e76c90d1da15152ee58))
+* PoseIntegrator_S/DPoseIntegrator crash with default x0 ([2d46cf2](https://github.com/petercorke/bdsim/commit/2d46cf2ab7ea0e56af2c3fba5c9de5ea83eeaa34))
+* release-please's Trigger PyPI publish step can't detect repo ([3edbc94](https://github.com/petercorke/bdsim/commit/3edbc946ec9a16bba2d10e66662ea6af1ee5ba9c))
+* release-please's Trigger PyPI publish step can't detect repo ([4076e57](https://github.com/petercorke/bdsim/commit/4076e57bc5752c699ecbd77b5a4479e3acbee5ac))
+* replace itertools.count() with a deepcopy-safe Counter ([6e84b46](https://github.com/petercorke/bdsim/commit/6e84b46275af0be0d7348046c40ceaf21f198786))
+* restore discovery of bdsim.blocks.spatial blocks ([8fb5e08](https://github.com/petercorke/bdsim/commit/8fb5e08759f2c3316059a04ad505d88ab5a01cf2))
+* Scope's watch=True silently no-ops when graphics is disabled ([7a9ad8e](https://github.com/petercorke/bdsim/commit/7a9ad8ea7a79a3ede49771c1e2d315d6dd11d120))
+* Scope(watch=True) crashed on start due to attribute typo ([f78712a](https://github.com/petercorke/bdsim/commit/f78712a0ce068b6610feb8894287564d59ab5f6f))
+* Scope(watch=True) crashed on start due to attribute typo ([92cc7e0](https://github.com/petercorke/bdsim/commit/92cc7e08bc4e93d215b542364c461a6f1af92858))
+
+
+### Documentation
+
+* add AGENTS.md stub ([b06e8f7](https://github.com/petercorke/bdsim/commit/b06e8f76a906a8d5cba33101c210be2fd6411dea))
+* add AGENTS.md stub linking to rvc-ecosystem conventions ([eaf68ec](https://github.com/petercorke/bdsim/commit/eaf68ecdf852b8643eaed6d5038741bc461e2535))
+* expand AGENTS.md with block discovery and CLI entry point notes ([2c9e9cd](https://github.com/petercorke/bdsim/commit/2c9e9cd0878d99d133336c67ff98fccc61744e2d))
+* match Sphinx page footer to rvc-ecosystem convention ([4fee176](https://github.com/petercorke/bdsim/commit/4fee176522de6f2ebb65f92793dad73fea32d753))
+* match Sphinx page footer to rvc-ecosystem convention ([32e4d65](https://github.com/petercorke/bdsim/commit/32e4d65cd2b6f05e2321866a9617c0dd27bd491a))
+* sync Sphinx docs with wiki, fix cross-references and drift ([0bc05ba](https://github.com/petercorke/bdsim/commit/0bc05ba2ef89ca44bbf33bd11b2cb0909fec6ca2))
+
 ## [1.3.0](https://github.com/petercorke/bdsim/compare/v1.2.2...v1.3.0) (2026-08-12)
 
 **Highlight: several bugs dormant since May are fixed, the published wheel
