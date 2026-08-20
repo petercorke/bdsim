@@ -4,8 +4,10 @@ Set BDSIM_IMPORT_TIMING=1 to print per-symbol lazy import timings during
 `import bdsim` and subsequent first access of exported symbols.
 """
 
+from .run_sim import *
 from .run_realtime import *
 from .blockdiagram import *
+from .blockdiagram import bdload
 from .components import *
 
 # from .block_types import GraphicsBlock

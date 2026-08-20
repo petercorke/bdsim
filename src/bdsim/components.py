@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 import importlib
-import os
 import re
 import threading
-import time
 import warnings
 import unicodedata
 import heapq
@@ -14,30 +12,9 @@ from collections import UserDict
 
 import numpy as np
 
-# def _env_true(name: str) -> bool:
-#     return os.getenv(name, "").strip().lower() in {"1", "true", "yes", "on"}
-
-
-# _IMPORT_TIMING = _env_true("BDSIM_IMPORT_TIMING")
-
-
-# def _timed_import(module_name: str, label: str) -> Any:
-#     # Keep import timing instrumentation centralized so startup profiling is
-#     # available without sprinkling print/debug code through module bodies.
-#     t0 = time.perf_counter() if _IMPORT_TIMING else 0.0
-#     module = importlib.import_module(module_name)
-#     if _IMPORT_TIMING:
-#         print(f"bdsim import: components->{label}={time.perf_counter() - t0:.3f}s")
-#     return module
-
-# np = _timed_import("numpy", "numpy")
-
 from typing import TYPE_CHECKING, Any, Callable, Protocol, TypeVar, runtime_checkable
 
-# _m_ex = _timed_import("bdsim.exceptions", "exceptions")
-# BlockApiError = _m_ex.BlockApiError
-# BlockRuntimeError = _m_ex.BlockRuntimeError
-# SimulationContextError = _m_ex.SimulationContextError
+from bdsim.exceptions import BlockApiError, BlockRuntimeError, SimulationContextError
 
 if TYPE_CHECKING:
     from bdsim.blockdiagram import BlockDiagram
@@ -784,7 +761,7 @@ _BLOCK_EXPORTS = {
 
 
 def _load_block_exports() -> None:
-    block_module = _timed_import("bdsim.block", "block")
+    block_module = importlib.import_module("bdsim.block")
     globals().update({name: getattr(block_module, name) for name in _BLOCK_EXPORTS})
 
 
