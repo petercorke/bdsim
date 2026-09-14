@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/petercorke/bdsim/compare/v1.4.0...v1.4.1) (2026-09-14)
+
+
+### Documentation
+
+* rewrite CONTRIBUTING.md ([57ade75](https://github.com/petercorke/bdsim/commit/57ade75520d040afcf940387f64bbf6d33dd0345))
+
 ## [1.4.0](https://github.com/petercorke/bdsim/compare/v1.3.0...v1.4.0) (2026-08-19)
 
 **Highlight** Wiki and Sphinx online documentation completely uptodate. Added proper deprecation for recent change to watch variables in `out` structure. Working against RVC3 examples at [https://github.com/petercorke/RVC3-python](https://github.com/petercorke/RVC3-python).
