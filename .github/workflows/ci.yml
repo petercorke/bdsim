@@ -56,6 +56,19 @@ jobs:
         run: |
           pytest --capture=no --timeout=50 --timeout_method=thread
 
+  all-tests-passed:
+    name: All tests passed
+    needs: test
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Check test matrix result
+        run: |
+          if [ "${{ needs.test.result }}" != "success" ]; then
+            echo "test matrix did not succeed: ${{ needs.test.result }}"
+            exit 1
+          fi
+
   codecov:
     name: codecov
     needs: test
