@@ -3,6 +3,7 @@ import inspect
 import json
 import textwrap
 from dataclasses import dataclass, field
+from dataclasses import fields as dataclass_fields
 from typing import Any, Iterable
 import numpy as np
 
@@ -1301,6 +1302,27 @@ def specialize_ir(fn: IR.Function, block_cfg) -> IR.Function:
     return IRSpecializer(block_cfg).specialize_function(fn)
 
 
+def collect_self_fields(node: Any, out: set[str]) -> None:
+    """Recursively collect names accessed as ``self.<name>`` anywhere in an IR tree.
+
+    Used to prune a block's ``self`` struct down to the fields its
+    (specialized) ``output``/``next`` IR actually reads, instead of emitting
+    every non-underscore instance attribute the Python block object happens
+    to carry (e.g. ``nin``/``nout``, which no block body ever reads via
+    ``self.``).
+    """
+    if isinstance(node, IR.Attribute) and isinstance(node.value, IR.Name):
+        if node.value.name == "self":
+            out.add(node.attr)
+            return
+    if isinstance(node, IR.Node):
+        for f in dataclass_fields(node):
+            collect_self_fields(getattr(node, f.name), out)
+    elif isinstance(node, list):
+        for item in node:
+            collect_self_fields(item, out)
+
+
 def _eigen_matrix_literal(m: np.ndarray) -> str:
     rows, cols = m.shape
     vals = [repr(float(m[r, c])) for r in range(rows) for c in range(cols)]
@@ -2205,7 +2227,16 @@ def fixname(name: str) -> str:
     return "".join(c if c.isalnum() else "_" for c in name)
 
 
-def codegen(bd):
+def codegen(bd, keep_fields: dict[str, set[str]] | None = None):
+    """Generate C++ code for a compiled :class:`BlockDiagram`.
+
+    :param bd: compiled block diagram
+    :param keep_fields: block name -> field names to always keep in that
+        block's ``self`` struct, even if unused by ``output()``/``next()``
+        (e.g. fields exposed for telemetry or live parameter tuning).
+    """
+    keep_fields = keep_fields or {}
+
     # build a dictionary of block metadata for code generation
     block_dict = {}
 
@@ -2260,6 +2291,15 @@ def codegen(bd):
         print("--- specialized IR")
         spec_ir = specialize_ir(method_ir, cfg)
         print(printer.format(spec_ir))
+
+        # prune the self struct to fields the specialized IR actually
+        # reads, plus any explicitly requested via keep_fields (e.g. for
+        # telemetry/live tuning, which by definition aren't read here)
+        used_self_fields: set[str] = set()
+        collect_self_fields(spec_ir, used_self_fields)
+        used_self_fields |= keep_fields.get(block.name, set())
+        cfg.self = {k: v for k, v in cfg.self.items() if k in used_self_fields}
+
         print("--- emitted C++")
         s, f = emit_cpp(spec_ir, block.name, "output", cfg)
         fp.write(f"// C++ code for block {block.name}\n")
