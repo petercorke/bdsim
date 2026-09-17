@@ -1,5 +1,6 @@
 import ast
 import inspect
+import json
 import textwrap
 from dataclasses import dataclass, field
 from typing import Any, Iterable
@@ -1634,7 +1635,7 @@ class CppEmitter(Emitter):
         if value is None:
             return "nullptr"
         if isinstance(value, str):
-            return repr(value)
+            return json.dumps(value)
         if isinstance(value, (int, float)):
             return repr(value)
         if isinstance(value, np.ndarray):
@@ -2279,12 +2280,10 @@ def codegen(bd):
                     typ = type(value).__name__
                     # if isinstance(value, np.ndarray):
                     #     typ += "{:s}.{:s}".format(str(value.shape), str(value.dtype))
-                    src_name = source.block.name or ""
-                    if source.block.nout > 1:
-                        src_name += f"[{source.port}]"
+                    src_name = fixname(source.block.name or "")
 
                     fp.write(
-                        f"{name}_inports._{port} = {src_name}_outports._{source.port};  // {name}[{port}] <-- {src_name}[{source.port}] (type: {typ})\n"
+                        f"{name}_inports._{port} = {src_name}_outports._{source.port};  // {name}[{port}] <-- {source.block.name}[{source.port}] (type: {typ})\n"
                     )
 
             # EMIT THE FUNCTION CALL
