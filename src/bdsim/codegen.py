@@ -493,6 +493,13 @@ class MethodFrontend(ast.NodeVisitor):
             func=self.visit(node.func), args=[self.visit(arg) for arg in node.args]
         )
 
+    def visit_IfExp(self, node: ast.IfExp) -> IR.IfExpr:
+        return IR.IfExpr(
+            body=self.visit(node.body),
+            condition=self.visit(node.test),
+            orelse=self.visit(node.orelse),
+        )
+
     def visit_Compare(self, node: ast.Compare) -> IR.Expr:
         if len(node.ops) != 1 or len(node.comparators) != 1:
             return IR.RawExpr(self.ast_source(node))
@@ -776,6 +783,16 @@ class IRSpecializer:
             if val is not UNKNOWN and not isinstance(val, VarType):
                 return _literal_from(val)
             return out
+        if isinstance(expr, IR.IfExpr):
+            cond = self.specialize_expr(expr.condition)
+            cond_val = self.eval_expr(cond)
+            if cond_val is True:
+                return self.specialize_expr(expr.body)
+            if cond_val is False:
+                return self.specialize_expr(expr.orelse)
+            return IR.IfExpr(
+                self.specialize_expr(expr.body), cond, self.specialize_expr(expr.orelse)
+            )
         if isinstance(expr, IR.Call):
             out = IR.Call(
                 self.specialize_expr(expr.func),
@@ -1030,6 +1047,13 @@ class IRSpecializer:
                     return False
                 return UNKNOWN
             return UNKNOWN
+        if isinstance(expr, IR.IfExpr):
+            cond_val = self.eval_expr(expr.condition)
+            if cond_val is True:
+                return self.eval_expr(expr.body)
+            if cond_val is False:
+                return self.eval_expr(expr.orelse)
+            return UNKNOWN
         if isinstance(expr, IR.IntrinsicCall):
             return UNKNOWN  # Intrinsic calls have known C++ forms but unknown Python values
         if isinstance(expr, IR.Call):
@@ -1266,6 +1290,63 @@ class IRInliner:
             cls._stack.discard(fn_id)
 
 
+def lower_function_block(block) -> IR.Function:
+    """Synthesize ``output()`` IR for a ``FUNCTION`` block by inlining its
+    user-supplied callable directly.
+
+    ``Function.output()``'s own Python source can never lower through the
+    normal AST pipeline -- it wraps the call in a ``try/except`` (no
+    ``visit_Try`` in ``MethodFrontend``, and there's no sensible embedded-C++
+    translation for exception handling anyway) and dispatches dynamically
+    via ``*args``/``**kwargs``. The user's callable itself, on the other
+    hand, is exactly what ``IRInliner`` already exists to inline -- so
+    bypass ``output()`` entirely and inline ``block.func`` against
+    ``inputs[i]`` references instead.
+
+    Only the common case is supported: a single callable, no ``fargs``/
+    ``fkwargs``, not ``persistent``. The other FUNCTION variants (a list of
+    per-output callables, extra static args, persistent state) would need
+    real design work, not a quick extension of this -- fails loudly rather
+    than silently mishandling them.
+    """
+    func = block.func
+    if isinstance(func, (list, tuple)):
+        raise NotImplementedError(
+            f"codegen: FUNCTION block '{block.name}' uses a list of "
+            "callables (one per output) -- not yet supported"
+        )
+    if getattr(block, "args", None) or getattr(block, "kwargs", None):
+        raise NotImplementedError(
+            f"codegen: FUNCTION block '{block.name}' uses fargs/fkwargs -- "
+            "not yet supported"
+        )
+    if getattr(block, "userdata", None) is not None:
+        raise NotImplementedError(
+            f"codegen: FUNCTION block '{block.name}' uses persistent=True "
+            "-- not yet supported"
+        )
+
+    arg_exprs: list[IR.Expr] = [
+        IR.Subscript(IR.Name("inputs"), IR.Literal(i)) for i in range(block.nin)
+    ]
+    inline_result = IRInliner.inline(func, arg_exprs)
+    if inline_result is None:
+        raise NotImplementedError(
+            f"codegen: could not inline FUNCTION block '{block.name}'s "
+            f"callable ({func!r}) -- source not available (e.g. a "
+            "builtin), or not a plain function/lambda"
+        )
+    extra_stmts, result_expr = inline_result
+    if not isinstance(result_expr, IR.List):
+        result_expr = IR.List([result_expr])
+
+    return IR.Function(
+        name="output",
+        args=["self", "t", "inputs", "x"],
+        body=extra_stmts + [IR.Return(result_expr)],
+    )
+
+
 def _flatten_list(nodes):
     out = []
     for n in nodes:
@@ -1305,10 +1386,30 @@ class _IRAlphaRenamer:
             return IR.Compare(self.rename_expr(e.left), e.op, self.rename_expr(e.right))
         if isinstance(e, IR.BoolOp):
             return IR.BoolOp(e.op, [self.rename_expr(v) for v in e.values])
-        if isinstance(e, IR.Call):
-            return IR.Call(
-                self.rename_expr(e.func), [self.rename_expr(a) for a in e.args]
+        if isinstance(e, IR.IfExpr):
+            return IR.IfExpr(
+                self.rename_expr(e.body),
+                self.rename_expr(e.condition),
+                self.rename_expr(e.orelse),
             )
+        if isinstance(e, IR.Call):
+            # Only rename the callee if it's actually a formal parameter
+            # being substituted (e.g. `def apply(f, x): return f(x)`) --
+            # otherwise leave it alone. It's a reference to a
+            # global/builtin/module-level function (abs, math.sin,
+            # another top-level def, ...), not a local to alpha-rename.
+            # Blindly renaming here previously turned `abs(u)` into a
+            # call to a nonexistent `_il0_abs`. Known remaining gap: an
+            # attribute-based reference (`math.sin`, `self.foo`) as the
+            # callee isn't renamed either way here, which is correct for
+            # a plain module/global reference but would be wrong for the
+            # rare case of a substituted callable reached via an
+            # attribute chain -- not worth the added complexity without
+            # a concrete case that needs it.
+            func = e.func
+            if isinstance(func, IR.Name) and func.name in self.subst:
+                func = self.rename_expr(func)
+            return IR.Call(func, [self.rename_expr(a) for a in e.args])
         if isinstance(e, IR.IntrinsicCall):
             return IR.IntrinsicCall(
                 e.name, [self.rename_expr(a) for a in e.args], e.result_vt
@@ -1755,6 +1856,9 @@ class CppEmitter(Emitter):
     def infer_expr_type(self, e: IR.Expr) -> str | None:
         """Best-effort C++ type string for *e*. Returns None if unknown."""
         if isinstance(e, IR.Name):
+            if e.name == "t":
+                # matches the `double t` parameter in every emitted signature
+                return "double"
             return self.locals_types.get(e.name)
         if isinstance(e, IR.Attribute):
             if isinstance(e.value, IR.Name) and e.value.name == "self":
@@ -1803,6 +1907,14 @@ class CppEmitter(Emitter):
             return "bool"
         if isinstance(e, IR.BoolOp):
             return "bool"
+        if isinstance(e, IR.IfExpr):
+            bt = self.infer_expr_type(e.body)
+            ot = self.infer_expr_type(e.orelse)
+            if bt == ot:
+                return bt
+            if bt in self._CPP_RANK and ot in self._CPP_RANK:
+                return bt if self._CPP_RANK[bt] >= self._CPP_RANK[ot] else ot
+            return None
         return None
 
     # ------------------------------------------------------------------
@@ -1853,12 +1965,22 @@ class CppEmitter(Emitter):
             return f"inports._{e.index.value}"
         return f"{self.expr(e.value)}[{self.expr(e.index)}]"
 
+    # C++'s `%` only accepts integer operands, unlike Python's -- floating
+    # modulo needs fmod(). <cmath> (pulled in transitively by Eigen)
+    # injects an unqualified overload into the global namespace, matching
+    # this file's existing unqualified-call style (e.g. abs(), matmul()).
+    _INTEGER_CPP_TYPES = {"bool", "int32_t", "int64_t"}
+
     def expr_BinaryOp(self, e: IR.BinaryOp) -> str:
         if e.op == "@":
             # NumPy matmul → Eigen helper
             return f"matmul({self.expr(e.left)}, {self.expr(e.right)})"
         lt = self.infer_expr_type(e.left)
         rt = self.infer_expr_type(e.right)
+        if e.op == "%" and (
+            lt not in self._INTEGER_CPP_TYPES or rt not in self._INTEGER_CPP_TYPES
+        ):
+            return f"fmod({self.expr(e.left)}, {self.expr(e.right)})"
         _mp = "Eigen::"
         lmat = lt is not None and lt.startswith(_mp)
         rmat = rt is not None and rt.startswith(_mp)
@@ -1873,6 +1995,9 @@ class CppEmitter(Emitter):
                 f"({self.expr(e.left)}.array() * {self.expr(e.right)}.array()).matrix()"
             )
         return f"({self.expr(e.left)} {e.op} {self.expr(e.right)})"
+
+    def expr_IfExpr(self, e: IR.IfExpr) -> str:
+        return f"({self.expr(e.condition)} ? {self.expr(e.body)} : {self.expr(e.orelse)})"
 
     def expr_Tuple(self, e: IR.Tuple) -> str:
         return "{" + ", ".join(self.expr(v) for v in e.values) + "}"
@@ -1988,6 +2113,15 @@ class CppEmitter(Emitter):
                 self._emit(f"auto _ret = {cpp_expr};")
                 for i in range(len(self._outport_types)):
                     self._emit(f"outports._{i} = _ret({i});")
+            self._emit("return;")
+            return
+        # Case 3: return inputs — the bare parameter itself, unmodified.
+        # Only the subsystem-flattening INPORT/OUTPORT pass-through
+        # blocks do this (nin == nout by construction); each port maps
+        # straight across, not through an Eigen-vector index like case 2.
+        if isinstance(s.value, IR.Name) and s.value.name == "inputs":
+            for i in range(len(self._outport_types)):
+                self._emit(f"outports._{i} = inports._{i};")
             self._emit("return;")
             return
         self._fail("return value must be a list literal or list(expr)", s)
@@ -2458,8 +2592,22 @@ def codegen(bd, keep_fields: dict[str, set[str]] | None = None):
         for name, value in block.__dict__.items():
             if name.startswith("_"):
                 continue
+            try:
+                vt = VarType(value)
+            except ValueError:
+                # Not representable as struct-field data -- e.g. FUNCTION
+                # blocks' self.func (a callable) or self.kwargs (a dict).
+                # Call-mechanics bookkeeping, not real block state; a call
+                # to it is a lowering/inlining concern (IRInliner), not
+                # something to store a value for. If the specialized IR
+                # ends up genuinely needing it, collect_self_fields'
+                # pruning step will never pick it back up (it's not in
+                # _self at all) and specialization will surface that as
+                # its own clear failure, rather than crashing here on
+                # every block that merely happens to carry one.
+                continue
             # print(f"  {name}: {value} ({type(value)})")
-            _self[name] = (value, VarType(value))
+            _self[name] = (value, vt)
 
         # type (not value) of the synthesized self.state field, for sampled
         # blocks -- lets the specializer fold isinstance()/.ndim/.size on
@@ -2490,7 +2638,10 @@ def codegen(bd, keep_fields: dict[str, set[str]] | None = None):
         print(f"====================================================== {block.name}")
         print(cfg)
 
-        method_ir = lower_block_method(cfg.block.output, cfg)
+        if getattr(cfg.block, "type", None) == "function":
+            method_ir = lower_function_block(cfg.block)
+        else:
+            method_ir = lower_block_method(cfg.block.output, cfg)
         method_ir = normalize_input_param(method_ir)
         if cfg.ndstates > 0:
             method_ir = substitute_state_param(method_ir)
