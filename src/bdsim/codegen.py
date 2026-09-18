@@ -2629,6 +2629,7 @@ def codegen(bd, keep_fields: dict[str, set[str]] | None = None):
     printer = IRPrettyPrinter()
 
     fp = open("codegen.cpp", "w")
+    emitted_blocks: list[str] = []
     for block in bd.blocklist:
 
         cfg = block_cfg(block)
@@ -2691,32 +2692,66 @@ def codegen(bd, keep_fields: dict[str, set[str]] | None = None):
             _, next_f = emit_cpp(next_spec_ir, block.name, "next", cfg)
             fp.write(next_f + "\n\n")
 
-    # build the run-time schedule and wiring
+        emitted_blocks.append(fixname(block.name))
 
+    # Per-block instance storage, and a single shared (always-empty) state
+    # vector purely to satisfy the existing `const Eigen::VectorXd& x`
+    # parameter every function still carries -- unused by any sampled
+    # block now that state lives on self.state; kept only for signature
+    # compatibility with the (currently out-of-scope) continuous-block path.
+    fp.write("\n\n/****** Block instances *******/\n")
+    fp.write("static Eigen::VectorXd g_x;\n")
+    for name in emitted_blocks:
+        fp.write(f"static {name}_self {name}_self_inst;\n")
+        fp.write(f"static {name}_inports {name}_inports_inst;\n")
+        fp.write(f"static {name}_outports {name}_outports_inst;\n")
+
+    fp.write("\nvoid bdsim_init() {\n}\n")
+
+    # build the run-time schedule and wiring, wrapped as a single function
+    # that runs one tick of the (single-clock, v1) polling loop -- see the
+    # "Runtime loop shape" section of the embedded codegen plan
+    fp.write("\nvoid bdsim_tick(double t) {\n")
+
+    emitted_block_set = set(emitted_blocks)
     for sequence, group in enumerate(bd.plan):
-        fp.write(f"\n\n/****** Schedule group {sequence} *******/\n")
+        fp.write(f"\n    /****** Schedule group {sequence} *******/\n")
         for b in group:
             print(f"Schedule {b.name} at sequence {sequence}")
             name = fixname(b.name)
 
-            if b.nin > 0 and sequence > 0:
-                fp.write("\n")
-                for port, source in enumerate(b.inports):
-                    value = source.block.outport_value(source.port)
-                    typ = type(value).__name__
-                    # if isinstance(value, np.ndarray):
-                    #     typ += "{:s}.{:s}".format(str(value.shape), str(value.dtype))
-                    src_name = fixname(source.block.name or "")
-
-                    fp.write(
-                        f"{name}_inports._{port} = {src_name}_outports._{source.port};  // {name}[{port}] <-- {source.block.name}[{source.port}] (type: {typ})\n"
-                    )
-
             # EMIT THE FUNCTION CALL
-            # e.g. bdsim_step_blockname(t, x, self_blockname,
             fp.write(
-                f"{name}_output(t, x, {name}_self, {name}_inports, {name}_outports);\n"
+                f"    {name}_output(t, g_x, {name}_self_inst, {name}_inports_inst, {name}_outports_inst);\n"
             )
+
+            # Push this tick's output to every connected destination's
+            # inport immediately -- mirrors how the real bdsim runtime
+            # propagates values (Block._publish_output_values), and is
+            # the only ordering that's correct in general: a non-
+            # feedthrough stateful block (e.g. an integrator) is
+            # scheduled independent of its input's readiness (its
+            # output only reads self.state), so it can land in an
+            # earlier sequence group than the block that produces its
+            # input -- but its inport still needs this tick's value
+            # before the state-update pass below runs. Reading from the
+            # destination's own sequence slot (the previous approach)
+            # got this wrong: it either never wired sequence-0 blocks'
+            # inputs at all, or would have read a stale, one-tick-old
+            # value had it tried.
+            for port in range(b.nout):
+                for wire in b._output_wires[port]:  # noqa: SLF001 -- no public accessor
+                    dest_block = wire.end.block
+                    dest_name = fixname(dest_block.name or "")
+                    if dest_name not in emitted_block_set:
+                        # sink block (e.g. SCOPE) -- no struct/instance
+                        # generated for it yet, see the I/O handling
+                        # section of the embedded codegen plan
+                        continue
+                    fp.write(
+                        f"    {dest_name}_inports_inst._{wire.end.port} = {name}_outports_inst._{port};"
+                        f"  // {dest_block.name}[{wire.end.port}] <-- {b.name}[{port}]\n"
+                    )
 
     # advance state for every clocked block, from this tick's now-current
     # (already wired) inputs. Must run after every output() above -- next()
@@ -2726,12 +2761,14 @@ def codegen(bd, keep_fields: dict[str, set[str]] | None = None):
     # plan (claude-notes/codegen-embedded-plan.md).
     stateful_blocks = [b for b in bd.blocklist if b.ndstates > 0]
     if stateful_blocks:
-        fp.write("\n\n/****** State update (next) *******/\n")
+        fp.write("\n    /****** State update (next) *******/\n")
         for b in stateful_blocks:
             name = fixname(b.name)
             fp.write(
-                f"{name}_next(t, x, {name}_self, {name}_inports, {name}_outports);\n"
+                f"    {name}_next(t, g_x, {name}_self_inst, {name}_inports_inst, {name}_outports_inst);\n"
             )
+
+    fp.write("}\n")
 
 
 # TODO:
