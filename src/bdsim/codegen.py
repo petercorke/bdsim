@@ -2762,14 +2762,29 @@ def codegen(bd, keep_fields: dict[str, set[str]] | None = None):
     # unconditionally here since no block ever reads another block's state,
     # only its own -- see the two-phase ordering in the embedded codegen
     # plan (claude-notes/codegen-embedded-plan.md).
+    #
+    # Skipped on the very first tick -- matches bdsim's own real clock
+    # semantics, confirmed by cross-checking generated output numerically
+    # against bdsim's Python simulator (see the embedded codegen plan):
+    # Clock.tick starts at 1, so the clock's first scheduled event fires
+    # at t=T, not t=0 -- there's an implicit free "tick 0" (the initial-
+    # condition sample) that never triggers a state update. At t=T,
+    # output() still reads the untouched initial state; only from t=2T
+    # does a block's output reflect its first next() call. Translated to
+    # this polling model (one bdsim_tick() call = one clock period,
+    # called starting at t=0): the first call is that free IC sample, so
+    # its next() pass doesn't run either.
     stateful_blocks = [b for b in bd.blocklist if b.ndstates > 0]
     if stateful_blocks:
         fp.write("\n    /****** State update (next) *******/\n")
+        fp.write("    static bool first_tick = true;\n")
+        fp.write("    if (!first_tick) {\n")
         for b in stateful_blocks:
             name = fixname(b.name)
             fp.write(
-                f"    {name}_next(t, g_x, {name}_self_inst, {name}_inports_inst, {name}_outports_inst);\n"
+                f"        {name}_next(t, g_x, {name}_self_inst, {name}_inports_inst, {name}_outports_inst);\n"
             )
+        fp.write("    }\n    first_tick = false;\n")
 
     fp.write("}\n")
 
