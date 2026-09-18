@@ -24,6 +24,10 @@ docs/paper1/**
 
 # C extensions
 *.so
+*.o
+
+# bdsim.codegen output -- always regenerated, never source
+codegen.cpp
 
 # Distribution / packaging
 .Python
