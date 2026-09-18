@@ -2629,6 +2629,9 @@ def codegen(bd, keep_fields: dict[str, set[str]] | None = None):
     printer = IRPrettyPrinter()
 
     fp = open("codegen.cpp", "w")
+    fp.write("#include <cstdint>\n")
+    fp.write("#include <cmath>\n")
+    fp.write("#include <Eigen/Dense>\n\n")
     emitted_blocks: list[str] = []
     for block in bd.blocklist:
 
