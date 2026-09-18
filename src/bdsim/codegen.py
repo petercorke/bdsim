@@ -4,6 +4,7 @@ import json
 import textwrap
 from dataclasses import dataclass, field
 from dataclasses import fields as dataclass_fields
+from dataclasses import replace as dataclass_replace
 from typing import Any, Iterable
 import numpy as np
 
@@ -1323,6 +1324,104 @@ def collect_self_fields(node: Any, out: set[str]) -> None:
             collect_self_fields(item, out)
 
 
+def rename_ir_name(node: Any, old: str, replacement: "IR.Expr") -> Any:
+    """Return a copy of an IR tree with every ``IR.Name(old)`` replaced by *replacement*."""
+    if isinstance(node, IR.Name) and node.name == old:
+        return replacement
+    if isinstance(node, IR.Node):
+        changes = {
+            f.name: rename_ir_name(getattr(node, f.name), old, replacement)
+            for f in dataclass_fields(node)
+        }
+        return dataclass_replace(node, **changes)
+    if isinstance(node, list):
+        return [rename_ir_name(item, old, replacement) for item in node]
+    return node
+
+
+def collect_names(node: Any, out: set[str]) -> None:
+    """Recursively collect every ``IR.Name.name`` appearing anywhere in an IR tree.
+
+    Not scope-aware (doesn't distinguish a name shadowed in a nested
+    comprehension from the same name used in the enclosing scope) -- used
+    only as a cheap pre-check that a rename target isn't already in use by
+    something else in the same function, not as a general symbol table.
+    """
+    if isinstance(node, IR.Name):
+        out.add(node.name)
+        return
+    if isinstance(node, IR.Node):
+        for f in dataclass_fields(node):
+            collect_names(getattr(node, f.name), out)
+    elif isinstance(node, list):
+        for item in node:
+            collect_names(item, out)
+
+
+def normalize_input_param(fn: IR.Function) -> IR.Function:
+    """Rewrite a lowered ``output``/``next``/``deriv`` IR.Function so its
+    input-list parameter is always named ``inputs``, regardless of what the
+    Python source called it.
+
+    Every such method has the fixed shape ``(self, t, <input-list>, x)`` --
+    that positional contract is enforced by the base ``Block`` class -- but
+    the local spelling of the third parameter varies across the block
+    library (``inputs`` in most files, ``u`` in ``sampled.py``/``spatial.py``/
+    continuous ``deriv()`` overrides, and blocks defined outside this repo
+    in RTB/MVTB may vary further in ways not auditable from here).
+    Normalizing it here lets the rest of the pipeline keep matching the
+    literal name ``"inputs"`` unchanged.
+
+    Fails loudly rather than silently corrupting the IR if some unrelated
+    local in the function body already happens to be named ``inputs`` --
+    that would make this rename ambiguous (see ``collect_names``'s caveat).
+    """
+    param_name = fn.args[2]
+    if param_name == "inputs":
+        return fn
+    existing_names: set[str] = set()
+    collect_names(fn.body, existing_names)
+    if "inputs" in existing_names:
+        raise NotImplementedError(
+            f"codegen: {fn.name}() already uses the name 'inputs' for "
+            f"something other than its input-list parameter (named "
+            f"'{param_name}' here) -- cannot normalize without ambiguity"
+        )
+    new_args = list(fn.args)
+    new_args[2] = "inputs"
+    new_body = rename_ir_name(fn.body, param_name, IR.Name("inputs"))
+    return IR.Function(name=fn.name, args=new_args, body=new_body)
+
+
+def substitute_state_param(fn: IR.Function) -> IR.Function:
+    """Rewrite a sampled block's IR so its state parameter (position 3,
+    conventionally ``x``) reads/writes ``self.state`` -- a field codegen
+    synthesizes on the ``self`` struct -- instead of being passed in as an
+    external parameter.
+
+    Only ever applied when ``cfg.ndstates > 0``; continuous blocks keep
+    receiving state as an external parameter, unchanged, since they're out
+    of scope for this codegen effort (see the embedded codegen plan).
+
+    Fails loudly if the function body already reads/writes a genuine
+    ``self.state`` attribute of its own -- that would collide with the
+    synthesized field and there's no way to tell them apart safely.
+    """
+    existing_self_fields: set[str] = set()
+    collect_self_fields(fn.body, existing_self_fields)
+    if "state" in existing_self_fields:
+        raise NotImplementedError(
+            f"codegen: {fn.name}() already reads/writes a 'state' field "
+            f"of its own on self -- collides with the state codegen "
+            f"synthesizes for sampled blocks, cannot substitute safely"
+        )
+    param_name = fn.args[3]
+    new_body = rename_ir_name(
+        fn.body, param_name, IR.Attribute(IR.Name("self"), "state")
+    )
+    return IR.Function(name=fn.name, args=fn.args, body=new_body)
+
+
 def _eigen_matrix_literal(m: np.ndarray) -> str:
     rows, cols = m.shape
     vals = [repr(float(m[r, c])) for r in range(rows) for c in range(cols)]
@@ -1359,6 +1458,7 @@ class Emitter:
         self._indent = 0
         self.locals_types: dict[str, str] = {}
         self.declared_locals: set[str] = set()
+        self._function_kind: str = "output"
 
     # ------------------------------------------------------------------
     # Line / indent machinery
@@ -1772,6 +1872,12 @@ class CppEmitter(Emitter):
             self._emit(f"{cpp_type} {target};")
 
     def stmt_Return(self, s: IR.Return) -> None:
+        # next() has no output ports -- its return value is the block's
+        # state for the following tick, written to self.state directly.
+        if self._function_kind == "next":
+            self._emit(f"self.state = {self.expr(s.value)};")
+            self._emit("return;")
+            return
         # Case 1: return [a, b, ...] — each element maps to one output port.
         if isinstance(s.value, IR.List):
             for i, value in enumerate(s.value.values):
@@ -1831,6 +1937,7 @@ class CppEmitter(Emitter):
         self.locals_types = {}
         self.declared_locals = set()
         self._needed_helpers = set()
+        self._function_kind = function_name
 
         prefix = fixname(block_name)
         self_struct = f"{prefix}_self"
@@ -2286,24 +2393,54 @@ def codegen(bd, keep_fields: dict[str, set[str]] | None = None):
         print(cfg)
 
         method_ir = lower_block_method(cfg.block.output, cfg)
+        method_ir = normalize_input_param(method_ir)
+        if cfg.ndstates > 0:
+            method_ir = substitute_state_param(method_ir)
         print("--- raw IR")
         print(printer.format(method_ir))
         print("--- specialized IR")
         spec_ir = specialize_ir(method_ir, cfg)
         print(printer.format(spec_ir))
 
-        # prune the self struct to fields the specialized IR actually
-        # reads, plus any explicitly requested via keep_fields (e.g. for
-        # telemetry/live tuning, which by definition aren't read here)
+        # sampled (clocked) blocks also get a next() function, computing
+        # their state for the following tick from this tick's inputs
+        next_spec_ir = None
+        if cfg.ndstates > 0:
+            next_ir = lower_block_method(cfg.block.next, cfg)
+            next_ir = normalize_input_param(next_ir)
+            next_ir = substitute_state_param(next_ir)
+            print("--- next specialized IR")
+            next_spec_ir = specialize_ir(next_ir, cfg)
+            print(printer.format(next_spec_ir))
+
+        # prune the self struct to fields the specialized IR (output and,
+        # if present, next) actually reads, plus any explicitly requested
+        # via keep_fields (e.g. for telemetry/live tuning, which by
+        # definition aren't read here)
         used_self_fields: set[str] = set()
         collect_self_fields(spec_ir, used_self_fields)
+        if next_spec_ir is not None:
+            collect_self_fields(next_spec_ir, used_self_fields)
         used_self_fields |= keep_fields.get(block.name, set())
+
+        # state is synthesized, not a real block.__dict__ attribute -- add
+        # it to cfg.self (typed/initialized from getstate0()) only now,
+        # after specialization, so it never gets constant-folded away
+        if cfg.ndstates > 0 and "state" in used_self_fields:
+            state0 = cfg.block.getstate0()
+            cfg.self["state"] = (state0, VarType(state0))
+
         cfg.self = {k: v for k, v in cfg.self.items() if k in used_self_fields}
 
         print("--- emitted C++")
         s, f = emit_cpp(spec_ir, block.name, "output", cfg)
         fp.write(f"// C++ code for block {block.name}\n")
         fp.write(s + "\n\n" + f + "\n\n")
+
+        if next_spec_ir is not None:
+            # struct definitions already written above; only the function body
+            _, next_f = emit_cpp(next_spec_ir, block.name, "next", cfg)
+            fp.write(next_f + "\n\n")
 
     # build the run-time schedule and wiring
 
@@ -2332,12 +2469,28 @@ def codegen(bd, keep_fields: dict[str, set[str]] | None = None):
                 f"{name}_output(t, x, {name}_self, {name}_inports, {name}_outports);\n"
             )
 
+    # advance state for every clocked block, from this tick's now-current
+    # (already wired) inputs. Must run after every output() above -- next()
+    # writes self.state directly and in place, and it's safe to do so
+    # unconditionally here since no block ever reads another block's state,
+    # only its own -- see the two-phase ordering in the embedded codegen
+    # plan (claude-notes/codegen-embedded-plan.md).
+    stateful_blocks = [b for b in bd.blocklist if b.ndstates > 0]
+    if stateful_blocks:
+        fp.write("\n\n/****** State update (next) *******/\n")
+        for b in stateful_blocks:
+            name = fixname(b.name)
+            fp.write(
+                f"{name}_next(t, x, {name}_self, {name}_inports, {name}_outports);\n"
+            )
+
 
 # TODO:
-# - handle next() blocks
 # - redo scheduler for multi-clock systems
 # - add time groups
 # - pass appropriate bits of state vector to each function, not the whole x
+#   (moot for sampled blocks now that state lives on self; still applies to
+#   continuous blocks, out of scope for this codegen effort)
 
 # # --- IR coverage summary ---
 # print("\n====================================================== IR coverage")
