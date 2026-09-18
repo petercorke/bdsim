@@ -25,9 +25,12 @@ docs/paper1/**
 # C extensions
 *.so
 *.o
+*.dSYM/
 
 # bdsim.codegen output -- always regenerated, never source
 codegen.cpp
+examples/verify_driver
+examples/verify_driver.cpp
 
 # Distribution / packaging
 .Python
