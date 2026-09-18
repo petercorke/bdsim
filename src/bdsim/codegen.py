@@ -620,6 +620,12 @@ class IRSpecializer:
         self.self = {k: v for k, (v, _vt) in block_cfg.self.items()}
         self.self_types = {k: vt for k, (_v, vt) in block_cfg.self.items()}
         self.input_types = list(block_cfg.itypes)
+        # Type (not value) of a sampled block's synthesized self.state field,
+        # if it has one -- lets isinstance()/.ndim/.size fold on state even
+        # though its concrete value must stay symbolic (it changes every
+        # tick, unlike a real self.X field, which is why it's deliberately
+        # kept out of self.self above).
+        self.state_type: VarType | None = getattr(block_cfg, "state_vt", None)
         self.env: dict[str, Any] = {}
         # Stmts queued by the inliner to splice before the current statement.
         self._pending_stmts: list[IR.Stmt] = []
@@ -783,6 +789,33 @@ class IRSpecializer:
                 and isinstance(out.args[0], (IR.Tuple, IR.List))
             ):
                 return IR.List(out.args[0].values)
+            # np.array(x) is a no-op coercion for codegen purposes -- the
+            # Eigen/C++ representation is already array-like -- so drop the
+            # wrapper entirely rather than emitting an unrenderable call.
+            if (
+                isinstance(out.func, IR.Attribute)
+                and isinstance(out.func.value, IR.Name)
+                and out.func.value.name == "np"
+                and out.func.attr == "array"
+                and len(out.args) == 1
+            ):
+                return out.args[0]
+            # x.item() unwraps a size-1 ndarray to a plain scalar -- a
+            # common idiom (ZOH/Integrator_S) for letting state be a
+            # scalar or a vector. The receiver's *value* can't fold (state
+            # is symbolic), but its *type* can (self.state_type / the
+            # input-type table), which is enough to recognize the pattern
+            # and hand it to the emitter as a language-neutral intrinsic.
+            if (
+                isinstance(out.func, IR.Attribute)
+                and out.func.attr == "item"
+                and len(out.args) == 0
+            ):
+                recv_vt = self.eval_expr(out.func.value)
+                if isinstance(recv_vt, VarType) and recv_vt.dtype == "ndarray":
+                    return IR.IntrinsicCall(
+                        "numpy.item", [out.func.value], VarType._make("float")
+                    )
             val = self.eval_expr(out)
             if val is not UNKNOWN and not isinstance(val, VarType):
                 return _literal_from(val)
@@ -865,8 +898,24 @@ class IRSpecializer:
             if isinstance(expr.value, IR.Name) and expr.value.name == "self":
                 if expr.attr in self.self:
                     return self.self[expr.attr]
+                if expr.attr == "state" and self.state_type is not None:
+                    return self.state_type
             base = self.eval_expr(expr.value)
             if base is UNKNOWN:
+                return UNKNOWN
+            if isinstance(base, VarType):
+                # Type-level (not value-level) folding for ndarray shape
+                # introspection -- e.g. the common `if x.ndim == 1 and
+                # x.size == 1: x = x.item()` scalar-unwrapping idiom, used
+                # by several sampled blocks on their state.
+                if base.dtype == "ndarray" and isinstance(base.dims, tuple):
+                    if expr.attr == "ndim":
+                        return len(base.dims)
+                    if expr.attr == "size":
+                        size = 1
+                        for d in base.dims:
+                            size *= d
+                        return size
                 return UNKNOWN
             try:
                 return getattr(base, expr.attr)
@@ -1657,11 +1706,18 @@ class CppEmitter(Emitter):
             "    return a.cross(b);\n"
             "}",
         ),
+        # x.item() on a size-1 Eigen vector/matrix -- linear coefficient
+        # access, no helper function needed.
+        "numpy.item": (lambda args: f"{args[0]}(0)", None),
     }
 
     def __init__(self, cfg, types: dict[str, str] | None = None) -> None:
         super().__init__(cfg, types)
         self._needed_helpers: set[str] = set()
+        # Python-name -> current C++ identifier, for locals whose type
+        # changes on reassignment (e.g. `x = x.item()`); see stmt_Assign.
+        self.name_remap: dict[str, str] = {}
+        self._rebind_counter: int = 0
         # Pre-derive type strings from cfg so vartype_to_str is only called once.
         self._self_field_types: dict[str, str] = {
             name: self.vartype_to_str(vt) for name, (_v, vt) in cfg.self.items()
@@ -1739,7 +1795,9 @@ class CppEmitter(Emitter):
             if rt is not None and rt.startswith(_mp):
                 return rt
             return None
-        if isinstance(e, (IR.Call, IR.IntrinsicCall)):
+        if isinstance(e, IR.IntrinsicCall):
+            return self.vartype_to_str(e.result_vt) if e.result_vt is not None else None
+        if isinstance(e, IR.Call):
             return None
         if isinstance(e, IR.Compare):
             return "bool"
@@ -1780,6 +1838,9 @@ class CppEmitter(Emitter):
 
     def expr_Literal(self, e: IR.Literal) -> str:
         return self.literal_to_str(e.value)
+
+    def expr_Name(self, e: IR.Name) -> str:
+        return self.name_remap.get(e.name, e.name)
 
     def expr_Subscript(self, e: IR.Subscript) -> str:
         # inputs[i] → inports._i  (domain-level port convention)
@@ -1833,22 +1894,51 @@ class CppEmitter(Emitter):
     def stmt_Assign(self, s: IR.Assign) -> None:
         if not isinstance(s.target, IR.Name):
             self._fail("assignment target must be a simple name", s)
-        target = s.target.name
-        rhs = self.expr(s.value)
-        if target not in self.locals_types:
+        py_name = s.target.name
+        rhs = self.expr(s.value)  # resolves py_name under its *old* mapping
+
+        if py_name not in self.locals_types:
             inferred = self.infer_expr_type(s.value)
             if inferred is None:
                 self._fail(
-                    f"cannot infer C++ type for local '{target}'"
+                    f"cannot infer C++ type for local '{py_name}'"
                     f" (rhs is {type(s.value).__name__})",
                     s,
                 )
-            self.locals_types[target] = inferred
-        if target in self.declared_locals:
-            self._emit(f"{target} = {rhs};")
+            self.locals_types[py_name] = inferred
+            self.name_remap[py_name] = py_name
+            self._emit(f"{inferred} {py_name} = {rhs};")
+            self.declared_locals.add(py_name)
+            return
+
+        # Already declared -- Python allows a name to change type on
+        # reassignment (e.g. the `if x.size == 1: x = x.item()` idiom,
+        # narrowing an ndarray to a scalar), C++ doesn't. When the new
+        # type genuinely can't be assigned into the old one -- crossing
+        # the Eigen-matrix/scalar boundary, or between two different
+        # Eigen shapes -- declare a fresh, disambiguated C++ local
+        # instead, and remap this Python name to it for the rest of the
+        # function. An ordinary scalar-to-scalar difference (int32_t vs
+        # float, say) is left alone: plain C++ assignment already
+        # implicitly converts those, so reuse the existing declaration.
+        # Also the fallback when inference can't tell at all -- treating
+        # "unknown" as "unchanged" matches the previous, simpler behavior.
+        inferred = self.infer_expr_type(s.value)
+        cpp_name = self.name_remap.get(py_name, py_name)
+        current = self.locals_types[py_name]
+        needs_rebind = (
+            inferred is not None
+            and inferred != current
+            and (inferred.startswith("Eigen::") or current.startswith("Eigen::"))
+        )
+        if needs_rebind:
+            self._rebind_counter += 1
+            cpp_name = f"{py_name}_{self._rebind_counter}"
+            self.locals_types[py_name] = inferred
+            self.name_remap[py_name] = cpp_name
+            self._emit(f"{inferred} {cpp_name} = {rhs};")
         else:
-            self._emit(f"{self.locals_types[target]} {target} = {rhs};")
-            self.declared_locals.add(target)
+            self._emit(f"{cpp_name} = {rhs};")
 
     def stmt_Declare(self, s: IR.Declare) -> None:
         if not isinstance(s.target, IR.Name):
@@ -1938,6 +2028,8 @@ class CppEmitter(Emitter):
         self.declared_locals = set()
         self._needed_helpers = set()
         self._function_kind = function_name
+        self.name_remap = {}
+        self._rebind_counter = 0
 
         prefix = fixname(block_name)
         self_struct = f"{prefix}_self"
@@ -2369,6 +2461,11 @@ def codegen(bd, keep_fields: dict[str, set[str]] | None = None):
             # print(f"  {name}: {value} ({type(value)})")
             _self[name] = (value, VarType(value))
 
+        # type (not value) of the synthesized self.state field, for sampled
+        # blocks -- lets the specializer fold isinstance()/.ndim/.size on
+        # state without ever seeing its (runtime-only) concrete value
+        state_vt = VarType(block.getstate0()) if block.ndstates > 0 else None
+
         return SimpleNamespace(
             block=block,
             nin=block.nin,
@@ -2378,6 +2475,7 @@ def codegen(bd, keep_fields: dict[str, set[str]] | None = None):
             itypes=itypes,
             otypes=otypes,
             self=_self,
+            state_vt=state_vt,
         )
 
     printer = IRPrettyPrinter()
