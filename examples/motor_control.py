@@ -21,7 +21,7 @@ Copyright (c) 2021- Peter Corke
 """
 
 import bdsim
-from bdsim.codegen import codegen
+from bdsim.codegen import Codegen
 
 sim = bdsim.BDSim(animation=False)  # create simulator
 bd = sim.blockdiagram()  # create an empty block diagram
@@ -56,10 +56,8 @@ bd.compile()  # check the diagram
 sim.report(bd, depth=0)
 bd.report_schedule()
 
-# generate C++ for the diagram -- writes codegen.cpp in the cwd. Only the
-# struct/function definitions compile so far (verified against real Eigen);
-# the schedule/wiring section doesn't yet -- see the "Newly found 2026-09-18"
-# entry in claude-notes/codegen-embedded-plan.md.
-codegen(bd)
+# generate C++ for the diagram -- writes codegen.cpp in the cwd, and
+# compiles/runs standalone -- see claude-notes/codegen-embedded-plan.md
+Codegen().generate(bd)
 
 out = sim.run(bd, T=5)
