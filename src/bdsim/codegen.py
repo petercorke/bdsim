@@ -1,6 +1,7 @@
 import ast
 import inspect
 import json
+import math
 import textwrap
 from dataclasses import dataclass, field
 from dataclasses import fields as dataclass_fields
@@ -23,7 +24,19 @@ class VarType:
     dims: int | tuple[int, int] | None = None
 
     def __init__(self, v):
-        if isinstance(v, str):
+        # Checked before str/bool/float/int: NumPy scalar types (np.uint16,
+        # np.float32, ...) carry an explicit width/precision the plain
+        # Python buckets below can't express -- and some of them (notably
+        # np.float64) are themselves subclasses of the Python builtin, so
+        # this must come first or explicit NumPy typing gets silently
+        # discarded (e.g. np.float64(x) would otherwise match `float`
+        # below and lose its width to the default float mapping).
+        # dims=() (0-d) distinguishes a genuine scalar from an ndarray.
+        if isinstance(v, np.generic):
+            self.dtype = "ndarray"
+            self.etype = str(v.dtype)
+            self.dims = ()
+        elif isinstance(v, str):
             self.dtype = "str"
         elif isinstance(v, bool):
             self.dtype = "bool"
@@ -633,6 +646,11 @@ class IRSpecializer:
         # tick, unlike a real self.X field, which is why it's deliberately
         # kept out of self.self above).
         self.state_type: VarType | None = getattr(block_cfg, "state_vt", None)
+        # Max nesting depth for IRInliner.inline() (a genuinely deep but
+        # non-cyclic helper-calls-helper chain, not the already-separately
+        # guarded case of true recursion -- see IRInliner._stack).
+        self.max_inline_depth: int = getattr(block_cfg, "max_inline_depth", 20)
+        self._inline_depth = 0
         self.env: dict[str, Any] = {}
         # Stmts queued by the inliner to splice before the current statement.
         self._pending_stmts: list[IR.Stmt] = []
@@ -724,14 +742,22 @@ class IRSpecializer:
                 self._flatten([self.specialize_stmt(s) for s in stmt.orelse]),
             )
         if isinstance(stmt, IR.If):
+            # Lazy: fold the condition first, and only specialize whichever
+            # branch actually survives. Previously specialized both branches
+            # unconditionally before deciding which to keep -- harmless while
+            # the pipeline silently passed through anything it couldn't
+            # translate, but wrong once unresolvable constructs fail loudly
+            # (a dead branch, e.g. Integrator_S.next()'s disabled-`enable`
+            # path calling np.zeros(), would fail even though it can never
+            # actually be reached once the guarding condition is known).
             cond = self.specialize_expr(stmt.condition)
             val = self.eval_expr(cond)
+            if val is True:
+                return self._flatten([self.specialize_stmt(s) for s in stmt.body])
+            if val is False:
+                return self._flatten([self.specialize_stmt(s) for s in stmt.orelse])
             body = self._flatten([self.specialize_stmt(s) for s in stmt.body])
             orelse = self._flatten([self.specialize_stmt(s) for s in stmt.orelse])
-            if val is True:
-                return body
-            if val is False:
-                return orelse
             return IR.If(cond, body, orelse)
         return stmt
 
@@ -858,18 +884,47 @@ class IRSpecializer:
                 print,
             ):
                 try:
-                    inline_result = IRInliner.inline(f_val, out.args)
+                    inline_result = IRInliner.inline(
+                        f_val,
+                        out.args,
+                        depth=self._inline_depth,
+                        max_depth=self.max_inline_depth,
+                    )
                     if inline_result is not None:
                         extra_stmts, result_expr = inline_result
-                        # Specialize the inlined body
-                        spec_extra = []
-                        for s in extra_stmts:
-                            r = self.specialize_stmt(s)
-                            spec_extra.extend(r if isinstance(r, list) else [r])
-                        self._pending_stmts.extend(spec_extra)
-                        return self.specialize_expr(result_expr)
+                        self._inline_depth += 1
+                        try:
+                            # Specialize the inlined body
+                            spec_extra = []
+                            for s in extra_stmts:
+                                r = self.specialize_stmt(s)
+                                spec_extra.extend(r if isinstance(r, list) else [r])
+                            self._pending_stmts.extend(spec_extra)
+                            result = self.specialize_expr(result_expr)
+                        finally:
+                            self._inline_depth -= 1
+                        return result
                 except (RecursionError, OSError, TypeError, AttributeError):
                     pass
+                # Not a registered intrinsic (checked above) and not
+                # inlineable -- no Python source available (e.g. a
+                # compiled/C-extension function), or the nesting limit was
+                # hit. Fail loudly now, naming the call, rather than
+                # silently emitting a reference to a C++ symbol that was
+                # never defined and deferring the failure to the C++
+                # compiler with a far less specific error.
+                fn_desc = getattr(f_val, "__qualname__", None) or repr(f_val)
+                fn_module = getattr(f_val, "__module__", None)
+                if fn_module:
+                    fn_desc = f"{fn_module}.{fn_desc}"
+                raise NotImplementedError(
+                    f"codegen: cannot transpile call to {fn_desc}() -- not a "
+                    f"registered intrinsic (add one to _INTRINSICS with a "
+                    f"hand-written C++ implementation) and its source isn't "
+                    f"available for inlining (e.g. a compiled/C-extension "
+                    f"function), or it nests deeper than max_inline_depth "
+                    f"({self.max_inline_depth})"
+                )
             return out
         if isinstance(expr, IR.List):
             return IR.List([self.specialize_expr(v) for v in expr.values])
@@ -894,6 +949,8 @@ class IRSpecializer:
             return self.env[name]
         if name == "np":
             return np
+        if name == "math":
+            return math
         if name == "isinstance":
             return isinstance
         if name == "len":
@@ -1236,14 +1293,29 @@ class IRInliner:
     """
 
     _stack: set[int] = set()  # function object ids currently being inlined
-    MAX_DEPTH = 3
+    MAX_DEPTH = 20  # default when a caller doesn't pass max_depth explicitly
 
     @classmethod
     def inline(
-        cls, fn_obj, arg_exprs: list[IR.Expr], depth: int = 0
+        cls,
+        fn_obj,
+        arg_exprs: list[IR.Expr],
+        depth: int = 0,
+        max_depth: int | None = None,
     ) -> tuple[list[IR.Stmt], IR.Expr] | None:
-        """Return (stmts, result_expr) or None if not inlineable."""
-        if depth >= cls.MAX_DEPTH:
+        """Return (stmts, result_expr) or None if not inlineable.
+
+        ``depth`` is the current nesting level (the caller is responsible
+        for incrementing it across recursive inlining -- this method does
+        not call itself). Not a cycle guard -- true recursion is caught
+        separately by ``_stack`` below, regardless of depth -- this is
+        purely a bound on how far a genuinely non-cyclic chain of nested
+        helper calls gets unrolled, both for sane generated-code size and
+        because the ``_il{depth}_`` alpha-rename prefix needs a distinct
+        value per nesting level to avoid two different helpers' same-named
+        locals colliding.
+        """
+        if depth >= (max_depth if max_depth is not None else cls.MAX_DEPTH):
             return None
         fn_id = id(fn_obj)
         if fn_id in cls._stack:
@@ -1736,8 +1808,14 @@ class CppEmitter(Emitter):
     _ETYPE_MAP: dict[str, str] = {
         "float32": "float",
         "float64": "double",
+        "int8": "int8_t",
+        "int16": "int16_t",
         "int32": "int32_t",
         "int64": "int64_t",
+        "uint8": "uint8_t",
+        "uint16": "uint16_t",
+        "uint32": "uint32_t",
+        "uint64": "uint64_t",
         "bool": "bool",
     }
     # Python annotation string (from IR.Declare) -> C++ type
@@ -1812,13 +1890,29 @@ class CppEmitter(Emitter):
         "numpy.item": (lambda args: f"{args[0]}(0)", None),
     }
 
-    def __init__(self, cfg, types: dict[str, str] | None = None) -> None:
+    def __init__(
+        self,
+        cfg,
+        types: dict[str, str] | None = None,
+        default_int_type: str = "int32_t",
+        default_float_type: str = "float",
+    ) -> None:
         super().__init__(cfg, types)
         self._needed_helpers: set[str] = set()
         # Python-name -> current C++ identifier, for locals whose type
         # changes on reassignment (e.g. `x = x.item()`); see stmt_Assign.
         self.name_remap: dict[str, str] = {}
         self._rebind_counter: int = 0
+        # Instance copy of _SCALAR_TYPES so a plain Python int/float's
+        # default C++ type is configurable per emitter instance instead of
+        # fixed for the whole class. Everything else (bool/str/None, and
+        # ndarray element types via _ETYPE_MAP) is unaffected -- those
+        # already carry explicit type information (see VarType), it's
+        # only bare int/float that have no signal of their own and need
+        # *some* default.
+        self.scalar_types: dict[str, str] = dict(self._SCALAR_TYPES)
+        self.scalar_types["int"] = default_int_type
+        self.scalar_types["float"] = default_float_type
         # Pre-derive type strings from cfg so vartype_to_str is only called once.
         self._self_field_types: dict[str, str] = {
             name: self.vartype_to_str(vt) for name, (_v, vt) in cfg.self.items()
@@ -1832,12 +1926,16 @@ class CppEmitter(Emitter):
     # ------------------------------------------------------------------
 
     def vartype_to_str(self, vt: VarType) -> str:
-        if vt.dtype in self._SCALAR_TYPES:
-            return self._SCALAR_TYPES[vt.dtype]
+        if vt.dtype in self.scalar_types:
+            return self.scalar_types[vt.dtype]
         if vt.dtype == "ndarray":
             if not isinstance(vt.dims, tuple):
                 self._fail("ndarray VarType must have tuple dims")
             scalar = self._etype_to_cpp(vt.etype)
+            if len(vt.dims) == 0:
+                # A genuine NumPy scalar (np.uint16(5), ...), not an
+                # array -- plain C++ scalar, no Eigen wrapper.
+                return scalar
             if len(vt.dims) == 1:
                 return f"Eigen::Matrix<{scalar}, {vt.dims[0]}, 1>"
             if len(vt.dims) == 2:
@@ -1928,6 +2026,16 @@ class CppEmitter(Emitter):
             return "nullptr"
         if isinstance(value, str):
             return json.dumps(value)
+        if isinstance(value, np.generic):
+            # A NumPy scalar (np.uint16(5), np.float32(1.0), ...) -- render
+            # its native-Python equivalent. Checked before (int, float)
+            # since e.g. np.float64 is itself a float subclass and would
+            # otherwise be caught there; np.bool_ is not a bool subclass
+            # (needs true/false, not Python's True/False repr).
+            item = value.item()
+            if isinstance(item, bool):
+                return "true" if item else "false"
+            return repr(item)
         if isinstance(value, (int, float)):
             return repr(value)
         if isinstance(value, np.ndarray):
@@ -2227,9 +2335,16 @@ def emit_cpp(
     function_name: str,
     cfg,
     types: dict[str, str] | None = None,
+    default_int_type: str = "int32_t",
+    default_float_type: str = "float",
 ) -> tuple[str, str]:
     """Backward-compatible wrapper around :class:`CppEmitter`."""
-    return CppEmitter(cfg, types=types).emit(ir, block_name, function_name)
+    return CppEmitter(
+        cfg,
+        types=types,
+        default_int_type=default_int_type,
+        default_float_type=default_float_type,
+    ).emit(ir, block_name, function_name)
 
 
 # ---------------------------------------------------------------------------
@@ -2560,20 +2675,49 @@ def fixname(name: str) -> str:
     return "".join(c if c.isalnum() else "_" for c in name)
 
 
-def codegen(bd, keep_fields: dict[str, set[str]] | None = None):
-    """Generate C++ code for a compiled :class:`BlockDiagram`.
+class Codegen:
+    """Orchestrates C++ code generation for a compiled :class:`BlockDiagram`.
 
-    :param bd: compiled block diagram
+    Kept as its own class, separate from ``BlockDiagram`` itself: codegen
+    is a heavyweight, still-experimental feature with its own dependencies
+    (``ast``, ``inspect``) that most bdsim users don't need pulled into
+    the core simulator's API surface. An instance holds generation
+    options; construct one per configuration and call :meth:`generate`
+    once per diagram.
+
     :param keep_fields: block name -> field names to always keep in that
         block's ``self`` struct, even if unused by ``output()``/``next()``
         (e.g. fields exposed for telemetry or live parameter tuning).
+    :param default_int_type: C++ type a plain Python ``int`` maps to when
+        it carries no more specific type information of its own. A
+        NumPy-typed value (e.g. ``np.uint16(5)``, or an ``ndarray`` with
+        an explicit ``dtype``) is unaffected -- it always keeps its own
+        explicit width regardless of this default.
+    :param default_float_type: as above, for a plain Python ``float``.
+    :param max_inline_depth: how many levels deep a chain of nested
+        (non-recursive) helper-function calls gets inlined before codegen
+        gives up and fails loudly, rather than silently emitting a call
+        to an undefined C++ symbol. True recursion is caught separately
+        and unconditionally (see ``IRInliner._stack``); this is purely a
+        bound on legitimate but very deep non-cyclic call chains.
+    :param output_path: where to write the generated C++.
     """
-    keep_fields = keep_fields or {}
 
-    # build a dictionary of block metadata for code generation
-    block_dict = {}
+    def __init__(
+        self,
+        keep_fields: dict[str, set[str]] | None = None,
+        default_int_type: str = "int32_t",
+        default_float_type: str = "float",
+        max_inline_depth: int = 20,
+        output_path: str = "codegen.cpp",
+    ) -> None:
+        self.keep_fields = keep_fields or {}
+        self.default_int_type = default_int_type
+        self.default_float_type = default_float_type
+        self.max_inline_depth = max_inline_depth
+        self.output_path = output_path
 
-    def block_cfg(block):
+    def _block_cfg(self, block):
         itypes = []
         try:
             for i in range(block.nin):
@@ -2624,169 +2768,203 @@ def codegen(bd, keep_fields: dict[str, set[str]] | None = None):
             otypes=otypes,
             self=_self,
             state_vt=state_vt,
+            max_inline_depth=self.max_inline_depth,
         )
 
-    printer = IRPrettyPrinter()
+    def generate(self, bd) -> None:
+        """Generate C++ code for compiled block diagram *bd*."""
+        printer = IRPrettyPrinter()
 
-    fp = open("codegen.cpp", "w")
-    fp.write("#include <cstdint>\n")
-    fp.write("#include <cmath>\n")
-    fp.write("#include <Eigen/Dense>\n\n")
-    emitted_blocks: list[str] = []
-    for block in bd.blocklist:
+        fp = open(self.output_path, "w")
+        fp.write("#include <cstdint>\n")
+        fp.write("#include <cmath>\n")
+        fp.write("#include <Eigen/Dense>\n\n")
+        emitted_blocks: list[str] = []
+        for block in bd.blocklist:
 
-        cfg = block_cfg(block)
+            cfg = self._block_cfg(block)
 
-        if cfg.nout == 0:
-            continue
-        print(f"====================================================== {block.name}")
-        print(cfg)
+            if cfg.nout == 0:
+                continue
+            print(f"====================================================== {block.name}")
+            print(cfg)
 
-        if getattr(cfg.block, "type", None) == "function":
-            method_ir = lower_function_block(cfg.block)
-        else:
-            method_ir = lower_block_method(cfg.block.output, cfg)
-        method_ir = normalize_input_param(method_ir)
-        if cfg.ndstates > 0:
-            method_ir = substitute_state_param(method_ir)
-        print("--- raw IR")
-        print(printer.format(method_ir))
-        print("--- specialized IR")
-        spec_ir = specialize_ir(method_ir, cfg)
-        print(printer.format(spec_ir))
+            if getattr(cfg.block, "type", None) == "function":
+                method_ir = lower_function_block(cfg.block)
+            else:
+                method_ir = lower_block_method(cfg.block.output, cfg)
+            method_ir = normalize_input_param(method_ir)
+            if cfg.ndstates > 0:
+                method_ir = substitute_state_param(method_ir)
+            print("--- raw IR")
+            print(printer.format(method_ir))
+            print("--- specialized IR")
+            spec_ir = specialize_ir(method_ir, cfg)
+            print(printer.format(spec_ir))
 
-        # sampled (clocked) blocks also get a next() function, computing
-        # their state for the following tick from this tick's inputs
-        next_spec_ir = None
-        if cfg.ndstates > 0:
-            next_ir = lower_block_method(cfg.block.next, cfg)
-            next_ir = normalize_input_param(next_ir)
-            next_ir = substitute_state_param(next_ir)
-            print("--- next specialized IR")
-            next_spec_ir = specialize_ir(next_ir, cfg)
-            print(printer.format(next_spec_ir))
+            # sampled (clocked) blocks also get a next() function, computing
+            # their state for the following tick from this tick's inputs
+            next_spec_ir = None
+            if cfg.ndstates > 0:
+                next_ir = lower_block_method(cfg.block.next, cfg)
+                next_ir = normalize_input_param(next_ir)
+                next_ir = substitute_state_param(next_ir)
+                print("--- next specialized IR")
+                next_spec_ir = specialize_ir(next_ir, cfg)
+                print(printer.format(next_spec_ir))
 
-        # prune the self struct to fields the specialized IR (output and,
-        # if present, next) actually reads, plus any explicitly requested
-        # via keep_fields (e.g. for telemetry/live tuning, which by
-        # definition aren't read here)
-        used_self_fields: set[str] = set()
-        collect_self_fields(spec_ir, used_self_fields)
-        if next_spec_ir is not None:
-            collect_self_fields(next_spec_ir, used_self_fields)
-        used_self_fields |= keep_fields.get(block.name, set())
+            # prune the self struct to fields the specialized IR (output and,
+            # if present, next) actually reads, plus any explicitly requested
+            # via keep_fields (e.g. for telemetry/live tuning, which by
+            # definition aren't read here)
+            used_self_fields: set[str] = set()
+            collect_self_fields(spec_ir, used_self_fields)
+            if next_spec_ir is not None:
+                collect_self_fields(next_spec_ir, used_self_fields)
+            used_self_fields |= self.keep_fields.get(block.name, set())
 
-        # state is synthesized, not a real block.__dict__ attribute -- add
-        # it to cfg.self (typed/initialized from getstate0()) only now,
-        # after specialization, so it never gets constant-folded away
-        if cfg.ndstates > 0 and "state" in used_self_fields:
-            state0 = cfg.block.getstate0()
-            cfg.self["state"] = (state0, VarType(state0))
+            # state is synthesized, not a real block.__dict__ attribute -- add
+            # it to cfg.self (typed/initialized from getstate0()) only now,
+            # after specialization, so it never gets constant-folded away
+            if cfg.ndstates > 0 and "state" in used_self_fields:
+                state0 = cfg.block.getstate0()
+                cfg.self["state"] = (state0, VarType(state0))
 
-        cfg.self = {k: v for k, v in cfg.self.items() if k in used_self_fields}
+            cfg.self = {k: v for k, v in cfg.self.items() if k in used_self_fields}
 
-        print("--- emitted C++")
-        s, f = emit_cpp(spec_ir, block.name, "output", cfg)
-        fp.write(f"// C++ code for block {block.name}\n")
-        fp.write(s + "\n\n" + f + "\n\n")
-
-        if next_spec_ir is not None:
-            # struct definitions already written above; only the function body
-            _, next_f = emit_cpp(next_spec_ir, block.name, "next", cfg)
-            fp.write(next_f + "\n\n")
-
-        emitted_blocks.append(fixname(block.name))
-
-    # Per-block instance storage, and a single shared (always-empty) state
-    # vector purely to satisfy the existing `const Eigen::VectorXd& x`
-    # parameter every function still carries -- unused by any sampled
-    # block now that state lives on self.state; kept only for signature
-    # compatibility with the (currently out-of-scope) continuous-block path.
-    fp.write("\n\n/****** Block instances *******/\n")
-    fp.write("static Eigen::VectorXd g_x;\n")
-    for name in emitted_blocks:
-        fp.write(f"static {name}_self {name}_self_inst;\n")
-        fp.write(f"static {name}_inports {name}_inports_inst;\n")
-        fp.write(f"static {name}_outports {name}_outports_inst;\n")
-
-    fp.write("\nvoid bdsim_init() {\n}\n")
-
-    # build the run-time schedule and wiring, wrapped as a single function
-    # that runs one tick of the (single-clock, v1) polling loop -- see the
-    # "Runtime loop shape" section of the embedded codegen plan
-    fp.write("\nvoid bdsim_tick(double t) {\n")
-
-    emitted_block_set = set(emitted_blocks)
-    for sequence, group in enumerate(bd.plan):
-        fp.write(f"\n    /****** Schedule group {sequence} *******/\n")
-        for b in group:
-            print(f"Schedule {b.name} at sequence {sequence}")
-            name = fixname(b.name)
-
-            # EMIT THE FUNCTION CALL
-            fp.write(
-                f"    {name}_output(t, g_x, {name}_self_inst, {name}_inports_inst, {name}_outports_inst);\n"
+            print("--- emitted C++")
+            s, f = emit_cpp(
+                spec_ir,
+                block.name,
+                "output",
+                cfg,
+                default_int_type=self.default_int_type,
+                default_float_type=self.default_float_type,
             )
+            fp.write(f"// C++ code for block {block.name}\n")
+            fp.write(s + "\n\n" + f + "\n\n")
 
-            # Push this tick's output to every connected destination's
-            # inport immediately -- mirrors how the real bdsim runtime
-            # propagates values (Block._publish_output_values), and is
-            # the only ordering that's correct in general: a non-
-            # feedthrough stateful block (e.g. an integrator) is
-            # scheduled independent of its input's readiness (its
-            # output only reads self.state), so it can land in an
-            # earlier sequence group than the block that produces its
-            # input -- but its inport still needs this tick's value
-            # before the state-update pass below runs. Reading from the
-            # destination's own sequence slot (the previous approach)
-            # got this wrong: it either never wired sequence-0 blocks'
-            # inputs at all, or would have read a stale, one-tick-old
-            # value had it tried.
-            for port in range(b.nout):
-                for wire in b._output_wires[port]:  # noqa: SLF001 -- no public accessor
-                    dest_block = wire.end.block
-                    dest_name = fixname(dest_block.name or "")
-                    if dest_name not in emitted_block_set:
-                        # sink block (e.g. SCOPE) -- no struct/instance
-                        # generated for it yet, see the I/O handling
-                        # section of the embedded codegen plan
-                        continue
-                    fp.write(
-                        f"    {dest_name}_inports_inst._{wire.end.port} = {name}_outports_inst._{port};"
-                        f"  // {dest_block.name}[{wire.end.port}] <-- {b.name}[{port}]\n"
-                    )
+            if next_spec_ir is not None:
+                # struct definitions already written above; only the function body
+                _, next_f = emit_cpp(
+                    next_spec_ir,
+                    block.name,
+                    "next",
+                    cfg,
+                    default_int_type=self.default_int_type,
+                    default_float_type=self.default_float_type,
+                )
+                fp.write(next_f + "\n\n")
 
-    # advance state for every clocked block, from this tick's now-current
-    # (already wired) inputs. Must run after every output() above -- next()
-    # writes self.state directly and in place, and it's safe to do so
-    # unconditionally here since no block ever reads another block's state,
-    # only its own -- see the two-phase ordering in the embedded codegen
-    # plan (claude-notes/codegen-embedded-plan.md).
-    #
-    # Skipped on the very first tick -- matches bdsim's own real clock
-    # semantics, confirmed by cross-checking generated output numerically
-    # against bdsim's Python simulator (see the embedded codegen plan):
-    # Clock.tick starts at 1, so the clock's first scheduled event fires
-    # at t=T, not t=0 -- there's an implicit free "tick 0" (the initial-
-    # condition sample) that never triggers a state update. At t=T,
-    # output() still reads the untouched initial state; only from t=2T
-    # does a block's output reflect its first next() call. Translated to
-    # this polling model (one bdsim_tick() call = one clock period,
-    # called starting at t=0): the first call is that free IC sample, so
-    # its next() pass doesn't run either.
-    stateful_blocks = [b for b in bd.blocklist if b.ndstates > 0]
-    if stateful_blocks:
-        fp.write("\n    /****** State update (next) *******/\n")
-        fp.write("    static bool first_tick = true;\n")
-        fp.write("    if (!first_tick) {\n")
-        for b in stateful_blocks:
-            name = fixname(b.name)
-            fp.write(
-                f"        {name}_next(t, g_x, {name}_self_inst, {name}_inports_inst, {name}_outports_inst);\n"
-            )
-        fp.write("    }\n    first_tick = false;\n")
+            emitted_blocks.append(fixname(block.name))
 
-    fp.write("}\n")
+        # Per-block instance storage, and a single shared (always-empty) state
+        # vector purely to satisfy the existing `const Eigen::VectorXd& x`
+        # parameter every function still carries -- unused by any sampled
+        # block now that state lives on self.state; kept only for signature
+        # compatibility with the (currently out-of-scope) continuous-block path.
+        fp.write("\n\n/****** Block instances *******/\n")
+        fp.write("static Eigen::VectorXd g_x;\n")
+        for name in emitted_blocks:
+            fp.write(f"static {name}_self {name}_self_inst;\n")
+            fp.write(f"static {name}_inports {name}_inports_inst;\n")
+            fp.write(f"static {name}_outports {name}_outports_inst;\n")
+
+        fp.write("\nvoid bdsim_init() {\n}\n")
+
+        # build the run-time schedule and wiring, wrapped as a single function
+        # that runs one tick of the (single-clock, v1) polling loop -- see the
+        # "Runtime loop shape" section of the embedded codegen plan
+        fp.write("\nvoid bdsim_tick(double t) {\n")
+
+        emitted_block_set = set(emitted_blocks)
+        for sequence, group in enumerate(bd.plan):
+            fp.write(f"\n    /****** Schedule group {sequence} *******/\n")
+            for b in group:
+                print(f"Schedule {b.name} at sequence {sequence}")
+                name = fixname(b.name)
+
+                # EMIT THE FUNCTION CALL
+                fp.write(
+                    f"    {name}_output(t, g_x, {name}_self_inst, {name}_inports_inst, {name}_outports_inst);\n"
+                )
+
+                # Push this tick's output to every connected destination's
+                # inport immediately -- mirrors how the real bdsim runtime
+                # propagates values (Block._publish_output_values), and is
+                # the only ordering that's correct in general: a non-
+                # feedthrough stateful block (e.g. an integrator) is
+                # scheduled independent of its input's readiness (its
+                # output only reads self.state), so it can land in an
+                # earlier sequence group than the block that produces its
+                # input -- but its inport still needs this tick's value
+                # before the state-update pass below runs. Reading from the
+                # destination's own sequence slot (the previous approach)
+                # got this wrong: it either never wired sequence-0 blocks'
+                # inputs at all, or would have read a stale, one-tick-old
+                # value had it tried.
+                for port in range(b.nout):
+                    for wire in b._output_wires[port]:  # noqa: SLF001 -- no public accessor
+                        dest_block = wire.end.block
+                        dest_name = fixname(dest_block.name or "")
+                        if dest_name not in emitted_block_set:
+                            # sink block (e.g. SCOPE) -- no struct/instance
+                            # generated for it yet, see the I/O handling
+                            # section of the embedded codegen plan
+                            continue
+                        fp.write(
+                            f"    {dest_name}_inports_inst._{wire.end.port} = {name}_outports_inst._{port};"
+                            f"  // {dest_block.name}[{wire.end.port}] <-- {b.name}[{port}]\n"
+                        )
+
+        # advance state for every clocked block, from this tick's now-current
+        # (already wired) inputs. Must run after every output() above -- next()
+        # writes self.state directly and in place, and it's safe to do so
+        # unconditionally here since no block ever reads another block's state,
+        # only its own -- see the two-phase ordering in the embedded codegen
+        # plan (claude-notes/codegen-embedded-plan.md).
+        #
+        # Skipped on the very first tick -- matches bdsim's own real clock
+        # semantics, confirmed by cross-checking generated output numerically
+        # against bdsim's Python simulator (see the embedded codegen plan):
+        # Clock.tick starts at 1, so the clock's first scheduled event fires
+        # at t=T, not t=0 -- there's an implicit free "tick 0" (the initial-
+        # condition sample) that never triggers a state update. At t=T,
+        # output() still reads the untouched initial state; only from t=2T
+        # does a block's output reflect its first next() call. Translated to
+        # this polling model (one bdsim_tick() call = one clock period,
+        # called starting at t=0): the first call is that free IC sample, so
+        # its next() pass doesn't run either.
+        stateful_blocks = [b for b in bd.blocklist if b.ndstates > 0]
+        if stateful_blocks:
+            fp.write("\n    /****** State update (next) *******/\n")
+            fp.write("    static bool first_tick = true;\n")
+            fp.write("    if (!first_tick) {\n")
+            for b in stateful_blocks:
+                name = fixname(b.name)
+                fp.write(
+                    f"        {name}_next(t, g_x, {name}_self_inst, {name}_inports_inst, {name}_outports_inst);\n"
+                )
+            fp.write("    }\n    first_tick = false;\n")
+
+        fp.write("}\n")
+        fp.close()
+
+
+def codegen(bd, keep_fields: dict[str, set[str]] | None = None) -> None:
+    """Generate C++ code for a compiled :class:`BlockDiagram`.
+
+    Thin backward-compatible wrapper around :class:`Codegen` using its
+    defaults. Construct a :class:`Codegen` directly for control over the
+    default int/float type mapping, the inliner's nesting-depth bound, or
+    the output path.
+
+    :param bd: compiled block diagram
+    :param keep_fields: block name -> field names to always keep in that
+        block's ``self`` struct, even if unused by ``output()``/``next()``
+        (e.g. fields exposed for telemetry or live parameter tuning).
+    """
+    Codegen(keep_fields=keep_fields).generate(bd)
 
 
 # TODO:
