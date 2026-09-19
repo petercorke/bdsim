@@ -1772,7 +1772,7 @@ class SinkBlock(Block):
         raise NotImplementedError
 
 
-class IOBlock:
+class IOBlockMixin:
     """
     A marker mixin for blocks that read or write real external I/O
     (hardware pins, serial devices, ...) rather than performing pure
@@ -1789,14 +1789,24 @@ class IOBlock:
     to the Source/Sink/Function/... axis every other class in this file
     represents, so combine it with :class:`SourceBlock` or
     :class:`SinkBlock` as appropriate, e.g.
-    ``class AnalogIn(IOBlock, SourceBlock): ...``.
+    ``class AnalogIn(SourceBlock, IOBlockMixin): ...``.
+
+    .. note:: Named to end in ``Mixin``, not ``Block``, deliberately --
+        ``bdsim.run_sim.load_blocks``'s AST-based block-metadata scanner
+        classifies a block's family by walking its base-class names as
+        literal strings and taking the first one ending in ``"Block"``
+        (``SourceBlock``/``SinkBlock``/``FunctionBlock``/...). A name
+        like ``IOBlock`` would itself match that check, so a block
+        listing it before its real ``SourceBlock``/``SinkBlock`` base
+        would get silently mis-classified.
 
     .. note:: This mirrors ``_IOBlockMixin`` on the (as yet unmerged)
         ``feat/realtime`` branch, which independently arrived at the
-        same shape for the same reason. When that branch merges, its
-        I/O block classes should inherit from this public ``IOBlock``
-        instead of their own private mixin, so there is exactly one
-        marker, not two.
+        same shape for the same reason (down to the name, minus the
+        leading underscore). When that branch merges, its I/O block
+        classes should inherit from this public ``IOBlockMixin`` instead
+        of their own private one, so there is exactly one marker, not
+        two.
     """
 
 
