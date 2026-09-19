@@ -2951,20 +2951,6 @@ class Codegen:
         fp.close()
 
 
-def codegen(bd, keep_fields: dict[str, set[str]] | None = None) -> None:
-    """Generate C++ code for a compiled :class:`BlockDiagram`.
-
-    Thin backward-compatible wrapper around :class:`Codegen` using its
-    defaults. Construct a :class:`Codegen` directly for control over the
-    default int/float type mapping, the inliner's nesting-depth bound, or
-    the output path.
-
-    :param bd: compiled block diagram
-    :param keep_fields: block name -> field names to always keep in that
-        block's ``self`` struct, even if unused by ``output()``/``next()``
-        (e.g. fields exposed for telemetry or live parameter tuning).
-    """
-    Codegen(keep_fields=keep_fields).generate(bd)
 
 
 # TODO:
@@ -3018,4 +3004,4 @@ if __name__ == "__main__":
 
     bd.report_schedule()
 
-    codegen(bd)
+    Codegen().generate(bd)
