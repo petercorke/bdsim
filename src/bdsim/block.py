@@ -1772,6 +1772,34 @@ class SinkBlock(Block):
         raise NotImplementedError
 
 
+class IOBlock:
+    """
+    A marker mixin for blocks that read or write real external I/O
+    (hardware pins, serial devices, ...) rather than performing pure
+    computation on their diagram inputs/outputs.
+
+    Deliberately carries no behavior of its own -- it exists purely as a
+    stable, shared extension point so that independent execution
+    backends (e.g. realtime hardware execution, embedded C++ codegen)
+    can recognize "this is an I/O block" via a plain ``isinstance()``
+    check, without needing to depend on each other's private internals
+    or duplicate a parallel block hierarchy under different names.
+
+    Not itself a :class:`Block` subclass -- "I/O or not" is orthogonal
+    to the Source/Sink/Function/... axis every other class in this file
+    represents, so combine it with :class:`SourceBlock` or
+    :class:`SinkBlock` as appropriate, e.g.
+    ``class AnalogIn(IOBlock, SourceBlock): ...``.
+
+    .. note:: This mirrors ``_IOBlockMixin`` on the (as yet unmerged)
+        ``feat/realtime`` branch, which independently arrived at the
+        same shape for the same reason. When that branch merges, its
+        I/O block classes should inherit from this public ``IOBlock``
+        instead of their own private mixin, so there is exactly one
+        marker, not two.
+    """
+
+
 class FunctionBlock(Block):
     """
     A FunctionBlock is a subclass of Block that represents a block that has inputs
