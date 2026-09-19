@@ -725,6 +725,21 @@ class IRSpecializer:
         # non-cyclic helper-calls-helper chain, not the already-separately
         # guarded case of true recursion -- see IRInliner._stack).
         self.max_inline_depth: int = getattr(block_cfg, "max_inline_depth", 20)
+        # Monotonic counter, one value per actual inline call site --
+        # drives IRInliner's alpha-rename prefix instead of nesting depth
+        # (two sibling inlined calls at the same depth still need distinct
+        # prefixes; see IRInliner.inline's unique_id docs). Starts at 1:
+        # 0 is reserved for lower_function_block()'s own top-level inline
+        # of a FUNCTION block's callable, which doesn't go through here.
+        self._inline_counter = 0
+        # Fallback namespace for free-variable name resolution -- e.g. a
+        # FUNCTION block's callable referencing a *sibling* helper defined
+        # in the same module (not a nested/self attribute), the normal
+        # shape for a toolbox module where one helper calls another. Only
+        # the top-level callable's own __globals__, not per-nesting-level,
+        # so a helper calling another helper defined in a *different*
+        # module still won't resolve -- a known, narrower-than-ideal limit.
+        self.extra_globals: dict[str, Any] = getattr(block_cfg, "extra_globals", None) or {}
         self._inline_depth = 0
         self.env: dict[str, Any] = {}
         # Stmts queued by the inliner to splice before the current statement.
@@ -989,11 +1004,13 @@ class IRSpecializer:
                     )
 
                 try:
+                    self._inline_counter += 1
                     inline_result = IRInliner.inline(
                         f_val,
                         out.args,
                         depth=self._inline_depth,
                         max_depth=self.max_inline_depth,
+                        unique_id=self._inline_counter,
                     )
                     if inline_result is not None:
                         extra_stmts, result_expr = inline_result
@@ -1060,6 +1077,8 @@ class IRSpecializer:
             return enumerate
         if name == "zip":
             return zip
+        if name in self.extra_globals:
+            return self.extra_globals[name]
         return UNKNOWN
 
     def eval_expr(self, expr: IR.Expr):
@@ -1403,18 +1422,30 @@ class IRInliner:
         arg_exprs: list[IR.Expr],
         depth: int = 0,
         max_depth: int | None = None,
+        unique_id: int | None = None,
     ) -> tuple[list[IR.Stmt], IR.Expr] | None:
         """Return (stmts, result_expr) or None if not inlineable.
 
         ``depth`` is the current nesting level (the caller is responsible
         for incrementing it across recursive inlining -- this method does
         not call itself). Not a cycle guard -- true recursion is caught
-        separately by ``_stack`` below, regardless of depth -- this is
-        purely a bound on how far a genuinely non-cyclic chain of nested
-        helper calls gets unrolled, both for sane generated-code size and
-        because the ``_il{depth}_`` alpha-rename prefix needs a distinct
-        value per nesting level to avoid two different helpers' same-named
-        locals colliding.
+        separately by ``_stack`` below, regardless of depth -- ``depth``
+        is purely a bound on how far a genuinely non-cyclic chain of
+        nested helper calls gets unrolled, for sane generated-code size.
+
+        ``unique_id``, not ``depth``, drives the ``_il{unique_id}_``
+        alpha-rename prefix (falls back to ``depth`` if not given, for
+        callers that only ever make one top-level inline call). Two
+        *sibling* inlined calls at the same nesting depth -- e.g. a
+        function returning ``[helper_a(u), helper_b(u)]`` -- are not
+        cyclic and don't collide with each other's names via ``_stack``,
+        but they *do* both sit at ``depth`` 0 if keyed on depth alone;
+        if both happen to use a same-named local (e.g. both use ``tmp``),
+        depth-keyed prefixes collide and silently corrupt the generated
+        code (second inlined ``tmp`` overwrites the first, both outputs
+        get the second helper's value). The caller is responsible for
+        passing a value that's unique per actual inline call site, not
+        per nesting level.
         """
         if depth >= (max_depth if max_depth is not None else cls.MAX_DEPTH):
             return None
@@ -1435,7 +1466,7 @@ class IRInliner:
             if not isinstance(func_def, ast.FunctionDef):
                 return None
 
-            prefix = f"_il{depth}_"
+            prefix = f"_il{unique_id if unique_id is not None else depth}_"
             formal_names = [a.arg for a in func_def.args.args]
             # Build substitution map: formal → actual arg expr
             subst: dict[str, IR.Expr] = {}
@@ -2883,6 +2914,18 @@ class Codegen:
         # state without ever seeing its (runtime-only) concrete value
         state_vt = VarType(block.getstate0()) if block.ndstates > 0 else None
 
+        # Fallback name-resolution namespace: the module a FUNCTION block's
+        # callable (or, for an ordinary block, its output() method) was
+        # itself defined in -- lets a sibling helper function referenced
+        # by bare name resolve for inlining. See IRSpecializer.extra_globals.
+        # getattr(..., None), not direct attribute access -- called for
+        # every block, including sink blocks (e.g. SCOPE) that have no
+        # output() at all; this runs before generate()'s nout==0 skip.
+        top_level_callable = getattr(block, "func", None) or getattr(
+            block, "output", None
+        )
+        extra_globals = getattr(top_level_callable, "__globals__", None) or {}
+
         return SimpleNamespace(
             block=block,
             nin=block.nin,
@@ -2894,6 +2937,7 @@ class Codegen:
             self=_self,
             state_vt=state_vt,
             max_inline_depth=self.max_inline_depth,
+            extra_globals=extra_globals,
         )
 
     # ------------------------------------------------------------------
