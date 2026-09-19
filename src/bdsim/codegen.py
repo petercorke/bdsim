@@ -1,3 +1,68 @@
+r"""Generate standalone, embedded-target C++ from a compiled bdsim
+:class:`~bdsim.blockdiagram.BlockDiagram`.
+
+Pipeline: each block's ``output()``/``next()`` Python source is parsed
+(:mod:`ast`), lowered to a small internal IR (:class:`IR`) by
+:class:`MethodFrontend`, constant-folded/specialized by
+:class:`IRSpecializer`, and rendered to C++ by :class:`CppEmitter`.
+:class:`Codegen` orchestrates the whole diagram. See
+``claude-notes/codegen-embedded-plan.md`` for the design history and
+rationale; this docstring is the reference for *what's actually
+supported* -- deliberately narrower than Python itself, and narrower
+than what a fully general Python-to-C++ transpiler would need, because
+the target is bdsim block bodies and simple toolbox helpers, not
+arbitrary code.
+
+Fails loudly (``NotImplementedError``) on anything outside this
+subset, naming the construct or call that couldn't be handled, rather
+than silently emitting C++ that won't compile or (worse) compiles but
+does the wrong thing. If you hit one of these, that's the pipeline
+correctly telling you it doesn't understand your code yet -- not a bug
+report waiting to happen at the C++ compile stage.
+
+**Supported statements**: assignment (``x = ...``), annotated
+declaration (``x: float = ...``), ``if``/``else`` (only the branch a
+constant-folded condition proves reachable is ever visited by later
+passes -- a dead branch containing something otherwise-unsupported is
+fine), ``return``, ``raise``, bare expression statements. ``for`` is
+lowered but only meaningfully consumed by one block-specific special
+case (:func:`IRSpecializer._specialize_sum_body`, for ``SUM``'s own
+``for i, input in enumerate(inputs): ...`` shape) -- no general for-loop
+support. ``while``, ``try``/``except``, ``with``, class/nested-function
+definitions, ``async``, walrus, and ``match`` are **not** supported at
+all (tracked: bdsim issue #92 for loops specifically).
+
+**Supported expressions**: arithmetic/comparison/boolean operators,
+subscripting, attribute access, literals, list/tuple construction, the
+ternary (``a if cond else b``). Calls are supported three ways, tried in
+order: (1) a registered intrinsic (``_INTRINSICS`` -- currently
+``spatialmath.base`` functions like ``skew``/``vex``/``cross``, rendered
+via a hand-written C++ implementation in each :class:`Emitter`
+subclass's ``INTRINSIC_IMPLS``); (2) inlining, for a plain Python
+function/lambda whose source :func:`inspect.getsource` can read, not
+from a blocked package (``_NO_INLINE_PACKAGES`` -- currently
+``numpy``/``scipy``: their internals sometimes *do* have real Python
+source, but are too complex to reliably specialize, so codegen refuses
+to even try and fails at the actual call site instead of somewhere deep
+inside NumPy's own implementation), within ``max_inline_depth`` levels
+of nesting; (3) a small set of specially-recognized builtins
+(``len``/``isinstance``/``enumerate``/``zip``/``abs``, ``list(x)`` and
+``np.array(x)`` as no-op coercions, ``x.item()`` on an ndarray-typed
+value). Comprehensions (``ListComp``/``DictComp``) are defined as IR
+node types but not meaningfully supported beyond limited folding.
+
+**Type mapping**: a bare Python ``int`` maps to ``int32_t``, a bare
+``float`` to C++ ``float`` (32-bit -- not ``double``, even though Python
+floats are 64-bit) by default -- both configurable per :class:`Codegen`
+instance (``default_int_type``/``default_float_type``). A genuinely
+NumPy-typed value (``np.uint16(5)``, or an ``ndarray`` with an explicit
+``dtype``) always keeps its own width regardless of that default --
+``np.float64(x)`` reliably gets a C++ ``double``, for instance. An
+``ndarray`` with 1 or 2 dimensions maps to a fixed-size
+``Eigen::Matrix``; 0 dimensions (a genuine NumPy scalar) maps to a plain
+C++ scalar, no Eigen wrapper.
+"""
+
 import ast
 import inspect
 import json
