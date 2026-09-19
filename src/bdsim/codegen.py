@@ -855,7 +855,27 @@ class IRSpecializer:
         _ir_coverage["spec_expr"].add(type(expr).__name__)
         if isinstance(expr, IR.Attribute):
             value = self.specialize_expr(expr.value)
-            return IR.Attribute(value, expr.attr)
+            out = IR.Attribute(value, expr.attr)
+            if isinstance(value, IR.Name) and value.name == "self":
+                # self.<field> (including the synthesized self.state) must
+                # stay a real struct-field reference in the emitted code,
+                # even when its current value happens to be known --
+                # folding it away would defeat keep_fields
+                # (telemetry/live tuning) and the whole point of a
+                # mutable self struct. Unlike every sibling case below,
+                # this branch deliberately never calls eval_expr() to fold.
+                return out
+            val = self.eval_expr(out)
+            if val is not UNKNOWN and not isinstance(val, VarType) and not callable(val):
+                # callable(val) excluded: a module-attribute reference
+                # to a *function* (np.array, np.zeros, ...) must stay an
+                # IR.Attribute, not get wrapped in an IR.Literal -- the
+                # IR.Call handling below pattern-matches specific
+                # `isinstance(out.func, IR.Attribute)` shapes (e.g. the
+                # np.array(x) no-op coercion, x.item()) that only fire
+                # when the callee is still a plain attribute reference.
+                return _literal_from(val)
+            return out
         if isinstance(expr, IR.Subscript):
             out = IR.Subscript(
                 self.specialize_expr(expr.value), self.specialize_expr(expr.index)
@@ -1476,7 +1496,10 @@ class IRInliner:
             frontend = MethodFrontend({})
             raw_body = frontend.lower_block(func_def.body)
 
-            renamer = _IRAlphaRenamer(prefix, subst)
+            bound_names: set[str] = set(formal_names)
+            collect_bound_names(raw_body, bound_names)
+
+            renamer = _IRAlphaRenamer(prefix, subst, bound_names)
             renamed_body = [renamer.rename_stmt(s) for s in raw_body]
             renamed_body = _flatten_list(renamed_body)
 
@@ -1562,11 +1585,30 @@ def _flatten_list(nodes):
 
 
 class _IRAlphaRenamer:
-    """α-rename locals in IR, substituting formals with actual arg exprs."""
+    """α-rename locals in IR, substituting formals with actual arg exprs.
 
-    def __init__(self, prefix: str, subst: dict[str, IR.Expr]) -> None:
+    Only renames names in ``bound_names`` (formals plus anything actually
+    assigned within the inlined function's own body -- see
+    :func:`collect_bound_names`). Any other ``IR.Name`` is a free
+    reference (a module like ``math``, a sibling helper function used as
+    a value, a builtin, ...) and must be left alone: renaming it would
+    point it at a local that's never declared. Previously every
+    non-substituted ``IR.Name`` was renamed unconditionally, which
+    silently corrupted free references reached other than as a direct
+    call target -- e.g. ``math.pi`` (an ``IR.Attribute`` whose ``.value``
+    is ``IR.Name("math")``) became the invalid ``_il0_math.pi``. The
+    direct-call-target case (``math.sin(x)``, another top-level ``def``)
+    had its own narrower carve-out for the same underlying reason; with
+    ``IR.Name`` itself now discriminating correctly, the call case no
+    longer needs a special case of its own.
+    """
+
+    def __init__(
+        self, prefix: str, subst: dict[str, IR.Expr], bound_names: set[str]
+    ) -> None:
         self.prefix = prefix
         self.subst = subst  # formal_name -> IR.Expr replacement
+        self.bound_names = bound_names  # true locals: formals + assigned names
 
     def _local(self, name: str) -> str:
         return self.prefix + name
@@ -1575,7 +1617,9 @@ class _IRAlphaRenamer:
         if isinstance(e, IR.Name):
             if e.name in self.subst:
                 return self.subst[e.name]
-            return IR.Name(self._local(e.name))
+            if e.name in self.bound_names:
+                return IR.Name(self._local(e.name))
+            return e  # free reference (module, global, sibling def, builtin)
         if isinstance(e, IR.Attribute):
             return IR.Attribute(self.rename_expr(e.value), e.attr)
         if isinstance(e, IR.Subscript):
@@ -1597,23 +1641,12 @@ class _IRAlphaRenamer:
                 self.rename_expr(e.orelse),
             )
         if isinstance(e, IR.Call):
-            # Only rename the callee if it's actually a formal parameter
-            # being substituted (e.g. `def apply(f, x): return f(x)`) --
-            # otherwise leave it alone. It's a reference to a
-            # global/builtin/module-level function (abs, math.sin,
-            # another top-level def, ...), not a local to alpha-rename.
-            # Blindly renaming here previously turned `abs(u)` into a
-            # call to a nonexistent `_il0_abs`. Known remaining gap: an
-            # attribute-based reference (`math.sin`, `self.foo`) as the
-            # callee isn't renamed either way here, which is correct for
-            # a plain module/global reference but would be wrong for the
-            # rare case of a substituted callable reached via an
-            # attribute chain -- not worth the added complexity without
-            # a concrete case that needs it.
-            func = e.func
-            if isinstance(func, IR.Name) and func.name in self.subst:
-                func = self.rename_expr(func)
-            return IR.Call(func, [self.rename_expr(a) for a in e.args])
+            # e.func goes through the same IR.Name handling as any other
+            # expression -- substituted if it's a formal, renamed if it's
+            # a genuine local (e.g. a locally-assigned callable:
+            # `g = helper; return g(x)`), left alone if it's a free
+            # reference (`abs(u)`, `math.sin(x)`, a sibling top-level def).
+            return IR.Call(self.rename_expr(e.func), [self.rename_expr(a) for a in e.args])
         if isinstance(e, IR.IntrinsicCall):
             return IR.IntrinsicCall(
                 e.name, [self.rename_expr(a) for a in e.args], e.result_vt
@@ -1710,6 +1743,36 @@ def collect_names(node: Any, out: set[str]) -> None:
     elif isinstance(node, list):
         for item in node:
             collect_names(item, out)
+
+
+def collect_bound_names(node: Any, out: set[str]) -> None:
+    """Recursively collect every name *assigned* within an IR tree --
+    ``Assign``/``Declare``/``For``/comprehension targets -- i.e. genuine
+    Python-scope locals, as opposed to free references to
+    globals/builtins/sibling functions.
+
+    Unlike :func:`collect_names` (which collects every ``IR.Name``
+    occurrence indiscriminately, for use as a cheap "is this name already
+    taken" pre-check), this distinguishes what :class:`_IRAlphaRenamer`
+    must rename -- real locals, to avoid colliding with the caller's own
+    names -- from what it must leave alone: free variables such as a
+    module name (``math``), a sibling helper function referenced by bare
+    name, or a builtin.
+    """
+    if isinstance(node, IR.Assign) and isinstance(node.target, IR.Name):
+        out.add(node.target.name)
+    elif isinstance(node, IR.Declare) and isinstance(node.target, IR.Name):
+        out.add(node.target.name)
+    elif isinstance(node, IR.For) and isinstance(node.target, IR.Name):
+        out.add(node.target.name)
+    elif isinstance(node, IR.Comprehension) and isinstance(node.target, IR.Name):
+        out.add(node.target.name)
+    if isinstance(node, IR.Node):
+        for f in dataclass_fields(node):
+            collect_bound_names(getattr(node, f.name), out)
+    elif isinstance(node, list):
+        for item in node:
+            collect_bound_names(item, out)
 
 
 def normalize_input_param(fn: IR.Function) -> IR.Function:
