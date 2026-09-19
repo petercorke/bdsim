@@ -2685,6 +2685,30 @@ class Codegen:
     options; construct one per configuration and call :meth:`generate`
     once per diagram.
 
+    ``generate()`` itself is language-independent: it walks the diagram,
+    lowers each block's Python source to IR, and specializes it -- none
+    of that varies by target language. Only the *scaffolding* text around
+    the per-block struct/function definitions (which already go through
+    :class:`Emitter`) is C++-specific: includes, instance declarations,
+    the wiring-assignment statement, the ``bdsim_tick()``/``bdsim_init()``
+    function syntax. Each such piece is its own small ``_*`` method below
+    rather than inline ``fp.write(...)`` calls, so a future
+    ``CodegenRust(Codegen)`` for a second target only needs to override
+    those methods, not re-read and rewrite ``generate()``.
+
+    Precedent for this split: ``sympy.utilities.codegen`` -- ``CodeGen``
+    holds the shared, language-independent ``routine()``/``write()``
+    logic; ``CCodeGen``/``FCodeGen`` subclasses override hook methods for
+    exactly this kind of scaffolding (``_preprocessor_statements``,
+    ``_declare_arguments``, ``get_prototype``, ``dump_c``/``dump_h``),
+    while a separately-delegated ``CodePrinter`` (``CCodePrinter``, ...)
+    handles per-expression rendering -- the same role :class:`Emitter`
+    already plays here. Not yet split into an abstract ``Codegen`` base
+    plus a concrete ``CodegenCpp``: with only one real target there's
+    nothing to distinguish it from yet, and inventing that split before a
+    second implementation exists to validate it against would be
+    guessing at the boundary rather than knowing it.
+
     :param keep_fields: block name -> field names to always keep in that
         block's ``self`` struct, even if unused by ``output()``/``next()``
         (e.g. fields exposed for telemetry or live parameter tuning).
@@ -2771,14 +2795,126 @@ class Codegen:
             max_inline_depth=self.max_inline_depth,
         )
 
+    # ------------------------------------------------------------------
+    # Target-language scaffolding hooks (C++ here). Override every one of
+    # these for a different target. Each returns text for generate() to
+    # write, rather than writing to a file itself -- matches how
+    # CppEmitter's own methods work elsewhere in this file, and keeps
+    # each hook independently testable without a real file.
+    # ------------------------------------------------------------------
+
+    def _preamble(self) -> str:
+        return "#include <cstdint>\n#include <cmath>\n#include <Eigen/Dense>\n\n"
+
+    def _block_header_comment(self, block_name: str) -> str:
+        return f"// C++ code for block {block_name}\n"
+
+    def _shared_state_decl(self) -> str:
+        # A single shared (always-empty) state vector, purely to satisfy
+        # the existing `const Eigen::VectorXd& x` parameter every
+        # function still carries -- unused by any sampled block now that
+        # state lives on self.state; kept only for signature
+        # compatibility with the (currently out-of-scope) continuous-
+        # block path.
+        return "static Eigen::VectorXd g_x;\n"
+
+    def _instance_decls(self, name: str) -> str:
+        return (
+            f"static {name}_self {name}_self_inst;\n"
+            f"static {name}_inports {name}_inports_inst;\n"
+            f"static {name}_outports {name}_outports_inst;\n"
+        )
+
+    def _init_function(self) -> str:
+        return "\nvoid bdsim_init() {\n}\n"
+
+    def _tick_function_open(self) -> str:
+        # Wraps the schedule/wiring/state-update sequence as a single
+        # function that runs one tick of the (single-clock, v1) polling
+        # loop -- see the "Runtime loop shape" section of the embedded
+        # codegen plan.
+        return "\nvoid bdsim_tick(double t) {\n"
+
+    def _tick_function_close(self) -> str:
+        return "}\n"
+
+    def _schedule_group_comment(self, sequence: int) -> str:
+        return f"\n    /****** Schedule group {sequence} *******/\n"
+
+    def _output_call(self, name: str) -> str:
+        return (
+            f"    {name}_output(t, g_x, {name}_self_inst, "
+            f"{name}_inports_inst, {name}_outports_inst);\n"
+        )
+
+    def _wire_assignment(
+        self,
+        dest_name: str,
+        dest_port: int,
+        src_name: str,
+        src_port: int,
+        dest_label: str,
+        src_label: str,
+    ) -> str:
+        # Push-based: called right after src_name's output() call, for
+        # every one of its connected destinations -- mirrors how the real
+        # bdsim runtime propagates values (Block._publish_output_values),
+        # and is the only ordering that's correct in general: a non-
+        # feedthrough stateful block (e.g. an integrator) is scheduled
+        # independent of its input's readiness (its output only reads
+        # self.state), so it can land in an earlier sequence group than
+        # the block that produces its input -- but its inport still
+        # needs this tick's value before the state-update pass runs.
+        # Reading from the destination's own sequence slot instead (the
+        # original approach) got this wrong: it either never wired
+        # sequence-0 blocks' inputs at all, or would have read a stale,
+        # one-tick-old value had it tried.
+        return (
+            f"    {dest_name}_inports_inst._{dest_port} = "
+            f"{src_name}_outports_inst._{src_port};"
+            f"  // {dest_label}[{dest_port}] <-- {src_label}[{src_port}]\n"
+        )
+
+    def _state_update_header(self) -> str:
+        # advance state for every clocked block, from this tick's now-
+        # current (already wired) inputs. Must run after every output()
+        # above -- next() writes self.state directly and in place, and
+        # it's safe to do so unconditionally here since no block ever
+        # reads another block's state, only its own.
+        #
+        # Skipped on the very first tick -- matches bdsim's own real
+        # clock semantics, confirmed by cross-checking generated output
+        # numerically against bdsim's Python simulator (see the embedded
+        # codegen plan): Clock.tick starts at 1, so the clock's first
+        # scheduled event fires at t=T, not t=0 -- there's an implicit
+        # free "tick 0" (the initial-condition sample) that never
+        # triggers a state update. At t=T, output() still reads the
+        # untouched initial state; only from t=2T does a block's output
+        # reflect its first next() call. Translated to this polling
+        # model (one bdsim_tick() call = one clock period, called
+        # starting at t=0): the first call is that free IC sample, so
+        # its next() pass doesn't run either.
+        return (
+            "\n    /****** State update (next) *******/\n"
+            "    static bool first_tick = true;\n"
+            "    if (!first_tick) {\n"
+        )
+
+    def _next_call(self, name: str) -> str:
+        return (
+            f"        {name}_next(t, g_x, {name}_self_inst, "
+            f"{name}_inports_inst, {name}_outports_inst);\n"
+        )
+
+    def _state_update_footer(self) -> str:
+        return "    }\n    first_tick = false;\n"
+
     def generate(self, bd) -> None:
         """Generate C++ code for compiled block diagram *bd*."""
         printer = IRPrettyPrinter()
 
         fp = open(self.output_path, "w")
-        fp.write("#include <cstdint>\n")
-        fp.write("#include <cmath>\n")
-        fp.write("#include <Eigen/Dense>\n\n")
+        fp.write(self._preamble())
         emitted_blocks: list[str] = []
         for block in bd.blocklist:
 
@@ -2841,7 +2977,7 @@ class Codegen:
                 default_int_type=self.default_int_type,
                 default_float_type=self.default_float_type,
             )
-            fp.write(f"// C++ code for block {block.name}\n")
+            fp.write(self._block_header_comment(block.name))
             fp.write(s + "\n\n" + f + "\n\n")
 
             if next_spec_ir is not None:
@@ -2858,51 +2994,23 @@ class Codegen:
 
             emitted_blocks.append(fixname(block.name))
 
-        # Per-block instance storage, and a single shared (always-empty) state
-        # vector purely to satisfy the existing `const Eigen::VectorXd& x`
-        # parameter every function still carries -- unused by any sampled
-        # block now that state lives on self.state; kept only for signature
-        # compatibility with the (currently out-of-scope) continuous-block path.
         fp.write("\n\n/****** Block instances *******/\n")
-        fp.write("static Eigen::VectorXd g_x;\n")
+        fp.write(self._shared_state_decl())
         for name in emitted_blocks:
-            fp.write(f"static {name}_self {name}_self_inst;\n")
-            fp.write(f"static {name}_inports {name}_inports_inst;\n")
-            fp.write(f"static {name}_outports {name}_outports_inst;\n")
+            fp.write(self._instance_decls(name))
 
-        fp.write("\nvoid bdsim_init() {\n}\n")
-
-        # build the run-time schedule and wiring, wrapped as a single function
-        # that runs one tick of the (single-clock, v1) polling loop -- see the
-        # "Runtime loop shape" section of the embedded codegen plan
-        fp.write("\nvoid bdsim_tick(double t) {\n")
+        fp.write(self._init_function())
+        fp.write(self._tick_function_open())
 
         emitted_block_set = set(emitted_blocks)
         for sequence, group in enumerate(bd.plan):
-            fp.write(f"\n    /****** Schedule group {sequence} *******/\n")
+            fp.write(self._schedule_group_comment(sequence))
             for b in group:
                 print(f"Schedule {b.name} at sequence {sequence}")
                 name = fixname(b.name)
 
-                # EMIT THE FUNCTION CALL
-                fp.write(
-                    f"    {name}_output(t, g_x, {name}_self_inst, {name}_inports_inst, {name}_outports_inst);\n"
-                )
+                fp.write(self._output_call(name))
 
-                # Push this tick's output to every connected destination's
-                # inport immediately -- mirrors how the real bdsim runtime
-                # propagates values (Block._publish_output_values), and is
-                # the only ordering that's correct in general: a non-
-                # feedthrough stateful block (e.g. an integrator) is
-                # scheduled independent of its input's readiness (its
-                # output only reads self.state), so it can land in an
-                # earlier sequence group than the block that produces its
-                # input -- but its inport still needs this tick's value
-                # before the state-update pass below runs. Reading from the
-                # destination's own sequence slot (the previous approach)
-                # got this wrong: it either never wired sequence-0 blocks'
-                # inputs at all, or would have read a stale, one-tick-old
-                # value had it tried.
                 for port in range(b.nout):
                     for wire in b._output_wires[port]:  # noqa: SLF001 -- no public accessor
                         dest_block = wire.end.block
@@ -2913,41 +3021,24 @@ class Codegen:
                             # section of the embedded codegen plan
                             continue
                         fp.write(
-                            f"    {dest_name}_inports_inst._{wire.end.port} = {name}_outports_inst._{port};"
-                            f"  // {dest_block.name}[{wire.end.port}] <-- {b.name}[{port}]\n"
+                            self._wire_assignment(
+                                dest_name,
+                                wire.end.port,
+                                name,
+                                port,
+                                dest_block.name,
+                                b.name,
+                            )
                         )
 
-        # advance state for every clocked block, from this tick's now-current
-        # (already wired) inputs. Must run after every output() above -- next()
-        # writes self.state directly and in place, and it's safe to do so
-        # unconditionally here since no block ever reads another block's state,
-        # only its own -- see the two-phase ordering in the embedded codegen
-        # plan (claude-notes/codegen-embedded-plan.md).
-        #
-        # Skipped on the very first tick -- matches bdsim's own real clock
-        # semantics, confirmed by cross-checking generated output numerically
-        # against bdsim's Python simulator (see the embedded codegen plan):
-        # Clock.tick starts at 1, so the clock's first scheduled event fires
-        # at t=T, not t=0 -- there's an implicit free "tick 0" (the initial-
-        # condition sample) that never triggers a state update. At t=T,
-        # output() still reads the untouched initial state; only from t=2T
-        # does a block's output reflect its first next() call. Translated to
-        # this polling model (one bdsim_tick() call = one clock period,
-        # called starting at t=0): the first call is that free IC sample, so
-        # its next() pass doesn't run either.
         stateful_blocks = [b for b in bd.blocklist if b.ndstates > 0]
         if stateful_blocks:
-            fp.write("\n    /****** State update (next) *******/\n")
-            fp.write("    static bool first_tick = true;\n")
-            fp.write("    if (!first_tick) {\n")
+            fp.write(self._state_update_header())
             for b in stateful_blocks:
-                name = fixname(b.name)
-                fp.write(
-                    f"        {name}_next(t, g_x, {name}_self_inst, {name}_inports_inst, {name}_outports_inst);\n"
-                )
-            fp.write("    }\n    first_tick = false;\n")
+                fp.write(self._next_call(fixname(b.name)))
+            fp.write(self._state_update_footer())
 
-        fp.write("}\n")
+        fp.write(self._tick_function_close())
         fp.close()
 
 
