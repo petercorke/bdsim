@@ -15,6 +15,16 @@ sim = bdsim.BDSim()
 
 UNKNOWN = object()
 
+# Top-level packages IRSpecializer never attempts to inline into, even when
+# Python source happens to be available for a specific function (e.g.
+# np.linalg.norm is a thin wrapper, not a compiled builtin) -- their
+# internals are too complex to reliably specialize and produce useless
+# errors buried deep inside auto-generated inlined code instead of at the
+# actual call site. Register a specific function in _INTRINSICS instead.
+# Deliberately narrow: ordinary third-party/toolbox modules (spatialmath,
+# RTB, MVTB, a user's own code) are exactly what the inliner exists for.
+_NO_INLINE_PACKAGES = frozenset({"numpy", "scipy"})
+
 
 class VarType:
     """Holds type information about a variable or value."""
@@ -883,6 +893,36 @@ class IRSpecializer:
                 range,
                 print,
             ):
+                fn_desc = getattr(f_val, "__qualname__", None) or repr(f_val)
+                fn_module = getattr(f_val, "__module__", None) or ""
+                if fn_module:
+                    fn_desc = f"{fn_module}.{fn_desc}"
+                top_package = fn_module.split(".")[0]
+
+                if top_package in _NO_INLINE_PACKAGES:
+                    # A numeric library's *internals* often do have real
+                    # Python source (e.g. np.linalg.norm is a thin wrapper),
+                    # so the inliner would happily recurse into it -- and
+                    # hit genuinely complex, shape/dtype-branching code
+                    # (np.linalg.norm calls _multi_svd_norm, branches on
+                    # ord/axis/keepdims, ...) that was never going to
+                    # specialize cleanly. Failing deep inside that produces
+                    # a useless error naming some auto-generated inlined
+                    # local, not the call that actually caused it. Refusing
+                    # to even attempt inlining here keeps the failure at
+                    # the actual call site, with a clear message, instead.
+                    # Doesn't apply to ordinary third-party/toolbox helpers
+                    # (spatialmath, RTB, MVTB, a user's own module) --
+                    # those are exactly what the inliner exists for.
+                    raise NotImplementedError(
+                        f"codegen: cannot transpile call to {fn_desc}() -- "
+                        f"it's from {top_package}, whose internals are too "
+                        f"complex to reliably inline even when Python source "
+                        f"happens to be available. Register it in "
+                        f"_INTRINSICS with a hand-written C++ implementation "
+                        f"instead."
+                    )
+
                 try:
                     inline_result = IRInliner.inline(
                         f_val,
@@ -913,10 +953,6 @@ class IRSpecializer:
                 # silently emitting a reference to a C++ symbol that was
                 # never defined and deferring the failure to the C++
                 # compiler with a far less specific error.
-                fn_desc = getattr(f_val, "__qualname__", None) or repr(f_val)
-                fn_module = getattr(f_val, "__module__", None)
-                if fn_module:
-                    fn_desc = f"{fn_module}.{fn_desc}"
                 raise NotImplementedError(
                     f"codegen: cannot transpile call to {fn_desc}() -- not a "
                     f"registered intrinsic (add one to _INTRINSICS with a "
