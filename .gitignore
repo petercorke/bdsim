@@ -29,8 +29,8 @@ docs/paper1/**
 
 # bdsim.codegen output -- always regenerated, never source
 codegen.cpp
-examples/verify_driver
-examples/verify_driver.cpp
+examples/codegen/verify_driver
+examples/codegen/verify_driver.cpp
 
 # Distribution / packaging
 .Python
