@@ -3087,19 +3087,46 @@ class Codegen:
 #   (moot for sampled blocks now that state lives on self; still applies to
 #   continuous blocks, out of scope for this codegen effort)
 
-# # --- IR coverage summary ---
-# print("\n====================================================== IR coverage")
-# col_w = 20
-# phases = ["spec_stmt", "spec_expr", "emit_stmt", "emit_expr"]
-# header = f"{'node type':<{col_w}}" + "".join(f"  {p:<{col_w}}" for p in phases)
-# print(header)
-# print("-" * len(header))
-# for name in sorted(_ALL_IR_TYPES):
-#     row = f"{name:<{col_w}}"
-#     for phase in phases:
-#         hit = "HIT" if name in _ir_coverage[phase] else "."
-#         row += f"  {hit:<{col_w}}"
-#     print(row)
+def ir_coverage_report() -> tuple[str, bool]:
+    """Return (report, raw_hit) summarizing which IR node types have been
+    exercised, across every ``specialize_ir()``/``emit_cpp()`` call made
+    in this process so far -- coverage accumulates in the module-level
+    ``_ir_coverage`` dict across multiple diagrams/calls; use
+    :func:`reset_ir_coverage` first to scope a report to just one.
+
+    ``raw_hit`` is ``True`` if ``RawStmt``/``RawExpr`` was hit in any
+    phase -- the one row that's a genuine warning, not just informational:
+    it means some Python construct fell through ``MethodFrontend``'s
+    per-node handling into the untyped fallback, i.e. real frontend
+    coverage is missing for whatever produced it.
+    """
+    col_w = 20
+    phases = ["spec_stmt", "spec_expr", "emit_stmt", "emit_expr"]
+    header = f"{'node type':<{col_w}}" + "".join(f"  {p:<{col_w}}" for p in phases)
+    lines = [header, "-" * len(header)]
+    raw_hit = False
+    for name in sorted(_ALL_IR_TYPES):
+        row = f"{name:<{col_w}}"
+        for phase in phases:
+            hit = name in _ir_coverage[phase]
+            row += f"  {'HIT' if hit else '.':<{col_w}}"
+            if hit and name in ("RawStmt", "RawExpr"):
+                raw_hit = True
+        lines.append(row)
+    if raw_hit:
+        lines += [
+            "",
+            "WARNING: RawStmt/RawExpr was hit -- some Python construct fell "
+            "through to the untyped fallback; MethodFrontend is missing real "
+            "support for whatever produced it.",
+        ]
+    return "\n".join(lines), raw_hit
+
+
+def reset_ir_coverage() -> None:
+    """Clear accumulated IR coverage, e.g. to scope a report to one call."""
+    for s in _ir_coverage.values():
+        s.clear()
 
 
 if __name__ == "__main__":
@@ -3132,3 +3159,7 @@ if __name__ == "__main__":
     bd.report_schedule()
 
     Codegen().generate(bd)
+
+    print("\n====================================================== IR coverage")
+    report, _raw_hit = ir_coverage_report()
+    print(report)
