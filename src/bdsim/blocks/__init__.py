@@ -9,5 +9,6 @@ from .linalg import *  # noqa: F401,F403
 from .displays import *  # noqa: F401,F403
 from .connections import *  # noqa: F401,F403
 from .spatial import *  # noqa: F401,F403
+from .io import *  # noqa: F401,F403
 
 url = "https://petercorke.github.io/bdsim/" + __package__
