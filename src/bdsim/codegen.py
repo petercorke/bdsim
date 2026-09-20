@@ -64,6 +64,7 @@ C++ scalar, no Eigen wrapper.
 """
 
 import ast
+import builtins
 import inspect
 import json
 import math
@@ -75,6 +76,7 @@ from typing import Any, Iterable
 import numpy as np
 
 import bdsim
+from bdsim.components import IOBlockMixin
 
 sim = bdsim.BDSim()
 
@@ -742,11 +744,24 @@ class IRSpecializer:
         self.extra_globals: dict[str, Any] = getattr(block_cfg, "extra_globals", None) or {}
         self._inline_depth = 0
         self.env: dict[str, Any] = {}
+        # Populated properly by specialize_function(); empty default here
+        # only for callers (e.g. direct specialize_expr()/eval_expr() unit
+        # tests) that never go through it.
+        self.local_names: set[str] = set()
         # Stmts queued by the inliner to splice before the current statement.
         self._pending_stmts: list[IR.Stmt] = []
 
     def specialize_function(self, fn: IR.Function) -> IR.Function:
         self.env = {}
+        # Every genuine local (formal params + every Assign/Declare/For
+        # target in the body) -- checked by _name_value before it ever
+        # falls through to np/math/extra_globals/builtins, so a local that
+        # happens to share a name with one of those (e.g. this block's own
+        # `input = inputs[0]`, colliding with the builtin input()) is
+        # never misresolved to it. See collect_bound_names's docstring --
+        # same underlying concept IRInliner's alpha-renamer uses.
+        self.local_names: set[str] = set(fn.args)
+        collect_bound_names(fn.body, self.local_names)
         body = [self.specialize_stmt(stmt) for stmt in fn.body]
         body = self._flatten(body)
         if self._is_sum_output(fn):
@@ -977,7 +992,18 @@ class IRSpecializer:
             # can render it without knowing about Python function objects.
             f_val = self.eval_expr(out.func)
             arg_vals = [self.eval_expr(a) for a in out.args]
-            if callable(f_val) and not any(v is UNKNOWN for v in arg_vals):
+            # No longer gated on "every arg value/type is known" -- a
+            # wildcard-registered intrinsic (sig=(), e.g. min/max) applies
+            # regardless of arg values by definition, and an exact-sig
+            # intrinsic (skew/vex/...) already can't spuriously match
+            # without its real VarType present (_vtsig only includes
+            # actual VarType args; UNKNOWN is filtered out exactly like
+            # any other non-VarType value already was). This also matters
+            # for a nested intrinsic call as an argument (e.g. min(a,
+            # max(b, c))): IR.IntrinsicCall always evaluates to UNKNOWN
+            # (deliberately -- see eval_expr's own IntrinsicCall case), so
+            # the outer call would otherwise never even attempt a lookup.
+            if callable(f_val):
                 hit = _lookup_intrinsic(f_val, arg_vals)
                 if hit is not None:
                     result_vt_fn, intrinsic_name = hit
@@ -1034,6 +1060,16 @@ class IRSpecializer:
                     )
                     if inline_result is not None:
                         extra_stmts, result_expr = inline_result
+                        # These are new locals (alpha-renamed, so already
+                        # collision-free against the outer function's own
+                        # names -- see IRInliner.inline) spliced into an
+                        # already-in-progress specialize_function() run;
+                        # self.local_names was only seeded from the outer
+                        # function's own body at the start, so without this
+                        # they'd be invisible to the same shadowing guard
+                        # in _name_value (e.g. an inlined helper with its
+                        # own `input = ...` local).
+                        collect_bound_names(extra_stmts, self.local_names)
                         self._inline_depth += 1
                         try:
                             # Specialize the inlined body
@@ -1085,6 +1121,14 @@ class IRSpecializer:
     def _name_value(self, name: str):
         if name in self.env:
             return self.env[name]
+        if name in self.local_names:
+            # A genuine local (formal param or assigned within this
+            # function) whose current value isn't concretely foldable --
+            # must not fall through to np/math/extra_globals/builtins
+            # below even if it happens to share a name with one of those
+            # (e.g. a block's own `input = inputs[0]` shadows the builtin
+            # input()); real Python scoping would shadow it too.
+            return UNKNOWN
         if name == "np":
             return np
         if name == "math":
@@ -1099,6 +1143,19 @@ class IRSpecializer:
             return zip
         if name in self.extra_globals:
             return self.extra_globals[name]
+        # Last-resort fallback: any other Python builtin (min, max, abs,
+        # round, sum, ...) referenced by bare name. Without this, a name
+        # like `min` silently resolves to UNKNOWN (callable(UNKNOWN) is
+        # False), so a call to it skips both the intrinsic and inline
+        # strategies without ever raising -- the IR.Call node just passes
+        # through unresolved, deferring the failure to CppEmitter, which
+        # reports a much less specific "cannot infer C++ type" error with
+        # no mention of `min` at all. Resolving the name here lets that
+        # call reach the same loud, specific failure (or a registered
+        # intrinsic, e.g. min/max -- see _INTRINSICS) as math.sqrt() does.
+        builtin = getattr(builtins, name, UNKNOWN)
+        if builtin is not UNKNOWN:
+            return builtin
         return UNKNOWN
 
     def eval_expr(self, expr: IR.Expr):
@@ -1397,6 +1454,85 @@ _reg(
     lambda vts: VarType._make("ndarray", "float64", (3,)),
     "bdsim.cross",
 )
+
+
+def _scalar_minmax_result_vt(arg_vals: list) -> VarType:
+    """Result type for the builtin min()/max() intrinsics below -- promotes
+    to the widest scalar dtype among the (up to 2) arguments actually
+    passed, whether each arrives as a concrete value or a VarType (a
+    symbolic arg, e.g. a block input, carries only a VarType; a concrete
+    self.field value carries its own Python type directly -- see
+    _lookup_intrinsic's signature filtering, which is why this can't just
+    read the registration key's sig tuple)."""
+
+    def dtype_of(v: Any) -> str:
+        if isinstance(v, VarType):
+            return v.dtype
+        if isinstance(v, bool):
+            return "bool"
+        if isinstance(v, float):
+            return "float"
+        if isinstance(v, int):
+            return "int"
+        return "float"
+
+    dtypes = [dtype_of(v) for v in arg_vals]
+    if "float" in dtypes:
+        return VarType._make("float")
+    if "int" in dtypes:
+        return VarType._make("int")
+    return VarType._make("bool")
+
+
+def _abs_result_vt(arg_vals: list) -> VarType:
+    """Result type for the builtin abs() intrinsic -- abs() preserves its
+    argument's dtype (unlike min/max, which promote across two args)."""
+    v = arg_vals[0] if arg_vals else None
+    if isinstance(v, VarType):
+        return v
+    if isinstance(v, bool):
+        return VarType._make("bool")
+    if isinstance(v, float):
+        return VarType._make("float")
+    if isinstance(v, int):
+        return VarType._make("int")
+    return VarType._make("float")
+
+
+# sig=() is a wildcard match (see _lookup_intrinsic's key_any fallback) --
+# min()/max() take scalars of any arithmetic type, and the render below
+# (static_cast<double> on both operands) works regardless of the mix.
+_reg("builtins", "min", (), _scalar_minmax_result_vt, "python.min")
+_reg("builtins", "max", (), _scalar_minmax_result_vt, "python.max")
+# abs() was previously an accidental "unresolved call passes through
+# verbatim, and C++ happens to have a same-named global too" pass-through
+# (see CppEmitter.expr_BinaryOp's "unqualified-call style (e.g. abs(),
+# matmul())" comment) -- fragile by construction (matmul() is the same
+# pattern and is *not* a real function; see bdsim#93). Now a real,
+# registered intrinsic like everything else.
+_reg("builtins", "abs", (), _abs_result_vt, "python.abs")
+
+# math.* functions -- wildcard-registered (sig=()) like min/max/abs above,
+# since these are always plain scalar-in-scalar-out. math.pi/math.e (bare
+# attribute access, not a call) already fold via specialize_expr's
+# IR.Attribute constant-folding; these are for the *calls* -- math.sqrt(x)
+# and friends, which previously had no coverage at all and hit the loud
+# "not a registered intrinsic" failure unconditionally.
+def _math_float_result(arg_vals: list) -> VarType:
+    return VarType._make("float")
+
+
+def _math_int_result(arg_vals: list) -> VarType:
+    # math.floor()/math.ceil() return int in Python (unlike std::floor/
+    # ceil, which return a floating type) -- cast in the render, not here.
+    return VarType._make("int")
+
+
+for _math_fn in ("sqrt", "sin", "cos", "tan", "exp", "log", "atan2", "pow"):
+    _reg("math", _math_fn, (), _math_float_result, f"python.math.{_math_fn}")
+for _math_fn in ("floor", "ceil"):
+    _reg("math", _math_fn, (), _math_int_result, f"python.math.{_math_fn}")
+del _math_fn
 
 
 def _lookup_intrinsic(fn_obj, arg_vts: list) -> tuple | None:
@@ -1988,6 +2124,28 @@ class Emitter:
         raise NotImplementedError
 
 
+def _cpp_render_minmax(op: str):
+    """Render for the ``python.min``/``python.max`` intrinsics (registered
+    with a wildcard signature -- see ``_reg("builtins", "min", (), ...)``
+    above -- so arity isn't checked at registration time). ``std::min``/
+    ``std::max`` require matching operand types, which int/float-mixed
+    Python args (e.g. an int ``self.max`` clip limit against a float
+    signal) won't satisfy without a cast, so both operands are promoted to
+    ``double`` unconditionally rather than trying to track/match the
+    narrower type."""
+
+    def render(args: list[str]) -> str:
+        if len(args) != 2:
+            raise NotImplementedError(
+                f"codegen: {op}() with {len(args)} arguments is not "
+                f"supported (only the 2-argument scalar form is)"
+            )
+        a, b = args
+        return f"std::{op}<double>(static_cast<double>({a}), static_cast<double>({b}))"
+
+    return render
+
+
 class CppEmitter(Emitter):
     """Emit C++ code (using Eigen for matrix types) from specialized IR."""
 
@@ -2083,6 +2241,34 @@ class CppEmitter(Emitter):
         # x.item() on a size-1 Eigen vector/matrix -- linear coefficient
         # access, no helper function needed.
         "numpy.item": (lambda args: f"{args[0]}(0)", None),
+        # std::min/std::max from <algorithm> -- no helper body needed.
+        "python.min": (_cpp_render_minmax("min"), None),
+        "python.max": (_cpp_render_minmax("max"), None),
+        # std::abs from <cmath>/<cstdlib> -- overloaded for int/float/
+        # double already, no cast needed (unlike min/max, only one operand
+        # so there's no cross-type mismatch to resolve).
+        "python.abs": (lambda args: f"std::abs({args[0]})", None),
+        # math.* -- all <cmath>, already included.
+        "python.math.sqrt": (lambda args: f"std::sqrt({args[0]})", None),
+        "python.math.sin": (lambda args: f"std::sin({args[0]})", None),
+        "python.math.cos": (lambda args: f"std::cos({args[0]})", None),
+        "python.math.tan": (lambda args: f"std::tan({args[0]})", None),
+        "python.math.exp": (lambda args: f"std::exp({args[0]})", None),
+        "python.math.log": (lambda args: f"std::log({args[0]})", None),
+        "python.math.atan2": (
+            lambda args: f"std::atan2({args[0]}, {args[1]})",
+            None,
+        ),
+        "python.math.pow": (lambda args: f"std::pow({args[0]}, {args[1]})", None),
+        # math.floor()/ceil() return Python int -- cast the double result.
+        "python.math.floor": (
+            lambda args: f"static_cast<int32_t>(std::floor({args[0]}))",
+            None,
+        ),
+        "python.math.ceil": (
+            lambda args: f"static_cast<int32_t>(std::ceil({args[0]}))",
+            None,
+        ),
     }
 
     def __init__(
@@ -2478,28 +2664,7 @@ class CppEmitter(Emitter):
             self.stmt(s)
         body_lines = list(self._lines)
 
-        # Build struct definitions
-        self_initializers = {
-            name: self.literal_to_str(value)
-            for name, (value, _vt) in self.cfg.self.items()
-            if name in self._self_field_types
-        }
-        struct_lines: list[str] = [
-            # "// Generated C++ structs for block state and ports",
-            *self._struct(
-                self_struct,
-                list(self._self_field_types.items()),
-                initializers=self_initializers,
-            ),
-            "",
-            *self._struct(
-                in_struct, [(f"_{i}", t) for i, t in enumerate(self._inport_types)]
-            ),
-            "",
-            *self._struct(
-                out_struct, [(f"_{i}", t) for i, t in enumerate(self._outport_types)]
-            ),
-        ]
+        struct_lines = self._struct_defs(prefix)
 
         # Prepend helper bodies for any intrinsics that were used
         helper_texts = [
@@ -2522,6 +2687,52 @@ class CppEmitter(Emitter):
         ]
 
         return "\n".join(struct_lines), "\n".join(func_lines)
+
+    def _struct_defs(self, prefix: str) -> list[str]:
+        """Build the self/inports/outports struct definitions for a block
+        named *prefix* -- shared by :meth:`emit` and
+        :meth:`emit_declaration`, since both need identical structs
+        regardless of whether a real function body follows."""
+        self_initializers = {
+            name: self.literal_to_str(value)
+            for name, (value, _vt) in self.cfg.self.items()
+            if name in self._self_field_types
+        }
+        return [
+            # "// Generated C++ structs for block state and ports",
+            *self._struct(
+                f"{prefix}_self",
+                list(self._self_field_types.items()),
+                initializers=self_initializers,
+            ),
+            "",
+            *self._struct(
+                f"{prefix}_inports",
+                [(f"_{i}", t) for i, t in enumerate(self._inport_types)],
+            ),
+            "",
+            *self._struct(
+                f"{prefix}_outports",
+                [(f"_{i}", t) for i, t in enumerate(self._outport_types)],
+            ),
+        ]
+
+    def emit_declaration(self, block_name: str, function_name: str) -> tuple[str, str]:
+        """Emit struct definitions plus a declaration-only function
+        prototype (no body) for a block whose function is never
+        transpiled from Python -- used for :class:`IOBlockMixin` blocks,
+        whose real implementation is hand-written C++ supplied elsewhere
+        (see :class:`Codegen`'s I/O handling). Mirrors :meth:`emit`'s
+        signature convention exactly, so the rest of the pipeline
+        (scheduling, wiring) can call it identically either way."""
+        prefix = fixname(block_name)
+        struct_lines = self._struct_defs(prefix)
+        decl = (
+            f"void {prefix}_{function_name}(double t, "
+            f"const Eigen::VectorXd& x, {prefix}_self& self, "
+            f"const {prefix}_inports& inports, {prefix}_outports& outports);"
+        )
+        return "\n".join(struct_lines), decl
 
 
 def emit_cpp(
@@ -2920,6 +3131,14 @@ class Codegen:
         and unconditionally (see ``IRInliner._stack``); this is purely a
         bound on legitimate but very deep non-cyclic call chains.
     :param output_path: where to write the generated C++.
+    :param verbose: print each block's config, raw/specialized IR, and
+        schedule as ``generate()`` runs -- useful when debugging a
+        lowering/specialization problem, off by default since it dumps a
+        lot of text (including, for a block whose callable's module
+        carries the ordinary Python ``__builtins__`` reference in its
+        ``__globals__``, the interactive-shell ``copyright``/``credits``/
+        ``license`` objects' multi-paragraph ``__repr__`` text -- harmless
+        but genuinely hard to read through).
     """
 
     def __init__(
@@ -2929,12 +3148,18 @@ class Codegen:
         default_float_type: str = "float",
         max_inline_depth: int = 20,
         output_path: str = "codegen.cpp",
+        verbose: bool = False,
     ) -> None:
         self.keep_fields = keep_fields or {}
         self.default_int_type = default_int_type
         self.default_float_type = default_float_type
         self.max_inline_depth = max_inline_depth
         self.output_path = output_path
+        self.verbose = verbose
+
+    def _log(self, *args: Any) -> None:
+        if self.verbose:
+            print(*args)
 
     def _block_cfg(self, block):
         itypes = []
@@ -3012,7 +3237,10 @@ class Codegen:
     # ------------------------------------------------------------------
 
     def _preamble(self) -> str:
-        return "#include <cstdint>\n#include <cmath>\n#include <Eigen/Dense>\n\n"
+        return (
+            "#include <algorithm>\n#include <cstdint>\n#include <cmath>\n"
+            "#include <Eigen/Dense>\n\n"
+        )
 
     def _block_header_comment(self, block_name: str) -> str:
         return f"// C++ code for block {block_name}\n"
@@ -3127,11 +3355,43 @@ class Codegen:
         for block in bd.blocklist:
 
             cfg = self._block_cfg(block)
+            # Captured once, before the isinstance() check below narrows
+            # the static type of `block` for the rest of this iteration
+            # (IOBlockMixin, a bare mixin unrelated to Block in the type
+            # system, would otherwise make `block.name` look unknown to
+            # the type checker after the narrowing).
+            block_name = block.name
+            is_io = isinstance(block, IOBlockMixin)
 
-            if cfg.nout == 0:
+            if cfg.nout == 0 and not is_io:
+                # sink block (e.g. SCOPE) -- no C++ meaning, nothing to
+                # generate. An I/O sink (DigitalOut/PWMOut/DeviceOut/...)
+                # still needs a struct + declaration, handled below.
                 continue
-            print(f"====================================================== {block.name}")
-            print(cfg)
+            self._log(f"====================================================== {block_name}")
+            self._log(cfg)
+
+            if is_io:
+                # I/O blocks' Python output()/step() is a Python-simulator-
+                # only stand-in (a settable sim value), never transpiled --
+                # the real implementation is hand-written C++ supplied
+                # elsewhere (see the I/O handling section of the embedded
+                # codegen plan). Keep every self field except simulator-only
+                # ones (by convention, a leading "sim_") -- e.g. `channel`/
+                # `device`/`freq` are real configuration the hand-written
+                # body needs, `sim_value(s)` is not.
+                cfg.self = {
+                    k: v for k, v in cfg.self.items() if not k.startswith("sim_")
+                }
+                s, f = CppEmitter(
+                    cfg,
+                    default_int_type=self.default_int_type,
+                    default_float_type=self.default_float_type,
+                ).emit_declaration(block_name, "output")
+                fp.write(self._block_header_comment(block_name))
+                fp.write(s + "\n\n" + f + "\n\n")
+                emitted_blocks.append(fixname(block_name))
+                continue
 
             if getattr(cfg.block, "type", None) == "function":
                 method_ir = lower_function_block(cfg.block)
@@ -3140,11 +3400,11 @@ class Codegen:
             method_ir = normalize_input_param(method_ir)
             if cfg.ndstates > 0:
                 method_ir = substitute_state_param(method_ir)
-            print("--- raw IR")
-            print(printer.format(method_ir))
-            print("--- specialized IR")
+            self._log("--- raw IR")
+            self._log(printer.format(method_ir))
+            self._log("--- specialized IR")
             spec_ir = specialize_ir(method_ir, cfg)
-            print(printer.format(spec_ir))
+            self._log(printer.format(spec_ir))
 
             # sampled (clocked) blocks also get a next() function, computing
             # their state for the following tick from this tick's inputs
@@ -3153,9 +3413,9 @@ class Codegen:
                 next_ir = lower_block_method(cfg.block.next, cfg)
                 next_ir = normalize_input_param(next_ir)
                 next_ir = substitute_state_param(next_ir)
-                print("--- next specialized IR")
+                self._log("--- next specialized IR")
                 next_spec_ir = specialize_ir(next_ir, cfg)
-                print(printer.format(next_spec_ir))
+                self._log(printer.format(next_spec_ir))
 
             # prune the self struct to fields the specialized IR (output and,
             # if present, next) actually reads, plus any explicitly requested
@@ -3165,7 +3425,7 @@ class Codegen:
             collect_self_fields(spec_ir, used_self_fields)
             if next_spec_ir is not None:
                 collect_self_fields(next_spec_ir, used_self_fields)
-            used_self_fields |= self.keep_fields.get(block.name, set())
+            used_self_fields |= self.keep_fields.get(block_name, set())
 
             # state is synthesized, not a real block.__dict__ attribute -- add
             # it to cfg.self (typed/initialized from getstate0()) only now,
@@ -3176,23 +3436,23 @@ class Codegen:
 
             cfg.self = {k: v for k, v in cfg.self.items() if k in used_self_fields}
 
-            print("--- emitted C++")
+            self._log("--- emitted C++")
             s, f = emit_cpp(
                 spec_ir,
-                block.name,
+                block_name,
                 "output",
                 cfg,
                 default_int_type=self.default_int_type,
                 default_float_type=self.default_float_type,
             )
-            fp.write(self._block_header_comment(block.name))
+            fp.write(self._block_header_comment(block_name))
             fp.write(s + "\n\n" + f + "\n\n")
 
             if next_spec_ir is not None:
                 # struct definitions already written above; only the function body
                 _, next_f = emit_cpp(
                     next_spec_ir,
-                    block.name,
+                    block_name,
                     "next",
                     cfg,
                     default_int_type=self.default_int_type,
@@ -3200,7 +3460,7 @@ class Codegen:
                 )
                 fp.write(next_f + "\n\n")
 
-            emitted_blocks.append(fixname(block.name))
+            emitted_blocks.append(fixname(block_name))
 
         fp.write("\n\n/****** Block instances *******/\n")
         fp.write(self._shared_state_decl())
@@ -3214,7 +3474,7 @@ class Codegen:
         for sequence, group in enumerate(bd.plan):
             fp.write(self._schedule_group_comment(sequence))
             for b in group:
-                print(f"Schedule {b.name} at sequence {sequence}")
+                self._log(f"Schedule {b.name} at sequence {sequence}")
                 name = fixname(b.name)
 
                 fp.write(self._output_call(name))
@@ -3330,7 +3590,7 @@ if __name__ == "__main__":
 
     bd.report_schedule()
 
-    Codegen().generate(bd)
+    Codegen(verbose=True).generate(bd)
 
     print("\n====================================================== IR coverage")
     report, _raw_hit = ir_coverage_report()
