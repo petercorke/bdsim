@@ -80,6 +80,23 @@ def _generate(bd, **kwargs) -> str:
         return Path(out).read_text()
 
 
+def _assert_compiles(test: unittest.TestCase, cpp: str) -> None:
+    """Real clang++ compile-check of generated C++ text. No-op (silently)
+    when CAN_COMPILE is False -- callers should still assert on the
+    generated text itself so there's *some* coverage without a toolchain."""
+    if not CAN_COMPILE:
+        return
+    with tempfile.TemporaryDirectory() as d:
+        cpp_path = os.path.join(d, "check.cpp")
+        Path(cpp_path).write_text(cpp)
+        result = subprocess.run(
+            [CLANGXX, "-std=c++17", f"-I{EIGEN_INCLUDE}", "-c", cpp_path,
+             "-o", os.path.join(d, "check.o")],
+            text=True, capture_output=True, timeout=60,
+        )
+        test.assertEqual(result.returncode, 0, result.stderr)
+
+
 def _function_diagram(fn, nin=1, nout=1):
     """CONSTANT(s) -> FUNCTION(fn) -> SCOPE, compiled and ready for codegen.
     The common shape for exercising FUNCTION-block lowering/inlining."""
@@ -363,16 +380,44 @@ class RegressionTests(unittest.TestCase):
         cpp = _generate(bd)
         self.assertIn("std::min<double>", cpp)
         self.assertIn("std::max<double>", cpp)
-        if CAN_COMPILE:
-            with tempfile.TemporaryDirectory() as d:
-                cpp_path = os.path.join(d, "clip.cpp")
-                Path(cpp_path).write_text(cpp)
-                result = subprocess.run(
-                    [CLANGXX, "-std=c++17", f"-I{EIGEN_INCLUDE}", "-c", cpp_path,
-                     "-o", os.path.join(d, "clip.o")],
-                    text=True, capture_output=True, timeout=60,
-                )
-                self.assertEqual(result.returncode, 0, result.stderr)
+        _assert_compiles(self, cpp)
+
+    def test_deriv_s_state_unwrap_and_state_assignment(self):
+        """Deriv_S.output() does `result = self.gain * (u[0] - x) / self.T`
+        then the same isinstance(result, np.ndarray)/.ndim/.size/.item()
+        scalar-unwrap idiom Integrator_S.output() uses (and already
+        folded correctly) -- but here `result` is a *computed* expression,
+        not a bare state read. eval_expr's BinaryOp type-propagation only
+        handled the case where *both* operands were VarType, so combining
+        a concrete self.field (self.gain) with the ndarray-typed state
+        lost all type information, and the isinstance/.ndim/.size/.item()
+        idiom reached the emitter as raw, uncompilable Python/NumPy text.
+
+        Deriv_S.next() (`return np.array(u[0])`) separately exercises a
+        second bug: once np.array()'s no-op-coercion strips down to a
+        bare scalar with nothing Eigen-typed left in the expression,
+        `self.state = <scalar>;` doesn't type-check against self.state's
+        real (size-1 array) C++ type -- Eigen has no implicit scalar ->
+        Matrix conversion. Fixed by broadcast-constructing
+        (`Type::Constant(...)`) when state's real shape (from
+        getstate0()) is exactly one element."""
+        sim = bdsim.BDSim(animation=False)
+        bd = sim.blockdiagram()
+        clock = bd.clock(10, "Hz")
+        src = bd.CONSTANT(1.0, name="src")
+        deriv = bd.DERIV_S(clock, x0=0.0, gain=0.1, name="deriv")
+        scope = bd.SCOPE(nin=1)
+        bd.connect(src, deriv)
+        bd.connect(deriv, scope)
+        bd.compile()
+        cpp = _generate(bd)
+        # the isinstance/.ndim/.size/.item() idiom must have folded away
+        self.assertNotIn("isinstance(", cpp)
+        self.assertNotIn(".ndim", cpp)
+        self.assertNotIn(".item()", cpp)
+        # next()'s state write must broadcast-construct, not assign raw
+        self.assertIn("::Constant(", cpp)
+        _assert_compiles(self, cpp)
 
     def test_local_variable_shadowing_a_builtin_not_misresolved(self):
         """A local variable that happens to share a name with a Python
@@ -392,6 +437,35 @@ class RegressionTests(unittest.TestCase):
         # must read the real local, not e.g. stringify the builtin
         self.assertIn("inports._0", cpp)
         self.assertNotIn("built-in", cpp)
+
+    def test_io_block_self_struct_excludes_bookkeeping_and_sim_fields(self):
+        """An IOBlockMixin block's self struct must contain exactly the
+        fields the block class registered via add_param() (its genuine,
+        user-facing configuration -- channel/device/freq) -- not every
+        surviving block.__dict__ attribute. Without this, generic Block
+        bookkeeping (nin/nout) and simulator-only fields (sim_value(s),
+        never meant for a hand-written C++ body) leaked into the struct
+        as dead fields with no meaning there. Also locks in that an
+        unset str/float parameter (device/freq) renders as a real,
+        usable std::string/float default -- not std::nullptr_t, which a
+        Python None default would produce and which can never hold a
+        real value afterwards."""
+        sim = bdsim.BDSim(animation=False)
+        bd = sim.blockdiagram()
+        encoder = bd.DEVICEIN(name="encoder")
+        pwm = bd.PWMOUT(channel=0, freq=1000.0, name="pwm")
+        direction = bd.DIGITALOUT(channel=1, name="direction")
+        bd.connect(encoder, pwm)
+        bd.connect(encoder, direction)
+        bd.compile()
+        cpp = _generate(bd)
+        self.assertNotIn("nin", cpp)
+        self.assertNotIn("nout", cpp)
+        self.assertNotIn("sim_value", cpp)
+        self.assertNotIn("nullptr_t", cpp)
+        self.assertIn("std::string device = \"\";", cpp)
+        self.assertIn("float freq = 1000.0;", cpp)
+        _assert_compiles(self, cpp)
 
 
 # ---------------------------------------------------------------------------
