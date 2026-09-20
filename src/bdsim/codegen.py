@@ -1237,8 +1237,26 @@ class IRSpecializer:
                         if expr.op in ("+", "-", "*", "/", "%"):
                             rank = max(_scalar_rank[l.dtype], _scalar_rank[r.dtype])
                             return VarType._make(["bool", "int", "float"][rank])
-                    if l.dtype == "ndarray" or r.dtype == "ndarray":
-                        nd = l if l.dtype == "ndarray" else r
+                # Elementwise-shape-preserving ops (+, -, *, /, %) between
+                # an ndarray-typed operand and *anything else* (a concrete
+                # scalar like a block's own self.gain, or another VarType)
+                # keep the ndarray operand's exact shape/etype -- real
+                # NumPy broadcasting semantics for scalar-op-array, not
+                # just a heuristic. Previously only handled when *both*
+                # operands were VarType, so a block's common
+                # `self.gain * (u[0] - x) / self.T` idiom (Deriv_S; unlike
+                # Integrator_S's bare `result = x`) lost all type
+                # information the moment a concrete self.field entered the
+                # expression -- the very next isinstance(result,
+                # np.ndarray)/.ndim/.size/.item() scalar-unwrap check (the
+                # same idiom Integrator_S already folds correctly) then
+                # couldn't fold either, and reached the emitter as raw,
+                # uncompilable Python-isinstance/NumPy-attribute text.
+                if expr.op in ("+", "-", "*", "/", "%"):
+                    l_nd = l if isinstance(l, VarType) and l.dtype == "ndarray" else None
+                    r_nd = r if isinstance(r, VarType) and r.dtype == "ndarray" else None
+                    nd = l_nd or r_nd
+                    if nd is not None:
                         return VarType._make("ndarray", nd.etype, nd.dims)
                 return UNKNOWN
             try:
@@ -2579,7 +2597,31 @@ class CppEmitter(Emitter):
         # next() has no output ports -- its return value is the block's
         # state for the following tick, written to self.state directly.
         if self._function_kind == "next":
-            self._emit(f"self.state = {self.expr(s.value)};")
+            rhs = self.expr(s.value)
+            state_vt = self.cfg.self.get("state", (None, None))[1]
+            # A state whose real shape (from getstate0(), not a guess) is
+            # exactly one element, but whose next() body returns a bare
+            # scalar expression (e.g. Deriv_S.next()'s `return
+            # np.array(u[0])` -- np.array()'s no-op-coercion strips down
+            # to plain `u[0]`, with nothing Eigen-typed left anywhere in
+            # the expression to make a direct `self.state = ...`
+            # assignment type-check). Eigen has no implicit scalar ->
+            # Matrix conversion, so broadcast-construct instead. Not
+            # applied for a genuinely multi-element state -- that would be
+            # masking a real bug, not a legitimate scalar/1-vector mixup.
+            rhs_type = self.infer_expr_type(s.value)
+            if (
+                isinstance(state_vt, VarType)
+                and state_vt.dtype == "ndarray"
+                and isinstance(state_vt.dims, tuple)
+                and math.prod(state_vt.dims) == 1
+                and rhs_type is not None
+                and not rhs_type.startswith("Eigen::")
+            ):
+                state_type = self._self_field_types.get("state", "")
+                self._emit(f"self.state = {state_type}::Constant({rhs});")
+            else:
+                self._emit(f"self.state = {rhs};")
             self._emit("return;")
             return
         # Case 1: return [a, b, ...] — each element maps to one output port.
@@ -3239,7 +3281,7 @@ class Codegen:
     def _preamble(self) -> str:
         return (
             "#include <algorithm>\n#include <cstdint>\n#include <cmath>\n"
-            "#include <Eigen/Dense>\n\n"
+            "#include <string>\n#include <Eigen/Dense>\n\n"
         )
 
     def _block_header_comment(self, block_name: str) -> str:
@@ -3376,13 +3418,17 @@ class Codegen:
                 # only stand-in (a settable sim value), never transpiled --
                 # the real implementation is hand-written C++ supplied
                 # elsewhere (see the I/O handling section of the embedded
-                # codegen plan). Keep every self field except simulator-only
-                # ones (by convention, a leading "sim_") -- e.g. `channel`/
-                # `device`/`freq` are real configuration the hand-written
-                # body needs, `sim_value(s)` is not.
-                cfg.self = {
-                    k: v for k, v in cfg.self.items() if not k.startswith("sim_")
-                }
+                # codegen plan). Keep only fields the block class itself
+                # registered via add_param() (block._parameters) -- the
+                # existing bdsim convention for "this is genuine, user-
+                # facing configuration" (e.g. channel/device/freq), used
+                # elsewhere for live parameter tuning too. Everything else
+                # on self -- generic Block bookkeeping like nin/nout, and
+                # simulator-only sim_value(s) -- was never meant for a
+                # hand-written C++ body and would otherwise show up as
+                # dead struct fields with no meaning there.
+                keep = set(block._parameters.keys())  # noqa: SLF001
+                cfg.self = {k: v for k, v in cfg.self.items() if k in keep}
                 s, f = CppEmitter(
                     cfg,
                     default_int_type=self.default_int_type,
