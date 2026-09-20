@@ -467,6 +467,30 @@ class RegressionTests(unittest.TestCase):
         self.assertIn("float freq = 1000.0;", cpp)
         _assert_compiles(self, cpp)
 
+    def test_io_sink_output_actually_gets_called_in_tick(self):
+        """An I/O sink block's {name}_output() must actually be called
+        somewhere in bdsim_tick() -- not just declared and wired to.
+        bd.plan (BlockDiagram.schedule_generate()) deliberately excludes
+        every sink/graphics-classed block; bdsim's own Python engine
+        calls them separately via BlockDiagram.step(), never through
+        plan/evaluate() at all. Missing this meant an I/O sink's struct
+        and declaration were emitted, and its inputs correctly wired, but
+        nothing in bdsim_tick() ever called it -- a real, correctly
+        hand-written implementation would still just never run. Caught
+        by inspection (grep) of a real generated file, not by any
+        previous test here -- compiling a declaration-only prototype
+        succeeds whether or not anything calls it, so
+        test_io_block_self_struct_excludes_... above didn't catch this."""
+        sim = bdsim.BDSim(animation=False)
+        bd = sim.blockdiagram()
+        encoder = bd.DEVICEIN(name="encoder")
+        pwm = bd.PWMOUT(channel=0, name="pwm")
+        bd.connect(encoder, pwm)
+        bd.compile()
+        cpp = _generate(bd)
+        tick_body = cpp[cpp.index("void bdsim_tick") :]
+        self.assertIn("pwm_output(t,", tick_body)
+
 
 # ---------------------------------------------------------------------------
 # 3. "codegen succeeds" tests against known-good diagrams

@@ -237,12 +237,22 @@ else. Every field has a real, usable default (`""` for an unset
 `device`, `0.0` for an unset `freq`), never a bare `None`/`nullptr_t`,
 so a hand-written body can always assign a real value if it needs to.
 
-Every block, I/O or not, is called the same way from the generated
-`bdsim_tick()` — `pwm_magnitude_output(t, g_x, pwm_magnitude_self_inst,
-pwm_magnitude_inports_inst, pwm_magnitude_outports_inst)` — the schedule
-loop doesn't know or care that a block is I/O; it just calls
-`{name}_output(...)` like any other. The only difference is who wrote
-the function body.
+Every block is called the same *way* — `pwm_magnitude_output(t, g_x,
+pwm_magnitude_self_inst, pwm_magnitude_inports_inst,
+pwm_magnitude_outports_inst)`, indistinguishable from a call to any
+other block's `{name}_output()`. The only difference is who wrote the
+function body. But *where* the call happens in `bdsim_tick()` does
+depend on direction: an I/O **source** (`AnalogIn`/`DigitalIn`/
+`DeviceIn`) is called from the normal schedule loop, in dataflow order,
+same as any other block. An I/O **sink** (`AnalogOut`/`DigitalOut`/
+`PWMOut`/`DeviceOut`) is not — `bd.plan` (bdsim's own dataflow schedule)
+deliberately excludes every sink/graphics-classed block, since bdsim's
+own Python engine calls them separately (`BlockDiagram.step()`, "at the
+end of every integration interval"), not through the dataflow plan at
+all. Codegen mirrors that: after the schedule loop, a trailing
+`/* I/O sink outputs (not in bd.plan) */` block calls every I/O sink's
+`{name}_output()` once, after every wire that could feed it has already
+been computed.
 
 ### Writing the implementation
 

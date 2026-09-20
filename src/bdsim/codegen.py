@@ -3518,6 +3518,7 @@ class Codegen:
         fp.write(self._tick_function_open())
 
         emitted_block_set = set(emitted_blocks)
+        called_blocks: set[str] = set()
         for sequence, group in enumerate(bd.plan):
             fp.write(self._schedule_group_comment(sequence))
             for b in group:
@@ -3525,6 +3526,7 @@ class Codegen:
                 name = fixname(b.name)
 
                 fp.write(self._output_call(name))
+                called_blocks.add(name)
 
                 for port in range(b.nout):
                     for wire in b._output_wires[port]:  # noqa: SLF001 -- no public accessor
@@ -3545,6 +3547,30 @@ class Codegen:
                                 b.name,
                             )
                         )
+
+        # bd.plan deliberately excludes every sink/graphics-classed block
+        # (BlockDiagram.schedule_generate() assigns them a _sequence for
+        # ordering purposes, then removes them from the group that
+        # actually gets appended to plan) -- bdsim's own Python engine
+        # calls them separately, via BlockDiagram.step() ("called at the
+        # end of every integration interval"), not through plan/evaluate()
+        # at all. An I/O sink (DigitalOut/PWMOut/DeviceOut/...) needs the
+        # same treatment here: its struct+declaration were emitted above
+        # and its inputs get wired above (as a wiring *destination*, via
+        # the loop just above), but nothing yet calls its own
+        # {name}_output() -- without this, a real, correctly-wired
+        # hand-written implementation would still just never run.
+        io_sink_blocks = [
+            b
+            for b in bd.blocklist
+            if isinstance(b, IOBlockMixin)
+            and b.nout == 0
+            and fixname(b.name) not in called_blocks
+        ]
+        if io_sink_blocks:
+            fp.write("\n    /****** I/O sink outputs (not in bd.plan) *******/\n")
+            for b in io_sink_blocks:
+                fp.write(self._output_call(fixname(b.name)))
 
         stateful_blocks = [b for b in bd.blocklist if b.ndstates > 0]
         if stateful_blocks:
