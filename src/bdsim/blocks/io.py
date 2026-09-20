@@ -47,6 +47,13 @@ class AnalogIn(SourceBlock, IOBlockMixin):
     :states: 0
 
     Reads a single analog input channel (e.g. an ADC pin).
+
+    .. note:: ``device`` defaults to ``""``, not ``None`` -- an unset
+        optional ``str`` renders as a real, always-usable ``std::string``
+        field in generated C++. A Python ``None`` default would map to
+        C++'s ``std::nullptr_t``, a legal but permanently-unusable type
+        (its only possible value is ``nullptr``), leaving hand-written
+        code with no way to ever give it a real value.
     """
 
     nin = 0
@@ -55,7 +62,7 @@ class AnalogIn(SourceBlock, IOBlockMixin):
     def __init__(
         self,
         channel: int,
-        device: str | None = None,
+        device: str = "",
         sim_value: float = 0.0,
         **blockargs: Any,
     ) -> None:
@@ -63,7 +70,7 @@ class AnalogIn(SourceBlock, IOBlockMixin):
         :param channel: hardware channel/pin identifier
         :type channel: int
         :param device: optional device identifier, for multi-device
-            targets, defaults to None
+            targets, defaults to "" (unspecified)
         :type device: str, optional
         :param sim_value: value this block returns when run in bdsim's own
             Python simulator (not real hardware), defaults to 0.0
@@ -102,14 +109,14 @@ class AnalogOut(SinkBlock, IOBlockMixin):
     def __init__(
         self,
         channel: int,
-        device: str | None = None,
+        device: str = "",
         **blockargs: Any,
     ) -> None:
         """
         :param channel: hardware channel/pin identifier
         :type channel: int
         :param device: optional device identifier, for multi-device
-            targets, defaults to None
+            targets, defaults to "" (unspecified)
         :type device: str, optional
         :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
@@ -144,7 +151,7 @@ class DigitalIn(SourceBlock, IOBlockMixin):
     def __init__(
         self,
         channel: int,
-        device: str | None = None,
+        device: str = "",
         sim_value: int = 0,
         **blockargs: Any,
     ) -> None:
@@ -152,7 +159,7 @@ class DigitalIn(SourceBlock, IOBlockMixin):
         :param channel: hardware channel/pin identifier
         :type channel: int
         :param device: optional device identifier, for multi-device
-            targets, defaults to None
+            targets, defaults to "" (unspecified)
         :type device: str, optional
         :param sim_value: value this block returns when run in bdsim's own
             Python simulator (not real hardware), defaults to 0
@@ -191,14 +198,14 @@ class DigitalOut(SinkBlock, IOBlockMixin):
     def __init__(
         self,
         channel: int,
-        device: str | None = None,
+        device: str = "",
         **blockargs: Any,
     ) -> None:
         """
         :param channel: hardware channel/pin identifier
         :type channel: int
         :param device: optional device identifier, for multi-device
-            targets, defaults to None
+            targets, defaults to "" (unspecified)
         :type device: str, optional
         :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
@@ -228,29 +235,35 @@ class PWMOut(AnalogOut):
     true DAC -- the common case on an 8-bit microcontroller. ``freq`` is
     advisory (a hint for the PWM carrier frequency); a target that doesn't
     support configuring it is free to ignore it.
+
+    .. note:: ``freq`` defaults to ``0.0`` (meaning "unspecified, let the
+        hardware/library pick"), not ``None`` -- same reasoning as
+        ``device`` on :class:`AnalogIn`: a real, always-usable C++
+        ``float`` field, not the unusable ``std::nullptr_t`` a Python
+        ``None`` default would map to.
     """
 
     def __init__(
         self,
         channel: int,
-        freq: float | None = None,
-        device: str | None = None,
+        freq: float = 0.0,
+        device: str = "",
         **blockargs: Any,
     ) -> None:
         """
         :param channel: hardware channel/pin identifier
         :type channel: int
-        :param freq: PWM carrier frequency in Hz, defaults to the target's
-            own default
+        :param freq: PWM carrier frequency in Hz, defaults to 0.0
+            (unspecified -- use the target's own default)
         :type freq: float, optional
         :param device: optional device identifier, for multi-device
-            targets, defaults to None
+            targets, defaults to "" (unspecified)
         :type device: str, optional
         :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
-        if freq is not None and freq <= 0:
-            raise ValueError("PWMOut freq must be > 0 Hz")
+        if freq < 0:
+            raise ValueError("PWMOut freq must be >= 0 Hz (0 means unspecified)")
         super().__init__(channel=channel, device=device, **blockargs)
         self.freq = freq
         self.add_param("freq")
@@ -280,14 +293,14 @@ class DeviceIn(SourceBlock, IOBlockMixin):
     def __init__(
         self,
         nout: int = 1,
-        device: str | None = None,
+        device: str = "",
         sim_values: list[Any] | None = None,
         **blockargs: Any,
     ) -> None:
         """
         :param nout: number of output channels, defaults to 1
         :type nout: int, optional
-        :param device: optional device identifier, defaults to None
+        :param device: optional device identifier, defaults to "" (unspecified)
         :type device: str, optional
         :param sim_values: values this block returns when run in bdsim's
             own Python simulator (not real hardware), defaults to
@@ -335,13 +348,13 @@ class DeviceOut(SinkBlock, IOBlockMixin):
     def __init__(
         self,
         nin: int = 1,
-        device: str | None = None,
+        device: str = "",
         **blockargs: Any,
     ) -> None:
         """
         :param nin: number of input channels, defaults to 1
         :type nin: int, optional
-        :param device: optional device identifier, defaults to None
+        :param device: optional device identifier, defaults to "" (unspecified)
         :type device: str, optional
         :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
