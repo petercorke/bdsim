@@ -112,6 +112,25 @@ Sampled-time dynamics
    :exclude-members: output, reset, step, start, done, deriv, nin, nout, inlabels, outlabels
 
 
+I/O blocks
+==========
+
+Blocks that read or write real external hardware (a pin, an encoder, a
+PWM output, ...) rather than performing pure computation. Their Python
+``output()``/``step()`` methods are deliberately trivial stand-ins (a
+settable simulated value) -- the real, hardware-facing implementation is
+hand-written C++ supplied separately when a diagram using these blocks
+is compiled with :mod:`bdsim.codegen`. See the codegen transpilation
+guide for that contract (what C++ gets generated for these blocks, and
+what the hand-written code is expected to implement).
+
+.. automodule:: bdsim.blocks.io
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :special-members: __init__
+   :exclude-members: output, reset, step, start, done, nin, nout, inlabels, outlabels
+
 External Toolbox blocksets
 ==========================
 

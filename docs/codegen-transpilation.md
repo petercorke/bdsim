@@ -8,8 +8,11 @@ reST for the Sphinx docs — for now it's the single source of truth for
 "what does `bdsim.codegen` actually support."
 
 I/O blocks (reading/writing real pins, encoders, PWM outputs, ...) are
-deliberately **not** covered here yet — that part of the design hasn't
-converged. This document covers pure-computation transpilation only.
+now covered too, in their own section below — struct/declaration shape
+and constructor parameters converged enough to document. The parts still
+genuinely unbuilt (an automated `main.cpp` skeleton generator with
+default implementations) are called out explicitly where relevant,
+rather than glossed over.
 
 ## What this is
 
@@ -180,11 +183,121 @@ practice, worth knowing about if you're debugging a new one:
   purposes, so the outer call's own intrinsic match doesn't get starved
   by that.
 
+## I/O blocks
+
+Blocks that read or write real hardware — `AnalogIn`, `AnalogOut`,
+`DigitalIn`, `DigitalOut`, `PWMOut`, and the two generic escape hatches
+`DeviceIn`/`DeviceOut` (arbitrary port count, for anything that isn't a
+single analog/digital pin — an encoder, an IMU, a stepper driver) — are
+tagged `IOBlockMixin` and handled completely differently from every
+other block. Their Python `output()`/`step()` is a trivial, simulator-
+only stand-in (a settable `sim_value`); it is **never** transpiled.
+Instead, codegen emits the block's `self`/`inports`/`outports` structs
+exactly as usual, plus a **declaration-only function prototype** — no
+body. You supply the body yourself, in a separate hand-written `.cpp`
+compiled alongside the generated file.
+
+### What gets generated
+
+For `encoder = bd.DEVICEIN(name="encoder")`,
+`pwm = bd.ANALOGOUT(channel=0, name="pwm_magnitude")`,
+`direction = bd.DIGITALOUT(channel=1, name="motor_direction")`, wired
+`encoder → pwm`, `encoder → direction`:
+
+```cpp
+struct encoder_self {
+    std::string device = "";
+};
+struct encoder_inports {
+};
+struct encoder_outports {
+    float _0;
+};
+void encoder_output(double t, const Eigen::VectorXd& x, encoder_self& self,
+                     const encoder_inports& inports, encoder_outports& outports);
+
+struct pwm_magnitude_self {
+    int32_t channel = 0;
+    std::string device = "";
+};
+struct pwm_magnitude_inports {
+    int32_t _0;
+};
+struct pwm_magnitude_outports {
+};
+void pwm_magnitude_output(double t, const Eigen::VectorXd& x, pwm_magnitude_self& self,
+                           const pwm_magnitude_inports& inports, pwm_magnitude_outports& outports);
+```
+
+(`motor_direction` is the same shape as `pwm_magnitude`, minus `channel`'s
+role obviously being a digital pin, not analog.) The struct fields are
+exactly the constructor parameters the block class registered via
+`add_param()` — `channel`, `device`, `freq` (`PWMOut` only) — nothing
+else. Every field has a real, usable default (`""` for an unset
+`device`, `0.0` for an unset `freq`), never a bare `None`/`nullptr_t`,
+so a hand-written body can always assign a real value if it needs to.
+
+Every block, I/O or not, is called the same way from the generated
+`bdsim_tick()` — `pwm_magnitude_output(t, g_x, pwm_magnitude_self_inst,
+pwm_magnitude_inports_inst, pwm_magnitude_outports_inst)` — the schedule
+loop doesn't know or care that a block is I/O; it just calls
+`{name}_output(...)` like any other. The only difference is who wrote
+the function body.
+
+### Writing the implementation
+
+Define a function with **exactly** this signature — same name, same
+struct types, in the same or a separately-compiled translation unit —
+and give it a real body. It reads configuration off `self` (the pin/
+channel, a device string if relevant), touches the real hardware, and
+reads/writes through `inports`/`outports` exactly like the generated
+code does for every other block.
+
+A complete Arduino-flavored implementation for the three declarations
+above:
+
+```cpp
+#include <Arduino.h>
+#include "codegen.cpp"   // the generated file, for the struct/function declarations
+
+void encoder_output(double t, const Eigen::VectorXd& x, encoder_self& self,
+                     const encoder_inports& inports, encoder_outports& outports) {
+    // quadrature encoder count, scaled to whatever unit the rest of the
+    // diagram expects -- e.g. an Encoder.h object read elsewhere
+    outports._0 = read_encoder_count();
+}
+
+void pwm_magnitude_output(double t, const Eigen::VectorXd& x, pwm_magnitude_self& self,
+                           const pwm_magnitude_inports& inports, pwm_magnitude_outports& outports) {
+    analogWrite(self.channel, inports._0);   // inports._0 is the wired PWM magnitude
+}
+
+void motor_direction_output(double t, const Eigen::VectorXd& x, motor_direction_self& self,
+                             const motor_direction_inports& inports, motor_direction_outports& outports) {
+    digitalWrite(self.channel, inports._0 > 0 ? HIGH : LOW);
+}
+```
+
+### What's not automated yet
+
+The plan is for `Codegen` to write a starter `main.cpp` the first time
+it runs (stub bodies that compile and do nothing, so the project always
+builds before real hardware is wired up; hand edits never overwritten on
+regeneration) — **this doesn't exist yet.** Today, you write and
+maintain the implementation file entirely by hand, matching each
+declared prototype exactly (get the signature wrong and it's a linker
+error, `undefined reference to encoder_output`, not a compile error).
+Tracked as an open item in the phasing plan (`claude-notes/
+codegen-embedded-plan.md`), not forgotten.
+
 ## Known limitations (current, not exhaustive)
 
 - No general `for`/`while` loop support ([bdsim#92](https://github.com/petercorke/bdsim/issues/92)).
 - Continuous-time blocks don't produce compilable C++ ([bdsim#93](https://github.com/petercorke/bdsim/issues/93)).
-- Single clock only — no multi-clock scheduling yet.
+- Single clock only — no multi-clock scheduling yet (I/O blocks included:
+  they run every tick like any stateless block, no clock affinity).
+- No automated `main.cpp`/project skeleton generation — see "I/O blocks"
+  above.
 - No recursion (guarded and rejected, not silently broken).
 - `max_inline_depth` (default 20) bounds how deep a legitimate, non-
   recursive chain of helper calls can nest before codegen gives up.
