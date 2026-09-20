@@ -66,6 +66,7 @@ C++ scalar, no Eigen wrapper.
 import ast
 import builtins
 import inspect
+import os
 import json
 import math
 import textwrap
@@ -3554,6 +3555,13 @@ class Codegen:
 
         fp.write(self._tick_function_close())
         fp.close()
+        # Always printed, regardless of `verbose` -- confirms generate()
+        # actually ran and points at the file, without dumping the
+        # per-block trace. Easy to miss otherwise: the file just changes
+        # on disk with no signal in the terminal that anything happened,
+        # or where to look (e.g. wiring lines buried at the end of a
+        # long bdsim_tick(), not obviously findable by scrolling).
+        print(f"Generated C++ code -> {os.path.abspath(self.output_path)}")
 
 
 
