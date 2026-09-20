@@ -125,6 +125,15 @@ def _sqrt_helper(u):
     return math.sqrt(u)
 
 
+def _unregistered_math_helper(u):
+    # math.gamma is deliberately not among the math.* intrinsics
+    # registered in codegen.py -- used to keep exercising the "call to an
+    # unresolvable name fails loudly and specifically" path now that
+    # math.sqrt itself is a real, working intrinsic (see
+    # test_math_sqrt_is_a_working_intrinsic).
+    return math.gamma(u)
+
+
 def _norm_helper(u):
     return np.linalg.norm(np.array([u, u]))
 
@@ -273,14 +282,23 @@ class RegressionTests(unittest.TestCase):
         cpp = _generate(_function_diagram(outer))
         self.assertNotIn("numpy", cpp.lower())
 
-    def test_math_sqrt_gives_actionable_not_a_module_error(self):
-        """math (and np) not being recognized by name resolution used to
-        leave calls like math.sqrt() silently UNKNOWN, producing a vague
-        failure. Now math resolves to the real module, so the call is
-        correctly diagnosed as 'not registered, can't inline' -- loud and
-        specific, naming the actual call."""
-        with self.assertRaisesRegex(NotImplementedError, r"math\.sqrt"):
-            _generate(_function_diagram(_sqrt_helper))
+    def test_math_sqrt_is_a_working_intrinsic(self):
+        """math.sqrt() is now a real, registered intrinsic (std::sqrt) --
+        was unresolvable at all until math got added to name resolution,
+        then correctly-but-unhelpfully refused once it did (not a
+        registered intrinsic). Locks in that it actually transpiles now,
+        not just fails with a better message."""
+        cpp = _generate(_function_diagram(_sqrt_helper))
+        self.assertIn("std::sqrt(", cpp)
+
+    def test_unregistered_math_function_gives_actionable_error(self):
+        """A math.* function with no registered intrinsic (math.gamma --
+        deliberately not among the ones codegen.py registers) must still
+        fail loudly and specifically, naming the actual call -- not
+        silently pass through as unresolvable the way it would have
+        before math got added to name resolution at all."""
+        with self.assertRaisesRegex(NotImplementedError, r"math\.gamma"):
+            _generate(_function_diagram(_unregistered_math_helper))
 
     def test_numpy_internals_refused_with_actionable_message(self):
         """np.linalg.norm has real Python source (a thin wrapper) that the
@@ -322,6 +340,58 @@ class RegressionTests(unittest.TestCase):
             code = line.split("//")[0]
             self.assertNotIn(src.name, code)  # raw "constant.0" (with the dot)
             self.assertNotIn(gain.name, code)  # raw "gain.0"
+
+    def test_clip_block_codegens_and_compiles(self):
+        """The CLIP block's output() does
+        `out = min(self.max, max(input, self.min))` -- min/max weren't
+        resolvable by name at all (silently UNKNOWN, callable(UNKNOWN) is
+        False), so this call never even reached a diagnosis, let alone
+        transpiled; CppEmitter failed much later with a generic
+        "cannot infer C++ type" error naming no call at all. Also the
+        first real exercise of a *nested* intrinsic call as another
+        intrinsic's argument (IR.IntrinsicCall deliberately evaluates to
+        UNKNOWN, so the outer call's own intrinsic lookup used to be
+        skipped too)."""
+        sim = bdsim.BDSim(animation=False)
+        bd = sim.blockdiagram()
+        src = bd.CONSTANT(50.0, name="src")
+        clip = bd.CLIP(-40, 40, name="clip")
+        scope = bd.SCOPE(nin=1)
+        bd.connect(src, clip)
+        bd.connect(clip, scope)
+        bd.compile()
+        cpp = _generate(bd)
+        self.assertIn("std::min<double>", cpp)
+        self.assertIn("std::max<double>", cpp)
+        if CAN_COMPILE:
+            with tempfile.TemporaryDirectory() as d:
+                cpp_path = os.path.join(d, "clip.cpp")
+                Path(cpp_path).write_text(cpp)
+                result = subprocess.run(
+                    [CLANGXX, "-std=c++17", f"-I{EIGEN_INCLUDE}", "-c", cpp_path,
+                     "-o", os.path.join(d, "clip.o")],
+                    text=True, capture_output=True, timeout=60,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_local_variable_shadowing_a_builtin_not_misresolved(self):
+        """A local variable that happens to share a name with a Python
+        builtin (`input`, matching FUNCTIONBLOCK-style code's own common
+        `input = inputs[0]` idiom -- e.g. CLIP's real output() body) must
+        resolve as the local, not silently fall through to the actual
+        builtin function once bare-builtin resolution was added (for
+        min/max/abs/math.*) -- real Python scoping shadows it too, and
+        conflating the two silently corrupted the call's arguments rather
+        than failing loudly."""
+
+        def outer(u):
+            input = u  # noqa: A001 -- deliberately shadows the builtin
+            return input + 1.0
+
+        cpp = _generate(_function_diagram(outer))
+        # must read the real local, not e.g. stringify the builtin
+        self.assertIn("inports._0", cpp)
+        self.assertNotIn("built-in", cpp)
 
 
 # ---------------------------------------------------------------------------
