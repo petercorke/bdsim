@@ -70,11 +70,18 @@ condition proves reachable is ever visited by later passes, so a dead
 branch containing something otherwise-unsupported is fine), `return`,
 `raise`, bare expression statements.
 
-**Loops:** `for` is lowered but only meaningfully consumed by one
-block-specific special case (`SUM`'s own
-`for i, input in enumerate(inputs): ...` shape) — there is no general
-for-loop support. `while` is not supported at all. Both tracked as
-[bdsim#92](https://github.com/petercorke/bdsim/issues/92).
+**Loops:** `for` is supported for exactly one shape —
+`for i, x in enumerate(inputs): ...` — unrolled into `nin` copies of the
+loop body (the bound is always statically known at generation time),
+substituting `i`/`x` per copy and leaving every other name (a
+cross-iteration accumulator, e.g. `SUM`'s `sum`/`PROD`'s `prod`)
+genuinely shared, not duplicated per copy. This is the only `for` shape
+bdsim's own block library actually uses — `SUM` and `PROD`'s scalar case
+(any mix of `*`/`/`) both fall out of it for free; no other shape is
+supported. `while` is not supported at all. Both tracked as
+[bdsim#92](https://github.com/petercorke/bdsim/issues/92) — `for` is now
+partially closed out; the issue stays open for `while` and other `for`
+shapes.
 
 **Not supported at all:** `try`/`except`, `with`, class/nested-function
 definitions, `async`, the walrus operator, `match`.
@@ -119,6 +126,7 @@ unavailable (e.g. a compiled/C-extension function), or nesting too deep.
 | `math.pi`, `math.e`, ... (bare attribute access, not a call) | folds directly to a numeric literal |
 | `spatialmath.base.skew/skewa/vex/r2t/t2r/norm/unit/cross` | hand-written Eigen helpers |
 | `x.item()` on an ndarray-typed value | direct coefficient access |
+| `np.uint8/16/32/64(x)`, `np.int8/16/32/64(x)`, `np.float32/64(x)`, `np.bool_(x)` | `static_cast<T>(x)` — also what the `CAST` block itself uses (see below), just synthesized directly from `self.dtype` rather than reached via a call expression |
 
 This list grows as real diagrams hit gaps — `min`/`max`/`abs`/`math.*`
 were all added because a real block (`CLIP`) or a real toolbox helper
@@ -365,8 +373,19 @@ codegen-embedded-plan.md`), not forgotten.
 
 ## Known limitations (current, not exhaustive)
 
-- No general `for`/`while` loop support ([bdsim#92](https://github.com/petercorke/bdsim/issues/92)).
-- Continuous-time blocks don't produce compilable C++ ([bdsim#93](https://github.com/petercorke/bdsim/issues/93)).
+- `for` supported for exactly one shape (`enumerate(inputs)`, see
+  above); `while` and any other `for` shape not at all
+  ([bdsim#92](https://github.com/petercorke/bdsim/issues/92), still
+  open for those).
+- Matrix multiply (`@`) has no C++ implementation — fails loudly at
+  generation time (`"matrix multiply (@) has no C++ implementation
+  yet"`), not a silent broken-C++ surprise at compile time. Affects
+  continuous-time blocks (closed as wontfix,
+  [bdsim#93](https://github.com/petercorke/bdsim/issues/93) — continuous
+  support isn't planned) and `PROD`'s matrix branch alike. Eigen's own
+  `Matrix::operator*` already does real matrix multiplication for two
+  Matrix-typed operands, so this is likely cheap to add for real later;
+  just not attempted yet.
 - Single clock only — no multi-clock scheduling yet (I/O blocks included:
   they run every tick like any stateless block, no clock affinity).
 - No automated `main.cpp`/project skeleton generation — see "I/O blocks"
