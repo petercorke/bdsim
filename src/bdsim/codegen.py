@@ -25,12 +25,16 @@ declaration (``x: float = ...``), ``if``/``else`` (only the branch a
 constant-folded condition proves reachable is ever visited by later
 passes -- a dead branch containing something otherwise-unsupported is
 fine), ``return``, ``raise``, bare expression statements. ``for`` is
-lowered but only meaningfully consumed by one block-specific special
-case (:func:`IRSpecializer._specialize_sum_body`, for ``SUM``'s own
-``for i, input in enumerate(inputs): ...`` shape) -- no general for-loop
-support. ``while``, ``try``/``except``, ``with``, class/nested-function
-definitions, ``async``, walrus, and ``match`` are **not** supported at
-all (tracked: bdsim issue #92 for loops specifically).
+supported for exactly one shape -- ``for i, x in enumerate(inputs):
+...`` -- unrolled into ``nin`` copies of the loop body (the bound is
+always statically known), substituting ``i``/``x`` per copy and leaving
+every other name (a cross-iteration accumulator, e.g. ``SUM``'s
+``sum``/``PROD``'s ``prod``) genuinely shared, not renamed (see
+:func:`IRSpecializer._unroll_enumerate_inputs_for`). This is the only
+``for`` shape bdsim's own block library actually uses; any other shape,
+and ``while``, ``try``/``except``, ``with``, class/nested-function
+definitions, ``async``, walrus, and ``match``, are **not** supported at
+all (tracked: bdsim issue #92).
 
 **Supported expressions**: arithmetic/comparison/boolean operators,
 subscripting, attribute access, literals, list/tuple construction, the
@@ -767,39 +771,64 @@ class IRSpecializer:
         collect_bound_names(fn.body, self.local_names)
         body = [self.specialize_stmt(stmt) for stmt in fn.body]
         body = self._flatten(body)
-        if self._is_sum_output(fn):
-            body = self._specialize_sum_body(body)
-        body = [self.specialize_stmt(stmt) for stmt in body]
-        body = self._flatten(body)
         return IR.Function(name=fn.name, args=fn.args, body=body)
 
-    def _is_sum_output(self, fn: IR.Function) -> bool:
-        block_type = getattr(self.block_cfg.block, "type", "")
-        return fn.name == "output" and block_type == "sum"
+    def _unroll_enumerate_inputs_for(self, stmt: IR.For) -> list[IR.Stmt] | None:
+        """Unroll ``for i, x in enumerate(inputs): BODY`` into ``nin``
+        copies of ``BODY``, substituting ``i`` -> the literal iteration
+        index and ``x`` -> ``inputs[index]`` in each copy -- sound because
+        the loop bound (``len(inputs) == nin``) is always known at
+        generation time. Every *other* name in ``BODY`` (an accumulator
+        like SUM's ``sum``/PROD's ``prod``) is deliberately left
+        completely alone, not renamed per copy -- reusing
+        ``_IRAlphaRenamer`` with an empty ``bound_names`` set gives
+        exactly that for free (nothing to rename, only the two
+        substitutions), so a genuine cross-iteration accumulator stays
+        one shared variable across the unrolled copies, threaded through
+        correctly, while ``i``/``x`` disappear into concrete per-copy
+        values.
 
-    def _specialize_sum_body(self, body: list[IR.Stmt]) -> list[IR.Stmt]:
-        if not body:
-            return body
-        if not isinstance(body[0], IR.For):
-            return body
+        This is the *only* for-loop shape bdsim's own block library
+        actually uses (SUM, PROD, ...) -- returns None for anything else,
+        which falls back to the generic (currently: fails at emit time
+        unless somehow otherwise supported) path.
 
-        signs = self.self.get("signs")
-        if not isinstance(signs, str) or len(signs) == 0:
-            return body
+        Returns the unrolled, NOT-YET-(re)specialized statements -- the
+        caller is responsible for feeding them back through
+        specialize_stmt(), same as for any other statement list.
+        """
+        it = stmt.iterable
+        if not (
+            isinstance(it, IR.Call)
+            and isinstance(it.func, IR.Name)
+            and it.func.name == "enumerate"
+            and len(it.args) == 1
+            and isinstance(it.args[0], IR.Name)
+            and it.args[0].name == "inputs"
+        ):
+            return None
+        target = stmt.target
+        if not (
+            isinstance(target, IR.Tuple)
+            and len(target.values) == 2
+            and isinstance(target.values[0], IR.Name)
+            and isinstance(target.values[1], IR.Name)
+        ):
+            return None
+        idx_name = target.values[0].name
+        elt_name = target.values[1].name
 
-        def in_at(i: int) -> IR.Expr:
-            return IR.Subscript(IR.Name("inputs"), IR.Literal(i))
-
-        expr: IR.Expr
-        expr = in_at(0) if signs[0] == "+" else IR.UnaryOp("-", in_at(0))
-        for i, sign in enumerate(signs[1:], start=1):
-            if sign == "+":
-                expr = IR.BinaryOp(expr, "+", in_at(i))
-            else:
-                expr = IR.BinaryOp(expr, "-", in_at(i))
-
-        assign = IR.Assign(IR.Name("sum"), expr)
-        return [assign] + body[1:]
+        unrolled: list[IR.Stmt] = []
+        for k in range(len(self.input_types)):
+            subst = {
+                idx_name: IR.Literal(k),
+                elt_name: IR.Subscript(IR.Name("inputs"), IR.Literal(k)),
+            }
+            renamer = _IRAlphaRenamer("", subst, set())
+            unrolled.extend(
+                _flatten_list([renamer.rename_stmt(s) for s in stmt.body])
+            )
+        return unrolled
 
     def _flatten(self, nodes: list[Any]) -> list[Any]:
         out: list[Any] = []
@@ -843,6 +872,9 @@ class IRSpecializer:
         if isinstance(stmt, IR.Raise):
             return IR.Raise(self.specialize_expr(stmt.value))
         if isinstance(stmt, IR.For):
+            unrolled = self._unroll_enumerate_inputs_for(stmt)
+            if unrolled is not None:
+                return self._flatten([self.specialize_stmt(s) for s in unrolled])
             return IR.For(
                 self.specialize_expr(stmt.target),
                 self.specialize_expr(stmt.iterable),
@@ -2568,8 +2600,20 @@ class CppEmitter(Emitter):
 
     def expr_BinaryOp(self, e: IR.BinaryOp) -> str:
         if e.op == "@":
-            # NumPy matmul → Eigen helper
-            return f"matmul({self.expr(e.left)}, {self.expr(e.right)})"
+            # No real matmul() helper exists -- this used to silently
+            # emit a call to one anyway, producing C++ that looked fine
+            # right up until compile time (an undefined `matmul`
+            # symbol), discovered via PROD's own matrix branch (`prod @
+            # input`, correctly isinstance-folded and reached at
+            # generation time for real matrix inputs) rather than only
+            # the already-tracked continuous-block case (bdsim#93). Fail
+            # loudly and specifically here instead -- Eigen's own
+            # Matrix::operator* already does real matrix multiplication
+            # (not elementwise) for two Matrix-typed operands, so this
+            # is likely cheap to actually implement later; just not
+            # attempted here (out of scope -- this session's ask was the
+            # scalar SUM/PROD case specifically).
+            self._fail("matrix multiply (@) has no C++ implementation yet", e)
         lt = self.infer_expr_type(e.left)
         rt = self.infer_expr_type(e.right)
         if e.op == "%" and (
