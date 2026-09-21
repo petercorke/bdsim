@@ -491,6 +491,41 @@ class RegressionTests(unittest.TestCase):
         tick_body = cpp[cpp.index("void bdsim_tick") :]
         self.assertIn("pwm_output(t,", tick_body)
 
+    def test_cast_block_codegens_and_compiles(self):
+        """CAST's dtype is fixed per-instance (never changes after
+        __init__), but its Python output() picks the right NumPy scalar
+        constructor via a dict-keyed lookup -- fine for bdsim's own
+        simulator, but not something codegen's self-attribute resolution
+        can follow (the constructor itself isn't VarType-representable,
+        and branching a static_cast on a runtime string isn't meaningful
+        either). lower_cast_block() bypasses output()'s source entirely
+        and synthesizes the call directly from self.dtype."""
+        sim = bdsim.BDSim(animation=False)
+        bd = sim.blockdiagram()
+        src = bd.CONSTANT(300.5, name="src")
+        cast = bd.CAST("uint16", name="cast")
+        scope = bd.SCOPE(nin=1)
+        bd.connect(src, cast)
+        bd.connect(cast, scope)
+        bd.compile()
+        cpp = _generate(bd)
+        self.assertIn("static_cast<uint16_t>(inports._0)", cpp)
+        _assert_compiles(self, cpp)
+
+    def test_numpy_scalar_constructor_called_inline_is_a_working_intrinsic(self):
+        """np.uint8(x)/np.float32(x) etc. called directly (not through the
+        dedicated CAST block -- e.g. inside an ordinary FUNCTION block's
+        Python source) are real, registered intrinsics too, sharing the
+        same python.cast.<etype> renders CAST itself uses."""
+
+        def outer(u):
+            return np.float32(u) + np.uint8(u)
+
+        cpp = _generate(_function_diagram(outer))
+        self.assertIn("static_cast<float>(", cpp)
+        self.assertIn("static_cast<uint8_t>(", cpp)
+        _assert_compiles(self, cpp)
+
 
 # ---------------------------------------------------------------------------
 # 3. "codegen succeeds" tests against known-good diagrams
