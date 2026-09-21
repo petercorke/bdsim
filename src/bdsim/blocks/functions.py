@@ -504,6 +504,86 @@ class Clip(FunctionBlock):
 # ------------------------------------------------------------------------ #
 
 
+class Cast(FunctionBlock):
+    """
+    :blockname:`CAST`
+
+    Coerce a signal to an explicit dtype.
+
+    :inputs: 1
+    :outputs: 1
+    :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - int, float, ndarray
+            - :math:`x`
+        *   - Output
+            - 0
+            - the requested dtype
+            - :math:`x` coerced to ``dtype``
+
+    A block's own type mapping (both in bdsim's own simulator and in
+    :mod:`bdsim.codegen`) is otherwise inferred entirely from the actual
+    values flowing through wires -- there's no way to explicitly say "treat
+    this signal as ``uint16``" if nothing upstream already produces that
+    exact NumPy dtype. ``CAST`` exists for exactly that::
+
+        counts = bd.CAST("uint16")
+
+    :note: The supported dtypes are exactly the scalar types
+        :mod:`bdsim.codegen` can represent in generated C++: ``int8``/
+        ``int16``/``int32``/``int64``, ``uint8``/``uint16``/``uint32``/
+        ``uint64``, ``float32``/``float64``, ``bool``.
+    """
+
+    nin = 1
+    nout = 1
+
+    _NP_TYPE: dict[str, type] = {
+        "int8": np.int8,
+        "int16": np.int16,
+        "int32": np.int32,
+        "int64": np.int64,
+        "uint8": np.uint8,
+        "uint16": np.uint16,
+        "uint32": np.uint32,
+        "uint64": np.uint64,
+        "float32": np.float32,
+        "float64": np.float64,
+        "bool": np.bool_,
+    }
+
+    def __init__(self, dtype: str, **blockargs: Any) -> None:
+        """
+        :param dtype: target dtype -- one of int8/16/32/64, uint8/16/32/64,
+            float32/64, bool
+        :type dtype: str
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        :type blockargs: dict
+        """
+        if dtype not in self._NP_TYPE:
+            raise ValueError(
+                f"unsupported dtype {dtype!r}; must be one of "
+                f"{sorted(self._NP_TYPE)}"
+            )
+        super().__init__(**blockargs)
+        self.dtype = dtype
+
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
+        return [self._NP_TYPE[self.dtype](inputs[0])]
+
+
+# ------------------------------------------------------------------------ #
+
+
 # TODO can have multiple outputs: pass in a tuple of functions, return a tuple
 class Function(FunctionBlock):
     r"""

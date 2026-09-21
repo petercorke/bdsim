@@ -1555,6 +1555,31 @@ for _math_fn in ("floor", "ceil"):
     _reg("math", _math_fn, (), _math_int_result, f"python.math.{_math_fn}")
 del _math_fn
 
+# NumPy scalar-type constructors (np.uint16(x), np.float32(x), ...) called
+# directly -- e.g. inside an ordinary FUNCTION block's Python source doing
+# an explicit cast. The CAST block (bdsim.blocks.functions.Cast) below
+# doesn't go through this table at all -- its dtype only exists as a
+# per-instance string, which can't be resolved through a call expression
+# the normal way (see lower_cast_block's docstring) -- but reuses these
+# same "python.cast.<etype>" intrinsic names directly, so there's one
+# rendering implementation either way.
+def _numpy_cast_result_vt(etype: str):
+    def result_vt(arg_vals: list) -> VarType:
+        if etype == "bool":
+            return VarType._make("bool")
+        return VarType._make("ndarray", etype, ())
+
+    return result_vt
+
+
+for _cast_etype in (
+    "int8", "int16", "int32", "int64",
+    "uint8", "uint16", "uint32", "uint64",
+    "float32", "float64", "bool",
+):
+    _reg("numpy", _cast_etype, (), _numpy_cast_result_vt(_cast_etype), f"python.cast.{_cast_etype}")
+del _cast_etype
+
 
 def _lookup_intrinsic(fn_obj, arg_vts: list) -> tuple | None:
     """Return ``(result_vt_fn, intrinsic_name)`` or None."""
@@ -1728,6 +1753,47 @@ def lower_function_block(block) -> IR.Function:
         name="output",
         args=["self", "t", "inputs", "x"],
         body=extra_stmts + [IR.Return(result_expr)],
+    )
+
+
+def lower_cast_block(block) -> IR.Function:
+    """Synthesize ``output()`` IR for a ``CAST`` block directly from its
+    ``dtype`` -- entirely metadata-driven, nothing to transpile from
+    Python source at all.
+
+    ``Cast.output()``'s real Python body does a dict-keyed lookup
+    (``self._NP_TYPE[self.dtype](inputs[0])``) to pick the right NumPy
+    scalar constructor -- fine for bdsim's own simulator, since dict
+    lookups are ordinary Python at runtime, but not something codegen's
+    self-attribute resolution can ever follow: the constructor itself
+    (a bare NumPy type, e.g. ``np.uint16``) isn't representable as a
+    ``VarType`` (see ``_block_cfg``'s try/except around ``VarType(value)``
+    for exactly this kind of non-data attribute), so it can never survive
+    onto ``self`` as something specialize_expr could read back out --
+    regardless of how indirectly it's stored or looked up. ``self.dtype``
+    (the *string*) is representable, but branching a C++ ``static_cast``
+    on a runtime string isn't meaningful either. Since the whole point of
+    a CAST block is that its behavior is fully fixed at construction time
+    -- the dtype never changes after ``__init__`` -- bypassing
+    ``output()``'s source and synthesizing the call directly is the
+    actual right answer, not a workaround: there's no Python source that
+    *should* need transpiling here at all, matching the same reasoning
+    that makes IOBlockMixin blocks declaration-only. Reuses the
+    ``python.cast.<etype>`` intrinsic names/renders registered for a
+    direct ``np.uint16(x)``-style call (see ``_reg("numpy", "uint16",
+    ...)`` above) -- one rendering implementation either way.
+    """
+    etype = block.dtype
+    result_vt = VarType._make("bool") if etype == "bool" else VarType._make("ndarray", etype, ())
+    call = IR.IntrinsicCall(
+        f"python.cast.{etype}",
+        [IR.Subscript(IR.Name("inputs"), IR.Literal(0))],
+        result_vt,
+    )
+    return IR.Function(
+        name="output",
+        args=["self", "t", "inputs", "x"],
+        body=[IR.Return(IR.List([call]))],
     )
 
 
@@ -2167,6 +2233,19 @@ def _cpp_render_minmax(op: str):
     return render
 
 
+def _cpp_render_cast(cpp_type: str):
+    """Render for a ``python.cast.<etype>`` intrinsic -- a plain
+    ``static_cast<T>``. One render per C++ scalar type (from
+    CppEmitter._ETYPE_MAP), shared by both a direct ``np.uint16(x)`` call
+    in ordinary code and the dedicated CAST block (see
+    lower_cast_block)."""
+
+    def render(args: list[str]) -> str:
+        return f"static_cast<{cpp_type}>({args[0]})"
+
+    return render
+
+
 class CppEmitter(Emitter):
     """Emit C++ code (using Eigen for matrix types) from specialized IR."""
 
@@ -2290,6 +2369,12 @@ class CppEmitter(Emitter):
             lambda args: f"static_cast<int32_t>(std::ceil({args[0]}))",
             None,
         ),
+        # One "python.cast.<etype>" render per entry in _ETYPE_MAP above --
+        # shared by a direct np.uint16(x)-style call and the CAST block.
+        **{
+            f"python.cast.{etype}": (_cpp_render_cast(cpp_type), None)
+            for etype, cpp_type in _ETYPE_MAP.items()
+        },
     }
 
     def __init__(
@@ -3471,8 +3556,13 @@ class Codegen:
                 emitted_blocks.append(fixname(block_name))
                 continue
 
-            if getattr(cfg.block, "type", None) == "function":
+            # block_type was already captured earlier in this iteration
+            # (for the block-separator comment) -- same value, reused
+            # here rather than recomputed.
+            if block_type == "function":
                 method_ir = lower_function_block(cfg.block)
+            elif block_type == "cast":
+                method_ir = lower_cast_block(cfg.block)
             else:
                 method_ir = lower_block_method(cfg.block.output, cfg)
             method_ir = normalize_input_param(method_ir)
