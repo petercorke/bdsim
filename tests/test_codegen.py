@@ -526,6 +526,80 @@ class RegressionTests(unittest.TestCase):
         self.assertIn("static_cast<uint8_t>(", cpp)
         _assert_compiles(self, cpp)
 
+    def test_sum_via_general_for_unroller(self):
+        """SUM.output()'s `for i, input in enumerate(inputs): ...` used to
+        be handled by a from-scratch special case (_specialize_sum_body,
+        removed) keyed on block_type == "sum" that ignored the loop body
+        entirely and hand-built a fresh +/- accumulator expression from
+        self.signs. Replaced by a general unroller
+        (_unroll_enumerate_inputs_for) that actually unrolls the real
+        loop body nin times -- this is the regression test locking in
+        that SUM itself still behaves identically through the new,
+        general mechanism."""
+        sim = bdsim.BDSim(animation=False)
+        bd = sim.blockdiagram()
+        a = bd.CONSTANT(5.0, name="a")
+        b = bd.CONSTANT(2.0, name="b")
+        summ = bd.SUM("+-", name="summ")
+        scope = bd.SCOPE(nin=1)
+        bd.connect(a, summ[0])
+        bd.connect(b, summ[1])
+        bd.connect(summ, scope)
+        bd.compile()
+        cpp = _generate(bd)
+        self.assertIn("sum = inports._0", cpp)
+        self.assertIn("sum = (sum - inports._1)", cpp)
+        _assert_compiles(self, cpp)
+
+    def test_prod_scalar_mixed_mul_div_via_general_for_unroller(self):
+        """PROD.output() uses the identical `for i, input in
+        enumerate(inputs)` shape as SUM, but was never covered by SUM's
+        special case (block_type == "sum" gated it out entirely) -- this
+        is the new capability the general unroller gives for free. Tests
+        an arbitrary mix of '*' and '/' (6 / 3 * 2 == 4)."""
+        sim = bdsim.BDSim(animation=False)
+        bd = sim.blockdiagram()
+        a = bd.CONSTANT(6.0, name="a")
+        b = bd.CONSTANT(3.0, name="b")
+        c = bd.CONSTANT(2.0, name="c")
+        prod = bd.PROD("*/*", name="prod")
+        scope = bd.SCOPE(nin=1)
+        bd.connect(a, prod[0])
+        bd.connect(b, prod[1])
+        bd.connect(c, prod[2])
+        bd.connect(prod, scope)
+        bd.compile()
+        self.assertEqual(prod.output(0.0, [6.0, 3.0, 2.0], None), [4.0])
+        cpp = _generate(bd)
+        self.assertIn("prod = inports._0", cpp)
+        self.assertIn("prod = (prod / inports._1)", cpp)
+        self.assertIn("prod = (prod * inports._2)", cpp)
+        _assert_compiles(self, cpp)
+
+    def test_prod_matrix_branch_fails_loudly_not_silently(self):
+        """PROD's matrix branch (`prod = prod @ input`, taken when
+        isinstance(input, np.ndarray) folds True) hits the same `@` ->
+        undefined `matmul()` gap as the continuous-block case (bdsim#93)
+        -- correctly isinstance-folded and reached via the general
+        unroller, this used to silently generate uncompilable C++ rather
+        than fail at generation time."""
+
+        def diagram():
+            sim = bdsim.BDSim(animation=False)
+            bd = sim.blockdiagram()
+            a = bd.CONSTANT(np.eye(2), name="a")
+            b = bd.CONSTANT(np.eye(2) * 2, name="b")
+            prod = bd.PROD("**", name="prod")
+            scope = bd.SCOPE(nin=1)
+            bd.connect(a, prod[0])
+            bd.connect(b, prod[1])
+            bd.connect(prod, scope)
+            bd.compile()
+            return bd
+
+        with self.assertRaisesRegex(NotImplementedError, r"matrix multiply"):
+            _generate(diagram())
+
 
 # ---------------------------------------------------------------------------
 # 3. "codegen succeeds" tests against known-good diagrams
@@ -533,10 +607,16 @@ class RegressionTests(unittest.TestCase):
 
 
 class KnownGoodDiagramTests(unittest.TestCase):
-    def test_original_demo_diagram(self):
+    def test_original_demo_diagram_fails_loudly_on_its_continuous_block(self):
         """demand(STEP) -> sum -> gain -> plant(LTI_SISO) -> scope, with
         feedback -- the diagram codegen.py's own __main__ has exercised
-        throughout development."""
+        throughout development. LTI_SISO is continuous (out of scope,
+        bdsim#93 -- closed wontfix) and its `self.C @ x` now fails loudly
+        at generation time (matrix `@` has no C++ implementation) instead
+        of silently generating a call to an undefined `matmul()` --
+        SUM/GAIN themselves are fine and already covered elsewhere
+        (PID_S, used throughout the motor_control tests, uses both
+        internally, compile- and numeric-cross-check-verified there)."""
         sim = bdsim.BDSim(animation=False)
         bd = sim.blockdiagram()
         demand = bd.STEP(T=1, name="demand")
@@ -550,9 +630,8 @@ class KnownGoodDiagramTests(unittest.TestCase):
         bd.connect(gain, plant)
         bd.connect(plant, scope[0])
         bd.compile()
-        cpp = _generate(bd)
-        self.assertIn("bdsim_init", cpp)
-        self.assertIn("bdsim_tick", cpp)
+        with self.assertRaisesRegex(NotImplementedError, r"matrix multiply"):
+            _generate(bd)
 
     def test_standalone_integrator_s(self):
         cpp = _generate(_standalone_integrator_s_diagram())
@@ -653,18 +732,20 @@ class IRCoverageTests(unittest.TestCase):
         but this makes the invariant explicit and self-checking)."""
         reset_ir_coverage()
 
+        # SUM/GAIN, not the original demo's continuous LTI_SISO plant
+        # (out of scope, bdsim#93 -- correctly raises now, see
+        # test_original_demo_diagram_fails_loudly_on_its_continuous_block).
         sim = bdsim.BDSim(animation=False)
         bd = sim.blockdiagram()
         demand = bd.STEP(T=1, name="demand")
+        offset = bd.CONSTANT(2.0, name="offset")
         summ = bd.SUM("+-")
         gain = bd.GAIN(10)
-        plant = bd.LTI_SISO(0.5, [2, 1], name="plant")
-        scope = bd.SCOPE(styles=["k", "r--"], loc="lower right")
-        bd.connect(demand, summ[0], scope[1])
-        bd.connect(plant, summ[1])
+        scope = bd.SCOPE(nin=1)
+        bd.connect(demand, summ[0])
+        bd.connect(offset, summ[1])
         bd.connect(summ, gain)
-        bd.connect(gain, plant)
-        bd.connect(plant, scope[0])
+        bd.connect(gain, scope)
         bd.compile()
         _generate(bd)
 
