@@ -155,6 +155,10 @@ def _norm_helper(u):
     return np.linalg.norm(np.array([u, u]))
 
 
+def _double_plus_one(u):
+    return u * 2.0 + 1.0
+
+
 def _standalone_integrator_s_diagram():
     """CONSTANT -> INTEGRATOR_S -> SCOPE. A minimal, fully in-scope
     (sampled-only) diagram -- unlike KnownGoodDiagramTests' "original
@@ -334,6 +338,45 @@ class RegressionTests(unittest.TestCase):
         # unroll further -- this is the bound itself, tested directly.
         result = IRInliner.inline(len, [], depth=5, max_depth=5)
         self.assertIsNone(result)
+
+    def test_lambda_and_def_forms_produce_equivalent_output(self):
+        """A FUNCTION block's callable can be a lambda, not just a `def` --
+        IRInliner.inline() used to require ast.FunctionDef unconditionally,
+        rejecting every lambda outright. A lambda body is always exactly
+        one expression (no Return to hunt for), so this reuses
+        MethodFrontend's existing per-expression visitors directly rather
+        than the statement-list path `def` goes through -- checked here by
+        confirming the two AST shapes converge on the same generated code
+        for the same function body."""
+        cpp_def = _generate(_function_diagram(_double_plus_one))
+        cpp_lambda = _generate(_function_diagram(lambda u: u * 2.0 + 1.0))
+        for cpp in (cpp_def, cpp_lambda):
+            self.assertIn("* 2.0", cpp)
+            self.assertIn("+ 1.0", cpp)
+
+    def test_complex_lambda_fails_loudly_and_suggests_def(self):
+        """A lambda body using a construct MethodFrontend can't translate
+        (here: the walrus operator, no visit_NamedExpr) must fail loudly
+        with a lambda-specific hint pointing at `def` as the fix -- not
+        silently degrade to a RawExpr that the emitter would only catch
+        much later with a generic, context-free message.
+
+        The equivalent `def` form (below) is *not* a fix for this -- the
+        walrus operator isn't supported by either path, since both funnel
+        through the same MethodFrontend expression visitors. That case is
+        checked too, so this doesn't quietly start passing if def-bodied
+        expressions ever get their own bypass of the shared visitor set:
+        it must still fail, just without the lambda-specific hint (nothing
+        here identifies it as coming from a lambda), from the emitter
+        instead of from IRInliner.inline() itself."""
+        with self.assertRaisesRegex(NotImplementedError, r"lambda.*rewrite.*def"):
+            _generate(_function_diagram(lambda u: (v := u * 2.0) + v))
+
+        def _walrus_def(u):
+            return (v := u * 2.0) + v
+
+        with self.assertRaisesRegex(NotImplementedError, r"raw expression reached emitter"):
+            _generate(_function_diagram(_walrus_def))
 
     def test_fixname_applied_to_wiring_source_side_too(self):
         """Auto-numbered block names (e.g. "constant.0") contain '.', not
