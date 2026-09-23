@@ -159,7 +159,15 @@ mathjax3_config = {
 
 # -------- Options favicon -------------------------------------------------------#
 
-html_static_path = ["_static"]
+# "../../src/bdsim/blocks/Icons" is the same directory bdedit reads block
+# icons from at runtime (src/bdedit/block_importer.py joins the block
+# module's own directory with "Icons/<type>.png") -- one canonical source
+# for both consumers, and now Sphinx too (see exts/blockname.py). Sphinx
+# copies every html_static_path entry's files into the build's own
+# _static/ directory, so this needs no separate CI step -- `make html`
+# bundles the icons automatically, and it works identically for a local
+# build on any branch, not just after something's pushed to GitHub.
+html_static_path = ["_static", "../../src/bdsim/blocks/Icons"]
 html_css_files = ["custom.css"]
 # create favicons online using https://favicon.io/favicon-converter/
 favicons = [
