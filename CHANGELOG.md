@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.5.0](https://github.com/petercorke/bdsim/compare/v1.4.0...v1.5.0) (2026-09-23)
+
+
+### Features
+
+* **icons:** add cast.png icon for the CAST block ([f7b1b39](https://github.com/petercorke/bdsim/commit/f7b1b393a3a4251f5ff1457dabaf4ddf57194c92))
+* **icons:** add icons for hardware I/O blocks ([c36273a](https://github.com/petercorke/bdsim/commit/c36273acf6ec681179ea553614a1019cbdd85257))
+
+
+### Bug Fixes
+
+* **icons:** drop doubled backslash before \! kerning in pose icons ([cacbe8b](https://github.com/petercorke/bdsim/commit/cacbe8b8e25c55ebb25694aceff8f32d8844f5f9))
+* make bdtex2icon fail fast and clearly instead of hanging/silent ([4759170](https://github.com/petercorke/bdsim/commit/475917035ecc5728ac77751fd8f1390273f44d24))
+* point bdtex2icon entry point at bdedit.tex2icon ([ec9c069](https://github.com/petercorke/bdsim/commit/ec9c069c065a9f2cacbdc1c49ae44558e62d539c))
+* repair the bdtex2icon icon pipeline and serve icons locally in docs ([c5bd523](https://github.com/petercorke/bdsim/commit/c5bd523cf14acc91dbaaac34e0b8c16748dade14))
+* serve block icons locally from the Sphinx build, not a stale remote URL ([4849b61](https://github.com/petercorke/bdsim/commit/4849b61913afa9ba7008c10d5042e92729e0ea4b))
+
+
+### Documentation
+
+* add sphinx-copybutton and sphinx-codeautolink ([2ab0b03](https://github.com/petercorke/bdsim/commit/2ab0b038ae8df44901ac5de8ba64ba59e4da7c79))
+* add sphinx-copybutton and sphinx-codeautolink extensions and config ([c4a5a2d](https://github.com/petercorke/bdsim/commit/c4a5a2d382e926057fe3015323fa5565ce28eb74))
+* add sphinx-copybutton and sphinx-codeautolink to docs deps ([4fdcaed](https://github.com/petercorke/bdsim/commit/4fdcaed3d48a6d1842ffbdec7c0551eb9835b455))
+* document the code-generated icon method, fix stale links ([46fc476](https://github.com/petercorke/bdsim/commit/46fc4765e48edfe6b6a61a3fd1f1c11e9e3d3db9))
+* rewrite CONTRIBUTING.md ([57ade75](https://github.com/petercorke/bdsim/commit/57ade75520d040afcf940387f64bbf6d33dd0345))
+
 ## [1.4.0](https://github.com/petercorke/bdsim/compare/v1.3.0...v1.4.0) (2026-08-19)
 
 **Highlight** Wiki and Sphinx online documentation completely uptodate. Added proper deprecation for recent change to watch variables in `out` structure. Working against RVC3 examples at [https://github.com/petercorke/RVC3-python](https://github.com/petercorke/RVC3-python).
