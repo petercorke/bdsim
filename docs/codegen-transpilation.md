@@ -43,7 +43,9 @@ the wrong thing.
   today (its `self.C @ x` hits matrix multiply's own "no C++
   implementation yet" failure — see below), which is at least an
   improvement over the previous behaviour of silently generating C++
-  that only failed later, at compile time.
+  that only failed later, at compile time. That failure isn't specific
+  to continuous blocks, though — matrix multiply (`@`) has no C++
+  implementation at all yet, full stop, regardless of scope; see below.
 - **Single clock.** The generated program is one polling loop
   (`bdsim_tick_clock0()`), called once per tick. Multiple independent
   clock rates aren't generalized yet — though the runtime scaffolding
@@ -487,12 +489,16 @@ rather than silently accepted or hastily patched.
   above); `while` and any other `for` shape not at all
   ([bdsim#92](https://github.com/petercorke/bdsim/issues/92), still
   open for those).
-- Matrix multiply (`@`) has no C++ implementation — fails loudly at
-  generation time (`"matrix multiply (@) has no C++ implementation
-  yet"`), not a silent broken-C++ surprise at compile time. Affects
-  `PROD`'s matrix branch, and (incidentally, since continuous support
-  itself isn't planned) any continuous-time block. Real support is its
-  own, independent roadmap item —
+- Matrix multiply (`@`) has no C++ implementation at all — fails
+  loudly at generation time (`"matrix multiply (@) has no C++
+  implementation yet"`), not a silent broken-C++ surprise at compile
+  time, for *any* block whose Python source uses `@`, in or out of
+  scope. Confirmed to hit `PROD`'s matrix branch, any continuous-time
+  block (incidental, since continuous support itself isn't planned),
+  and the genuinely in-scope sampled `LTI_SS_S`/`LTI_SISO_S` (real
+  `A @ x`/`C @ x` state-space math in their `output()`/`next()`) —
+  likely elsewhere in the block library too; not exhaustively audited.
+  Real support is its own, independent roadmap item —
   [bdsim#94](https://github.com/petercorke/bdsim/issues/94), **not**
   the same thing as the continuous-block wontfix
   ([bdsim#93](https://github.com/petercorke/bdsim/issues/93)) — Eigen's
