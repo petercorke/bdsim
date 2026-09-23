@@ -66,10 +66,13 @@ static const int kN = {len(t_py)};
 static double demand_log[kN], pid_log[kN], pwm_log[kN], dir_log[kN];
 
 int main() {{
-    bdsim_init();
+    bdsim_init(0);  // desktop cross-check drives bdsim_tick_clock0() directly
+                    // with each simulation timestamp -- never touches
+                    // bdsim_clocks[]/millis()-based polling, so the actual
+                    // now_ms value here doesn't matter
     auto start = std::chrono::steady_clock::now();
     for (int i = 0; i < kN; i++) {{
-        bdsim_tick(kTimes[i]);
+        bdsim_tick_clock0(kTimes[i]);
         demand_log[i] = demand_outports_inst._0;
         pid_log[i] = pid_outport_0_outports_inst._0;
         pwm_log[i] = motor_out_outports_inst._0;

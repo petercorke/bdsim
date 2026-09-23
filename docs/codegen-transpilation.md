@@ -45,8 +45,10 @@ the wrong thing.
   improvement over the previous behaviour of silently generating C++
   that only failed later, at compile time.
 - **Single clock.** The generated program is one polling loop
-  (`bdsim_tick()`), called once per tick. Multiple independent clock
-  rates aren't generalized yet.
+  (`bdsim_tick_clock0()`), called once per tick. Multiple independent
+  clock rates aren't generalized yet — though the runtime scaffolding
+  `generate_project()` writes is already structured for more (see
+  "Generating a full project" below).
 - **A dozen blocks, not a hundred.** No attempt at scaling; the
   generated code is meant to be read and hand-verified.
 
@@ -241,7 +243,7 @@ struct encoder_outports {
 };
 
 void encoder_output(
-    double t,
+    float t,
     const Eigen::VectorXd& x,
     encoder_self& self,
     const encoder_inports& inports,
@@ -257,14 +259,14 @@ struct pwm_magnitude_self {
 };
 
 struct pwm_magnitude_inports {
-    float _0;
+    int32_t _0;
 };
 
 struct pwm_magnitude_outports {
 };
 
 void pwm_magnitude_output(
-    double t,
+    float t,
     const Eigen::VectorXd& x,
     pwm_magnitude_self& self,
     const pwm_magnitude_inports& inports,
@@ -281,7 +283,7 @@ else. Every field has a real, usable default (`""` for an unset
 so a hand-written body can always assign a real value if it needs to.
 Function declarations/definitions are stacked one argument per line
 (the single-line form routinely ran past 150 columns) — call *sites* in
-`bdsim_tick()` stay single-line, since they read as a sequence to scan
+`bdsim_tick_clock0()` stay single-line, since they read as a sequence to scan
 rather than an API to study, and are already followed by a wiring
 comment per line.
 
@@ -290,7 +292,7 @@ Every block is called the same *way* —
 pwm_magnitude_inports_inst, pwm_magnitude_outports_inst)`,
 indistinguishable from a call to any other block's `{name}_output()`.
 The only difference is who wrote the function body. But *where* the
-call happens in `bdsim_tick()` does depend on direction: an I/O
+call happens in `bdsim_tick_clock0()` does depend on direction: an I/O
 **source** (`AnalogIn`/`DigitalIn`/`DeviceIn`) is called from the normal
 schedule loop, in dataflow order, same as any other block. An I/O
 **sink** (`AnalogOut`/`DigitalOut`/`PWMOut`/`DeviceOut`) is not —
@@ -304,7 +306,7 @@ I/O sink's `{name}_output()` once, after every wire that could feed it
 has already been computed:
 
 ```cpp
-void bdsim_tick(double t) {
+void bdsim_tick_clock0(float t) {
 
     /****** Schedule group 0 *******/
     encoder_output(t, g_x, encoder_self_inst, encoder_inports_inst, encoder_outports_inst);
@@ -334,7 +336,7 @@ above:
 #include "codegen.cpp"   // the generated file, for the struct/function declarations
 
 void encoder_output(
-    double t, const Eigen::VectorXd& x, encoder_self& self,
+    float t, const Eigen::VectorXd& x, encoder_self& self,
     const encoder_inports& inports, encoder_outports& outports
 ) {
     // quadrature encoder count, scaled to whatever unit the rest of the
@@ -343,31 +345,141 @@ void encoder_output(
 }
 
 void pwm_magnitude_output(
-    double t, const Eigen::VectorXd& x, pwm_magnitude_self& self,
+    float t, const Eigen::VectorXd& x, pwm_magnitude_self& self,
     const pwm_magnitude_inports& inports, pwm_magnitude_outports& outports
 ) {
     analogWrite(self.channel, inports._0);   // inports._0 is the wired PWM magnitude
 }
 
 void motor_direction_output(
-    double t, const Eigen::VectorXd& x, motor_direction_self& self,
+    float t, const Eigen::VectorXd& x, motor_direction_self& self,
     const motor_direction_inports& inports, motor_direction_outports& outports
 ) {
     digitalWrite(self.channel, inports._0 > 0 ? HIGH : LOW);
 }
 ```
 
-### What's not automated yet
+### Generating a full project: `Codegen.generate_project()`
 
-The plan is for `Codegen` to write a starter `main.cpp` the first time
-it runs (stub bodies that compile and do nothing, so the project always
-builds before real hardware is wired up; hand edits never overwritten on
-regeneration) — **this doesn't exist yet.** Today, you write and
-maintain the implementation file entirely by hand, matching each
-declared prototype exactly (get the signature wrong and it's a linker
-error, `undefined reference to encoder_output`, not a compile error).
-Tracked as an open item in the phasing plan (`claude-notes/
-codegen-embedded-plan.md`), not forgotten.
+`generate()` (above) only ever writes one file — the always-regenerated
+`codegen.cpp`. `generate_project(bd, project_dir=None)` layers a real,
+buildable project on top of it:
+
+```
+<project_dir>/
+├── platformio.ini          # [env:<board>] target, lib_deps (Eigen)
+├── <project_dir>.ino       # marker only -- see below
+└── src/
+    ├── codegen.cpp          # from generate(), always regenerated
+    └── main.cpp             # starter, yours to edit -- see below
+```
+
+`project_dir` defaults to the source script's own base name
+(`motor_control2.py` → `motor_control2/`) — this doubles as satisfying
+the Arduino IDE's requirement that a sketch folder contain a `.ino` file
+of the same name, for free.
+
+**One layout serves both PlatformIO and the Arduino IDE, no switch
+needed for that.** Arduino IDE's only hard requirements are: a top-level
+`.ino` matching the folder name (that's all `<project_dir>.ino` is —
+`setup()`/`loop()` live in `src/main.cpp`, not there), and it (like
+`arduino-cli`) already recurses into a `src/` subfolder for extra
+`.cpp`/`.h` files, same convention PlatformIO uses. `platformio.ini` is
+just an unrecognized file to Arduino IDE, ignored. What genuinely can't
+be papered over is dependency management: `lib_deps` (Eigen) is
+PlatformIO-only, so an Arduino-IDE-only user needs to install Eigen by
+hand (Library Manager, or vendor a copy). The `.ino` marker is controlled
+by `Codegen(arduino_ide_compat=True)` (the default) — set `False` to skip
+it if you only ever use PlatformIO.
+
+**`main.cpp` is a starter you own, not regenerated output** — a first
+`generate_project()` call writes a real, working `setup()`/`loop()`
+(below) plus a `// TODO` stub for each I/O block's declared function, so
+the project always builds before any real hardware is wired up. Every
+later call checks a trailing `// bdsim-codegen-hash: ...` comment against
+the rest of the file's own content: untouched since it was written →
+safe to refresh (e.g. picking up a template improvement from a newer
+bdsim); edited at all → left alone, with a note printed, never silently
+clobbered. Get the signature of an I/O stub wrong while hand-editing it
+and it's a linker error (`undefined reference to encoder_output`), not a
+compile error, same as before.
+
+### The polling loop and clock overrun
+
+A generated project's `main.cpp` polls `millis()` — non-blocking,
+drift-free (each due-time advances by a fixed period rather than being
+recomputed from "now", so timing doesn't creep from one call's overhead
+into the next), and safe across `millis()`'s ~49-day wraparound (the
+`(int32_t)(now_ms - next_due_ms) >= 0` comparison, not a naive `>=`,
+which would stall forever exactly once, at the wrap):
+
+```cpp
+void loop() {
+    uint32_t now_ms = millis();
+    for (size_t i = 0; i < BDSIM_NUM_CLOCKS; i++) {
+        BdsimClock& clk = bdsim_clocks[i];
+        int32_t overdue_ms = (int32_t)(now_ms - clk.next_due_ms);
+        if (overdue_ms < 0) continue;
+        if (overdue_ms >= (int32_t)clk.period_ms) {
+            bdsim_overrun(i, (uint32_t)overdue_ms);
+            clk.next_due_ms = now_ms;  // resync, don't burst catch-up ticks
+        }
+        clk.tick(now_ms / 1000.0f);
+        clk.next_due_ms += clk.period_ms;
+    }
+}
+```
+
+If a tick overruns its own period (the diagram's per-tick computation
+took longer than the clock's period), the naive fix — just keep firing
+until caught up — is actually worse: it bursts several ticks back-to-back
+with stale, unchanged sensor feedback between them. Instead, an overrun
+resyncs to the current time (accepting a skipped cycle) and calls
+`bdsim_overrun(clock_index, overdue_ms)`, a hook you define yourself
+(count it, log it, blink a pin, abort — whatever fits your application),
+matching the same declare-in-`codegen.cpp`/define-in-`main.cpp` pattern
+already used for I/O blocks.
+
+`main.cpp` is deliberately the *only* place `millis()`/the Arduino
+framework gets referenced — `codegen.cpp` has no dependency on it and
+stays compilable with a plain desktop `clang++`, the same way every other
+verification in this document works. `bdsim_init(now_ms)` takes the
+current time as a parameter rather than calling `millis()` itself for
+exactly this reason; `main.cpp`'s `setup()` calls `bdsim_init(millis())`.
+
+**This is table-driven from day one, even with only one clock supported
+today** — `bd.clocklist` is capped at length 1 for now (more raises
+`NotImplementedError`, not silently picks one), but `main.cpp`'s loop
+already iterates a `bdsim_clocks[]` table. Multi-clock support, when it
+lands, only ever needs more table rows and more `bdsim_tick_clockN()`
+functions in `codegen.cpp` — `main.cpp`, once generated, never needs its
+shape touched again.
+
+### A `float`-precision caveat worth knowing about for long-running deployments
+
+`t` (like every bare Python `float`) is C++ `float`, not `double` — see
+[Type mapping](#type-mapping). For a real, long-running embedded
+deployment this has a consequence worth knowing about before it surprises
+you: `float`'s ~7 significant decimal digits mean `t`'s resolution (as an
+*absolute* elapsed-seconds value) degrades to roughly a typical clock
+period (10–100 ms) once uptime reaches somewhere around **1–2 weeks of
+continuous operation**, and keeps degrading from there.
+
+Most blocks won't notice — feedback logic works off incrementally-updated
+state (`next()`, e.g. an integrator's accumulated `self.state`), not by
+recomputing from absolute `t` each tick. **The likely exception is a
+waveform/source block that computes its output directly from absolute
+`t`** — e.g. something doing `sin(2·π·f·t)` rather than accumulating
+phase incrementally — where degraded `t` resolution would show up as a
+very gradual frequency/phase drift over many days, not a sudden failure.
+
+Not fixed here: the real fix is switching such generators to incremental,
+phase-accumulator-style state (carry `self.phase`, advance it by
+`2·π·f·period` each tick, rather than evaluating `sin(...)` against
+absolute `t`) — correct regardless of `t`'s precision, and arguably better
+practice generally, but a genuine rewrite of how those blocks compute
+their output, not a small fix. Left as a known, documented limitation
+rather than silently accepted or hastily patched.
 
 ## Known limitations (current, not exhaustive)
 
@@ -389,8 +501,13 @@ codegen-embedded-plan.md`), not forgotten.
   not attempted yet.
 - Single clock only — no multi-clock scheduling yet (I/O blocks included:
   they run every tick like any stateless block, no clock affinity).
-- No automated `main.cpp`/project skeleton generation — see "I/O blocks"
-  above.
+  `generate_project()`'s clock table is already structured for more
+  clocks, though — see "Generating a full project" above.
+- `t`'s `float` precision degrades to roughly a typical clock period
+  after ~1–2 weeks of continuous uptime, most likely to matter for a
+  waveform generator computing directly from absolute `t` — see "A
+  `float`-precision caveat" above. Documented, not fixed (the real fix is
+  a genuine rewrite of how such blocks compute state).
 - No recursion (guarded and rejected, not silently broken).
 - `max_inline_depth` (default 20) bounds how deep a legitimate, non-
   recursive chain of helper calls can nest before codegen gives up.
