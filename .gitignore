@@ -31,6 +31,9 @@ docs/paper1/**
 codegen.cpp
 examples/codegen/verify_driver
 examples/codegen/verify_driver.cpp
+# generate_project() output -- add a line here for each new example
+# script that calls it, same convention as the single-file output above
+examples/codegen/motor_control2/
 
 # Distribution / packaging
 .Python

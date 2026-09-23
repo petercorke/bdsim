@@ -787,19 +787,45 @@ class ProjectGenerationTests(unittest.TestCase):
             with self.assertRaisesRegex(NotImplementedError, r"exactly one"):
                 Codegen().generate_project(bd, project_dir=os.path.join(d, "proj"))
 
-    def test_directory_structure_and_default_project_name(self):
+    def test_directory_structure_with_explicit_project_dir(self):
         bd = _standalone_integrator_s_diagram()
         with tempfile.TemporaryDirectory() as d:
-            old_argv0, sys.argv[0] = sys.argv[0], os.path.join(d, "my_diagram.py")
-            try:
-                Codegen().generate_project(bd, project_dir=os.path.join(d, "my_diagram"))
-            finally:
-                sys.argv[0] = old_argv0
             proj = os.path.join(d, "my_diagram")
+            Codegen().generate_project(bd, project_dir=proj)
             self.assertTrue(os.path.isfile(os.path.join(proj, "platformio.ini")))
             self.assertTrue(os.path.isfile(os.path.join(proj, "my_diagram.ino")))
             self.assertTrue(os.path.isfile(os.path.join(proj, "src", "codegen.cpp")))
             self.assertTrue(os.path.isfile(os.path.join(proj, "src", "main.cpp")))
+
+    def test_default_project_dir_is_anchored_to_script_not_cwd(self):
+        """project_dir, left unspecified, must land next to the source
+        script itself -- not wherever the process happened to be run
+        from. A bare relative default would silently land in whatever
+        the ambient cwd is (e.g. many IDE "run" buttons use the
+        workspace root, not the script's own folder) -- surprising, and
+        exactly the kind of bug an explicit-project_dir-only test can't
+        catch (real regression: the first version of this test always
+        passed project_dir explicitly, never exercising the default at
+        all)."""
+        bd = _standalone_integrator_s_diagram()
+        with tempfile.TemporaryDirectory() as script_dir, \
+                tempfile.TemporaryDirectory() as cwd_dir:
+            old_argv0 = sys.argv[0]
+            old_cwd = os.getcwd()
+            sys.argv[0] = os.path.join(script_dir, "my_diagram.py")
+            os.chdir(cwd_dir)  # deliberately NOT script_dir
+            try:
+                Codegen().generate_project(bd)
+            finally:
+                sys.argv[0] = old_argv0
+                os.chdir(old_cwd)
+
+            expected = os.path.join(script_dir, "my_diagram")
+            self.assertTrue(os.path.isfile(os.path.join(expected, "platformio.ini")))
+            self.assertFalse(
+                os.path.exists(os.path.join(cwd_dir, "my_diagram")),
+                "project landed in cwd instead of next to the script",
+            )
 
     def test_arduino_ide_compat_false_skips_ino_marker(self):
         bd = _standalone_integrator_s_diagram()
