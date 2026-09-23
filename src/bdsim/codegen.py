@@ -70,12 +70,14 @@ C++ scalar, no Eigen wrapper.
 import ast
 import builtins
 import datetime
+import hashlib
 import inspect
 import os
 import sys
 import json
 import math
 import textwrap
+from pathlib import Path
 from dataclasses import dataclass, field
 from dataclasses import fields as dataclass_fields
 from dataclasses import replace as dataclass_replace
@@ -2532,8 +2534,8 @@ class CppEmitter(Emitter):
         """Best-effort C++ type string for *e*. Returns None if unknown."""
         if isinstance(e, IR.Name):
             if e.name == "t":
-                # matches the `double t` parameter in every emitted signature
-                return "double"
+                # matches the `float t` parameter in every emitted signature
+                return "float"
             return self.locals_types.get(e.name)
         if isinstance(e, IR.Attribute):
             if isinstance(e.value, IR.Name) and e.value.name == "self":
@@ -2919,7 +2921,7 @@ class CppEmitter(Emitter):
         unstacked single-line form routinely ran past 150 columns."""
         return [
             f"void {prefix}_{function_name}(",
-            "    double t,",
+            "    float t,",
             "    const Eigen::VectorXd& x,",
             f"    {prefix}_self& self,",
             f"    const {prefix}_inports& inports,",
@@ -3374,6 +3376,15 @@ class Codegen:
         ``__globals__``, the interactive-shell ``copyright``/``credits``/
         ``license`` objects' multi-paragraph ``__repr__`` text -- harmless
         but genuinely hard to read through).
+    :param arduino_ide_compat: only used by :meth:`generate_project` --
+        also write a near-empty marker ``.ino`` file, so the project can
+        be opened directly in the Arduino IDE (which requires a top-level
+        ``.ino`` matching the project folder's name) in addition to
+        PlatformIO. Harmless to leave on even if you only use PlatformIO.
+    :param board: only used by :meth:`generate_project` -- the
+        ``platformio.ini`` ``[env:<board>]`` target. Defaults to a 32-bit
+        board (not classic AVR) -- see the "Language/toolchain target"
+        section of the embedded codegen plan for why.
     """
 
     def __init__(
@@ -3384,6 +3395,8 @@ class Codegen:
         max_inline_depth: int = 20,
         output_path: str = "codegen.cpp",
         verbose: bool = False,
+        arduino_ide_compat: bool = True,
+        board: str = "esp32dev",
     ) -> None:
         self.keep_fields = keep_fields or {}
         self.default_int_type = default_int_type
@@ -3391,6 +3404,9 @@ class Codegen:
         self.max_inline_depth = max_inline_depth
         self.output_path = output_path
         self.verbose = verbose
+        self.arduino_ide_compat = arduino_ide_compat
+        self.board = board
+        self._io_block_decls: list[tuple[str, str, str]] = []
 
     def _log(self, *args: Any) -> None:
         if self.verbose:
@@ -3522,15 +3538,67 @@ class Codegen:
             f"static {name}_outports {name}_outports_inst;\n"
         )
 
-    def _init_function(self) -> str:
-        return "\nvoid bdsim_init() {\n}\n"
+    def _clock_table(self, period_ms: int, offset_ms: int) -> str:
+        # Table-driven from day one, even though there's only ever one row
+        # today (bd.clocklist is capped at length 1 -- see generate()):
+        # multi-clock (bdsim#92-adjacent, plan Phase 4) then only ever
+        # needs more rows and more bdsim_tick_clockN() functions here --
+        # main.cpp's poll loop (already table-driven, see
+        # docs/codegen-transpilation.md) never needs to change shape.
+        #
+        # next_due_ms starts at 0 here and gets its real value (anchored
+        # to actual boot-time millis(), plus this clock's phase offset)
+        # from bdsim_init() below, not from this static initializer --
+        # static/global init runs before setup() on real hardware, so
+        # there's no meaningful millis() reading available yet here.
+        return (
+            # Forward declaration -- the table below references this by
+            # (function pointer) name before bdsim_tick_clock0's own full
+            # definition appears later in the file.
+            "\nvoid bdsim_tick_clock0(float t);\n\n"
+            "struct BdsimClock {\n"
+            "    const uint32_t period_ms;\n"
+            "    const uint32_t offset_ms;\n"
+            "    uint32_t next_due_ms;\n"
+            "    void (*tick)(float t_seconds);\n"
+            "};\n\n"
+            "BdsimClock bdsim_clocks[] = {\n"
+            f"    {{{period_ms}, {offset_ms}, 0, bdsim_tick_clock0}},\n"
+            "};\n"
+            "constexpr size_t BDSIM_NUM_CLOCKS = "
+            "sizeof(bdsim_clocks) / sizeof(bdsim_clocks[0]);\n\n"
+            "// Called when a clock's polling loop (main.cpp) finds it's\n"
+            "// fallen more than one full period behind -- define this\n"
+            "// yourself (e.g. in main.cpp): count it, log it, abort,\n"
+            "// whatever makes sense for your application.\n"
+            "void bdsim_overrun(size_t clock_index, uint32_t overdue_ms);\n"
+        )
+
+    def _init_function(self, has_clock: bool) -> str:
+        # Takes now_ms as a parameter rather than calling millis() itself
+        # (main.cpp's setup() does: bdsim_init(millis())) -- millis() is
+        # an Arduino-only symbol, and codegen.cpp must stay compilable
+        # with a plain desktop clang++ (see docs/codegen-transpilation.md
+        # / the whole "verify with real compiles" approach this codegen
+        # effort has used throughout) -- it must never gain a hard
+        # dependency on the Arduino framework itself.
+        if not has_clock:
+            return "\nvoid bdsim_init(uint32_t now_ms) {\n    (void)now_ms;\n}\n"
+        return (
+            "\nvoid bdsim_init(uint32_t now_ms) {\n"
+            "    for (size_t i = 0; i < BDSIM_NUM_CLOCKS; i++)\n"
+            "        bdsim_clocks[i].next_due_ms = now_ms + bdsim_clocks[i].offset_ms;\n"
+            "}\n"
+        )
 
     def _tick_function_open(self) -> str:
         # Wraps the schedule/wiring/state-update sequence as a single
-        # function that runs one tick of the (single-clock, v1) polling
-        # loop -- see the "Runtime loop shape" section of the embedded
-        # codegen plan.
-        return "\nvoid bdsim_tick(double t) {\n"
+        # function that runs one tick of clock 0's polling loop -- see the
+        # "Runtime loop shape" section of the embedded codegen plan. Named
+        # ...clock0 unconditionally (even for a diagram with no bd.clock()
+        # at all -- see generate()), matching the multi-clock-ready naming
+        # the table above already uses.
+        return "\nvoid bdsim_tick_clock0(float t) {\n"
 
     def _tick_function_close(self) -> str:
         return "}\n"
@@ -3610,10 +3678,23 @@ class Codegen:
         """Generate C++ code for compiled block diagram *bd*."""
         printer = IRPrettyPrinter()
 
+        # Single clock only (plan Phase 3) -- multi-clock is a real, separate
+        # piece of design work (bdsim#92-adjacent, plan Phase 4): more table
+        # rows plus more bdsim_tick_clockN() functions, none of which exist
+        # yet. Fail loudly rather than silently picking/ignoring clocks.
+        if len(bd.clocklist) > 1:
+            raise NotImplementedError(
+                f"codegen: {len(bd.clocklist)} clocks found -- only a "
+                "single bd.clock(...) is supported today (multi-clock is "
+                "planned, not yet implemented)"
+            )
+        clock = bd.clocklist[0] if bd.clocklist else None
+
         fp = open(self.output_path, "w")
         fp.write(self._file_header_comment())
         fp.write(self._preamble())
         emitted_blocks: list[str] = []
+        self._io_block_decls: list[tuple[str, str, str]] = []
         for block in bd.blocklist:
 
             cfg = self._block_cfg(block)
@@ -3658,6 +3739,7 @@ class Codegen:
                 fp.write(self._block_header_comment(block_name, block_type))
                 fp.write(s + "\n\n" + f + "\n\n")
                 emitted_blocks.append(fixname(block_name))
+                self._io_block_decls.append((block_name, block_type, f))
                 continue
 
             # block_type was already captured earlier in this iteration
@@ -3739,7 +3821,11 @@ class Codegen:
         for name in emitted_blocks:
             fp.write(self._instance_decls(name))
 
-        fp.write(self._init_function())
+        if clock is not None:
+            period_ms = round(clock.T * 1000)
+            offset_ms = round(clock.offset * 1000)
+            fp.write(self._clock_table(period_ms, offset_ms))
+        fp.write(self._init_function(has_clock=clock is not None))
         fp.write(self._tick_function_open())
 
         emitted_block_set = set(emitted_blocks)
@@ -3814,7 +3900,167 @@ class Codegen:
         # long bdsim_tick(), not obviously findable by scrolling).
         print(f"Generated C++ code -> {os.path.abspath(self.output_path)}")
 
+    # ------------------------------------------------------------------
+    # Project scaffolding (PlatformIO, optionally Arduino-IDE-compatible)
+    # ------------------------------------------------------------------
 
+    _MAIN_CPP_HASH_PREFIX = "// bdsim-codegen-hash: "
+
+    @staticmethod
+    def _content_hash(text: str) -> str:
+        return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
+
+    def _write_protected(self, path: str, fresh_content: str) -> None:
+        """Write *path* with a trailing self-consistency hash comment,
+        unless a file already there has been hand-edited since the last
+        write (its embedded hash no longer matches its own content) -- in
+        which case, leave it alone rather than clobber someone's work.
+
+        Deliberately not "regenerate fresh content and diff it against
+        what's on disk": that would false-positive as "edited" the moment
+        the *template* itself changes between bdsim versions, even for a
+        file nobody has touched. This only asks whether the on-disk file
+        is still self-consistent with the hash it was written with.
+        """
+        if os.path.exists(path):
+            existing = Path(path).read_text()
+            lines = existing.splitlines(keepends=True)
+            if lines and lines[-1].startswith(self._MAIN_CPP_HASH_PREFIX):
+                stored = lines[-1][len(self._MAIN_CPP_HASH_PREFIX):].strip()
+                body = "".join(lines[:-1])
+                if self._content_hash(body) != stored:
+                    print(f"{path}: has been edited -- not overwriting")
+                    return
+            else:
+                print(f"{path}: exists without a bdsim-codegen marker -- not overwriting")
+                return
+        final = fresh_content + f"{self._MAIN_CPP_HASH_PREFIX}{self._content_hash(fresh_content)}\n"
+        Path(path).write_text(final)
+
+    def _default_project_name(self) -> str:
+        script = sys.argv[0]
+        if not script:
+            return "bdsim_project"
+        return os.path.splitext(os.path.basename(script))[0]
+
+    def _platformio_ini(self) -> str:
+        return (
+            "; Generated by bdsim.codegen -- safe to hand-edit, never\n"
+            "; regenerated automatically once this file exists.\n"
+            f"[env:{self.board}]\n"
+            "platform = espressif32\n"
+            "framework = arduino\n"
+            "lib_deps =\n"
+            "    ; Eigen -- verify/adjust this for your board; this entry\n"
+            "    ; hasn't been checked against a real PlatformIO registry\n"
+            "    ; package yet, only reasoned about, not verified.\n"
+            "    eigen\n"
+        )
+
+    def _ino_marker(self, project_name: str) -> str:
+        return (
+            f"// {project_name}.ino -- marker file only, so this project can\n"
+            "// also be opened directly in the Arduino IDE (which requires a\n"
+            "// top-level .ino matching the folder name). setup()/loop() live\n"
+            "// in src/main.cpp, not here -- Arduino IDE and arduino-cli both\n"
+            "// compile everything under src/ alongside this file.\n"
+        )
+
+    def _main_cpp_starter(self) -> str:
+        # Only called from generate_project(), which requires exactly one
+        # clock -- so this is always the "has a real polling loop" case,
+        # no has_clock branch needed (generate()'s lower-level codegen.cpp
+        # output is the thing that still needs to handle "no clock at
+        # all", for e.g. unit-testing a single block's transpilation).
+        parts = [
+            "// Starter driver -- edit freely. Regenerated only while this\n"
+            "// file is untouched since the last generate_project() call\n"
+            "// (see the trailing bdsim-codegen-hash comment below); once you\n"
+            "// edit it, it's yours and never gets overwritten again.\n"
+            '#include "codegen.cpp"\n\n'
+        ]
+        for block_name, _block_type, decl in self._io_block_decls:
+            body = decl[:-1] if decl.endswith(";") else decl
+            parts.append(
+                f"{body} {{\n"
+                f"    // TODO: {block_name} -- real hardware access goes here.\n"
+                "    // See docs/codegen-transpilation.md for a worked example.\n"
+                "}\n\n"
+            )
+        parts.append(
+            "void bdsim_overrun(size_t clock_index, uint32_t overdue_ms) {\n"
+            "    // bdsim_tick_clockN() didn't keep up with its period --\n"
+            "    // do whatever makes sense here: count it, log it, blink a\n"
+            "    // pin, abort. Default just counts.\n"
+            "    static uint32_t overrun_count[BDSIM_NUM_CLOCKS] = {0};\n"
+            "    overrun_count[clock_index]++;\n"
+            "}\n\n"
+            "void setup() { bdsim_init(millis()); }\n\n"
+            "void loop() {\n"
+            "    uint32_t now_ms = millis();\n"
+            "    for (size_t i = 0; i < BDSIM_NUM_CLOCKS; i++) {\n"
+            "        BdsimClock& clk = bdsim_clocks[i];\n"
+            "        int32_t overdue_ms = (int32_t)(now_ms - clk.next_due_ms);\n"
+            "        if (overdue_ms < 0) continue;\n"
+            "        if (overdue_ms >= (int32_t)clk.period_ms) {\n"
+            "            bdsim_overrun(i, (uint32_t)overdue_ms);\n"
+            "            clk.next_due_ms = now_ms;  // resync, don't burst catch-up ticks\n"
+            "        }\n"
+            "        clk.tick(now_ms / 1000.0f);\n"
+            "        clk.next_due_ms += clk.period_ms;\n"
+            "    }\n"
+            "}\n"
+        )
+        return "".join(parts)
+
+    def generate_project(self, bd, project_dir: str | None = None) -> None:
+        """Generate a full PlatformIO project (also directly openable in
+        the Arduino IDE when *arduino_ide_compat*, the default) for
+        compiled diagram *bd*: ``<project_dir>/platformio.ini``,
+        ``<project_dir>/src/codegen.cpp`` (always regenerated -- see
+        :meth:`generate`), and ``<project_dir>/src/main.cpp`` (a starter,
+        hand-editable, never overwritten once touched -- see
+        :meth:`_write_protected`).
+
+        *project_dir* defaults to the source script's own base name (e.g.
+        ``motor_control2.py`` -> ``motor_control2/``) -- doubles as
+        satisfying the Arduino IDE's folder/``.ino``-name-match rule for
+        free, with no extra configuration.
+
+        Requires a diagram with exactly one ``bd.clock(...)`` -- a project
+        scaffold's whole point is a real polling main loop, which isn't
+        meaningful for a diagram with no clock at all. Use :meth:`generate`
+        directly for that case (e.g. unit-testing a single block's
+        transpilation).
+        """
+        if not bd.clocklist:
+            raise NotImplementedError(
+                "codegen: generate_project() needs a diagram with exactly "
+                "one bd.clock(...) -- got none. Use generate() directly "
+                "for a diagram with no real-time polling loop."
+            )
+        project_dir = project_dir or self._default_project_name()
+        project_name = os.path.basename(os.path.normpath(project_dir))
+        src_dir = os.path.join(project_dir, "src")
+        os.makedirs(src_dir, exist_ok=True)
+
+        prev_output_path = self.output_path
+        self.output_path = os.path.join(src_dir, "codegen.cpp")
+        try:
+            self.generate(bd)
+        finally:
+            self.output_path = prev_output_path
+
+        Path(os.path.join(project_dir, "platformio.ini")).write_text(self._platformio_ini())
+        if self.arduino_ide_compat:
+            ino_path = os.path.join(project_dir, f"{project_name}.ino")
+            Path(ino_path).write_text(self._ino_marker(project_name))
+
+        self._write_protected(
+            os.path.join(src_dir, "main.cpp"),
+            self._main_cpp_starter(),
+        )
+        print(f"Generated PlatformIO project -> {os.path.abspath(project_dir)}")
 
 
 # TODO:

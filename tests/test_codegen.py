@@ -765,6 +765,116 @@ class CompileVerificationTests(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
+# 4b. PlatformIO/Arduino-IDE project scaffolding (generate_project())
+# ---------------------------------------------------------------------------
+
+
+class ProjectGenerationTests(unittest.TestCase):
+    """generate_project() layers a full project (platformio.ini, an
+    Arduino-IDE-compatible .ino marker, and a hash-protected starter
+    main.cpp) on top of generate()'s existing single-file codegen.cpp
+    output -- see the "Runtime loop shape" / clock-table discussion in
+    claude-notes/codegen-embedded-plan.md."""
+
+    def test_requires_exactly_one_clock(self):
+        """A project scaffold's whole point is a real polling main loop --
+        meaningless for a diagram with no bd.clock() at all. Multi-clock
+        is a separate, not-yet-implemented piece of work (generate()
+        itself already refuses >1 clocks; this checks the ==0 case,
+        specific to generate_project())."""
+        bd = _function_diagram(lambda u: u * 2.0)  # no bd.clock() at all
+        with tempfile.TemporaryDirectory() as d:
+            with self.assertRaisesRegex(NotImplementedError, r"exactly one"):
+                Codegen().generate_project(bd, project_dir=os.path.join(d, "proj"))
+
+    def test_directory_structure_and_default_project_name(self):
+        bd = _standalone_integrator_s_diagram()
+        with tempfile.TemporaryDirectory() as d:
+            old_argv0, sys.argv[0] = sys.argv[0], os.path.join(d, "my_diagram.py")
+            try:
+                Codegen().generate_project(bd, project_dir=os.path.join(d, "my_diagram"))
+            finally:
+                sys.argv[0] = old_argv0
+            proj = os.path.join(d, "my_diagram")
+            self.assertTrue(os.path.isfile(os.path.join(proj, "platformio.ini")))
+            self.assertTrue(os.path.isfile(os.path.join(proj, "my_diagram.ino")))
+            self.assertTrue(os.path.isfile(os.path.join(proj, "src", "codegen.cpp")))
+            self.assertTrue(os.path.isfile(os.path.join(proj, "src", "main.cpp")))
+
+    def test_arduino_ide_compat_false_skips_ino_marker(self):
+        bd = _standalone_integrator_s_diagram()
+        with tempfile.TemporaryDirectory() as d:
+            proj = os.path.join(d, "proj")
+            Codegen(arduino_ide_compat=False).generate_project(bd, project_dir=proj)
+            self.assertFalse(glob.glob(os.path.join(proj, "*.ino")))
+
+    def test_clock_table_and_overrun_hook_present(self):
+        bd = _standalone_integrator_s_diagram()  # bd.clock(10, "Hz")
+        with tempfile.TemporaryDirectory() as d:
+            proj = os.path.join(d, "proj")
+            Codegen().generate_project(bd, project_dir=proj)
+            cpp = Path(os.path.join(proj, "src", "codegen.cpp")).read_text()
+            self.assertIn("{100, 0, 0, bdsim_tick_clock0}", cpp)  # 10 Hz -> 100 ms
+            self.assertIn("void bdsim_overrun(size_t clock_index, uint32_t overdue_ms);", cpp)
+            main_cpp = Path(os.path.join(proj, "src", "main.cpp")).read_text()
+            self.assertIn("void bdsim_overrun(size_t clock_index, uint32_t overdue_ms) {", main_cpp)
+            self.assertIn("bdsim_init(millis())", main_cpp)
+            self.assertNotIn("millis()", cpp)  # codegen.cpp must stay Arduino-free
+
+    def test_main_cpp_untouched_gets_refreshed_edited_is_protected(self):
+        bd = _standalone_integrator_s_diagram()
+        with tempfile.TemporaryDirectory() as d:
+            proj = os.path.join(d, "proj")
+            codegen = Codegen()
+            codegen.generate_project(bd, project_dir=proj)
+            main_path = os.path.join(proj, "src", "main.cpp")
+            first = Path(main_path).read_text()
+
+            # Regenerating an untouched file is a no-op (same content) --
+            # not "never writes again", just never *clobbers an edit*.
+            codegen.generate_project(bd, project_dir=proj)
+            self.assertEqual(Path(main_path).read_text(), first)
+
+            # Now edit it, and regenerate again -- the edit must survive.
+            with open(main_path, "a") as f:
+                f.write("// my custom code\n")
+            edited = Path(main_path).read_text()
+            codegen.generate_project(bd, project_dir=proj)
+            self.assertEqual(Path(main_path).read_text(), edited)
+
+    @unittest.skipUnless(CAN_COMPILE, SKIP_COMPILE_REASON)
+    def test_generated_project_compiles(self):
+        """codegen.cpp must compile standalone with a plain desktop
+        clang++ (no Arduino framework) -- it's the file every non-hardware
+        verification in this whole test module relies on being able to
+        build. main.cpp needs the Arduino API (millis()); given a trivial
+        shim for just that one symbol, it must compile too."""
+        bd = _standalone_integrator_s_diagram()
+        with tempfile.TemporaryDirectory() as d:
+            proj = os.path.join(d, "proj")
+            Codegen().generate_project(bd, project_dir=proj)
+            src = os.path.join(proj, "src")
+
+            result = subprocess.run(
+                [CLANGXX, "-std=c++17", f"-I{EIGEN_INCLUDE}", "-c",
+                 os.path.join(src, "codegen.cpp"), "-o", os.path.join(src, "codegen.o")],
+                text=True, capture_output=True, timeout=60,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+
+            shim_path = os.path.join(src, "arduino_shim.h")
+            Path(shim_path).write_text(
+                "#pragma once\n#include <cstdint>\ninline uint32_t millis() { return 0; }\n"
+            )
+            result = subprocess.run(
+                [CLANGXX, "-std=c++17", f"-I{EIGEN_INCLUDE}", "-include", shim_path, "-c",
+                 os.path.join(src, "main.cpp"), "-o", os.path.join(src, "main.o")],
+                text=True, capture_output=True, timeout=60,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+
+
+# ---------------------------------------------------------------------------
 # 5. IR coverage sanity check
 # ---------------------------------------------------------------------------
 
