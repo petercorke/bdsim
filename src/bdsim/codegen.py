@@ -1698,9 +1698,25 @@ class IRInliner:
         cls._stack.add(fn_id)
         try:
             tree = ast.parse(src)
-            func_def = tree.body[0]
-            if not isinstance(func_def, ast.FunctionDef):
-                return None
+            stmt = tree.body[0]
+
+            if isinstance(stmt, ast.FunctionDef):
+                func_def: ast.FunctionDef | ast.Lambda = stmt
+            else:
+                # A lambda is never a statement on its own -- it's always
+                # embedded in an assignment, call argument, etc., so
+                # getsource's line-based extraction can't isolate it the
+                # way it can a `def`. Find it by walking the statement;
+                # bail if that's not unambiguous (no lambda at all, or
+                # more than one in the same source line/statement -- e.g.
+                # getsource grabbed a whole call site with several
+                # callables -- there's no reliable way to tell which one
+                # is fn_obj without deeper line-number cross-referencing,
+                # not attempted here).
+                lambdas = [n for n in ast.walk(stmt) if isinstance(n, ast.Lambda)]
+                if len(lambdas) != 1:
+                    return None
+                func_def = lambdas[0]
 
             prefix = f"_il{unique_id if unique_id is not None else depth}_"
             formal_names = [a.arg for a in func_def.args.args]
@@ -1710,6 +1726,23 @@ class IRInliner:
                 subst[formal] = actual
 
             frontend = MethodFrontend({})
+
+            if isinstance(func_def, ast.Lambda):
+                # A lambda body is always exactly one expression -- no
+                # statements are syntactically possible, so there's no
+                # Return to hunt for and never any extra_stmts.
+                renamer = _IRAlphaRenamer(prefix, subst, set(formal_names))
+                result_expr = renamer.rename_expr(frontend.visit(func_def.body))
+                if _contains_raw(result_expr):
+                    # Some construct in the body fell through to
+                    # MethodFrontend's untyped fallback -- rather than let
+                    # that surface later as a generic "raw expression
+                    # reached emitter" failure with no context, bail here
+                    # so the caller (lower_function_block) can give a
+                    # clearer, lambda-specific message.
+                    return None
+                return [], result_expr
+
             raw_body = frontend.lower_block(func_def.body)
 
             bound_names: set[str] = set(formal_names)
@@ -1774,10 +1807,18 @@ def lower_function_block(block) -> IR.Function:
     ]
     inline_result = IRInliner.inline(func, arg_exprs)
     if inline_result is None:
+        hint = ""
+        if getattr(func, "__name__", None) == "<lambda>":
+            hint = (
+                " It's a lambda -- only a single-expression body with no "
+                "unsupported constructs, unambiguously isolable from its "
+                "source line, can be inlined; rewrite it as a named `def` "
+                "function for more reliable support."
+            )
         raise NotImplementedError(
             f"codegen: could not inline FUNCTION block '{block.name}'s "
             f"callable ({func!r}) -- source not available (e.g. a "
-            "builtin), or not a plain function/lambda"
+            f"builtin), or not a plain top-level function definition.{hint}"
         )
     extra_stmts, result_expr = inline_result
     if not isinstance(result_expr, IR.List):
@@ -2000,6 +2041,21 @@ def collect_names(node: Any, out: set[str]) -> None:
     elif isinstance(node, list):
         for item in node:
             collect_names(item, out)
+
+
+def _contains_raw(node: Any) -> bool:
+    """Recursively check whether an IR tree contains a RawExpr/RawStmt --
+    i.e. some Python construct MethodFrontend couldn't translate and fell
+    back to an unlowered placeholder, which the emitter would otherwise
+    only catch later with a generic, context-free failure.
+    """
+    if isinstance(node, (IR.RawExpr, IR.RawStmt)):
+        return True
+    if isinstance(node, IR.Node):
+        return any(_contains_raw(getattr(node, f.name)) for f in dataclass_fields(node))
+    if isinstance(node, list):
+        return any(_contains_raw(item) for item in node)
+    return False
 
 
 def collect_bound_names(node: Any, out: set[str]) -> None:
