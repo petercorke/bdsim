@@ -77,12 +77,10 @@ bd.compile()  # check the diagram
 sim.report(bd, depth=0)
 # bd.report_schedule()
 
-# generate C++ for the diagram -- writes codegen.cpp in the cwd, and
-# compiles/runs standalone -- see claude-notes/codegen-embedded-plan.md
+# generate a full PlatformIO (+ Arduino-IDE-compatible) project -- see
+# docs/codegen-transpilation.md's "Generating a full project" section
 if CODEGEN_EMBEDDED:
-    # generate C++ for the diagram -- writes codegen.cpp in the cwd, and
-    # compiles/runs standalone -- see claude-notes/codegen-embedded-plan.md
-    Codegen().generate(bd)
+    Codegen().generate_project(bd)
 else:
     # simulate the diagram for 5 seconds -- this is a placeholder for a real plant model
     out = sim.run(bd, T=5)
