@@ -3674,8 +3674,14 @@ class Codegen:
     def _state_update_footer(self) -> str:
         return "    }\n    first_tick = false;\n"
 
-    def generate(self, bd) -> None:
-        """Generate C++ code for compiled block diagram *bd*."""
+    def generate(self, bd, announce: bool = True) -> None:
+        """Generate C++ code for compiled block diagram *bd*.
+
+        :param announce: print "Generated C++ code -> ..." when done.
+            Set False by generate_project(), which prints its own,
+            higher-level summary instead -- avoids two redundant lines
+            for what a caller experiences as one action.
+        """
         printer = IRPrettyPrinter()
 
         # Single clock only (plan Phase 3) -- multi-clock is a real, separate
@@ -3892,13 +3898,15 @@ class Codegen:
 
         fp.write(self._tick_function_close())
         fp.close()
-        # Always printed, regardless of `verbose` -- confirms generate()
-        # actually ran and points at the file, without dumping the
-        # per-block trace. Easy to miss otherwise: the file just changes
-        # on disk with no signal in the terminal that anything happened,
-        # or where to look (e.g. wiring lines buried at the end of a
-        # long bdsim_tick(), not obviously findable by scrolling).
-        print(f"Generated C++ code -> {os.path.abspath(self.output_path)}")
+        # Printed by default (regardless of `verbose`), unless the caller
+        # is generate_project() (announce=False) printing its own,
+        # higher-level summary instead. Otherwise easy to miss: the file
+        # just changes on disk with no signal in the terminal that
+        # anything happened, or where to look (e.g. wiring lines buried
+        # at the end of a long bdsim_tick_clock0(), not obviously
+        # findable by scrolling).
+        if announce:
+            print(f"Generated C++ code -> {os.path.abspath(self.output_path)}")
 
     # ------------------------------------------------------------------
     # Project scaffolding (PlatformIO, optionally Arduino-IDE-compatible)
@@ -3937,11 +3945,20 @@ class Codegen:
         final = fresh_content + f"{self._MAIN_CPP_HASH_PREFIX}{self._content_hash(fresh_content)}\n"
         Path(path).write_text(final)
 
-    def _default_project_name(self) -> str:
+    def _default_project_dir(self) -> str:
+        # Anchored to the source script's own directory, not the ambient
+        # cwd -- a bare relative name would land wherever the script
+        # happened to be *run from* (e.g. many IDE "run" buttons use the
+        # workspace root, not the script's own folder), which is
+        # surprising and easy to lose track of. This way the project
+        # always shows up next to the diagram that generated it,
+        # regardless of invocation context.
         script = sys.argv[0]
         if not script:
             return "bdsim_project"
-        return os.path.splitext(os.path.basename(script))[0]
+        script_dir = os.path.dirname(os.path.abspath(script))
+        name = os.path.splitext(os.path.basename(script))[0]
+        return os.path.join(script_dir, name)
 
     def _platformio_ini(self) -> str:
         return (
@@ -4022,10 +4039,13 @@ class Codegen:
         hand-editable, never overwritten once touched -- see
         :meth:`_write_protected`).
 
-        *project_dir* defaults to the source script's own base name (e.g.
-        ``motor_control2.py`` -> ``motor_control2/``) -- doubles as
-        satisfying the Arduino IDE's folder/``.ino``-name-match rule for
-        free, with no extra configuration.
+        *project_dir* defaults to a folder named after the source script,
+        next to that script (e.g. ``.../examples/motor_control2.py`` ->
+        ``.../examples/motor_control2/``) -- anchored to the script's own
+        directory, not the ambient cwd, so it shows up in the same place
+        regardless of where the script was actually run from. Also
+        doubles as satisfying the Arduino IDE's folder/``.ino``-name-
+        match rule for free, with no extra configuration.
 
         Requires a diagram with exactly one ``bd.clock(...)`` -- a project
         scaffold's whole point is a real polling main loop, which isn't
@@ -4039,7 +4059,7 @@ class Codegen:
                 "one bd.clock(...) -- got none. Use generate() directly "
                 "for a diagram with no real-time polling loop."
             )
-        project_dir = project_dir or self._default_project_name()
+        project_dir = project_dir or self._default_project_dir()
         project_name = os.path.basename(os.path.normpath(project_dir))
         src_dir = os.path.join(project_dir, "src")
         os.makedirs(src_dir, exist_ok=True)
@@ -4047,7 +4067,7 @@ class Codegen:
         prev_output_path = self.output_path
         self.output_path = os.path.join(src_dir, "codegen.cpp")
         try:
-            self.generate(bd)
+            self.generate(bd, announce=False)
         finally:
             self.output_path = prev_output_path
 
