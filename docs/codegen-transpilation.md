@@ -37,15 +37,13 @@ the wrong thing.
   tick; there is no continuous-time integration. `PID_S`,
   `Integrator_S`, `WAVEFORM`, `FUNCTION`, `GAIN`, `SUM`, `CLIP` and
   friends are all fair game.
-- **Continuous-time blocks are out of scope, and using one produces
-  C++ that does not compile.** The specializer will happily lower and
-  fold a block like `LTI_SISO`, but the emitter has no real
-  implementation for matrix multiply (`@` emits a call to a `matmul()`
-  that doesn't exist) or NumPy `.size`/`.item()` against an Eigen type.
-  Tracked as [bdsim#93](https://github.com/petercorke/bdsim/issues/93);
-  the fix, when this becomes in-scope, is either to make codegen refuse
-  continuous blocks loudly (cheap) or to actually implement continuous
-  support (a real scope expansion).
+- **Continuous-time blocks are out of scope.** Closed as wontfix
+  ([bdsim#93](https://github.com/petercorke/bdsim/issues/93)) — not
+  planned. A block like `LTI_SISO` fails loudly at generation time
+  today (its `self.C @ x` hits matrix multiply's own "no C++
+  implementation yet" failure — see below), which is at least an
+  improvement over the previous behaviour of silently generating C++
+  that only failed later, at compile time.
 - **Single clock.** The generated program is one polling loop
   (`bdsim_tick()`), called once per tick. Multiple independent clock
   rates aren't generalized yet.
@@ -380,12 +378,15 @@ codegen-embedded-plan.md`), not forgotten.
 - Matrix multiply (`@`) has no C++ implementation — fails loudly at
   generation time (`"matrix multiply (@) has no C++ implementation
   yet"`), not a silent broken-C++ surprise at compile time. Affects
-  continuous-time blocks (closed as wontfix,
-  [bdsim#93](https://github.com/petercorke/bdsim/issues/93) — continuous
-  support isn't planned) and `PROD`'s matrix branch alike. Eigen's own
-  `Matrix::operator*` already does real matrix multiplication for two
-  Matrix-typed operands, so this is likely cheap to add for real later;
-  just not attempted yet.
+  `PROD`'s matrix branch, and (incidentally, since continuous support
+  itself isn't planned) any continuous-time block. Real support is its
+  own, independent roadmap item —
+  [bdsim#94](https://github.com/petercorke/bdsim/issues/94), **not**
+  the same thing as the continuous-block wontfix
+  ([bdsim#93](https://github.com/petercorke/bdsim/issues/93)) — Eigen's
+  own `Matrix::operator*` already does real matrix multiplication for
+  two Matrix-typed operands, so it's likely cheap to add for real; just
+  not attempted yet.
 - Single clock only — no multi-clock scheduling yet (I/O blocks included:
   they run every tick like any stateless block, no clock affinity).
 - No automated `main.cpp`/project skeleton generation — see "I/O blocks"

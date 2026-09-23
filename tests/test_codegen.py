@@ -159,8 +159,8 @@ def _standalone_integrator_s_diagram():
     """CONSTANT -> INTEGRATOR_S -> SCOPE. A minimal, fully in-scope
     (sampled-only) diagram -- unlike KnownGoodDiagramTests' "original
     demo" (which includes a continuous LTI_SISO block, out of scope for
-    this codegen effort and not actually compilable -- see bdsim#93),
-    this is safe to use for real compile verification."""
+    this codegen effort and now fails loudly at generation time -- see
+    bdsim#93), this is safe to use for real compile verification."""
     sim = bdsim.BDSim(animation=False)
     bd = sim.blockdiagram()
     clock = bd.clock(10, "Hz")
@@ -579,8 +579,10 @@ class RegressionTests(unittest.TestCase):
     def test_prod_matrix_branch_fails_loudly_not_silently(self):
         """PROD's matrix branch (`prod = prod @ input`, taken when
         isinstance(input, np.ndarray) folds True) hits the same `@` ->
-        undefined `matmul()` gap as the continuous-block case (bdsim#93)
-        -- correctly isinstance-folded and reached via the general
+        undefined `matmul()` gap real matmul support is meant to close
+        (bdsim#94 -- independent of the continuous-block wontfix,
+        bdsim#93; `@` matters for sampled/stateless blocks like PROD
+        too) -- correctly isinstance-folded and reached via the general
         unroller, this used to silently generate uncompilable C++ rather
         than fail at generation time."""
 
@@ -612,9 +614,10 @@ class KnownGoodDiagramTests(unittest.TestCase):
         feedback -- the diagram codegen.py's own __main__ has exercised
         throughout development. LTI_SISO is continuous (out of scope,
         bdsim#93 -- closed wontfix) and its `self.C @ x` now fails loudly
-        at generation time (matrix `@` has no C++ implementation) instead
-        of silently generating a call to an undefined `matmul()` --
-        SUM/GAIN themselves are fine and already covered elsewhere
+        at generation time (matrix `@` has no C++ implementation yet --
+        bdsim#94, independent of #93) instead of silently generating a
+        call to an undefined `matmul()` -- SUM/GAIN themselves are fine
+        and already covered elsewhere
         (PID_S, used throughout the motor_control tests, uses both
         internally, compile- and numeric-cross-check-verified there)."""
         sim = bdsim.BDSim(animation=False)
@@ -669,11 +672,11 @@ class CompileVerificationTests(unittest.TestCase):
     def test_standalone_integrator_s_compiles_with_clang(self):
         # Deliberately not the "original demo" diagram from
         # KnownGoodDiagramTests -- it includes a continuous LTI_SISO
-        # block, out of scope for this codegen effort, whose generated
-        # C++ does not actually compile (undefined `matmul`, Python-only
-        # `.size`/`.item()` usage on an Eigen type -- see bdsim#93). Only
-        # sampled/clocked diagrams are expected to produce compilable
-        # code; this is a minimal one.
+        # block, out of scope for this codegen effort (bdsim#93) and now
+        # fails loudly at generation time (its `self.C @ x` hits matrix
+        # multiply's own "no C++ implementation yet" failure -- bdsim#94,
+        # independent of #93). Only sampled/clocked diagrams are expected
+        # to produce compilable code; this is a minimal one.
         bd = _standalone_integrator_s_diagram()
         with tempfile.TemporaryDirectory() as d:
             cpp_path = os.path.join(d, "codegen.cpp")
