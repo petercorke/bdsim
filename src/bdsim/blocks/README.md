@@ -12,5 +12,4 @@ The class definitions are grouped by block class
 |sinks.py | signal sink blocks |
 |sources.py | signal source blocks | 
 |transfers.py | transfer function blocks |
-|tex2icon.py | convert LaTeX string to an icon image file |
 |Icons | folder of icon images |
