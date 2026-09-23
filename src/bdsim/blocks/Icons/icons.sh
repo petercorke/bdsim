@@ -1,5 +1,6 @@
 #! /bin/bash
 
+bdtex2icon -r 97 -o cast.png -t '\texttt{cast(}\cdot\texttt{)}'
 bdtex2icon -r 300 -o sum.png -t '\sum'
 bdtex2icon -r 450 -o prod.png -t '\Pi'
 bdtex2icon -r 200 -o norm.png -t '\| \cdot \|'
