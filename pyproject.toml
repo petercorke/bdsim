@@ -54,6 +54,8 @@ docs = [
     "sphinx-autodoc-typehints",
     "sphinx-favicon",
     "sphinxcontrib-jquery",
+    "sphinx-copybutton",
+    "sphinx-codeautolink",
 ]
 
 bdedit = ["PySide6", "Pillow"]

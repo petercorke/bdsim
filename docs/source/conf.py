@@ -15,6 +15,8 @@ import os
 import sys
 import warnings
 
+from sphinx_codeautolink import clean_ipython, clean_pycon
+
 # Keep docs builds focused on bdsim itself; avoid external toolbox discovery
 # side effects (extra warnings from third-party docstrings during scanning).
 os.environ.setdefault("BDSIM_NO_TOOLBOXES", "1")
@@ -68,6 +70,14 @@ extensions = [
     "sphinx_autodoc_typehints",
     "sphinx_favicon",
     "blockname",
+    "sphinx_copybutton",
+    "sphinx_codeautolink",
+]
+
+suppress_warnings = [
+    "codeautolink.match_block",
+    "codeautolink.match_name",
+    "config.cache",  # codeautolink_custom_blocks holds function refs, not picklable
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -206,6 +216,24 @@ favicons = [
 # -------- Options inheritance-diagram -----------------------------------------------#
 
 inheritance_graph_attrs = dict(rankdir="TB")
+
+# -------- sphinx-codeautolink options --------------------------------------------#
+
+codeautolink_custom_blocks = {
+    "pycon": clean_pycon,
+    "ipython": clean_ipython,
+    "ipython3": clean_ipython,
+}
+# Ensure pycon (Python console) blocks are included in the autolink search.
+codeautolink_search_css_classes = ["highlight-python", "highlight-pycon"]
+
+# -------- sphinx-copybutton options ----------------------------------------------#
+# Strip interactive prompts (Python and shell) when users copy code snippets.
+
+copybutton_prompt_text = r">>> |\.\.\. |\$ "
+copybutton_prompt_is_regexp = True
+copybutton_only_copy_prompt_lines = False
+copybutton_remove_prompts = True
 
 # -------- Options InterSphinx -------------------------------------------------------#
 
