@@ -1561,8 +1561,10 @@ _reg("builtins", "max", (), _scalar_minmax_result_vt, "python.max")
 # verbatim, and C++ happens to have a same-named global too" pass-through
 # (see CppEmitter.expr_BinaryOp's "unqualified-call style (e.g. abs(),
 # matmul())" comment) -- fragile by construction (matmul() is the same
-# pattern and is *not* a real function; see bdsim#93). Now a real,
-# registered intrinsic like everything else.
+# pattern and is *not* a real function; see bdsim#94, real matmul
+# support -- independent roadmap item, not the same thing as the
+# continuous-block wontfix, bdsim#93). Now a real, registered intrinsic
+# like everything else.
 _reg("builtins", "abs", (), _abs_result_vt, "python.abs")
 
 # math.* functions -- wildcard-registered (sig=()) like min/max/abs above,
@@ -2605,14 +2607,16 @@ class CppEmitter(Emitter):
             # right up until compile time (an undefined `matmul`
             # symbol), discovered via PROD's own matrix branch (`prod @
             # input`, correctly isinstance-folded and reached at
-            # generation time for real matrix inputs) rather than only
-            # the already-tracked continuous-block case (bdsim#93). Fail
-            # loudly and specifically here instead -- Eigen's own
-            # Matrix::operator* already does real matrix multiplication
-            # (not elementwise) for two Matrix-typed operands, so this
-            # is likely cheap to actually implement later; just not
-            # attempted here (out of scope -- this session's ask was the
-            # scalar SUM/PROD case specifically).
+            # generation time for real matrix inputs). Fail loudly and
+            # specifically here instead -- Eigen's own Matrix::operator*
+            # already does real matrix multiplication (not elementwise)
+            # for two Matrix-typed operands, so this is likely cheap to
+            # actually implement later; just not attempted here (out of
+            # scope -- this session's ask was the scalar SUM/PROD case
+            # specifically). Real matmul support is its own, independent
+            # roadmap item -- bdsim#94 -- not tied to continuous-block
+            # support (bdsim#93, wontfix); don't conflate the two, `@`
+            # matters for sampled/stateless blocks like PROD too.
             self._fail("matrix multiply (@) has no C++ implementation yet", e)
         lt = self.infer_expr_type(e.left)
         rt = self.infer_expr_type(e.right)
