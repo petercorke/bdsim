@@ -1,0 +1,7 @@
+---
+exclude_paths:
+  # bdedit is a vendored student project we're keeping working but not
+  # investing further in (the planned bdweb editor is its replacement).
+  # It's PySide6/Qt code that leans heavily on `from X import *`, which
+  # dominates the repo's lint noise without being worth cleaning up.
+  - "src/bdedit/**"
