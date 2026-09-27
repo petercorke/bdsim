@@ -182,6 +182,59 @@ class BDSimStrTest(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
+class BDSimDoneTest(unittest.TestCase):
+    """Regression tests for BDSim.done().
+
+    run_sim.py used to define `done()` (and `closefigs()`) twice in the same
+    class -- Python silently keeps only the later definition, which had lost
+    the notebook/DisplayManager-aware branch the earlier one added. Since
+    calling `sim.done(bd, block=True)` directly (outside `run()`, which
+    routes around `done()` for notebook backends itself) is a documented
+    usage pattern, this silently broke notebook finalization for anyone
+    following that pattern.
+    """
+
+    def _context_with_display_manager(self, display_manager):
+        from bdsim.run_context import SimulationContext
+
+        simstate = SimpleNamespace(display_manager=display_manager)
+        options = SimpleNamespace(hold=False)
+        return SimulationContext(bd=None, simstate=simstate, options=options)
+
+    def test_done_uses_display_manager_when_present(self):
+        from unittest.mock import MagicMock
+
+        sim = bdsim.BDSim(graphics=None, progress=False, banner=False)
+        display_manager = MagicMock()
+        context = self._context_with_display_manager(display_manager)
+        sim._set_context(context)
+        try:
+            bd = MagicMock()
+            sim.done(bd, block=True)
+        finally:
+            sim._set_context(None)
+
+        display_manager.finalize.assert_called_once_with(hold=True)
+        bd.done.assert_called_once()
+
+    def test_done_falls_back_to_plt_show_without_display_manager(self):
+        from unittest.mock import MagicMock, patch
+
+        sim = bdsim.BDSim(graphics=None, progress=False, banner=False)
+        context = self._context_with_display_manager(None)
+        sim._set_context(context)
+        try:
+            bd = MagicMock()
+            with patch("bdsim.run_sim.plt.show") as mock_show:
+                sim.done(bd, block=True)
+            mock_show.assert_called_once_with(block=True)
+        finally:
+            sim._set_context(None)
+
+        bd.done.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
 class SimRunCoverageTest(unittest.TestCase):
     """Tests that exercise deeply uncovered paths inside sim.run()."""
 

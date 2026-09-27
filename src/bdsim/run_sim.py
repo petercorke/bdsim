@@ -1765,32 +1765,6 @@ class BDSim(Runner):
         future: Future[BDStruct] = BDSim._executor.submit(self.run, bd, **kwargs)
         return SimulationJob(future)
 
-    def done(self, bd: Any, block: bool = False) -> None:
-        context = self._require_context()
-        if context.options.hold:
-            block = context.options.hold
-        display_manager = getattr(context.simstate, "display_manager", None)
-        try:
-            if display_manager is not None:
-                display_manager.finalize(hold=block)
-            else:
-                plt.show(block=block)
-        except KeyboardInterrupt:
-            print("bdsim: closing all windows")
-            plt.close("all")
-            return
-        bd.done()
-        plt.close("all")
-        plt.pause(0.5)
-
-    def closefigs(self) -> None:
-        context = self._require_context()
-        for i in range(context.simstate.fignum):
-            print("close", i + 1)
-            plt.close(i + 1)
-            plt.pause(0.1)
-        context.simstate.fignum = 0
-
     def update_parameters(self, bd: Any) -> None:
         """
         Set value of parameters according to command line arguments
@@ -2242,8 +2216,16 @@ class BDSim(Runner):
         if options.hold:
             block = options.hold
 
+        display_manager = (
+            getattr(context.simstate, "display_manager", None)
+            if context is not None
+            else None
+        )
         try:
-            plt.show(block=block)
+            if display_manager is not None:
+                display_manager.finalize(hold=block)
+            else:
+                plt.show(block=block)
         except KeyboardInterrupt:
             print("bdsim: closing all windows")
             plt.close("all")
