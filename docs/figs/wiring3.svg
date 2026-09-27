@@ -1,0 +1,469 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with EazyDraw for Mac ( https://www.eazydraw.com/ ) -->
+
+<svg
+    version="1.1"
+    xmlns:dc="http://purl.org/dc/elements/1.1/"
+    xmlns:cc="http://creativecommons.org/ns#"
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns:svg="http://www.w3.org/2000/svg"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    xmlns="http://www.w3.org/2000/svg"
+    width="465.414529568"
+    height="299.16703428"
+    viewBox="0, 0, 465.414529568, 299.16703428"
+    preserveAspectRatio="none"
+    id="svg2">
+   <defs
+       id="defs_573988F1">
+      <marker
+          orient="auto"
+          refX="0.0"
+          refY="0.0"
+          id="3BD5DF33_end_arrow"
+          style="overflow:visible"
+          markerUnits="userSpaceOnUse">
+         <path
+             id="3BD5DF33_end_arrow_path"
+             style="fill:#0433FF;fill-opacity:0.11172;stroke:#0433FF;stroke-opacity:0.11172;fill-rule:nonzero;stroke-linecap:square;stroke-linejoin:miter;stroke-width:0.991496443748;stroke-miterlimit:10"
+             d="M0,0 L-14.5577675974,5.298594082811 L-14.5577675974,-5.298594082811 z"/>
+      </marker>
+      <marker
+          orient="auto"
+          refX="0.0"
+          refY="0.0"
+          id="B67FDB52_end_arrow"
+          style="overflow:visible"
+          markerUnits="userSpaceOnUse">
+         <path
+             id="B67FDB52_end_arrow_path"
+             style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-opacity:1;fill-rule:nonzero;stroke-linecap:square;stroke-linejoin:miter;stroke-width:0.25;stroke-miterlimit:10"
+             d="M0,0 L-7.517540966287,2.736161146605 L-7.517540966287,-2.736161146605 z"/>
+      </marker>
+      <marker
+          orient="auto"
+          refX="0.0"
+          refY="0.0"
+          id="577FDB52_end_arrow"
+          style="overflow:visible"
+          markerUnits="userSpaceOnUse">
+         <path
+             id="577FDB52_end_arrow_path"
+             style="fill:#000000;fill-opacity:0.1484;stroke:#000000;stroke-opacity:0.1484;fill-rule:nonzero;stroke-linecap:square;stroke-linejoin:miter;stroke-width:0.25;stroke-miterlimit:10"
+             d="M0,0 L-7.517540966287,2.736161146605 L-7.517540966287,-2.736161146605 z"/>
+      </marker>
+   </defs>
+   <metadata
+       id="metadata7">
+      <rdf:RDF>
+         <cc:Work
+             rdf:about="">
+            <dc:format>image/svg+xml</dc:format>
+            <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+            <dc:title></dc:title>
+         </cc:Work>
+      </rdf:RDF>
+   </metadata>
+   <g
+       id="layer_Paper"
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-opacity:1;fill-rule:nonzero;stroke-linecap:square;stroke-linejoin:miter;stroke-width:1;stroke-miterlimit:10">
+      <path
+          style="fill:none;stroke:#0433FF;stroke-opacity:0.11172;stroke-width:3.965985774994;stroke-dasharray:10,5.695772171021;marker-end:url(#3BD5DF33_end_arrow)"
+          id="3BD5DF33"
+          d="M126.926249846,175.014176226 C126.926249846,175.014176226 123.447442456,175.243311552 123.447442456,175.243311552 C180.953847099,175.156007708 196.63570202,195.752001245 231.423270339,216.602237817 C268.817736803,239.014941836 286.991316229,248.209025756 357.688875997,245.158227766"/>
+      <rect
+          style="fill:none;stroke-width:2"
+          id="C57FDB52"
+          x="44.8013324174"
+          y="156.011470863"
+          width="64.6734099661"
+          height="108"/>
+      <path
+          style="fill:#0F70FA"
+          id="D57FDB52"
+          d="M109.474742384,168.015380328 C113.520311855,170.351090951 117.565881326,172.686801574 121.611450796,175.022512197 C117.565881326,177.35822282 113.520311855,179.693933443 109.474742384,182.029644066 C109.474742384,177.35822282 109.474742384,172.686801574 109.474742384,168.015380328
+z"/>
+      <path
+          style="fill:none"
+          id="E57FDB52"
+          d="M109.474742384,204.015380328 C113.520311855,206.351090951 117.565881326,208.686801574 121.611450796,211.022512197 C117.565881326,213.35822282 113.520311855,215.693933443 109.474742384,218.029644066 C109.474742384,213.35822282 109.474742384,208.686801574 109.474742384,204.015380328
+z"/>
+      <path
+          style="fill:none"
+          id="F57FDB52"
+          d="M109.474742384,240.015380328 C113.520311855,242.351090951 117.565881326,244.686801574 121.611450796,247.022512197 C117.565881326,249.35822282 113.520311855,251.693933443 109.474742384,254.029644066 C109.474742384,249.35822282 109.474742384,244.686801574 109.474742384,240.015380328
+z"/>
+      <rect
+          style="fill:none;stroke-width:2"
+          id="167FDB52"
+          x="374.206571472"
+          y="156.011470863"
+          width="69.5419583242"
+          height="108"/>
+      <path
+          style="fill:none"
+          id="267FDB52"
+          d="M361.532393867,167.529132437 C365.726574318,167.529132437 369.920754768,167.529132437 374.114935219,167.529132437 C374.114935219,171.723312888 374.114935219,175.917493338 374.114935219,180.111673789 C369.920754768,180.111673789 365.726574318,180.111673789 361.532393867,180.111673789
+C361.532393867,175.917493338 361.532393867,171.723312888 361.532393867,167.529132437 z"/>
+      <text
+          id="AECB4A03"
+          style="stroke:none"
+          font-family="Avenir"
+          font-size="8"
+          font-weight="normal"
+          font-style="normal">
+<tspan x="366.532393867" y="176.320403113">0</tspan>      </text>
+      <path
+          style="fill:none"
+          id="367FDB52"
+          d="M361.832749979,203.44755116 C366.02693043,203.44755116 370.22111088,203.44755116 374.415291331,203.44755116 C374.415291331,207.64173161 374.415291331,211.835912061 374.415291331,216.030092511 C370.22111088,216.030092511 366.02693043,216.030092511 361.832749979,216.030092511
+C361.832749979,211.835912061 361.832749979,207.64173161 361.832749979,203.44755116 z"/>
+      <text
+          id="27A93B03"
+          style="stroke:none"
+          font-family="Avenir"
+          font-size="8"
+          font-weight="normal"
+          font-style="normal">
+<tspan x="366.832749979" y="212.238821836">1</tspan>      </text>
+      <path
+          style="fill:#0F70FA"
+          id="467FDB52"
+          d="M361.474742384,238.955375515 C365.668922834,238.955375515 369.863103285,238.955375515 374.057283735,238.955375515 C374.057283735,243.149555965 374.057283735,247.343736416 374.057283735,251.537916866 C369.863103285,251.537916866 365.668922834,251.537916866 361.474742384,251.537916866
+C361.474742384,247.343736416 361.474742384,243.149555965 361.474742384,238.955375515 z"/>
+      <text
+          id="44D5CB03"
+          style="stroke:none"
+          font-family="Avenir"
+          font-size="8"
+          font-weight="normal"
+          font-style="normal">
+<tspan x="366.474742384" y="247.746646191">2</tspan>      </text>
+      <rect
+          style="fill:none"
+          id="767FDB52"
+          x="55.4747423839"
+          y="48.011470863"
+          width="72"
+          height="18"/>
+      <text
+          id="867FDB52"
+          style="stroke:none"
+          font-family="Menlo"
+          font-size="11"
+          font-weight="normal"
+          font-style="normal">
+<tspan x="61.673228712" y="60.511470863">blocklist</tspan>      </text>
+      <rect
+          style="fill:none"
+          id="967FDB52"
+          x="55.4747423839"
+          y="84.011470863"
+          width="72"
+          height="18"/>
+      <text
+          id="A67FDB52"
+          style="stroke:none"
+          font-family="Menlo"
+          font-size="11"
+          font-weight="normal"
+          font-style="normal">
+<tspan x="64.9845080089" y="96.511470863">wirelist</tspan>      </text>
+      <path
+          style="fill:none;marker-end:url(#B67FDB52_end_arrow)"
+          id="B67FDB52"
+          d="M74.1058995069,47.847949452 C74.1058995069,47.847949452 74.1058995069,47.847949452 74.1058995069,47.847949452 C73.6948331079,25.007552929 35.6694622473,14.755151947 20.1058995064,29.847949453 C-10.3511956518,59.383781157 -7.451881332835,148.396480469 43.3149331399,168.709291104"/>
+      <path
+          style="fill:none;marker-end:url(#B67FDB52_end_arrow)"
+          id="C67FDB52"
+          d="M91.4747423839,48.011470863 C91.4747423839,48.011470863 91.4747423839,48.011470863 91.4747423839,48.011470863 C89.4804832429,19.501908699 142.000892018,6.764167798 150.426070804,5.756019778 C182.963291751,1.862650191 222.613232931,9.476688355 271.474742384,30.011470863
+C316.07006623,48.753324856 389.871415902,104.599362101 397.474742384,156.011470863"/>
+      <text
+          id="D67FDB52"
+          style="stroke:none"
+          font-family="Menlo"
+          font-size="11"
+          font-weight="bold"
+          font-style="normal">
+<tspan x="40.6719561336" y="11.513687636">BlockDiagram</tspan>      </text>
+      <rect
+          style="fill:none"
+          id="E67FDB52"
+          x="37.4747423835"
+          y="0.5"
+          width="108"
+          height="123.67440418"/>
+      <rect
+          style="fill:none;stroke-opacity:0.1484"
+          id="F67FDB52"
+          x="199.474742384"
+          y="120.011470863"
+          width="90"
+          height="36"/>
+      <text
+          id="077FDB52"
+          style="fill-opacity:0.15933;stroke:none"
+          font-family="Menlo"
+          font-size="11"
+          font-weight="bold"
+          font-style="normal">
+<tspan x="231.229625196" y="141.511470863">Wire</tspan>      </text>
+      <rect
+          style="fill:none;stroke-opacity:0.1484"
+          id="177FDB52"
+          x="180.930546029"
+          y="187.3843894"
+          width="46.2861805279"
+          height="37.1023782582"/>
+      <text
+          id="277FDB52"
+          style="fill-opacity:0.15187;stroke:none"
+          font-family="Menlo"
+          font-size="6"
+          font-weight="bold"
+          font-style="normal">
+<tspan x="187.818265199" y="208.435578529">StartPlug</tspan>      </text>
+      <rect
+          style="fill:none;stroke-opacity:0.1484"
+          id="377FDB52"
+          x="254.430947297"
+          y="186.694973502"
+          width="46.2861805279"
+          height="37.1023782582"/>
+      <text
+          id="477FDB52"
+          style="fill-opacity:0.14576;stroke:none"
+          font-family="Menlo"
+          font-size="7"
+          font-weight="bold"
+          font-style="normal">
+<tspan x="262.82379342" y="207.246162631">EndPlug</tspan>      </text>
+      <path
+          style="fill:none;stroke-opacity:0.1484;marker-end:url(#577FDB52_end_arrow)"
+          id="577FDB52"
+          d="M223.373582539,156.14220052 C223.373582539,156.14220052 223.373582539,156.14220052 223.373582539,156.14220052 C223.699705675,167.50344822 212.441314928,169.013379129 206.267857922,186.613448931"/>
+      <path
+          style="fill:none;stroke-opacity:0.1484;marker-end:url(#577FDB52_end_arrow)"
+          id="677FDB52"
+          d="M240.103817543,156.786303271 C240.103817543,156.786303271 240.103817543,156.786303271 240.103817543,156.786303271 C240.429940679,168.147550971 255.929418448,168.5548981 267.747363171,186.785263827"/>
+      <path
+          style="fill:none;stroke-opacity:0.1484;marker-end:url(#577FDB52_end_arrow)"
+          id="777FDB52"
+          d="M93.2901908519,102.030514071 C93.2901908519,102.030514071 93.2901908519,102.030514071 93.2901908519,102.030514071 C93.0273991769,107.180841765 97.8964372009,136.057118735 107.298558188,139.666946665 C128.815893233,147.928261015 167.709842646,117.432592812 196.330179293,100.522578822
+C227.293377558,82.228310579 239.182648305,94.000304652 240.126772932,119.532946346"/>
+      <path
+          style="fill:none;stroke-opacity:0.1484;marker-end:url(#577FDB52_end_arrow)"
+          id="877FDB52"
+          d="M202.327982047,224.828168163 C202.327982047,224.828168163 202.327982047,224.828168163 202.327982047,224.828168163 C202.846795377,229.107297317 203.389118058,239.453163415 196.797239767,243.548778899 C175.339375024,256.880815568 163.778910359,242.570667557 158.463261428,235.933379815
+C148.302958449,223.24690347 130.641622985,195.265778365 117.716190986,178.996119432"/>
+      <path
+          style="fill:none;stroke-opacity:0.1484;marker-end:url(#577FDB52_end_arrow)"
+          id="977FDB52"
+          d="M276.070440749,224.010303621 C276.070440749,224.010303621 276.070440749,224.010303621 276.070440749,224.010303621 C278.294353011,244.355554757 324.834522675,250.791598603 360.001596301,244.926803495"/>
+      <rect
+          style="fill:none"
+          id="5B6B6F52"
+          x="179.994015382"
+          y="266.142837102"
+          width="91.5695652046"
+          height="32.5241971781"/>
+      <path
+          style="fill:none;marker-end:url(#B67FDB52_end_arrow)"
+          id="5EB53062"
+          d="M54.5925822399,227.721061298 C54.5925822399,227.721061298 54.5925822399,227.721061298 54.5925822399,227.721061298 C58.9886642819,274.710487763 128.321674379,281.857936319 179.113718101,279.48694162"/>
+      <path
+          style="fill:none;marker-end:url(#B67FDB52_end_arrow)"
+          id="032DE162"
+          d="M430.062125812,248.653296032 C430.062125812,248.653296032 430.062125812,248.653296032 430.062125812,248.653296032 C429.706600868,296.854543474 310.129847064,284.221886442 270.935417488,283.616975622"/>
+      <rect
+          style="fill:none"
+          id="81399A62"
+          x="47.6586298429"
+          y="185.178184206"
+          width="58.6696283062"
+          height="11.7327701933"/>
+      <text
+          id="611FDA62"
+          style="stroke:none"
+          font-family="Menlo"
+          font-size="5"
+          font-weight="normal"
+          font-style="normal">
+<tspan x="52.6586298429" y="193.044569303">_outport_wires</tspan>      </text>
+      <rect
+          style="fill:none"
+          id="01BEBB62"
+          x="47.6407164639"
+          y="215.391171656"
+          width="59.2690240523"
+          height="11.7327701933"/>
+      <text
+          id="21BEBB62"
+          style="stroke:none"
+          font-family="Menlo"
+          font-size="5"
+          font-weight="normal"
+          font-style="normal">
+<tspan x="52.6407164639" y="223.257556753">_outport_slots</tspan>      </text>
+      <rect
+          style="fill:none"
+          id="BE344D62"
+          x="377.497358148"
+          y="170.027973245"
+          width="60.8271782636"
+          height="11.7327701933"/>
+      <text
+          id="CE344D62"
+          style="stroke:none"
+          font-family="Menlo"
+          font-size="6"
+          font-weight="normal"
+          font-style="normal">
+<tspan x="382.497358148" y="178.394358342">_inport_wires</tspan>      </text>
+      <path
+          style="fill:none;marker-end:url(#B67FDB52_end_arrow)"
+          id="AE6A0872"
+          d="M428.902713661,169.762455917 C429.001354269,169.703715878 429.139722536,169.631627463 429.136454859,169.568020196 C426.942308232,126.857657188 352.552982014,126.27008677 289.361957811,131.28101553"/>
+      <path
+          style="fill:none;marker-end:url(#B67FDB52_end_arrow)"
+          id="F7BF7972"
+          d="M54.4531907919,184.348212328 C54.4531907919,184.348212328 54.4531907919,184.348212328 54.4531907919,184.348212328 C57.8934769839,146.981046656 97.2652421049,134.435901792 198.567072568,132.283592035"/>
+      <rect
+          style="fill:none"
+          id="6BAAF7E2"
+          x="377.497358148"
+          y="190.23527022"
+          width="60.4133822647"
+          height="11.7327701933"/>
+      <text
+          id="7BAAF7E2"
+          style="stroke:none"
+          font-family="Menlo"
+          font-size="7"
+          font-weight="normal"
+          font-style="normal">
+<tspan x="382.497358148" y="198.101655317">_parents</tspan>      </text>
+      <path
+          style="fill:none;marker-end:url(#B67FDB52_end_arrow)"
+          id="8DCBDAE2"
+          d="M430.010578298,202.95018998 C430.010578298,202.95018998 430.010578298,202.95018998 430.010578298,202.95018998 C428.842523982,225.156521963 407.375233378,230.082258379 381.158953541,223.463608397 C333.098303296,211.330055358 301.016219008,193.332012844 228.317299301,197.732370779"/>
+      <text
+          id="D19A21F2"
+          style="stroke:none"
+          font-family="Menlo"
+          font-size="11"
+          font-weight="bold"
+          font-style="normal">
+<tspan x="379.231371581" y="259.875413944">Block</tspan>      </text>
+      <text
+          id="407DB1F2"
+          style="stroke:none"
+          font-family="Menlo"
+          font-size="11"
+          font-weight="bold"
+          font-style="normal">
+<tspan x="73.6121631769" y="167.79690097">Block</tspan>      </text>
+      <rect
+          style="fill:none"
+          id="AE06C9F2"
+          x="377.497358148"
+          y="235.964700098"
+          width="64.0232529326"
+          height="11.7327701935"/>
+      <text
+          id="CE06C9F2"
+          style="stroke:none"
+          font-family="Menlo"
+          font-size="6"
+          font-weight="normal"
+          font-style="normal">
+<tspan x="382.497358148" y="244.331085195">_inport_slots</tspan>      </text>
+      <text
+          id="25A0F403"
+          style="stroke:none"
+          font-family="Menlo"
+          font-size="11"
+          font-weight="bold"
+          font-style="normal">
+<tspan x="182.767159301" y="276.85586871">PortValueSlot</tspan>      </text>
+      <rect
+          style="fill:none"
+          id="5E12A503"
+          x="185.641149137"
+          y="283.719009717"
+          width="58.3285913216"
+          height="10.8881529156"/>
+      <text
+          id="41E2D503"
+          style="stroke:none"
+          font-family="Menlo"
+          font-size="10"
+          font-weight="normal"
+          font-style="normal">
+<tspan x="199.754175266" y="292.719009717">value</tspan>      </text>
+      <text
+          id="B5974903"
+          style="fill:#0433FF;stroke:none"
+          font-family="Menlo"
+          font-size="6"
+          font-weight="normal"
+          font-style="normal">
+<tspan x="430.578110346" y="255.233609143">[2]</tspan>      </text>
+      <text
+          id="ED003113"
+          style="stroke:none"
+          font-family="Avenir"
+          font-size="6"
+          font-weight="normal"
+          font-style="normal">
+<tspan x="111.497378528" y="176.803239275">0</tspan>      </text>
+      <text
+          id="C0724213"
+          style="stroke:none"
+          font-family="Avenir"
+          font-size="6"
+          font-weight="normal"
+          font-style="normal">
+<tspan x="111.441725922" y="212.893748042">1</tspan>      </text>
+      <text
+          id="94254213"
+          style="stroke:none"
+          font-family="Avenir"
+          font-size="6"
+          font-weight="normal"
+          font-style="normal">
+<tspan x="111.258047435" y="249.014438166">2</tspan>      </text>
+      <text
+          id="7CE82A13"
+          style="fill:#0433FF;stroke:none"
+          font-family="Menlo"
+          font-size="6"
+          font-weight="normal"
+          font-style="normal">
+<tspan x="429.131547992" y="167.209235124">[2]</tspan>      </text>
+      <text
+          id="22E93A13"
+          style="fill:#0433FF;stroke:none"
+          font-family="Menlo"
+          font-size="6"
+          font-weight="normal"
+          font-style="normal">
+<tspan x="430.718284543" y="208.410453551">[2]</tspan>      </text>
+      <text
+          id="05DBEB13"
+          style="fill:#0433FF;stroke:none"
+          font-family="Menlo"
+          font-size="6"
+          font-weight="normal"
+          font-style="normal">
+<tspan x="56.8598506559" y="183.237373261">[0]</tspan>      </text>
+      <text
+          id="6AA9EC13"
+          style="fill:#0433FF;stroke:none"
+          font-family="Menlo"
+          font-size="6"
+          font-weight="normal"
+          font-style="normal">
+<tspan x="56.9175924019" y="233.880783262">[0]</tspan>      </text>
+   </g>
+</svg>
