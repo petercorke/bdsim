@@ -6,7 +6,6 @@ Copyright (c) 2021- Peter Corke
 """
 
 import bdsim
-import time
 
 sim = bdsim.BDSim()
 bd = sim.blockdiagram()

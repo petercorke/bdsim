@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
 import numpy as np
-import scipy.interpolate
-import math
 
 from bdsim.blocks.connections import DeMux, Dict, Item, Mux
 

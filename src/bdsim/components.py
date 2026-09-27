@@ -12,7 +12,7 @@ from collections import UserDict
 import numpy as np
 from typing import TYPE_CHECKING, Any, Callable, Protocol, TypeVar, runtime_checkable
 
-from bdsim.exceptions import BlockApiError, BlockRuntimeError, SimulationContextError
+from bdsim.exceptions import SimulationContextError
 
 if TYPE_CHECKING:
     from bdsim.blockdiagram import BlockDiagram
@@ -514,7 +514,8 @@ class Runner:
             bd.report_schedule(**kwargs)
 
 
-from bdsim.connect import EndPlug, Plug, Port, StartPlug, Wire
+# Re-exported for bdsim.components.Plug / .Wire (e.g. tests/test_components.py).
+from bdsim.connect import Plug, Wire  # noqa: F401
 
 # ------------------------------------------------------------------------- #
 

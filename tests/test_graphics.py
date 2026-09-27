@@ -12,7 +12,6 @@ Targets uncovered lines:
   113-288 create_figure() method
 """
 
-import io
 import os
 import tempfile
 import unittest

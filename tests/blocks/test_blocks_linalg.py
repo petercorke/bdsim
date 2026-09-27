@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
 import numpy as np
-import scipy.interpolate
-import math
 
 from bdsim.blocks.linalg import Cond, Det, Flatten, Inverse, Norm, Slice1, Slice2, Transpose
 

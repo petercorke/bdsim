@@ -19,7 +19,6 @@ import os
 import shutil
 import sys
 from pathlib import Path
-import importlib.util
 import tempfile
 import unittest
 import io
@@ -1175,8 +1174,6 @@ class DebugEnvironmentTest(unittest.TestCase):
         # This test just ensures the code paths exist; actual debug output
         # would be verified visually by running:
         #   $ BDSIM_DEBUG_DISCOVERY=1 python -c "import bdsim; sim = bdsim.BDSim(...)"
-        import os
-
         # Check that the env var is referenced in code
         with open(Path(__file__).parent.parent / "src/bdsim/run_sim.py", "r") as f:
             content = f.read()
@@ -1184,8 +1181,6 @@ class DebugEnvironmentTest(unittest.TestCase):
 
     def test_debug_lazy_load_env_var_supported(self):
         """BDSIM_DEBUG_LAZY_LOAD env var should be supported (not tested verbatim)."""
-        import os
-
         # Check that the env var is referenced in code
         with open(Path(__file__).parent.parent / "src/bdsim/run_sim.py", "r") as f:
             content = f.read()

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import ast
 from concurrent.futures import Future, ThreadPoolExecutor
-from collections import Counter, namedtuple
+from collections import Counter
 from dataclasses import dataclass, field
 import io
 import inspect
@@ -30,7 +30,7 @@ import scipy.integrate as integrate
 import spatialmath.base as smb  # type: ignore[import-not-found]
 from colored import attr, fg
 
-from bdsim.components import (
+from bdsim.components import (  # noqa: F401  (TimeQ: re-exported for tests/test_run_sim.py)
     BDStruct,
     Block,
     Clock,
@@ -41,7 +41,6 @@ from bdsim.components import (
     TimeQ,
 )
 from bdsim.exceptions import (
-    BlockApiError,
     BlockCreationError,
     BlockRuntimeError,
     EventProbeOutsideIntervalError,

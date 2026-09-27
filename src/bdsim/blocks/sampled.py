@@ -10,10 +10,6 @@ Sampled-time blocks:
 from __future__ import annotations
 
 import numpy as np
-import math
-from math import sin, cos, atan2, sqrt, pi
-
-import inspect
 import spatialmath.base as smb  # type: ignore[import-not-found]
 
 from typing import Any, Callable

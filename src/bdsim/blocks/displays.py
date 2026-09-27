@@ -9,7 +9,6 @@ Sink blocks:
 """
 
 import numpy as np
-from math import pi, sqrt, sin, cos, atan2
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -24,7 +23,6 @@ import spatialmath.base as smb  # type: ignore[import-not-found]
 from typing import Any, Callable, Literal
 
 from bdsim.block_types import GraphicsBlock
-from bdsim.components import SinkBlock
 
 # ------------------------------------------------------------------------ #
 
