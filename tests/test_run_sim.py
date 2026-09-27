@@ -1545,6 +1545,45 @@ class HybridSimGraphicsRegressionTest(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
+class ScopeRecordingResolutionTest(unittest.TestCase):
+    """Regression test for bdsim#31: a Scope's recorded trace was silently
+    capped at ~200 samples over the whole run (throttled for display-refresh
+    cost), regardless of the requested ``dt`` -- e.g. 5s/1ms-dt gave one
+    sample every ~25ms. Scope.record() now runs on every accepted sample,
+    independent of Scope.step()'s (still throttled) render cadence.
+    """
+
+    def test_scope_records_at_full_dt_resolution(self):
+        sim = bdsim.BDSim(animation=False, backend="Agg", quiet=True)
+        bd = sim.blockdiagram()
+        demand = bd.STEP(T=1, name="demand")
+        summer = bd.SUM("+-")
+        gain = bd.GAIN(50)
+        plant = bd.LTI_SISO(0.5, [2, 1], name="plant")
+        scope = bd.SCOPE(nin=2, name="scope")
+        bd.connect(demand, summer[0], scope[1])
+        bd.connect(summer, gain)
+        bd.connect(gain, plant)
+        bd.connect(plant, summer[1], scope[0])
+        bd.compile()
+
+        sim.run(bd, T=3, dt=1e-3)
+
+        expected_samples = int(round(3 / 1e-3)) + 1
+        self.assertEqual(len(scope.tdata), expected_samples)
+
+        # demand is an algebraic (stateless) STEP, so its recorded trace
+        # must show a sharp transition, not the smoothed-out slew that the
+        # throttled ~200-point recording produced.
+        t = np.asarray(scope.tdata)
+        demand_trace = np.asarray(scope.ydata[1])
+        just_before = demand_trace[t < 1.0][-1]
+        just_after = demand_trace[t >= 1.0][0]
+        self.assertEqual(just_before, 0)
+        self.assertEqual(just_after, 1)
+
+
+# ---------------------------------------------------------------------------
 class BuildTEvalGridTest(unittest.TestCase):
     """Unit tests for `BDSim._build_t_eval_grid`.
 

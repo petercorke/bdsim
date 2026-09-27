@@ -434,11 +434,11 @@ class Scope(GraphicsBlock):
         if not self._enabled:
             return
 
-        # init the arrays that hold the data
-        self.tdata = np.array([])
-        self.ydata = [
-            np.array([]),
-        ] * self.nplots
+        # init the buffers that hold the data. Plain lists so that record()
+        # can append in O(1) amortized time on every accepted sample instead
+        # of the O(n) copy an np.append-per-sample pattern would cost.
+        self.tdata: list[float] = []
+        self.ydata: list[list[Any]] = [[] for _ in range(self.nplots)]
 
         assert self.fig is not None and self.ax is not None
 
@@ -551,12 +551,12 @@ class Scope(GraphicsBlock):
 
         plt.draw()
 
-    def step(self, t: float, inports: list[Any]) -> None:
+    def record(self, t: float, inports: list[Any]) -> None:
+        """Append one sample. Runs on every accepted sample (see :meth:`step`)."""
         if not self._enabled:
             return
 
-        # inputs are set
-        self.tdata = np.append(self.tdata, t)
+        self.tdata.append(t)
 
         if self.vector is None:
             # take data from multiple inputs as a list
@@ -574,9 +574,16 @@ class Scope(GraphicsBlock):
 
         # append new data to the set
         for i, y in enumerate(data):
-            self.ydata[i] = np.append(self.ydata[i], y)
+            self.ydata[i].append(y)
 
-        # plot the data
+    def step(self, t: float, inports: list[Any]) -> None:
+        if not self._enabled:
+            return
+
+        # Render whatever record() has appended so far. record() runs on
+        # every accepted sample; step() itself may be throttled (see
+        # run_sim.py's periodic_update) purely to limit redraw cost, so it
+        # must not be relied on to capture data.
         for i in range(0, self.nplots):
             self.line[i].set_data(self.tdata, self.ydata[i])
 
@@ -589,6 +596,18 @@ class Scope(GraphicsBlock):
             self._cursor_update(self._cursor_x)
 
         super().step(t, inports)
+
+    def done(self, block: bool = False, **kwargs: Any) -> None:
+        # Force one final render so the displayed/saved figure reflects all
+        # recorded data, even if the last periodic step() ran before the
+        # final accepted sample(s) were recorded.
+        if self._enabled and self._fig is not None:
+            for i in range(0, self.nplots):
+                self.line[i].set_data(self.tdata, self.ydata[i])
+            if self.scale == "auto":
+                self.ax.relim()
+                self.ax.autoscale_view(scalex=False, scaley=True)
+        super().done(block=block, **kwargs)
 
     def _cursor_values(self, x: float) -> list[float]:
         if len(self.tdata) == 0:

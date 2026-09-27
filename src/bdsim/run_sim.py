@@ -999,6 +999,12 @@ class BDSim(Runner):
             out = b.outport_value(p.port)
             simstate.plist[i].append(out)
 
+        if run_graphics:
+            # Always record at full resolution (cheap: e.g. Scope's data log).
+            # bd.step() itself may be throttled below and must not be relied
+            # on for data capture.
+            bd.record(t)
+
         movies_enabled = getattr(simstate.options, "movies", None) is not None
         run_animation = bool(getattr(simstate.options, "animation", False)) or bool(
             movies_enabled

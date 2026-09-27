@@ -799,6 +799,25 @@ class Block(ABC, Port):
         except Exception as err:
             self._raise_runtime_error("step", err, t=t, inputs=u)
 
+    def record(self, t: float, u: list[Any]) -> None:
+        """Record one accepted sample, independent of graphics/animation throttling.
+
+        Default is a no-op. Sink blocks that log signal data (e.g. ``Scope``)
+        override this to append at full simulation resolution, since ``step``
+        itself may be called only periodically for display-refresh purposes.
+
+        :param t: simulation time
+        :type t: float
+        :param u: block input port values
+        :type u: list
+        """
+
+    def record_safe(self, t: Any, u: Any) -> None:
+        try:
+            self.record(t, u)
+        except Exception as err:
+            self._raise_runtime_error("record", err, t=t, inputs=u)
+
     def next_safe(self, t: Any, u: Any, x: Any) -> Any:
         try:
             return self.next(t, u, x)

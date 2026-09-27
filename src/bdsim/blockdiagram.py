@@ -1350,6 +1350,26 @@ class BlockDiagram(BlockDiagramMixin):
         except BlockRuntimeError as err:
             self._handle_block_runtime_error(err)
 
+    def record(self, t: float) -> None:
+        """
+        Record one accepted sample on all sink blocks.
+
+        :param t: simulation time
+        :type t: float
+
+        Unlike :meth:`step`, this is called on *every* accepted simulation
+        sample, not just periodically for display refresh, so sink blocks
+        that log signal data at full resolution (e.g. ``Scope``) do so here
+        rather than in ``step``, which may run at a throttled rate.
+        """
+
+        try:
+            for b in self.blocklist:
+                if isinstance(b, SinkBlock):
+                    b.record_safe(t, b.inport_values)
+        except BlockRuntimeError as err:
+            self._handle_block_runtime_error(err)
+
     def deriv(
         self,
         t: float,
