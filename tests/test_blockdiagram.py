@@ -1342,6 +1342,23 @@ class StateAndResetTest(SetUpMixin, unittest.TestCase):
         bd.evaluate({}, 0)
         bd.step(0.0)  # calls SinkBlock.step for each sink block
 
+    def test_record(self):
+        bd, _, _ = self._simple_bd()
+        bd.evaluate({}, 0)
+        bd.record(0.0)  # calls SinkBlock.record for each sink block (default no-op)
+
+    def test_record_error_propagates(self):
+        """A record() failure should surface the same way a step() failure does."""
+        bd, _, dst = self._simple_bd()
+        bd.evaluate({}, 0)
+
+        def boom(t, u):
+            raise ValueError("record failed")
+
+        dst.record = boom
+        with self.assertRaises(RuntimeError):
+            bd.record(0.0)
+
 
 # ---------------------------------------------------------------------------
 class StateMappingTest(SetUpMixin, unittest.TestCase):
