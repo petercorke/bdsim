@@ -155,6 +155,36 @@ class StepTest(unittest.TestCase):
         finally:
             plt.close("all")
 
+    def test_step_animation_qt5agg_flush_events_branch(self):
+        """step() with backend Qt5Agg flushes events before drawing."""
+        gb = MinGB(nin=1)
+        ss = _make_simstate(animation=True, backend="Qt5Agg")
+        gb._simstate = ss
+        gb.fig = plt.figure()
+        try:
+            gb.fig.canvas.flush_events = MagicMock()
+            gb.fig.canvas.draw = MagicMock()
+            gb.step(0.0, [1.0])
+            gb.fig.canvas.flush_events.assert_called_once()
+            gb.fig.canvas.draw.assert_called_once()
+        finally:
+            plt.close("all")
+
+    def test_step_animation_qtagg_flush_events_branch(self):
+        """step() with backend QtAgg (matplotlib's post-Qt5Agg name) also flushes events."""
+        gb = MinGB(nin=1)
+        ss = _make_simstate(animation=True, backend="QtAgg")
+        gb._simstate = ss
+        gb.fig = plt.figure()
+        try:
+            gb.fig.canvas.flush_events = MagicMock()
+            gb.fig.canvas.draw = MagicMock()
+            gb.step(0.0, [1.0])
+            gb.fig.canvas.flush_events.assert_called_once()
+            gb.fig.canvas.draw.assert_called_once()
+        finally:
+            plt.close("all")
+
     def test_step_tiled_shared_figure_draws_once_per_time(self):
         """Shared tiled figures should redraw once per simulation time, not once per block."""
         ss = _make_simstate(animation=True, backend="agg")

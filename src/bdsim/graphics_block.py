@@ -272,7 +272,7 @@ class GraphicsBlock(SinkBlock):
                     self._fig.canvas.flush_events()  # type: ignore[union-attr]
                     plt.show(block=False)
                     plt.show(block=False)
-                elif self._simstate.backend == "Qt5Agg":
+                elif self._simstate.backend in ("Qt5Agg", "QtAgg"):
                     self._fig.canvas.flush_events()  # type: ignore[union-attr]
                     self._fig.canvas.draw()  # type: ignore[union-attr]
                 else:
