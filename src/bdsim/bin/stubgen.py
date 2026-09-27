@@ -191,4 +191,9 @@ with open(OUTPUT, "w") as f:
             # SyntaxWarnings in the generated file (Python 3.12+).
             safe_doc = doc.replace("\\", "\\\\")
             f.write(f'        """{safe_doc}\n        """\n')
-        f.write("        ...\n")
+        f.write(
+            "        raise NotImplementedError(\n"
+            '            "stub signature -- the real implementation is injected "\n'
+            '            "onto BlockDiagram at import time by the @block decorator"\n'
+            "        )\n"
+        )
