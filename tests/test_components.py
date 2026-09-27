@@ -7,7 +7,7 @@ import os
 import bdsim
 from bdsim.components import BDStruct, Clock, OptionsBase, Plug, Wire, clocklist
 from bdsim.blocks import Constant, Mux, Null, Scope, ZOH
-from bdsim import BDSim, TimeQ, BlockDiagram
+from bdsim import TimeQ, BlockDiagram
 
 
 class WireTest(unittest.TestCase):

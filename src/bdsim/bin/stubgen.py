@@ -16,7 +16,6 @@ Usage:
 from __future__ import annotations
 
 import inspect
-from math import inf
 from pathlib import Path
 
 import bdsim

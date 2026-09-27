@@ -35,8 +35,6 @@ Created on Thu May 21 06:39:29 2020
 import numpy as np
 import math
 
-import matplotlib.pyplot as plt
-
 import bdsim
 from bdsim.blocks.continuous import Integrator, LTI_SISO, LTI_SS, _tf2ss
 from bdsim.blocks.spatial import PoseIntegrator

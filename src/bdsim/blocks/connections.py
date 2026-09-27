@@ -22,10 +22,9 @@ from typing import Any, cast
 
 import numpy as np
 
-import bdsim
 from bdsim.blockdiagram import bdload
 from bdsim.blockdiagram import BlockDiagram
-from bdsim.components import SubsystemBlock, SourceBlock, SinkBlock, FunctionBlock
+from bdsim.components import SubsystemBlock, FunctionBlock
 
 
 # ------------------------------------------------------------------------ #

@@ -7,15 +7,12 @@ Continuous-time blocks:
 """
 
 from __future__ import annotations
-from typing import Any, Callable
+from typing import Any
 
 
 import numpy as np
-import scipy.signal
-import math
-from math import sin, cos, atan2, sqrt, pi
+from math import pi
 import spatialmath.base as smb  # type: ignore[import-not-found]
-from bdsim.blockdiagram import BlockDiagram
 from bdsim.components import ContinuousBlock, SubsystemBlock
 
 Vector1D = int | float | tuple[float, ...] | list[float] | np.ndarray
@@ -675,8 +672,6 @@ class Deriv2(LTI_SS):
 
 
 # ------------------------------------------------------------------------ #
-
-from bdsim.blocks.connections import SubSystem
 
 
 class Deriv(SubsystemBlock):

@@ -2,8 +2,6 @@
 
 import io
 import numpy as np
-import scipy.interpolate
-import math
 from types import SimpleNamespace
 
 import bdsim

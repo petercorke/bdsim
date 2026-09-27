@@ -3,8 +3,6 @@
 import numpy as np
 import math
 
-import matplotlib.pyplot as plt
-
 from bdsim.blocks.sampled import Integrator_S, LTI_SISO_S, LTI_SS_S, ZOH
 from bdsim import Clock
 
