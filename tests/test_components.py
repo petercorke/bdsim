@@ -1,9 +1,12 @@
 import unittest
+import numpy as np
 import numpy.testing as nt
 import tempfile
 import os
-from bdsim.components import *
-from bdsim.blocks import *
+
+import bdsim
+from bdsim.components import BDStruct, Clock, OptionsBase, Plug, Wire, clocklist
+from bdsim.blocks import Constant, Mux, Null, Scope, ZOH
 from bdsim import BDSim, TimeQ, BlockDiagram
 
 
@@ -162,7 +165,6 @@ class ClockTest(unittest.TestCase):
         self.assertEqual(c.blocklist[0], block)
 
     def test_str(self):
-        global clocklist
         clocklist.clear()
 
         c = Clock(2)
@@ -187,7 +189,6 @@ class ClockTest(unittest.TestCase):
 
     @unittest.skip
     def test_state(self):
-        global clocklist
         clocklist.clear()
 
         c = Clock(2)
@@ -209,7 +210,6 @@ class ClockTest(unittest.TestCase):
         nt.assert_almost_equal(c.getstate(0.0), np.r_[13, 14])
 
     def test_time(self):
-        global clocklist
         clocklist.clear()
 
         c = Clock(2, offset=1)

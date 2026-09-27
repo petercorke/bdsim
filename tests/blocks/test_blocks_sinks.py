@@ -40,7 +40,7 @@ import math
 
 import unittest
 
-from bdsim.blocks.sinks import *
+from bdsim.blocks.sinks import Event, Print, Stop
 from typing import Any
 
 
