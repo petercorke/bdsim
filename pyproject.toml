@@ -108,7 +108,6 @@ omit = [
     "src/bdedit/tex2icon.py",
     "src/bdsim/blocks/io.py",
     "src/bdsim/blocks/vision.py",
-    "src/bdsim/_blockdiagram_mixin.py",
     "tk_editor/*.py",
     "examples/RVC3/*.py",
 ]

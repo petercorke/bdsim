@@ -37,7 +37,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -58,7 +58,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -82,7 +82,7 @@ class BlockDiagramMixin:
 
             :output p: image plane points as ndarray(2,N)
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -105,7 +105,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -120,7 +120,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -131,7 +131,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -144,7 +144,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -163,7 +163,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -174,7 +174,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -187,7 +187,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -206,7 +206,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -231,7 +231,7 @@ class BlockDiagramMixin:
         A smaller value of ``zeta`` results in a faster response but with overshoot, while a larger value results in a slower response with no overshoot.
         Choose ``zeta=0.707`` (:math:`1/\\sqrt{2}`) for optimal rise time and overshoot (4.3%).
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -248,7 +248,7 @@ class BlockDiagramMixin:
         :param kwargs: |BlockOptions|
         :type kwargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -259,7 +259,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -272,7 +272,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -295,7 +295,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -316,7 +316,7 @@ class BlockDiagramMixin:
         :return: a ESTPOSE_P block
         :rtype: EstPose_p instance
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -335,7 +335,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -350,7 +350,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -372,7 +372,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -389,7 +389,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -402,7 +402,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -425,7 +425,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict, optional
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -440,7 +440,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -455,7 +455,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -472,7 +472,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -487,7 +487,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -510,7 +510,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -549,7 +549,7 @@ class BlockDiagramMixin:
             SCOPE(styles=[{'color': 'blue'}, {'color': 'red', 'linestyle': '--'}])
             SCOPE(styles=['k', 'r--'])
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -564,7 +564,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -577,7 +577,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -592,7 +592,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -605,7 +605,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -624,7 +624,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -647,7 +647,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -668,7 +668,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -681,7 +681,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -694,7 +694,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -730,7 +730,7 @@ class BlockDiagramMixin:
             - If ``inverse`` is True and the Jacobian is singular a runtime
               error will occur.
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -752,7 +752,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -806,7 +806,7 @@ class BlockDiagramMixin:
             - The ``_feedthrough`` attribute of the block is set to True if D is nonzero. This can be used to check for feedthrough without having to check the D matrix directly, and is used
               by the scheduler to ensure correct block evaluation order.
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -892,7 +892,7 @@ class BlockDiagramMixin:
             - The ``_feedthrough`` attribute of the block is set to True if D is nonzero. This can be used to check for feedthrough without having to check the D matrix directly, and is used
               by the scheduler to ensure correct block evaluation order.
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -915,7 +915,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -938,7 +938,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -959,7 +959,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -976,7 +976,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -995,7 +995,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1008,7 +1008,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1023,7 +1023,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1036,7 +1036,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1049,7 +1049,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1073,7 +1073,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1099,7 +1099,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1112,7 +1112,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1127,7 +1127,7 @@ class BlockDiagramMixin:
 
         If ``T`` is None then it defaults to the identity matrix.
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1140,7 +1140,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1155,7 +1155,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1170,7 +1170,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1187,7 +1187,7 @@ class BlockDiagramMixin:
         :return: A PRINT block
         :rtype: Print instance
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1204,7 +1204,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1221,7 +1221,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1255,7 +1255,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1274,7 +1274,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1295,7 +1295,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1308,7 +1308,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1323,7 +1323,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1340,7 +1340,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1353,7 +1353,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1380,7 +1380,7 @@ class BlockDiagramMixin:
         :raises ImportError: module not found or no BlockDiagram in it
         :raises ValueError: invalid argument type or .bd load constraints not met
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1412,7 +1412,7 @@ class BlockDiagramMixin:
         For example if ``mode="rc"`` then a 2-element array would have its
         second element wrapped to the range [-π, π).
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1423,7 +1423,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1434,7 +1434,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1445,7 +1445,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1466,7 +1466,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1477,7 +1477,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1499,7 +1499,7 @@ class BlockDiagramMixin:
         If ``T`` is given the value ``qf`` is reached at this time.  This can be
         less or greater than the simulation time.
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1521,7 +1521,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1554,7 +1554,7 @@ class BlockDiagramMixin:
             - A dynamic trail, showing path to date can be animated if
               the option ``path`` is set to a linestyle.
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1575,7 +1575,7 @@ class BlockDiagramMixin:
 
         If the Jacobian
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1588,7 +1588,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1617,7 +1617,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
@@ -1632,7 +1632,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        raise NotImplementedError(
+        raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
             "onto BlockDiagram at import time by the @block decorator"
         )
