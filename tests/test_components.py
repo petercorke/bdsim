@@ -165,7 +165,6 @@ class ClockTest(unittest.TestCase):
         self.assertEqual(c.blocklist[0], block)
 
     def test_str(self):
-        global clocklist
         clocklist.clear()
 
         c = Clock(2)
@@ -190,7 +189,6 @@ class ClockTest(unittest.TestCase):
 
     @unittest.skip
     def test_state(self):
-        global clocklist
         clocklist.clear()
 
         c = Clock(2)
@@ -212,7 +210,6 @@ class ClockTest(unittest.TestCase):
         nt.assert_almost_equal(c.getstate(0.0), np.r_[13, 14])
 
     def test_time(self):
-        global clocklist
         clocklist.clear()
 
         c = Clock(2, offset=1)
