@@ -323,7 +323,7 @@ class OptionTest(unittest.TestCase):
         self.assertEqual(opt.foo, 1)
         self.assertEqual(opt.bar, "hello")
 
-    def test_init1(self):
+    def test_init3(self):
         opt = OptionsBase(dict(foo=1, bar="hello"), dict(foo=2, baz=3))
 
         self.assertEqual(opt.foo, 1)
