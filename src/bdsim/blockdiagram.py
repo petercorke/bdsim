@@ -12,7 +12,7 @@ import sys
 from tempfile import _TemporaryFileWrapper
 import traceback
 import warnings
-from typing import TYPE_CHECKING, Any, NoReturn
+from typing import TYPE_CHECKING, Any, Callable, NoReturn
 
 if TYPE_CHECKING:
     from typing import Self
@@ -34,8 +34,15 @@ else:
             pass
 
 
-from bdsim.components import *
-from bdsim.components import Counter
+from bdsim.components import (
+    Block,
+    Clock,
+    Counter,
+    EventSource,
+    SimulationState,
+    SinkBlock,
+    SubsystemBlock,
+)
 from bdsim.connect import EndPlug, Plug, Port, StartPlug, Wire
 
 # ------------------------------------------------------------------------- #
