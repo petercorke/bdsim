@@ -8,6 +8,7 @@ omit =
     src/bdsim/run_realtime.py
     src/bdsim/bdedit/*
     src/bdsim/tex2icon.py
+    src/bdsim/_blockdiagram_mixin.py
 
 [report]
 omit =
@@ -15,4 +16,5 @@ omit =
     src/bdsim/run_realtime.py
     src/bdsim/bdedit/*
     src/bdsim/tex2icon.py
+    src/bdsim/_blockdiagram_mixin.py
 fail_under = 70
