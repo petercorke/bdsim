@@ -4,7 +4,7 @@ import numpy as np
 import scipy.interpolate
 import math
 
-from bdsim.blocks.linalg import *
+from bdsim.blocks.linalg import Cond, Det, Flatten, Inverse, Norm, Slice1, Slice2, Transpose
 
 import unittest
 import numpy.testing as nt

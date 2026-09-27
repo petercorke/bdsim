@@ -1,9 +1,12 @@
 import unittest
+import numpy as np
 import numpy.testing as nt
 import tempfile
 import os
-from bdsim.components import *
-from bdsim.blocks import *
+
+import bdsim
+from bdsim.components import BDStruct, Clock, OptionsBase, Plug, Wire, clocklist
+from bdsim.blocks import Constant, Mux, Null, Scope, ZOH
 from bdsim import BDSim, TimeQ, BlockDiagram
 
 

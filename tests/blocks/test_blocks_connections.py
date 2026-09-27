@@ -4,7 +4,7 @@ import numpy as np
 import scipy.interpolate
 import math
 
-from bdsim.blocks.connections import *
+from bdsim.blocks.connections import DeMux, Dict, Item, Mux
 
 import unittest
 import numpy.testing as nt

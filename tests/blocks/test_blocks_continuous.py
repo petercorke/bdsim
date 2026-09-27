@@ -38,9 +38,8 @@ import math
 import matplotlib.pyplot as plt
 
 import bdsim
-from bdsim.blocks.continuous import *
+from bdsim.blocks.continuous import Integrator, LTI_SISO, LTI_SS, _tf2ss
 from bdsim.blocks.spatial import PoseIntegrator
-from bdsim.blocks.continuous import _tf2ss
 from spatialmath import SE3, Twist3
 
 import unittest
