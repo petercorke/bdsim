@@ -114,7 +114,7 @@ jobs:
           files: ./coverage.xml
 
       - name: Upload coverage to Codacy
-        uses: codacy/codacy-coverage-reporter-action@v1
+        uses: codacy/codacy-coverage-reporter-action@89d6c85cfafaec52c72b6c5e8b2878d33104c699 # v1.3.0
         with:
           api-token: ${{ secrets.CODACY_API_TOKEN }}
           coverage-reports: ./coverage.xml
