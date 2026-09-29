@@ -890,11 +890,11 @@ class LabelTest(unittest.TestCase):
         self.assertEqual(mb.nout, 2)
 
         # check we pickup non unique labels
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             mb = Gain(inames=["in1", "in2", "in1"], onames=["out1", "out2"])
 
         # check we pickup on block attributes
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             mb = Gain(inames=["in1", "in2", "nin"], onames=["out1", "out2"])
 
     def test_label5(self):
@@ -1187,19 +1187,19 @@ class ConnectVariantsTest(SetUpMixin, unittest.TestCase):
             bd.connect(42, dst)
 
     def test_connect_block_nout_nin_mismatch_raises(self):
-        """connect(Block_nout1, Block_nin2) raises AssertionError."""
+        """connect(Block_nout1, Block_nin2) raises ValueError."""
         bd = self.sim.blockdiagram()
         src = bd.CONSTANT(2)  # nout=1
         dst = bd.NULL(2)  # nin=2
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             bd.connect(src, dst)
 
     def test_connect_plug_to_block_nin_gt1_raises(self):
-        """connect(Plug, Block_nin2) raises AssertionError (nin must be 1)."""
+        """connect(Plug, Block_nin2) raises ValueError (nin must be 1)."""
         bd = self.sim.blockdiagram()
         src = bd.CONSTANT(2)
         dst = bd.NULL(2)  # nin=2
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             bd.connect(src[0], dst)
 
 

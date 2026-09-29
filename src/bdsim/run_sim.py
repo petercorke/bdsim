@@ -463,7 +463,8 @@ class BDSim(Runner):
                 )
 
     def _resolve_block_info(self, block_name: str) -> dict[str, Any]:
-        assert self._blocklibrary is not None
+        if self._blocklibrary is None:
+            raise RuntimeError("block library not loaded")  # pragma: no cover
         try:
             return self._blocklibrary[block_name]
         except KeyError as exc:
@@ -658,7 +659,8 @@ class BDSim(Runner):
         internal registry and are still accessible as factory methods on a
         :class:`BlockDiagram`.
         """
-        assert self._blocklibrary is not None, "block library not loaded"
+        if self._blocklibrary is None:
+            raise RuntimeError("block library not loaded")  # pragma: no cover
         return {k: v for k, v in self._blocklibrary.items() if not v.get("deprecated")}
 
     def blockinfo(self, block: str | None = None) -> Any:
@@ -674,11 +676,11 @@ class BDSim(Runner):
             DeprecationWarning,
             stacklevel=2,
         )
+        if self._blocklibrary is None:
+            raise RuntimeError("block library not loaded")  # pragma: no cover
         if block is None:
-            assert self._blocklibrary is not None
             return self._blocklibrary
         else:
-            assert self._blocklibrary is not None
             return self._blocklibrary[block]
 
     def _repr__(self) -> str:
@@ -688,14 +690,17 @@ class BDSim(Runner):
         :return: single line summary of simulation environment
         :rtype: str
         """
-        assert self._blocklibrary is not None
+        if self._blocklibrary is None:
+            raise RuntimeError("block library not loaded")  # pragma: no cover
         s: str = f"BDSim(nblocks={len(self._blocklibrary)})\n"
         return s
 
     def __str__(self) -> str:
-        assert self._blocklibrary is not None
+        if self._blocklibrary is None:
+            raise RuntimeError("block library not loaded")  # pragma: no cover
         context: SimulationContext | None = self._get_context()
-        assert self.options is not None
+        if self.options is None:
+            raise RuntimeError("options not initialised")  # pragma: no cover
         options: OptionsBase = context.options if context is not None else self.options
         s: str = (
             f"BDSim: Block diagram simulation runtime, {len(self._blocklibrary)} blocks"
@@ -721,7 +726,8 @@ class BDSim(Runner):
     def _make_run_options(
         self, *, threaded: bool = False, **overrides: Any
     ) -> OptionsBase:
-        assert self.options is not None
+        if self.options is None:
+            raise RuntimeError("options not initialised")  # pragma: no cover
         options: OptionsBase = self.options.copy()
         options.set(**overrides)
         if threaded:
@@ -1017,7 +1023,8 @@ class BDSim(Runner):
             simstate.gtime = t
 
         progress: Progress | None = self._require_context().progress
-        assert progress is not None
+        if progress is None:
+            raise RuntimeError("progress bar not initialised")  # pragma: no cover
         progress.update(t)
 
         if simstate.stop is not None:
@@ -1127,7 +1134,8 @@ class BDSim(Runner):
             stiff or discontinuous system.
         """
 
-        assert bd.compiled, "Network has not been compiled"
+        if not bd.compiled:
+            raise RuntimeError("Network has not been compiled")  # pragma: no cover
 
         if solver_args is None:
             solver_args = {}
@@ -1786,7 +1794,8 @@ class BDSim(Runner):
         """
 
         context: SimulationContext | None = self._get_context()
-        assert self.options is not None
+        if self.options is None:
+            raise RuntimeError("options not initialised")  # pragma: no cover
         options: OptionsBase = context.options if context is not None else self.options
         re_set: re.Pattern[str] = re.compile(
             r"(?P<block>[\w\.]+):(?P<param>[\w]+)=(?P<value>.*)"
@@ -2144,7 +2153,8 @@ class BDSim(Runner):
             return f
 
         # bind the block constructors as new methods on this instance
-        assert self._blocklibrary is not None
+        if self._blocklibrary is None:
+            raise RuntimeError("block library not loaded")  # pragma: no cover
         for blockname, info in self._blocklibrary.items():
             # create a function to invoke the block's constructor
             f = new_method(blockname, bd)
@@ -2183,7 +2193,8 @@ class BDSim(Runner):
 
     def DEBUG(self, debug: str, fmt: str, *args: Any) -> None:
         context: SimulationContext | None = self._get_context()
-        assert self.options is not None
+        if self.options is None:
+            raise RuntimeError("options not initialised")  # pragma: no cover
         options: OptionsBase = context.options if context is not None else self.options
         if debug[0] in options.debug:
             print(f"DEBUG.{debug:s}: " + fmt.format(*args))
@@ -2736,8 +2747,10 @@ class BDSim(Runner):
         def dots(s: str, n: int = 40) -> str:
             return s + "." * (n - len(s))
 
-        assert self._blocklibrary is not None
-        assert self._moduledicts is not None
+        if self._blocklibrary is None:
+            raise RuntimeError("block library not loaded")  # pragma: no cover
+        if self._moduledicts is None:
+            raise RuntimeError("module dicts not initialised")  # pragma: no cover
         print(len(self._blocklibrary), " blocks loaded")
         for pkg, module_dict in self._moduledicts.items():
             for k, v in module_dict.items():
@@ -2763,7 +2776,8 @@ class BDSim(Runner):
                         print(f"{dots(k)}: {line}")
 
     def set_options(self, **options: Any) -> None:
-        assert self.options is not None
+        if self.options is None:
+            raise RuntimeError("options not initialised")  # pragma: no cover
         self.options.set(**options)
         warnings.warn("use sim.options.OPT=VALUE instead", DeprecationWarning)
 
@@ -2786,7 +2800,8 @@ class BDSim(Runner):
         and their old and new values.
         """
         # handle the globals
-        assert self.options is not None
+        if self.options is None:
+            raise RuntimeError("options not initialised")  # pragma: no cover
         for s in self.options.setglob:
             var, value = s.split("=")
 
@@ -2810,7 +2825,8 @@ class BDSim(Runner):
         :seealso: :meth:`BlockDiagram.report_summary` :meth:`BlockDiagram.report_lists` :meth:`BlockDiagram.report_schedule`
         """
         context: SimulationContext | None = self._get_context()
-        assert self.options is not None
+        if self.options is None:
+            raise RuntimeError("options not initialised")  # pragma: no cover
         options: OptionsBase = context.options if context is not None else self.options
         if options.quiet:
             return

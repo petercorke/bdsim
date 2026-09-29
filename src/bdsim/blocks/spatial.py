@@ -350,7 +350,8 @@ class PoseIntegrator_S(SampledBlock):
         return [Twist3(x).SE3()]
 
     def next(self, t: float, u: list[Any], x: np.ndarray) -> np.ndarray:
-        assert self._clock is not None
+        if self._clock is None:
+            raise RuntimeError("block has no clock")  # pragma: no cover
         T_delta: SE3 = SE3.Delta(u[0] * self._clock.T)
         pose = Twist3(x).SE3() * T_delta
         return Twist3(pose).A

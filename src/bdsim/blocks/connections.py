@@ -85,8 +85,10 @@ class Item(FunctionBlock):
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         input = inputs[0]
         # TODO, handle inputs that are vectors themselves
-        assert isinstance(input, dict), "Input signal must be a dict"
-        assert self.item in input, "Item is not in input dict"
+        if not isinstance(input, dict):
+            raise TypeError("Input signal must be a dict")
+        if self.item not in input:
+            raise ValueError("Item is not in input dict")
         return [input[self.item]]
 
 
@@ -260,9 +262,8 @@ class DeMux(FunctionBlock):
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         input = inputs[0]
         # TODO, handle inputs that are vectors themselves
-        assert (
-            len(input) == self.nout
-        ), "Input width not equal to number of output ports"
+        if len(input) != self.nout:
+            raise ValueError("Input width not equal to number of output ports")
         return list(input)
 
 
