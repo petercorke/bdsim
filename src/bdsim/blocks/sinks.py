@@ -105,7 +105,8 @@ class Print(SinkBlock):
 
             elif isinstance(value, np.ndarray):
                 fmt = self.format
-                assert fmt is not None
+                if fmt is None:
+                    raise RuntimeError("format string not set")
                 with np.printoptions(
                     formatter={"all": lambda x: fmt.format(x)}  # type: ignore[arg-type]
                 ):

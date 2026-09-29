@@ -609,7 +609,6 @@ class Clock:
         else:
             # Compile-time fallback when no SimulationState is available.
             self._log_compile_fallback("_set_runtime_state")
-            assert simstate is not None or True, "compile-time state tracking"
             self._compile_state = np.array(x)
 
     def _get_runtime_state(
@@ -620,7 +619,6 @@ class Clock:
             return simstate.clock_states[self].state
         # Compile-time fallback
         self._log_compile_fallback("_get_runtime_state")
-        assert simstate is not None or True, "compile-time state tracking"
         return self._compile_state if len(self._compile_state) > 0 else self.getstate0()
 
     def getlog(self, simstate: SimulationState | None = None) -> tuple[list, list]:
@@ -726,7 +724,6 @@ class Clock:
         else:
             # Compile-time fallback when no SimulationState is available.
             self._log_compile_fallback("savestate")
-            assert simstate is not None or True, "compile-time state tracking"
             self._compile_tlog.append(t)
             self._compile_xlog.append(x)
             self._compile_state = np.array(x)

@@ -220,9 +220,8 @@ class Block(ABC, Port):
 
         if blockclass is not None:
             self._blockclass = blockclass
-        assert (
-            self._blockclass is not None
-        ), f"blockclass must be specified for block {self.name}"
+        if self._blockclass is None:
+            raise ValueError(f"blockclass must be specified for block {self.name}")
 
         # key simulation variables
         self._x_view: np.ndarray | None = (
@@ -236,7 +235,8 @@ class Block(ABC, Port):
 
         # deprecated options for graphical display
         if isinstance(pos, list):
-            assert len(pos) == 2, "block position must have exactly two elements"
+            if len(pos) != 2:
+                raise ValueError("block position must have exactly two elements")
             self._pos = (pos[0], pos[1])
         else:
             self._pos = pos
@@ -269,13 +269,15 @@ class Block(ABC, Port):
             inames = getattr(self.__class__, "inlabels", None)
         if inames is not None:
             if explicit_nin:
-                assert (
-                    len(inames) == self.nin
-                ), "number of input port names must match number of inputs"
+                if len(inames) != self.nin:
+                    raise ValueError(
+                        "number of input port names must match number of inputs"
+                    )
             else:
                 self.nin = len(inames)
             inames = normalized_port_names(inames)
-            assert len(set(inames)) == len(inames), "input port names must be unique"
+            if len(set(inames)) != len(inames):
+                raise ValueError("input port names must be unique")
             checknames(inames)
         self._inport_names = inames
 
@@ -283,21 +285,24 @@ class Block(ABC, Port):
             onames = getattr(self.__class__, "outlabels", None)
         if onames is not None:
             if explicit_nout:
-                assert (
-                    len(onames) == self.nout
-                ), "number of output port names must match number of outputs"
+                if len(onames) != self.nout:
+                    raise ValueError(
+                        "number of output port names must match number of outputs"
+                    )
             else:
                 self.nout = len(onames)
             onames = normalized_port_names(onames)
-            assert len(set(onames)) == len(onames), "output port names must be unique"
+            if len(set(onames)) != len(onames):
+                raise ValueError("output port names must be unique")
             checknames(onames)
         self._outport_names = onames
 
         if snames is not None:
             if nstates is not None:
-                assert (
-                    len(snames) == nstates
-                ), "number of state names must match number of states"
+                if len(snames) != nstates:
+                    raise ValueError(
+                        "number of state names must match number of states"
+                    )
             else:
                 nstates = len(snames)
         self._state_names = snames
@@ -307,9 +312,8 @@ class Block(ABC, Port):
             inputs = (inputs,)
         if inputs is not None and len(inputs) > 0:
             # assert len(inputs) == self.nin, 'Number of input connections must match number of inputs'
-            assert (
-                self.bd is not None
-            ), "inputs provided but block is not in a block diagram"
+            if self.bd is None:
+                raise RuntimeError("inputs provided but block is not in a block diagram")
             for i, input in enumerate(inputs):
                 self.bd.connect(input, Plug(self, port=i))
 
@@ -470,7 +474,8 @@ class Block(ABC, Port):
         if name is not None:
             self._name_tex = name
             fixed_name = _fixname(name)
-            assert isinstance(fixed_name, str), "block name must resolve to a string"
+            if not isinstance(fixed_name, str):
+                raise TypeError("block name must resolve to a string")
             self._name = fixed_name
         else:
             self._name_tex = None
@@ -548,7 +553,8 @@ class Block(ABC, Port):
 
     @property
     def bd(self) -> BlockDiagram:
-        assert self._bd is not None, "block is not in a block diagram"
+        if self._bd is None:
+            raise RuntimeError("block is not in a block diagram")
         return self._bd
 
     @bd.setter
@@ -575,7 +581,8 @@ class Block(ABC, Port):
         """
         sources: list[Block] = []
         for wire in self._input_wires:
-            assert wire is not None, f"block {self.name} has an unconnected input"
+            if wire is None:
+                raise ValueError(f"block {self.name} has an unconnected input")
             sources.append(wire.start.block)
         return sources
 
@@ -597,7 +604,8 @@ class Block(ABC, Port):
         """
         inports: list[Plug] = []
         for wire in self._input_wires:
-            assert wire is not None, f"block {self.name} has an unconnected input"
+            if wire is None:
+                raise ValueError(f"block {self.name} has an unconnected input")
             inports.append(wire.start)
         return inports
 
@@ -620,7 +628,8 @@ class Block(ABC, Port):
         """
         values = []
         slots = getattr(self, "_inport_slots", None)
-        assert slots is not None, f"block {self.name} input slots not initialised"
+        if slots is None:
+            raise RuntimeError(f"block {self.name} input slots not initialised")
         for i, slot in enumerate(slots):
             if slot is not None:
                 values.append(slot.value)
@@ -645,7 +654,8 @@ class Block(ABC, Port):
         :seealso: :meth:`inport_values`
         """
         slots = getattr(self, "_inport_slots", None)
-        assert slots is not None, f"block {self.name} input slots not initialised"
+        if slots is None:
+            raise RuntimeError(f"block {self.name} input slots not initialised")
 
         if slots is not None:
             slot = slots[i]
@@ -671,7 +681,8 @@ class Block(ABC, Port):
 
         :seealso: :meth:`outport_name` :meth:`source_name`
         """
-        assert i < self.nin, f"block {self.name} input port index {i} out of range"
+        if i >= self.nin:
+            raise IndexError(f"block {self.name} input port index {i} out of range")
         if self._inport_names is None:
             return f"[{i}]"
         else:
@@ -722,12 +733,10 @@ class Block(ABC, Port):
 
         :seealso: :meth:`inport_value`
         """
-        assert (
-            self._output_values is not None
-        ), f"block {self.name} output values not initialised"
-        assert (
-            self._output_values[i] is not None
-        ), f"block {self.name} output value {i} not set"
+        if self._output_values is None:
+            raise RuntimeError(f"block {self.name} output values not initialised")
+        if self._output_values[i] is None:
+            raise RuntimeError(f"block {self.name} output value {i} not set")
         return self._output_values[i]
 
     def _publish_output_values(self, out: list[Any] | tuple[Any, ...]) -> None:
@@ -737,11 +746,13 @@ class Block(ABC, Port):
             self._outport_slots[port].value = value
 
     def outport_slot(self, i: int) -> PortValueSlot:
-        assert i < self.nout, f"block {self.name} output port index {i} out of range"
+        if i >= self.nout:
+            raise IndexError(f"block {self.name} output port index {i} out of range")
         return self._outport_slots[i]
 
     def bind_input_slot(self, i: int, slot: PortValueSlot) -> None:
-        assert i < self.nin, f"block {self.name} input port index {i} out of range"
+        if i >= self.nin:
+            raise IndexError(f"block {self.name} input port index {i} out of range")
         self._inport_slots[i] = slot
 
     def outport_name(self, i: int) -> str:
@@ -757,7 +768,8 @@ class Block(ABC, Port):
 
         :seealso: :meth:`inport_name` :meth:`source_name`
         """
-        assert i < self.nout, f"block {self.name} output port index {i} out of range"
+        if i >= self.nout:
+            raise IndexError(f"block {self.name} output port index {i} out of range")
         if self._outport_names is None:
             return f"[{i}]"
         else:
@@ -887,14 +899,17 @@ class Block(ABC, Port):
         Mostly used for making concise unit tests.
         """
         # check inputs and assign to attribute
-        assert len(inputs) == self.nin, "wrong number of inputs provided"
+        if len(inputs) != self.nin:
+            raise ValueError("wrong number of inputs provided")
 
         # evaluate the block
         out = self.output(t, inputs, x)
 
         # sanity check the output
-        assert isinstance(out, list), "result must be a list"
-        assert len(out) == self.nout, "result list is wrong length"
+        if not isinstance(out, list):
+            raise TypeError("result must be a list")
+        if len(out) != self.nout:
+            raise ValueError("result list is wrong length")
         return out
 
     def test_deriv(
@@ -919,17 +934,20 @@ class Block(ABC, Port):
         """
 
         # check inputs and assign to attribute
-        assert len(inputs) == self.nin, "wrong number of inputs provided"
+        if len(inputs) != self.nin:
+            raise ValueError("wrong number of inputs provided")
 
-        if x is not None:
-            assert len(x) == self.nstates, "passed state is wrong length"
+        if x is not None and len(x) != self.nstates:
+            raise ValueError("passed state is wrong length")
 
         # evaluate the block
         out = self.deriv(t, inputs, x)
 
         # sanity check the output
-        assert isinstance(out, np.ndarray), "result must be an ndarray"
-        assert out.shape == (self.nstates,), "result array is wrong length"
+        if not isinstance(out, np.ndarray):
+            raise TypeError("result must be an ndarray")
+        if out.shape != (self.nstates,):
+            raise ValueError("result array is wrong length")
         return out
 
     def test_next(
@@ -955,18 +973,22 @@ class Block(ABC, Port):
         """
 
         # check inputs and assign to attribute
-        assert len(inputs) == self.nin, "wrong number of inputs provided"
+        if len(inputs) != self.nin:
+            raise ValueError("wrong number of inputs provided")
 
-        if x is not None:
-            assert len(x) == self.ndstates, "passed state is wrong length"
+        if x is not None and len(x) != self.ndstates:
+            raise ValueError("passed state is wrong length")
 
         # evaluate the block
-        assert hasattr(self, "next"), "block does not have a next method"
+        if not hasattr(self, "next"):
+            raise AttributeError("block does not have a next method")
         out = self.next(t, inputs, x)
 
         # sanity check the output
-        assert isinstance(out, np.ndarray), "next state must be an ndarray"
-        assert out.shape == (self.ndstates,), "next state array is wrong length"
+        if not isinstance(out, np.ndarray):
+            raise TypeError("next state must be an ndarray")
+        if out.shape != (self.ndstates,):
+            raise ValueError("next state array is wrong length")
         return out
 
     def test_step(self, *inputs: Any, t: float = 0.0) -> None:
@@ -986,7 +1008,8 @@ class Block(ABC, Port):
         """
 
         # check inputs and assign to attribute
-        assert len(inputs) == self.nin, "wrong number of inputs provided"
+        if len(inputs) != self.nin:
+            raise ValueError("wrong number of inputs provided")
 
         # step the block
         self.step(t, inputs)
@@ -1190,16 +1213,18 @@ class Block(ABC, Port):
 
     def add_output_wire(self, w: Wire) -> None:
         port = w.start.port
-        assert isinstance(port, int), "output wire port must be an int"
-        assert port < len(self._output_wires), "port number too big"
+        if not isinstance(port, int):
+            raise TypeError("output wire port must be an int")
+        if port >= len(self._output_wires):
+            raise IndexError("port number too big")
         self._output_wires[port].append(w)
 
     def add_input_wire(self, w: Wire) -> None:
         port = w.end.port
-        assert isinstance(port, int), "input wire port must be an int"
-        assert (
-            self._input_wires[port] is None
-        ), "attempting to connect second wire to an input"
+        if not isinstance(port, int):
+            raise TypeError("input wire port must be an int")
+        if self._input_wires[port] is not None:
+            raise ValueError("attempting to connect second wire to an input")
         self._input_wires[port] = w
         self._parents[port] = w.start
 
@@ -1246,9 +1271,10 @@ class Block(ABC, Port):
         # block * block
         # block * plug
         s = left.bd
-        assert (
-            s is not None
-        ), "left operand of >> operator must be a block connected to a block diagram"
+        if s is None:
+            raise RuntimeError(
+                "left operand of >> operator must be a block connected to a block diagram"
+            )
         # assert isinstance(right, Block), 'arguments to * must be blocks not ports (for now)'
         w = s.connect(left, right)  # type: ignore[func-returns-value]
         # print('block * ' + str(w))
@@ -1257,9 +1283,10 @@ class Block(ABC, Port):
         # make connection, return a plug
 
     def _autoconstant(self, value: int | float | str | np.ndarray) -> Block:
-        assert (
-            self.bd is not None
-        ), "block must be connected to a block diagram to create an automatic constant"
+        if self.bd is None:
+            raise RuntimeError(
+                "block must be connected to a block diagram to create an automatic constant"
+            )
 
         if isinstance(value, (int, float)):
             name = "_const.{:d}({:.3g})".format(next(self.bd.n_auto_const), value)
@@ -1269,15 +1296,13 @@ class Block(ABC, Port):
             name = "_const.{:d}<{}>".format(
                 next(self.bd.n_auto_const), type(value).__name__
             )
-        assert (
-            self.bd is not None
-        ), "block must be connected to a block diagram to create an automatic constant"
         return self.bd.CONSTANT(value, name=name)
 
     def _autogain(self, value: int | float | np.ndarray, **kwargs: Any) -> Block:
-        assert (
-            self.bd is not None
-        ), "block must be connected to a block diagram to create an automatic gain"
+        if self.bd is None:
+            raise RuntimeError(
+                "block must be connected to a block diagram to create an automatic gain"
+            )
 
         if isinstance(value, (int, float)):
             name = "_gain.{:d}({:.3g})".format(next(self.bd.n_auto_gain), value)
@@ -1287,20 +1312,15 @@ class Block(ABC, Port):
             raise TypeError(
                 f"automatic gain value must be int, float, or ndarray, got {type(value).__name__}"
             )
-        assert (
-            self.bd is not None
-        ), "block must be connected to a block diagram to create an automatic gain"
         return self.bd.GAIN(value, name=name, **kwargs)
 
     def _autopow(self, value: int | float, **kwargs: Any) -> Block:
-        assert (
-            self.bd is not None
-        ), "block must be connected to a block diagram to create an automatic power block"
+        if self.bd is None:
+            raise RuntimeError(
+                "block must be connected to a block diagram to create an automatic power block"
+            )
 
         name = "_pow.{:d}({:.3g})".format(next(self.bd.n_auto_pow), value)
-        assert (
-            self.bd is not None
-        ), "block must be connected to a block diagram to create an automatic power block"
         return self.bd.POW(value, name=name, **kwargs)
 
     @oodebug
@@ -1338,9 +1358,10 @@ class Block(ABC, Port):
         # value + value, create a SUM block
         from bdsim.blocks import Sum
 
-        assert (
-            self.bd is not None
-        ), "block must be connected to a block diagram to create an automatic sum block"
+        if self.bd is None:
+            raise RuntimeError(
+                "block must be connected to a block diagram to create an automatic sum block"
+            )
         name = "_sum.{:d}".format(next(self.bd.n_auto_sum))
         if isinstance(other, (int, float, np.ndarray)):
             # block + constant, create a CONSTANT block
@@ -1382,9 +1403,10 @@ class Block(ABC, Port):
         # value + value, create a SUM block
         from bdsim.blocks import Sum
 
-        assert (
-            self.bd is not None
-        ), "block must be connected to a block diagram to create an automatic sum block"
+        if self.bd is None:
+            raise RuntimeError(
+                "block must be connected to a block diagram to create an automatic sum block"
+            )
         name = "_sum.{:d}".format(next(self.bd.n_auto_sum))
         if isinstance(other, (int, float, np.ndarray)):
             # constant + block, create a CONSTANT block
@@ -1421,9 +1443,10 @@ class Block(ABC, Port):
         # value - value, create a SUM block
         from bdsim.blocks import Sum
 
-        assert (
-            self.bd is not None
-        ), "block must be connected to a block diagram to create an automatic sum block"
+        if self.bd is None:
+            raise RuntimeError(
+                "block must be connected to a block diagram to create an automatic sum block"
+            )
         name = "_sum.{:d}".format(next(self.bd.n_auto_sum))
         if isinstance(other, (int, float, np.ndarray)):
             # block - constant, create a CONSTANT block
@@ -1464,9 +1487,10 @@ class Block(ABC, Port):
         # value - value, create a SUM block
         from bdsim.blocks import Sum
 
-        assert (
-            self.bd is not None
-        ), "block must be connected to a block diagram to create an automatic sum block"
+        if self.bd is None:
+            raise RuntimeError(
+                "block must be connected to a block diagram to create an automatic sum block"
+            )
 
         name = "_sum.{:d}".format(next(self.bd.n_auto_sum))
         if isinstance(other, (int, float, np.ndarray)):
@@ -1553,9 +1577,10 @@ class Block(ABC, Port):
         """
         from bdsim.blocks import Prod
 
-        assert (
-            self.bd is not None
-        ), "block must be connected to a block diagram to create an automatic product block"
+        if self.bd is None:
+            raise RuntimeError(
+                "block must be connected to a block diagram to create an automatic product block"
+            )
 
         if isinstance(other, (int, float, np.ndarray)):
             # block * constant, create a GAIN block
@@ -1634,9 +1659,10 @@ class Block(ABC, Port):
         # value / value, create a PROD block
         from bdsim.blocks import Prod
 
-        assert (
-            self.bd is not None
-        ), "block must be connected to a block diagram to create an automatic product block"
+        if self.bd is None:
+            raise RuntimeError(
+                "block must be connected to a block diagram to create an automatic product block"
+            )
 
         name = "_prod.{:d}".format(next(self.bd.n_auto_prod))
         if isinstance(other, (int, float, np.ndarray)):
@@ -1684,9 +1710,10 @@ class Block(ABC, Port):
         # value / value, create a PROD block
         from bdsim.blocks import Prod
 
-        assert (
-            self.bd is not None
-        ), "block must be connected to a block diagram to create an automatic product block"
+        if self.bd is None:
+            raise RuntimeError(
+                "block must be connected to a block diagram to create an automatic product block"
+            )
 
         name = "_prod.{:d}".format(next(self.bd.n_auto_prod))
         if isinstance(other, (int, float, np.ndarray)):
@@ -1710,30 +1737,36 @@ class Block(ABC, Port):
         pass
 
     def check(self) -> None:  # check validity of block parameters at start
-        assert hasattr(self, "nin"), f"block {self.name} has no nin specified"
-        assert hasattr(self, "nout"), f"block {self.name} has no nout specified"
+        if not hasattr(self, "nin"):
+            raise AttributeError(f"block {self.name} has no nin specified")
+        if not hasattr(self, "nout"):
+            raise AttributeError(f"block {self.name} has no nout specified")
 
-        assert isinstance(self.nin, int), f"block {self.name} nin must be an int"
-        assert isinstance(self.nout, int), f"block {self.name} nout must be an int"
-        assert self.nin >= 0, f"block {self.name} nin must be non-negative"
-        assert self.nout >= 0, f"block {self.name} nout must be non-negative"
+        if not isinstance(self.nin, int):
+            raise TypeError(f"block {self.name} nin must be an int")
+        if not isinstance(self.nout, int):
+            raise TypeError(f"block {self.name} nout must be an int")
+        if self.nin < 0:
+            raise ValueError(f"block {self.name} nin must be non-negative")
+        if self.nout < 0:
+            raise ValueError(f"block {self.name} nout must be non-negative")
 
-        if self._inport_names is not None:
-            assert (
-                len(self._inport_names) == self.nin
-            ), "number of input port names must match number of inputs"
+        if self._inport_names is not None and len(self._inport_names) != self.nin:
+            raise ValueError(
+                "number of input port names must match number of inputs"
+            )
 
-        if self._outport_names is not None:
-            assert (
-                len(self._outport_names) == self.nout
-            ), "number of output port names must match number of outputs"
+        if self._outport_names is not None and len(self._outport_names) != self.nout:
+            raise ValueError(
+                "number of output port names must match number of outputs"
+            )
 
-        assert (
-            self.nin > 0 or self.nout > 0
-        ), f"block {self.name} no inputs or outputs specified"
-        assert (
-            hasattr(self, "_initd") and self._initd
-        ), "Block superclass not initalized. was super().__init__ called?"
+        if not (self.nin > 0 or self.nout > 0):
+            raise ValueError(f"block {self.name} no inputs or outputs specified")
+        if not (hasattr(self, "_initd") and self._initd):
+            raise RuntimeError(
+                "Block superclass not initalized. was super().__init__ called?"
+            )
 
     def done(self, **kwargs: Any) -> None:  # end of simulation
         pass
@@ -1876,8 +1909,10 @@ class ContinuousBlock(Block):
 
     def check(self) -> None:
         super().check()
-        assert len(self._x0) == self.nstates, "incorrect length for initial state"
-        assert self.nin > 0 or self.nout > 0, "no inputs or outputs specified"
+        if len(self._x0) != self.nstates:
+            raise ValueError("incorrect length for initial state")
+        if not (self.nin > 0 or self.nout > 0):
+            raise ValueError("no inputs or outputs specified")
 
     @abstractmethod
     def deriv(self, t: float, u: list[Any], x: np.ndarray) -> np.ndarray:
@@ -1950,13 +1985,18 @@ class SampledBlock(Block):
         return self._x0
 
     def check(self) -> None:
-        assert (
-            self.ndstates > 0 and self._x0 is not None
-        ), f"sampled block must have discrete states and initial state vector, ndstates={self.ndstates}, x0={self._x0}"
-        assert (
-            len(self._x0) == self.ndstates
-        ), f"incorrect length for initial state: got {len(self._x0)}, expected {self.ndstates}"
-        assert self.nin > 0 or self.nout > 0, "block has no inputs or outputs"
+        if not (self.ndstates > 0 and self._x0 is not None):
+            raise ValueError(
+                "sampled block must have discrete states and initial state "
+                f"vector, ndstates={self.ndstates}, x0={self._x0}"
+            )
+        if len(self._x0) != self.ndstates:
+            raise ValueError(
+                f"incorrect length for initial state: got {len(self._x0)}, "
+                f"expected {self.ndstates}"
+            )
+        if not (self.nin > 0 or self.nout > 0):
+            raise ValueError("block has no inputs or outputs")
 
 
 class SubsystemBlock(Block):

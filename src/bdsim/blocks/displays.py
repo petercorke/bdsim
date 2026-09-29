@@ -378,16 +378,16 @@ class Scope(GraphicsBlock):
             self.styles: list[Any] | None = listify(styles)
             if nplots is None:
                 nplots = len(self.styles)
-            else:
-                assert nplots == len(self.styles), "need one style per plot"
+            elif nplots != len(self.styles):
+                raise ValueError("need one style per plot")
         else:
             self.styles = None
         if labels is not None:
             self.labels: list[Any] | None = listify(labels)
             if nplots is None:
                 nplots = len(self.labels)
-            else:
-                assert nplots == len(self.labels), "need one label per plot"
+            elif nplots != len(self.labels):
+                raise ValueError("need one label per plot")
         else:
             self.labels = None
 
@@ -438,7 +438,8 @@ class Scope(GraphicsBlock):
         self.tdata: list[float] = []
         self.ydata: list[list[Any]] = [[] for _ in range(self.nplots)]
 
-        assert self.fig is not None and self.ax is not None
+        if self.fig is None or self.ax is None:
+            raise RuntimeError("figure not created, step called before start?")
 
         # get labels if not provided
         if self.labels is None:
@@ -793,8 +794,8 @@ class ScopeXY(GraphicsBlock):
         self.xdata: list[Any] = []
         self.ydata: list[Any] = []
         self.line: Any = None
-        if init is not None:
-            assert callable(init), "graphics init function must be callable"
+        if init is not None and not callable(init):
+            raise TypeError("graphics init function must be callable")
         self.init = init
 
         self.styles = style
@@ -821,7 +822,8 @@ class ScopeXY(GraphicsBlock):
         # create the plot
         super().reset()
 
-        assert self.fig is not None and self.ax is not None
+        if self.fig is None or self.ax is None:
+            raise RuntimeError("figure not created, step called before start?")
 
         args = []
         blockargs = {}
@@ -891,13 +893,16 @@ class ScopeXY(GraphicsBlock):
         self.xdata.append(x)
         self.ydata.append(y)
 
-        assert self.fig is not None, "figure not created, step called before start?"
+        if self.fig is None:
+            raise RuntimeError("figure not created, step called before start?")
         plt.figure(self.fig.number)
         self.line.set_data(self.xdata, self.ydata)
 
-        assert (
-            self.bd is not None
-        ), f"block {self.name} not connected to a block diagram, step called before start?"
+        if self.bd is None:
+            raise RuntimeError(
+                f"block {self.name} not connected to a block diagram, step called"
+                " before start?"
+            )
         if self.bd.runtime.options.animation:
             self.fig.canvas.flush_events()
 
@@ -1166,7 +1171,8 @@ class Animation(GraphicsBlock):
 
         if not self._enabled:
             return
-        assert self.fig is not None and self.ax is not None
+        if self.fig is None or self.ax is None:
+            raise RuntimeError("figure not created, step called before start?")
 
         # Apply dark-theme text styling when inside a tiled (shared-figure) layout.
         if getattr(self, "_tile_subplotspec", None) is not None:

@@ -15,3 +15,10 @@ exclude_paths:
   # false positives (assignment-from-no-return, mutable-default-argument)
   # against code that never actually runs.
   - "src/bdsim/_blockdiagram_mixin.py"
+
+engines:
+  bandit:
+    exclude_paths:
+      # idiomatic pytest assert usage, not the validation-assert risk
+      # Bandit_B101 targets -- see PR description for details.
+      - "tests/**"
