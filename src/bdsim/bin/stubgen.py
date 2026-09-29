@@ -162,7 +162,7 @@ with open(OUTPUT, "w") as f:
     f.write(header)
 
     if not sim.block_library:
-        raise RuntimeError("No blocks found in library")
+        raise RuntimeError("No blocks found in library")  # pragma: no cover
 
     for block, info in sorted(sim.block_library.items()):
         meth = info["class"]

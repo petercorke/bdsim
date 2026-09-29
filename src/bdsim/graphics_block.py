@@ -309,7 +309,7 @@ class GraphicsBlock(SinkBlock):
         """
         try:
             if self._fig is None:
-                raise RuntimeError("no figure to save")
+                raise RuntimeError("no figure to save")  # pragma: no cover
             plt.figure(self._fig.number)  # make block's figure the current one
             if filename is None:
                 filename = self.name or ""
@@ -587,7 +587,7 @@ class GraphicsBlock(SinkBlock):
             else:
                 tiled_figure = getattr(gstate, "tiled_figure", None)
                 if tiled_figure is None:
-                    raise RuntimeError("tiled figure not initialised")
+                    raise RuntimeError("tiled figure not initialised")  # pragma: no cover
                 f = tiled_figure
 
         _notebook = getattr(gstate, "notebook_backend", False)

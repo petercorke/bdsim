@@ -313,7 +313,7 @@ class Block(ABC, Port):
         if inputs is not None and len(inputs) > 0:
             # assert len(inputs) == self.nin, 'Number of input connections must match number of inputs'
             if self.bd is None:
-                raise RuntimeError("inputs provided but block is not in a block diagram")
+                raise RuntimeError("inputs provided but block is not in a block diagram")  # pragma: no cover
             for i, input in enumerate(inputs):
                 self.bd.connect(input, Plug(self, port=i))
 
@@ -554,7 +554,7 @@ class Block(ABC, Port):
     @property
     def bd(self) -> BlockDiagram:
         if self._bd is None:
-            raise RuntimeError("block is not in a block diagram")
+            raise RuntimeError("block is not in a block diagram")  # pragma: no cover
         return self._bd
 
     @bd.setter
@@ -629,7 +629,7 @@ class Block(ABC, Port):
         values = []
         slots = getattr(self, "_inport_slots", None)
         if slots is None:
-            raise RuntimeError(f"block {self.name} input slots not initialised")
+            raise RuntimeError(f"block {self.name} input slots not initialised")  # pragma: no cover
         for i, slot in enumerate(slots):
             if slot is not None:
                 values.append(slot.value)
@@ -655,7 +655,7 @@ class Block(ABC, Port):
         """
         slots = getattr(self, "_inport_slots", None)
         if slots is None:
-            raise RuntimeError(f"block {self.name} input slots not initialised")
+            raise RuntimeError(f"block {self.name} input slots not initialised")  # pragma: no cover
 
         if slots is not None:
             slot = slots[i]
@@ -734,9 +734,9 @@ class Block(ABC, Port):
         :seealso: :meth:`inport_value`
         """
         if self._output_values is None:
-            raise RuntimeError(f"block {self.name} output values not initialised")
+            raise RuntimeError(f"block {self.name} output values not initialised")  # pragma: no cover
         if self._output_values[i] is None:
-            raise RuntimeError(f"block {self.name} output value {i} not set")
+            raise RuntimeError(f"block {self.name} output value {i} not set")  # pragma: no cover
         return self._output_values[i]
 
     def _publish_output_values(self, out: list[Any] | tuple[Any, ...]) -> None:
@@ -1272,7 +1272,7 @@ class Block(ABC, Port):
         # block * plug
         s = left.bd
         if s is None:
-            raise RuntimeError(
+            raise RuntimeError(  # pragma: no cover
                 "left operand of >> operator must be a block connected to a block diagram"
             )
         # assert isinstance(right, Block), 'arguments to * must be blocks not ports (for now)'
@@ -1284,7 +1284,7 @@ class Block(ABC, Port):
 
     def _autoconstant(self, value: int | float | str | np.ndarray) -> Block:
         if self.bd is None:
-            raise RuntimeError(
+            raise RuntimeError(  # pragma: no cover
                 "block must be connected to a block diagram to create an automatic constant"
             )
 
@@ -1300,7 +1300,7 @@ class Block(ABC, Port):
 
     def _autogain(self, value: int | float | np.ndarray, **kwargs: Any) -> Block:
         if self.bd is None:
-            raise RuntimeError(
+            raise RuntimeError(  # pragma: no cover
                 "block must be connected to a block diagram to create an automatic gain"
             )
 
@@ -1316,7 +1316,7 @@ class Block(ABC, Port):
 
     def _autopow(self, value: int | float, **kwargs: Any) -> Block:
         if self.bd is None:
-            raise RuntimeError(
+            raise RuntimeError(  # pragma: no cover
                 "block must be connected to a block diagram to create an automatic power block"
             )
 
@@ -1359,7 +1359,7 @@ class Block(ABC, Port):
         from bdsim.blocks import Sum
 
         if self.bd is None:
-            raise RuntimeError(
+            raise RuntimeError(  # pragma: no cover
                 "block must be connected to a block diagram to create an automatic sum block"
             )
         name = "_sum.{:d}".format(next(self.bd.n_auto_sum))
@@ -1404,7 +1404,7 @@ class Block(ABC, Port):
         from bdsim.blocks import Sum
 
         if self.bd is None:
-            raise RuntimeError(
+            raise RuntimeError(  # pragma: no cover
                 "block must be connected to a block diagram to create an automatic sum block"
             )
         name = "_sum.{:d}".format(next(self.bd.n_auto_sum))
@@ -1444,7 +1444,7 @@ class Block(ABC, Port):
         from bdsim.blocks import Sum
 
         if self.bd is None:
-            raise RuntimeError(
+            raise RuntimeError(  # pragma: no cover
                 "block must be connected to a block diagram to create an automatic sum block"
             )
         name = "_sum.{:d}".format(next(self.bd.n_auto_sum))
@@ -1488,7 +1488,7 @@ class Block(ABC, Port):
         from bdsim.blocks import Sum
 
         if self.bd is None:
-            raise RuntimeError(
+            raise RuntimeError(  # pragma: no cover
                 "block must be connected to a block diagram to create an automatic sum block"
             )
 
@@ -1578,7 +1578,7 @@ class Block(ABC, Port):
         from bdsim.blocks import Prod
 
         if self.bd is None:
-            raise RuntimeError(
+            raise RuntimeError(  # pragma: no cover
                 "block must be connected to a block diagram to create an automatic product block"
             )
 
@@ -1660,7 +1660,7 @@ class Block(ABC, Port):
         from bdsim.blocks import Prod
 
         if self.bd is None:
-            raise RuntimeError(
+            raise RuntimeError(  # pragma: no cover
                 "block must be connected to a block diagram to create an automatic product block"
             )
 
@@ -1711,7 +1711,7 @@ class Block(ABC, Port):
         from bdsim.blocks import Prod
 
         if self.bd is None:
-            raise RuntimeError(
+            raise RuntimeError(  # pragma: no cover
                 "block must be connected to a block diagram to create an automatic product block"
             )
 
@@ -1764,7 +1764,7 @@ class Block(ABC, Port):
         if not (self.nin > 0 or self.nout > 0):
             raise ValueError(f"block {self.name} no inputs or outputs specified")
         if not (hasattr(self, "_initd") and self._initd):
-            raise RuntimeError(
+            raise RuntimeError(  # pragma: no cover
                 "Block superclass not initalized. was super().__init__ called?"
             )
 

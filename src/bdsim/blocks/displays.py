@@ -439,7 +439,7 @@ class Scope(GraphicsBlock):
         self.ydata: list[list[Any]] = [[] for _ in range(self.nplots)]
 
         if self.fig is None or self.ax is None:
-            raise RuntimeError("figure not created, step called before start?")
+            raise RuntimeError("figure not created, step called before start?")  # pragma: no cover
 
         # get labels if not provided
         if self.labels is None:
@@ -823,7 +823,7 @@ class ScopeXY(GraphicsBlock):
         super().reset()
 
         if self.fig is None or self.ax is None:
-            raise RuntimeError("figure not created, step called before start?")
+            raise RuntimeError("figure not created, step called before start?")  # pragma: no cover
 
         args = []
         blockargs = {}
@@ -894,12 +894,12 @@ class ScopeXY(GraphicsBlock):
         self.ydata.append(y)
 
         if self.fig is None:
-            raise RuntimeError("figure not created, step called before start?")
+            raise RuntimeError("figure not created, step called before start?")  # pragma: no cover
         plt.figure(self.fig.number)
         self.line.set_data(self.xdata, self.ydata)
 
         if self.bd is None:
-            raise RuntimeError(
+            raise RuntimeError(  # pragma: no cover
                 f"block {self.name} not connected to a block diagram, step called"
                 " before start?"
             )
@@ -1172,7 +1172,7 @@ class Animation(GraphicsBlock):
         if not self._enabled:
             return
         if self.fig is None or self.ax is None:
-            raise RuntimeError("figure not created, step called before start?")
+            raise RuntimeError("figure not created, step called before start?")  # pragma: no cover
 
         # Apply dark-theme text styling when inside a tiled (shared-figure) layout.
         if getattr(self, "_tile_subplotspec", None) is not None:

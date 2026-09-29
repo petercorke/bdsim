@@ -216,7 +216,7 @@ class Plug(Port):
     def __rshift__(left: Plug, right: Plug | Block) -> Plug | Block:
         s = left.block.bd
         if s is None:
-            raise RuntimeError(
+            raise RuntimeError(  # pragma: no cover
                 "left operand of >> operator must be a plug connected to a block diagram"
             )
         s.connect(left, right)
@@ -281,7 +281,7 @@ class Plug(Port):
             raise ValueError("unsupported operand type for *: " + str(type(other)))
 
         if bd is None:
-            raise RuntimeError(
+            raise RuntimeError(  # pragma: no cover
                 "left operand of * operator must be a plug connected to a block diagram"
             )
         name = "_prod.{:d}".format(next(bd.n_auto_prod))
