@@ -99,8 +99,8 @@ def clone_wiki() -> bool:
         return False
 
     shutil.rmtree(WIKI, ignore_errors=True)
-    result = subprocess.run(  # nosec B603 B607 -- git resolved via shutil.which();
-        # WIKI_GIT is a hardcoded constant, not user input
+    # git resolved via shutil.which() above; WIKI_GIT is a hardcoded constant, not user input.
+    result = subprocess.run(  # nosec B603 B607  # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-audit.dangerous-subprocess-use-audit
         [git, "clone", "-q", "--depth", "1", WIKI_GIT, str(WIKI)],
         capture_output=True,
         text=True,
@@ -149,9 +149,8 @@ def main() -> None:
     sphinxbuild = shutil.which(sphinxbuild_name)
     if sphinxbuild is None:
         raise SystemExit(f"sphinx-build not found: {sphinxbuild_name!r}")
-    # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-audit.dangerous-subprocess-use-audit,python.lang.security.audit.dangerous-subprocess-use-tainted-env-args.dangerous-subprocess-use-tainted-env-args
     subprocess.run(  # nosec B603 -- sphinxbuild resolved via shutil.which() above
-        [sphinxbuild, "-q", "-b", "text", str(SOURCE), str(TEXT)],
+        [sphinxbuild, "-q", "-b", "text", str(SOURCE), str(TEXT)],  # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-audit.dangerous-subprocess-use-audit,python.lang.security.audit.dangerous-subprocess-use-tainted-env-args.dangerous-subprocess-use-tainted-env-args
         check=True,
     )
     pages = ["index"] + toctree_pages(SOURCE / "index.rst")
