@@ -1,5 +1,7 @@
 # bdsim — Agent Instructions
 
+> **Audience:** agents working on bdsim's source code. If you're helping someone *use* bdsim, read https://petercorke.github.io/bdsim/llms.txt instead (or `llms-full.txt` for the complete documentation and wiki).
+
 Part of the RVC ecosystem. **Read [rvc-ecosystem/AGENTS.md](https://github.com/petercorke/rvc-ecosystem/blob/main/AGENTS.md) first** — it defines shared conventions: repo ownership, math invariants, dependency boundaries, git/PR workflow, code standards, tech-debt tracking. This file only adds what's specific to this repo.
 
 | | |

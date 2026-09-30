@@ -54,6 +54,7 @@ EXTRA_LINKS = [
     ("Source code", "https://github.com/petercorke/bdsim", "GitHub repository; examples are in examples/"),
     ("PyPI", "https://pypi.org/project/bdsim/", "install with pip install bdsim"),
     ("RVC ecosystem", "https://github.com/petercorke/rvc-ecosystem", "how bdsim relates to the Robotics and Machine Vision Toolboxes"),
+    ("Contributing", "https://github.com/petercorke/bdsim/blob/main/AGENTS.md", "repo conventions and workflow, for agents working on bdsim's source code"),
 ]
 
 
