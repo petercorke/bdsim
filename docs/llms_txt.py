@@ -27,7 +27,10 @@ from __future__ import annotations
 import os
 import re
 import shutil
-import subprocess
+# Used only for `git clone` (fixed args, hardcoded URL) and re-invoking
+# `sphinx-build`, both resolved via shutil.which() below; this is a local/CI
+# docs-build script, not code that runs against untrusted input.
+import subprocess  # nosec B404
 import sys
 from dataclasses import dataclass, field
 from importlib.metadata import metadata
@@ -90,8 +93,18 @@ def clone_wiki() -> bool:
 
     :return: whether the clone succeeded
     """
+    git = shutil.which("git")
+    if git is None:
+        print("warning: wiki not included, git not found on PATH", file=sys.stderr)
+        return False
+
     shutil.rmtree(WIKI, ignore_errors=True)
-    result = subprocess.run(["git", "clone", "-q", "--depth", "1", WIKI_GIT, str(WIKI)], capture_output=True, text=True)
+    result = subprocess.run(  # nosec B603 B607 -- git resolved via shutil.which();
+        # WIKI_GIT is a hardcoded constant, not user input
+        [git, "clone", "-q", "--depth", "1", WIKI_GIT, str(WIKI)],
+        capture_output=True,
+        text=True,
+    )
     if result.returncode:
         print(f"warning: wiki not included, clone failed: {result.stderr.strip()}", file=sys.stderr)
     return result.returncode == 0
@@ -128,8 +141,17 @@ def main() -> None:
     base = urls["documentation"].rstrip("/") + "/"
     name, summary = meta["Name"], meta["Summary"]
 
-    subprocess.run(
-        [os.environ.get("SPHINXBUILD", "sphinx-build"), "-q", "-b", "text", str(SOURCE), str(TEXT)],
+    # SPHINXBUILD matches the same override convention as docs/Makefile's
+    # `SPHINXBUILD ?= sphinx-build` (lets it point at a specific venv's build,
+    # not attacker-facing input) -- resolved via shutil.which() to a full path
+    # before use.
+    sphinxbuild_name = os.environ.get("SPHINXBUILD", "sphinx-build")
+    sphinxbuild = shutil.which(sphinxbuild_name)
+    if sphinxbuild is None:
+        raise SystemExit(f"sphinx-build not found: {sphinxbuild_name!r}")
+    # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-audit.dangerous-subprocess-use-audit,python.lang.security.audit.dangerous-subprocess-use-tainted-env-args.dangerous-subprocess-use-tainted-env-args
+    subprocess.run(  # nosec B603 -- sphinxbuild resolved via shutil.which() above
+        [sphinxbuild, "-q", "-b", "text", str(SOURCE), str(TEXT)],
         check=True,
     )
     pages = ["index"] + toctree_pages(SOURCE / "index.rst")
