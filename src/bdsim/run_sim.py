@@ -1410,7 +1410,7 @@ class BDSim(Runner):
                             f"  (simulated {simstate.T:.3g}s in {run_wall_time*1000:.1f} ms)"
                         )
                         print(f"  integration time points:   {len(simstate.tlist)}")
-                        print(f"  scheduled event intervals: 0")
+                        print("  scheduled event intervals: 0")
                         print(attr(0))
                     # Build output struct
                     out = BDStruct(name="results")

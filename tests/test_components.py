@@ -168,7 +168,7 @@ class ClockTest(unittest.TestCase):
         clocklist.clear()
 
         c = Clock(2)
-        block = ZOH(c)
+        ZOH(c)
 
         s = str(c)
         self.assertIsInstance(s, str)
@@ -181,7 +181,7 @@ class ClockTest(unittest.TestCase):
         self.assertIn("T=2", r)
 
         c = Clock(2, offset=1, name="myclock")
-        block = ZOH(c)
+        ZOH(c)
         r = repr(c)
         self.assertIsInstance(r, str)
         self.assertIn("myclock", r)
@@ -213,7 +213,7 @@ class ClockTest(unittest.TestCase):
         clocklist.clear()
 
         c = Clock(2, offset=1)
-        block1 = ZOH(c, x0=3)
+        ZOH(c, x0=3)
 
         self.assertEqual(c.time(0), 1)
         self.assertEqual(c.time(1), 3)
@@ -265,7 +265,7 @@ class StructTest(unittest.TestCase):
         self.assertEqual(s.a, 2)
         self.assertEqual(s.b, 3)
         with self.assertRaises(AttributeError):
-            z = s.c
+            s.c
 
         s.c = 4
         self.assertEqual(s.c, 4)
@@ -309,7 +309,7 @@ class StructTest(unittest.TestCase):
 
 class OptionTest(unittest.TestCase):
     def test_init(self):
-        opt = OptionsBase()
+        OptionsBase()
 
     def test_init1(self):
         opt = OptionsBase(dict(foo=1, bar="hello"))

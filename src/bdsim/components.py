@@ -352,7 +352,7 @@ class TimeQ:
 
     def __repr__(self) -> str:
         if len(self) == 0:
-            return f"TimeQ(len=0)"
+            return "TimeQ(len=0)"
         first = self._heap[0]
         return f"TimeQ(len={len(self)}, nextout={first[2]} @ t={first[0]})"
 
@@ -495,7 +495,7 @@ class Runner:
         context = self._require_context()
         if context.options.hold:
             block = context.options.hold
-        bd.done()
+        bd.done(block=block)
 
     def closefigs(self) -> None:
         pass
@@ -526,7 +526,6 @@ class Clock:
     def __init__(
         self, arg: float, unit: str = "s", offset: float = 0, name: str | None = None
     ) -> None:
-        global clocklist
         if unit == "s":
             self.T = arg
         elif unit == "ms":
@@ -571,7 +570,7 @@ class Clock:
         s = f"Clock {self.name}:\n  T = {self.T}"
         if self.offset != 0:
             s += f"\n  offset = {self.offset}"
-        s += f"\n  blocks:\n"
+        s += "\n  blocks:\n"
         for b in self.blocklist:
             s += f"    {b.name}\n"
         return s

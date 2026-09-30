@@ -261,7 +261,6 @@ class WaveForm(SourceBlock, EventSource):
                 t2 += T
 
     def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
-        T: float = 1.0 / self.freq
         phase = (t * self.freq - self.phase) % 1.0
 
         # define all signals in the range -1 to 1

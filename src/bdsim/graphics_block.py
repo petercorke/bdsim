@@ -542,7 +542,6 @@ class GraphicsBlock(SinkBlock):
                 # so preserve the normal figure size instead of shrinking the
                 # container to a single-tile window.
                 default_figsize = list(f.get_size_inches())
-                effective_dpi = dpi * dpiscale
                 if ntiles is None or ntiles == [1, 1]:
                     figsize = default_figsize
                 else:
