@@ -826,13 +826,13 @@ class ScopeXY(GraphicsBlock):
             raise RuntimeError("figure not created, step called before start?")  # pragma: no cover
 
         args = []
-        blockargs = {}
+        kwargs = {}
         style = self.styles
         if isinstance(style, dict):
-            blockargs = style
+            kwargs = style
         elif isinstance(style, str):
             args = [style]
-        (self.line,) = self.ax.plot(self.xdata, self.ydata, *args)
+        (self.line,) = self.ax.plot(self.xdata, self.ydata, *args, **kwargs)
 
         self.ax.grid(True)
         self.ax.set_xlabel(self.labels[0])

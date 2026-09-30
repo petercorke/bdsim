@@ -438,8 +438,6 @@ class SubSystem(SubsystemBlock):
         :raises ValueError: invalid argument type or .bd load constraints not met
         """
 
-        resolved_subsys: BlockDiagram
-
         name = None
 
         if isinstance(subsys, str):
@@ -606,7 +604,6 @@ class OutPort(FunctionBlock):
 
 
 if __name__ == "__main__":  # pragma: no cover
-    from pathlib import Path
     import subprocess
     import sys
 

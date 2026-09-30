@@ -357,7 +357,6 @@ class Block(ABC, Port):
             "SubsystemBlock": ["deriv", "output", "next", "step"],
         }
         blockclass = cls.__mro__[1].__name__
-        x = ":".join([c.__name__ for c in cls.__mro__])
         if blockclass in disallowed:
             # raise ValueError(
             #     f"unknown block class {blockclass} for class {cls.__name__}"
@@ -1275,9 +1274,7 @@ class Block(ABC, Port):
             raise RuntimeError(  # pragma: no cover
                 "left operand of >> operator must be a block connected to a block diagram"
             )
-        # assert isinstance(right, Block), 'arguments to * must be blocks not ports (for now)'
-        w = s.connect(left, right)  # type: ignore[func-returns-value]
-        # print('block * ' + str(w))
+        s.connect(left, right)
         return right
 
         # make connection, return a plug

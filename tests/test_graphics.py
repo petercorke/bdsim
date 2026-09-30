@@ -317,7 +317,7 @@ class CreateFigureTest(unittest.TestCase):
         """create_figure() with tiles='2x2' exercises different ntiles computation."""
         gb = self._make_gb()
         state = _make_gstate(tiles="2x2")
-        f = gb.create_figure(state)
+        gb.create_figure(state)
         self.assertEqual(state.ntiles, [2, 2])
         plt.close("all")
 
@@ -371,7 +371,7 @@ class CreateFigureTest(unittest.TestCase):
             MagicMock(isgraphics=True),
         ]
         state = _make_gstate(tiles="square")
-        f = gb.create_figure(state)
+        gb.create_figure(state)
         self.assertEqual(state.ntiles, [2, 2])
         plt.close("all")
 
@@ -384,7 +384,7 @@ class CreateFigureTest(unittest.TestCase):
             MagicMock(isgraphics=True),
         ]
         state = _make_gstate(tiles="wide")
-        f = gb.create_figure(state)
+        gb.create_figure(state)
         self.assertEqual(state.ntiles, [1, 3])
         plt.close("all")
 
@@ -397,7 +397,7 @@ class CreateFigureTest(unittest.TestCase):
             MagicMock(isgraphics=True),
         ]
         state = _make_gstate(tiles="tall")
-        f = gb.create_figure(state)
+        gb.create_figure(state)
         self.assertEqual(state.ntiles, [3, 1])
         plt.close("all")
 

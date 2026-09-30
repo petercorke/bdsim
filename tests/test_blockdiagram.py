@@ -870,13 +870,13 @@ class LabelTest(unittest.TestCase):
                 super().__init__(**kwargs)
 
         with self.assertRaises(AssertionError):
-            mb = MyBlock(nin=1, nout=2)
+            MyBlock(nin=1, nout=2)
 
         with self.assertRaises(AssertionError):
-            mb = MyBlock(nin=2, nout=3)
+            MyBlock(nin=2, nout=3)
 
         with self.assertRaises(AssertionError):
-            mb = MyBlock()
+            MyBlock()
 
     def test_label4c(self):
         # provide labels and infer number of ports from labels
@@ -1153,7 +1153,6 @@ class ConnectVariantsTest(SetUpMixin, unittest.TestCase):
         const = bd.CONSTANT([3, 4])
         demux = bd.DEMUX(2)
         dst1 = bd.NULL(1)
-        dst2 = bd.NULL(1)
         bd.connect(const, demux)
         # The start-slice -> Block branch falls through to an 'else: raise ValueError'
         # because the second conditional uses 'if' instead of 'elif' in the source.

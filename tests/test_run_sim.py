@@ -77,8 +77,8 @@ class TimeQTest(unittest.TestCase):
         q.push((1.0, "a"))
         q.push((2.0, "b"))
         result = q.pop_until(2.0)
-        # Items with t <= 2.0 should remain (or be popped — behavior depends on impl.)
-        # The function removes items with t <= t_thresh
+        # pop_until removes and returns items with t <= t_thresh, sorted by t
+        self.assertEqual(result, [(1.0, "a"), (2.0, "b")])
         # After pop_until(2.0), only the items with t > 2.0 remain
         remaining, _ = q.pop()
         self.assertEqual(remaining, 3.0)
@@ -462,7 +462,7 @@ class SimRunCoverageTest(unittest.TestCase):
             tmpname = tmp.name
         try:
             self.sim.options.outfile = tmpname
-            out = self.sim.run(bd, T=0.5)
+            self.sim.run(bd, T=0.5)
             self.assertTrue(os.path.exists(tmpname))
             self.assertGreater(os.path.getsize(tmpname), 0)
         finally:
@@ -962,7 +962,7 @@ class LazyBlockClassTest(unittest.TestCase):
         """_LazyBlockClass should resolve on first __call__."""
         lazy = _LazyBlockClass("bdsim.blocks.sources", "Constant")
         # Calling the lazy proxy should resolve it
-        block_instance = lazy(1)  # Create a Constant(1) block
+        lazy(1)  # Create a Constant(1) block
         self.assertIsNotNone(lazy._resolved)
         # Should be the actual Block class
         self.assertTrue(hasattr(lazy._resolved, "__mro__"))
@@ -1076,7 +1076,7 @@ class LazyResolutionTest(unittest.TestCase):
         self.assertIsInstance(const_info["class"], _LazyBlockClass)
 
         # Call factory to create a block
-        block = bd.CONSTANT(42)
+        bd.CONSTANT(42)
 
         # After factory call, class should be resolved
         self.assertNotIsInstance(const_info["class"], _LazyBlockClass)
@@ -1146,9 +1146,9 @@ class IntegrationTest(unittest.TestCase):
         bd = self.sim.blockdiagram()
 
         # Sources module should load only once even with multiple blocks
-        const1 = bd.CONSTANT(1)
-        const2 = bd.CONSTANT(2)
-        time_block = bd.TIME()  # Also from sources module
+        bd.CONSTANT(1)
+        bd.CONSTANT(2)
+        bd.TIME()  # Also from sources module
 
         # All source blocks should now be resolved (promoted)
         for block_name in ["CONSTANT", "TIME"]:

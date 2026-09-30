@@ -150,7 +150,7 @@ def test_pyplot_add_patch_suppresses_show_and_draw(monkeypatch):
     nbp = _fresh_nbp()
     nbp.patch_roboticstoolbox_pyplot_launch_for_notebook()
 
-    fig = plt.figure()
+    plt.figure()
     initial_fignums = set(plt.get_fignums())
 
     instance = cls()
@@ -415,7 +415,6 @@ def test_armplot_patch_notebook_suppresses_plt_draw(monkeypatch):
     nbp = _fresh_nbp()
     nbp.patch_roboticstoolbox_armplot_for_notebook()
 
-    draw_during_step: list[bool] = []
     plt_draw_was_suppressed: list[bool] = []
 
     real_draw = plt.draw
