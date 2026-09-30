@@ -149,8 +149,8 @@ def main() -> None:
     sphinxbuild = shutil.which(sphinxbuild_name)
     if sphinxbuild is None:
         raise SystemExit(f"sphinx-build not found: {sphinxbuild_name!r}")
-    subprocess.run(  # nosec B603 -- sphinxbuild resolved via shutil.which() above
-        [sphinxbuild, "-q", "-b", "text", str(SOURCE), str(TEXT)],  # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-audit.dangerous-subprocess-use-audit,python.lang.security.audit.dangerous-subprocess-use-tainted-env-args.dangerous-subprocess-use-tainted-env-args
+    subprocess.run(  # nosec B603 -- sphinxbuild resolved via shutil.which() above  # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-audit.dangerous-subprocess-use-audit
+        [sphinxbuild, "-q", "-b", "text", str(SOURCE), str(TEXT)],  # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-tainted-env-args.dangerous-subprocess-use-tainted-env-args
         check=True,
     )
     pages = ["index"] + toctree_pages(SOURCE / "index.rst")
