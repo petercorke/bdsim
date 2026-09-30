@@ -70,7 +70,7 @@ jobs:
 
       - name: Build Sphinx docs
         run: |
-          make -C docs html
+          make -C docs html llms
 
       - name: Prepare notebooks for JupyterLite
         run: |
