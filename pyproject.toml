@@ -41,8 +41,6 @@ dev = [
     "sympy",
     "pytest",
     "pytest-timeout",
-    "pytest-xvfb",
-    "pytest-qt",
     "coverage",
     "flake8",
     "ipython",
