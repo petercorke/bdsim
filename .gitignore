@@ -35,6 +35,8 @@ eggs/
 .eggs/
 lib/
 lib64/
+# ...but the bdweb SvelteKit frontend keeps its sources in src/lib (the $lib alias)
+!src/bdweb/frontend/src/lib/
 parts/
 sdist/
 var/
