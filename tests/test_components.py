@@ -1,4 +1,5 @@
 import unittest
+import inspect
 import numpy as np
 import numpy.testing as nt
 import tempfile
@@ -6,6 +7,7 @@ import os
 
 import bdsim
 from bdsim.components import BDStruct, Clock, OptionsBase, Plug, Wire, clocklist
+from bdsim.block import Block
 from bdsim.blocks import Constant, Mux, Null, Scope, ZOH
 from bdsim import TimeQ, BlockDiagram
 
@@ -371,6 +373,46 @@ class OptionTest(unittest.TestCase):
         opt = OptionsBase({}, dict(foo=1))
         with self.assertRaises(AttributeError):
             opt.__getattr__("_does_not_exist")
+
+
+class OodebugTest(unittest.TestCase):
+    # operator overloads on Block and Plug are wrapped by the oodebug
+    # decorator; functools.wraps must be applied so that introspection
+    # (Sphinx autodoc typehints, inspect.signature) sees the real method
+    # rather than the wrapper - see issue #78
+
+    dunders = (
+        "__rshift__",
+        "__add__",
+        "__radd__",
+        "__sub__",
+        "__rsub__",
+        "__neg__",
+        "__pow__",
+        "__mul__",
+        "__rmul__",
+        "__truediv__",
+        "__rtruediv__",
+    )
+
+    def test_operator_methods_keep_wrapped_metadata(self):
+        for cls in (Block, Plug):
+            for name in self.dunders:
+                with self.subTest(cls=cls.__name__, method=name):
+                    meth = getattr(cls, name)
+                    # functools.wraps sets __wrapped__ on the wrapper
+                    self.assertTrue(hasattr(meth, "__wrapped__"))
+                    self.assertEqual(meth.__name__, name)
+                    # the signature must be that of the original method,
+                    # not the wrapper's (*args, **kwargs)
+                    params = list(inspect.signature(meth).parameters)
+                    self.assertNotEqual(params, ["args", "kwargs"])
+                    self.assertEqual(
+                        params,
+                        list(inspect.signature(meth.__wrapped__).parameters),
+                    )
+                    # the original docstring must be visible too
+                    self.assertEqual(meth.__doc__, meth.__wrapped__.__doc__)
 
 
 # ---------------------------------------------------------------------------------------#

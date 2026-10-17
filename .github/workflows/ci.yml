@@ -113,7 +113,14 @@ jobs:
         with:
           files: ./coverage.xml
 
+      # Repository secrets are not passed to workflows triggered by pull requests
+      # from forks (or by Dependabot), so the token is empty there and the
+      # reporter would fail the job. Upload only where the secret exists.
       - name: Upload coverage to Codacy
+        if: >-
+          github.event_name != 'pull_request' ||
+          (github.event.pull_request.head.repo.full_name == github.repository &&
+          github.actor != 'dependabot[bot]')
         uses: codacy/codacy-coverage-reporter-action@89d6c85cfafaec52c72b6c5e8b2878d33104c699 # v1.3.0
         with:
           api-token: ${{ secrets.CODACY_API_TOKEN }}
