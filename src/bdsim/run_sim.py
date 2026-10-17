@@ -2153,37 +2153,36 @@ class BDSim(Runner):
             return f
 
         # bind the block constructors as new methods on this instance
-        if self._blocklibrary is None:
-            raise RuntimeError("block library not loaded")  # pragma: no cover
-        for blockname, info in self._blocklibrary.items():
-            # create a function to invoke the block's constructor
-            f = new_method(blockname, bd)
+        if self._blocklibrary is not None:
+            for blockname, info in self._blocklibrary.items():
+                # create a function to invoke the block's constructor
+                f = new_method(blockname, bd)
 
-            # Use metadata docstring to avoid forcing class resolution at bind time.
-            f.__doc__ = info.get("doc")
+                # Use metadata docstring to avoid forcing class resolution at bind time.
+                f.__doc__ = info.get("doc")
 
-            # get a bound version of this function
-            bound_method: types.MethodType = f.__get__(self)
-            # and set it as an attribute of the instance
-            setattr(bd, blockname, bound_method)
+                # get a bound version of this function
+                bound_method: types.MethodType = f.__get__(self)
+                # and set it as an attribute of the instance
+                setattr(bd, blockname, bound_method)
 
-        # finally we need to check that all the upper-case methods of the block diagram
-        # have been defined via load_blocks. If they are just a stub we replace that
-        # with a function that raises an exception at runtime.
-        for blockname in dir(bd):
-            if blockname.isupper() and blockname not in self._blocklibrary.keys():
-                # this is a method we haven't already defined, so add it as a
-                # factory method that raises an error if called
-                # print(f"block {blockname} is not defined in the block library")
+            # finally we need to check that all the upper-case methods of the block diagram
+            # have been defined via load_blocks. If they are just a stub we replace that
+            # with a function that raises an exception at runtime.
+            for blockname in dir(bd):
+                if blockname.isupper() and blockname not in self._blocklibrary.keys():
+                    # this is a method we haven't already defined, so add it as a
+                    # factory method that raises an error if called
+                    # print(f"block {blockname} is not defined in the block library")
 
-                def undefined_block_factory(
-                    *args: Any, blockname: str = blockname, **kwargs: Any
-                ) -> NoReturn:
-                    raise NotImplementedError(
-                        f"block {blockname} is not defined in the block library: missing block definition, block path error, or syntax error in the body of the block's code."
-                    )
+                    def undefined_block_factory(
+                        *args: Any, blockname: str = blockname, **kwargs: Any
+                    ) -> NoReturn:
+                        raise NotImplementedError(
+                            f"block {blockname} is not defined in the block library: missing block definition, block path error, or syntax error in the body of the block's code."
+                        )
 
-                setattr(bd, blockname, undefined_block_factory)
+                    setattr(bd, blockname, undefined_block_factory)
 
         # add a clone of the options
         # bd.options = copy.copy(self.options)
