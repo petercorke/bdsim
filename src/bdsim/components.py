@@ -8,6 +8,7 @@ import warnings
 import unicodedata
 import heapq
 from collections import UserDict
+from functools import wraps
 
 import numpy as np
 from typing import TYPE_CHECKING, Any, Callable, Protocol, TypeVar, runtime_checkable
@@ -36,6 +37,7 @@ _F = TypeVar("_F", bound=Callable[..., Any])
 
 # decorator for debugging implicit block creation with operator overloading
 def oodebug(func: _F) -> _F:
+    @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         ret = func(*args, **kwargs)
         # print(f"{func.__qualname__}{args} --> {ret}")
