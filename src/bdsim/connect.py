@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 from typing import Any, Callable, TYPE_CHECKING, TypeVar
 
 import numpy as np
@@ -16,6 +17,7 @@ _F = TypeVar("_F", bound=Callable[..., Any])
 # decorator for debugging implicit block creation with operator overloading
 # kept local to avoid an import cycle with components.py
 def oodebug(func: _F) -> _F:
+    @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         ret = func(*args, **kwargs)
         # print(f"{func.__qualname__}{args} --> {ret}")
