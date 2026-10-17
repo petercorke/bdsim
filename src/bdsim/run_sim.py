@@ -2123,6 +2123,10 @@ class BDSim(Runner):
         # instantiate a new blockdiagram
         #  it includes stubs for factory methods defined in the BlockDiagramMixin class
         bd = BlockDiagram(name=name)
+        bd.runtime = self
+
+        if self._blocklibrary is None:
+            return bd
 
         def new_method(block_name: str, bd: Any) -> Any:
             # return a wrapper for the block constructor that automatically
@@ -2153,8 +2157,6 @@ class BDSim(Runner):
             return f
 
         # bind the block constructors as new methods on this instance
-        if self._blocklibrary is None:
-            raise RuntimeError("block library not loaded")  # pragma: no cover
         for blockname, info in self._blocklibrary.items():
             # create a function to invoke the block's constructor
             f = new_method(blockname, bd)
@@ -2184,10 +2186,6 @@ class BDSim(Runner):
                     )
 
                 setattr(bd, blockname, undefined_block_factory)
-
-        # add a clone of the options
-        # bd.options = copy.copy(self.options)
-        bd.runtime = self
 
         return bd
 
