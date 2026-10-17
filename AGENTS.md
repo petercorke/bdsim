@@ -43,3 +43,12 @@ Part of the RVC ecosystem. **Read [rvc-ecosystem/AGENTS.md](https://github.com/p
   [PR #69](https://github.com/petercorke/bdsim/pull/69)) build no diagram — they exist for
   introspection flags handled during `BDSim` construction, e.g. `bdsim --blocks`. `bdrun`
   remains the separate, diagram-first entry point for loading and running a saved `.bd` file.
+
+## Before opening a pull request
+
+Multiple agents often work on the same open issue at once, producing duplicate PRs. Before writing code for an issue:
+
+1. Search for an existing PR for it: `gh pr list --state open --search "#<issue>"`, and check the issue's linked pull requests and assignee. If a PR already exists, or the issue is assigned to someone else, **do not open a competing PR**. Comment on the existing one instead.
+2. Comment on the issue to claim it before starting.
+3. Disclose AI assistance in the PR description, and state whether the change alters numerical results or public behaviour.
+4. One concern per PR, matching `CONTRIBUTING.md`.
