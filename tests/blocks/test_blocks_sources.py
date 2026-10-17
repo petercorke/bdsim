@@ -34,7 +34,7 @@ Created on Thu May 21 06:39:29 2020
 import numpy as np
 import math
 
-from bdsim.blocks.sources import *
+from bdsim.blocks.sources import Constant, Piecewise, Ramp, Step, Time, WaveForm
 
 import unittest
 import numpy.testing as nt

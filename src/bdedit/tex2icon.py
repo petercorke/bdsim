@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import shutil
 import tempfile
 import os
 import sys
@@ -57,6 +58,20 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    # fail fast with a clear message if the toolchain isn't on PATH, rather
+    # than letting a missing tool surface as an opaque exception (or, for
+    # pdflatex specifically, an interactive prompt that hangs forever)
+    # several steps deeper in the pipeline
+    missing = [
+        tool for tool in ("pdflatex", "pdfcrop", "gs") if shutil.which(tool) is None
+    ]
+    if missing:
+        print(
+            f"bdtex2icon: missing required tool(s): {', '.join(missing)} -- "
+            "install a LaTeX distribution (pdflatex, pdfcrop) and Ghostscript (gs)"
+        )
+        sys.exit(1)
+
     # look for rvc-notation on LaTeX path, see https://github.com/petercorke/rvc-notation
     try:
         subprocess.run(
@@ -82,7 +97,14 @@ def main() -> None:
         if args.verbose:
             print("run pdflatex on ", source_path)
         subprocess.run(
-            ["pdflatex", "-output-directory", source_path.parent, source_path.name],
+            [
+                "pdflatex",
+                "-interaction=nonstopmode",
+                "-halt-on-error",
+                "-output-directory",
+                source_path.parent,
+                source_path.name,
+            ],
             stdout=subprocess.DEVNULL,
             stdin=subprocess.DEVNULL,
             check=True,
@@ -106,7 +128,7 @@ def main() -> None:
         # run gs to convert cropped pdf to png file
         # user can control the resolution to scale the icon
         gs_args = [
-            "/usr/local/bin/gs",
+            shutil.which("gs"),
             "-sDEVICE=pngalpha",
             "-sOutputFile=%stdout",
             "-r" + str(args.r * 5),
@@ -154,8 +176,16 @@ def main() -> None:
         Image.fromarray(icon_rgba).save(args.o)
         print("icon saved --> ", args.o)
 
-    except (OSError, ValueError, subprocess.CalledProcessError):
-        print("exception during processing pipeline, requires: pdflatex, gs, pdfcrop")
+    except (OSError, ValueError, subprocess.CalledProcessError) as e:
+        failed = True
+        print(f"bdtex2icon: failed during processing pipeline: {e}")
+        if args.verbose:
+            log_path = source_path.with_suffix(".log")
+            if log_path.exists():
+                print(f"--- {log_path} (tail) ---")
+                print("\n".join(log_path.read_text(errors="replace").splitlines()[-20:]))
+    else:
+        failed = False
 
     # cleanup all the temporary files
     for suffix in (".aux", ".log", ".pdf", ".tex"):
@@ -165,6 +195,9 @@ def main() -> None:
         cropped_filename.unlink(missing_ok=True)
     except UnboundLocalError:
         pass
+
+    if failed:
+        sys.exit(1)
 
 
 if __name__ == "__main__":

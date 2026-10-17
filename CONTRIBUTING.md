@@ -1,39 +1,34 @@
-# Contributing
+# Contributing to bdsim
 
-This is a small-scale private project with a team size of about 0.01. I'd be delighted if you'd like to use and apply the tool, or even to contribute.
+Thanks for your interest in contributing! We welcome bug reports, fixes, new features, and documentation improvements.
 
-## Communicating
-GitHub Issues is a convenient means to discuss bugs or possible contributions.
+## Reporting issues
 
-## Bug notifications
-If you're using bdsim and encounter errors with the latest version from GitHub then please report it through GitHib Issues.  Be sure to include:
+Please use the issue template and include:
 
-* a description of what the issue is, and the stack trace you get
-* the version of Python and numpy that you are using
-* a runnable code example that demonstrates the issue
+- Your operating system, Python version, and bdsim version
+- A short, self-contained code example that reproduces the problem
 
-## Specific contributions needed
+## Looking for somewhere to start?
 
-* The numerical integrator from SciPy has some limitations.  It cannot handle:
-  *  hybrid continuous-discrete systems, 
-  *  events associated with strong non-linearities or discontinuous inputs,
-  *  allow the state vector to be updated (ie. as would be required to renormalize a unit-quaternion state).
-* Extend to support bond graphs, or a hybrid of bond graphs and block diagrams.
-* There are many more blocks that could be created but of immediate interest are:
-  * real-time blocks that interface to ADCs, DACs and PWM channels for use on a RaspberryPi
-  * vision blocks that interface to cameras, displays and OpenCV operators
+Issues labelled [`good first issue`](https://github.com/petercorke/bdsim/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) or [`help wanted`](https://github.com/petercorke/bdsim/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22) are a good place to start.
 
-## Other contributions
+## Contributing code
 
-These are welcome but it'd be great to discuss through GitHub Issues before you start.  You will be acknowledged as the author, but by contributing you are agreeing to your work being shared under the MIT Licence.  Contributions should have unit tests and good quality documentation.
+- Keep pull requests scoped to a single feature or fix. If you have several unrelated changes, open separate PRs so each can be reviewed and merged independently.
+- For API changes, propose the change in [Discussions](https://github.com/petercorke/bdsim/discussions) before opening a PR.
+- PR titles follow [Conventional Commits](https://www.conventionalcommits.org/) (`type: description`) — checked automatically on the PR.
+- Code is formatted with [black](https://pypi.org/project/black/); configuration is in `pyproject.toml` under `[tool.black]`.
+- New or changed code should be type-hinted using modern syntax (`X | Y`, `X | None`, `list[X]`, `dict[K, V]` — not `Union`, `Optional`, `List`, `Dict`).
+- Docstrings use reST style (`:param:`, `:returns:`). Type hints in the function signature already cover types, so `:type:`/`:rtype:` are rarely needed.
+- Any code change should be covered by tests and must not break existing ones. Tests live in `tests/`. Install the dev dependencies with `pip install -e '.[dev]'` (add `,docs` too if you're touching documentation), then run:
 
-## Feature requests
-These are unlikely to be implemented by me, it's a time thing...
+  ```
+  pytest --capture=no --timeout=50 --timeout_method=thread
+  ```
 
-## Any contributions you make will be under the MIT Software License
-In short, when you submit code changes, your submissions are understood to be under the same [MIT License](http://choosealicense.com/licenses/mit/) that covers the project. 
+- Target branch is `main`.
 
-## Code of conduct
+## License
 
-So far there isn't one, but if there were it would embed principles from the [Contributor Covenant Code Of Conduct](https://www.contributor-covenant.org/version/1/4/code-of-conduct).
-
+By contributing, you agree that your contributions will be licensed under this project's [MIT License](LICENSE).

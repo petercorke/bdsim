@@ -206,7 +206,8 @@ class WaveForm(SourceBlock, EventSource):
         """
         super().__init__(**blockargs)
 
-        assert 0 < duty < 1, "duty must be in range [0,1]"
+        if not (0 < duty < 1):
+            raise ValueError("duty must be in range [0,1]")
 
         if wave in ("square", "triangle", "sine"):
             self.wave: str = wave
@@ -260,7 +261,6 @@ class WaveForm(SourceBlock, EventSource):
                 t2 += T
 
     def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
-        T: float = 1.0 / self.freq
         phase = (t * self.freq - self.phase) % 1.0
 
         # define all signals in the range -1 to 1
@@ -369,7 +369,8 @@ class Piecewise(SourceBlock, EventSource):
         else:
             _seq = seq
 
-        assert _seq is not None, "no sequence provided"
+        if _seq is None:
+            raise ValueError("no sequence provided")
 
         self.t = [x[0] for x in _seq]
         self.y = [x[1] for x in _seq]

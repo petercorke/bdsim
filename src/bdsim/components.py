@@ -12,7 +12,7 @@ from collections import UserDict
 import numpy as np
 from typing import TYPE_CHECKING, Any, Callable, Protocol, TypeVar, runtime_checkable
 
-from bdsim.exceptions import BlockApiError, BlockRuntimeError, SimulationContextError
+from bdsim.exceptions import SimulationContextError
 
 if TYPE_CHECKING:
     from bdsim.blockdiagram import BlockDiagram
@@ -352,7 +352,7 @@ class TimeQ:
 
     def __repr__(self) -> str:
         if len(self) == 0:
-            return f"TimeQ(len=0)"
+            return "TimeQ(len=0)"
         first = self._heap[0]
         return f"TimeQ(len={len(self)}, nextout={first[2]} @ t={first[0]})"
 
@@ -495,7 +495,7 @@ class Runner:
         context = self._require_context()
         if context.options.hold:
             block = context.options.hold
-        bd.done()
+        bd.done(block=block)
 
     def closefigs(self) -> None:
         pass
@@ -514,7 +514,8 @@ class Runner:
             bd.report_schedule(**kwargs)
 
 
-from bdsim.connect import EndPlug, Plug, Port, StartPlug, Wire
+# Re-exported for bdsim.components.Plug / .Wire (e.g. tests/test_components.py).
+from bdsim.connect import Plug, Wire  # noqa: F401
 
 # ------------------------------------------------------------------------- #
 
@@ -525,7 +526,6 @@ class Clock:
     def __init__(
         self, arg: float, unit: str = "s", offset: float = 0, name: str | None = None
     ) -> None:
-        global clocklist
         if unit == "s":
             self.T = arg
         elif unit == "ms":
@@ -570,7 +570,7 @@ class Clock:
         s = f"Clock {self.name}:\n  T = {self.T}"
         if self.offset != 0:
             s += f"\n  offset = {self.offset}"
-        s += f"\n  blocks:\n"
+        s += "\n  blocks:\n"
         for b in self.blocklist:
             s += f"    {b.name}\n"
         return s
@@ -608,7 +608,6 @@ class Clock:
         else:
             # Compile-time fallback when no SimulationState is available.
             self._log_compile_fallback("_set_runtime_state")
-            assert simstate is not None or True, "compile-time state tracking"
             self._compile_state = np.array(x)
 
     def _get_runtime_state(
@@ -619,7 +618,6 @@ class Clock:
             return simstate.clock_states[self].state
         # Compile-time fallback
         self._log_compile_fallback("_get_runtime_state")
-        assert simstate is not None or True, "compile-time state tracking"
         return self._compile_state if len(self._compile_state) > 0 else self.getstate0()
 
     def getlog(self, simstate: SimulationState | None = None) -> tuple[list, list]:
@@ -725,7 +723,6 @@ class Clock:
         else:
             # Compile-time fallback when no SimulationState is available.
             self._log_compile_fallback("savestate")
-            assert simstate is not None or True, "compile-time state tracking"
             self._compile_tlog.append(t)
             self._compile_xlog.append(x)
             self._compile_state = np.array(x)

@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 
 import numpy as np
-import math
 
 import bdsim
 import unittest
-import numpy.testing as nt
 from pathlib import Path
 from unittest.mock import patch
 

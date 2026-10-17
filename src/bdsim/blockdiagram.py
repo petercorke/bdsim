@@ -12,7 +12,7 @@ import sys
 from tempfile import _TemporaryFileWrapper
 import traceback
 import warnings
-from typing import TYPE_CHECKING, Any, NoReturn
+from typing import TYPE_CHECKING, Any, Callable, NoReturn
 
 if TYPE_CHECKING:
     from typing import Self
@@ -34,8 +34,15 @@ else:
             pass
 
 
-from bdsim.components import *
-from bdsim.components import Counter
+from bdsim.components import (
+    Block,
+    Clock,
+    Counter,
+    EventSource,
+    SimulationState,
+    SinkBlock,
+    SubsystemBlock,
+)
 from bdsim.connect import EndPlug, Plug, Port, StartPlug, Wire
 
 # ------------------------------------------------------------------------- #
@@ -182,29 +189,32 @@ class BlockDiagram(BlockDiagramMixin):
                 if isinstance(end, Block):
                     # connect(X, Y)
                     # wires from all outport to all inports
-                    assert start.nout == end.nin, (
-                        "can only connect blocks where number of input and output ports"
-                        " match"
-                    )
+                    if start.nout != end.nin:
+                        raise ValueError(
+                            "can only connect blocks where number of input and output"
+                            " ports match"
+                        )
                     for i in range(start.nout):
                         wire = Wire(StartPlug(start, i), EndPlug(end, i), name)
                         self.add_wire(wire)
 
                 elif isinstance(end, Plug) and not end.isslice:
                     # connect(X, Y[i])
-                    assert (
-                        start.nout == 1
-                    ), "can only connect single output block to a port"
+                    if start.nout != 1:
+                        raise ValueError(
+                            "can only connect single output block to a port"
+                        )
                     end.type = "end"
                     wire = Wire(StartPlug(start, 0), end, name)
                     self.add_wire(wire)
 
                 elif isinstance(end, Plug) and end.isslice:
                     # connect(X, Y[m:n])
-                    assert start.nout == end.width, (
-                        "can only connect single output block to an input port slice of"
-                        " width 1"
-                    )
+                    if start.nout != end.width:
+                        raise ValueError(
+                            "can only connect single output block to an input port"
+                            " slice of width 1"
+                        )
                     end.type = "end"
                     for i in range(start.nout):
                         wire = Wire(StartPlug(start, i), end[i], name)
@@ -217,9 +227,10 @@ class BlockDiagram(BlockDiagramMixin):
                 if isinstance(end, Block):
                     # connect(X[i], Y)
                     # wires from all outport to all inports
-                    assert (
-                        end.nin == 1
-                    ), "can only connect a port to a block with single input port"
+                    if end.nin != 1:
+                        raise ValueError(
+                            "can only connect a port to a block with single input port"
+                        )
                     wire = Wire(start, EndPlug(end, 0), name)
                     self.add_wire(wire)
 
@@ -231,9 +242,11 @@ class BlockDiagram(BlockDiagramMixin):
 
                 elif isinstance(end, Plug) and end.isslice:
                     # connect(X[i], Y[m:n])
-                    assert (
-                        end.width == 1
-                    ), "can only connect output port to an input port slice of width 1"
+                    if end.width != 1:
+                        raise ValueError(
+                            "can only connect output port to an input port slice of"
+                            " width 1"
+                        )
                     end.type = "end"
                     wire = Wire(start, end[0], name)
                     self.add_wire(wire)
@@ -244,27 +257,30 @@ class BlockDiagram(BlockDiagramMixin):
             elif isinstance(start, Plug) and start.isslice:
                 if isinstance(end, Block):
                     # connect(X[i:j], Y)
-                    assert start.width == end.nin, (
-                        "can only connect output slice to a block with matching number"
-                        " of input ports"
-                    )
+                    if start.width != end.nin:
+                        raise ValueError(
+                            "can only connect output slice to a block with matching"
+                            " number of input ports"
+                        )
                     for i in range(end.nin):
                         wire = Wire(start[i], EndPlug(end, i), name)
                         self.add_wire(wire)
 
                 elif isinstance(end, Plug) and not end.isslice:
                     # connect(X[i:j], Y[m])
-                    assert (
-                        start.width == 1
-                    ), "can only connect output slice of width 1 to a port"
+                    if start.width != 1:
+                        raise ValueError(
+                            "can only connect output slice of width 1 to a port"
+                        )
                     wire = Wire(start[0], end, name)
                     self.add_wire(wire)
 
                 if isinstance(end, Plug) and end.isslice:
                     # connect(X[i:j], Y[m:n])
-                    assert (
-                        start.width == end.width
-                    ), "can only connect port slices of same width"
+                    if start.width != end.width:
+                        raise ValueError(
+                            "can only connect port slices of same width"
+                        )
                     for i in range(start.width):
                         wire = Wire(start[i], end[i], name)
                         self.add_wire(wire)
@@ -447,9 +463,10 @@ class BlockDiagram(BlockDiagramMixin):
             if b.blockclass == "continuous":
                 self.nstates += b.nstates
                 if b._state_names is not None:
-                    assert (
-                        len(b._state_names) == b.nstates
-                    ), "number of state names not consistent with number of states"
+                    if len(b._state_names) != b.nstates:
+                        raise ValueError(
+                            "number of state names not consistent with number of states"
+                        )
                     self.statenames.extend(b._state_names)
                 else:
                     # create default state names
@@ -459,9 +476,10 @@ class BlockDiagram(BlockDiagramMixin):
             if b.blockclass == "sampled":
                 self.ndstates += b.ndstates
                 if b._state_names is not None:
-                    assert (
-                        len(b._state_names) == b.nstates
-                    ), "number of state names not consistent with number of states"
+                    if len(b._state_names) != b.nstates:
+                        raise ValueError(
+                            "number of state names not consistent with number of states"
+                        )
                     self.dstatenames.extend(b._state_names)
                 else:
                     # create default state names
@@ -508,18 +526,12 @@ class BlockDiagram(BlockDiagramMixin):
                         )
                     )
 
-            if b._inport_names is not None:
-                assert (
-                    len(b._inport_names) == b.nin
-                ), "incorrect number of input names given: " + str(b)
-            if b._outport_names is not None:
-                assert (
-                    len(b._outport_names) == b.nout
-                ), "incorrect number of output names given: " + str(b)
-            if b._state_names is not None:
-                assert (
-                    len(b._state_names) == b.nstates
-                ), "incorrect number of state names given: " + str(b)
+            if b._inport_names is not None and len(b._inport_names) != b.nin:
+                raise ValueError("incorrect number of input names given: " + str(b))
+            if b._outport_names is not None and len(b._outport_names) != b.nout:
+                raise ValueError("incorrect number of output names given: " + str(b))
+            if b._state_names is not None and len(b._state_names) != b.nstates:
+                raise ValueError("incorrect number of state names given: " + str(b))
 
         # check for cycles of function blocks
         if verbose:
@@ -739,7 +751,8 @@ class BlockDiagram(BlockDiagramMixin):
         for b in self.blocklist:
             if b.blockclass == "continuous":
                 xb = state_map.get(b)
-                assert xb is not None
+                if xb is None:
+                    raise ValueError(f"block {b} has no state entry")
                 x = np.r_[x, np.asarray(xb).reshape(-1)]
         return x
 
@@ -1225,7 +1238,8 @@ class BlockDiagram(BlockDiagramMixin):
             for b in self.blocklist:
                 if b.blockclass == "sampled":
                     c = b._clock
-                    assert c is not None
+                    if c is None:
+                        raise ValueError(f"sampled block {b} has no clock")
                     table.row(b.id, b.name, c.name, c.T, c.offset)
             table.print(**kwargs)
 
@@ -1347,6 +1361,26 @@ class BlockDiagram(BlockDiagramMixin):
             for b in self.blocklist:
                 if isinstance(b, SinkBlock):
                     b.step_safe(t, b.inport_values)
+        except BlockRuntimeError as err:
+            self._handle_block_runtime_error(err)
+
+    def record(self, t: float) -> None:
+        """
+        Record one accepted sample on all sink blocks.
+
+        :param t: simulation time
+        :type t: float
+
+        Unlike :meth:`step`, this is called on *every* accepted simulation
+        sample, not just periodically for display refresh, so sink blocks
+        that log signal data at full resolution (e.g. ``Scope``) do so here
+        rather than in ``step``, which may run at a throttled rate.
+        """
+
+        try:
+            for b in self.blocklist:
+                if isinstance(b, SinkBlock):
+                    b.record_safe(t, b.inport_values)
         except BlockRuntimeError as err:
             self._handle_block_runtime_error(err)
 

@@ -16,7 +16,6 @@ Usage:
 from __future__ import annotations
 
 import inspect
-from math import inf
 from pathlib import Path
 
 import bdsim
@@ -162,7 +161,8 @@ with open(OUTPUT, "w") as f:
     print(f"writing mixin --> {OUTPUT}")
     f.write(header)
 
-    assert sim.block_library, "No blocks found in library"
+    if not sim.block_library:
+        raise RuntimeError("No blocks found in library")  # pragma: no cover
 
     for block, info in sorted(sim.block_library.items()):
         meth = info["class"]
@@ -192,4 +192,9 @@ with open(OUTPUT, "w") as f:
             # SyntaxWarnings in the generated file (Python 3.12+).
             safe_doc = doc.replace("\\", "\\\\")
             f.write(f'        """{safe_doc}\n        """\n')
-        f.write("        ...\n")
+        f.write(
+            "        raise NotImplementedError(  # pragma: no cover\n"
+            '            "stub signature -- the real implementation is injected "\n'
+            '            "onto BlockDiagram at import time by the @block decorator"\n'
+            "        )\n"
+        )

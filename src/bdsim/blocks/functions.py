@@ -110,8 +110,10 @@ class Sum(FunctionBlock):
         """
         super().__init__(nin=len(signs), **blockargs)
 
-        assert isinstance(signs, str), "first argument must be signs string"
-        assert all([x in "+-" for x in signs]), "invalid sign"
+        if not isinstance(signs, str):
+            raise TypeError("first argument must be signs string")
+        if not all(x in "+-" for x in signs):
+            raise ValueError("invalid sign")
         self.signs: str = signs
         self.mode: Optional[str] = mode
 
@@ -224,8 +226,10 @@ class Prod(FunctionBlock):
 
         """
         super().__init__(nin=len(ops), **blockargs)
-        assert isinstance(ops, str), "first argument must be signs string"
-        assert all([x in "*/" for x in ops]), "invalid op"
+        if not isinstance(ops, str):
+            raise TypeError("first argument must be signs string")
+        if not all(x in "*/" for x in ops):
+            raise ValueError("invalid op")
         self.ops: str = ops
         if matrix is not None:
             warnings.warn(
@@ -624,7 +628,8 @@ class Function(FunctionBlock):
 
         if isinstance(func, (list, tuple)):
             for f in func:
-                assert callable(f), "Function must be a callable"
+                if not callable(f):
+                    raise TypeError("Function must be a callable")
                 if fkwargs is None:
                     # we can check the number of arguments
                     n: int = len(inspect.signature(func).parameters)
@@ -797,7 +802,8 @@ class Interpolate(FunctionBlock):
             # process separate x and y vectors
             x = np.array(x)
             y = np.array(y)
-            assert x.shape[0] == y.shape[0], "x and y data must be same length"
+            if x.shape[0] != y.shape[0]:
+                raise ValueError("x and y data must be same length")
         else:
             # process mixed xy data
             if isinstance(xy, (list, tuple)):
@@ -819,10 +825,12 @@ class Interpolate(FunctionBlock):
 
         if simstate is not None:
             if self.time:
-                assert self.xpts[0] >= 0, "interpolation not defined for t<0"
+                if self.xpts[0] < 0:
+                    raise ValueError("interpolation not defined for t<0")
                 if self.xpts[-1] is np.inf:
                     self.xpts[-1] = simstate.tf
-                assert self.xpts[-1] >= simstate.tf, "interpolation not defined for t>T"
+                if self.xpts[-1] < simstate.tf:
+                    raise ValueError("interpolation not defined for t>T")
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         if self.time:

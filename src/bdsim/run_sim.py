@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import ast
 from concurrent.futures import Future, ThreadPoolExecutor
-from collections import Counter, namedtuple
+from collections import Counter
 from dataclasses import dataclass, field
 import io
 import inspect
@@ -30,7 +30,7 @@ import scipy.integrate as integrate
 import spatialmath.base as smb  # type: ignore[import-not-found]
 from colored import attr, fg
 
-from bdsim.components import (
+from bdsim.components import (  # noqa: F401  (TimeQ: re-exported for tests/test_run_sim.py)
     BDStruct,
     Block,
     Clock,
@@ -41,7 +41,6 @@ from bdsim.components import (
     TimeQ,
 )
 from bdsim.exceptions import (
-    BlockApiError,
     BlockCreationError,
     BlockRuntimeError,
     EventProbeOutsideIntervalError,
@@ -464,7 +463,8 @@ class BDSim(Runner):
                 )
 
     def _resolve_block_info(self, block_name: str) -> dict[str, Any]:
-        assert self._blocklibrary is not None
+        if self._blocklibrary is None:
+            raise RuntimeError("block library not loaded")  # pragma: no cover
         try:
             return self._blocklibrary[block_name]
         except KeyError as exc:
@@ -560,40 +560,40 @@ class BDSim(Runner):
         If ``sysargs`` is True, process command line arguments and passed
         options.  Command line arguments have precedence.
 
-        =================================  ===============  =========  =====================================================
-        Command line switch                Argument         Default    Behaviour
-        =================================  ===============  =========  =====================================================
-        ``--graphics``, ``+g``             graphics         True       enable graphical display
-        ``--no-graphics``, ``-g``          graphics         True       disable graphical display
-        ``--animation``, ``+a``            animation        False      update graphics at each time step
-        ``--no-animation``, ``-a``         animation        False      don't update graphics at each time step
-        ``--hold``, ``+H``                 hold             True       hold graphics in done()
-        ``--no-hold``, ``-H``              hold             True       do not hold graphics in done()
-        ``--altscreen``, ``+A``            altscreen        True       display plots on second monitor
-        ``--no-altscreen``, ``-A``         altscreen        True       do not display plots on second monitor
-        ``--no-progress``                   progress         True       do not display simulation progress bar
-        ``--backend BE``, ``-b BE``        backend          None       matplotlib backend
-        ``--tiles SPEC``, ``-t SPEC``      tiles            None       arrange figure tiles as RxC or square/wide/tall
-        ``--shape WxH``                    shape            None       window size (default: matplotlib default)
-        ``--movies [DIR]``, ``-m [DIR]``   movies           None       record all graphics blocks to MP4 files in DIR (default: .), sampled at ``animation_rate``
-        ``--no-movies``                    movies           None       disable automatic movie recording
-        ``--blocks``                       blocks           False      display block list at startup
-        ``--debug F``, ``-d F``            debug            ``''``     debug flags: p/ropagate, s/tate, d/eriv, i/nteractive, g/raphics-diagnostics
-        ``--animation-rate R``             animation_rate   20.0       target update rate for animation/debugger (Hz)
-        ``--simtime T[,dt]``, ``-S``       simtime          None       simulation time as T or T,dt
-        ``--dt DT``                        dt               None       output sample interval (build solve_ivp t_eval)
-        ``--max-step DT``                  max_step         None       maximum solve_ivp integration step
-        ``--atol ATOL``                    atol             None       absolute tolerance for solve_ivp
-        ``--rtol RTOL``                    rtol             None       relative tolerance for solve_ivp
-        ``--method NAME``                  method           None       solve_ivp method (RK45, DOP853, Radau, BDF, LSODA)
-        ``--verbose``, ``-v``              verbose          False      be verbose
-        ``--quiet``, ``-q``               quiet            False      suppress reports and progress bar
-        ``-p [FILE]``, ``--pickle [FILE]`` outfile          None       output pickled results (default: bd.out)
-        ``-o [FILE]``, ``--out [FILE]``    outfile          None       *(deprecated, use -p/--pickle)*
-        ``-j [FILE]``, ``--json [FILE]``   jsonfile         None       output JSON results (default: bd.json)
-        ``--set P``, ``-s P``              setparam         ``[]``     override block parameter: ``block:param=value``
-        ``--global G``                     setglob          ``[]``     override global parameter: ``var=value``
-        =================================  ===============  =========  =====================================================
+        ==================================  ==============  =======  ==========================================================================================
+        Command line switch                 Argument        Default  Behaviour
+        ==================================  ==============  =======  ==========================================================================================
+        ``--graphics``, ``+g``              graphics        True     enable graphical display
+        ``--no-graphics``, ``-g``           graphics        True     disable graphical display
+        ``--animation``, ``+a``             animation       False    update graphics at each time step
+        ``--no-animation``, ``-a``          animation       False    don't update graphics at each time step
+        ``--hold``, ``+H``                  hold            True     hold graphics in done()
+        ``--no-hold``, ``-H``               hold            True     do not hold graphics in done()
+        ``--altscreen``, ``+A``             altscreen       True     display plots on second monitor
+        ``--no-altscreen``, ``-A``          altscreen       True     do not display plots on second monitor
+        ``--no-progress``                   progress        True     do not display simulation progress bar
+        ``--backend BE``, ``-b BE``         backend         None     matplotlib backend
+        ``--tiles SPEC``, ``-t SPEC``       tiles           None     arrange figure tiles as RxC or square/wide/tall
+        ``--shape WxH``                     shape           None     window size (default: matplotlib default)
+        ``--movies [DIR]``, ``-m [DIR]``    movies          None     record all graphics blocks to MP4 files in DIR (default: .), sampled at ``animation_rate``
+        ``--no-movies``                     movies          None     disable automatic movie recording
+        ``--blocks``                        blocks          False    display block list at startup
+        ``--debug F``, ``-d F``             debug           ``''``   debug flags: p/ropagate, s/tate, d/eriv, i/nteractive, g/raphics-diagnostics
+        ``--animation-rate R``              animation_rate  20.0     target update rate for animation/debugger (Hz)
+        ``--simtime T[,dt]``, ``-S``        simtime         None     simulation time as T or T,dt
+        ``--dt DT``                         dt              None     output sample interval (build solve_ivp t_eval)
+        ``--max-step DT``                   max_step        None     maximum solve_ivp integration step
+        ``--atol ATOL``                     atol            None     absolute tolerance for solve_ivp
+        ``--rtol RTOL``                     rtol            None     relative tolerance for solve_ivp
+        ``--method NAME``                   method          None     solve_ivp method (RK45, DOP853, Radau, BDF, LSODA)
+        ``--verbose``, ``-v``               verbose         False    be verbose
+        ``--quiet``, ``-q``                 quiet           False    suppress reports and progress bar
+        ``-p [FILE]``, ``--pickle [FILE]``  outfile         None     output pickled results (default: bd.out)
+        ``-o [FILE]``, ``--out [FILE]``     outfile         None     *(deprecated, use -p/--pickle)*
+        ``-j [FILE]``, ``--json [FILE]``    jsonfile        None     output JSON results (default: bd.json)
+        ``--set P``, ``-s P``               setparam        ``[]``   override block parameter: ``block:param=value``
+        ``--global G``                      setglob         ``[]``   override global parameter: ``var=value``
+        ==================================  ==============  =======  ==========================================================================================
 
         .. note:: ``animation`` and ``graphics`` options are coupled.  If
             ``graphics=False``, all graphics is suppressed.  If
@@ -659,7 +659,8 @@ class BDSim(Runner):
         internal registry and are still accessible as factory methods on a
         :class:`BlockDiagram`.
         """
-        assert self._blocklibrary is not None, "block library not loaded"
+        if self._blocklibrary is None:
+            raise RuntimeError("block library not loaded")  # pragma: no cover
         return {k: v for k, v in self._blocklibrary.items() if not v.get("deprecated")}
 
     def blockinfo(self, block: str | None = None) -> Any:
@@ -675,11 +676,11 @@ class BDSim(Runner):
             DeprecationWarning,
             stacklevel=2,
         )
+        if self._blocklibrary is None:
+            raise RuntimeError("block library not loaded")  # pragma: no cover
         if block is None:
-            assert self._blocklibrary is not None
             return self._blocklibrary
         else:
-            assert self._blocklibrary is not None
             return self._blocklibrary[block]
 
     def _repr__(self) -> str:
@@ -689,14 +690,17 @@ class BDSim(Runner):
         :return: single line summary of simulation environment
         :rtype: str
         """
-        assert self._blocklibrary is not None
+        if self._blocklibrary is None:
+            raise RuntimeError("block library not loaded")  # pragma: no cover
         s: str = f"BDSim(nblocks={len(self._blocklibrary)})\n"
         return s
 
     def __str__(self) -> str:
-        assert self._blocklibrary is not None
+        if self._blocklibrary is None:
+            raise RuntimeError("block library not loaded")  # pragma: no cover
         context: SimulationContext | None = self._get_context()
-        assert self.options is not None
+        if self.options is None:
+            raise RuntimeError("options not initialised")  # pragma: no cover
         options: OptionsBase = context.options if context is not None else self.options
         s: str = (
             f"BDSim: Block diagram simulation runtime, {len(self._blocklibrary)} blocks"
@@ -722,7 +726,8 @@ class BDSim(Runner):
     def _make_run_options(
         self, *, threaded: bool = False, **overrides: Any
     ) -> OptionsBase:
-        assert self.options is not None
+        if self.options is None:
+            raise RuntimeError("options not initialised")  # pragma: no cover
         options: OptionsBase = self.options.copy()
         options.set(**overrides)
         if threaded:
@@ -999,6 +1004,12 @@ class BDSim(Runner):
             out = b.outport_value(p.port)
             simstate.plist[i].append(out)
 
+        if run_graphics:
+            # Always record at full resolution (cheap: e.g. Scope's data log).
+            # bd.step() itself may be throttled below and must not be relied
+            # on for data capture.
+            bd.record(t)
+
         movies_enabled = getattr(simstate.options, "movies", None) is not None
         run_animation = bool(getattr(simstate.options, "animation", False)) or bool(
             movies_enabled
@@ -1012,7 +1023,8 @@ class BDSim(Runner):
             simstate.gtime = t
 
         progress: Progress | None = self._require_context().progress
-        assert progress is not None
+        if progress is None:
+            raise RuntimeError("progress bar not initialised")  # pragma: no cover
         progress.update(t)
 
         if simstate.stop is not None:
@@ -1122,7 +1134,8 @@ class BDSim(Runner):
             stiff or discontinuous system.
         """
 
-        assert bd.compiled, "Network has not been compiled"
+        if not bd.compiled:
+            raise RuntimeError("Network has not been compiled")  # pragma: no cover
 
         if solver_args is None:
             solver_args = {}
@@ -1397,7 +1410,7 @@ class BDSim(Runner):
                             f"  (simulated {simstate.T:.3g}s in {run_wall_time*1000:.1f} ms)"
                         )
                         print(f"  integration time points:   {len(simstate.tlist)}")
-                        print(f"  scheduled event intervals: 0")
+                        print("  scheduled event intervals: 0")
                         print(attr(0))
                     # Build output struct
                     out = BDStruct(name="results")
@@ -1759,32 +1772,6 @@ class BDSim(Runner):
         future: Future[BDStruct] = BDSim._executor.submit(self.run, bd, **kwargs)
         return SimulationJob(future)
 
-    def done(self, bd: Any, block: bool = False) -> None:
-        context = self._require_context()
-        if context.options.hold:
-            block = context.options.hold
-        display_manager = getattr(context.simstate, "display_manager", None)
-        try:
-            if display_manager is not None:
-                display_manager.finalize(hold=block)
-            else:
-                plt.show(block=block)
-        except KeyboardInterrupt:
-            print("bdsim: closing all windows")
-            plt.close("all")
-            return
-        bd.done()
-        plt.close("all")
-        plt.pause(0.5)
-
-    def closefigs(self) -> None:
-        context = self._require_context()
-        for i in range(context.simstate.fignum):
-            print("close", i + 1)
-            plt.close(i + 1)
-            plt.pause(0.1)
-        context.simstate.fignum = 0
-
     def update_parameters(self, bd: Any) -> None:
         """
         Set value of parameters according to command line arguments
@@ -1807,7 +1794,8 @@ class BDSim(Runner):
         """
 
         context: SimulationContext | None = self._get_context()
-        assert self.options is not None
+        if self.options is None:
+            raise RuntimeError("options not initialised")  # pragma: no cover
         options: OptionsBase = context.options if context is not None else self.options
         re_set: re.Pattern[str] = re.compile(
             r"(?P<block>[\w\.]+):(?P<param>[\w]+)=(?P<value>.*)"
@@ -2165,7 +2153,8 @@ class BDSim(Runner):
             return f
 
         # bind the block constructors as new methods on this instance
-        assert self._blocklibrary is not None
+        if self._blocklibrary is None:
+            raise RuntimeError("block library not loaded")  # pragma: no cover
         for blockname, info in self._blocklibrary.items():
             # create a function to invoke the block's constructor
             f = new_method(blockname, bd)
@@ -2204,7 +2193,8 @@ class BDSim(Runner):
 
     def DEBUG(self, debug: str, fmt: str, *args: Any) -> None:
         context: SimulationContext | None = self._get_context()
-        assert self.options is not None
+        if self.options is None:
+            raise RuntimeError("options not initialised")  # pragma: no cover
         options: OptionsBase = context.options if context is not None else self.options
         if debug[0] in options.debug:
             print(f"DEBUG.{debug:s}: " + fmt.format(*args))
@@ -2236,8 +2226,16 @@ class BDSim(Runner):
         if options.hold:
             block = options.hold
 
+        display_manager = (
+            getattr(context.simstate, "display_manager", None)
+            if context is not None
+            else None
+        )
         try:
-            plt.show(block=block)
+            if display_manager is not None:
+                display_manager.finalize(hold=block)
+            else:
+                plt.show(block=block)
         except KeyboardInterrupt:
             print("bdsim: closing all windows")
             plt.close("all")
@@ -2749,8 +2747,10 @@ class BDSim(Runner):
         def dots(s: str, n: int = 40) -> str:
             return s + "." * (n - len(s))
 
-        assert self._blocklibrary is not None
-        assert self._moduledicts is not None
+        if self._blocklibrary is None:
+            raise RuntimeError("block library not loaded")  # pragma: no cover
+        if self._moduledicts is None:
+            raise RuntimeError("module dicts not initialised")  # pragma: no cover
         print(len(self._blocklibrary), " blocks loaded")
         for pkg, module_dict in self._moduledicts.items():
             for k, v in module_dict.items():
@@ -2776,7 +2776,8 @@ class BDSim(Runner):
                         print(f"{dots(k)}: {line}")
 
     def set_options(self, **options: Any) -> None:
-        assert self.options is not None
+        if self.options is None:
+            raise RuntimeError("options not initialised")  # pragma: no cover
         self.options.set(**options)
         warnings.warn("use sim.options.OPT=VALUE instead", DeprecationWarning)
 
@@ -2799,7 +2800,8 @@ class BDSim(Runner):
         and their old and new values.
         """
         # handle the globals
-        assert self.options is not None
+        if self.options is None:
+            raise RuntimeError("options not initialised")  # pragma: no cover
         for s in self.options.setglob:
             var, value = s.split("=")
 
@@ -2823,7 +2825,8 @@ class BDSim(Runner):
         :seealso: :meth:`BlockDiagram.report_summary` :meth:`BlockDiagram.report_lists` :meth:`BlockDiagram.report_schedule`
         """
         context: SimulationContext | None = self._get_context()
-        assert self.options is not None
+        if self.options is None:
+            raise RuntimeError("options not initialised")  # pragma: no cover
         options: OptionsBase = context.options if context is not None else self.options
         if options.quiet:
             return

@@ -37,7 +37,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # roboticstoolbox.blocks.mobile.Bicycle
     def BICYCLE(self, L: Any = 1, speed_max: Any = inf, accel_max: Any = inf, steer_max: Any = 1.413716694115407, x0: Any = None, **blockargs: Any) -> Any:
@@ -55,7 +58,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # machinevisiontoolbox.blocks.camera.Camera
     def CAMERA(self, camera: Any = None, args: Any = {}, **blockargs: Any) -> Any:
@@ -76,7 +82,10 @@ class BlockDiagramMixin:
 
             :output p: image plane points as ndarray(2,N)
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # roboticstoolbox.blocks.arm.CirclePath
     def CIRCLEPATH(self, radius: Any = 1, centre: Any = (0, 0, 0), pose: Any = None, frequency: Any = 1, unit: Any = 'rps', phase: Any = 0, **blockargs: Any) -> Any:
@@ -96,7 +105,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.functions.Clip
     def CLIP(self, min: Vector1D = -inf, max: ArrayLike = inf, **blockargs: Any) -> Any:
@@ -108,7 +120,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.linalg.Cond
     def COND(self, **blockargs: Any) -> Any:
@@ -116,7 +131,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.sources.Constant
     def CONSTANT(self, value: Any = 0, **blockargs: Any) -> Any:
@@ -126,7 +144,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # roboticstoolbox.blocks.arm.CTraj
     def CTRAJ(self, T1: Any, T2: Any, T: Any, trapezoidal: Any = True, **blockargs: Any) -> Any:
@@ -142,7 +163,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # roboticstoolbox.blocks.spatial.Delta2Tr
     def DELTA2TR(self, **blockargs: Any) -> Any:
@@ -150,7 +174,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.connections.DeMux
     def DEMUX(self, nout: int = 1, **blockargs: Any) -> Any:
@@ -160,7 +187,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.continuous.Deriv
     def DERIV(self, alpha: float, x0: Vector1D = 0, y0: Vector1D | None = None, gain: float = 1.0, **blockargs: Any) -> Any:
@@ -176,7 +206,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.continuous.Deriv2
     def DERIV2(self, wn: float, unit: str = 'rad/s', zeta: float = 1, x0: Vector1D = (0, 0), gain: float = 1.0, **blockargs: Any) -> Any:
@@ -198,7 +231,10 @@ class BlockDiagramMixin:
         A smaller value of ``zeta`` results in a faster response but with overshoot, while a larger value results in a slower response with no overshoot.
         Choose ``zeta=0.707`` (:math:`1/\\sqrt{2}`) for optimal rise time and overshoot (4.3%).
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.sampled.Deriv_S
     def DERIV_S(self, clock: Clock, x0: Vector1D = 0, gain: float = 1.0, **blockargs: Any) -> Any:
@@ -212,7 +248,10 @@ class BlockDiagramMixin:
         :param kwargs: |BlockOptions|
         :type kwargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.linalg.Det
     def DET(self, **blockargs: Any) -> Any:
@@ -220,7 +259,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.connections.Dict
     def DICT(self, keys: list[str], **blockargs: Any) -> Any:
@@ -230,7 +272,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # roboticstoolbox.blocks.mobile.DiffSteer
     def DIFFSTEER(self, w: Any = 1, R: Any = 1, speed_max: Any = inf, accel_max: Any = inf, steer_max: Any = None, a: Any = 0, x0: Any = None, **blockargs: Any) -> Any:
@@ -250,7 +295,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # machinevisiontoolbox.blocks.camera.EstPose_p
     def ESTPOSE_P(self, camera: Any, P: Any, frame: Any = 'world', method: Any = 'iterative', **blockargs: Any) -> Any:
@@ -268,7 +316,10 @@ class BlockDiagramMixin:
         :return: a ESTPOSE_P block
         :rtype: EstPose_p instance
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.sinks.Event
     def EVENT(self, direction: str, func: Callable[..., Any], fargs: list[Any] | tuple[Any, ...] | None = None, fkwargs: dict[str, Any] | None = None, **blockargs: Any) -> Any:
@@ -284,7 +335,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # roboticstoolbox.blocks.arm.FDyn
     def FDYN(self, robot: Any, q0: Any = None, **blockargs: Any) -> Any:
@@ -296,7 +350,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # roboticstoolbox.blocks.arm.FDyn_X
     def FDYN_X(self, robot: Any, q0: Any = None, gravcomp: Any = False, velcomp: Any = False, representation: Any = 'rpy/xyz', **blockargs: Any) -> Any:
@@ -315,7 +372,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # roboticstoolbox.blocks.arm.FKine
     def FKINE(self, robot: Any = None, args: Any = {}, **blockargs: Any) -> Any:
@@ -329,7 +389,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.linalg.Flatten
     def FLATTEN(self, order: str = 'C', **blockargs: Any) -> Any:
@@ -339,7 +402,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.functions.Function
     def FUNCTION(self, func: Callable[..., Any] | list[Callable[..., Any]] | tuple[Callable[..., Any], ...] | None = None, nin: int = 1, nout: int = 1, persistent: bool = False, fargs: list[Any] | None = None, fkwargs: dict[str, Any] | None = None, **blockargs: Any) -> Any:
@@ -359,7 +425,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict, optional
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.functions.Gain
     def GAIN(self, K: int | float | np.ndarray = 1, premul: bool = False, **blockargs: Any) -> Any:
@@ -371,7 +440,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # roboticstoolbox.blocks.arm.Gravload
     def GRAVLOAD(self, robot: Any, gravity: Any = None, **blockargs: Any) -> Any:
@@ -383,7 +455,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # roboticstoolbox.blocks.arm.Gravload_X
     def GRAVLOAD_X(self, robot: Any, representation: Any = 'rpy/xyz', gravity: Any = None, **blockargs: Any) -> Any:
@@ -397,7 +472,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # roboticstoolbox.blocks.arm.IDyn
     def IDYN(self, robot: Any, gravity: Any = None, **blockargs: Any) -> Any:
@@ -409,7 +487,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # roboticstoolbox.blocks.arm.IKine
     def IKINE(self, robot: Any = None, q0: Any = None, useprevious: Any = True, ik: Any = None, args: Any = {}, seed: Any = None, **blockargs: Any) -> Any:
@@ -429,7 +510,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # machinevisiontoolbox.blocks.camera.ImagePlane
     def IMAGEPLANE(self, camera: Any, style: Any = None, labels: Any = None, grid: Any = True, retain: Any = False, watch: Any = False, init: Any = None, **blockargs: Any) -> Any:
@@ -465,7 +549,10 @@ class BlockDiagramMixin:
             SCOPE(styles=[{'color': 'blue'}, {'color': 'red', 'linestyle': '--'}])
             SCOPE(styles=['k', 'r--'])
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.connections.Index
     def INDEX(self, index: list[int] | slice | str | None = None, **blockargs: Any) -> Any:
@@ -477,7 +564,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # roboticstoolbox.blocks.arm.Inertia
     def INERTIA(self, robot: Any, **blockargs: Any) -> Any:
@@ -487,7 +577,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # roboticstoolbox.blocks.arm.Inertia_X
     def INERTIA_X(self, robot: Any, representation: Any = 'rpy/xyz', pinv: Any = False, **blockargs: Any) -> Any:
@@ -499,7 +592,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.connections.InPort
     def INPORT(self, nout: int = 1, **blockargs: Any) -> Any:
@@ -509,7 +605,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.continuous.Integrator
     def INTEGRATOR(self, x0: Vector1D = 0, gain: float = 1.0, min: Vector1D | None = None, max: Vector1D | None = None, **blockargs: Any) -> Any:
@@ -525,7 +624,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.sampled.Integrator_S
     def INTEGRATOR_S(self, clock: Clock, x0: Vector1D = 0, gain: float = 1.0, min: Vector1D | None = None, max: Vector1D | None = None, enable: Callable[[float, list[Any], np.ndarray], bool] | None = None, **blockargs: Any) -> Any:
@@ -545,7 +647,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.functions.Interpolate
     def INTERPOLATE(self, x: list[Any] | tuple[Any, ...] | np.ndarray | None = None, y: list[Any] | tuple[Any, ...] | np.ndarray | None = None, xy: np.ndarray | None = None, time: bool = False, kind: str = 'linear', **blockargs: Any) -> Any:
@@ -563,7 +668,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.linalg.Inverse
     def INVERSE(self, pinv: bool = False, **blockargs: Any) -> Any:
@@ -573,7 +681,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.connections.Item
     def ITEM(self, item: Any, **blockargs: Any) -> Any:
@@ -583,7 +694,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # roboticstoolbox.blocks.arm.Jacobian
     def JACOBIAN(self, robot: Any, frame: Any = '0', representation: Any = None, inverse: Any = False, pinv: Any = False, damping: Any = None, transpose: Any = False, **blockargs: Any) -> Any:
@@ -616,7 +730,10 @@ class BlockDiagramMixin:
             - If ``inverse`` is True and the Jacobian is singular a runtime
               error will occur.
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # roboticstoolbox.blocks.arm.JTraj
     def JTRAJ(self, q0: Any, qf: Any, qd0: Any = None, qdf: Any = None, T: Any = None, **blockargs: Any) -> Any:
@@ -635,7 +752,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.continuous.LTI_SISO
     def LTI_SISO(self, N: Vector1D = 1, D: Vector1D = [1, 1], x0: np.ndarray | None = None, form: str = 'ccf', order: str = 'backward', verbose: bool = False, **blockargs: Any) -> Any:
@@ -686,7 +806,10 @@ class BlockDiagramMixin:
             - The ``_feedthrough`` attribute of the block is set to True if D is nonzero. This can be used to check for feedthrough without having to check the D matrix directly, and is used
               by the scheduler to ensure correct block evaluation order.
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.sampled.LTI_SISO_S
     def LTI_SISO_S(self, clock: Clock, N: Vector1D = 1, D: Vector1D = [1, 1], x0: np.ndarray | None = None, form: str = 'ccf', order: str = 'backward', verbose: bool = False, **blockargs: Any) -> Any:
@@ -769,7 +892,10 @@ class BlockDiagramMixin:
             - The ``_feedthrough`` attribute of the block is set to True if D is nonzero. This can be used to check for feedthrough without having to check the D matrix directly, and is used
               by the scheduler to ensure correct block evaluation order.
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.continuous.LTI_SS
     def LTI_SS(self, A: np.ndarray, B: np.ndarray, C: np.ndarray, D: np.ndarray | None = None, x0: np.ndarray | None = None, **blockargs: Any) -> Any:
@@ -789,7 +915,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.sampled.LTI_SS_S
     def LTI_SS_S(self, clock: Clock, A: np.ndarray, B: np.ndarray, C: np.ndarray, D: np.ndarray | None = None, x0: np.ndarray | None = None, **blockargs: Any) -> Any:
@@ -809,7 +938,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # roboticstoolbox.blocks.uav.MultiRotor
     def MULTIROTOR(self, model: Any, groundcheck: Any = True, speedcheck: Any = True, x0: Any = None, **blockargs: Any) -> Any:
@@ -827,7 +959,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # roboticstoolbox.blocks.uav.MultiRotorMixer
     def MULTIROTORMIXER(self, model: Any = None, wmax: Any = 1000, wmin: Any = 5, **blockargs: Any) -> Any:
@@ -841,7 +976,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # roboticstoolbox.blocks.uav.MultiRotorPlot
     def MULTIROTORPLOT(self, model: Any, scale: Any = [-2, 2, -2, 2, 10], flapscale: Any = 1, projection: Any = 'ortho', **blockargs: Any) -> Any:
@@ -857,7 +995,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.connections.Mux
     def MUX(self, nin: int = 1, **blockargs: Any) -> Any:
@@ -867,7 +1008,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.linalg.Norm
     def NORM(self, ord: Any = None, axis: Any = None, **blockargs: Any) -> Any:
@@ -879,7 +1023,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.sinks.Null
     def NULL(self, nin: int = 1, **blockargs: Any) -> Any:
@@ -889,7 +1036,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.connections.OutPort
     def OUTPORT(self, nin: int = 1, **blockargs: Any) -> Any:
@@ -899,7 +1049,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.continuous.PID
     def PID(self, P: float = 0.0, I: float = 0.0, D: float = 0.0, D_pole: float = 1, I_limit: float | tuple[float, ...] | list[float] | None = None, structure: str = 'parallel', **blockargs: Any) -> Any:
@@ -920,7 +1073,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.sampled.PID_S
     def PID_S(self, clock: Clock, P: float = 0.0, I: float = 0.0, D: float = 0.0, I_limit: float | tuple[float, ...] | list[float] | None = None, I_band: float | None = None, structure: str = 'parallel', **blockargs: Any) -> Any:
@@ -943,7 +1099,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.sources.Piecewise
     def PIECEWISE(self, *args: tuple[float, float], seq: list[tuple[float, float]] | None = None, **blockargs: Any) -> Any:
@@ -953,7 +1112,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # roboticstoolbox.blocks.spatial.Point2Tr
     def POINT2TR(self, T: Any = None, **blockargs: Any) -> Any:
@@ -965,7 +1127,10 @@ class BlockDiagramMixin:
 
         If ``T`` is None then it defaults to the identity matrix.
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.continuous.PoseIntegrator
     def POSEINTEGRATOR(self, x0: SE3 | Twist3 | None = None, **blockargs: Any) -> Any:
@@ -975,7 +1140,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.sampled.PoseIntegrator_S
     def POSEINTEGRATOR_S(self, clock: Clock, x0: SE3 | Twist3 | np.ndarray | None = None, **blockargs: Any) -> Any:
@@ -987,7 +1155,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.functions.Pow
     def POW(self, p: int | float = 1, matrix: bool = False, **blockargs: Any) -> Any:
@@ -999,7 +1170,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.sinks.Print
     def PRINT(self, fmt: str | None = None, file: TextIO | None = None, **blockargs: Any) -> Any:
@@ -1013,7 +1187,10 @@ class BlockDiagramMixin:
         :return: A PRINT block
         :rtype: Print instance
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.functions.Prod
     def PROD(self, ops: str = '**', matrix: bool = False, **blockargs: Any) -> Any:
@@ -1027,7 +1204,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.sources.Ramp
     def RAMP(self, T: float = 1, off: float = 0, slope: float = 1, **blockargs: Any) -> Any:
@@ -1041,7 +1221,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.displays.Scope
     def SCOPE(self, nin: int = 1, vector: int | list[int] | None = None, styles: str | dict | list[str | dict] | None = None, stairs: bool = False, scale: Literal['auto'] | float = 'auto', labels: list[str] | None = None, grid: bool | list | tuple = True, watch: bool = False, title: str | None = None, loc: str = 'best', **blockargs: Any) -> Any:
@@ -1072,7 +1255,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.displays.ScopeXY
     def SCOPEXY(self, style: str | dict | None = None, scale: Literal['auto'] | list | tuple = 'auto', aspect: str = 'equal', labels: list[str] = ['X', 'Y'], init: Callable | None = None, nin: int = 2, **blockargs: Any) -> Any:
@@ -1088,7 +1274,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.displays.ScopeXY1
     def SCOPEXY1(self, indices: list[int] = [0, 1], **blockargs: Any) -> Any:
@@ -1106,7 +1295,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.linalg.Slice1
     def SLICE1(self, index: Any, **blockargs: Any) -> Any:
@@ -1116,7 +1308,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.linalg.Slice2
     def SLICE2(self, rows: Any = None, cols: Any = None, **blockargs: Any) -> Any:
@@ -1128,7 +1323,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.sources.Step
     def STEP(self, T: float = 1, off: float = 0, on: float = 1, **blockargs: Any) -> Any:
@@ -1142,7 +1340,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.sinks.Stop
     def STOP(self, func: Callable[[Any], object] | None = None, **blockargs: Any) -> Any:
@@ -1152,7 +1353,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.connections.SubSystem
     def SUBSYSTEM(self, subsys: str | BlockDiagram, nin: int = 1, nout: int = 1, allow_eval: bool | None = None, trace_eval: bool = False, globalvars: dict[str, Any] | None = None, **blockargs: Any) -> Any:
@@ -1176,7 +1380,10 @@ class BlockDiagramMixin:
         :raises ImportError: module not found or no BlockDiagram in it
         :raises ValueError: invalid argument type or .bd load constraints not met
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.functions.Sum
     def SUM(self, signs: str = '++', mode: str | None = None, **blockargs: Any) -> Any:
@@ -1205,7 +1412,10 @@ class BlockDiagramMixin:
         For example if ``mode="rc"`` then a 2-element array would have its
         second element wrapped to the range [-π, π).
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.sources.Time
     def TIME(self, value: Any | None = None, **blockargs: Any) -> Any:
@@ -1213,7 +1423,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # roboticstoolbox.blocks.spatial.Tr2Delta
     def TR2DELTA(self, **blockargs: Any) -> Any:
@@ -1221,7 +1434,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # roboticstoolbox.blocks.spatial.TR2T
     def TR2T(self, **blockargs: Any) -> Any:
@@ -1229,7 +1445,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # roboticstoolbox.blocks.arm.Traj
     def TRAJ(self, y0: Any = 0, yf: Any = 1, T: Any = None, time: Any = False, traj: Any = 'trapezoidal', **blockargs: Any) -> Any:
@@ -1247,7 +1466,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.linalg.Transpose
     def TRANSPOSE(self, **blockargs: Any) -> Any:
@@ -1255,7 +1477,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # roboticstoolbox.blocks.arm.Trapezoidal
     def TRAPEZOIDAL(self, q0: Any, qf: Any, V: Any = None, T: Any = None, **blockargs: Any) -> Any:
@@ -1274,7 +1499,10 @@ class BlockDiagramMixin:
         If ``T`` is given the value ``qf`` is reached at this time.  This can be
         less or greater than the simulation time.
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # roboticstoolbox.blocks.mobile.Unicycle
     def UNICYCLE(self, w: Any = 1, speed_max: Any = inf, accel_max: Any = inf, steer_max: Any = inf, x0: Any = None, **blockargs: Any) -> Any:
@@ -1293,7 +1521,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # roboticstoolbox.blocks.mobile.VehiclePlot
     def VEHICLEPLOT(self, animation: Any = None, path: Any = None, labels: Any = ['X', 'Y'], square: Any = True, init: Any = None, scale: Any = 'auto', polyargs: Any = {}, **blockargs: Any) -> Any:
@@ -1323,7 +1554,10 @@ class BlockDiagramMixin:
             - A dynamic trail, showing path to date can be animated if
               the option ``path`` is set to a linestyle.
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # machinevisiontoolbox.blocks.camera.Visjac_p
     def VISJAC_P(self, camera: Any, depth: Any = 1, depthest: Any = False, **blockargs: Any) -> Any:
@@ -1341,7 +1575,10 @@ class BlockDiagramMixin:
 
         If the Jacobian
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.sinks.Watch
     def WATCH(self, **blockargs: Any) -> Any:
@@ -1351,7 +1588,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.sources.WaveForm
     def WAVEFORM(self, wave: str = 'square', freq: float = 1, unit: str = 'Hz', phase: float = 0, amplitude: float = 1, offset: float = 0, min: float | None = None, max: float | None = None, duty: float = 0.5, **blockargs: Any) -> Any:
@@ -1377,7 +1617,10 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
 
     # bdsim.blocks.sampled.ZOH
     def ZOH(self, clock: Clock, x0: Vector1D = 0, **blockargs: Any) -> Any:
@@ -1389,4 +1632,7 @@ class BlockDiagramMixin:
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
-        ...
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )

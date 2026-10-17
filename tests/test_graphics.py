@@ -12,7 +12,6 @@ Targets uncovered lines:
   113-288 create_figure() method
 """
 
-import io
 import os
 import tempfile
 import unittest
@@ -155,6 +154,36 @@ class StepTest(unittest.TestCase):
         finally:
             plt.close("all")
 
+    def test_step_animation_qt5agg_flush_events_branch(self):
+        """step() with backend Qt5Agg flushes events before drawing."""
+        gb = MinGB(nin=1)
+        ss = _make_simstate(animation=True, backend="Qt5Agg")
+        gb._simstate = ss
+        gb.fig = plt.figure()
+        try:
+            gb.fig.canvas.flush_events = MagicMock()
+            gb.fig.canvas.draw = MagicMock()
+            gb.step(0.0, [1.0])
+            gb.fig.canvas.flush_events.assert_called_once()
+            gb.fig.canvas.draw.assert_called_once()
+        finally:
+            plt.close("all")
+
+    def test_step_animation_qtagg_flush_events_branch(self):
+        """step() with backend QtAgg (matplotlib's post-Qt5Agg name) also flushes events."""
+        gb = MinGB(nin=1)
+        ss = _make_simstate(animation=True, backend="QtAgg")
+        gb._simstate = ss
+        gb.fig = plt.figure()
+        try:
+            gb.fig.canvas.flush_events = MagicMock()
+            gb.fig.canvas.draw = MagicMock()
+            gb.step(0.0, [1.0])
+            gb.fig.canvas.flush_events.assert_called_once()
+            gb.fig.canvas.draw.assert_called_once()
+        finally:
+            plt.close("all")
+
     def test_step_tiled_shared_figure_draws_once_per_time(self):
         """Shared tiled figures should redraw once per simulation time, not once per block."""
         ss = _make_simstate(animation=True, backend="agg")
@@ -288,7 +317,7 @@ class CreateFigureTest(unittest.TestCase):
         """create_figure() with tiles='2x2' exercises different ntiles computation."""
         gb = self._make_gb()
         state = _make_gstate(tiles="2x2")
-        f = gb.create_figure(state)
+        gb.create_figure(state)
         self.assertEqual(state.ntiles, [2, 2])
         plt.close("all")
 
@@ -342,7 +371,7 @@ class CreateFigureTest(unittest.TestCase):
             MagicMock(isgraphics=True),
         ]
         state = _make_gstate(tiles="square")
-        f = gb.create_figure(state)
+        gb.create_figure(state)
         self.assertEqual(state.ntiles, [2, 2])
         plt.close("all")
 
@@ -355,7 +384,7 @@ class CreateFigureTest(unittest.TestCase):
             MagicMock(isgraphics=True),
         ]
         state = _make_gstate(tiles="wide")
-        f = gb.create_figure(state)
+        gb.create_figure(state)
         self.assertEqual(state.ntiles, [1, 3])
         plt.close("all")
 
@@ -368,7 +397,7 @@ class CreateFigureTest(unittest.TestCase):
             MagicMock(isgraphics=True),
         ]
         state = _make_gstate(tiles="tall")
-        f = gb.create_figure(state)
+        gb.create_figure(state)
         self.assertEqual(state.ntiles, [3, 1])
         plt.close("all")
 

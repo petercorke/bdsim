@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 import numpy as np
-from spatialmath import *
+from spatialmath import SE3
 
-from bdsim.blocks.spatial import *
+from bdsim.blocks.spatial import Pose_inverse, Pose_postmul, Pose_premul, Transform_vector
 
 import unittest
 import numpy.testing as nt

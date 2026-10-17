@@ -2,8 +2,6 @@
 
 import io
 import numpy as np
-import scipy.interpolate
-import math
 from types import SimpleNamespace
 
 import bdsim
@@ -872,13 +870,13 @@ class LabelTest(unittest.TestCase):
                 super().__init__(**kwargs)
 
         with self.assertRaises(AssertionError):
-            mb = MyBlock(nin=1, nout=2)
+            MyBlock(nin=1, nout=2)
 
         with self.assertRaises(AssertionError):
-            mb = MyBlock(nin=2, nout=3)
+            MyBlock(nin=2, nout=3)
 
         with self.assertRaises(AssertionError):
-            mb = MyBlock()
+            MyBlock()
 
     def test_label4c(self):
         # provide labels and infer number of ports from labels
@@ -892,11 +890,11 @@ class LabelTest(unittest.TestCase):
         self.assertEqual(mb.nout, 2)
 
         # check we pickup non unique labels
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             mb = Gain(inames=["in1", "in2", "in1"], onames=["out1", "out2"])
 
         # check we pickup on block attributes
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             mb = Gain(inames=["in1", "in2", "nin"], onames=["out1", "out2"])
 
     def test_label5(self):
@@ -1155,7 +1153,6 @@ class ConnectVariantsTest(SetUpMixin, unittest.TestCase):
         const = bd.CONSTANT([3, 4])
         demux = bd.DEMUX(2)
         dst1 = bd.NULL(1)
-        dst2 = bd.NULL(1)
         bd.connect(const, demux)
         # The start-slice -> Block branch falls through to an 'else: raise ValueError'
         # because the second conditional uses 'if' instead of 'elif' in the source.
@@ -1189,19 +1186,19 @@ class ConnectVariantsTest(SetUpMixin, unittest.TestCase):
             bd.connect(42, dst)
 
     def test_connect_block_nout_nin_mismatch_raises(self):
-        """connect(Block_nout1, Block_nin2) raises AssertionError."""
+        """connect(Block_nout1, Block_nin2) raises ValueError."""
         bd = self.sim.blockdiagram()
         src = bd.CONSTANT(2)  # nout=1
         dst = bd.NULL(2)  # nin=2
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             bd.connect(src, dst)
 
     def test_connect_plug_to_block_nin_gt1_raises(self):
-        """connect(Plug, Block_nin2) raises AssertionError (nin must be 1)."""
+        """connect(Plug, Block_nin2) raises ValueError (nin must be 1)."""
         bd = self.sim.blockdiagram()
         src = bd.CONSTANT(2)
         dst = bd.NULL(2)  # nin=2
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             bd.connect(src[0], dst)
 
 
@@ -1341,6 +1338,23 @@ class StateAndResetTest(SetUpMixin, unittest.TestCase):
         bd, _, _ = self._simple_bd()
         bd.evaluate({}, 0)
         bd.step(0.0)  # calls SinkBlock.step for each sink block
+
+    def test_record(self):
+        bd, _, _ = self._simple_bd()
+        bd.evaluate({}, 0)
+        bd.record(0.0)  # calls SinkBlock.record for each sink block (default no-op)
+
+    def test_record_error_propagates(self):
+        """A record() failure should surface the same way a step() failure does."""
+        bd, _, dst = self._simple_bd()
+        bd.evaluate({}, 0)
+
+        def boom(t, u):
+            raise ValueError("record failed")
+
+        dst.record = boom
+        with self.assertRaises(RuntimeError):
+            bd.record(0.0)
 
 
 # ---------------------------------------------------------------------------

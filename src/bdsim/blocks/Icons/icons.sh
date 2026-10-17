@@ -1,5 +1,6 @@
 #! /bin/bash
 
+bdtex2icon -r 97 -o cast.png -t '\texttt{cast(}\cdot\texttt{)}'
 bdtex2icon -r 300 -o sum.png -t '\sum'
 bdtex2icon -r 450 -o prod.png -t '\Pi'
 bdtex2icon -r 200 -o norm.png -t '\| \cdot \|'
@@ -40,10 +41,10 @@ bdtex2icon -r 100 -o fdynx.png -t '\ddvec{x}\left(\vec{q}, \vec{w}\right)'
 bdtex2icon -r 80 -o idyn.png -t '\vec{\tau}\!\left(\vec{q}, \dvec{q}, \ddvec{q}\right)'
 bdtex2icon -r 80 -o idynx.png -t '\vec{w}\!\left(\vec{q}, \dvec{q}, \ddvec{x}\right)'
 
-bdtex2icon -r 180 -o pose_postmul.png -t '\mathbf{\oplus\\!\pose[x]_y}'
-bdtex2icon -r 180 -o pose_premul.png -t '\mathbf{\pose[x]_y\\!\oplus}'
+bdtex2icon -r 179 -o pose_postmul.png -t '\mathbf{\oplus\!\pose[x]_y}'
+bdtex2icon -r 180 -o pose_premul.png -t '\mathbf{\pose[x]_y\!\oplus}'
 bdtex2icon -r 170 -o pose_inverse.png -t '\mathbf{\ominus}'
-bdtex2icon -r 150 -o transform_vector.png -t '\mathbf{\pose[x]_y}\\!\sbullet\\!\vec{p}'
+bdtex2icon -r 150 -o transform_vector.png -t '\mathbf{\pose[x]_y}\!\sbullet\!\vec{p}'
 bdtex2icon -r 140 -o poseintegerator.png -t "\int\! \nu\, dt"
 
 bdtex2icon -r 192 -o pid.png -t '\mbox{PID}'

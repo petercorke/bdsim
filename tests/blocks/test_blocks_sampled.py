@@ -3,16 +3,13 @@
 import numpy as np
 import math
 
-import matplotlib.pyplot as plt
-
-from bdsim.blocks.sampled import *
+from bdsim.blocks.sampled import Integrator_S, LTI_SISO_S, LTI_SS_S, ZOH
 from bdsim import Clock
 
 import unittest
 import numpy.testing as nt
 
 import bdsim
-from bdsim.blocks.sampled import *
 from bdsim.blocks.spatial import PoseIntegrator_S, DPoseIntegrator
 from spatialmath import SE3, Twist3
 

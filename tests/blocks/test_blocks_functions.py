@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 
 import numpy as np
-import scipy.interpolate
 import math
 
-from bdsim.blocks.functions import *
+from bdsim.blocks.functions import Clip, Function, Gain, Interpolate, Pow, Prod, Sum
 
 import unittest
 import numpy.testing as nt

@@ -32,12 +32,25 @@ def block_name(name, rawtext, text, lineno, inliner, options={}, content=[]):
     </table>
     """
 
-    # this is the path to the icons within the github repo
-    path = (
-        "https://github.com/petercorke/bdsim/raw/master/bdsim/blocks/Icons/"
-        + text.lower()
-        + ".png"
-    )
+    # Served locally out of the Sphinx build's own _static/ directory
+    # (see conf.py's html_static_path -- it copies straight from
+    # src/bdsim/blocks/Icons/, the same directory bdedit reads icons from
+    # at runtime) rather than fetched from a remote GitHub URL. The
+    # previous approach (a hardcoded "raw/master/bdsim/blocks/Icons/"
+    # URL, stale on both the branch name and the pre-src-layout path)
+    # broke every icon in the docs, and even fixed, a remote fetch would
+    # only ever show icons already pushed to GitHub -- not new ones on
+    # the branch/PR actually being built, exactly what showed up here.
+    #
+    # docutils raw HTML nodes don't get Sphinx's usual path resolution,
+    # so the relative path to _static/ has to be computed by hand from
+    # how deeply nested the *current* page is (root-level docs pages
+    # need no "../" at all; this only matters if :blockname: is ever
+    # used from a page nested under a subdirectory).
+    env = inliner.document.settings.env
+    depth = env.docname.count("/")
+    static_prefix = "../" * depth
+    path = f"{static_prefix}_static/{text.lower()}.png"
     html_node = nodes.raw(text=html.format(text, path), format="html")
     return [html_node], []
 

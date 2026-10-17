@@ -28,6 +28,7 @@
 [![Downloads](https://static.pepy.tech/badge/bdsim/month)](https://pepy.tech/projects/bdsim)
 ![Python Version](https://img.shields.io/pypi/pyversions/bdsim.svg)
 [![Coverage](https://codecov.io/gh/petercorke/bdsim/branch/main/graph/badge.svg)](https://codecov.io/gh/petercorke/bdsim)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/d2353237272a4db4b74830da2eab0d07)](https://app.codacy.com/gh/petercorke/bdsim/dashboard)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 

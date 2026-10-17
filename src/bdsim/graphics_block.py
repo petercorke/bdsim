@@ -272,7 +272,7 @@ class GraphicsBlock(SinkBlock):
                     self._fig.canvas.flush_events()  # type: ignore[union-attr]
                     plt.show(block=False)
                     plt.show(block=False)
-                elif self._simstate.backend == "Qt5Agg":
+                elif self._simstate.backend in ("Qt5Agg", "QtAgg"):
                     self._fig.canvas.flush_events()  # type: ignore[union-attr]
                     self._fig.canvas.draw()  # type: ignore[union-attr]
                 else:
@@ -308,7 +308,8 @@ class GraphicsBlock(SinkBlock):
         jpeg, png or pdf.
         """
         try:
-            assert self._fig is not None, "no figure to save"
+            if self._fig is None:
+                raise RuntimeError("no figure to save")  # pragma: no cover
             plt.figure(self._fig.number)  # make block's figure the current one
             if filename is None:
                 filename = self.name or ""
@@ -541,7 +542,6 @@ class GraphicsBlock(SinkBlock):
                 # so preserve the normal figure size instead of shrinking the
                 # container to a single-tile window.
                 default_figsize = list(f.get_size_inches())
-                effective_dpi = dpi * dpiscale
                 if ntiles is None or ntiles == [1, 1]:
                     figsize = default_figsize
                 else:
@@ -585,7 +585,8 @@ class GraphicsBlock(SinkBlock):
                 f = plt.figure(figsize=gstate.figsize, dpi=gstate.dpi)
             else:
                 tiled_figure = getattr(gstate, "tiled_figure", None)
-                assert tiled_figure is not None
+                if tiled_figure is None:
+                    raise RuntimeError("tiled figure not initialised")  # pragma: no cover
                 f = tiled_figure
 
         _notebook = getattr(gstate, "notebook_backend", False)

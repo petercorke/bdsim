@@ -9,7 +9,6 @@ Sink blocks:
 """
 
 import numpy as np
-from math import pi, sqrt, sin, cos, atan2
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -24,7 +23,6 @@ import spatialmath.base as smb  # type: ignore[import-not-found]
 from typing import Any, Callable, Literal
 
 from bdsim.block_types import GraphicsBlock
-from bdsim.components import SinkBlock
 
 # ------------------------------------------------------------------------ #
 
@@ -380,16 +378,16 @@ class Scope(GraphicsBlock):
             self.styles: list[Any] | None = listify(styles)
             if nplots is None:
                 nplots = len(self.styles)
-            else:
-                assert nplots == len(self.styles), "need one style per plot"
+            elif nplots != len(self.styles):
+                raise ValueError("need one style per plot")
         else:
             self.styles = None
         if labels is not None:
             self.labels: list[Any] | None = listify(labels)
             if nplots is None:
                 nplots = len(self.labels)
-            else:
-                assert nplots == len(self.labels), "need one label per plot"
+            elif nplots != len(self.labels):
+                raise ValueError("need one label per plot")
         else:
             self.labels = None
 
@@ -434,13 +432,14 @@ class Scope(GraphicsBlock):
         if not self._enabled:
             return
 
-        # init the arrays that hold the data
-        self.tdata = np.array([])
-        self.ydata = [
-            np.array([]),
-        ] * self.nplots
+        # init the buffers that hold the data. Plain lists so that record()
+        # can append in O(1) amortized time on every accepted sample instead
+        # of the O(n) copy an np.append-per-sample pattern would cost.
+        self.tdata: list[float] = []
+        self.ydata: list[list[Any]] = [[] for _ in range(self.nplots)]
 
-        assert self.fig is not None and self.ax is not None
+        if self.fig is None or self.ax is None:
+            raise RuntimeError("figure not created, step called before start?")  # pragma: no cover
 
         # get labels if not provided
         if self.labels is None:
@@ -551,12 +550,12 @@ class Scope(GraphicsBlock):
 
         plt.draw()
 
-    def step(self, t: float, inports: list[Any]) -> None:
+    def record(self, t: float, inports: list[Any]) -> None:
+        """Append one sample. Runs on every accepted sample (see :meth:`step`)."""
         if not self._enabled:
             return
 
-        # inputs are set
-        self.tdata = np.append(self.tdata, t)
+        self.tdata.append(t)
 
         if self.vector is None:
             # take data from multiple inputs as a list
@@ -574,9 +573,16 @@ class Scope(GraphicsBlock):
 
         # append new data to the set
         for i, y in enumerate(data):
-            self.ydata[i] = np.append(self.ydata[i], y)
+            self.ydata[i].append(y)
 
-        # plot the data
+    def step(self, t: float, inports: list[Any]) -> None:
+        if not self._enabled:
+            return
+
+        # Render whatever record() has appended so far. record() runs on
+        # every accepted sample; step() itself may be throttled (see
+        # run_sim.py's periodic_update) purely to limit redraw cost, so it
+        # must not be relied on to capture data.
         for i in range(0, self.nplots):
             self.line[i].set_data(self.tdata, self.ydata[i])
 
@@ -589,6 +595,18 @@ class Scope(GraphicsBlock):
             self._cursor_update(self._cursor_x)
 
         super().step(t, inports)
+
+    def done(self, block: bool = False, **kwargs: Any) -> None:
+        # Force one final render so the displayed/saved figure reflects all
+        # recorded data, even if the last periodic step() ran before the
+        # final accepted sample(s) were recorded.
+        if self._enabled and self._fig is not None:
+            for i in range(0, self.nplots):
+                self.line[i].set_data(self.tdata, self.ydata[i])
+            if self.scale == "auto":
+                self.ax.relim()
+                self.ax.autoscale_view(scalex=False, scaley=True)
+        super().done(block=block, **kwargs)
 
     def _cursor_values(self, x: float) -> list[float]:
         if len(self.tdata) == 0:
@@ -776,8 +794,8 @@ class ScopeXY(GraphicsBlock):
         self.xdata: list[Any] = []
         self.ydata: list[Any] = []
         self.line: Any = None
-        if init is not None:
-            assert callable(init), "graphics init function must be callable"
+        if init is not None and not callable(init):
+            raise TypeError("graphics init function must be callable")
         self.init = init
 
         self.styles = style
@@ -804,16 +822,17 @@ class ScopeXY(GraphicsBlock):
         # create the plot
         super().reset()
 
-        assert self.fig is not None and self.ax is not None
+        if self.fig is None or self.ax is None:
+            raise RuntimeError("figure not created, step called before start?")  # pragma: no cover
 
         args = []
-        blockargs = {}
+        kwargs = {}
         style = self.styles
         if isinstance(style, dict):
-            blockargs = style
+            kwargs = style
         elif isinstance(style, str):
             args = [style]
-        (self.line,) = self.ax.plot(self.xdata, self.ydata, *args)
+        (self.line,) = self.ax.plot(self.xdata, self.ydata, *args, **kwargs)
 
         self.ax.grid(True)
         self.ax.set_xlabel(self.labels[0])
@@ -874,13 +893,16 @@ class ScopeXY(GraphicsBlock):
         self.xdata.append(x)
         self.ydata.append(y)
 
-        assert self.fig is not None, "figure not created, step called before start?"
+        if self.fig is None:
+            raise RuntimeError("figure not created, step called before start?")  # pragma: no cover
         plt.figure(self.fig.number)
         self.line.set_data(self.xdata, self.ydata)
 
-        assert (
-            self.bd is not None
-        ), f"block {self.name} not connected to a block diagram, step called before start?"
+        if self.bd is None:
+            raise RuntimeError(  # pragma: no cover
+                f"block {self.name} not connected to a block diagram, step called"
+                " before start?"
+            )
         if self.bd.runtime.options.animation:
             self.fig.canvas.flush_events()
 
@@ -1149,7 +1171,8 @@ class Animation(GraphicsBlock):
 
         if not self._enabled:
             return
-        assert self.fig is not None and self.ax is not None
+        if self.fig is None or self.ax is None:
+            raise RuntimeError("figure not created, step called before start?")  # pragma: no cover
 
         # Apply dark-theme text styling when inside a tiled (shared-figure) layout.
         if getattr(self, "_tile_subplotspec", None) is not None:

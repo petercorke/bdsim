@@ -9,7 +9,7 @@ Block library
 The block diagrams comprise blocks which belong to one of a number of different categories. These come from
 the package ``bdsim.blocks``, ``roboticstoolbox.blocks``, ``machinevisiontoolbox.blocks``.
 
-Icons, if shown to the left of the black header bar, are as used with `bdedit <https://github.com/petercorke/bdsim/tree/master/bdsim/bdedit>`_.
+Icons, if shown to the left of the black header bar, are as used with `bdedit <https://github.com/petercorke/bdsim/tree/main/src/bdedit>`_.
 
 .. inheritance-diagram:: bdsim.components.SourceBlock bdsim.components.SinkBlock bdsim.graphics.GraphicsBlock bdsim.components.FunctionBlock bdsim.components.ContinuousBlock bdsim.components.SampledBlock bdsim.components.SubsystemBlock
    :caption: Block class hierarchy, arrow from parent class to subclass

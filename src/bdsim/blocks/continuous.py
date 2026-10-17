@@ -7,15 +7,12 @@ Continuous-time blocks:
 """
 
 from __future__ import annotations
-from typing import Any, Callable
+from typing import Any
 
 
 import numpy as np
-import scipy.signal
-import math
-from math import sin, cos, atan2, sqrt, pi
+from math import pi
 import spatialmath.base as smb  # type: ignore[import-not-found]
-from bdsim.blockdiagram import BlockDiagram
 from bdsim.components import ContinuousBlock, SubsystemBlock
 
 Vector1D = int | float | tuple[float, ...] | list[float] | np.ndarray
@@ -239,7 +236,8 @@ class LTI_SS(ContinuousBlock):
         :type blockargs: dict
         """
         # print('in SS constructor')
-        assert A.shape[0] == A.shape[1], "A must be square"
+        if A.shape[0] != A.shape[1]:
+            raise ValueError("A must be square")
         n = A.shape[0]
         if len(B.shape) == 1:
             # 1D array, assume it's a column vector and reshape to (n,1)
@@ -247,24 +245,29 @@ class LTI_SS(ContinuousBlock):
             B = B.reshape((n, 1))
         else:
             nin = B.shape[1]
-        assert B.shape[0] == n, "B must have same number of rows as A"
+        if B.shape[0] != n:
+            raise ValueError("B must have same number of rows as A")
 
         if len(C.shape) == 1:
             # 1D array, assume it's a row vector and reshape to (1,n)
             nout = 1
-            assert C.shape[0] == n, "C must have same number of columns as A"
+            if C.shape[0] != n:
+                raise ValueError("C must have same number of columns as A")
             C = C.reshape((1, n))
         else:
             nout = C.shape[0]
-            assert C.shape[1] == n, "C must have same number of columns as A"
+            if C.shape[1] != n:
+                raise ValueError("C must have same number of columns as A")
 
         if D is None:
             D = np.zeros((nout, n))
         elif len(D.shape) == 1:
-            assert len(D) == nin * nout, "D must conform to B and C dimensions"
+            if len(D) != nin * nout:
+                raise ValueError("D must conform to B and C dimensions")
             D = D.reshape((nout, nin))
         else:
-            assert D.shape == (nout, nin), "D must conform to B and C dimensions"
+            if D.shape != (nout, nin):
+                raise ValueError("D must conform to B and C dimensions")
 
         self.A = A
         self.B = B
@@ -675,8 +678,6 @@ class Deriv2(LTI_SS):
 
 
 # ------------------------------------------------------------------------ #
-
-from bdsim.blocks.connections import SubSystem
 
 
 class Deriv(SubsystemBlock):

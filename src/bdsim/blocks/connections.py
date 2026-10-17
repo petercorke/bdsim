@@ -22,10 +22,9 @@ from typing import Any, cast
 
 import numpy as np
 
-import bdsim
 from bdsim.blockdiagram import bdload
 from bdsim.blockdiagram import BlockDiagram
-from bdsim.components import SubsystemBlock, SourceBlock, SinkBlock, FunctionBlock
+from bdsim.components import SubsystemBlock, FunctionBlock
 
 
 # ------------------------------------------------------------------------ #
@@ -86,8 +85,10 @@ class Item(FunctionBlock):
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         input = inputs[0]
         # TODO, handle inputs that are vectors themselves
-        assert isinstance(input, dict), "Input signal must be a dict"
-        assert self.item in input, "Item is not in input dict"
+        if not isinstance(input, dict):
+            raise TypeError("Input signal must be a dict")
+        if self.item not in input:
+            raise ValueError("Item is not in input dict")
         return [input[self.item]]
 
 
@@ -261,9 +262,8 @@ class DeMux(FunctionBlock):
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         input = inputs[0]
         # TODO, handle inputs that are vectors themselves
-        assert (
-            len(input) == self.nout
-        ), "Input width not equal to number of output ports"
+        if len(input) != self.nout:
+            raise ValueError("Input width not equal to number of output ports")
         return list(input)
 
 
@@ -438,8 +438,6 @@ class SubSystem(SubsystemBlock):
         :raises ValueError: invalid argument type or .bd load constraints not met
         """
 
-        resolved_subsys: BlockDiagram
-
         name = None
 
         if isinstance(subsys, str):
@@ -606,7 +604,6 @@ class OutPort(FunctionBlock):
 
 
 if __name__ == "__main__":  # pragma: no cover
-    from pathlib import Path
     import subprocess
     import sys
 

@@ -19,7 +19,6 @@ import os
 import shutil
 import sys
 from pathlib import Path
-import importlib.util
 import tempfile
 import unittest
 import io
@@ -78,8 +77,8 @@ class TimeQTest(unittest.TestCase):
         q.push((1.0, "a"))
         q.push((2.0, "b"))
         result = q.pop_until(2.0)
-        # Items with t <= 2.0 should remain (or be popped — behavior depends on impl.)
-        # The function removes items with t <= t_thresh
+        # pop_until removes and returns items with t <= t_thresh, sorted by t
+        self.assertEqual(result, [(1.0, "a"), (2.0, "b")])
         # After pop_until(2.0), only the items with t > 2.0 remain
         remaining, _ = q.pop()
         self.assertEqual(remaining, 3.0)
@@ -179,6 +178,59 @@ class BDSimStrTest(unittest.TestCase):
     def test_str(self):
         s = str(self.sim)
         self.assertIn("BDSim", s)
+
+
+# ---------------------------------------------------------------------------
+class BDSimDoneTest(unittest.TestCase):
+    """Regression tests for BDSim.done().
+
+    run_sim.py used to define `done()` (and `closefigs()`) twice in the same
+    class -- Python silently keeps only the later definition, which had lost
+    the notebook/DisplayManager-aware branch the earlier one added. Since
+    calling `sim.done(bd, block=True)` directly (outside `run()`, which
+    routes around `done()` for notebook backends itself) is a documented
+    usage pattern, this silently broke notebook finalization for anyone
+    following that pattern.
+    """
+
+    def _context_with_display_manager(self, display_manager):
+        from bdsim.run_context import SimulationContext
+
+        simstate = SimpleNamespace(display_manager=display_manager)
+        options = SimpleNamespace(hold=False)
+        return SimulationContext(bd=None, simstate=simstate, options=options)
+
+    def test_done_uses_display_manager_when_present(self):
+        from unittest.mock import MagicMock
+
+        sim = bdsim.BDSim(graphics=None, progress=False, banner=False)
+        display_manager = MagicMock()
+        context = self._context_with_display_manager(display_manager)
+        sim._set_context(context)
+        try:
+            bd = MagicMock()
+            sim.done(bd, block=True)
+        finally:
+            sim._set_context(None)
+
+        display_manager.finalize.assert_called_once_with(hold=True)
+        bd.done.assert_called_once()
+
+    def test_done_falls_back_to_plt_show_without_display_manager(self):
+        from unittest.mock import MagicMock, patch
+
+        sim = bdsim.BDSim(graphics=None, progress=False, banner=False)
+        context = self._context_with_display_manager(None)
+        sim._set_context(context)
+        try:
+            bd = MagicMock()
+            with patch("bdsim.run_sim.plt.show") as mock_show:
+                sim.done(bd, block=True)
+            mock_show.assert_called_once_with(block=True)
+        finally:
+            sim._set_context(None)
+
+        bd.done.assert_called_once()
 
 
 # ---------------------------------------------------------------------------
@@ -410,7 +462,7 @@ class SimRunCoverageTest(unittest.TestCase):
             tmpname = tmp.name
         try:
             self.sim.options.outfile = tmpname
-            out = self.sim.run(bd, T=0.5)
+            self.sim.run(bd, T=0.5)
             self.assertTrue(os.path.exists(tmpname))
             self.assertGreater(os.path.getsize(tmpname), 0)
         finally:
@@ -910,7 +962,7 @@ class LazyBlockClassTest(unittest.TestCase):
         """_LazyBlockClass should resolve on first __call__."""
         lazy = _LazyBlockClass("bdsim.blocks.sources", "Constant")
         # Calling the lazy proxy should resolve it
-        block_instance = lazy(1)  # Create a Constant(1) block
+        lazy(1)  # Create a Constant(1) block
         self.assertIsNotNone(lazy._resolved)
         # Should be the actual Block class
         self.assertTrue(hasattr(lazy._resolved, "__mro__"))
@@ -1024,7 +1076,7 @@ class LazyResolutionTest(unittest.TestCase):
         self.assertIsInstance(const_info["class"], _LazyBlockClass)
 
         # Call factory to create a block
-        block = bd.CONSTANT(42)
+        bd.CONSTANT(42)
 
         # After factory call, class should be resolved
         self.assertNotIsInstance(const_info["class"], _LazyBlockClass)
@@ -1094,9 +1146,9 @@ class IntegrationTest(unittest.TestCase):
         bd = self.sim.blockdiagram()
 
         # Sources module should load only once even with multiple blocks
-        const1 = bd.CONSTANT(1)
-        const2 = bd.CONSTANT(2)
-        time_block = bd.TIME()  # Also from sources module
+        bd.CONSTANT(1)
+        bd.CONSTANT(2)
+        bd.TIME()  # Also from sources module
 
         # All source blocks should now be resolved (promoted)
         for block_name in ["CONSTANT", "TIME"]:
@@ -1175,8 +1227,6 @@ class DebugEnvironmentTest(unittest.TestCase):
         # This test just ensures the code paths exist; actual debug output
         # would be verified visually by running:
         #   $ BDSIM_DEBUG_DISCOVERY=1 python -c "import bdsim; sim = bdsim.BDSim(...)"
-        import os
-
         # Check that the env var is referenced in code
         with open(Path(__file__).parent.parent / "src/bdsim/run_sim.py", "r") as f:
             content = f.read()
@@ -1184,8 +1234,6 @@ class DebugEnvironmentTest(unittest.TestCase):
 
     def test_debug_lazy_load_env_var_supported(self):
         """BDSIM_DEBUG_LAZY_LOAD env var should be supported (not tested verbatim)."""
-        import os
-
         # Check that the env var is referenced in code
         with open(Path(__file__).parent.parent / "src/bdsim/run_sim.py", "r") as f:
             content = f.read()
@@ -1542,6 +1590,45 @@ class HybridSimGraphicsRegressionTest(unittest.TestCase):
         out_hybrid = sim_hybrid.run(bd_hybrid, T=5.0, dt=0.1)
         self.assertEqual(len(out_hybrid.t), 1)
         self.assertEqual(float(out_hybrid.t[0]), 0.0)
+
+
+# ---------------------------------------------------------------------------
+class ScopeRecordingResolutionTest(unittest.TestCase):
+    """Regression test for bdsim#31: a Scope's recorded trace was silently
+    capped at ~200 samples over the whole run (throttled for display-refresh
+    cost), regardless of the requested ``dt`` -- e.g. 5s/1ms-dt gave one
+    sample every ~25ms. Scope.record() now runs on every accepted sample,
+    independent of Scope.step()'s (still throttled) render cadence.
+    """
+
+    def test_scope_records_at_full_dt_resolution(self):
+        sim = bdsim.BDSim(animation=False, backend="Agg", quiet=True)
+        bd = sim.blockdiagram()
+        demand = bd.STEP(T=1, name="demand")
+        summer = bd.SUM("+-")
+        gain = bd.GAIN(50)
+        plant = bd.LTI_SISO(0.5, [2, 1], name="plant")
+        scope = bd.SCOPE(nin=2, name="scope")
+        bd.connect(demand, summer[0], scope[1])
+        bd.connect(summer, gain)
+        bd.connect(gain, plant)
+        bd.connect(plant, summer[1], scope[0])
+        bd.compile()
+
+        sim.run(bd, T=3, dt=1e-3)
+
+        expected_samples = int(round(3 / 1e-3)) + 1
+        self.assertEqual(len(scope.tdata), expected_samples)
+
+        # demand is an algebraic (stateless) STEP, so its recorded trace
+        # must show a sharp transition, not the smoothed-out slew that the
+        # throttled ~200-point recording produced.
+        t = np.asarray(scope.tdata)
+        demand_trace = np.asarray(scope.ydata[1])
+        just_before = demand_trace[t < 1.0][-1]
+        just_after = demand_trace[t >= 1.0][0]
+        self.assertEqual(just_before, 0)
+        self.assertEqual(just_after, 1)
 
 
 # ---------------------------------------------------------------------------
