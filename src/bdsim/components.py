@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import re
 import threading
 import warnings
@@ -36,6 +37,7 @@ _F = TypeVar("_F", bound=Callable[..., Any])
 
 # decorator for debugging implicit block creation with operator overloading
 def oodebug(func: _F) -> _F:
+    @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         ret = func(*args, **kwargs)
         # print(f"{func.__qualname__}{args} --> {ret}")
