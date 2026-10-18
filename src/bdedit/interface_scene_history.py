@@ -1,6 +1,7 @@
 # Library imports
 import sys
 import traceback
+from collections.abc import Callable
 
 # BdEdit imports
 from bdedit.block_graphics_wire import GraphicsWire
@@ -33,13 +34,13 @@ class SceneHistory:
         # After model has been loaded, add current deserialized state as the first stamp in the history stack
         self.storeHistory("Initial History Stamp")
 
-    def addHistoryModifiedListener(self, callback: "function"):
+    def addHistoryModifiedListener(self, callback: Callable[..., None]):
         self._history_modified_listeners.append(callback)
 
-    def addHistoryStoredListener(self, callback: "function"):
+    def addHistoryStoredListener(self, callback: Callable[..., None]):
         self._history_stored_listeners.append(callback)
 
-    def addHistoryRestoredListener(self, callback: "function"):
+    def addHistoryRestoredListener(self, callback: Callable[..., None]):
         self._history_restored_listeners.append(callback)
 
     def undo(self):

@@ -17,7 +17,6 @@ import importlib.util
 import argparse
 import types
 import time
-import traceback
 import traceback as tb
 import warnings
 from typing import Any, Callable, NoReturn, Sequence

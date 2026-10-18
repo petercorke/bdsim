@@ -111,6 +111,9 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]  # re-exports
+# bdedit modules rely on `from x import *` chains, so an "unused" import is often
+# a name that dependent modules use implicitly; auto-removing them breaks those modules.
+"src/bdedit/**" = ["F401"]
 
 [tool.ruff.format]
 quote-style = "double"
