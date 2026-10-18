@@ -30,7 +30,6 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 import bdsim
-from bdsim.bdrun import bdload
 
 # ---------------------------------------------------------------------------
 # App + CORS (dev: Vite runs on :5173, backend on :8000)
