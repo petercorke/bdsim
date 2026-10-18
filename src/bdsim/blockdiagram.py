@@ -278,9 +278,7 @@ class BlockDiagram(BlockDiagramMixin):
                 if isinstance(end, Plug) and end.isslice:
                     # connect(X[i:j], Y[m:n])
                     if start.width != end.width:
-                        raise ValueError(
-                            "can only connect port slices of same width"
-                        )
+                        raise ValueError("can only connect port slices of same width")
                     for i in range(start.width):
                         wire = Wire(start[i], end[i], name)
                         self.add_wire(wire)
@@ -658,7 +656,7 @@ class BlockDiagram(BlockDiagramMixin):
                 # Subsystem block encountered, recurse to find its constituent blocks and wires
                 # do not add it to the block list, it was just a container for the subsystem blocks and wires
                 if verbose:
-                    print(f"{'  '*(depth+1)}instantiating subsystem ", b.name)
+                    print(f"{'  ' * (depth + 1)}instantiating subsystem ", b.name)
                 ssb, ssw = self._subsystem_import(
                     b.subsystem,  # reference to the BlockDiagram that describes the subsystem
                     b.name,  # name of the subsystem block, becomes a prefix for all blocks within the subsystem

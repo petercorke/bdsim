@@ -178,11 +178,7 @@ with open(OUTPUT, "w") as f:
         # Normalize legacy typing spellings that come back from inspect so the
         # generated mixin uses the project's modern ``|`` style annotations.
         # Params without annotations default to Any.
-        sig_str = (
-            "("
-            + ", ".join(["self"] + [_param_to_str(p) for p in params])
-            + ")"
-        )
+        sig_str = "(" + ", ".join(["self"] + [_param_to_str(p) for p in params]) + ")"
         doc = (meth.__init__.__doc__ or "").rstrip()
 
         f.write(f"\n    # {info['module']}.{info['classname']}\n")

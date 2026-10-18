@@ -10,7 +10,6 @@ import numpy.testing as nt
 
 
 class FunctionBlockTest(unittest.TestCase):
-
     def test_gain(self):
 
         block = Gain(2)
@@ -232,5 +231,4 @@ class FunctionBlockTest(unittest.TestCase):
 
 # ---------------------------------------------------------------------------------------#
 if __name__ == "__main__":
-
     unittest.main()

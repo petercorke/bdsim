@@ -437,7 +437,9 @@ class Scene(Serializable):
         # For each block from the saved blocks
         for block_data in data["blocks"]:
             block_type = block_data["block_type"]
-            normalized_block_type = Scene._LEGACY_BLOCK_TYPES.get(block_type, block_type)
+            normalized_block_type = Scene._LEGACY_BLOCK_TYPES.get(
+                block_type, block_type
+            )
             if normalized_block_type != block_type:
                 print(
                     "BdEdit warning: renamed deprecated block type during load: "
@@ -448,7 +450,10 @@ class Scene(Serializable):
                 )
             # If a block is one that is manually defined by bdedit (such as the connector
             # or main blocks, or the text item), they must manaully be re-created.
-            if normalized_block_type == "CONNECTOR" or normalized_block_type == "Connector":
+            if (
+                normalized_block_type == "CONNECTOR"
+                or normalized_block_type == "Connector"
+            ):
                 Connector(self, self.window).deserialize(block_data, hashmap)
 
             elif normalized_block_type == "MAIN" or normalized_block_type == "Main":

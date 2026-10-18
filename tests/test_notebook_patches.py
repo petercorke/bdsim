@@ -120,9 +120,9 @@ def test_pyplot_launch_patch_reuses_existing_3d_axes(monkeypatch):
     instance = cls()
     instance.launch(name="test", fig=fig)
 
-    assert (
-        instance.launch_calls[0]["ax"] is ax3d
-    ), "Existing 3D axes should have been injected into launch() call"
+    assert instance.launch_calls[0]["ax"] is ax3d, (
+        "Existing 3D axes should have been injected into launch() call"
+    )
     plt.close("all")
 
 
@@ -137,9 +137,9 @@ def test_pyplot_launch_patch_clears_inline_is_jl(monkeypatch):
     instance = cls()
     instance.launch(name="test")
 
-    assert (
-        instance._inline_is_jl is False
-    ), "patched_launch must reset _inline_is_jl to False after original_launch"
+    assert instance._inline_is_jl is False, (
+        "patched_launch must reset _inline_is_jl to False after original_launch"
+    )
 
 
 def test_pyplot_add_patch_suppresses_show_and_draw(monkeypatch):
@@ -157,9 +157,9 @@ def test_pyplot_add_patch_suppresses_show_and_draw(monkeypatch):
     instance.add("robot_stub")
 
     # Figure must still be open — show() should not have closed it
-    assert (
-        set(plt.get_fignums()) >= initial_fignums
-    ), "plt.show() inside add() should not have closed figures"
+    assert set(plt.get_fignums()) >= initial_fignums, (
+        "plt.show() inside add() should not have closed figures"
+    )
     plt.close("all")
 
 
@@ -356,9 +356,9 @@ def test_armplot_patch_notebook_clears_jl_flag_nontiled(monkeypatch):
 
     instance.step(0.0, [np.zeros(6)])
 
-    assert (
-        instance.env._inline_is_jl is False
-    ), "patched_step must clear _inline_is_jl so RTB uses display-id, not clear_output()"
+    assert instance.env._inline_is_jl is False, (
+        "patched_step must clear _inline_is_jl so RTB uses display-id, not clear_output()"
+    )
 
 
 def test_armplot_patch_notebook_suppresses_push_inline_frame_tiled(monkeypatch):
@@ -396,13 +396,13 @@ def test_armplot_patch_notebook_suppresses_push_inline_frame_tiled(monkeypatch):
 
     # During env.step(), _push_inline_frame must have been replaced (not the original)
     assert len(push_seen_during_step) == 1
-    assert (
-        push_seen_during_step[0] is not original_push
-    ), "_push_inline_frame should be suppressed during env.step() in tiled mode"
+    assert push_seen_during_step[0] is not original_push, (
+        "_push_inline_frame should be suppressed during env.step() in tiled mode"
+    )
     # After step(), _push_inline_frame must be restored
-    assert (
-        instance.env._push_inline_frame is original_push
-    ), "_push_inline_frame must be restored after patched_step()"
+    assert instance.env._push_inline_frame is original_push, (
+        "_push_inline_frame must be restored after patched_step()"
+    )
 
 
 def test_armplot_patch_notebook_suppresses_plt_draw(monkeypatch):
@@ -433,9 +433,9 @@ def test_armplot_patch_notebook_suppresses_plt_draw(monkeypatch):
 
     instance.step(0.0, [np.zeros(6)])
 
-    assert plt_draw_was_suppressed == [
-        True
-    ], "plt.draw should be suppressed inside env.step()"
+    assert plt_draw_was_suppressed == [True], (
+        "plt.draw should be suppressed inside env.step()"
+    )
     assert plt.draw is real_draw, "plt.draw should be restored after step()"
 
 
@@ -466,9 +466,9 @@ def test_armplot_patch_notebook_suppresses_time_sleep(monkeypatch):
 
     instance.step(0.0, [np.zeros(6)])
 
-    assert sleep_was_suppressed == [
-        True
-    ], "time.sleep should be suppressed inside env.step()"
+    assert sleep_was_suppressed == [True], (
+        "time.sleep should be suppressed inside env.step()"
+    )
     assert _time.sleep is real_sleep, "time.sleep should be restored after step()"
 
 
@@ -519,6 +519,6 @@ def test_armplot_patch_restores_plt_draw_on_exception(monkeypatch):
     with pytest.raises(RuntimeError, match="boom"):
         instance.step(0.0, [np.zeros(6)])
 
-    assert (
-        plt.draw is real_draw
-    ), "plt.draw must be restored even after env.step() raises"
+    assert plt.draw is real_draw, (
+        "plt.draw must be restored even after env.step() raises"
+    )

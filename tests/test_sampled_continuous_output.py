@@ -35,7 +35,6 @@ def _is_1d_ndarray(v, size):
 
 
 class TestZOHOutput(unittest.TestCase):
-
     def test_scalar_state_returns_float(self):
         blk = ZOH(_clock(), x0=0.0)
         result = blk.output(t=0.0, inputs=[3.14], x=np.array([3.14]))
@@ -70,7 +69,6 @@ class TestZOHOutput(unittest.TestCase):
 
 
 class TestIntegratorSOutput(unittest.TestCase):
-
     def test_scalar_returns_float(self):
         blk = Integrator_S(_clock(), x0=0.0)
         result = blk.output(t=0.0, u=[1.0], x=np.array([5.0]))
@@ -90,7 +88,6 @@ class TestIntegratorSOutput(unittest.TestCase):
 
 
 class TestDerivSOutput(unittest.TestCase):
-
     def test_scalar_returns_float(self):
         blk = Deriv_S(_clock(T=0.1), x0=0.0)
         # derivative: (u - x) / T = (1.0 - 0.0) / 0.1 = 10.0
@@ -110,7 +107,6 @@ class TestDerivSOutput(unittest.TestCase):
 
 
 class TestIntegratorOutput(unittest.TestCase):
-
     def test_scalar_returns_float(self):
         blk = Integrator(x0=0.0)
         result = blk.output(t=0.0, u=[1.0], x=np.array([2.5]))
@@ -130,7 +126,6 @@ class TestIntegratorOutput(unittest.TestCase):
 
 
 class TestLTISSOutput(unittest.TestCase):
-
     def _siso(self):
         return LTI_SS(A=np.array([[-2.0]]), B=np.array([[1.0]]), C=np.array([[1.0]]))
 
@@ -195,7 +190,6 @@ class TestLTISSOutput(unittest.TestCase):
 
 
 class TestLTISSSOutput(unittest.TestCase):
-
     def _siso(self):
         return LTI_SS_S(
             _clock(),

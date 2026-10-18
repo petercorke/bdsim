@@ -312,7 +312,6 @@ class GraphicsBlock(QGraphicsItem):
         """
 
         try:
-
             # Block dimensions are checked for to ensure there's enough space for all sockets
             self.checkBlockHeight()
 

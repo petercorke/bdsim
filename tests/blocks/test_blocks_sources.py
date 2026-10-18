@@ -31,6 +31,7 @@ Created on Thu May 21 06:39:29 2020
 
 @author: Peter Corke
 """
+
 import numpy as np
 import math
 
@@ -223,5 +224,4 @@ class SourceBlockTest(unittest.TestCase):
 
 # ---------------------------------------------------------------------------------------#
 if __name__ == "__main__":
-
     unittest.main()

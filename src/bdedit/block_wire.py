@@ -27,7 +27,11 @@ def _describe_socket_ref(socket_obj, socket_id):
     if socket_obj is None:
         return f"socket id {socket_id}"
     block = socket_obj.node
-    block_name = getattr(block, "title", None) or getattr(block, "block_type", None) or block.__class__.__name__
+    block_name = (
+        getattr(block, "title", None)
+        or getattr(block, "block_type", None)
+        or block.__class__.__name__
+    )
     return f"{block_name} (id {block.id})"
 
 
@@ -438,22 +442,17 @@ class Wire(Serializable):
 
         # If there are more than 1 wires, check for overlapping
         if number_of_wires > 1:
-
             # Iterate through each wire in list of wires
             for i in range(0, number_of_wires):
-
                 # If the wire has a vertical segment, check intersections against other wires
                 # Else ignore (as wire only has horizontal segments, and these cant create an intersection point
                 # unless a vertical line passes through them)
 
                 wire_has_vert = self.scene.wires[i].vertical_segments
                 if wire_has_vert:
-
                     # Check each vertical segment against horizontal segments of other wires
                     for vertical_segment in wire_has_vert:
-
                         for j in range(0, number_of_wires):
-
                             # If j==i this means the same wire is being checked, ignore checking this wire (cannot overlap with itself)
                             if j == i:
                                 pass
@@ -464,12 +463,10 @@ class Wire(Serializable):
                             ):
                                 pass
                             else:
-
                                 # Iterate through each horizontal segments of the wire being checked
                                 for horizontal_segment in self.scene.wires[
                                     j
                                 ].horizontal_segments:
-
                                     # In a vertical wire with points [(a1,b1), (a2,b2)], the horizontal coordinates will be
                                     # equal, hence the wire is essentially [(a,b1), (a,b2)]
 

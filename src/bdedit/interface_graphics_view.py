@@ -226,7 +226,6 @@ class GraphicsView(QGraphicsView):
         """
         # If there are wires within the Scene
         if self.grScene.scene.wires:
-
             # print("Graphics view - intersection test")
             # for i, wire in enumerate(self.grScene.scene.wires):
             #     print("Wire " + str(i) + " Coordinates: ", wire.wire_coordinates)
@@ -308,7 +307,6 @@ class GraphicsView(QGraphicsView):
         if type(item) is GraphicsSocket:
             # And the clicked socket is not the same socket the original wire started from
             if item.socket != self.drag_start_socket:
-
                 # If we released dragging on a socket (other then the beginning socket)
                 # We want to keep all the wires coming from target socket
                 if not item.socket.is_multi_wire:
@@ -586,7 +584,6 @@ class GraphicsView(QGraphicsView):
                 return
 
         if type(item) is GraphicsSocket:
-
             if self.mode == MODE_NONE:
                 self.mode = MODE_WIRE_DRAG
                 self.edgeDragStart(item)

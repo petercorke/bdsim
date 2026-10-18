@@ -4,6 +4,7 @@
 Example of bouncing ball system
 Copyright (c) 2021- Peter Corke
 """
+
 import bdsim
 
 # define constants
