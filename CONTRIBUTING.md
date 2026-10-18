@@ -27,7 +27,14 @@ Several people (and AI coding agents) often pick up the same issue at about the 
 - Keep pull requests scoped to a single feature or fix. If you have several unrelated changes, open separate PRs so each can be reviewed and merged independently.
 - For API changes, propose the change in [Discussions](https://github.com/petercorke/bdsim/discussions) before opening a PR.
 - PR titles follow [Conventional Commits](https://www.conventionalcommits.org/) (`type: description`) — checked automatically on the PR.
-- Code is formatted with [black](https://pypi.org/project/black/); configuration is in `pyproject.toml` under `[tool.black]`.
+- Code is formatted and linted with [ruff](https://docs.astral.sh/ruff/); configuration is in `pyproject.toml` under `[tool.ruff]`. CI runs `ruff check .` and `ruff format --check .`, so before pushing run:
+
+  ```
+  ruff format .
+  ruff check .
+  ```
+
+  `pip install -e '.[dev]'` installs the pinned ruff version. Please don't reformat code you are not otherwise changing.
 - New or changed code should be type-hinted using modern syntax (`X | Y`, `X | None`, `list[X]`, `dict[K, V]` — not `Union`, `Optional`, `List`, `Dict`).
 - Docstrings use reST style (`:param:`, `:returns:`). Type hints in the function signature already cover types, so `:type:`/`:rtype:` are rarely needed.
 - Any code change should be covered by tests and must not break existing ones. Tests live in `tests/`. Install the dev dependencies with `pip install -e '.[dev]'` (add `,docs` too if you're touching documentation), then run:
