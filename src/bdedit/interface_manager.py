@@ -950,7 +950,7 @@ class InterfaceWindow(QMainWindow):
             self._sim_process = subprocess.Popen(command, shell=False)
 
         except (ValueError, OSError):
-            print(f"failed to spawn subprocess")
+            print("failed to spawn subprocess")
 
     # -----------------------------------------------------------------------------
     def abortButton(self):

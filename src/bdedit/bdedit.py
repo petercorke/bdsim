@@ -11,7 +11,6 @@ import faulthandler
 from pathlib import Path
 
 from sys import platform
-from pathlib import Path
 
 # PySide6 imports
 from PySide6.QtWidgets import QApplication

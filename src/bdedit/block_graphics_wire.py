@@ -275,7 +275,7 @@ class GraphicsWire(QGraphicsPathItem):
         logic of the wire between the start and end socket.
         """
 
-        raise NotImplemented("This method is to be over written by child class")
+        raise NotImplementedError("This method is to be over written by child class")
 
     # -----------------------------------------------------------------------------
     def updateCursorSegments(self, segments):
