@@ -1,5 +1,9 @@
 # bdweb — Web-based Block Diagram Editor
 
+> **Status: work in progress.** The frontend does not build yet: `frontend/src/lib/` and
+> `package.json` are not committed, so some files listed under Structure below do not exist
+> on this branch. See [#118](https://github.com/petercorke/bdsim/issues/118) for what remains.
+
 Modern web UI for bdsim using SvelteKit 5 and FastAPI.
 
 ## Structure
@@ -129,15 +133,34 @@ Handles are displayed as small triangles: output handles point **right**, input 
 
 | Method | Path | Description |
 |---|---|---|
-| `GET` | `/api/library` | All block types with introspected parameters |
-| `GET` | `/api/info/{block_type}` | Metadata for a single block (docs URL, params) |
-| `GET` | `/api/ls?path=…` | List a directory on the server filesystem |
+| `GET` | `/api/blocks` | Full block library, grouped by block class (Source, Sink, Function, ...), with introspected parameters |
+| `GET` | `/api/blockinfo/{name}` | Metadata for a single block (docs URL, params); name is case-insensitive, 404 if unknown |
+| `GET` | `/api/ls?dir=…` | List directories and `.bd` files; `dir` is relative to `~` and cannot escape it (403) |
 | `GET` | `/api/exists?path=…` | Check whether a file path exists |
-| `POST` | `/api/load` | Load a `.bd` file; returns diagram JSON |
-| `POST` | `/api/save` | Save a `.bd` file from diagram JSON |
-| `POST` | `/api/run` | Execute the diagram and return stdout + base64 plots |
+| `POST` | `/api/load` | Load a `.bd` file (`{"path": ...}`); returns diagram JSON |
+| `POST` | `/api/save` | Save diagram JSON (`{"path": ..., "diagram": ...}`) as a `.bd` file, creating parent directories |
+| `POST` | `/api/run` | Run a saved `.bd` file with `bdrun` in a subprocess (`{"path": ..., "timeout": 120}`); returns `stdout`, `stderr`, `returncode`. Matplotlib windows open natively on the server |
+
+> **Security: not safe to expose to a network yet.** Only `/api/ls` is confined to `~`.
+> `/api/load`, `/api/save`, `/api/exists` and `/api/run` accept any path the server process
+> can reach, and `bdweb` currently binds to `0.0.0.0` (all interfaces). Run it only on a
+> machine and network you trust until this is addressed. Tracked in
+> [#118](https://github.com/petercorke/bdsim/issues/118).
 
 See [BDFILE.md](BDFILE.md) for the `.bd` file format specification.
+
+## Testing
+
+The backend tests use FastAPI's `TestClient`, which calls the app in-process (no server or
+browser needed). They skip automatically if `fastapi` or `httpx` is not installed:
+
+```bash
+pip install fastapi httpx
+pytest tests/test_bdweb.py
+```
+
+They cover the block library and block info routes and `.bd` load/save (round trips, error
+cases). `/api/ls`, `/api/exists` and `/api/run` are not yet covered.
 
 ## Technology
 
