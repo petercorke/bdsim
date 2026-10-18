@@ -56,9 +56,32 @@ jobs:
         run: |
           pytest --capture=no --timeout=50 --timeout_method=thread
 
+  lint:
+    name: lint (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      # keep this pin in step with the ruff entry in pyproject.toml's dev extra:
+      # formatter output can change between ruff releases
+      - name: Install ruff
+        run: python -m pip install "ruff>=0.17,<0.18"
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Check formatting
+        run: ruff format --check .
+
   all-tests-passed:
     name: All tests passed
-    needs: test
+    needs: [test, lint]
     runs-on: ubuntu-latest
     if: always()
     steps:
@@ -66,6 +89,10 @@ jobs:
         run: |
           if [ "${{ needs.test.result }}" != "success" ]; then
             echo "test matrix did not succeed: ${{ needs.test.result }}"
+            exit 1
+          fi
+          if [ "${{ needs.lint.result }}" != "success" ]; then
+            echo "lint did not succeed: ${{ needs.lint.result }}"
             exit 1
           fi
 
