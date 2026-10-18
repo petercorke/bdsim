@@ -313,7 +313,9 @@ class Block(ABC, Port):
         if inputs is not None and len(inputs) > 0:
             # assert len(inputs) == self.nin, 'Number of input connections must match number of inputs'
             if self.bd is None:
-                raise RuntimeError("inputs provided but block is not in a block diagram")  # pragma: no cover
+                raise RuntimeError(
+                    "inputs provided but block is not in a block diagram"
+                )  # pragma: no cover
             for i, input in enumerate(inputs):
                 self.bd.connect(input, Plug(self, port=i))
 
@@ -628,7 +630,9 @@ class Block(ABC, Port):
         values = []
         slots = getattr(self, "_inport_slots", None)
         if slots is None:
-            raise RuntimeError(f"block {self.name} input slots not initialised")  # pragma: no cover
+            raise RuntimeError(
+                f"block {self.name} input slots not initialised"
+            )  # pragma: no cover
         for i, slot in enumerate(slots):
             if slot is not None:
                 values.append(slot.value)
@@ -654,7 +658,9 @@ class Block(ABC, Port):
         """
         slots = getattr(self, "_inport_slots", None)
         if slots is None:
-            raise RuntimeError(f"block {self.name} input slots not initialised")  # pragma: no cover
+            raise RuntimeError(
+                f"block {self.name} input slots not initialised"
+            )  # pragma: no cover
 
         if slots is not None:
             slot = slots[i]
@@ -733,9 +739,13 @@ class Block(ABC, Port):
         :seealso: :meth:`inport_value`
         """
         if self._output_values is None:
-            raise RuntimeError(f"block {self.name} output values not initialised")  # pragma: no cover
+            raise RuntimeError(
+                f"block {self.name} output values not initialised"
+            )  # pragma: no cover
         if self._output_values[i] is None:
-            raise RuntimeError(f"block {self.name} output value {i} not set")  # pragma: no cover
+            raise RuntimeError(
+                f"block {self.name} output value {i} not set"
+            )  # pragma: no cover
         return self._output_values[i]
 
     def _publish_output_values(self, out: list[Any] | tuple[Any, ...]) -> None:
@@ -1749,14 +1759,10 @@ class Block(ABC, Port):
             raise ValueError(f"block {self.name} nout must be non-negative")
 
         if self._inport_names is not None and len(self._inport_names) != self.nin:
-            raise ValueError(
-                "number of input port names must match number of inputs"
-            )
+            raise ValueError("number of input port names must match number of inputs")
 
         if self._outport_names is not None and len(self._outport_names) != self.nout:
-            raise ValueError(
-                "number of output port names must match number of outputs"
-            )
+            raise ValueError("number of output port names must match number of outputs")
 
         if not (self.nin > 0 or self.nout > 0):
             raise ValueError(f"block {self.name} no inputs or outputs specified")

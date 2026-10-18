@@ -9,7 +9,6 @@ import numpy.testing as nt
 
 
 class ConnectionsTest(unittest.TestCase):
-
     def test_mux(self):
 
         block = Mux(2)
@@ -51,5 +50,4 @@ class ConnectionsTest(unittest.TestCase):
 
 # ---------------------------------------------------------------------------------------#
 if __name__ == "__main__":
-
     unittest.main()

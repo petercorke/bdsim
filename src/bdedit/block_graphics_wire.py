@@ -32,7 +32,6 @@ DEBUG_COORDINATES = False
 #
 # =============================================================================
 class GraphicsWire(QGraphicsPathItem):
-
     # Handles for displaying cursors when trying to move wire segments
     handleHSeg1 = 0
     handleVSeg1 = 1
@@ -546,7 +545,6 @@ class GraphicsWire(QGraphicsPathItem):
         # so this leaves only the vertical segment connecting them. If that segment is dragged, adjust the points accordingly.
         # If any other segments are being dragged, don't do anything
         if self.handleSegments == 3:
-
             if self.handleSelected == self.handleVSeg1:
                 # Only 1 vertical segment in this case, so take the first vert segment [0]
                 segment = self.wire.vertical_segments[0].copy()
@@ -561,7 +559,6 @@ class GraphicsWire(QGraphicsPathItem):
         # Otherwise if there are five segments, since first and last segment cannot be moved, this leaves us with 3 segments which can
         # Two vertical segments, and one horizontal segment. If any of those three are selected, adjust the points accordingly.
         elif self.handleSegments == 5:
-
             if self.handleSelected == self.handleHSeg2:
                 # There are three horizontal segments to choose from, 1st and 3rd (last) cannot be moved, this means our segment is #2 [1].
                 segment = self.wire.horizontal_segments[1].copy()
@@ -729,7 +726,6 @@ class GraphicsWireStep(GraphicsWire):
 
     def updatePath(self):
         if self.customlogicOverride:
-
             self.adjustCustomRoutingWireCoordinates()
 
             # The path of the wire is set to be drawn with either
@@ -870,7 +866,6 @@ class GraphicsWireStep(GraphicsWire):
                     # Top of the destination block is above source block
                     # Should be dy > sy, but graphics view draws the y-axis inverted
                     if dy - d_Offset[1] - (d_index * block_padding) < sy:
-
                         # Bottom of destination block is above top of source block OR
                         # LHS of destination block is further left than RHS of source block
 
@@ -1095,7 +1090,6 @@ class GraphicsWireStep(GraphicsWire):
 
                 # ------------------------------  Start Socket EQUAL or LEFT OF End Socket  ------------------------------
                 else:
-
                     # Source block is above destination block
                     if sy - s_Offset[1] - (s_index * block_padding) < dy - d_Offset[
                         1
@@ -1142,7 +1136,6 @@ class GraphicsWireStep(GraphicsWire):
 
                         # Bottom of source block is at level with or below top of destination block
                         else:
-
                             # RHS of destination block is further left than RHS of source block
                             if (dx + block_padding) < (
                                 sx + source_block_width + block_padding
@@ -1266,7 +1259,6 @@ class GraphicsWireStep(GraphicsWire):
 
                         # Top of source block is at level with or above bottom of destination block
                         else:
-
                             # LHS of destination is further left than LHS of source block
                             if (dx - destination_block_width - block_padding) < (
                                 sx - block_padding

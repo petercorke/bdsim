@@ -586,7 +586,9 @@ class GraphicsBlock(SinkBlock):
             else:
                 tiled_figure = getattr(gstate, "tiled_figure", None)
                 if tiled_figure is None:
-                    raise RuntimeError("tiled figure not initialised")  # pragma: no cover
+                    raise RuntimeError(
+                        "tiled figure not initialised"
+                    )  # pragma: no cover
                 f = tiled_figure
 
         _notebook = getattr(gstate, "notebook_backend", False)

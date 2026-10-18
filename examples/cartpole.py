@@ -133,9 +133,7 @@ theta_dot[0] = (
     -f * cos_theta
     - m * l * theta_dot**2 * cos_theta * sin_theta
     - (M + m) * g * sin_theta
-) / (
-    l * D
-)  # pendulum angular acceleration
+) / (l * D)  # pendulum angular acceleration
 
 # total energy of the system (for monitoring)
 T = (

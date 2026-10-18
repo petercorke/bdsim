@@ -10,7 +10,6 @@ from PySide6.QtWidgets import *
 
 
 class GraphicsGBox(QGraphicsRectItem):
-
     handleTopLeft = 1
     handleTopMiddle = 2
     handleTopRight = 3
@@ -255,7 +254,6 @@ class GraphicsGBox(QGraphicsRectItem):
         self.prepareGeometryChange()
 
         if self.handleSelected == self.handleTopLeft:
-
             fromX = self.mousePressRect.left()
             fromY = self.mousePressRect.top()
             toX = fromX + x
@@ -268,7 +266,6 @@ class GraphicsGBox(QGraphicsRectItem):
             rect.setTop(boundingRect.top() + offset)
 
         elif self.handleSelected == self.handleTopMiddle:
-
             fromY = self.mousePressRect.top()
             toY = fromY + y
             diff.setY(toY - fromY)
@@ -276,7 +273,6 @@ class GraphicsGBox(QGraphicsRectItem):
             rect.setTop(boundingRect.top() + offset)
 
         elif self.handleSelected == self.handleTopRight:
-
             fromX = self.mousePressRect.right()
             fromY = self.mousePressRect.top()
             toX = fromX + x
@@ -289,7 +285,6 @@ class GraphicsGBox(QGraphicsRectItem):
             rect.setTop(boundingRect.top() + offset)
 
         elif self.handleSelected == self.handleMiddleLeft:
-
             fromX = self.mousePressRect.left()
             toX = fromX + x
             diff.setX(toX - fromX)
@@ -304,7 +299,6 @@ class GraphicsGBox(QGraphicsRectItem):
             rect.setRight(boundingRect.right() - offset)
 
         elif self.handleSelected == self.handleBottomLeft:
-
             fromX = self.mousePressRect.left()
             fromY = self.mousePressRect.bottom()
             toX = fromX + x
@@ -317,7 +311,6 @@ class GraphicsGBox(QGraphicsRectItem):
             rect.setBottom(boundingRect.bottom() - offset)
 
         elif self.handleSelected == self.handleBottomMiddle:
-
             fromY = self.mousePressRect.bottom()
             toY = fromY + y
             diff.setY(toY - fromY)
@@ -325,7 +318,6 @@ class GraphicsGBox(QGraphicsRectItem):
             rect.setBottom(boundingRect.bottom() - offset)
 
         elif self.handleSelected == self.handleBottomRight:
-
             fromX = self.mousePressRect.right()
             fromY = self.mousePressRect.bottom()
             toX = fromX + x

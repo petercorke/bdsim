@@ -384,9 +384,9 @@ class TestExport:
         assert out.exists(), "PNG not created"
         assert out.stat().st_size > self.MIN_BYTES, "PNG suspiciously small"
         # Verify PNG magic bytes
-        assert (
-            out.read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
-        ), "file does not look like a PNG"
+        assert out.read_bytes()[:8] == b"\x89PNG\r\n\x1a\n", (
+            "file does not look like a PNG"
+        )
 
 
 # ===========================================================================
@@ -424,9 +424,9 @@ class TestCLI:
     def test_cli_print_pdf(self, tmp_path):
         out = tmp_path / "eg1.pdf"
         result = self._run_print(out)
-        assert (
-            result.returncode == 0
-        ), f"bdedit exited {result.returncode}\n{result.stderr}"
+        assert result.returncode == 0, (
+            f"bdedit exited {result.returncode}\n{result.stderr}"
+        )
         assert out.exists(), "PDF output not created"
         assert out.stat().st_size > self.MIN_BYTES
         assert out.read_bytes()[:4] == b"%PDF"
@@ -434,9 +434,9 @@ class TestCLI:
     def test_cli_print_png(self, tmp_path):
         out = tmp_path / "eg1.png"
         result = self._run_print(out, fmt="png")
-        assert (
-            result.returncode == 0
-        ), f"bdedit exited {result.returncode}\n{result.stderr}"
+        assert result.returncode == 0, (
+            f"bdedit exited {result.returncode}\n{result.stderr}"
+        )
         assert out.exists(), "PNG output not created"
         assert out.stat().st_size > self.MIN_BYTES
         assert out.read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"

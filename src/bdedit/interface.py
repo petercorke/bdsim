@@ -387,23 +387,23 @@ class Interface(QWidget):
 
         # Set up secondary connection to these buttons, to update scene history when they are added to the scene
         self.connector_block_button.clicked.connect(
-            lambda checked, desc="Added connector block to scene": self.scene.history.storeHistory(
-                desc
+            lambda checked, desc="Added connector block to scene": (
+                self.scene.history.storeHistory(desc)
             )
         )
         self.main_block_button.clicked.connect(
-            lambda checked, desc="Added main block to scene": self.scene.history.storeHistory(
-                desc
+            lambda checked, desc="Added main block to scene": (
+                self.scene.history.storeHistory(desc)
             )
         )
         self.text_item_button.clicked.connect(
-            lambda checked, desc="Added text label to scene": self.scene.history.storeHistory(
-                desc
+            lambda checked, desc="Added text label to scene": (
+                self.scene.history.storeHistory(desc)
             )
         )
         self.grouping_box_button.clicked.connect(
-            lambda checked, desc="Added grouping box to scene": self.scene.history.storeHistory(
-                desc
+            lambda checked, desc="Added grouping box to scene": (
+                self.scene.history.storeHistory(desc)
             )
         )
 
@@ -413,7 +413,6 @@ class Interface(QWidget):
         # This for loop goes through each block type (sink, source, function) that was auto
         # imported (and stored into self.blockLibrary at the Interface's initialization).
         for sub_class_group in self.blockLibrary:
-
             group_of_buttons = []
 
             # Grab each group that blocks belong to, and create a library panel button for those groups
@@ -448,7 +447,6 @@ class Interface(QWidget):
             # Go through each class block in the 2nd element of the group of blocks, and create buttons to spawn each
             # of those blocks into bdedit
             for class_block in sub_class_group[1]:
-
                 # Make a button with the name of the block type
                 button = QPushButton(class_block[0])
                 self._style_palette_button(button, item=True)
@@ -459,8 +457,8 @@ class Interface(QWidget):
                     lambda checked, blockClass=class_block[1]: blockClass()
                 )
                 button.clicked.connect(
-                    lambda checked, desc="Added imported block to scene": self.scene.history.storeHistory(
-                        desc
+                    lambda checked, desc="Added imported block to scene": (
+                        self.scene.history.storeHistory(desc)
                     )
                 )
                 # Add button to list of scrollbar buttons for reference of what buttons should be

@@ -27,6 +27,7 @@ from __future__ import annotations
 import os
 import re
 import shutil
+
 # Used only for `git clone` (fixed args, hardcoded URL) and re-invoking
 # `sphinx-build`, both resolved via shutil.which() below; this is a local/CI
 # docs-build script, not code that runs against untrusted input.
@@ -50,11 +51,27 @@ API_PAGES = {"bdsim.blocks", "internals"}
 
 # Links that belong in llms.txt but are neither pages of this site nor wiki pages
 EXTRA_LINKS = [
-    ("Example notebooks", "https://github.com/petercorke/bdsim/tree/main/docs/notebooks", "Jupyter notebooks, also runnable in the browser from the documentation site"),
-    ("Source code", "https://github.com/petercorke/bdsim", "GitHub repository; examples are in examples/"),
+    (
+        "Example notebooks",
+        "https://github.com/petercorke/bdsim/tree/main/docs/notebooks",
+        "Jupyter notebooks, also runnable in the browser from the documentation site",
+    ),
+    (
+        "Source code",
+        "https://github.com/petercorke/bdsim",
+        "GitHub repository; examples are in examples/",
+    ),
     ("PyPI", "https://pypi.org/project/bdsim/", "install with pip install bdsim"),
-    ("RVC ecosystem", "https://github.com/petercorke/rvc-ecosystem", "how bdsim relates to the Robotics and Machine Vision Toolboxes"),
-    ("Contributing", "https://github.com/petercorke/bdsim/blob/main/AGENTS.md", "repo conventions and workflow, for agents working on bdsim's source code"),
+    (
+        "RVC ecosystem",
+        "https://github.com/petercorke/rvc-ecosystem",
+        "how bdsim relates to the Robotics and Machine Vision Toolboxes",
+    ),
+    (
+        "Contributing",
+        "https://github.com/petercorke/bdsim/blob/main/AGENTS.md",
+        "repo conventions and workflow, for agents working on bdsim's source code",
+    ),
 ]
 
 
@@ -107,7 +124,10 @@ def clone_wiki() -> bool:
         text=True,
     )
     if result.returncode:
-        print(f"warning: wiki not included, clone failed: {result.stderr.strip()}", file=sys.stderr)
+        print(
+            f"warning: wiki not included, clone failed: {result.stderr.strip()}",
+            file=sys.stderr,
+        )
     return result.returncode == 0
 
 
@@ -151,7 +171,14 @@ def main() -> None:
     if sphinxbuild is None:
         raise SystemExit(f"sphinx-build not found: {sphinxbuild_name!r}")
     subprocess.run(  # nosec B603 -- sphinxbuild resolved via shutil.which() above  # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-audit.dangerous-subprocess-use-audit
-        [sphinxbuild, "-q", "-b", "text", str(SOURCE), str(TEXT)],  # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-tainted-env-args.dangerous-subprocess-use-tainted-env-args
+        [
+            sphinxbuild,
+            "-q",
+            "-b",
+            "text",
+            str(SOURCE),
+            str(TEXT),
+        ],  # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-tainted-env-args.dangerous-subprocess-use-tainted-env-args
         check=True,
     )
     pages = ["index"] + toctree_pages(SOURCE / "index.rst")
@@ -179,7 +206,12 @@ def main() -> None:
         if s.note:
             index += [s.note, ""]
         index += [f"- [{t}]({WIKI_URL}{n})" for t, n in s.pages] + [""]
-    index += ["## Optional", "", *(f"- [{label}]({url}): {note}" for label, url, note in EXTRA_LINKS), ""]
+    index += [
+        "## Optional",
+        "",
+        *(f"- [{label}]({url}): {note}" for label, url, note in EXTRA_LINKS),
+        "",
+    ]
     HTML.mkdir(parents=True, exist_ok=True)
     (HTML / "llms.txt").write_text("\n".join(index))
 
@@ -192,12 +224,22 @@ def main() -> None:
     for s in wiki:
         note = f"\n({s.note})\n" if s.note else ""
         for t, n in s.pages:
-            parts.append(block(f"{WIKI_URL}{n}", f"# {t}\n{note}\n" + (WIKI / f"{n}.md").read_text()))
+            parts.append(
+                block(
+                    f"{WIKI_URL}{n}",
+                    f"# {t}\n{note}\n" + (WIKI / f"{n}.md").read_text(),
+                )
+            )
     parts += [block(f"{base}{p}.html", texts[p]) for p in pages if p in API_PAGES]
-    full = re.sub(r"\n{3,}", "\n\n", "".join(parts))  # the text builder leaves runs of blank lines
+    full = re.sub(
+        r"\n{3,}", "\n\n", "".join(parts)
+    )  # the text builder leaves runs of blank lines
     (HTML / "llms-full.txt").write_text(full)
     n_wiki = sum(len(s.pages) for s in wiki)
-    print(f"llms.txt: {len(pages)} site pages, {n_wiki} wiki pages; llms-full.txt: {len(full) // 1000} kB", file=sys.stderr)
+    print(
+        f"llms.txt: {len(pages)} site pages, {n_wiki} wiki pages; llms-full.txt: {len(full) // 1000} kB",
+        file=sys.stderr,
+    )
 
 
 if __name__ == "__main__":

@@ -15,7 +15,6 @@ from spatialmath import SE3, Twist3
 
 
 class DiscreteTest(unittest.TestCase):
-
     def test_ZOH(self):
 
         clock = Clock(2, "Hz")
@@ -419,5 +418,4 @@ class SampledSim(unittest.TestCase):
 
 # ---------------------------------------------------------------------------------------#
 if __name__ == "__main__":
-
     unittest.main()

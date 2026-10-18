@@ -1401,13 +1401,13 @@ class BDSim(Runner):
                             f"  (remaining are post-integration replay + sink passes)"
                         )
                         print(
-                            f"  bd.evaluate() mean time:   {mean_eval_ms*1000:.1f} us/call"
+                            f"  bd.evaluate() mean time:   {mean_eval_ms * 1000:.1f} us/call"
                             f"  (total {simstate.bdtime * 1000:.1f} ms)"
                         )
                         run_wall_time = time.time() - run_start_time
                         print(
                             f"  clocktime speedup:         {simstate.T / max(run_wall_time, 1e-12):.2f}x"
-                            f"  (simulated {simstate.T:.3g}s in {run_wall_time*1000:.1f} ms)"
+                            f"  (simulated {simstate.T:.3g}s in {run_wall_time * 1000:.1f} ms)"
                         )
                         print(f"  integration time points:   {len(simstate.tlist)}")
                         print("  scheduled event intervals: 0")
@@ -1534,7 +1534,11 @@ class BDSim(Runner):
                 bd.evaluate(bd.state_map(x0, simstate), 0.0, sinks=False)
                 simstate.bdtime += time.time() - eval_start
                 self._record_sample_and_service_hooks(
-                    bd, simstate, 0.0, x0, stop_short_circuit=False,
+                    bd,
+                    simstate,
+                    0.0,
+                    x0,
+                    stop_short_circuit=False,
                 )
                 # refresh() (present + grab_frame) only fires from _anim_frame
                 # at t=interactive_dt — call it once so the IC reaches the live
@@ -1655,13 +1659,13 @@ class BDSim(Runner):
                     f"  (remaining are post-integration replay + sink passes)"
                 )
                 print(
-                    f"  bd.evaluate() mean time:   {mean_eval_ms*1000:.1f} us/call"
+                    f"  bd.evaluate() mean time:   {mean_eval_ms * 1000:.1f} us/call"
                     f"  (total {simstate.bdtime * 1000:.1f} ms)"
                 )
                 run_wall_time = time.time() - run_start_time
                 print(
                     f"  clocktime speedup:         {simstate.T / max(run_wall_time, 1e-12):.2f}x"
-                    f"  (simulated {simstate.T:.3g}s in {run_wall_time*1000:.1f} ms)"
+                    f"  (simulated {simstate.T:.3g}s in {run_wall_time * 1000:.1f} ms)"
                 )
                 print(f"  integration time points:   {len(simstate.tlist)}")
                 # Scheduled events (clock ticks, explicit declare_event calls) are

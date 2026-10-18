@@ -363,7 +363,6 @@ class Block(Serializable):
             or self.block_type == "Prod"
             or self.block_type == "Sum"
         ):
-
             # Iterates through user-editable parameters stored within the block and checks
             # if one by the name of 'Operations' or 'Signs' exists (these block types should
             # have them). These parameters hold characters (+,-,*,/) representing what signs

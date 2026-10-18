@@ -3,14 +3,18 @@
 import numpy as np
 from spatialmath import SE3
 
-from bdsim.blocks.spatial import Pose_inverse, Pose_postmul, Pose_premul, Transform_vector
+from bdsim.blocks.spatial import (
+    Pose_inverse,
+    Pose_postmul,
+    Pose_premul,
+    Transform_vector,
+)
 
 import unittest
 import numpy.testing as nt
 
 
 class SpatialMathBlockTest(unittest.TestCase):
-
     def test_pose_postmul(self):
 
         A = SE3.Trans(1, 2, 3) * SE3.Rx(np.pi / 2)
@@ -42,5 +46,4 @@ class SpatialMathBlockTest(unittest.TestCase):
 
 # ---------------------------------------------------------------------------------------#
 if __name__ == "__main__":
-
     unittest.main()

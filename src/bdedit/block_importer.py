@@ -230,9 +230,7 @@ def import_blocks(scene, window):
         except KeyError:
             block_url = None
 
-        block_parameters = (
-            []
-        )  # Once name, type, value, restrictions are extracted, this will be populated
+        block_parameters = []  # Once name, type, value, restrictions are extracted, this will be populated
 
         for param in block_ds["params"].items():
             # Extract parameter name
@@ -315,14 +313,12 @@ def import_blocks(scene, window):
 
                         # If current word is array_like
                         if regex_search:
-
                             # Search each array_like word found in type docstring, looking for size restriction
                             for match in regex_search:
                                 element_restriction_match = re.findall(r"[0-9]", match)
 
                                 # If an element size restriction has been detected
                                 if element_restriction_match:
-
                                     # If size restriction is already entered, this will stop it from being entered multiple times
                                     restriction_to_insert = int(
                                         element_restriction_match[0]
@@ -398,7 +394,6 @@ def import_blocks(scene, window):
 
                 # Parse the docstring ignoring words until finding a known "defaults to:"
                 for i in range(0, len(param_value_docstring) - 1):
-
                     if param_value_docstring[i] in ["range"]:
                         # This parameter must be within a certain range, extract the provided range values
                         # These should be in the form of "range [a,b]"
@@ -449,7 +444,9 @@ def import_blocks(scene, window):
                     ] and param_value_docstring[i + 1] in ["to"]:
                         # Value only has 1 default, which should follow after the word 'to'
                         # Try to evaluate value, if successful, this is some form of non string
-                        if param_value is None and (i + 3) >= len(param_value_docstring):
+                        if param_value is None and (i + 3) >= len(
+                            param_value_docstring
+                        ):
                             try:
                                 param_value = ast.literal_eval(
                                     param_value_docstring[i + 2]

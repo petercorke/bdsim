@@ -6,7 +6,13 @@ from typing import Any
 from spatialmath import SE2, SE3, SO2, SO3, Twist3
 import spatialmath.base as smb
 
-from bdsim.components import ContinuousBlock, FunctionBlock, SampledBlock, Clock, deprecated_block
+from bdsim.components import (
+    ContinuousBlock,
+    FunctionBlock,
+    SampledBlock,
+    Clock,
+    deprecated_block,
+)
 
 
 class Pose_postmul(FunctionBlock):
@@ -45,7 +51,9 @@ class Pose_postmul(FunctionBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, pose: SO2 | SO3 | SE2 | SE3 | None = None, **blockargs: Any) -> None:
+    def __init__(
+        self, pose: SO2 | SO3 | SE2 | SE3 | None = None, **blockargs: Any
+    ) -> None:
         """
         :param pose: pose to apply
         :type pose: SO2, SE2, SO3 or SE3
@@ -62,7 +70,9 @@ class Pose_postmul(FunctionBlock):
         input = inputs[0]
         return [input * self.pose]
 
+
 # ------------------------------------------------------------------------ #
+
 
 class Pose_premul(FunctionBlock):
     r"""
@@ -100,7 +110,9 @@ class Pose_premul(FunctionBlock):
     nin = 1
     nout = 1
 
-    def __init__(self, pose: SO2 | SO3 | SE2 | SE3 | None = None, **blockargs: Any) -> None:
+    def __init__(
+        self, pose: SO2 | SO3 | SE2 | SE3 | None = None, **blockargs: Any
+    ) -> None:
         """
         :param pose: pose to apply
         :type pose: SO2, SE2, SO3 or SE3
@@ -117,7 +129,9 @@ class Pose_premul(FunctionBlock):
         input = inputs[0]
         return [self.pose * input]
 
+
 # ------------------------------------------------------------------------ #
+
 
 class Transform_vector(FunctionBlock):
     r"""
@@ -168,7 +182,9 @@ class Transform_vector(FunctionBlock):
             raise ValueError("pose must be SO2, SE2, SO3 or SE3")
         return [pose * inputs[1]]
 
+
 # ------------------------------------------------------------------------ #
+
 
 class Pose_inverse(FunctionBlock):
     r"""
@@ -214,7 +230,9 @@ class Pose_inverse(FunctionBlock):
         input = inputs[0]
         return [input.inv()]
 
+
 # ------------------------------------------------------------------------ #
+
 
 class PoseIntegrator(ContinuousBlock):
     r"""
@@ -279,7 +297,9 @@ class PoseIntegrator(ContinuousBlock):
     def deriv(self, t: float, u: list[Any], x: np.ndarray) -> Any:
         return u[0]
 
+
 # ------------------------------------------------------------------------ #
+
 
 class PoseIntegrator_S(SampledBlock):
     r"""
@@ -356,7 +376,9 @@ class PoseIntegrator_S(SampledBlock):
         pose = Twist3(x).SE3() * T_delta
         return Twist3(pose).A
 
+
 # ------------------------------------------------------------------------ #
+
 
 @deprecated_block("PoseIntegrator_S")
 class DPoseIntegrator(PoseIntegrator_S):
@@ -371,7 +393,9 @@ if __name__ == "__main__":  # pragma: no cover
     import sys
 
     root = Path(__file__).resolve().parents[3]
-    test_file = root / "tests" / "blocks" / f"test_blocks_{Path(__file__).stem.lower()}.py"
+    test_file = (
+        root / "tests" / "blocks" / f"test_blocks_{Path(__file__).stem.lower()}.py"
+    )
 
     if not test_file.exists():
         print(f"No module unit tests found for {Path(__file__).name}: {test_file}")

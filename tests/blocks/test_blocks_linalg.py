@@ -2,14 +2,22 @@
 
 import numpy as np
 
-from bdsim.blocks.linalg import Cond, Det, Flatten, Inverse, Norm, Slice1, Slice2, Transpose
+from bdsim.blocks.linalg import (
+    Cond,
+    Det,
+    Flatten,
+    Inverse,
+    Norm,
+    Slice1,
+    Slice2,
+    Transpose,
+)
 
 import unittest
 import numpy.testing as nt
 
 
 class LinalgBlockTest(unittest.TestCase):
-
     def test_inverse(self):
 
         block = Inverse()
@@ -143,5 +151,4 @@ class LinalgBlockTest(unittest.TestCase):
 
 # ---------------------------------------------------------------------------------------#
 if __name__ == "__main__":
-
     unittest.main()
