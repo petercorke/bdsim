@@ -88,11 +88,19 @@ build-backend = "hatchling.build"
 packages = ["src/bdsim", "src/bdedit", "src/bdweb"]
 exclude = [
     "src/bdedit/figs/**",
+    "src/bdedit/docs/**",
     "src/bdedit/Bdedit Technical Report.pdf",
 ]
 
 [tool.hatch.build.targets.sdist]
 include = ["src/", "tests/", "README.md", "LICENSE"]
+# bdedit's documentation screenshots were 75% of the sdist (6.3 of 8.4 MB) and are
+# not needed to build or test the package; keep this in step with the wheel above
+exclude = [
+    "src/bdedit/figs/**",
+    "src/bdedit/docs/**",
+    "src/bdedit/Bdedit Technical Report.pdf",
+]
 
 [tool.ruff]
 line-length = 88
