@@ -14,6 +14,8 @@ import json
 import tempfile
 import os
 import io
+import subprocess
+import sys
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
@@ -326,6 +328,32 @@ class BdrunCliBehaviorTest(unittest.TestCase):
         self.assertIn("--safe-eval", out)
         self.assertIn("The options below are provided by the BDSim runtime", out)
         self.assertEqual(mock_bdsim.call_count, 1)
+
+
+def test_bdrun_module_runs_diagram(tmp_path: Path) -> None:
+    path = tmp_path / "model with spaces.bd"
+    path.write_text(json.dumps(_minimal_bd_json()), encoding="utf-8")
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "bdsim.bin.bdrun",
+            str(path),
+            "--no-graphics",
+            "--no-progress",
+            "--simtime",
+            "0.01",
+        ],
+        cwd=tmp_path,
+        env={**os.environ, "PYTHONIOENCODING": "utf-8"},
+        capture_output=True,
+        encoding="utf-8",
+        timeout=30,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "bdrun exiting" in result.stdout
 
 
 if __name__ == "__main__":
