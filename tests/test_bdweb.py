@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
 from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
+from unittest.mock import Mock
 
 import pytest
 
@@ -303,3 +306,212 @@ def test_load_save_invalid_json(client: TestClient, endpoint: str) -> None:
 
     assert response.status_code == 422
     assert response.json()["detail"]
+
+
+def test_ls_filters_and_sorts_entries(client: TestClient, tmp_path: Path) -> None:
+    for name in ("zebra", "Alpha", ".hidden"):
+        (tmp_path / name).mkdir()
+    for name in ("z.bd", "A.bd", ".hidden.bd", "notes.txt"):
+        (tmp_path / name).touch()
+
+    response = client.get("/api/ls")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "dir": "",
+        "abs": str(tmp_path),
+        "entries": [
+            {"name": "Alpha", "type": "dir"},
+            {"name": "zebra", "type": "dir"},
+            {"name": "A.bd", "type": "file", "abs": str(tmp_path / "A.bd")},
+            {"name": "z.bd", "type": "file", "abs": str(tmp_path / "z.bd")},
+        ],
+    }
+
+
+def test_ls_nested_directory(client: TestClient, tmp_path: Path) -> None:
+    (tmp_path / "models").mkdir()
+
+    response = client.get("/api/ls", params={"dir": "models/../models"})
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "dir": "models",
+        "abs": str(tmp_path / "models"),
+        "entries": [],
+    }
+
+
+@pytest.mark.parametrize("name", ["missing", "diagram.bd"])
+def test_ls_requires_directory(client: TestClient, tmp_path: Path, name: str) -> None:
+    (tmp_path / "diagram.bd").touch()
+
+    response = client.get("/api/ls", params={"dir": name})
+
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Not a directory"}
+
+
+@pytest.mark.parametrize("absolute", [False, True])
+def test_ls_rejects_paths_outside_root(
+    client: TestClient,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    absolute: bool,
+) -> None:
+    root = tmp_path / "home"
+    root.mkdir()
+    outside = tmp_path / "home-other"
+    outside.mkdir()
+    monkeypatch.setattr(server, "_FS_ROOT", root)
+
+    response = client.get(
+        "/api/ls", params={"dir": str(outside) if absolute else "../home-other"}
+    )
+
+    assert response.status_code == 403
+    assert response.json() == {"detail": "Path outside home directory"}
+
+
+def test_ls_permission_denied(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(Path, "iterdir", Mock(side_effect=PermissionError))
+
+    response = client.get("/api/ls")
+
+    assert response.status_code == 403
+    assert response.json() == {"detail": "Permission denied"}
+
+
+@pytest.mark.parametrize("exists", [False, True])
+def test_exists(client: TestClient, tmp_path: Path, exists: bool) -> None:
+    path = tmp_path / "diagram.bd"
+    if exists:
+        path.touch()
+
+    response = client.get("/api/exists", params={"path": str(path)})
+
+    assert response.status_code == 200
+    assert response.json() == {"exists": exists}
+
+
+def test_exists_requires_path(client: TestClient) -> None:
+    response = client.get("/api/exists")
+
+    assert response.status_code == 422
+    assert response.json()["detail"]
+
+
+@pytest.fixture
+def run_process(monkeypatch: pytest.MonkeyPatch) -> Mock:
+    process = Mock(
+        return_value=subprocess.CompletedProcess([], 0, stdout="", stderr="")
+    )
+    monkeypatch.setattr(subprocess, "run", process)
+    return process
+
+
+@pytest.mark.parametrize("returncode", [0, 1])
+@pytest.mark.parametrize("timeout", [None, 2.5])
+def test_run_invokes_bdrun_and_returns_output(
+    client: TestClient,
+    tmp_path: Path,
+    run_process: Mock,
+    returncode: int,
+    timeout: float | None,
+) -> None:
+    path = tmp_path / "model with spaces.bd"
+    path.touch()
+    run_process.return_value = subprocess.CompletedProcess(
+        [], returncode, stdout="simulation output\n", stderr="diagnostic\n"
+    )
+    body: dict[str, Any] = {"path": path.name}
+    if timeout is not None:
+        body["timeout"] = timeout
+
+    response = client.post("/api/run", json=body)
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "stdout": "simulation output\n",
+        "stderr": "diagnostic\n",
+        "returncode": returncode,
+    }
+    run_process.assert_called_once_with(
+        [sys.executable, "-m", "bdsim.bin.bdrun", str(path)],
+        capture_output=True,
+        text=True,
+        timeout=120.0 if timeout is None else timeout,
+    )
+
+
+@pytest.mark.parametrize(
+    ("filename", "exists", "status", "detail"),
+    [
+        ("missing.bd", False, 404, None),
+        ("diagram.json", True, 400, "Only .bd files are supported"),
+    ],
+)
+def test_run_rejects_invalid_files_before_execution(
+    client: TestClient,
+    tmp_path: Path,
+    run_process: Mock,
+    filename: str,
+    exists: bool,
+    status: int,
+    detail: str | None,
+) -> None:
+    path = tmp_path / filename
+    if exists:
+        path.touch()
+
+    response = client.post("/api/run", json={"path": str(path)})
+
+    assert response.status_code == status
+    assert response.json() == {"detail": detail or f"File not found: {path}"}
+    run_process.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ("error", "status", "detail"),
+    [
+        (
+            subprocess.TimeoutExpired("bdrun", 0.25),
+            504,
+            "bdrun timed out after 0.25s",
+        ),
+        (OSError("Cannot start bdrun"), 500, "Cannot start bdrun"),
+    ],
+)
+def test_run_subprocess_errors(
+    client: TestClient,
+    tmp_path: Path,
+    run_process: Mock,
+    error: Exception,
+    status: int,
+    detail: str,
+) -> None:
+    path = tmp_path / "diagram.bd"
+    path.touch()
+    run_process.side_effect = error
+
+    response = client.post("/api/run", json={"path": str(path), "timeout": 0.25})
+
+    assert response.status_code == status
+    assert response.json() == {"detail": detail}
+    run_process.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "body",
+    [{}, {"path": None}, {"path": []}, {"path": "model.bd", "timeout": "invalid"}],
+)
+def test_run_invalid_request(
+    client: TestClient, run_process: Mock, body: dict[str, Any]
+) -> None:
+    response = client.post("/api/run", json=body)
+
+    assert response.status_code == 422
+    assert response.json()["detail"]
+    run_process.assert_not_called()

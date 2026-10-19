@@ -464,7 +464,7 @@ def run_diagram(req: RunRequest) -> dict[str, Any]:
 
     try:
         result = subprocess.run(
-            [sys.executable, "-m", "bdsim.bdrun", str(p)],
+            [sys.executable, "-m", "bdsim.bin.bdrun", str(p)],
             capture_output=True,
             text=True,
             timeout=req.timeout,
