@@ -1,5 +1,67 @@
 # Changelog
 
+## [1.4.1](https://github.com/petercorke/bdsim/compare/v1.4.0...v1.4.1) (2026-10-19)
+
+
+### Features
+
+* **icons:** add cast.png icon for the CAST block ([f7b1b39](https://github.com/petercorke/bdsim/commit/f7b1b393a3a4251f5ff1457dabaf4ddf57194c92))
+* **icons:** add icons for hardware I/O blocks ([c36273a](https://github.com/petercorke/bdsim/commit/c36273acf6ec681179ea553614a1019cbdd85257))
+
+
+### Bug Fixes
+
+* allow block diagrams without loading the block library ([546e1d5](https://github.com/petercorke/bdsim/commit/546e1d5e0f0044bd9804cd52e271c79a96460883))
+* apply functools.wraps in oodebug so operator signatures survive introspection ([#121](https://github.com/petercorke/bdsim/issues/121)) ([ad38132](https://github.com/petercorke/bdsim/commit/ad3813280b39e9566b075a6a8db40a23007f68ab))
+* apply Qt5Agg's animation refresh path to QtAgg too ([90b130a](https://github.com/petercorke/bdsim/commit/90b130a7f8f11ed87cadeb279cd32611f7815c40))
+* apply Qt5Agg's flush_events()+draw() animation refresh to QtAgg too ([b287bd0](https://github.com/petercorke/bdsim/commit/b287bd06277d6be435c2898b00b4ebfa93539296))
+* apply safe ruff F-rule fixes; ignore F401 in bdedit ([7882a21](https://github.com/petercorke/bdsim/commit/7882a2168917690249d9772bf529c36daef6294f))
+* BDSim.done()/closefigs() duplicate definitions, silent test gap ([b305262](https://github.com/petercorke/bdsim/commit/b305262d45a4edcb7c6bd79896d59f28cc408b21))
+* BDSim.done()/closefigs() were defined twice, silently losing notebook support ([9a540ac](https://github.com/petercorke/bdsim/commit/9a540ac111444b97b4a4c39e876d9bd4677d16b1))
+* block discovery no longer crashes on docstrings without :type: lines ([#133](https://github.com/petercorke/bdsim/issues/133)) ([f649053](https://github.com/petercorke/bdsim/commit/f649053d13f204b61ed8678c3a0ff6fda17e7cea))
+* clean up unused locals and dead code flagged by pyflakes ([4134141](https://github.com/petercorke/bdsim/commit/4134141ad3fa24a6201890e7728fc320f9f5dba3))
+* clean up unused locals and dead code flagged by pyflakes (F841/F811/F541/F999) ([823a9e0](https://github.com/petercorke/bdsim/commit/823a9e0441d25671857bd69f667de7966c54254a))
+* drop unnecessary `global clocklist` in test_components.py ([5883df7](https://github.com/petercorke/bdsim/commit/5883df704a295ff7298de85f8a163818348a3ca8))
+* exclude internal-state invariant guards from coverage measurement ([888ffae](https://github.com/petercorke/bdsim/commit/888ffae7e199e4770d328ba054f0bede177e386d))
+* **icons:** drop doubled backslash before \! kerning in pose icons ([cacbe8b](https://github.com/petercorke/bdsim/commit/cacbe8b8e25c55ebb25694aceff8f32d8844f5f9))
+* make bdtex2icon fail fast and clearly instead of hanging/silent ([4759170](https://github.com/petercorke/bdsim/commit/475917035ecc5728ac77751fd8f1390273f44d24))
+* make block-factory stub bodies raise instead of falling through to None ([0b2c14c](https://github.com/petercorke/bdsim/commit/0b2c14c87fcc3bd10543124116c10a26262af3a6))
+* make block-factory stub bodies raise instead of falling through to None ([cf8cc93](https://github.com/petercorke/bdsim/commit/cf8cc933743c826522fd3109a025f1c2a3978ccc))
+* omit the generated stub file from coverage measurement ([6c3e382](https://github.com/petercorke/bdsim/commit/6c3e3829cb49bcf7e175a6bbb8bd05af7c02f21c))
+* place nosemgrep suppressions on the exact flagged lines ([e503aed](https://github.com/petercorke/bdsim/commit/e503aed49b39c530ce54a190696379d60dfafa50))
+* point bdtex2icon entry point at bdedit.tex2icon ([ec9c069](https://github.com/petercorke/bdsim/commit/ec9c069c065a9f2cacbdc1c49ae44558e62d539c))
+* record Scope data at full simulation resolution, not throttled ~200 samples ([10a0911](https://github.com/petercorke/bdsim/commit/10a09112fce0434d4a30ad647ef58a9063d47efd))
+* record Scope data at full simulation resolution, not throttled ~200 samples ([4de3370](https://github.com/petercorke/bdsim/commit/4de3370f2a30569d8a3a6945781d6cab56d96385))
+* repair the bdtex2icon icon pipeline and serve icons locally in docs ([c5bd523](https://github.com/petercorke/bdsim/commit/c5bd523cf14acc91dbaaac34e0b8c16748dade14))
+* replace validation asserts with explicit exceptions (Bandit B101) ([39d87bc](https://github.com/petercorke/bdsim/commit/39d87bc1844096b917a992bb68ebec7079b24cc9))
+* replace validation asserts with explicit exceptions (Bandit B101) ([f4126ff](https://github.com/petercorke/bdsim/commit/f4126fffd57498047d692701c83037b39ac90bb2))
+* resolve subprocess executables via shutil.which, justify remaining findings ([835daf1](https://github.com/petercorke/bdsim/commit/835daf1a9b05a135b4fb6b88d7822055bf1101a9))
+* serve block icons locally from the Sphinx build, not a stale remote URL ([4849b61](https://github.com/petercorke/bdsim/commit/4849b61913afa9ba7008c10d5042e92729e0ea4b))
+* split the two subprocess nosemgrep suppressions onto their own lines ([b11d8a2](https://github.com/petercorke/bdsim/commit/b11d8a21eb5883b7bc370a1d4285a8dadcc4bd08))
+* use pragma: no cover instead of omitting the whole stub file ([72cba39](https://github.com/petercorke/bdsim/commit/72cba39de5e68316c2625cae87a73da59622f905))
+
+
+### Documentation
+
+* add Codacy grade badge to README ([b7430bf](https://github.com/petercorke/bdsim/commit/b7430bf4bde7f3286dec9951e6418a73a2e4ba59))
+* add sphinx-copybutton and sphinx-codeautolink ([2ab0b03](https://github.com/petercorke/bdsim/commit/2ab0b038ae8df44901ac5de8ba64ba59e4da7c79))
+* add sphinx-copybutton and sphinx-codeautolink extensions and config ([c4a5a2d](https://github.com/petercorke/bdsim/commit/c4a5a2d382e926057fe3015323fa5565ce28eb74))
+* add sphinx-copybutton and sphinx-codeautolink to docs deps ([4fdcaed](https://github.com/petercorke/bdsim/commit/4fdcaed3d48a6d1842ffbdec7c0551eb9835b455))
+* ask contributors to check for existing PRs and claim issues first ([#125](https://github.com/petercorke/bdsim/issues/125)) ([120aece](https://github.com/petercorke/bdsim/commit/120aece6001229366e3ff9d94f4b293259a70ecc))
+* document the code-generated icon method, fix stale links ([46fc476](https://github.com/petercorke/bdsim/commit/46fc4765e48edfe6b6a61a3fd1f1c11e9e3d3db9))
+* include the bdsim wiki in llms.txt and llms-full.txt ([7e5b2c9](https://github.com/petercorke/bdsim/commit/7e5b2c9e1e00499e84d076df1feec74bcec0335c))
+* point each agent file at the other's audience ([#108](https://github.com/petercorke/bdsim/issues/108)) ([a955ac3](https://github.com/petercorke/bdsim/commit/a955ac37d0456209e3471b6c5e8a08976fc36d70))
+* publish llms.txt and llms-full.txt with the documentation site ([b1154d6](https://github.com/petercorke/bdsim/commit/b1154d64ece6b60efe66be733873fbc1490d597a))
+* rewrite CONTRIBUTING.md ([57ade75](https://github.com/petercorke/bdsim/commit/57ade75520d040afcf940387f64bbf6d33dd0345))
+* say what happens to the factory methods when the block library is not loaded ([6301163](https://github.com/petercorke/bdsim/commit/63011630a4456fdcec9f074f692fb7637fbac45d))
+* update AGENTS.md for feat/bdweb and drop stale feat/shiftop note ([#119](https://github.com/petercorke/bdsim/issues/119)) ([297c948](https://github.com/petercorke/bdsim/commit/297c9480ec1900e2b4b2504f47a2abb81212164f))
+
+
+### Build System
+
+* configure ruff (format + F rules) in place of black and flake8 ([38ce97f](https://github.com/petercorke/bdsim/commit/38ce97fb36105c15b42ce752fa5847dfbbbd8864))
+* exclude bdedit's documentation figures from the sdist ([86c5315](https://github.com/petercorke/bdsim/commit/86c531504520546d36e43b5f862c2b400c6e87cd))
+
 ## [1.4.0](https://github.com/petercorke/bdsim/compare/v1.3.0...v1.4.0) (2026-08-19)
 
 **Highlight** Wiki and Sphinx online documentation completely uptodate. Added proper deprecation for recent change to watch variables in `out` structure. Working against RVC3 examples at [https://github.com/petercorke/RVC3-python](https://github.com/petercorke/RVC3-python).
