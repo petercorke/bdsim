@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import functools
+import warnings
 from typing import Any, Callable, TYPE_CHECKING, TypeVar
 
 import numpy as np
@@ -156,8 +157,8 @@ class Plug(Port):
     :type block: Block
     :param port: The port on the block, defaults to 0
     :type port: int, optional
-    :param type: 'start' or 'end', defaults to None
-    :type type: str, optional
+    :param kind: 'start' or 'end', defaults to None
+    :param type: deprecated, use ``kind``
     :return: Plug object
     :rtype: Plug
 
@@ -165,7 +166,7 @@ class Plug(Port):
     about port number and wire end. Plugs are on the end of each wire, and connect a
     Wire to a specific port on a Block.
 
-    The ``type`` argument indicates if the ``Plug`` is at:
+    The ``kind`` argument sets the ``type`` attribute, which indicates if the ``Plug`` is at:
         - the start of a wire, ie. the port is an output port
         - the end of a wire, ie. the port is an input port
 
@@ -174,10 +175,29 @@ class Plug(Port):
 
     __array_ufunc__ = None  # allow block operators with NumPy values
 
-    def __init__(self, block: Block, port: int | slice = 0, type: str | None = None) -> None:
+    def __init__(
+        self,
+        block: Block,
+        port: int | slice = 0,
+        kind: str | None = None,
+        *,
+        # deprecated spelling of ``kind``; remove it (and the pylint comment) in #134
+        # when the deprecation period ends (due 2027-04-19)
+        type: str | None = None,  # pylint: disable=redefined-builtin
+    ) -> None:
+        if type is not None:
+            if kind is not None:
+                raise TypeError("pass only one of 'kind' and the deprecated 'type'")
+            warnings.warn(
+                "the 'type' argument to Plug is deprecated and will be removed in a "
+                "future release; use 'kind' instead",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            kind = type
         self.block: Block = block
         self.port: int | slice = port
-        self.type: str = type or ""
+        self.type: str = kind or ""
 
     def __str__(self) -> str:
         return str(self.block) + "[" + str(self.port) + "]"
@@ -315,12 +335,12 @@ class Plug(Port):
 
 class StartPlug(Plug):
     def __init__(self, block: Block, port: int | slice = 0) -> None:
-        super().__init__(block, port, type="start")
+        super().__init__(block, port, kind="start")
 
 
 class EndPlug(Plug):
     def __init__(self, block: Block, port: int | slice = 0) -> None:
-        super().__init__(block, port, type="end")
+        super().__init__(block, port, kind="end")
 
 
 if __name__ == "__main__":
