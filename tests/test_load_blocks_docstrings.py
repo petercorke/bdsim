@@ -9,6 +9,7 @@ Older libraries document every parameter with both.
 from __future__ import annotations
 
 import ast
+import os
 from pathlib import Path
 
 import pytest
@@ -79,12 +80,18 @@ def library(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     blocks.mkdir()
     (blocks / "gains.py").write_text(BLOCKS_SOURCE, encoding="utf-8")
 
+    # ``packages`` is a colon-separated list, so an absolute Windows path (C:\...)
+    # would be split at the drive letter; use a relative path, which still contains
+    # a path separator and so is treated as a folder rather than a package name
+    monkeypatch.chdir(tmp_path)
+    blocks_arg = os.path.join(".", "mylib_blocks")
+
     # the library is cached on the class, so make sure it is rebuilt, and restored
     monkeypatch.setattr(BDSim, "_blocklibrary", None)
 
     def load() -> dict:
         BDSim(
-            packages=str(blocks),
+            packages=blocks_arg,
             toolboxes=False,
             banner=False,
             graphics=False,
