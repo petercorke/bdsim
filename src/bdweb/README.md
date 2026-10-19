@@ -159,8 +159,10 @@ pip install fastapi httpx
 pytest tests/test_bdweb.py
 ```
 
-They cover the block library and block info routes and `.bd` load/save (round trips, error
-cases). `/api/ls`, `/api/exists` and `/api/run` are not yet covered.
+They cover every route: the block library and block info, `.bd` load/save (round trips,
+error cases), `/api/ls`, `/api/exists` and `/api/run` (with the subprocess mocked). A
+separate test in `tests/test_bdrun.py` runs `python -m bdsim.bin.bdrun` on a real diagram,
+which is what `/api/run` invokes.
 
 ## Technology
 
