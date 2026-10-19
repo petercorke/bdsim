@@ -2,6 +2,14 @@
 
 ## [1.4.1](https://github.com/petercorke/bdsim/compare/v1.4.0...v1.4.1) (2026-10-19)
 
+### Highlights
+
+* Codacy code quality A
+* Scope blocks maintain data at full temporal resolution, only subsample for display
+* New icons
+* Remove cruft from the shipped package (the source distribution drops from 6.2 MB to 0.7 MB)
+* Migrate from black/flake8 to ruff
+
 
 ### Features
 
