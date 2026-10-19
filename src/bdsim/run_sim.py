@@ -2117,6 +2117,15 @@ class BDSim(Runner):
         which are all upper case, for example, the method ``.GAIN`` invokes
         the constructor for the ``Gain`` class.
 
+        If the block library was not loaded, ``BDSim(load=False)``, the diagram
+        has no factory methods and calling one, for example ``bd.GAIN(2)``,
+        raises ``NotImplementedError``.  Import the block classes directly and
+        pass the diagram as ``bd`` instead::
+
+            from bdsim.blocks import Gain
+
+            gain = Gain(2, bd=bd)
+
         :seealso: :func:`BlockDiagram`
         """
 
