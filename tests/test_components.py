@@ -45,7 +45,7 @@ class WireTest(unittest.TestCase):
 class PlugTest(unittest.TestCase):
     def test_portlist(self):
         block = Mux(5)
-        p = Plug(block, type="end")
+        p = Plug(block, kind="end")
         p = block[3]
         pl = p.portlist
         self.assertEqual(len(pl), 1)
