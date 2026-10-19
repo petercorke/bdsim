@@ -1,4 +1,4 @@
-name: Package Artifacts
+name: Assets
 
 on:
   push:
