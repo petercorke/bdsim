@@ -381,12 +381,30 @@ class TestExport:
 
     def test_export_png(self, tmp_path):
         out = self._export("png", tmp_path)
+
+        from PySide6.QtGui import QImage
         assert out.exists(), "PNG not created"
         assert out.stat().st_size > self.MIN_BYTES, "PNG suspiciously small"
         # Verify PNG magic bytes
         assert (
             out.read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
         ), "file does not look like a PNG"
+        # A valid but blank or wrongly cropped image must not pass: check the
+        # dimensions are sane and that sampled pixels are not all one flat
+        # color (a diagram has blocks, wires, and text).
+        img = QImage(str(out))
+        assert not img.isNull(), "exported PNG is not a readable image"
+        assert img.width() > 100 and img.height() > 100, (
+            f"PNG dimensions too small: {img.width()}x{img.height()}"
+        )
+        xstep = max(1, img.width() // 64)
+        ystep = max(1, img.height() // 64)
+        colors = {
+            img.pixel(xx, yy)
+            for yy in range(0, img.height(), ystep)
+            for xx in range(0, img.width(), xstep)
+        }
+        assert len(colors) > 1, "PNG appears blank (single flat color)"
 
 
 # ===========================================================================
