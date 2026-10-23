@@ -836,38 +836,34 @@ class Interface(QWidget):
         [x, y, width, height] = self.grab_screenshot_dimensions()
 
         ratio = 3  # 3× oversampling for ~288 dpi at 96 dpi screen
-        # ensure row stride (width × 3 bytes) is a multiple of 4
-        width += (width * 3) % 4
 
-        output_image = QImage(
-            int(self.scene.scene_width * ratio),
-            int(self.scene.scene_height * ratio),
-            QImage.Format_RGBA64,
-        )
+        img_width = int(width * ratio)
+        img_height = int(height * ratio)
+        output_image = QImage(img_width, img_height, QImage.Format_RGB888)
+        if output_image.isNull():
+            raise RuntimeError(
+                f"could not allocate {img_width}x{img_height} image for PNG export"
+            )
 
+        # render only the screenshot region, like _save_as_svg does, rather
+        # than rendering the whole (possibly huge) scene and cropping it
         painter = QPainter(output_image)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
-        self.scene.grScene.render(painter)
+        source = QRectF(x, y, width, height)
+        target = QRectF(0, 0, img_width, img_height)
+        self.scene.grScene.render(painter, target, source)
         painter.end()
-
-        rect = QRect(
-            int(output_image.width() / 2 + (x * ratio)),
-            int(output_image.height() / 2 + (y * ratio)),
-            int(width * ratio),
-            int(height * ratio),
-        )
-        output_image = output_image.copy(rect).convertToFormat(QImage.Format_RGB888)
 
         from PIL import Image as PILImage
 
         img_data = output_image.bits().tobytes()
         img_pil = PILImage.frombuffer(
             "RGB",
-            (output_image.width(), output_image.height()),
+            (img_width, img_height),
             img_data,
             "raw",
             "RGB",
-            0,
+            output_image.bytesPerLine(),
             1,
         )
         img_pil.save(save_path)
