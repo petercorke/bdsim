@@ -288,9 +288,19 @@ def patch_roboticstoolbox_armplot_for_notebook() -> None:
         _orig_pause = _plt.pause
         _orig_draw = _plt.draw
         _orig_sleep = _time.sleep
-        _plt.pause = lambda _dt=None: None
-        _plt.draw = lambda: None
-        _time.sleep = lambda _dt=None: None
+
+        def _no_pause(_dt: float | None = None) -> None:
+            pass
+
+        def _no_draw() -> None:
+            pass
+
+        def _no_sleep(_dt: Any) -> None:
+            pass
+
+        _plt.pause = _no_pause
+        _plt.draw = _no_draw
+        _time.sleep = _no_sleep
         try:
             if env is not None:
                 try:

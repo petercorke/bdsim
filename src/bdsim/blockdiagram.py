@@ -10,7 +10,7 @@ import os
 import sys
 import traceback
 import warnings
-from typing import TYPE_CHECKING, Any, NoReturn
+from typing import TYPE_CHECKING, Any, NoReturn, cast
 
 if TYPE_CHECKING:
     from typing import Self
@@ -822,8 +822,10 @@ class BlockDiagram(
             if b.name is None:
                 raise RuntimeError("a block in a diagram is always named")
             # rename the block to include subsystem path
+            block_name = cast(str, b.name)
             if sspath:
-                b.name = sspath + "/" + b.name
+                block_name = sspath + "/" + block_name
+                b.name = block_name
 
             if not isinstance(b, SubsystemBlock):
                 # not a Subsystem block, just add the block to the list
@@ -837,7 +839,7 @@ class BlockDiagram(
                 self.subsystems[b.name] = b
                 ssb, ssw = self._subsystem_import(
                     b.subsystem,  # reference to the BlockDiagram that describes the subsystem
-                    b.name,  # name of the subsystem block, becomes a prefix for all blocks within the subsystem
+                    block_name,  # name of the subsystem block, becomes a prefix for all blocks within the subsystem
                     depth=depth + 1,  # increase subsystem nesting depth
                     verbose=verbose,
                 )

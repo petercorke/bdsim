@@ -13,7 +13,7 @@ from __future__ import annotations
 import sys
 import math
 import importlib
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import matplotlib
 import matplotlib.figure
@@ -23,7 +23,9 @@ import matplotlib.pyplot as plt
 from bdsim.block import SinkBlock
 
 if TYPE_CHECKING:
-    from bdsim.components import SimulationState
+    from bdsim.components import OptionsBase, SimulationState
+    from bdsim.connect import Wire
+    from bdsim.run_sim import BDSimState
 
 
 def is_notebook_backend(backend: str) -> bool:
@@ -94,6 +96,7 @@ class GraphicsBlock(SinkBlock):
             self.TIMESTAMP_FORMAT if timestamp_fmt is None else str(timestamp_fmt)
         )
         self._timestamp_artist: Any = None
+        self._graphics_start_in_progress_run_id: int | None = None
 
     @property
     def fig(self) -> matplotlib.figure.Figure | None:
@@ -125,6 +128,7 @@ class GraphicsBlock(SinkBlock):
     def start(self, simstate: SimulationState) -> None:
         # plt.draw()
         # plt.show(block=False)
+        simstate = cast(BDSimState, simstate)
         run_id = id(simstate)
 
         if (
@@ -137,7 +141,7 @@ class GraphicsBlock(SinkBlock):
             raise RuntimeError("duplicate graphics start detected for block")
 
         self._simstate = simstate
-        self._enabled = simstate.options.graphics
+        self._enabled = cast(OptionsBase, simstate.options).graphics
 
         if self.watch:
             # watch-list registration is a data-collection concern, not a
@@ -147,7 +151,7 @@ class GraphicsBlock(SinkBlock):
             # rather than in each subclass's start() so every GraphicsBlock
             # gets it for free.
             for wire in self._input_wires:  # type: ignore[attr-defined]
-                plug = wire.start  # start plug for input wire
+                plug = cast(Wire, wire).start  # start plug for input wire
 
                 # append to the watchlist, bdsim.run() will do the rest
                 simstate.watchlist.append(plug)
@@ -199,7 +203,13 @@ class GraphicsBlock(SinkBlock):
 
         if self._movie is not None:
             try:
-                fps = float(getattr(self._simstate.options, "animation_rate", 10.0))
+                fps = float(
+                    getattr(
+                        cast(OptionsBase, self._simstate.options),
+                        "animation_rate",
+                        10.0,
+                    )
+                )
                 if fps <= 0:
                     fps = 10.0
                 fps_int = max(1, int(round(fps)))
@@ -251,7 +261,7 @@ class GraphicsBlock(SinkBlock):
         self._update_timestamp(t)
 
         # bring the figure up to date in a backend-specific way
-        if self._simstate.options.animation:
+        if cast(OptionsBase, self._simstate.options).animation:
             notebook_backend = bool(getattr(self._simstate, "notebook_backend", False))
             tiled = getattr(self._simstate, "ntiles", None) not in (None, [], [1, 1])
             draw_key = float(t)
@@ -388,8 +398,8 @@ class GraphicsBlock(SinkBlock):
                         gstate._warned_nomove = True
                     pass  # can't do this for MacOSX
 
-        gstate = state
-        options = state.options
+        gstate = cast(BDSimState, state)
+        options = cast(OptionsBase, gstate.options)
         f: matplotlib.figure.Figure
         dpi: float
         row = 0
