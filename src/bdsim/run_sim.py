@@ -19,7 +19,7 @@ import types
 import time
 import traceback as tb
 import warnings
-from typing import Any, Callable, NoReturn, Sequence
+from typing import Any, Callable, NoReturn, Sequence, cast
 
 import matplotlib
 
@@ -200,20 +200,24 @@ class _LazyBlockClass:
         return self._module_name
 
     def _resolve(self) -> type[Block]:
-        if self._resolved is None:
+        resolved = self._resolved
+        if resolved is None:
             if os.getenv("BDSIM_DEBUG_LAZY_LOAD"):
                 print(
                     f"[bdsim] lazy-resolve {self._module_name}.{self._class_name}",
                     flush=True,
                 )
             module = importlib.import_module(self._module_name)
-            resolved = getattr(module, self._class_name)
-            if not inspect.isclass(resolved) or Block not in inspect.getmro(resolved):
+            resolved_class = getattr(module, self._class_name)
+            if not inspect.isclass(resolved_class) or Block not in inspect.getmro(
+                resolved_class
+            ):
                 raise TypeError(
                     f"{self._module_name}.{self._class_name} is not a Block class"
                 )
+            resolved = cast(type[Block], resolved_class)
             self._resolved = resolved
-        return self._resolved
+        return resolved
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         return self._resolve()(*args, **kwargs)
@@ -323,6 +327,11 @@ class BDSimState(SimulationState):
         RunIntervalStats counters for interval/solver diagnostics.
     """
 
+    tiled_figure: Any
+    tile_gridspec: Any
+    _warned_nomove: bool
+    _graphics_slot_claims: list[dict[str, Any]]
+
     def __init__(self) -> None:
         super().__init__()
         # offline-specific fields
@@ -345,7 +354,7 @@ class BDSimState(SimulationState):
         self.backend: str = ""
         self.notebook_backend: bool = False
         self.screensize_pix: tuple = ()
-        self.ntiles: list = []
+        self.ntiles: list[int] | None = []
         self.xoffset: int = 0
         self.display_manager: DisplayManager | None = None
         # Crossing detectors: zero-crossing detection callbacks for solve_ivp.
@@ -700,7 +709,9 @@ class BDSim(Runner):
         context: SimulationContext | None = self._get_context()
         if self.options is None:
             raise RuntimeError("options not initialised")  # pragma: no cover
-        options: OptionsBase = context.options if context is not None else self.options
+        options = cast(
+            OptionsBase, context.options if context is not None else self.options
+        )
         s: str = (
             f"BDSim: Block diagram simulation runtime, {len(self._blocklibrary)} blocks"
             " imported to library.\n"
@@ -2232,7 +2243,9 @@ class BDSim(Runner):
             ``hold`` option is read from ``sim.options`` directly.
         """
         context: SimulationContext | None = self._get_context()
-        options: OptionsBase = context.options if context is not None else self.options
+        options = cast(
+            OptionsBase, context.options if context is not None else self.options
+        )
         if options.hold:
             block = options.hold
 
@@ -2947,6 +2960,7 @@ class Options(OptionsBase):
                 effective_defaults[key] = value
 
         unknownargs: list[str] = []
+        parser: argparse.ArgumentParser | None = None
         if sysargs:
             raw_argv = list(sys.argv[1:])
 
@@ -3277,7 +3291,6 @@ class Options(OptionsBase):
                 altscreen=effective_defaults["altscreen"],
             )
 
-            self._parser = parser
             argv0 = sys.argv[0] if len(sys.argv) > 0 else ""
             args, unknownargs = parser.parse_known_args()
 
@@ -3331,7 +3344,8 @@ class Options(OptionsBase):
                 raise SystemExit(0)
         else:
             cmdline_options = dict()  # empty dictionary
-            self._parser = None
+
+        self._parser = parser
 
         # BDSIM_NO_GRAPHICS: unconditional override that forces graphics off,
         # taking precedence over everything else -- code (BDSim(graphics=True)),

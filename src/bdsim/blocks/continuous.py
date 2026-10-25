@@ -216,7 +216,7 @@ class LTI_SS(ContinuousBlock):
         B: np.ndarray,
         C: np.ndarray,
         D: np.ndarray | None = None,
-        x0: np.ndarray | None = None,
+        x0: Vector1D | None = None,
         **blockargs: Any,
     ) -> None:
         r"""
