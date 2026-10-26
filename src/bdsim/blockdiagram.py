@@ -801,9 +801,6 @@ class BlockDiagram(BlockDiagramMixin):
                 "state", ">>>>>>>>> t={}, x={} >>>>>>>>>>>>>>>>", t, state_map
             )
 
-            # reset all the blocks ready for the evalation
-            self.reset()
-
             self._state_map = state_map
 
             self.runtime.DEBUG("propagate", "t={:.3f}", t)
@@ -1322,10 +1319,11 @@ class BlockDiagram(BlockDiagramMixin):
 
     def reset(self) -> None:
         """
-        Reset conditions within every active block.  Most importantly, all
-        inputs are marked as unknown.
+        Restore the initial internal state of every block.
 
-        Invokes the `reset` method on all blocks.
+        Invokes the ``reset`` method on all blocks.  Called by :meth:`start`,
+        once per run, before the blocks are started.  It does not clear the
+        values on the wires.
 
         """
         try:
@@ -1485,6 +1483,10 @@ class BlockDiagram(BlockDiagramMixin):
                 )
                 print(attr(0))
                 raise RuntimeError("Fatal failure") from None
+
+        # undo anything the compile-time trial evaluation or a previous run did
+        # to the blocks' own state
+        self.reset()
 
         try:
             for b in self.blocklist:

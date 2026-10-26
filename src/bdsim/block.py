@@ -1731,10 +1731,19 @@ class Block(ABC, Port):
     # ---------------------------------------------------------------------- #
 
     def reset(self) -> None:
-        self._updated = False
-        self._output_values = [None] * self.nout
-        for slot in getattr(self, "_outport_slots", []):
-            slot.value = None
+        """
+        Restore the block's initial internal state.
+
+        Called once per run, before :meth:`start`, so that nothing the
+        compile-time trial evaluation or a previous run did to the block is
+        visible to the run about to start.  A block that keeps state of its own
+        in Python, for example a random number generator or a mode flag, must
+        override this and restore it.  Continuous and discrete state vectors
+        are not part of this: they are restored from :meth:`getstate0`.
+
+        The values on the block's ports are not touched.
+        """
+        pass
 
     def start(self, simstate: SimulationState) -> None:  # begin a simulation
         pass
@@ -1900,9 +1909,6 @@ class ContinuousBlock(Block):
         self._feedthrough = feedthrough
         super().__init__(nstates=nstates, ndstates=0, **blockargs)
 
-    def reset(self) -> None:
-        super().reset()
-
     def setstate(self, x: np.ndarray) -> np.ndarray:
         self._x_view = x[: self.nstates]
         return x[self.nstates :]
@@ -1976,9 +1982,6 @@ class SampledBlock(Block):
         self.T = clock.T
         self._feedthrough = feedthrough
         clock.add_block(self)
-
-    def reset(self) -> None:
-        super().reset()
 
     def setstate(self, x: np.ndarray) -> np.ndarray:
         self._x_view = x[: self.ndstates]

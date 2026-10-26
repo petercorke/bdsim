@@ -10,7 +10,7 @@ import numpy.testing as nt
 from contextlib import redirect_stdout
 
 from bdsim.blocks import Gain
-from bdsim.block_types import ContinuousBlock
+from bdsim.block_types import ContinuousBlock, FunctionBlock
 
 
 class FeedthroughContinuous(ContinuousBlock):
@@ -1703,6 +1703,62 @@ class AddDeleteBlockTest(unittest.TestCase):
         bd.delete_block(dst1)
         bd.connect(src, dst2)
         self.assertNotEqual(bd.wirelist[0].id, w_id)
+
+
+class ResetLifecycleTest(unittest.TestCase):
+    """reset() restores a block's own state once per run, before start()."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.sim = bdsim.BDSim(graphics=None, progress=False, banner=False)
+
+    def _diagram(self):
+        calls = []
+
+        class Probe(FunctionBlock):
+            nin = 1
+            nout = 1
+
+            def output(self, t, inputs, x):
+                return [inputs[0]]
+
+            def reset(self):
+                calls.append("reset")
+
+            def start(self, simstate):
+                calls.append("start")
+
+        bd = self.sim.blockdiagram()
+        probe = Probe(bd=bd)
+        bd.connect(bd.CONSTANT(1), probe)
+        bd.connect(probe, bd.NULL(1))
+        return bd, probe, calls
+
+    def test_compile_and_evaluate_do_not_reset(self):
+        bd, probe, calls = self._diagram()
+        bd.compile(verbose=False)
+        bd.evaluate(bd.initial_state_map(), 0.0)
+        self.assertEqual(calls, [])
+
+    def test_evaluate_keeps_the_values_on_the_wires(self):
+        bd, probe, calls = self._diagram()
+        bd.compile(verbose=False)
+        slot = probe.outport_slot(0)
+        self.assertEqual(slot.value, 1)
+        slot.value = "sentinel"
+        bd.evaluate(bd.initial_state_map(), 0.0, sinks=False)
+        # every block in the plan is recomputed, so the slot is overwritten
+        # rather than first cleared
+        self.assertEqual(slot.value, 1)
+
+    def test_run_resets_once_before_start(self):
+        bd, probe, calls = self._diagram()
+        bd.compile(verbose=False)
+        self.sim.run(bd, T=0.1)
+        self.assertEqual(calls, ["reset", "start"])
+        calls.clear()
+        self.sim.run(bd, T=0.1)  # a second run resets again
+        self.assertEqual(calls, ["reset", "start"])
 
 
 if __name__ == "__main__":

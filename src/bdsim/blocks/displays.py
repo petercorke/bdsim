@@ -822,8 +822,6 @@ class ScopeXY(GraphicsBlock):
             return
 
         # create the plot
-        super().reset()
-
         if self.fig is None or self.ax is None:
             raise RuntimeError(
                 "figure not created, step called before start?"
