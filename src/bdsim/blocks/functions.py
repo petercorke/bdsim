@@ -348,7 +348,7 @@ class Gain(FunctionBlock):
 
 
 class Pow(FunctionBlock):
-    """
+    r"""
     :blockname:`POW`
 
     Power block.
@@ -393,7 +393,7 @@ class Pow(FunctionBlock):
     nout = 1
 
     def __init__(
-        self, p: Union[int, float] = 1, matrix: bool = False, **blockargs: Any
+        self, p: int | float = 1, matrix: bool = False, **blockargs: Any
     ) -> None:
         """
         :param p: The exponent value, defaults to 1
@@ -417,9 +417,9 @@ class Pow(FunctionBlock):
             # input is an array
             if self.matrix:
                 # matrixwise exponentiation
-                if isinstance(self.p, int):
+                if float(self.p).is_integer():
                     # integer case
-                    return [np.linalg.matrix_power(input, self.p)]
+                    return [np.linalg.matrix_power(input, int(self.p))]
                 else:
                     # general fractional case
                     return [linalg.fractional_matrix_power(input, self.p)]
@@ -428,6 +428,347 @@ class Pow(FunctionBlock):
                 return [input**self.p]
         else:
             return [input**self.p]
+
+
+# ------------------------------------------------------------------------ #
+
+
+class Sqrt(FunctionBlock):
+    r"""
+    :blockname:`SQRT`
+
+    Square root block.
+
+    :inputs: 1
+    :outputs: 1
+    :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Port type
+          - Port number
+          - Types
+          - Description
+        * - Input
+          - 0
+          - int, float, ndarray
+          - :math:`x`
+        * - Output
+          - 0
+          - int, float, ndarray
+          - :math:`\operatorname{sgn}(x)\sqrt{|x|}`
+
+    The block computes the signed square root of the input, which is defined for
+    negative inputs: it returns the negative of the square root of the absolute
+    value.  If the input is a Numpy array, this operation is performed elementwise.
+
+    For example::
+
+        sqrt = bd.SQRT()
+
+    Useful for square-root controller.
+
+    :seealso: :class:`Pow`
+    """
+
+    nin = 1
+    nout = 1
+
+    def __init__(self, **blockargs: Any) -> None:
+        """
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        :type blockargs: dict
+
+        """
+        super().__init__(**blockargs)
+
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
+        input = inputs[0]
+
+        # works for scalars and, elementwise, for arrays
+        return [np.sign(input) * np.sqrt(np.abs(input))]
+
+
+# ------------------------------------------------------------------------ #
+
+
+class Sign(FunctionBlock):
+    r"""
+    :blockname:`SIGN`
+
+    Sign block.
+
+    :inputs: 1
+    :outputs: 1
+    :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Port type
+          - Port number
+          - Types
+          - Description
+        * - Input
+          - 0
+          - int, float, ndarray
+          - :math:`x`
+        * - Output
+          - 0
+          - int, float, ndarray
+          - :math:`\operatorname{sgn}(x)`
+
+    The output is -1, 0 or +1 according to whether the input is negative, zero
+    or positive.  If the input is a Numpy array, this operation is performed
+    elementwise.
+
+    For example::
+
+        sign = bd.SIGN()
+
+    :seealso: :class:`Sqrt`
+    """
+
+    nin = 1
+    nout = 1
+
+    def __init__(self, **blockargs: Any) -> None:
+        """
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        :type blockargs: dict
+
+        """
+        super().__init__(**blockargs)
+
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
+        input = inputs[0]
+
+        # works for scalars and, elementwise, for arrays
+        return [np.sign(input)]
+
+
+# ------------------------------------------------------------------------ #
+
+
+class Abs(FunctionBlock):
+    r"""
+    :blockname:`ABS`
+
+    Absolute value block.
+
+    :inputs: 1
+    :outputs: 1
+    :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Port type
+          - Port number
+          - Types
+          - Description
+        * - Input
+          - 0
+          - int, float, ndarray
+          - :math:`x`
+        * - Output
+          - 0
+          - int, float, ndarray
+          - :math:`|x|`
+
+    The output is the absolute value of the input.  If the input is a Numpy
+    array, this operation is performed elementwise.
+
+    For example::
+
+        absval = bd.ABS()
+
+    :seealso: :class:`Sign`
+    """
+
+    nin = 1
+    nout = 1
+
+    def __init__(self, **blockargs: Any) -> None:
+        """
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        :type blockargs: dict
+
+        """
+        super().__init__(**blockargs)
+
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
+        input = inputs[0]
+
+        # works for scalars and, elementwise, for arrays
+        return [np.abs(input)]
+
+
+# ------------------------------------------------------------------------ #
+
+
+class Anoise(FunctionBlock):
+    r"""
+    :blockname:`ANOISE`
+
+    Additive noise block.
+
+    :inputs: 1
+    :outputs: 1
+    :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Port type
+          - Port number
+          - Types
+          - Description
+        * - Input
+          - 0
+          - int, float, ndarray
+          - :math:`x`
+        * - Output
+          - 0
+          - int, float, ndarray
+          - :math:`x + \mathcal{N}(0, \sigma^2)`
+
+    The block adds zero-mean Gaussian noise to the input signal.  The noise is
+    generated using the Numpy random number generator and its standard
+    deviation is specified by the ``sigma`` parameter.
+
+    If the input is a Numpy array, noise is generated independently for each
+    element.  ``sigma`` can be a scalar, applied to every element, or an array
+    that can be broadcast to the shape of the input, giving a different
+    standard deviation for each element.
+
+    For example::
+
+        anoise = bd.ANOISE(sigma=0.1)
+
+    :seealso: :class:`Mnoise` :func:`numpy.random.default_rng`
+    """
+
+    nin = 1
+    nout = 1
+
+    def __init__(
+        self, sigma: ArrayLike | float = 1, seed: int | None = None, **blockargs: Any
+    ) -> None:
+        """
+        :param sigma: Standard deviation of the noise, defaults to 1.
+        :type sigma: float or array_like
+        :param seed: Seed for the random number generator, defaults to None
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        :type blockargs: dict
+
+        """
+        super().__init__(**blockargs)
+
+        self.sigma = sigma
+        self.add_param("sigma")
+
+        # Initialize the generator
+        self.rng = np.random.default_rng(seed)
+
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
+        input = inputs[0]
+        shape = np.shape(input)  # () for a scalar input
+
+        # numpy broadcasts sigma against size, and raises ValueError if it can't
+        try:
+            noise = self.rng.normal(0.0, self.sigma, size=shape)
+        except ValueError as e:
+            raise ValueError(
+                f"sigma shape {np.shape(self.sigma)} is not compatible with "
+                f"input shape {shape}"
+            ) from e
+
+        return [input + noise]
+
+
+# ------------------------------------------------------------------------ #
+
+
+class Mnoise(FunctionBlock):
+    r"""
+    :blockname:`MNOISE`
+
+    Multiplicative noise block.
+
+    :inputs: 1
+    :outputs: 1
+    :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Port type
+          - Port number
+          - Types
+          - Description
+        * - Input
+          - 0
+          - int, float, ndarray
+          - :math:`x`
+        * - Output
+          - 0
+          - int, float, ndarray
+          - :math:`x \times \mathcal{N}(1, \sigma^2)`
+
+    The block multiplies the input signal by Gaussian noise with unit mean.  The
+    noise is generated using the Numpy random number generator and its standard
+    deviation is specified by the ``sigma`` parameter.
+
+    If the input is a Numpy array, noise is generated independently for each
+    element.  ``sigma`` can be a scalar, applied to every element, or an array
+    that can be broadcast to the shape of the input, giving a different
+    standard deviation for each element.
+
+    For example::
+
+        mnoise = bd.MNOISE(sigma=0.1)
+
+    :seealso: :class:`Anoise` :func:`numpy.random.default_rng`
+    """
+
+    nin = 1
+    nout = 1
+
+    def __init__(
+        self, sigma: ArrayLike | float = 1, seed: int | None = None, **blockargs: Any
+    ) -> None:
+        """
+        :param sigma: Standard deviation of the noise, defaults to 1.
+        :type sigma: float or array_like
+        :param seed: Seed for the random number generator, defaults to None
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        :type blockargs: dict
+
+        """
+        super().__init__(**blockargs)
+
+        self.sigma = sigma
+        self.add_param("sigma")
+
+        # Initialize the generator
+        self.rng = np.random.default_rng(seed)
+
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
+        input = inputs[0]
+        shape = np.shape(input)  # () for a scalar input
+
+        # numpy broadcasts sigma against size, and raises ValueError if it can't
+        try:
+            noise = self.rng.normal(1.0, self.sigma, size=shape)
+        except ValueError as e:
+            raise ValueError(
+                f"sigma shape {np.shape(self.sigma)} is not compatible with "
+                f"input shape {shape}"
+            ) from e
+
+        return [input * noise]
 
 
 # ------------------------------------------------------------------------ #
@@ -502,6 +843,110 @@ class Clip(FunctionBlock):
             out = np.clip(input, self.min, self.max)
         else:
             out = min(self.max, max(input, self.min))  # type: ignore[arg-type]
+        return [out]
+
+
+# ------------------------------------------------------------------------ #
+
+
+class Deadband(FunctionBlock):
+    r"""
+    :blockname:`DEADBAND`
+
+    Dead band (dead zone).
+
+    :inputs: 1
+    :outputs: 1
+    :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - int, float, ndarray
+            - :math:`x`
+        *   - Output
+            - 0
+            - int, float, ndarray
+            - :math:`y`
+
+    The output is zero while the input is within the band from :math:`a` to
+    :math:`b` inclusive.  Outside the band the output is the distance of the
+    input from the nearest edge of the band, so the output is continuous:
+
+    .. math::
+
+        y = \begin{cases}
+            x - b & x > b \\
+            0 & a \le x \le b \\
+            x - a & x < a
+        \end{cases}
+
+    The band is specified by ``d`` which can be:
+
+        - a scalar, in which case the band is :math:`-d` to :math:`+d`, or
+        - a 2-element array_like, the lower and upper edges of the band
+          :math:`(a, b)`.
+
+    If the input is a Numpy array the same band is applied to every element.
+
+    For example::
+
+        deadband = bd.DEADBAND(0.1)         # band is -0.1 to 0.1
+        deadband = bd.DEADBAND([-0.1, 0.3]) # band is -0.1 to 0.3
+
+    :seealso: :class:`Clip`
+    """
+
+    nin = 1
+    nout = 1
+
+    def __init__(self, d: float | ArrayLike = 1, **blockargs: Any) -> None:
+        """
+        :param d: Half-width of a symmetric band, or the lower and upper edges
+            of the band, defaults to 1
+        :type d: float or array_like(2)
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        :type blockargs: dict
+        :raises ValueError: ``d`` is not a scalar or 2-element array_like, or
+            the band is empty (lower edge above upper edge)
+        """
+        super().__init__(**blockargs)
+
+        arr = np.asarray(d, dtype=float)
+        if arr.ndim == 0:
+            if arr < 0:
+                raise ValueError("scalar deadband d must be non-negative")
+            lower, upper = -float(arr), float(arr)
+        elif arr.shape == (2,):
+            lower, upper = float(arr[0]), float(arr[1])
+            if lower > upper:
+                raise ValueError(
+                    f"deadband lower edge {lower} must not exceed upper edge {upper}"
+                )
+        else:
+            raise ValueError("d must be a scalar or a 2-element array_like")
+
+        self.d = d
+        self.lower = lower
+        self.upper = upper
+
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
+        input = inputs[0]
+
+        # np.where handles scalars and, elementwise, arrays
+        out = np.where(
+            input > self.upper,
+            input - self.upper,
+            np.where(input < self.lower, input - self.lower, 0.0),
+        )
+        if np.ndim(input) == 0:
+            out = out.item()
         return [out]
 
 

@@ -3,7 +3,21 @@
 import numpy as np
 import math
 
-from bdsim.blocks.functions import Clip, Function, Gain, Interpolate, Pow, Prod, Sum
+from bdsim.blocks.functions import (
+    Abs,
+    Anoise,
+    Clip,
+    Deadband,
+    Function,
+    Gain,
+    Interpolate,
+    Mnoise,
+    Pow,
+    Prod,
+    Sign,
+    Sqrt,
+    Sum,
+)
 
 import unittest
 import numpy.testing as nt
@@ -63,6 +77,120 @@ class FunctionBlockTest(unittest.TestCase):
             block.test_output(np.array([[2, 0], [0, 3]]))[0],
             np.array([[8, 0], [0, 27]]),
         )
+
+    def test_pow_matrix_float_integer_exponent(self):
+        # 2.0 is integral, so must take the matrix_power path, same as 2
+        m = np.array([[1, 2], [3, 4]])
+        nt.assert_array_almost_equal(
+            Pow(2.0, matrix=True).test_output(m)[0],
+            Pow(2, matrix=True).test_output(m)[0],
+        )
+        nt.assert_array_almost_equal(Pow(2.0, matrix=True).test_output(m)[0], m @ m)
+
+    def test_sqrt(self):
+        block = Sqrt()
+        self.assertEqual(block.test_output(4)[0], 2)
+        self.assertEqual(block.test_output(0)[0], 0)
+
+        # signed: sgn(x) * sqrt(|x|)
+        self.assertEqual(block.test_output(-9)[0], -3)
+
+        nt.assert_array_almost_equal(
+            block.test_output(np.r_[4, -9, 0, 2.25])[0], np.r_[2, -3, 0, 1.5]
+        )
+        nt.assert_array_almost_equal(
+            block.test_output(np.array([[1, -4], [-16, 25]]))[0],
+            np.array([[1, -2], [-4, 5]]),
+        )
+
+    def test_sign(self):
+        block = Sign()
+        self.assertEqual(block.test_output(3.5)[0], 1)
+        self.assertEqual(block.test_output(-0.1)[0], -1)
+        self.assertEqual(block.test_output(0)[0], 0)
+        self.assertEqual(block.test_output(-7)[0], -1)
+
+        nt.assert_array_equal(
+            block.test_output(np.r_[-2.5, 0, 4, -0.0])[0], np.r_[-1, 0, 1, 0]
+        )
+        nt.assert_array_equal(
+            block.test_output(np.array([[1, -2], [0, 5]]))[0],
+            np.array([[1, -1], [0, 1]]),
+        )
+
+    def test_abs(self):
+        block = Abs()
+        self.assertEqual(block.test_output(3.5)[0], 3.5)
+        self.assertEqual(block.test_output(-3.5)[0], 3.5)
+        self.assertEqual(block.test_output(0)[0], 0)
+        self.assertEqual(block.test_output(-7)[0], 7)
+
+        nt.assert_array_equal(
+            block.test_output(np.r_[-2.5, 0, 4, -0.0])[0], np.r_[2.5, 0, 4, 0]
+        )
+        nt.assert_array_equal(
+            block.test_output(np.array([[1, -2], [0, -5]]))[0],
+            np.array([[1, 2], [0, 5]]),
+        )
+
+    def test_anoise(self):
+        # scalar in -> scalar out, array in -> same shape out
+        block = Anoise(sigma=0.5, seed=1)
+        self.assertEqual(np.shape(block.test_output(1.0)[0]), ())
+        self.assertEqual(np.shape(block.test_output(np.zeros(3))[0]), (3,))
+        self.assertEqual(np.shape(block.test_output(np.zeros((2, 3)))[0]), (2, 3))
+
+        # zero sigma is the identity
+        nt.assert_array_equal(Anoise(sigma=0).test_output(np.r_[1, 2, 3])[0], [1, 2, 3])
+
+        # seeded blocks are reproducible
+        x = np.zeros(5)
+        nt.assert_array_equal(
+            Anoise(sigma=1, seed=42).test_output(x)[0],
+            Anoise(sigma=1, seed=42).test_output(x)[0],
+        )
+
+        # statistics: mean and std of added noise
+        out = Anoise(sigma=2.0, seed=3).test_output(np.full(100000, 10.0))[0]
+        self.assertAlmostEqual(out.mean(), 10.0, delta=0.05)
+        self.assertAlmostEqual(out.std(), 2.0, delta=0.05)
+
+        # per-element sigma
+        out = Anoise(sigma=np.r_[0.0, 1000.0], seed=4).test_output(np.zeros((5000, 2)))[0]
+        self.assertTrue(np.all(out[:, 0] == 0))
+        self.assertAlmostEqual(out[:, 1].std(), 1000.0, delta=50)
+
+        # incompatible sigma shape
+        with self.assertRaises(ValueError):
+            Anoise(sigma=np.r_[1, 2, 3]).test_output(np.zeros(2))
+
+    def test_mnoise(self):
+        block = Mnoise(sigma=0.5, seed=1)
+        self.assertEqual(np.shape(block.test_output(1.0)[0]), ())
+        self.assertEqual(np.shape(block.test_output(np.zeros(3))[0]), (3,))
+        self.assertEqual(np.shape(block.test_output(np.zeros((2, 3)))[0]), (2, 3))
+
+        # zero sigma is the identity
+        nt.assert_array_equal(Mnoise(sigma=0).test_output(np.r_[1, 2, 3])[0], [1, 2, 3])
+
+        # zero input stays zero, whatever the noise
+        nt.assert_array_equal(Mnoise(sigma=1, seed=1).test_output(np.zeros(4))[0], 0)
+
+        # seeded blocks are reproducible
+        x = np.ones(5)
+        nt.assert_array_equal(
+            Mnoise(sigma=1, seed=42).test_output(x)[0],
+            Mnoise(sigma=1, seed=42).test_output(x)[0],
+        )
+
+        # statistics: x * N(1, sigma^2) has mean x and std |x| * sigma
+        out = Mnoise(sigma=0.1, seed=3).test_output(np.full(100000, 10.0))[0]
+        self.assertAlmostEqual(out.mean(), 10.0, delta=0.05)
+        self.assertAlmostEqual(out.std(), 1.0, delta=0.02)
+
+        # incompatible sigma shape
+        with self.assertRaises(ValueError):
+            Mnoise(sigma=np.r_[1, 2, 3]).test_output(np.zeros(2))
 
     def test_sum(self):
 
@@ -138,6 +266,78 @@ class FunctionBlockTest(unittest.TestCase):
             block.test_output(np.r_[-10, -2, -1, 0, 1, 3, 10])[0],
             np.r_[-2, -2, -1, 0, 1, 3, 3],
         )
+
+    def test_clip_array_bounds(self):
+        # elementwise bounds
+        block = Clip(min=np.r_[-1, -2], max=np.r_[1, 2])
+        nt.assert_array_equal(block.test_output(np.r_[-5, 5])[0], np.r_[-1, 2])
+        nt.assert_array_equal(block.test_output(np.r_[0.5, -0.5])[0], np.r_[0.5, -0.5])
+
+        # scalar bounds applied to every element
+        block = Clip(min=-1, max=1)
+        nt.assert_array_equal(block.test_output(np.r_[-5, 0, 5])[0], np.r_[-1, 0, 1])
+
+        # defaults are unbounded
+        block = Clip()
+        self.assertEqual(block.test_output(1e9)[0], 1e9)
+        self.assertEqual(block.test_output(-1e9)[0], -1e9)
+
+    def test_deadband_symmetric(self):
+        block = Deadband(2)
+        self.assertEqual(block.test_output(0)[0], 0)
+        self.assertEqual(block.test_output(1.5)[0], 0)
+        self.assertEqual(block.test_output(-1.5)[0], 0)
+
+        # edges are inside the band, output continuous across them
+        self.assertEqual(block.test_output(2)[0], 0)
+        self.assertEqual(block.test_output(-2)[0], 0)
+
+        # outside: distance from nearest edge
+        self.assertEqual(block.test_output(5)[0], 3)
+        self.assertEqual(block.test_output(-5)[0], -3)
+
+        nt.assert_array_almost_equal(
+            block.test_output(np.r_[-5, -2, -1, 0, 1, 2, 5])[0],
+            np.r_[-3, 0, 0, 0, 0, 0, 3],
+        )
+
+    def test_deadband_asymmetric(self):
+        for d in ([-1, 3], (-1, 3), np.r_[-1, 3]):
+            block = Deadband(d)
+            self.assertEqual(block.test_output(0)[0], 0)
+            self.assertEqual(block.test_output(3)[0], 0)
+            self.assertEqual(block.test_output(-1)[0], 0)
+            self.assertEqual(block.test_output(5)[0], 2)
+            self.assertEqual(block.test_output(-4)[0], -3)
+
+        # the band need not contain zero
+        block = Deadband([1, 3])
+        self.assertEqual(block.test_output(0)[0], -1)
+        self.assertEqual(block.test_output(2)[0], 0)
+        self.assertEqual(block.test_output(4)[0], 1)
+
+        # array input, same band for every element
+        block = Deadband([-1, 3])
+        nt.assert_array_almost_equal(
+            block.test_output(np.array([[-4, 0], [3.5, 5]]))[0],
+            np.array([[-3, 0], [0.5, 2]]),
+        )
+
+    def test_deadband_zero_width(self):
+        block = Deadband(0)
+        self.assertEqual(block.test_output(0)[0], 0)
+        self.assertEqual(block.test_output(2)[0], 2)
+        self.assertEqual(block.test_output(-2)[0], -2)
+
+    def test_deadband_errors(self):
+        with self.assertRaises(ValueError):
+            Deadband(-1)
+        with self.assertRaises(ValueError):
+            Deadband([3, -1])
+        with self.assertRaises(ValueError):
+            Deadband([1, 2, 3])
+        with self.assertRaises(ValueError):
+            Deadband([[1, 2], [3, 4]])
 
     def test_function(self):
 
