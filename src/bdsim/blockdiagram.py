@@ -22,6 +22,7 @@ from ansitable import ANSITable, Column  # type: ignore[import-not-found]
 from colored import attr, fg
 
 from bdsim.exceptions import BlockRuntimeError
+from bdsim.signature import Signature
 
 if TYPE_CHECKING:
     from bdsim._blockdiagram_mixin import BlockDiagramMixin
@@ -46,6 +47,11 @@ from bdsim.components import (
 from bdsim.connect import EndPlug, Plug, Port, StartPlug, Wire
 
 # ------------------------------------------------------------------------- #
+
+
+def _signature_str(signature: Signature | None) -> str:
+    """Signature for display in a report, ``?`` if the wire was not observed."""
+    return "?" if signature is None else str(signature)
 
 
 # class BlockDiagram(BlockDiagramMixin):
@@ -613,6 +619,9 @@ class BlockDiagram(BlockDiagramMixin):
             # run all the blocks for one step
             self.evaluate(state_map, 0.0, sinks=False)
 
+            # the values it left on the wires give each wire's signature
+            self._record_signatures()
+
         if error:
             # show report if there was an error
             if not report:
@@ -623,6 +632,18 @@ class BlockDiagram(BlockDiagramMixin):
             self.compiled = True
 
         return self.compiled
+
+    def _record_signatures(self) -> None:
+        """Record the signature of every wire from the values now on the slots.
+
+        Called by :meth:`compile` after the trial evaluation, which has run
+        every block once in schedule order.  The signature is kept on the slot,
+        so it is shared by the producer's output port and every input port wired
+        to it, and :meth:`reset` does not clear it.
+        """
+        for b in self.blocklist:
+            for slot in b._outport_slots:
+                slot.signature = Signature.of(slot.value)
 
     def _subsystem_import(
         self, bd: BlockDiagram, sspath: str, verbose: bool = False, depth: int = 0
@@ -1126,10 +1147,7 @@ class BlockDiagram(BlockDiagramMixin):
             if b.nin > 0:
                 # non source block, list all its inputs, one per row
                 for port, source in enumerate(b.inports):
-                    value = source.block.outport_value(source.port)  # type: ignore[arg-type]
-                    typ = type(value).__name__
-                    if isinstance(value, np.ndarray):
-                        typ += "{:s}.{:s}".format(str(value.shape), str(value.dtype))
+                    typ = _signature_str(b.insig[port])
                     src_name = source.block.name or ""
                     if source.block.nout > 1:
                         src_name += f"[{source.port}]"
@@ -1209,13 +1227,7 @@ class BlockDiagram(BlockDiagramMixin):
             start: str = "{}[{}]".format(wire.start.block.id, wire.start.port)
             end: str = "{}[{}]".format(wire.end.block.id, wire.end.port)
 
-            try:
-                value = wire.end.block.inport_value(wire.end.port)  # type: ignore[arg-type]
-                typ: str = type(value).__name__
-                if isinstance(value, np.ndarray):
-                    typ += "{:s}.{:s}".format(str(value.shape), str(value.dtype))
-            except:
-                typ = "??"
+            typ = _signature_str(wire.end.block.insig[wire.end.port])  # type: ignore[index]
             table.row(wire.id, start, end, wire.fullname, typ)
         table.print(**kwargs)
 

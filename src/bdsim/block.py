@@ -13,6 +13,7 @@ import spatialmath.base as smb
 from bdsim.exceptions import BlockApiError, BlockRuntimeError
 from bdsim.components import Clock, _fixname, oodebug
 from bdsim.connect import Plug, Port, Wire
+from bdsim.signature import Signature
 
 if TYPE_CHECKING:
     from bdsim.blockdiagram import BlockDiagram
@@ -22,10 +23,31 @@ Vector1D = int | float | tuple[float, ...] | list[float] | np.ndarray
 
 
 class PortValueSlot:
-    __slots__ = ("value",)
+    """
+    The signal on one wire.
+
+    The slot of an output port is shared with every input port wired to it, so
+    ``value`` and ``signature`` are the producer's and every consumer's view of
+    the same wire.  ``signature`` is ``None`` until compile() has observed the
+    wire.
+    """
+
+    __slots__ = ("value", "signature")
 
     def __init__(self) -> None:
         self.value: Any = None
+        self.signature: Signature | None = None
+
+
+def _collapse_size_one_vector(value: Any) -> Any:
+    """A 1-D ndarray of size 1 is presented as a scalar of the same NumPy type.
+
+    Only ``ndarray`` is affected, and only if it is 1-D: a ``(1, 1)`` matrix
+    stays a matrix.
+    """
+    if isinstance(value, np.ndarray) and value.ndim == 1 and value.size == 1:
+        return value[0]
+    return value
 
 
 class Block(ABC, Port):
@@ -74,6 +96,7 @@ class Block(ABC, Port):
     #
     # Publish path:
     #   block.output(...) -> Block._publish_output_values(values)
+    #   -> a 1-D ndarray of size 1 is collapsed to a scalar (once, here)
     #   -> cache in block._output_values
     #   -> write each output-port value once to self._outport_slots[port]
     #
@@ -750,9 +773,40 @@ class Block(ABC, Port):
 
     def _publish_output_values(self, out: list[Any] | tuple[Any, ...]) -> None:
         """Cache block outputs and publish each port value once to its slot."""
-        self._output_values = list(out)
+        self._output_values = [_collapse_size_one_vector(value) for value in out]
         for port, value in enumerate(self._output_values):
             self._outport_slots[port].value = value
+
+    @property
+    def outsig(self) -> list[Signature | None]:
+        """
+        Signatures of the output ports.
+
+        An entry is ``None`` until :meth:`BlockDiagram.compile` has observed
+        the wire.
+
+        :seealso: :class:`~bdsim.signature.Signature` :attr:`insig`
+        """
+        slots = self.__dict__.get("_outport_slots")  # created by compile()
+        if slots is None:
+            return [None] * self.nout
+        return [slot.signature for slot in slots]
+
+    @property
+    def insig(self) -> list[Signature | None]:
+        """
+        Signatures of the input ports.
+
+        The input port is bound to the slot of the output port that drives it,
+        so this is that producer's :attr:`outsig`.  An entry is ``None`` if the
+        port is unconnected or the wire has not yet been observed.
+
+        :seealso: :class:`~bdsim.signature.Signature` :attr:`outsig`
+        """
+        slots = self.__dict__.get("_inport_slots")  # created by compile()
+        if slots is None:
+            return [None] * self.nin
+        return [None if slot is None else slot.signature for slot in slots]
 
     def outport_slot(self, i: int) -> PortValueSlot:
         if i >= self.nout:
