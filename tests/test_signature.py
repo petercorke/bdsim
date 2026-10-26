@@ -8,7 +8,7 @@ import numpy as np
 from spatialmath import SE3
 
 import bdsim
-from bdsim.block_types import SourceBlock
+from bdsim.block_types import FunctionBlock, SourceBlock
 from bdsim.signature import Signature
 
 
@@ -305,6 +305,78 @@ class ReportTest(unittest.TestCase):
             for slot in b._outport_slots:
                 slot.value = None
         self.assertIn("ndarray(3,) float64", self._printed(bd.report_summary))
+
+
+class ConfigureTest(unittest.TestCase):
+    """configure() runs once per run, after reset() and before start()."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.sim = bdsim.BDSim(graphics=None, progress=False, banner=False)
+
+    def _diagram(self, fail=False):
+        calls, seen = [], {}
+
+        class Probe(FunctionBlock):
+            nin = 1
+            nout = 1
+
+            def output(self, t, inputs, x):
+                return [inputs[0]]
+
+            def reset(self):
+                calls.append("reset")
+
+            def configure(self):
+                calls.append("configure")
+                if fail:
+                    raise ValueError("cannot configure")
+                seen["insig"] = self.insig
+                seen["outsig"] = self.outsig
+
+            def start(self, simstate):
+                calls.append("start")
+
+        bd = self.sim.blockdiagram()
+        probe = Probe(bd=bd)
+        bd.connect(Emit(np.zeros(3), bd=bd), probe)
+        bd.connect(probe, bd.NULL(1))
+        bd.compile(verbose=False)
+        return bd, probe, calls, seen
+
+    def test_default_is_a_no_op(self):
+        bd = self.sim.blockdiagram()
+        block = bd.GAIN(2)
+        self.assertIsNone(block.configure())
+
+    def test_compile_does_not_configure(self):
+        bd, probe, calls, seen = self._diagram()
+        self.assertEqual(calls, [])
+
+    def test_order_within_a_run(self):
+        bd, probe, calls, seen = self._diagram()
+        self.sim.run(bd, T=0.1)
+        self.assertEqual(calls, ["reset", "configure", "start"])
+        calls.clear()
+        self.sim.run(bd, T=0.1)  # every run configures again
+        self.assertEqual(calls, ["reset", "configure", "start"])
+
+    def test_configure_sees_the_signatures(self):
+        bd, probe, calls, seen = self._diagram()
+        self.sim.run(bd, T=0.1)
+        expected = [Signature(np.ndarray, (3,), np.dtype(float))]
+        self.assertEqual(seen["insig"], expected)
+        self.assertEqual(seen["outsig"], expected)
+
+    def test_error_in_configure_names_the_block(self):
+        bd, probe, calls, seen = self._diagram(fail=True)
+        buf = io.StringIO()
+        with redirect_stdout(buf), self.assertRaises(RuntimeError):
+            self.sim.run(bd, T=0.1)
+        self.assertIn(probe.name, buf.getvalue())
+        self.assertIn("configure", buf.getvalue())
+        self.assertIn("cannot configure", buf.getvalue())
+        self.assertNotIn("start", calls)  # no block was started
 
 
 if __name__ == "__main__":

@@ -1500,6 +1500,13 @@ class BlockDiagram(BlockDiagramMixin):
         # to the blocks' own state
         self.reset()
 
+        # let each block read the signatures compile() recorded
+        try:
+            for b in self.blocklist:
+                b.configure_safe()
+        except BlockRuntimeError as err:
+            self._handle_block_runtime_error(err)
+
         try:
             for b in self.blocklist:
                 b.start_safe(simstate)

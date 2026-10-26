@@ -76,7 +76,8 @@ class Block(ABC, Port):
         - ``output(t, u, x)``: returns the output value of the block at output port ``i`` given the current state and inputs. The outputs are cached and
           can be accessed by ``block.output_value(i)``
         - ``deriv(t, u, x)``: returns the derivative of the state variables for continuous-time blocks
-        - ``reset()``: resets the block to its initial state
+        - ``reset()``: restores the block's own initial state, once per run
+        - ``configure()``: prepares the block for a run using the signatures of its wires, once per run, after ``reset()`` and before ``start()``
         - ``done()``: performs any cleanup at end of the simulation
         - ``info()``: displays information about the block for debugging purposes
 
@@ -916,6 +917,12 @@ class Block(ABC, Port):
             self.reset()
         except Exception as err:
             self._raise_runtime_error("reset", err)
+
+    def configure_safe(self) -> None:
+        try:
+            self.configure()
+        except Exception as err:
+            self._raise_runtime_error("configure", err)
 
     def start_safe(self, simstate: Any) -> None:
         try:
@@ -1796,6 +1803,22 @@ class Block(ABC, Port):
         are not part of this: they are restored from :meth:`getstate0`.
 
         The values on the block's ports are not touched.
+        """
+        pass
+
+    def configure(self) -> None:
+        """
+        Prepare the block for a run, using what compile() learned about its wires.
+
+        Called once per run, after :meth:`reset` and before :meth:`start`.  This
+        is the place to read :attr:`insig` and :attr:`outsig`, for example to
+        size per-element detectors or allocate buffers.  The signatures are those
+        observed by the trial evaluation in ``compile()``.  They are ``None`` if
+        the diagram was compiled with ``evaluate=False``, in which case the block
+        should not assume anything about its wires.
+
+        The default does nothing.  :meth:`start` keeps its meaning: acquire
+        resources and register with the simulation.
         """
         pass
 
