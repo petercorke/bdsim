@@ -14,6 +14,7 @@ import math
 from typing import Any
 
 from bdsim.components import EventSource, SourceBlock
+from bdsim.signature import unify
 
 
 # ------------------------------------------------------------------------ #
@@ -373,7 +374,12 @@ class Piecewise(SourceBlock, EventSource):
             raise ValueError("no sequence provided")
 
         self.t = [x[0] for x in _seq]
-        self.y = [x[1] for x in _seq]
+        self.y = list(
+            unify(
+                *[x[1] for x in _seq],
+                names=[f"seq[{i}] value" for i in range(len(_seq))],
+            )
+        )
 
     def start(self, simstate: Any) -> None:
         super().start(simstate)
@@ -436,23 +442,29 @@ class Step(SourceBlock, EventSource):
     nout = 1
 
     def __init__(
-        self, T: float = 1, off: float = 0, on: float = 1, **blockargs: Any
+        self, T: float = 1, off: Any = 0, on: Any = 1, **blockargs: Any
     ) -> None:
         """
         :param T: time of step, defaults to 1
         :type T: float, optional
         :param off: initial value, defaults to 0
-        :type off: float, optional
+        :type off: any, optional
         :param on: final value, defaults to 1
-        :type on: float, optional
+        :type on: any, optional
         :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
+        :raises TypeError: ``off`` and ``on`` are of different types
+        :raises ValueError: ``off`` and ``on`` are arrays with different shape or dtype
+
+        The output is always of one type.  ``off`` and ``on`` can be any Python
+        object, but must be the same type, for example two lists or two
+        strings.  Numbers are promoted to a common type, so ``off=0, on=1.0``
+        gives ``0.0`` and ``1.0``.  A bool cannot be mixed with a number.
         """
         super().__init__(**blockargs)
 
         self.T: float = T
-        self.off: float = off
-        self.on: float = on
+        self.off, self.on = unify(off, on, names=("off", "on"))
 
     def start(self, simstate: Any) -> None:
         simstate.declare_event(self, self.T)
@@ -529,9 +541,16 @@ class Ramp(SourceBlock, EventSource):
         """
         super().__init__(**blockargs)
 
+        unify(off, slope, names=("off", "slope"))  # same shape, or both numbers
+        try:
+            # off + slope * (t - T) is a float, so the output is a float before T too
+            off = off + 0.0 * slope
+        except TypeError as err:
+            raise TypeError("off and slope must be numbers or arrays") from err
+
         self.T: float = T
-        self.off: float = off
-        self.slope: float = slope
+        self.off = off
+        self.slope = slope
 
     def start(self, simstate: Any) -> None:
         simstate.declare_event(self, self.T)
