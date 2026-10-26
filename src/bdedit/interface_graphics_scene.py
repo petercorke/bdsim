@@ -126,8 +126,12 @@ class GraphicsScene(QGraphicsScene):
         self._pen_light.setWidth(1)
         self._pen_dark = QPen(self._color_dark)
         self._pen_dark.setWidth(2)
-        # Set the background fill color
-        self.setBackgroundBrush(self._color_background)
+        # Set the background fill color. checkMode() is called from within
+        # drawBackground/drawForeground, and setBackgroundBrush() schedules a
+        # repaint, so only set it on a change or the scene repaints endlessly.
+        # See: https://doc.qt.io/qt-6/qgraphicsscene.html#backgroundBrush-prop
+        if self.backgroundBrush().color() != QColor(self._color_background):
+            self.setBackgroundBrush(self._color_background)
 
     def mousePressEvent(self, event):
         # If the mouse is pressed, an internal variable is set to True
