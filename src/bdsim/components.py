@@ -424,8 +424,8 @@ class SimulationState:
         Count of open/allocated graphics figures.
     stop
         Stop-request source (typically a block instance) or ``None``.
-    checkfinite
-        If ``True``, fail fast on NaN/Inf signal values when supported.
+    check
+        If ``True``, check block outputs and derivatives as they are computed.
     debugger
         Legacy debugger enable flag used by some runner/debug paths.
     t_stop
@@ -444,7 +444,7 @@ class SimulationState:
         self.t: float | None = None
         self.fignum: int = 0
         self.stop = None
-        self.checkfinite: bool = True
+        self.check: bool = True
         self.debugger: bool = True
         self.t_stop: float | None = None
         self.eventq: TimeQ = TimeQ()

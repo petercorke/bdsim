@@ -58,6 +58,54 @@ class Signature:
             return f"ndarray{self.shape} {self.dtype}"
         return self.type.__name__
 
+    def matches(self, other: Signature) -> bool:
+        """
+        Is ``other`` the same kind of signal as this one?
+
+        Arrays must have the same shape and dtype.  Scalars match if they are the
+        same kind, ``bool``, ``int``, ``float`` or ``complex``, so a Python
+        ``float`` and a ``numpy.float64`` agree but an ``int`` and a ``float``
+        do not.  Any other type must be exactly the same type.
+        """
+        if self.type is np.ndarray or other.type is np.ndarray:
+            return (
+                self.type is other.type
+                and self.shape == other.shape
+                and self.dtype == other.dtype
+            )
+        return _kind(self.type) == _kind(other.type)
+
+    def matches_value(self, value: Any) -> bool:
+        """
+        Does ``value`` have this signature?  Same rule as :meth:`matches`,
+        without making a :class:`Signature` for the value.
+        """
+        kind = type(value)
+        if kind is self.type and kind is not np.ndarray:
+            return True  # the common case, nothing more to look at
+        if isinstance(value, np.ndarray):
+            return (
+                self.type is np.ndarray
+                and value.shape == self.shape
+                and value.dtype == self.dtype
+            )
+        if self.type is np.ndarray:
+            return False
+        return _kind(kind) == _kind(self.type)
+
+
+def _kind(typ: type) -> Any:
+    """Kind of a scalar type: Python and NumPy scalars of one kind are the same."""
+    if issubclass(typ, (bool, np.bool_)):
+        return "bool"
+    if issubclass(typ, (int, np.integer)):
+        return "int"
+    if issubclass(typ, (float, np.floating)):
+        return "float"
+    if issubclass(typ, (complex, np.complexfloating)):
+        return "complex"
+    return typ
+
 
 def unify(*values: Any, names: Sequence[str] | None = None) -> tuple[Any, ...]:
     """

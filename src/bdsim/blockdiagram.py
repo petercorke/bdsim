@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, Any, Callable, NoReturn
 if TYPE_CHECKING:
     from typing import Self
 
+import math
 import numpy as np
 from ansitable import ANSITable, Column  # type: ignore[import-not-found]
 from colored import attr, fg
@@ -47,6 +48,21 @@ from bdsim.components import (
 from bdsim.connect import EndPlug, Plug, Port, StartPlug, Wire
 
 # ------------------------------------------------------------------------- #
+
+
+def _is_finite(value: Any) -> bool:
+    """False for a float or complex value, or an array of them, containing NaN or Inf.
+
+    Integers, booleans and any other object are finite as far as this is
+    concerned, and are not examined.
+    """
+    if type(value) is float:
+        return math.isfinite(value)
+    if isinstance(value, np.ndarray):
+        return value.dtype.kind not in "fc" or bool(np.isfinite(value).all())
+    if isinstance(value, (float, complex, np.floating, np.complexfloating)):
+        return bool(np.isfinite(value))
+    return True
 
 
 def _signature_str(signature: Signature | None) -> str:
@@ -92,6 +108,7 @@ class BlockDiagram(BlockDiagramMixin):
         self._block_id_counter = Counter()
         self._wire_id_counter = Counter()
         self.name: str = name
+        self.check: bool = True  # run-time checks on, see evaluate()
         self.nstates = 0
         self.ndstates = 0
         self._issubsystem = False
@@ -788,8 +805,9 @@ class BlockDiagram(BlockDiagramMixin):
         self,
         state_map: dict[Block, np.ndarray | None],
         t: float,
-        checkfinite: bool = True,
         sinks: bool = True,
+        *,
+        check: bool | None = None,
     ) -> None:
         """
         Evaluate all blocks in the network using the compiled execution schedule
@@ -798,11 +816,11 @@ class BlockDiagram(BlockDiagramMixin):
         :type state_map: dict
         :param t: current time
         :type t: float
-        :param checkfinite: check for Inf or Nan values in block outputs
-        :type checkfinite: bool
-        :param sinks: evaluate sink blocks, defaults to Trye
+        :param sinks: evaluate sink blocks, defaults to True
         :type sinks: bool, optional
-        :param simstate: simulation state
+        :param check: check the block outputs, defaults to the diagram's ``check``
+            attribute, which :meth:`BDSim.run` sets from the ``check`` option
+        :type check: bool, optional
 
         Performs the following steps:
 
@@ -812,7 +830,13 @@ class BlockDiagram(BlockDiagramMixin):
 
         Sink blocks are not executed here, but after completion their inputs
         will all be valid.
+
+        If ``check`` is true every block's output is checked as it is produced,
+        see :meth:`_check_output_form` and :meth:`_check_published`.  The
+        checks cost time, ``--no-check`` skips them.
         """
+        if check is None:
+            check = self.check
 
         # TODO: don't copy outputs to inputs of next block, have inputs
         # pull the value from connected inputs
@@ -835,41 +859,13 @@ class BlockDiagram(BlockDiagramMixin):
 
                     self.runtime.DEBUG("propagate", "block {:s}: output = {}", b, out)
 
-                    if not isinstance(out, (tuple, list)):
-                        b._raise_runtime_error(
-                            "output",
-                            AssertionError(
-                                f"block {b} output {b} must be a list: {type(out)}"
-                            ),
-                            t=t,
-                            inputs=inports,
-                            state=block_state,
-                        )
-                    if len(out) != b.nout:
-                        b._raise_runtime_error(
-                            "output",
-                            AssertionError(
-                                f"block {b} output {b} has incorrect length: {len(out)} instead of {b.nout}"
-                            ),
-                            t=t,
-                            inputs=inports,
-                            state=block_state,
-                        )
-
-                    if (
-                        checkfinite
-                        and isinstance(out, (int, float, np.ndarray))
-                        and not np.isfinite(out).any()
-                    ):
-                        b._raise_runtime_error(
-                            "output",
-                            RuntimeError(f"block {b} output contains NaN"),
-                            t=t,
-                            inputs=inports,
-                            state=block_state,
-                        )
+                    if check and (type(out) is not list or len(out) != b.nout):
+                        self._check_output_form(b, out, t, inports, block_state)
 
                     b._publish_output_values(out)
+
+                    if check:
+                        self._check_published(b, t, inports, block_state)
 
             if sinks:
                 for b in self.blocklist:
@@ -877,6 +873,121 @@ class BlockDiagram(BlockDiagramMixin):
                         b.step_safe(t, b.inport_values)
         except BlockRuntimeError as err:
             self._handle_block_runtime_error(err)
+
+    # ---------------------------------------------------------------------- #
+    # run-time checks, all switched by ``check``, see evaluate(), deriv(), next()
+
+    @staticmethod
+    def _check_failed(
+        b: Block, operation: str, message: str, t: float, inputs: Any, state: Any
+    ) -> NoReturn:
+        b._raise_runtime_error(
+            operation, AssertionError(message), t=t, inputs=inputs, state=state
+        )
+        raise AssertionError(message)  # pragma: no cover, _raise_runtime_error raises
+
+    def _check_output_form(
+        self, b: Block, out: Any, t: float, inputs: Any, state: Any
+    ) -> None:
+        """The block returned a list with one value per output port."""
+        if not isinstance(out, (tuple, list)):
+            self._check_failed(
+                b,
+                "output",
+                f"block {b} output must be a list: {type(out)}",
+                t,
+                inputs,
+                state,
+            )
+        if len(out) != b.nout:
+            self._check_failed(
+                b,
+                "output",
+                f"block {b} output has incorrect length: {len(out)} instead of {b.nout}",
+                t,
+                inputs,
+                state,
+            )
+
+    def _check_published(self, b: Block, t: float, inputs: Any, state: Any) -> None:
+        """What the block published is finite and has the signature seen at compile time.
+
+        Looks at the value as published, after the scalar collapse.  An output
+        with no recorded signature, because the diagram was compiled with
+        ``evaluate=False``, is not compared.
+
+        This runs for every block on every evaluation, so the common cases, a
+        float or an int of the type recorded at compile time, are handled
+        before any function call.
+        """
+        for port, slot in enumerate(b._outport_slots):
+            value = slot.value
+            kind = type(value)
+
+            if kind is float:
+                finite = math.isfinite(value)
+            elif kind is int or kind is bool:
+                finite = True
+            else:
+                finite = _is_finite(value)
+            if not finite:
+                self._check_failed(
+                    b,
+                    "output",
+                    f"block {b} output {port} contains NaN or Inf",
+                    t,
+                    inputs,
+                    state,
+                )
+
+            signature = slot.signature
+            if signature is None:
+                continue
+            if kind is signature.type and kind is not np.ndarray:
+                continue
+            if not signature.matches_value(value):
+                self._check_failed(
+                    b,
+                    "output",
+                    f"block {b} output {port} changed signature: "
+                    f"was {signature}, now {Signature.of(value)}",
+                    t,
+                    inputs,
+                    state,
+                )
+
+    def _check_deriv(self, b: Block, yd: Any, t: float, state: Any) -> None:
+        """The derivative is a 1-D ndarray with one element per continuous state."""
+        if not isinstance(yd, np.ndarray):
+            self._check_failed(
+                b,
+                "deriv",
+                f"deriv: block {b} did not return ndarray",
+                t,
+                b.inport_values,
+                state,
+            )
+        if yd.ndim != 1 or yd.shape[0] != b.nstates:
+            self._check_failed(
+                b,
+                "deriv",
+                f"deriv: block {b} returns wrong shape {yd.shape}, should be ({b.nstates},)",
+                t,
+                b.inport_values,
+                state,
+            )
+
+    def _check_next(self, b: Block, xb: Any, t: float, state: Any) -> None:
+        """The next discrete state is an ndarray."""
+        if not isinstance(xb, np.ndarray):
+            self._check_failed(
+                b,
+                "next",
+                f"next: block {b} did not return ndarray",
+                t,
+                b.inport_values,
+                state,
+            )
 
     def schedule_generate(self) -> None:
         """
@@ -1412,24 +1523,8 @@ class BlockDiagram(BlockDiagramMixin):
                 if b.blockclass == "continuous":
                     block_state = active_state_map.get(b)
                     yd = b.deriv_safe(t, b.inport_values, block_state)
-                    if not isinstance(yd, np.ndarray):
-                        b._raise_runtime_error(
-                            "deriv",
-                            AssertionError(f"deriv: block {b} did not return ndarray"),
-                            t=t,
-                            inputs=b.inport_values,
-                            state=block_state,
-                        )
-                    if yd.ndim != 1 or yd.shape[0] != b.nstates:
-                        b._raise_runtime_error(
-                            "deriv",
-                            AssertionError(
-                                f"deriv: block {b} returns wrong shape {yd.shape}, should be ({b.nstates},)"
-                            ),
-                            t=t,
-                            inputs=b.inport_values,
-                            state=block_state,
-                        )
+                    if self.check:
+                        self._check_deriv(b, yd, t, block_state)
                     YD = np.r_[YD, yd]
             self.runtime.DEBUG("deriv", YD)
             return YD
@@ -1449,14 +1544,8 @@ class BlockDiagram(BlockDiagramMixin):
             for b in clock.blocklist:
                 block_state = active_state_map.get(b)
                 xb = b.next_safe(t, b.inport_values, block_state)
-                if not isinstance(xb, np.ndarray):
-                    b._raise_runtime_error(
-                        "next",
-                        AssertionError(f"next: block {b} did not return ndarray"),
-                        t=t,
-                        inputs=b.inport_values,
-                        state=block_state,
-                    )
+                if self.check:
+                    self._check_next(b, xb, t, block_state)
                 x_next = np.r_[x_next, xb.flatten()]
             clock_next[clock] = x_next
         return clock_next
