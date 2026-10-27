@@ -222,6 +222,37 @@ class SourceBlockTest(unittest.TestCase):
         self.assertAlmostEqual(block.test_output(t=6)[0], 1)
 
 
+class ConstantValueTest(unittest.TestCase):
+    """CONSTANT emits exactly the value it is given, whatever the type."""
+
+    def test_list_stays_a_list(self):
+        value = [1, 2, 3]
+        out = Constant(value).test_output()[0]
+        self.assertIs(out, value)
+        self.assertIsInstance(out, list)
+
+    def test_tuple_stays_a_tuple(self):
+        value = (1, 2, 3)
+        out = Constant(value).test_output()[0]
+        self.assertIs(out, value)
+        self.assertIsInstance(out, tuple)
+
+    def test_ndarray_stays_an_ndarray(self):
+        value = np.r_[1, 2, 3]
+        out = Constant(value).test_output()[0]
+        self.assertIs(out, value)
+
+    def test_a_vector_is_explicit(self):
+        out = Constant(np.r_[1]).test_output()[0]
+        self.assertIsInstance(out, np.ndarray)
+        self.assertEqual(out.shape, (1,))
+
+    def test_other_types_are_unchanged(self):
+        for value in (5, 2.5, True, "text", None, {"a": 1}):
+            with self.subTest(value=value):
+                self.assertIs(Constant(value).test_output()[0], value)
+
+
 # ---------------------------------------------------------------------------------------#
 if __name__ == "__main__":
     unittest.main()

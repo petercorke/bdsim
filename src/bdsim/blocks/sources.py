@@ -40,7 +40,17 @@ class Constant(SourceBlock):
             - constant ``value``
 
     The output value is a constant and can be any
-    Python type, for example float, list or Numpy ndarray.
+    Python type, for example float, list or Numpy ndarray.  It is emitted
+    exactly as given.
+
+    .. note:: **Behaviour change.**  A ``list`` or ``tuple`` used to be
+        converted to a Numpy ``ndarray``.  It is now left alone, so the wire
+        carries a ``list``, as it would for any other Python object.  This
+        matters downstream: arithmetic on a list is not arithmetic on a vector,
+        for example ``[1, 2] * 2`` is ``[1, 2, 1, 2]``.  If you want a vector,
+        say so::
+
+            bd.CONSTANT(np.array([1, 2, 3]))   # or np.r_[1, 2, 3]
     """
 
     nin = 0
@@ -48,15 +58,14 @@ class Constant(SourceBlock):
 
     def __init__(self, value: Any = 0, **blockargs: Any) -> None:
         """
-        :param value: the constant, defaults to 0
+        :param value: the constant, defaults to 0.  Emitted as given: a list or
+            tuple is not converted to an ``ndarray``, use ``np.array(...)`` for that.
         :type value: any, optional
         :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(**blockargs)
 
-        if isinstance(value, (tuple, list)):
-            value = np.array(value)
         self.value = value
 
         self.add_param("value")
