@@ -934,7 +934,7 @@ class BlockDiagram(BlockDiagramMixin):
                 self._check_failed(
                     b,
                     "output",
-                    f"block {b} output {port} contains NaN or Inf",
+                    f"output {port} contains NaN or Inf",
                     t,
                     inputs,
                     state,
@@ -949,7 +949,7 @@ class BlockDiagram(BlockDiagramMixin):
                 self._check_failed(
                     b,
                     "output",
-                    f"block {b} output {port} changed signature: "
+                    f"output {port} changed signature: "
                     f"was {signature}, now {Signature.of(value)}",
                     t,
                     inputs,
