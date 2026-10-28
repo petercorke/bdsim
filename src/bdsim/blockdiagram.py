@@ -22,6 +22,7 @@ from ansitable import ANSITable, Column  # type: ignore[import-not-found]
 from colored import attr, fg
 
 from bdsim.exceptions import BlockRuntimeError
+from bdsim.literals import NOT_A_LITERAL, parse_literal
 
 if TYPE_CHECKING:
     from bdsim._blockdiagram_mixin import BlockDiagramMixin
@@ -1950,7 +1951,10 @@ def bdload(
     :type verbose: bool, optional
     :param allow_eval: controls expression evaluation behavior. ``True`` enables
         ``eval`` without warning, ``False`` refuses required ``=...`` expressions,
-        ``None`` (default) allows evaluation with a one-time warning.
+        ``None`` (default) allows evaluation with a one-time warning.  A NumPy dtype
+        literal such as ``float32([1, 2])`` or ``uint16(5)`` is parsed without
+        ``eval``, so it is accepted whatever ``allow_eval`` is, see
+        :mod:`bdsim.literals`.
     :type allow_eval: bool, optional
     :param trace_eval: print each expression before it is evaluated.
     :type trace_eval: bool, optional
@@ -2030,7 +2034,16 @@ def bdload(
 
                 newvalue = None
                 if isinstance(value, str):
-                    if value[0] == "=":
+                    try:
+                        literal = parse_literal(value)
+                    except ValueError as err:
+                        raise RuntimeError(
+                            f"bdload: bad parameter {key} for block [{block['title']}]: {err}"
+                        ) from err
+                    if literal is not NOT_A_LITERAL:
+                        # a NumPy dtype literal, parsed safely, no eval needed
+                        newvalue = literal
+                    elif value.startswith("="):
                         expr = value[1:]
                         if allow_eval is False:
                             raise RuntimeError(
