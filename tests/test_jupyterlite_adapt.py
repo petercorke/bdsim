@@ -1,10 +1,10 @@
 """Regression tests for the generated JupyterLite install cell."""
 
 import json
-import subprocess
-import sys
+import runpy
 import tempfile
 import unittest
+from contextlib import chdir
 from pathlib import Path
 
 
@@ -44,13 +44,8 @@ class TestJupyterLiteAdapter(unittest.TestCase):
             )
 
             for _ in range(2):
-                subprocess.run(
-                    [sys.executable, str(ADAPT_SCRIPT)],
-                    cwd=lite_dir,
-                    check=True,
-                    capture_output=True,
-                    text=True,
-                )
+                with chdir(lite_dir):
+                    runpy.run_path(str(ADAPT_SCRIPT))
 
             adapted = json.loads(notebook_path.read_text(encoding="utf-8"))
             install_cells = [
