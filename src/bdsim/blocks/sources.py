@@ -14,7 +14,7 @@ import math
 from typing import Any
 
 from bdsim.components import EventSource, SourceBlock
-from bdsim.signature import unify
+from bdsim.signature import maybe_asarray, unify
 
 
 # ------------------------------------------------------------------------ #
@@ -40,34 +40,38 @@ class Constant(SourceBlock):
             - any
             - constant ``value``
 
-    The output value is a constant and can be any
-    Python type, for example float, list or Numpy ndarray.  It is emitted
-    exactly as given.
+    The output value is a constant and can be any Python type, for example
+    float, string or Numpy ndarray.
 
-    .. note:: **Behaviour change.**  A ``list`` or ``tuple`` used to be
-        converted to a Numpy ``ndarray``.  It is now left alone, so the wire
-        carries a ``list``, as it would for any other Python object.  This
-        matters downstream: arithmetic on a list is not arithmetic on a vector,
-        for example ``[1, 2] * 2`` is ``[1, 2, 1, 2]``.  If you want a vector,
-        say so::
+    **A** ``list`` **or** ``tuple`` **of numbers is converted to a Numpy**
+    ``ndarray`` **by default, with dtype** ``int64`` **if the elements are all
+    integers and** ``float64`` **if any is a float**, so ``CONSTANT([1, 2, 3])``
+    is a vector of ``int64``.  Anything else, such as a list of strings or of
+    objects, is emitted as given.  Other dtypes are chosen by passing an array,
+    and a list of numbers is emitted as a list with ``asarray=False``::
 
-            bd.CONSTANT(np.array([1, 2, 3]))   # or np.r_[1, 2, 3]
+        bd.CONSTANT([1, 2, 3])                   # int64 array
+        bd.CONSTANT([1, 2.5])                    # float64 array
+        bd.CONSTANT([1, 2, 3], asarray=False)    # the list [1, 2, 3]
+        bd.CONSTANT(np.float32([1, 2, 3]))       # float32 array
     """
 
     nin = 0
     nout = 1
 
-    def __init__(self, value: Any = 0, **blockargs: Any) -> None:
+    def __init__(self, value: Any = 0, asarray: bool = True, **blockargs: Any) -> None:
         """
-        :param value: the constant, defaults to 0.  Emitted as given: a list or
-            tuple is not converted to an ``ndarray``, use ``np.array(...)`` for that.
+        :param value: the constant, defaults to 0
         :type value: any, optional
+        :param asarray: convert a list or tuple of numbers to an ``ndarray``
+            of ``int64`` or ``float64``, defaults to True
+        :type asarray: bool, optional
         :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         super().__init__(**blockargs)
 
-        self.value = value
+        self.value = maybe_asarray(value, asarray)
 
         self.add_param("value")
 
@@ -362,11 +366,15 @@ class Piecewise(SourceBlock, EventSource):
         self,
         *args: tuple[float, float],
         seq: list[tuple[float, float]] | None = None,
+        asarray: bool = True,
         **blockargs: Any,
     ) -> None:
         """
         :param seq: sequence of time, value pairs
         :type seq: list of 2-element iterables
+        :param asarray: convert a list or tuple of numbers used as a value to an
+            ``ndarray`` of ``int64`` or ``float64``, defaults to True
+        :type asarray: bool, optional
         :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
 
@@ -385,7 +393,7 @@ class Piecewise(SourceBlock, EventSource):
         self.t = [x[0] for x in _seq]
         self.y = list(
             unify(
-                *[x[1] for x in _seq],
+                *[maybe_asarray(x[1], asarray) for x in _seq],
                 names=[f"seq[{i}] value" for i in range(len(_seq))],
             )
         )
@@ -451,7 +459,12 @@ class Step(SourceBlock, EventSource):
     nout = 1
 
     def __init__(
-        self, T: float = 1, off: Any = 0, on: Any = 1, **blockargs: Any
+        self,
+        T: float = 1,
+        off: Any = 0,
+        on: Any = 1,
+        asarray: bool = True,
+        **blockargs: Any,
     ) -> None:
         """
         :param T: time of step, defaults to 1
@@ -460,20 +473,29 @@ class Step(SourceBlock, EventSource):
         :type off: any, optional
         :param on: final value, defaults to 1
         :type on: any, optional
+        :param asarray: convert a list or tuple of numbers to an ``ndarray`` of
+            ``int64`` or ``float64``, defaults to True
+        :type asarray: bool, optional
         :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         :raises TypeError: ``off`` and ``on`` are of different types
         :raises ValueError: ``off`` and ``on`` are arrays with different shape or dtype
 
         The output is always of one type.  ``off`` and ``on`` can be any Python
-        object, but must be the same type, for example two lists or two
-        strings.  Numbers are promoted to a common type, so ``off=0, on=1.0``
-        gives ``0.0`` and ``1.0``.  A bool cannot be mixed with a number.
+        object, but must be the same type, for example two arrays or two
+        strings.  **A list or tuple of numbers is first converted to an**
+        ``ndarray`` **of** ``int64`` **or** ``float64`` (see ``asarray``).  Numbers are promoted to a common type, so
+        ``off=0, on=1.0`` gives ``0.0`` and ``1.0``.  A bool cannot be mixed
+        with a number.
         """
         super().__init__(**blockargs)
 
         self.T: float = T
-        self.off, self.on = unify(off, on, names=("off", "on"))
+        self.off, self.on = unify(
+            maybe_asarray(off, asarray),
+            maybe_asarray(on, asarray),
+            names=("off", "on"),
+        )
 
     def start(self, simstate: Any) -> None:
         simstate.declare_event(self, self.T)
@@ -550,6 +572,7 @@ class Ramp(SourceBlock, EventSource):
         """
         super().__init__(**blockargs)
 
+        off, slope = maybe_asarray(off), maybe_asarray(slope)
         unify(off, slope, names=("off", "slope"))  # same shape, or both numbers
         try:
             # off + slope * (t - T) is a float, so the output is a float before T too

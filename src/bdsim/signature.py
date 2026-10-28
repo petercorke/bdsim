@@ -131,3 +131,48 @@ def unify(*values: Any, names: Sequence[str] | None = None) -> tuple[Any, ...]:
     if len({type(v) for v in values}) != 1:
         raise TypeError(f"must all be the same type: {describe()}")
     return tuple(values)
+
+
+def _is_numeric(value: Any) -> bool:
+    """Is ``value`` a number, a bool, a numeric ndarray, or a list or tuple of those?"""
+    if isinstance(value, (bool, np.bool_, numbers.Number)):
+        return True
+    if isinstance(value, np.ndarray):
+        return value.dtype.kind in "biufc"
+    if isinstance(value, (list, tuple)):
+        return all(_is_numeric(v) for v in value)
+    return False
+
+
+def maybe_asarray(value: Any, asarray: bool = True) -> Any:
+    """
+    Turn a list or tuple of numbers into an ``ndarray``, for blocks that emit a value.
+
+    :param value: the value a block is to emit
+    :param asarray: if false, return ``value`` unchanged
+    :return: an ``ndarray`` if ``value`` is a non-empty list or tuple of numbers,
+        otherwise ``value`` itself
+
+    **By default a list or tuple of numbers is converted to an ``ndarray`` with
+    the dtype NumPy chooses: ``int64`` if all the elements are integers,
+    ``float64`` if any is a float, ``bool`` for bools and ``complex128`` for
+    complex numbers.**  (On Windows with NumPy 1.x the integer default is
+    ``int32``.)  Nested lists give a 2-D array, and elements that already have
+    a dtype, such as ``np.float32(1)``, keep it.  To get a different dtype, pass
+    an array: ``np.array([1, 2], dtype=np.float32)``.
+
+    A user who writes ``CONSTANT([1, 2, 3])`` wants a vector, and arithmetic on
+    a ``list`` is not vector arithmetic (``[1, 2] * 2`` is ``[1, 2, 1, 2]``).
+    Only a sequence whose elements are all numbers, bools, or lists and arrays
+    of them is converted.  A list of strings, of objects (including ``SE3``,
+    which NumPy would otherwise stack into an array of matrices), a ragged
+    list, an empty list and every other type are returned as given.
+    """
+    if asarray and isinstance(value, (list, tuple)) and _is_numeric(value):
+        try:
+            array = np.asarray(value)
+        except ValueError:  # ragged
+            return value
+        if array.size > 0:
+            return array
+    return value
