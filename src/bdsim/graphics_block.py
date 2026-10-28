@@ -26,6 +26,8 @@ if TYPE_CHECKING:
     from bdsim.components import OptionsBase, SimulationState
     from bdsim.connect import Wire
     from bdsim.run_sim import BDSimState
+else:
+    OptionsBase = Wire = BDSimState = Any
 
 
 def is_notebook_backend(backend: str) -> bool:
