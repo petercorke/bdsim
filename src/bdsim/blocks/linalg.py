@@ -70,6 +70,7 @@ class Inverse(FunctionBlock):
         super().__init__(**blockargs)
 
         self.pinv: bool = pinv
+        self.add_param("pinv")
 
     def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         mat = inputs[0]
@@ -257,6 +258,7 @@ class Flatten(FunctionBlock):
         """
         super().__init__(**blockargs)
         self.order: str = order
+        self.add_param("order")
 
     def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         vec = inputs[0]

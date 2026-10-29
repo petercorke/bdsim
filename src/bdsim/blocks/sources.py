@@ -74,6 +74,7 @@ class Constant(SourceBlock):
         self.value = maybe_asarray(value, asarray)
 
         self.add_param("value")
+        self.add_param("asarray", when="never")
 
     def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         return [self.value]
@@ -250,6 +251,12 @@ class WaveForm(SourceBlock, EventSource):
             raise ValueError("duty out of range")
         self.amplitude = amplitude
         self.offset = offset
+        self.add_param("wave", when="setup")
+        self.add_param("unit", when="never")
+        self.add_param("phase", when="setup")
+        self.add_param("amplitude")
+        self.add_param("offset")
+        self.add_param("duty", when="setup")
 
     def start(self, simstate: Any) -> None:
         super().start(simstate)
@@ -397,6 +404,7 @@ class Piecewise(SourceBlock, EventSource):
                 names=[f"seq[{i}] value" for i in range(len(_seq))],
             )
         )
+        self.add_param("asarray", when="never")
 
     def start(self, simstate: Any) -> None:
         super().start(simstate)
@@ -413,6 +421,28 @@ class Piecewise(SourceBlock, EventSource):
 
 
 # ------------------------------------------------------------------------ #
+
+
+def _promote_pair(block: Any, name: str, partner: str, value: Any) -> Any:
+    """
+    Check a new value against the parameter it is paired with, and promote both.
+
+    :param block: the block
+    :param name: the parameter being set
+    :param partner: the parameter it must stay consistent with
+    :param value: the new value of ``name``
+    :return: the new value, promoted to a common type with the partner
+    :raises TypeError: the two are of different types
+    :raises ValueError: the two are arrays of different shape or dtype
+
+    The values of a ``Step`` or ``Ramp`` are the signal itself, so they must stay one
+    type (:func:`~bdsim.signature.unify`).  If setting one from an integer to a float
+    promotes the pair, the partner follows, otherwise neither could ever be changed
+    without the other.
+    """
+    new, other = unify(value, getattr(block, partner), names=(name, partner))
+    setattr(block, partner, other)
+    return new
 
 
 class Step(SourceBlock, EventSource):
@@ -496,9 +526,19 @@ class Step(SourceBlock, EventSource):
             maybe_asarray(on, asarray),
             names=("off", "on"),
         )
+        self.add_param("T", when="setup")
+        self.add_param("off", validate=self._check_off)
+        self.add_param("on", validate=self._check_on)
+        self.add_param("asarray", when="never")
 
     def start(self, simstate: Any) -> None:
         simstate.declare_event(self, self.T)
+
+    def _check_off(self, value: Any) -> Any:
+        return _promote_pair(self, "off", "on", value)
+
+    def _check_on(self, value: Any) -> Any:
+        return _promote_pair(self, "on", "off", value)
 
     def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[float]:
         out: float
@@ -583,9 +623,18 @@ class Ramp(SourceBlock, EventSource):
         self.T: float = T
         self.off = off
         self.slope = slope
+        self.add_param("T", when="setup")
+        self.add_param("off", validate=self._check_off)
+        self.add_param("slope", validate=self._check_slope)
 
     def start(self, simstate: Any) -> None:
         simstate.declare_event(self, self.T)
+
+    def _check_off(self, value: Any) -> Any:
+        return _promote_pair(self, "off", "slope", value)
+
+    def _check_slope(self, value: Any) -> Any:
+        return _promote_pair(self, "slope", "off", value)
 
     def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         out: float | int

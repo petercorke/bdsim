@@ -86,6 +86,7 @@ class Print(SinkBlock):
         super().__init__(**blockargs)
         self.format = fmt
         self.file = file
+        self.add_param("file", when="setup")
 
         # TODO format can be a string or function
 
@@ -302,6 +303,7 @@ class Event(SinkBlock):
         self.args = [] if fargs is None else list(fargs)
         self.kwargs = {} if fkwargs is None else dict(fkwargs)
         self._event_detector: Callable[[float, Any], float] | None = None
+        self.add_param("func")
 
     def start(self, simstate: Any) -> None:
         # Build an event function from the current input value. solve_ivp reads
@@ -406,6 +408,7 @@ class Null(SinkBlock):
         :type blockargs: dict
         """
         super().__init__(nin=nin, **blockargs)
+        self.add_param("nin", when="never")
 
     def step(self, t: float, inputs: list[Any]) -> None:
         pass  # do nothing
@@ -462,6 +465,7 @@ class Watch(SinkBlock):
         :type blockargs: dict
         """
         super().__init__(nin=nin, **blockargs)
+        self.add_param("nin", when="never")
 
     def start(self, simstate: Any) -> None:
         # called at start of simulation, add this block to the watchlist

@@ -49,6 +49,20 @@ from bdsim.connect import EndPlug, Plug, Port, StartPlug, Wire
 # ------------------------------------------------------------------------- #
 
 
+def _value_str(value: Any, width: int = 40) -> str:
+    """A value for display in a table: on one line, abbreviated if it is long."""
+    if isinstance(value, np.ndarray):
+        text = np.array2string(
+            value, precision=4, threshold=6, edgeitems=2, max_line_width=1000
+        )
+    elif callable(value):
+        text = f"<{getattr(value, '__name__', type(value).__name__)}>"
+    else:
+        text = repr(value)
+    text = " ".join(text.split())
+    return text if len(text) <= width else text[: width - 1] + "…"
+
+
 def _signature_str(signature: Signature | None) -> str:
     """Signature for display in a report, ``?`` if the wire was not observed."""
     return "?" if signature is None else str(signature)
@@ -630,6 +644,12 @@ class BlockDiagram(BlockDiagramMixin):
                 raise RuntimeError("could not compile system")
         else:
             self.compiled = True
+
+        # --param asks for the table of parameters; it is an explicit request so it
+        # is printed even with -q
+        options = getattr(getattr(self, "runtime", None), "options", None)
+        if not subsystem and options is not None and getattr(options, "param", False):
+            self.report_params()
 
         return self.compiled
 
@@ -1249,6 +1269,51 @@ class BlockDiagram(BlockDiagramMixin):
                         raise ValueError(f"sampled block {b} has no clock")
                     table.row(b.id, b.name, c.name, c.T, c.offset)
             table.print(**kwargs)
+
+    def report_params(self, fixed: bool = False, **kwargs: Any) -> None:
+        """
+        Print a table of the parameters of all blocks and their current values.
+
+        :param fixed: also list the parameters that are fixed when the block is
+            created, defaults to False
+        :type fixed: bool, optional
+        :param kwargs: options passed to :meth:`ansitable.table.ANSIMatrix.print`
+        :type kwargs: dict
+
+        The first column is the name exactly as it is used by the ``--set`` option,
+        ``block:param``, and by :meth:`Block.set_param`.  The columns are
+
+        1. the name, ``block:param``
+        2. the current value, abbreviated if it is long
+        3. its type, as the signature of the value
+        4. when it can be set: ``anytime``, ``setup`` (before the run starts), or
+           ``never`` (only with ``fixed=True``)
+
+        Blocks inside a subsystem are listed with the path of the subsystem, such as
+        ``sub/gain.0:K``.  The ``--param`` option prints this table when the diagram is
+        compiled.
+
+        :seealso: :meth:`Block.add_param` :meth:`Block.set_param`
+        """
+        table = ANSITable(
+            Column("parameter", headalign="^", colalign="<"),
+            Column("value", headalign="^", colalign="<"),
+            Column("type", headalign="^", colalign="<"),
+            Column("when", headalign="^", colalign="<"),
+            border="thin",
+        )
+        for b in self.blocklist:
+            for name, param in b._parameters.items():
+                if param.when == "never" and not fixed:
+                    continue
+                value = getattr(b, name, None)
+                table.row(
+                    f"{b.name}:{name}",
+                    _value_str(value),
+                    _signature_str(Signature.of(value)),
+                    param.when,
+                )
+        table.print(**kwargs)
 
     def report_schedule(self, **kwargs: Any) -> None:
         """

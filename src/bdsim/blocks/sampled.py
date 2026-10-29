@@ -15,7 +15,7 @@ import spatialmath.base as smb  # type: ignore[import-not-found]
 from typing import Any, Callable
 
 from bdsim.components import SampledBlock, Clock, SubsystemBlock, deprecated_block
-from bdsim.blocks.continuous import _tf2ss
+from bdsim.blocks.continuous import _conform_D, _tf2ss, _TFParams
 
 Vector1D = int | float | tuple[float, ...] | list[float] | np.ndarray
 
@@ -68,6 +68,7 @@ class ZOH(SampledBlock):
         :type blockargs: dict
         """
         super().__init__(clock=clock, nin=1, nout=1, x0=x0, **blockargs)
+        self.add_param("clock", when="never")
 
         # print('nstates', self.nstates)
 
@@ -186,6 +187,11 @@ class Integrator_S(SampledBlock):
         self.enable = enable
         if enable is not None and not callable(enable):
             raise ValueError("enable must be callable")
+        self.add_param("clock", when="never")
+        self.add_param("gain")
+        self.add_param("min")
+        self.add_param("max")
+        self.add_param("enable")
 
     def output(self, t: float, u: list[Any], x: np.ndarray) -> list[Any]:
         result = x
@@ -275,6 +281,8 @@ class Deriv_S(SampledBlock):
         """
         super().__init__(clock=clock, x0=x0, feedthrough=True, **blockargs)
         self.gain = gain
+        self.add_param("clock", when="never")
+        self.add_param("gain")
 
     def output(self, t: float, u: list[Any], x: np.ndarray) -> list[Any]:
         result = self.gain * (u[0] - x) / self.T
@@ -409,10 +417,10 @@ class LTI_SS_S(SampledBlock):
         # if D is nonzero then we have feedthrough, which may create an algebraic loop, so flag this to the base class
         if np.any(D != 0):
             # flag we have feedthrough, which may create an algebraic loop
-            self.D: np.ndarray | None = D
+            self._D: np.ndarray | None = D
             feedthrough = True
         else:
-            self.D = None
+            self._D = None
             feedthrough = False
 
         super().__init__(
@@ -424,11 +432,25 @@ class LTI_SS_S(SampledBlock):
             feedthrough=feedthrough,
             **blockargs,
         )
+        self.add_param("clock", when="never")
+        self.add_param("A")
+        self.add_param("B")
+        self.add_param("C")
+        self.add_param("D")
+
+    @property
+    def D(self) -> np.ndarray | None:
+        """The feedthrough matrix, ``None`` if it is zero."""
+        return self._D
+
+    @D.setter
+    def D(self, value: Any) -> None:
+        self._D = _conform_D(self, value)
 
     def output(self, t: float, u: list[Any], x: np.ndarray) -> list[Any]:
         y = self.C @ x
-        if self.D is not None:
-            y = y + self.D @ np.array(u)
+        if self._D is not None:
+            y = y + self._D @ np.array(u)
         if y.size == 1:
             return [y.item()]
         return [y]
@@ -445,7 +467,7 @@ class LTI_SS_S(SampledBlock):
 # ------------------------------------------------------------------------ #
 
 
-class LTI_SISO_S(LTI_SS_S):
+class LTI_SISO_S(_TFParams, LTI_SS_S):
     r"""
     :blockname:`LTI_SISO_S`
 
@@ -589,9 +611,14 @@ class LTI_SISO_S(LTI_SS_S):
         .. note::
             - The transfer function is assumed to be strictly proper (:math:`deg(N) < deg(D)`).
             - The default ``form='ccf', order='backward'`` corresponds to the state-space realization returned by ``scipy.signal.tf2ss`` and MATLAB's ``tf2ss``.
-            - The state-space matrices are available in the ``A``, ``B``, ``C``, and ``D`` attributes of the block.
-            - If D is zero, then the block has no feedthrough and the D matrix is set to None. If D is nonzero, then the block has feedthrough and the D matrix is stored in the D attribute.
-            - The ``_feedthrough`` attribute of the block is set to True if D is nonzero. This can be used to check for feedthrough without having to check the D matrix directly, and is used
+            - ``N`` and ``D`` are attributes holding the numerator and denominator coefficients, and can be
+              changed after the block is created (they are parameters).  The state-space matrices are rebuilt
+              from them.  The order of the system, the length of ``D`` minus one, cannot change.
+            - The state-space matrices are available in the ``A``, ``B`` and ``C`` attributes of the block.
+              The ``D`` attribute is the denominator, as in the constructor, so the feedthrough matrix of the
+              state-space model is ``_D``.
+            - If the numerator degree is less than the denominator degree, the block has no feedthrough and ``_D`` is None.
+              The ``_feedthrough`` attribute of the block is set to True otherwise. It is used
               by the scheduler to ensure correct block evaluation order.
         """
 
@@ -602,17 +629,13 @@ class LTI_SISO_S(LTI_SS_S):
             x0 = np.zeros((n,))
 
         super().__init__(clock=clock, A=A, B=B, C=C, D=_D, x0=x0, **blockargs)
-
-        # TODO: parameters
-        # def change_param(self, param: str, newvalue: np.ndarray) -> None:
-        #     if param == "num":
-        #         self.num = newvalue
-        #     elif param == "den":
-        #         self.den = newvalue
-        #     self.A, self.B, self.C, self.D = scipy.signal.tf2ss(self.num, self.den)
-
-        # self.add_param("num", change_param)
-        # self.add_param("den", change_param)
+        self._init_tf(N, D, form, order, verbose)
+        self.add_param("N", coerce=False)  # a polynomial may change length
+        self.add_param("D", coerce=False)
+        self.add_param("clock", when="never")
+        self.add_param("form", when="never")
+        self.add_param("order", when="never")
+        self.add_param("verbose", when="never")
 
 
 # ------------------------------------------------------------------------ #
@@ -910,6 +933,8 @@ class PID_S(SubsystemBlock):
             subsystem.connect(out_sum, outp)
 
         super().__init__(subsystem=subsystem, **blockargs)
+        self.add_param("clock", when="never")
+        self.add_param("structure", when="never")
 
 
 # ---------------------------------------------------------------------------

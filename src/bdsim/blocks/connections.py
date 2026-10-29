@@ -81,6 +81,7 @@ class Item(FunctionBlock):
 
         super().__init__(**blockargs)
         self.item: Any = item
+        self.add_param("item")
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         input = inputs[0]
@@ -147,6 +148,7 @@ class Dict(FunctionBlock):
 
         super().__init__(nin=len(keys), **blockargs)
         self.keys: list[str] = keys
+        self.add_param("keys", when="never")
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         return [{key: inputs[i] for i, key in enumerate(self.keys)}]
@@ -200,6 +202,7 @@ class Mux(FunctionBlock):
         :type blockargs: dict
         """
         super().__init__(nin=nin, **blockargs)
+        self.add_param("nin", when="never")
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         # TODO, handle inputs that are vectors themselves
@@ -258,6 +261,7 @@ class DeMux(FunctionBlock):
         :type blockargs: dict
         """
         super().__init__(nout=nout, **blockargs)
+        self.add_param("nout", when="never")
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         input = inputs[0]
@@ -501,6 +505,12 @@ class SubSystem(SubsystemBlock):
         if "name" not in blockargs and name is not None:
             blockargs["name"] = name
         super().__init__(subsystem=new_subsystem, **blockargs)
+        self.add_param("subsys", when="never")
+        self.add_param("nin", when="never")
+        self.add_param("nout", when="never")
+        self.add_param("allow_eval", when="never")
+        self.add_param("trace_eval", when="never")
+        self.add_param("globalvars", when="never")
 
 
 # ------------------------------------------------------------------------ #
@@ -547,6 +557,7 @@ class InPort(FunctionBlock):
         :type blockargs: dict
         """
         super().__init__(nout=nout, **blockargs)
+        self.add_param("nout", when="never")
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         # signal feed through
@@ -599,6 +610,7 @@ class OutPort(FunctionBlock):
         :type blockargs: dict
         """
         super().__init__(nin=nin, **blockargs)
+        self.add_param("nin", when="never")
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         # signal feed through

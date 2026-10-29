@@ -65,6 +65,7 @@ class Pose_postmul(FunctionBlock):
 
         super().__init__(**blockargs)
         self.pose = pose
+        self.add_param("pose")
 
     def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         input = inputs[0]
@@ -124,6 +125,7 @@ class Pose_premul(FunctionBlock):
 
         super().__init__(**blockargs)
         self.pose = pose
+        self.add_param("pose")
 
     def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         input = inputs[0]
@@ -365,6 +367,7 @@ class PoseIntegrator_S(SampledBlock):
             x0 = smb.getvector(x0, 6)
 
         super().__init__(clock=clock, x0=x0, **blockargs)
+        self.add_param("clock", when="never")
 
     def output(self, t: float, u: list[Any], x: np.ndarray) -> list[SE3]:
         return [Twist3(x).SE3()]

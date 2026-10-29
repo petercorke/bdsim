@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Callable, cast
+from typing import TYPE_CHECKING, Any, Callable, Literal, cast
+import numbers
 import warnings
 
 import numpy as np
@@ -13,7 +14,7 @@ import spatialmath.base as smb
 from bdsim.exceptions import BlockApiError, BlockRuntimeError
 from bdsim.components import Clock, _fixname, oodebug
 from bdsim.connect import Plug, Port, Wire
-from bdsim.signature import Signature
+from bdsim.signature import Signature, maybe_asarray
 
 if TYPE_CHECKING:
     from bdsim.blockdiagram import BlockDiagram
@@ -50,6 +51,95 @@ def _collapse_size_one_vector(value: Any) -> Any:
     return value
 
 
+_MISSING = object()
+
+
+class Parameter:
+    """
+    A parameter of a block, see :meth:`Block.add_param`.
+
+    :param name: the name, which is the ``__init__`` argument of the block
+    :param when: ``"anytime"``, ``"setup"`` or ``"never"``
+    :param validate: optional check of a new value, which raises if it is not acceptable
+    :param coerce: check the new value against the type of the current one
+    """
+
+    __slots__ = ("name", "when", "validate", "coerce")
+
+    def __init__(
+        self,
+        name: str,
+        when: Literal["anytime", "setup", "never"] = "anytime",
+        validate: Callable[[Any], None] | None = None,
+        coerce: bool = True,
+    ) -> None:
+        if when not in ("anytime", "setup", "never"):
+            raise ValueError(
+                f"when must be 'anytime', 'setup' or 'never', not {when!r}"
+            )
+        self.name = name
+        self.when = when
+        self.validate = validate
+        self.coerce = coerce
+
+
+def _coerce_parameter(block: Block, name: str, old: Any, new: Any) -> Any:
+    """
+    The new value of a parameter in the type of the old one, or an error.
+
+    The current value says what is acceptable, so no type has to be declared:
+
+    * an ``ndarray`` keeps its shape and dtype; a list of numbers becomes an array,
+      and an array that can be cast safely to the dtype is cast (an integer array
+      into a float one)
+    * a ``bool`` stays a bool
+    * a number may be any other number, and is widened (an integer parameter can
+      become a float, a float parameter stays a float), never narrowed
+    * a callable stays callable
+    * anything else must be the same type
+    * if the current value is ``None`` or does not exist there is nothing to compare
+      with, and the new value is accepted
+    """
+    where = f"block {block.name}: parameter '{name}'"
+    if old is _MISSING or old is None:
+        return maybe_asarray(new)
+
+    if isinstance(old, np.ndarray):
+        new = maybe_asarray(new)
+        if not isinstance(new, np.ndarray):
+            raise TypeError(f"{where} is {Signature.of(old)}, not {Signature.of(new)}")
+        if new.shape != old.shape:
+            raise ValueError(f"{where} has shape {old.shape}, not {new.shape}")
+        if new.dtype != old.dtype:
+            if not np.can_cast(new.dtype, old.dtype, "same_kind"):
+                raise ValueError(
+                    f"{where} has dtype {old.dtype}, it cannot be set to {new.dtype}"
+                )
+            new = new.astype(old.dtype)
+        return new
+
+    if isinstance(old, (bool, np.bool_)):
+        if not isinstance(new, (bool, np.bool_)):
+            raise TypeError(f"{where} is a bool, not {Signature.of(new)}")
+        return new
+
+    if isinstance(old, numbers.Number):
+        if isinstance(new, (bool, np.bool_)) or not isinstance(new, numbers.Number):
+            raise TypeError(
+                f"{where} is a number ({Signature.of(old)}), not {Signature.of(new)}"
+            )
+        return type(old + new)(new)  # widen, never narrow
+
+    if callable(old):
+        if not callable(new):
+            raise TypeError(f"{where} is a function, not {Signature.of(new)}")
+        return new
+
+    if type(new) is not type(old):
+        raise TypeError(f"{where} is {Signature.of(old)}, not {Signature.of(new)}")
+    return new
+
+
 class Block(ABC, Port):
     """_summary_
 
@@ -79,6 +169,9 @@ class Block(ABC, Port):
         - ``reset()``: restores the block's own initial state, once per run
         - ``configure()``: prepares the block for a run using the signatures of its wires, once per run, after ``reset()`` and before ``start()``
         - ``done()``: performs any cleanup at end of the simulation
+        - ``add_param(name, when=, validate=, coerce=)``: registers a parameter, one call per ``__init__`` argument, with when it can be set (``anytime``, ``setup`` or ``never``)
+        - ``set_param(name, value)``: sets a registered parameter, checking that the value is of the same kind as the current one, and returns the old value
+        - ``parameters()``: the parameters that can be set, with their current values
         - ``info()``: displays information about the block for debugging purposes
 
     Ports can be accessed by index, eg. ``block.input_value(i)`` or ``block.output_value(i)``, or by name, eg. ``block.inport("in1")`` or ``block.outport("out1")`` if the block has named ports.
@@ -143,7 +236,8 @@ class Block(ABC, Port):
     _clock: Clock | None
 
     _graphics: bool = False
-    _parameters: dict[str, Any]
+    _parameters: dict[str, Parameter]
+    _running: bool = False  # between start() and done(), see set_param()
 
     # these lists are used to record the wires connected to the block, set by connect()
     # used to build inter-block references at compile time
@@ -436,19 +530,128 @@ class Block(ABC, Port):
         ]:
             print("  {:11s}{:s}".format(k + ":", str(v)))
 
-    def add_param(self, param: str, handler: Callable[..., Any] | None = None) -> None:
-        if handler is None:
+    def add_param(
+        self,
+        name: str,
+        *,
+        when: Literal["anytime", "setup", "never"] = "anytime",
+        validate: Callable[[Any], None] | None = None,
+        coerce: bool = True,
+    ) -> None:
+        """
+        Register a parameter of the block, one per call.
 
-            def default_handler(self: Block, name: str, newvalue: Any) -> None:
-                setattr(self, name, newvalue)
+        :param name: the name of the parameter, which is the name of the ``__init__``
+            argument.  The block's current value is ``getattr(self, name)``, so it is a
+            plain attribute or a Python ``property``
+        :type name: str
+        :param when: when the parameter can be set, one of
 
-            handler = default_handler
+            * ``"anytime"``: at any time, between evaluations (default)
+            * ``"setup"``: before the run starts, including from ``--set``, but not
+              while it runs, because :meth:`start` has used the value to build something
+              such as an event or a figure
+            * ``"never"``: not after the block is created, for structure such as
+              ``nin`` or ``clock``
 
-        self.__dict__["_parameters"][param] = handler
+        :type when: str, optional
+        :param validate: a function of the new value that raises ``ValueError`` or
+            ``TypeError`` if it is not acceptable, for example a bound method of the
+            block, called after the type has been checked.  If it returns a value that
+            is not ``None`` that replaces the new value, which lets a check that has to
+            keep two parameters consistent promote them together
+        :type validate: callable, optional
+        :param coerce: check the new value against the type of the current one,
+            see :meth:`set_param`, defaults to True.  Give ``False`` for a parameter
+            that legitimately takes several forms or changes shape, such as a
+            polynomial that may be given as coefficients or as factors, and let the
+            ``property`` setter or ``validate`` deal with the value
+        :type coerce: bool, optional
 
-    def set_param(self, name: str, newvalue: Any) -> None:
-        print(f"setting parameter {name} of block {self.name} to {newvalue}")
-        self._parameters[name](self, name, newvalue)
+        Every ``__init__`` argument of a block is registered, each with a decision
+        about when it can be set.  A parameter whose value is not kept under its own
+        name, because the block built other blocks or derived state from it, is a
+        ``property`` of the class: the getter finds the value and the setter applies it.
+
+        :seealso: :meth:`set_param` :meth:`parameters`
+        """
+        self.__dict__["_parameters"][name] = Parameter(name, when, validate, coerce)
+
+    def remove_param(self, name: str) -> None:
+        """
+        Remove a registered parameter, for a subclass whose parent registers one that
+        does not apply to it.
+
+        :param name: the name of the parameter
+        :type name: str
+        """
+        self.__dict__["_parameters"].pop(name, None)
+
+    def _lookup_param(self, name: str) -> Parameter:
+        """The registered parameter, or a ValueError that says what can be set."""
+        param = self._parameters.get(name)
+        if param is None:
+            settable = ", ".join(self.parameters()) or "none"
+            raise ValueError(
+                f"block {self.name} ({self.type}) has no settable parameter '{name}'; "
+                f"settable parameters: {settable}"
+            )
+        if param.when == "never":
+            raise ValueError(
+                f"block {self.name}: parameter '{name}' is fixed when the block is "
+                "created and cannot be set"
+            )
+        return param
+
+    def set_param(self, name: str, newvalue: Any) -> Any:
+        """
+        Set a registered parameter of the block.
+
+        :param name: the name of the parameter
+        :type name: str
+        :param newvalue: the new value
+        :return: the old value
+        :raises ValueError: no such parameter, it is fixed, it cannot be set while the
+            run is going, or the value is not acceptable
+        :raises TypeError: the value is of the wrong type
+
+        The new value must be of the same kind as the current one, see
+        :func:`_coerce_parameter`: an array keeps its shape and dtype, a number can widen
+        from integer to float but not narrow, and so on.  A list of numbers is
+        converted to an array if the parameter is an array.
+
+        :seealso: :meth:`add_param` :meth:`parameters`
+        """
+        param = self._lookup_param(name)
+        if param.when == "setup" and self._running:
+            raise ValueError(
+                f"block {self.name}: parameter '{name}' can only be set before the "
+                "run starts, not while it is running"
+            )
+
+        old = getattr(self, name, _MISSING)
+        new = _coerce_parameter(self, name, old, newvalue) if param.coerce else newvalue
+        if param.validate is not None:
+            checked = param.validate(new)
+            if checked is not None:  # the check may normalise the value
+                new = checked
+        setattr(self, name, new)
+        return None if old is _MISSING else old
+
+    def parameters(self) -> dict[str, Any]:
+        """
+        The parameters that can be set, with their current values.
+
+        :return: ``{name: value}`` for every registered parameter that is not fixed
+        :rtype: dict
+
+        :seealso: :meth:`add_param` :meth:`set_param`
+        """
+        return {
+            name: getattr(self, name, None)
+            for name, param in self._parameters.items()
+            if param.when != "never"
+        }
 
     @property
     def id(self) -> int | None:
@@ -929,6 +1132,7 @@ class Block(ABC, Port):
             self.start(simstate)
         except Exception as err:
             self._raise_runtime_error("start", err)
+        self._running = True
 
     def validate_start_safe(self) -> None:
         try:
@@ -941,6 +1145,8 @@ class Block(ABC, Port):
             self.done(**kwargs)
         except Exception as err:
             self._raise_runtime_error("done", err)
+        finally:
+            self._running = False
 
     # ---------------------------------------------------------------------- #
     # methods used for unit testing

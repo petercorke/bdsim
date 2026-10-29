@@ -116,6 +116,20 @@ class Sum(FunctionBlock):
             raise ValueError("invalid sign")
         self.signs: str = signs
         self.mode: Optional[str] = mode
+        self.add_param("signs", validate=self._check_signs)
+        self.add_param("mode", validate=self._check_mode)
+
+    def _check_signs(self, value: str) -> None:
+        if not isinstance(value, str) or not all(x in "+-" for x in value):
+            raise ValueError("signs must be a string of + and - characters")
+        if len(value) != self.nin:
+            raise ValueError(
+                f"signs must have {self.nin} characters, one per input, not {len(value)}"
+            )
+
+    def _check_mode(self, value: Optional[str]) -> None:
+        if value is not None and not all(x in "rcCL" for x in value):
+            raise ValueError("mode must be a string of r, c, C or L characters")
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         for i, input in enumerate(inputs):
@@ -238,6 +252,16 @@ class Prod(FunctionBlock):
                 DeprecationWarning,
                 stacklevel=2,
             )
+        self.add_param("ops", validate=self._check_ops)
+        self.add_param("matrix", when="never")
+
+    def _check_ops(self, value: str) -> None:
+        if not isinstance(value, str) or not all(x in "*/" for x in value):
+            raise ValueError("ops must be a string of * and / characters")
+        if len(value) != self.nin:
+            raise ValueError(
+                f"ops must have {self.nin} characters, one per input, not {len(value)}"
+            )
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         for i, input in enumerate(inputs):
@@ -328,6 +352,7 @@ class Gain(FunctionBlock):
         self.premul: bool = premul
 
         self.add_param("K")
+        self.add_param("premul")
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         input = inputs[0]
@@ -409,6 +434,7 @@ class Pow(FunctionBlock):
         self.p: int | float = p
         self.matrix: bool = matrix
         self.add_param("p")
+        self.add_param("matrix")
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         input = inputs[0]
@@ -494,6 +520,8 @@ class Clip(FunctionBlock):
         super().__init__(**blockargs)
         self.min = min
         self.max = max
+        self.add_param("min")
+        self.add_param("max")
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         input = inputs[0]
@@ -661,12 +689,26 @@ class Function(FunctionBlock):
             self.userdata = None
         self.args = fargs
         self.kwargs = fkwargs
+        self.add_param("func", validate=self._check_func)
+        self.add_param("nin", when="never")
+        self.add_param("nout", when="never")
 
     def start(self, simstate: Any) -> None:
         super().start(simstate)
         if self.userdata is not None:
             self.userdata.clear()
             print("clearing user data")
+
+    def _check_func(self, value: Any) -> None:
+        if isinstance(value, (list, tuple)):
+            if not all(callable(f) for f in value):
+                raise TypeError("func must be a callable or a list of callables")
+            if len(value) != self.nout:
+                raise ValueError(
+                    f"func must have {self.nout} functions, one per output, not {len(value)}"
+                )
+        elif not callable(value):
+            raise TypeError("func must be a callable or a list of callables")
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
 
@@ -819,6 +861,7 @@ class Interpolate(FunctionBlock):
             x=x, y=y, kind=kind, axis=0
         )
         self.xpts = x
+        self.add_param("time", when="never")
 
     def start(self, simstate: Any, **blockargs: Any) -> None:
         super().start(simstate)

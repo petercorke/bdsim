@@ -128,6 +128,9 @@ class Integrator(ContinuousBlock):
         self.min = min
         self.max = max
         self.gain: float = gain
+        self.add_param("gain")
+        self.add_param("min")
+        self.add_param("max")
 
         # TODO: event
         # self.enable = enable
@@ -159,6 +162,43 @@ class Integrator(ContinuousBlock):
 
 
 # ------------------------------------------------------------------------ #
+
+
+def _conform_D(block: Any, value: Any) -> np.ndarray | None:
+    """
+    The feedthrough matrix ``D`` as an LTI block stores it.
+
+    :param block: the LTI block, which has ``B``, ``C`` and ``_feedthrough``
+    :param value: the new ``D``, an array, a list, or None for zero
+    :return: an ``(nout, nin)`` array, or ``None`` if it is zero and the block has no
+        feedthrough
+    :raises ValueError: ``D`` does not conform to ``B`` and ``C``, or it is non-zero
+        and the block was created without feedthrough
+
+    A block created with ``D = 0`` has no direct feedthrough, which decides where it
+    sits in the execution order: its output is computed before its input is known.
+    So ``D`` can change from one non-zero value to another, but not from zero to
+    non-zero.
+    """
+    nout, nin = block.C.shape[0], block.B.shape[1]
+    if value is None:
+        D = np.zeros((nout, nin))
+    else:
+        D = np.asarray(value, dtype=float)
+        if D.ndim < 2 and D.size == nin * nout:  # a number, or a flat list of numbers
+            D = D.reshape((nout, nin))
+        if D.shape != (nout, nin):
+            raise ValueError(
+                f"D must be {nout}x{nin} to conform to B and C, not {D.shape}"
+            )
+    if np.any(D != 0):
+        if not block._feedthrough:
+            raise ValueError(
+                "D cannot be non-zero: the block was created with D = 0, so it has no "
+                "direct feedthrough, which fixes its place in the execution order"
+            )
+        return D
+    return D if block._feedthrough else None
 
 
 class LTI_SS(ContinuousBlock):
@@ -275,20 +315,33 @@ class LTI_SS(ContinuousBlock):
 
         if np.any(D != 0):
             # flag we have feedthrough, which may create an algebraic loop
-            self.D: np.ndarray | None = D
+            self._D: np.ndarray | None = D
             feedthrough = True
         else:
-            self.D = None
+            self._D = None
             feedthrough = False
 
         super().__init__(
             nstates=n, nin=nin, nout=nout, x0=x0, feedthrough=feedthrough, **blockargs
         )
+        self.add_param("A")
+        self.add_param("B")
+        self.add_param("C")
+        self.add_param("D")
+
+    @property
+    def D(self) -> np.ndarray | None:
+        """The feedthrough matrix, ``None`` if it is zero."""
+        return self._D
+
+    @D.setter
+    def D(self, value: Any) -> None:
+        self._D = _conform_D(self, value)
 
     def output(self, t: float, u: list[Any], x: np.ndarray) -> list[Any]:
         y = self.C @ x
-        if self.D is not None:
-            y = y + self.D @ np.array(u)
+        if self._D is not None:
+            y = y + self._D @ np.array(u)
         if y.size == 1:
             return [y.item()]
         return [y]
@@ -303,6 +356,31 @@ class LTI_SS(ContinuousBlock):
 
 
 # ------------------------------------------------------------------------ #
+
+
+def _expand_poly(x: Any) -> np.ndarray:
+    """
+    Coefficients of a polynomial given as coefficients or as factors.
+
+    :param x: a number, a vector of coefficients in descending powers, or a sequence of
+        factors to be convolved
+    :return: the coefficients as a float array
+
+    * ``[1, 2]`` is already the coefficients of :math:`s+2`
+    * ``[[1, 1], [1, 2]]`` is the factors :math:`(s+1)(s+2)`, convolved to give the
+      coefficients of :math:`s^2 + 3s + 2`
+    * ``[2, [1, 1], [1, 2]]`` is :math:`2(s+1)(s+2)`
+    """
+    if isinstance(x, (int, float)):
+        return np.array([x], dtype=float)
+    if smb.isvector(x):
+        # directly equivalent to a 1D array
+        return smb.getvector(x, dtype="float")
+
+    coeffs: Any = [1]
+    for t in x:
+        coeffs = np.convolve(coeffs, t)
+    return np.asarray(coeffs, dtype=float)
 
 
 def _tf2ss(
@@ -356,27 +434,8 @@ def _tf2ss(
     """
     # normalize polynomials so leading coefficient of denominator is one
 
-    def expand_poly(x: Any) -> np.ndarray:
-        # if x is an array of scalars, assume it's already in the correct form
-        # otherwise assume it's an array of factors and convolve them together to get the coefficients
-        #
-        # eg. [1, 2] is already the coefficients of s+2,
-        # eg. [[1, 1], [1, 2]] is the factors (s+1)(s+2) which are convolved to get the coefficients of s^2 + 3s + 2
-        # eg. [2,[1,1], [1,2]] is the factors 2(s+1)(s+2) which are convolved to get the coefficients of 2s^2 + 6s + 4
-        if isinstance(x, (int, float)):
-            return np.array([x], dtype=float)
-        if smb.isvector(x):
-            # is directly equivalent to a 1D array, convert to array
-            return smb.getvector(x, dtype="float")
-
-        coeffs: Any = [1]
-        for t in x:
-            print(coeffs, t)
-            coeffs = np.convolve(coeffs, t)
-        return coeffs
-
-    num_arr = expand_poly(num)
-    den_arr = expand_poly(den)
+    num_arr = _expand_poly(num)
+    den_arr = _expand_poly(den)
 
     D0 = den_arr[0]
     den_arr = den_arr / D0
@@ -456,7 +515,77 @@ def _tf2ss(
     return A, B, C, D
 
 
-class LTI_SISO(LTI_SS):
+class _TFParams:
+    """
+    The numerator ``N`` and denominator ``D`` of a transfer function block as parameters.
+
+    A mixin for :class:`LTI_SISO` and :class:`LTI_SISO_S`, which come before their
+    state-space parent in the bases so that ``D`` here, the denominator, takes the
+    place of the parent's ``D``, the feedthrough matrix, which is kept as ``_D``.
+
+    The state-space matrices are derived from the two polynomials, so changing either
+    rebuilds ``A``, ``B`` and ``C`` from it and the other.  The order of the system
+    cannot change, because that is the number of states, and a numerator that makes the
+    system non-causal is refused.
+    """
+
+    def _init_tf(
+        self: Any, num: Any, den: Any, form: str, order: str, verbose: bool
+    ) -> None:
+        """Keep what is needed to rebuild the realisation; call after ``super().__init__``."""
+        self._num = _expand_poly(num)
+        self._den = _expand_poly(den)
+        self.form = form
+        self.order = order
+        self.verbose = verbose
+
+        # A, B and C are derived from N and D, and D is now the denominator, so the
+        # subclass registers N and D itself, and these are not parameters
+        for name in "ABCD":
+            self.remove_param(name)
+
+    @property
+    def N(self) -> np.ndarray:
+        """Numerator coefficients in descending powers of :math:`s` (or :math:`z`)."""
+        return self._num  # type: ignore[attr-defined, no-any-return]
+
+    @N.setter
+    def N(self, value: Any) -> None:
+        self._set_tf(value, self._den)  # type: ignore[attr-defined]
+
+    @property
+    def D(self) -> np.ndarray:  # type: ignore[override]
+        """Denominator coefficients in descending powers of :math:`s` (or :math:`z`)."""
+        return self._den  # type: ignore[attr-defined, no-any-return]
+
+    @D.setter
+    def D(self, value: Any) -> None:
+        self._set_tf(self._num, value)  # type: ignore[attr-defined]
+
+    def _set_tf(self: Any, num: Any, den: Any) -> None:
+        """Rebuild the realisation from a new numerator and denominator, or raise."""
+        num_c, den_c = _expand_poly(num), _expand_poly(den)
+        if den_c.size == 0 or den_c[0] == 0:
+            raise ValueError(
+                "the leading coefficient of the denominator cannot be zero"
+            )
+        A, B, C, D = _tf2ss(num_c, den_c, form=self.form, order=self.order)
+        if A.shape != self.A.shape:
+            raise ValueError(
+                f"the order of the system cannot change: it has {self.A.shape[0]} "
+                f"states and the new denominator would have {A.shape[0]}"
+            )
+        if np.any(D != 0) and not self._feedthrough:
+            raise ValueError(
+                "the new numerator would give direct feedthrough, but the block was "
+                "created strictly proper, which fixes its place in the execution order"
+            )
+        self.A, self.B, self.C = A, B, C
+        self._D = D if self._feedthrough else None
+        self._num, self._den = num_c, den_c
+
+
+class LTI_SISO(_TFParams, LTI_SS):
     r"""
     :blockname:`LTI_SISO`
 
@@ -565,10 +694,19 @@ class LTI_SISO(LTI_SS):
         .. note::
             - The transfer function is assumed to be strictly proper (:math:`deg(N) < deg(D)`).
             - The default ``form='ccf', order='backward'`` corresponds to the state-space realization returned by ``scipy.signal.tf2ss`` and MATLAB's ``tf2ss``.
-            - The state-space matrices are available in the ``A``, ``B``, ``C``, and ``D`` attributes of the block.
-            - If D is zero, then the block has no feedthrough and the D matrix is set to None. If D is nonzero, then the block has feedthrough and the D matrix is stored in the D attribute.
-            - The ``_feedthrough`` attribute of the block is set to True if D is nonzero. This can be used to check for feedthrough without having to check the D matrix directly, and is used
+            - ``N`` and ``D`` are attributes holding the numerator and denominator coefficients, and can be
+              changed after the block is created (they are parameters).  The state-space matrices are rebuilt
+              from them.  The order of the system, the length of ``D`` minus one, cannot change.
+            - The state-space matrices are available in the ``A``, ``B`` and ``C`` attributes of the block.
+              The ``D`` attribute is the denominator, as in the constructor, so the feedthrough matrix of the
+              state-space model is ``_D``.
+            - If the numerator degree is less than the denominator degree, the block has no feedthrough and ``_D`` is None.
+              The ``_feedthrough`` attribute of the block is set to True otherwise. It is used
               by the scheduler to ensure correct block evaluation order.
+
+        .. versionchanged:: next
+            The ``D`` attribute is the denominator polynomial, as the constructor argument is.  It was the
+            feedthrough matrix of the state-space realisation, which is now ``_D``.
 
         """
 
@@ -579,17 +717,12 @@ class LTI_SISO(LTI_SS):
             x0 = np.zeros((n,))
 
         super().__init__(A=A, B=B, C=C, D=_D, x0=x0, **blockargs)
-
-        # TODO: param
-        #  def change_param(self, param: str, newvalue: np.ndarray) -> None:
-        #     if param == "num":
-        #         self.num = newvalue
-        #     elif param == "den":
-        #         self.den = newvalue
-        #     self.A, self.B, self.C, self.D = scipy.signal.tf2ss(self.num, self.den)
-
-        # self.add_param("num", change_param)
-        # self.add_param("den", change_param)
+        self._init_tf(N, D, form, order, verbose)
+        self.add_param("N", coerce=False)  # a polynomial may change length
+        self.add_param("D", coerce=False)
+        self.add_param("form", when="never")
+        self.add_param("order", when="never")
+        self.add_param("verbose", when="never")
 
 
 # ------------------------------------------------------------------------ #
@@ -675,6 +808,7 @@ class Deriv2(LTI_SS):
 
         # this model is strictly proper, D is zero and can be ommitted.
         super().__init__(A=A, B=B, C=C, x0=x0, **blockargs)
+        self.add_param("unit", when="never")
 
 
 # ------------------------------------------------------------------------ #
@@ -1078,6 +1212,7 @@ class PID(SubsystemBlock):
             subsystem.connect(out_sum, outp)
 
         super().__init__(subsystem=subsystem, **blockargs)
+        self.add_param("structure", when="never")
 
 
 if __name__ == "__main__":  # pragma: no cover
