@@ -15,7 +15,7 @@ import spatialmath.base as smb  # type: ignore[import-not-found]
 from typing import Any, Callable
 
 from bdsim.components import SampledBlock, Clock, SubsystemBlock, deprecated_block
-from bdsim.blocks.continuous import _conform_D, _tf2ss, _TFParams
+from bdsim.blocks.continuous import _conform_D, _old_tf_names, _tf2ss, _TFParams
 
 Vector1D = int | float | tuple[float, ...] | list[float] | np.ndarray
 
@@ -509,7 +509,7 @@ class LTI_SISO_S(_TFParams, LTI_SS_S):
 
     Examples::
 
-        lti = bd.LTI_SISO(N=[1, 2], D=[2, 3, -4])
+        lti = bd.LTI_SISO_S(clock, num=[1, 2], den=[2, 3, -4])
 
     is the transfer function :math:`\frac{s+2}{2s^2+3s-4}`.
 
@@ -529,8 +529,8 @@ class LTI_SISO_S(_TFParams, LTI_SS_S):
     def __init__(
         self,
         clock: Clock,
-        N: Vector1D = 1,
-        D: Vector1D = [1, 1],
+        num: Vector1D = 1,
+        den: Vector1D = [1, 1],
         x0: np.ndarray | None = None,
         form: str = "ccf",
         order: str = "backward",
@@ -540,11 +540,11 @@ class LTI_SISO_S(_TFParams, LTI_SS_S):
         r"""
         :param clock: clock source
         :type clock: Clock
-        :param N: Numerator coefficients in descending powers of :math:`s`.
-        :type N: array_like
-        :param D: Denominator coefficients in descending powers of :math:`s`.
+        :param num: Numerator coefficients in descending powers of :math:`z`.
+        :type num: array_like
+        :param den: Denominator coefficients in descending powers of :math:`z`.
             Does not have to be normalized.
-        :type D: array_like
+        :type den: array_like
         :param form: The canonical form of the realization, defaults to 'ccf'.
         :type form: str, optional
         :param order: The state ordering convention
@@ -554,7 +554,7 @@ class LTI_SISO_S(_TFParams, LTI_SS_S):
         :return: LTI_SISO_S block
         :rtype: ``LTI_SISO_S`` instance
 
-        Coefficients ``N`` and ``D``can be specified in the form of an array of
+        Coefficients ``num`` and ``den`` can be specified in the form of an array of
         coefficients, or an array of factors. The coefficients and factors are arrays of
         coefficients in decreasing powers of :math:`z`, this could be :math:`z^2 + 0.8z
         + 0.15` or :math:`1 + 0.8z^{-1} + 0.15z^{-2}`, both represented as ``[1, 0.8, 0.15]``.
@@ -609,29 +609,34 @@ class LTI_SISO_S(_TFParams, LTI_SS_S):
   
 
         .. note::
-            - The transfer function is assumed to be strictly proper (:math:`deg(N) < deg(D)`).
+            - The transfer function is assumed to be strictly proper (:math:`deg(num) < deg(den)`).
             - The default ``form='ccf', order='backward'`` corresponds to the state-space realization returned by ``scipy.signal.tf2ss`` and MATLAB's ``tf2ss``.
-            - ``N`` and ``D`` are attributes holding the numerator and denominator coefficients, and can be
-              changed after the block is created (they are parameters).  The state-space matrices are rebuilt
-              from them.  The order of the system, the length of ``D`` minus one, cannot change.
-            - The state-space matrices are available in the ``A``, ``B`` and ``C`` attributes of the block.
-              The ``D`` attribute is the denominator, as in the constructor, so the feedthrough matrix of the
-              state-space model is ``_D``.
-            - If the numerator degree is less than the denominator degree, the block has no feedthrough and ``_D`` is None.
+            - ``num`` and ``den`` are attributes holding the numerator and denominator coefficients (expanded
+              if they were given as factors), and can be changed after the block is created (they are
+              parameters).  The state-space matrices are rebuilt from them.  The order of the system, the
+              length of ``den`` minus one, cannot change.
+            - The state-space matrices are available in the ``A``, ``B``, ``C``, and ``D`` attributes of the block.
+            - If the numerator degree is less than the denominator degree, the block has no feedthrough and ``D`` is None.
               The ``_feedthrough`` attribute of the block is set to True otherwise. It is used
               by the scheduler to ensure correct block evaluation order.
+
+        .. versionchanged:: next
+            The arguments ``N`` and ``D`` are renamed ``num`` and ``den``, because ``D`` is also the feedthrough
+            matrix of the state-space realization.  The old keywords still work, with a ``DeprecationWarning``,
+            and will be removed in a later release.
         """
 
-        A, B, C, _D = _tf2ss(N, D, form=form, order=order, verbose=verbose)
+        num, den = _old_tf_names(num, den, blockargs)
+        A, B, C, _D = _tf2ss(num, den, form=form, order=order, verbose=verbose)
 
         n = A.shape[0]
         if x0 is None:
             x0 = np.zeros((n,))
 
         super().__init__(clock=clock, A=A, B=B, C=C, D=_D, x0=x0, **blockargs)
-        self._init_tf(N, D, form, order, verbose)
-        self.add_param("N", coerce=False)  # a polynomial may change length
-        self.add_param("D", coerce=False)
+        self._init_tf(num, den, form, order, verbose)
+        self.add_param("num", coerce=False)  # a polynomial may change length
+        self.add_param("den", coerce=False)
         self.add_param("clock", when="never")
         self.add_param("form", when="never")
         self.add_param("order", when="never")

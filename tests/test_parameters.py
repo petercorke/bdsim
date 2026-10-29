@@ -18,6 +18,7 @@ import io
 from contextlib import redirect_stdout
 from pathlib import Path
 import unittest
+import warnings
 
 import numpy as np
 import numpy.testing as nt
@@ -303,89 +304,216 @@ class SetOptionTest(ParamTestCase):
 
 
 class TransferFunctionTest(ParamTestCase):
-    """LTI_SISO and LTI_SISO_S: N and D are parameters, A, B and C are rebuilt from them."""
+    """LTI_SISO and LTI_SISO_S: num and den are parameters, A, B and C are rebuilt from them."""
 
-    def make(self, kind, N=1, D=(1, 1)):
+    def make(self, kind, num=1, den=(1, 1)):
         bd = self.bd()
-        D = list(D)
+        den = list(den)
         if kind == "LTI_SISO":
-            return bd.LTI_SISO(N, D, name="tf")
-        return bd.LTI_SISO_S(bd.clock(0.1), N, D, name="tf")
+            return bd.LTI_SISO(num, den, name="tf")
+        return bd.LTI_SISO_S(bd.clock(0.1), num, den, name="tf")
 
     def assertSameRealisation(self, got, expected):
         for name in "ABC":
             nt.assert_allclose(getattr(got, name), getattr(expected, name), atol=1e-12)
 
-    def test_the_parameters_are_n_and_d_only(self):
+    def test_the_parameters_are_num_and_den_only(self):
         for kind in ("LTI_SISO", "LTI_SISO_S"):
             with self.subTest(kind=kind):
-                self.assertEqual(sorted(self.make(kind).parameters()), ["D", "N"])
+                self.assertEqual(sorted(self.make(kind).parameters()), ["den", "num"])
 
-    def test_n_and_d_are_the_polynomials_as_coefficients(self):
+    def test_num_and_den_are_the_polynomials_as_coefficients(self):
         for kind in ("LTI_SISO", "LTI_SISO_S"):
             with self.subTest(kind=kind):
-                tf = self.make(kind, N=[1, 2], D=[[1, 1], [1, 2]])  # (s+1)(s+2)
-                nt.assert_array_equal(tf.N, [1.0, 2.0])
-                nt.assert_array_equal(tf.D, [1.0, 3.0, 2.0])
+                tf = self.make(kind, num=[1, 2], den=[[1, 1], [1, 2]])  # (s+1)(s+2)
+                nt.assert_array_equal(tf.num, [1.0, 2.0])
+                nt.assert_array_equal(tf.den, [1.0, 3.0, 2.0])
 
-    def test_changing_d_rebuilds_the_realisation(self):
+    def test_D_is_still_the_feedthrough_matrix(self):
+        strictly_proper = self.make("LTI_SISO", num=[1], den=(1, 1))
+        self.assertIsNone(strictly_proper.D)
+        proper = self.make("LTI_SISO", num=[1, 1], den=(1, 2))  # s+1 over s+2
+        nt.assert_allclose(proper.D, [[1.0]])
+
+    def test_changing_den_rebuilds_the_realisation(self):
         for kind in ("LTI_SISO", "LTI_SISO_S"):
             with self.subTest(kind=kind):
-                tf = self.make(kind, D=(1, 1))
-                old = tf.set_param("D", [1, 3])
+                tf = self.make(kind, den=(1, 1))
+                old = tf.set_param("den", [1, 3])
                 nt.assert_array_equal(old, [1.0, 1.0])
-                self.assertSameRealisation(tf, self.make(kind, D=(1, 3)))
+                self.assertSameRealisation(tf, self.make(kind, den=(1, 3)))
 
-    def test_changing_n_uses_the_denominator_it_already_has(self):
+    def test_changing_num_uses_the_denominator_it_already_has(self):
         for kind in ("LTI_SISO", "LTI_SISO_S"):
             with self.subTest(kind=kind):
-                tf = self.make(kind, N=[1], D=(1, 2, 3))
-                tf.set_param("N", [1, 2])
-                self.assertSameRealisation(tf, self.make(kind, N=[1, 2], D=(1, 2, 3)))
-                nt.assert_array_equal(tf.D, [1.0, 2.0, 3.0])
+                tf = self.make(kind, num=[1], den=(1, 2, 3))
+                tf.set_param("num", [1, 2])
+                self.assertSameRealisation(
+                    tf, self.make(kind, num=[1, 2], den=(1, 2, 3))
+                )
+                nt.assert_array_equal(tf.den, [1.0, 2.0, 3.0])
 
     def test_factors_are_accepted(self):
-        tf = self.make("LTI_SISO", D=(1, 3, 2))
-        tf.set_param("D", [[1, 1], [1, 4]])  # (s+1)(s+4) = s^2 + 5s + 4
-        nt.assert_array_equal(tf.D, [1.0, 5.0, 4.0])
+        tf = self.make("LTI_SISO", den=(1, 3, 2))
+        tf.set_param("den", [[1, 1], [1, 4]])  # (s+1)(s+4) = s^2 + 5s + 4
+        nt.assert_array_equal(tf.den, [1.0, 5.0, 4.0])
 
     def test_the_order_cannot_change_and_nothing_is_left_half_done(self):
         for kind in ("LTI_SISO", "LTI_SISO_S"):
             with self.subTest(kind=kind):
-                tf = self.make(kind, D=(1, 1))
+                tf = self.make(kind, den=(1, 1))
                 before = tf.A.copy()
                 with self.assertRaises(ValueError) as cm:
-                    tf.set_param("D", [1, 2, 3])
+                    tf.set_param("den", [1, 2, 3])
                 self.assertIn("order", str(cm.exception))
                 nt.assert_array_equal(tf.A, before)
-                nt.assert_array_equal(tf.D, [1.0, 1.0])
+                nt.assert_array_equal(tf.den, [1.0, 1.0])
 
     def test_a_non_causal_numerator_is_refused(self):
-        tf = self.make("LTI_SISO", D=(1, 1))
+        tf = self.make("LTI_SISO", den=(1, 1))
         with self.assertRaises(ValueError):
-            tf.set_param("N", [1, 2, 3])
+            tf.set_param("num", [1, 2, 3])
 
     def test_a_numerator_that_would_add_feedthrough_is_refused(self):
-        tf = self.make("LTI_SISO", D=(1, 1))  # strictly proper: no feedthrough
+        tf = self.make("LTI_SISO", den=(1, 1))  # strictly proper: no feedthrough
         with self.assertRaises(ValueError) as cm:
-            tf.set_param("N", [1, 0])  # s/(s+1)
+            tf.set_param("num", [1, 0])  # s/(s+1)
         self.assertIn("feedthrough", str(cm.exception))
 
     def test_a_zero_leading_denominator_coefficient_is_refused(self):
-        tf = self.make("LTI_SISO", D=(1, 1))
+        tf = self.make("LTI_SISO", den=(1, 1))
         with self.assertRaises(ValueError):
-            tf.set_param("D", [0, 1])
+            tf.set_param("den", [0, 1])
 
     def test_the_step_response_follows_the_new_denominator(self):
         bd = self.bd()
         tf = bd.LTI_SISO(1, [1, 1], name="tf")
         bd.connect(bd.CONSTANT(1.0), tf)
         bd.compile(verbose=False)
-        tf.set_param("D", [1, 2])  # 1/(s+2): y = 0.5 (1 - exp(-2 t))
+        tf.set_param("den", [1, 2])  # 1/(s+2): y = 0.5 (1 - exp(-2 t))
         out = self.sim.run(
             bd, T=3, dt=0.1, watch=[tf], solver_args=dict(rtol=1e-10, atol=1e-12)
         )
         nt.assert_allclose(out.y[:, 0], 0.5 * (1 - np.exp(-2 * out.t)), atol=1e-7)
+
+    def test_set_from_text(self):
+        bd = self.bd()
+        tf = bd.LTI_SISO([1, 2], [1, 2, 3], name="tf")
+        sim = bdsim.BDSim(
+            graphics=None,
+            progress=False,
+            banner=False,
+            quiet=True,
+            setparam=["tf:num=5 6", "tf:den=1,4,5"],
+        )
+        with redirect_stdout(io.StringIO()):
+            sim.update_parameters(bd)
+        nt.assert_array_equal(tf.num, [5.0, 6.0])
+        nt.assert_array_equal(tf.den, [1.0, 4.0, 5.0])
+
+
+class OldNamesTest(ParamTestCase):
+    """N= and D= were renamed num= and den=; the old keywords work for now, with a warning."""
+
+    def build(self, kind, **kwargs):
+        bd = self.bd()
+        if kind == "LTI_SISO":
+            return bd.LTI_SISO(**kwargs)
+        return bd.LTI_SISO_S(bd.clock(0.1), **kwargs)
+
+    def test_the_old_keywords_still_work_and_warn(self):
+        for kind in ("LTI_SISO", "LTI_SISO_S"):
+            with self.subTest(kind=kind):
+                new = self.build(kind, num=[1, 2], den=[1, 2, 3])
+                with warnings.catch_warnings(record=True) as caught:
+                    warnings.simplefilter("always")
+                    old = self.build(kind, N=[1, 2], D=[1, 2, 3])
+                messages = [
+                    str(w.message)
+                    for w in caught
+                    if issubclass(w.category, DeprecationWarning)
+                ]
+                self.assertTrue(
+                    any("'N'" in m and "num" in m for m in messages), messages
+                )
+                self.assertTrue(
+                    any("'D'" in m and "den" in m for m in messages), messages
+                )
+                for name in "ABC":
+                    nt.assert_array_equal(getattr(old, name), getattr(new, name))
+                nt.assert_array_equal(old.num, new.num)
+
+    def test_one_old_keyword_with_one_new(self):
+        with warnings.catch_warnings(record=True):
+            warnings.simplefilter("always")
+            tf = self.build("LTI_SISO", N=[3], den=[1, 2])
+        nt.assert_array_equal(tf.num, [3.0])
+        nt.assert_array_equal(tf.den, [1.0, 2.0])
+
+    def test_old_and_new_together_is_an_error(self):
+        # the class directly: the block factory wraps the error in BlockCreationError
+        from bdsim.blocks.continuous import LTI_SISO
+        from bdsim.blocks.sampled import LTI_SISO_S
+
+        bd = self.bd()
+        with self.assertRaises(TypeError) as cm:
+            LTI_SISO(num=[1], N=[2], bd=bd)
+        self.assertIn("num", str(cm.exception))
+        with self.assertRaises(TypeError) as cm:
+            LTI_SISO_S(bd.clock(0.1), den=[1, 2], D=[1, 3], bd=bd)
+        self.assertIn("den", str(cm.exception))
+
+    def test_positional_calls_are_unchanged(self):
+        tf = self.bd().LTI_SISO(0.5, [2, 1])
+        nt.assert_array_equal(tf.num, [0.5])
+        nt.assert_array_equal(tf.den, [2.0, 1.0])
+
+    def test_an_old_bd_model_still_loads(self):
+        import json
+        import tempfile
+
+        from bdsim.bin.bdrun import bdload
+
+        def block(i, kind, ins, outs, params):
+            return {
+                "id": i,
+                "block_type": kind,
+                "title": kind.lower(),
+                "pos_x": 0,
+                "pos_y": 0,
+                "width": 100,
+                "height": 100,
+                "flipped": False,
+                "inputsNum": len(ins),
+                "outputsNum": len(outs),
+                "inputs": [{"id": k, "index": j} for j, k in enumerate(ins)],
+                "outputs": [{"id": k, "index": j} for j, k in enumerate(outs)],
+                "parameters": params,
+            }
+
+        model = {
+            "blocks": [
+                block(1, "CONSTANT", [], [10], [["value", 1.0]]),
+                block(
+                    2, "LTI_SISO", [20], [21], [["N", 0.5], ["D", [2, 1]], ["x0", None]]
+                ),
+                block(3, "NULL", [30], [], []),
+            ],
+            "wires": [
+                {"start_socket": 10, "end_socket": 20},
+                {"start_socket": 21, "end_socket": 30},
+            ],
+        }
+        with tempfile.NamedTemporaryFile("w", suffix=".bd", delete=False) as f:
+            json.dump(model, f)
+        bd = self.bd()
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            bdload(bd, f.name, allow_eval=False)
+        self.assertTrue(any(issubclass(w.category, DeprecationWarning) for w in caught))
+        tf = bd["lti_siso"]
+        nt.assert_array_equal(tf.num, [0.5])
+        nt.assert_array_equal(tf.den, [2.0, 1.0])
 
 
 class FeedthroughMatrixTest(ParamTestCase):
