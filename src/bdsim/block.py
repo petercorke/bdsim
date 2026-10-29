@@ -92,6 +92,7 @@ def _coerce_parameter(block: Block, name: str, old: Any, new: Any) -> Any:
     * an ``ndarray`` keeps its shape and dtype; a list of numbers becomes an array,
       and an array that can be cast safely to the dtype is cast (an integer array
       into a float one)
+      A one-element array also accepts a number.
     * a ``bool`` stays a bool
     * a number may be any other number, and is widened (an integer parameter can
       become a float, a float parameter stays a float), never narrowed
@@ -105,6 +106,12 @@ def _coerce_parameter(block: Block, name: str, old: Any, new: Any) -> Any:
         return maybe_asarray(new)
 
     if isinstance(old, np.ndarray):
+        if (
+            old.size == 1
+            and isinstance(new, numbers.Number)
+            and not isinstance(new, (bool, np.bool_))
+        ):
+            new = np.full(old.shape, new)  # a number for a one-element array
         new = maybe_asarray(new)
         if not isinstance(new, np.ndarray):
             raise TypeError(f"{where} is {Signature.of(old)}, not {Signature.of(new)}")
@@ -2144,6 +2151,17 @@ class FunctionBlock(Block):
         raise NotImplementedError
 
 
+def _initial_state(block: Any, value: Any) -> np.ndarray:
+    """An initial state vector for the block, as a float array with one element per state."""
+    x0 = smb.getvector(value, dtype=float)
+    n = len(block._x0)
+    if x0.shape != (n,):
+        raise ValueError(
+            f"x0 must have {n} element{'s' if n != 1 else ''}, one per state, not {len(x0)}"
+        )
+    return x0
+
+
 class ContinuousBlock(Block):
     """
     A ContinuousBlock is a subclass of Block that represents a block with inputs,
@@ -2195,6 +2213,15 @@ class ContinuousBlock(Block):
     def setstate(self, x: np.ndarray) -> np.ndarray:
         self._x_view = x[: self.nstates]
         return x[self.nstates :]
+
+    @property
+    def x0(self) -> np.ndarray:
+        """Initial state vector.  It can be set until the run starts."""
+        return self._x0  # type: ignore[no-any-return]
+
+    @x0.setter
+    def x0(self, value: Any) -> None:
+        self._x0 = _initial_state(self, value)
 
     def getstate0(self) -> np.ndarray:
         return self._x0
@@ -2269,6 +2296,15 @@ class SampledBlock(Block):
     def setstate(self, x: np.ndarray) -> np.ndarray:
         self._x_view = x[: self.ndstates]
         return x[self.ndstates :]
+
+    @property
+    def x0(self) -> np.ndarray:
+        """Initial state vector.  It can be set until the run starts."""
+        return self._x0  # type: ignore[no-any-return]
+
+    @x0.setter
+    def x0(self, value: Any) -> None:
+        self._x0 = _initial_state(self, value)
 
     def getstate0(self) -> np.ndarray:
         return self._x0

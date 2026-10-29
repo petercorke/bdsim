@@ -69,6 +69,7 @@ class ZOH(SampledBlock):
         """
         super().__init__(clock=clock, nin=1, nout=1, x0=x0, **blockargs)
         self.add_param("clock", when="never")
+        self.add_param("x0", when="setup")
 
         # print('nstates', self.nstates)
 
@@ -192,6 +193,7 @@ class Integrator_S(SampledBlock):
         self.add_param("min")
         self.add_param("max")
         self.add_param("enable")
+        self.add_param("x0", when="setup")
 
     def output(self, t: float, u: list[Any], x: np.ndarray) -> list[Any]:
         result = x
@@ -283,6 +285,7 @@ class Deriv_S(SampledBlock):
         self.gain = gain
         self.add_param("clock", when="never")
         self.add_param("gain")
+        self.add_param("x0", when="setup")
 
     def output(self, t: float, u: list[Any], x: np.ndarray) -> list[Any]:
         result = self.gain * (u[0] - x) / self.T
@@ -437,6 +440,7 @@ class LTI_SS_S(SampledBlock):
         self.add_param("B")
         self.add_param("C")
         self.add_param("D")
+        self.add_param("x0", when="setup")
 
     @property
     def D(self) -> np.ndarray | None:
@@ -641,6 +645,7 @@ class LTI_SISO_S(_TFParams, LTI_SS_S):
         self.add_param("form", when="never")
         self.add_param("order", when="never")
         self.add_param("verbose", when="never")
+        self.add_param("x0", when="setup")
 
 
 # ------------------------------------------------------------------------ #

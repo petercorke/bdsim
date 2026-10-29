@@ -132,6 +132,7 @@ class Integrator(ContinuousBlock):
         self.add_param("gain")
         self.add_param("min")
         self.add_param("max")
+        self.add_param("x0", when="setup")
 
         # TODO: event
         # self.enable = enable
@@ -329,6 +330,7 @@ class LTI_SS(ContinuousBlock):
         self.add_param("B")
         self.add_param("C")
         self.add_param("D")
+        self.add_param("x0", when="setup")
 
     @property
     def D(self) -> np.ndarray | None:
@@ -752,6 +754,7 @@ class LTI_SISO(_TFParams, LTI_SS):
         self.add_param("form", when="never")
         self.add_param("order", when="never")
         self.add_param("verbose", when="never")
+        self.add_param("x0", when="setup")
 
 
 # ------------------------------------------------------------------------ #
@@ -838,6 +841,7 @@ class Deriv2(LTI_SS):
         # this model is strictly proper, D is zero and can be ommitted.
         super().__init__(A=A, B=B, C=C, x0=x0, **blockargs)
         self.add_param("unit", when="never")
+        self.add_param("x0", when="setup")
 
 
 # ------------------------------------------------------------------------ #

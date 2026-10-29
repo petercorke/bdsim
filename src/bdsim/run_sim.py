@@ -1303,6 +1303,10 @@ class BDSim(Runner):
             simstate.watchlist = watchlist
             simstate.watchnamelist = watchnamelist
 
+            # update block parameters given on command line; this must come before the
+            # initial state is collected, which a setup parameter such as x0 changes
+            self.update_parameters(bd)
+
             x0 = bd.getstate0()
 
             if not simstate.options.quiet:
@@ -1335,9 +1339,6 @@ class BDSim(Runner):
 
             if not simstate.options.quiet:
                 print(attr(0))
-
-            # update block parameters given on command line
-            self.update_parameters(bd)
 
             if bool(getattr(simstate, "notebook_backend", False)):
                 patch_roboticstoolbox_pyplot_launch_for_notebook()

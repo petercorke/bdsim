@@ -104,6 +104,15 @@ class TypeEnforcementTest(ParamTestCase):
             gain.set_param("K", 3)
         self.assertIn("ndarray(2, 2)", str(cm.exception))
 
+    def test_a_number_can_replace_a_one_element_array(self):
+        const = self.bd().CONSTANT(np.array([1.0]))
+        const.set_param("value", 4)
+        nt.assert_array_equal(const.value, [4.0])
+        self.assertEqual(const.value.shape, (1,))
+        two = self.bd().CONSTANT(np.array([1.0, 2.0]))
+        with self.assertRaises(TypeError):
+            two.set_param("value", 4)  # not a one-element array
+
     def test_a_matrix_cannot_replace_a_number(self):
         gain = self.bd().GAIN(2.0)
         with self.assertRaises(TypeError):
@@ -317,10 +326,12 @@ class TransferFunctionTest(ParamTestCase):
         for name in "ABC":
             nt.assert_allclose(getattr(got, name), getattr(expected, name), atol=1e-12)
 
-    def test_the_parameters_are_num_and_den_only(self):
+    def test_the_parameters_are_num_den_and_the_initial_state(self):
         for kind in ("LTI_SISO", "LTI_SISO_S"):
             with self.subTest(kind=kind):
-                self.assertEqual(sorted(self.make(kind).parameters()), ["den", "num"])
+                self.assertEqual(
+                    sorted(self.make(kind).parameters()), ["den", "num", "x0"]
+                )
 
     def test_num_and_den_are_the_polynomials_as_coefficients(self):
         for kind in ("LTI_SISO", "LTI_SISO_S"):
@@ -525,7 +536,7 @@ class FeedthroughMatrixTest(ParamTestCase):
 
     def test_the_state_space_matrices_are_parameters(self):
         lti = self.bd().LTI_SS(self.A, self.B, self.C)
-        self.assertEqual(sorted(lti.parameters()), ["A", "B", "C", "D"])
+        self.assertEqual(sorted(lti.parameters()), ["A", "B", "C", "D", "x0"])
 
     def test_zero_d_stays_none_and_non_zero_is_refused(self):
         lti = self.bd().LTI_SS(self.A, self.B, self.C)  # no feedthrough
@@ -815,12 +826,8 @@ PENDING = {
     "Slice1.index",
     "Slice2.rows",
     "Slice2.cols",
-    "Integrator.x0",
-    "LTI_SS.x0",
-    "LTI_SISO.x0",
     "Deriv2.wn",
     "Deriv2.zeta",
-    "Deriv2.x0",
     "Deriv2.gain",
     "Deriv.alpha",
     "Deriv.x0",
@@ -836,16 +843,9 @@ PENDING = {
     "PID_S.D",
     "PID_S.I_limit",
     "PID_S.I_band",
-    "ZOH.x0",
-    "Integrator_S.x0",
-    "Deriv_S.x0",
-    "LTI_SS_S.x0",
-    "LTI_SISO_S.x0",
     "WaveForm.freq",
     "WaveForm.min",
     "WaveForm.max",
-    "PoseIntegrator.x0",
-    "PoseIntegrator_S.x0",
 }
 
 
