@@ -11,6 +11,8 @@ from typing import Any
 
 
 import warnings
+import numbers
+
 import numpy as np
 from math import pi
 import spatialmath.base as smb  # type: ignore[import-not-found]
@@ -120,19 +122,32 @@ class Integrator(ContinuousBlock):
 
         super().__init__(nstates=nstates, **blockargs)
 
-        if min is not None:
-            min = smb.getvector(min, nstates)
-        if max is not None:
-            max = smb.getvector(max, nstates)
-
         self._x0 = x0
         self.min = min
         self.max = max
         self.gain: float = gain
         self.add_param("gain")
-        self.add_param("min")
-        self.add_param("max")
+        self.add_param("min", coerce=False)
+        self.add_param("max", coerce=False)
         self.add_param("x0", when="setup")
+
+    @property
+    def min(self) -> np.ndarray | None:
+        """Lower limit of each state, or ``None`` for no limit."""
+        return self._min
+
+    @min.setter
+    def min(self, value: Any) -> None:
+        self._min = None if value is None else smb.getvector(value, len(self._x0))
+
+    @property
+    def max(self) -> np.ndarray | None:
+        """Upper limit of each state, or ``None`` for no limit."""
+        return self._max
+
+    @max.setter
+    def max(self, value: Any) -> None:
+        self._max = None if value is None else smb.getvector(value, len(self._x0))
 
         # TODO: event
         # self.enable = enable
@@ -999,23 +1014,64 @@ class Deriv(SubsystemBlock):
         inp = subsystem.INPORT(1, name="IN")
         outp = subsystem.OUTPORT(1, name="OUT")
         sum = subsystem.SUM("+-", name="SUM")
-        alpha = subsystem.GAIN(alpha, name="alpha")
+        alpha_block = subsystem.GAIN(alpha, name="alpha")
+        gain_block = subsystem.GAIN(
+            gain, name="K"
+        )  # always present, so gain can be set
 
         subsystem.connect(inp, sum[0])
-        subsystem.connect(sum[0], alpha)
-        subsystem.connect(alpha, integrator)
+        subsystem.connect(sum[0], alpha_block)
+        subsystem.connect(alpha_block, integrator)
         subsystem.connect(integrator, sum[1])
-        if gain != 1.0:
-            gain = subsystem.GAIN(gain, name="K")
-            subsystem.connect(alpha, gain)
-            subsystem.connect(gain, outp)
-        else:
-            subsystem.connect(alpha, outp)
+        subsystem.connect(alpha_block, gain_block)
+        subsystem.connect(gain_block, outp)
 
         super().__init__(subsystem=subsystem, **blockargs)
+        self._integrator = integrator
+        self._alpha_block = alpha_block
+        self.add_param("alpha", forward=(alpha_block, "K"))
+        self.add_param("gain", forward=(gain_block, "K"))
+        self.add_param("x0", forward=(integrator, "x0"))
+        self.add_param("y0", when="setup")
+
+    @property
+    def y0(self) -> np.ndarray:
+        """
+        The initial output, which is the initial state :math:`x_0` scaled by the pole
+        :math:`\\alpha`: :math:`y_0 = -x_0/\\alpha`.  Setting it sets the state.
+        """
+        return -self._integrator.x0 / self._alpha_block.K  # type: ignore[no-any-return]
+
+    @y0.setter
+    def y0(self, value: Any) -> None:
+        y0 = np.array(smb.getvector(value), dtype=float).reshape(-1)
+        self._integrator.set_param("x0", -y0 * self._alpha_block.K)
 
 
 # ------------------------------------------------------------------------ #
+
+
+def _integral_limits(I_limit: Any) -> tuple[float | None, float | None]:
+    """
+    The lower and upper limit of the integral term of a PID block.
+
+    :param I_limit: ``None`` for no limit, a number for the symmetric limit
+        :math:`\\pm` that number, or a lower and an upper limit, either of which can be
+        ``None``
+    :raises ValueError: it is none of these
+    """
+    if I_limit is None:
+        return None, None
+    if isinstance(I_limit, numbers.Real) and not isinstance(I_limit, bool):
+        return -float(I_limit), float(I_limit)
+    if isinstance(I_limit, (tuple, list, np.ndarray)) and len(I_limit) == 2:
+        lo, hi = I_limit
+        return (None if lo is None else float(lo)), (None if hi is None else float(hi))
+    raise ValueError("I_limit must be None, a number, or a lower and an upper limit")
+
+
+_NO_I = "the block was built without an integral term (I=0), which cannot be added"
+_NO_D = "the block was built without a derivative term (D=0), which cannot be added"
 
 
 class PID(SubsystemBlock):
@@ -1205,16 +1261,9 @@ class PID(SubsystemBlock):
         if I != 0:
             # if the I term is required, create the block
             type += "I"
-            integ_args = {}
-            if isinstance(I_limit, float):
-                integ_args["min"] = -I_limit
-                integ_args["max"] = I_limit
-            elif isinstance(I_limit, tuple) and len(I_limit) == 2:
-                integ_args["min"] = I_limit[0]
-                integ_args["max"] = I_limit[1]
-
+            lo, hi = _integral_limits(I_limit)
             Iblock = subsystem.INTEGRATOR(
-                gain=I, name="I", **integ_args
+                gain=I, name="I", min=lo, max=hi
             )  # integral block with gain I
 
         if D != 0:
@@ -1228,7 +1277,6 @@ class PID(SubsystemBlock):
 
         subsystem.connect(inp, error_sum)
 
-        print("PID type:", type, "structure:", structure)
         # for each case sum the various terms
         if structure == "parallel":
             if type == "PID":
@@ -1296,7 +1344,46 @@ class PID(SubsystemBlock):
             subsystem.connect(out_sum, outp)
 
         super().__init__(subsystem=subsystem, **blockargs)
+        self._Iblock = Iblock if "I" in type else None
+        self.add_param("P", forward=(Pblock, "K"))
+        if "I" in type:
+            self.add_param("I", forward=(Iblock, "gain"))
+            self.add_param("I_limit", coerce=False)
+        else:
+            self.add_param("I", unavailable=_NO_I)
+            self.add_param("I_limit", unavailable=_NO_I)
+        if "D" in type:
+            self.add_param("D", forward=(Dblock, "gain"))
+            self.add_param("D_pole", forward=(Dblock, "alpha"))
+        else:
+            self.add_param("D", unavailable=_NO_D)
+            self.add_param("D_pole", unavailable=_NO_D)
         self.add_param("structure", when="never")
+
+    @property
+    def I_limit(self) -> float | tuple[float | None, float | None] | None:
+        """
+        Limit on the integral term: ``None`` for none, a number for the limit
+        :math:`\\pm` that number, or a (lower, upper) pair.
+        """
+        if self._Iblock is None:
+            return None
+        lo, hi = self._Iblock.min, self._Iblock.max
+        lo = None if lo is None else float(lo[0])
+        hi = None if hi is None else float(hi[0])
+        if lo is None and hi is None:
+            return None
+        if lo is not None and hi is not None and lo == -hi:
+            return hi
+        return lo, hi
+
+    @I_limit.setter
+    def I_limit(self, value: Any) -> None:
+        if self._Iblock is None:
+            raise ValueError(_NO_I)
+        lo, hi = _integral_limits(value)
+        self._Iblock.set_param("min", lo)
+        self._Iblock.set_param("max", hi)
 
 
 if __name__ == "__main__":  # pragma: no cover

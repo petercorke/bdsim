@@ -802,26 +802,10 @@ class ParamOptionTest(ParamTestCase):
 BLOCKS = Path(bdsim.__file__).parent / "blocks"
 
 # Parameters that need a handler (derived state, a unit, an initial state, a
-# structure that may be absent) and do not have one yet.  All that remain are the
-# blocks built from a subsystem, which is flattened away when the diagram is compiled.  This list is the work
+# structure that may be absent) and do not have one yet.  This list is the work
 # still to do: it must shrink, and a parameter that is handled or declared must
 # be removed from it.
-PENDING = {
-    "Deriv.alpha",
-    "Deriv.x0",
-    "Deriv.y0",
-    "Deriv.gain",
-    "PID.P",
-    "PID.I",
-    "PID.D",
-    "PID.D_pole",
-    "PID.I_limit",
-    "PID_S.P",
-    "PID_S.I",
-    "PID_S.D",
-    "PID_S.I_limit",
-    "PID_S.I_band",
-}
+PENDING: set[str] = set()
 
 
 def block_parameters():

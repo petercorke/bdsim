@@ -1829,7 +1829,7 @@ class BDSim(Runner):
                 block._lookup_param(param)  # is there such a parameter, can it be set?
             except ValueError as err:
                 raise ValueError(f"cannot set {block.name}:{param}: {err}") from err
-            if callable(getattr(block, param, None)):
+            if callable(block._param_value(param)):
                 raise ValueError(
                     f"cannot set {block.name}:{param} from text: it is a function, "
                     "set it from code with block.set_param"
@@ -1837,7 +1837,7 @@ class BDSim(Runner):
 
             # get the new value; the type of the current value says how to read the text
             try:
-                new_value = _parse_param_text(m["value"], getattr(block, param, None))
+                new_value = _parse_param_text(m["value"], block._param_value(param))
             except ValueError as err:
                 raise ValueError(
                     f"cannot set {block.name}:{param}: cannot read {m['value']!r}: {err}"

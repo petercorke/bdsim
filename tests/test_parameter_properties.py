@@ -378,5 +378,232 @@ class Deriv2ParameterTest(PropTestCase):
             d.set_param("wn", -1)
 
 
+class SubsystemParameterTest(PropTestCase):
+    """PID, PID_S and DERIV are subsystems: their parameters are forwarded to inner blocks."""
+
+    def pid(self, bd=None, **kwargs):
+        bd = bd or self.bd()
+        pid = bd.PID(name="pid", **kwargs)
+        bd.connect(bd.CONSTANT(1.0), pid[0])
+        bd.connect(bd.CONSTANT(0.0), pid[1])
+        bd.connect(pid, bd.NULL(1))
+        return bd, pid
+
+    @staticmethod
+    def inner(block, *path):
+        """The inner block at a path of names, through nested subsystems."""
+        for name in path:
+            block = block.subsystem.blocknames[name]
+        return block
+
+    def update(self, bd, *setparam):
+        sim = bdsim.BDSim(
+            graphics=None,
+            progress=False,
+            banner=False,
+            quiet=True,
+            setparam=list(setparam),
+        )
+        with contextlib.redirect_stdout(io.StringIO()):
+            sim.update_parameters(bd)
+
+    def test_the_parameters_are_those_of_the_constructor(self):
+        _, pid = self.pid(P=1, I=2, D=3, D_pole=10, I_limit=5.0)
+        self.assertEqual(
+            pid.parameters(),
+            {"P": 1, "I": 2, "D": 3, "D_pole": 10, "I_limit": 5.0},
+        )
+
+    def test_set_param_reaches_the_inner_blocks(self):
+        _, pid = self.pid(P=1, I=2, D=3, D_pole=10)
+        self.assertEqual(pid.set_param("P", 4), 1)  # the old value
+        pid.set_param("I", 5)
+        pid.set_param("D", 6)
+        pid.set_param("D_pole", 20)  # PID -> DERIV -> its gain block: a chain
+        self.assertEqual(self.inner(pid, "P").K, 4)
+        self.assertEqual(self.inner(pid, "I").gain, 5)
+        self.assertEqual(self.inner(pid, "D", "K").K, 6)
+        self.assertEqual(self.inner(pid, "D", "alpha").K, 20)
+        self.assertEqual(
+            pid.parameters(),
+            {"P": 4, "I": 5, "D": 6, "D_pole": 20, "I_limit": None},
+        )
+
+    def test_the_inner_block_does_the_checking(self):
+        _, pid = self.pid(P=1.0, I=2.0)
+        with self.assertRaises(TypeError):
+            pid.set_param("P", "big")
+
+    def test_integral_limit_forms(self):
+        _, pid = self.pid(P=1, I=2)
+        integrator = self.inner(pid, "I")
+        pid.set_param("I_limit", 2.0)
+        self.assertEqual((integrator.min[0], integrator.max[0]), (-2, 2))
+        self.assertEqual(pid.I_limit, 2.0)
+        pid.set_param("I_limit", (-1, 3))
+        self.assertEqual((integrator.min[0], integrator.max[0]), (-1, 3))
+        self.assertEqual(pid.I_limit, (-1, 3))
+        pid.set_param("I_limit", 5)  # an int is a limit too
+        self.assertEqual(pid.I_limit, 5.0)
+        pid.set_param("I_limit", None)
+        self.assertIsNone(integrator.min)
+        self.assertIsNone(pid.I_limit)
+        with self.assertRaises(ValueError):
+            pid.set_param("I_limit", (1, 2, 3))
+
+    def test_a_term_the_block_was_built_without_cannot_be_set(self):
+        _, pid = self.pid(P=1, I=2)  # no derivative term
+        self.assertEqual(sorted(pid.parameters()), ["I", "I_limit", "P"])
+        with self.assertRaises(ValueError) as cm:
+            pid.set_param("D", 1)
+        self.assertIn("derivative", str(cm.exception))
+        with self.assertRaises(ValueError):
+            pid.set_param("D_pole", 1)
+
+    def test_a_forward_must_point_at_a_parameter_that_can_be_set(self):
+        bd = self.bd()
+        pid = bd.PID(P=1, I=1)
+        with self.assertRaises(ValueError):
+            pid.add_param("bad", forward=(self.inner(pid, "P"), "nonesuch"))
+        with self.assertRaises(ValueError):
+            pid.add_param("bad", forward=(self.inner(pid, "P"), "nin"))
+
+    def test_changed_parameters_give_the_same_result_as_built_that_way(self):
+        def run(bd):
+            bd.compile(verbose=False)
+            sim = bdsim.BDSim(graphics=None, progress=False, banner=False, quiet=True)
+            return sim.run(bd, T=1.0, dt=0.1)
+
+        bd1, _ = self.pid(P=2, I=1, D=0.5, D_pole=10)
+        bd2, pid = self.pid(P=1, I=0.5, D=0.2, D_pole=5)
+        pid.set_param("P", 2)
+        pid.set_param("I", 1)
+        pid.set_param("D", 0.5)
+        pid.set_param("D_pole", 10)
+        out1, out2 = run(bd1), run(bd2)
+        self.assertGreater(out1.x.size, 0)
+        nt.assert_allclose(out2.x, out1.x, atol=1e-12)
+
+    def test_the_subsystem_block_is_found_by_name_after_compile(self):
+        bd, pid = self.pid(P=1, I=2, D=3, D_pole=10)
+        bd.compile(verbose=False)
+        self.assertNotIn("pid", bd.blocknames)  # flattened away
+        self.assertIs(bd["pid"], pid)
+        bd["pid"].set_param("I", 7)
+        self.assertEqual(bd["pid/I"].gain, 7)
+        # it is still there if compiled again
+        bd.compile(verbose=False)
+        self.assertIs(bd["pid"], pid)
+
+    def test_set_option_reaches_the_inner_blocks_after_compile(self):
+        bd, pid = self.pid(P=1, I=2, D=3, D_pole=10)
+        bd.compile(verbose=False)
+        self.update(bd, "pid:P=3", "pid:D_pole=20", "pid:I_limit=2")
+        self.assertEqual(bd["pid/P"].K, 3)
+        self.assertEqual(bd["pid/D/alpha"].K, 20)
+        self.assertEqual(bd["pid/I"].max[0], 2)
+
+    def test_set_option_refuses_a_missing_term(self):
+        bd, _ = self.pid(P=1, I=2)
+        bd.compile(verbose=False)
+        with self.assertRaises(ValueError) as cm:
+            self.update(bd, "pid:D=1")
+        self.assertIn("derivative", str(cm.exception))
+
+    def test_inner_blocks_can_still_be_set_by_their_own_names(self):
+        bd, _ = self.pid(P=1, I=2)
+        bd.compile(verbose=False)
+        self.update(bd, "pid/P:K=9")
+        self.assertEqual(bd["pid/P"].K, 9)
+
+    def test_report_lists_the_subsystem_and_not_its_inner_blocks(self):
+        bd, _ = self.pid(P=1, I=2, D=3, D_pole=10)
+        bd.compile(verbose=False)
+        with contextlib.redirect_stdout(io.StringIO()) as out:
+            bd.report_params()
+        text = out.getvalue()
+        for name in ("pid:P", "pid:I", "pid:D", "pid:D_pole", "pid:I_limit"):
+            self.assertIn(name, text)
+        self.assertNotIn("pid/P:K", text)
+        self.assertNotIn("pid/D/alpha:K", text)
+
+    def test_a_subsystem_inside_a_subsystem_copies_the_forwards(self):
+        # SUBSYSTEM copies the diagram it is given, so the forwards must point at the
+        # copy of the inner block and not at the original
+        ss = self.sim.blockdiagram(name="inner")
+        inp = ss.INPORT(2)
+        pid = ss.PID(P=1, I=1, name="pid")
+        outp = ss.OUTPORT(1)
+        ss.connect(inp, pid)
+        ss.connect(pid, outp)
+
+        bd = self.bd()
+        sub = bd.SUBSYSTEM(ss, name="sub")
+        bd.connect(bd.CONSTANT(1.0), sub[0])
+        bd.connect(bd.CONSTANT(0.0), sub[1])
+        bd.connect(sub, bd.NULL(1))
+        bd.compile(verbose=False)
+
+        self.update(bd, "sub/pid:P=5")
+        self.assertEqual(bd["sub/pid/P"].K, 5)
+        self.assertEqual(pid.parameters()["P"], 1)  # the original is untouched
+        with contextlib.redirect_stdout(io.StringIO()) as out:
+            bd.report_params()
+        self.assertIn("sub/pid:P", out.getvalue())
+        self.assertNotIn("sub/pid/P:K", out.getvalue())
+
+    def test_deriv_parameters(self):
+        deriv = self.bd().DERIV(alpha=2.0, x0=[4.0], gain=3.0)
+        self.assertEqual(sorted(deriv.parameters()), ["alpha", "gain", "x0", "y0"])
+        deriv.set_param("alpha", 4.0)
+        deriv.set_param("gain", 5.0)
+        self.assertEqual(self.inner(deriv, "alpha").K, 4)
+        self.assertEqual(self.inner(deriv, "K").K, 5)
+        nt.assert_array_equal(deriv.parameters()["x0"], [4.0])
+
+    def test_deriv_with_gain_one_can_still_have_its_gain_set(self):
+        deriv = self.bd().DERIV(alpha=2.0)
+        deriv.set_param("gain", 2.0)
+        self.assertEqual(self.inner(deriv, "K").K, 2)
+
+    def test_deriv_y0_is_the_initial_output(self):
+        deriv = self.bd().DERIV(alpha=2.0, x0=[4.0])
+        nt.assert_allclose(deriv.y0, [-2.0])
+        deriv.set_param("y0", [-1.0])
+        nt.assert_allclose(self.inner(deriv, "integrator.0").x0, [2.0])
+        deriv.set_param("alpha", 4.0)
+        nt.assert_allclose(deriv.y0, [-0.5])
+
+    def test_pid_s(self):
+        bd = self.bd()
+        pid = bd.PID_S(bd.clock(0.1), P=1, I=2, D=3, I_limit=4.0, I_band=0.5)
+        self.assertEqual(
+            pid.parameters(),
+            {"P": 1, "I": 2, "D": 3, "I_limit": 4.0, "I_band": 0.5},
+        )
+        pid.set_param("P", 2)
+        pid.set_param("I", 3)
+        pid.set_param("D", 4)
+        pid.set_param("I_limit", (-1, 2))
+        self.assertEqual(self.inner(pid, "I").gain, 3)
+        self.assertEqual(self.inner(pid, "I").min[0], -1)
+        self.assertEqual(self.inner(pid, "I").max[0], 2)
+        self.assertEqual(pid.I_limit, (-1, 2))
+
+    def test_pid_s_integral_band(self):
+        bd = self.bd()
+        pid = bd.PID_S(bd.clock(0.1), P=1, I=2, I_band=0.5)
+        integrator = self.inner(pid, "I")
+        self.assertTrue(integrator.enable(0, [0.1], None))
+        self.assertFalse(integrator.enable(0, [0.9], None))
+        pid.set_param("I_band", 1.0)
+        self.assertTrue(integrator.enable(0, [0.9], None))
+        pid.set_param("I_band", None)
+        self.assertIsNone(integrator.enable)
+        self.assertIsNone(pid.I_band)
+        with self.assertRaises(ValueError):
+            pid.set_param("I_band", -1.0)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -15,7 +15,15 @@ import spatialmath.base as smb  # type: ignore[import-not-found]
 from typing import Any, Callable
 
 from bdsim.components import SampledBlock, Clock, SubsystemBlock, deprecated_block
-from bdsim.blocks.continuous import _conform_D, _old_tf_names, _tf2ss, _TFParams
+from bdsim.blocks.continuous import (
+    _NO_D,
+    _NO_I,
+    _conform_D,
+    _integral_limits,
+    _old_tf_names,
+    _tf2ss,
+    _TFParams,
+)
 
 Vector1D = int | float | tuple[float, ...] | list[float] | np.ndarray
 
@@ -85,6 +93,23 @@ class ZOH(SampledBlock):
 
 
 # ------------------------------------------------------------------------ #
+
+
+def _check_enable(value: Any) -> None:
+    """Validator for ``enable``, a function or ``None``."""
+    if value is not None and not callable(value):
+        raise ValueError("enable must be callable")
+
+
+def _band_enable(I_band: float | None) -> Callable[..., bool] | None:
+    """The ``enable`` function of an integrator that only integrates when the error is in a band."""
+    if I_band is None:
+        return None
+
+    def ifunc(t: float, u: list[Any], x: Any) -> bool:
+        return bool(abs(u[0]) < I_band)
+
+    return ifunc
 
 
 class Integrator_S(SampledBlock):
@@ -175,11 +200,6 @@ class Integrator_S(SampledBlock):
         """
         super().__init__(clock=clock, x0=x0, **blockargs)
 
-        if min is not None:
-            min = smb.getvector(min, len(self._x0))
-        if max is not None:
-            max = smb.getvector(max, len(self._x0))
-
         self.min = min
         self.max = max
         self.gain: float = gain
@@ -190,10 +210,28 @@ class Integrator_S(SampledBlock):
             raise ValueError("enable must be callable")
         self.add_param("clock", when="never")
         self.add_param("gain")
-        self.add_param("min")
-        self.add_param("max")
-        self.add_param("enable")
+        self.add_param("min", coerce=False)
+        self.add_param("max", coerce=False)
+        self.add_param("enable", coerce=False, validate=_check_enable)
         self.add_param("x0", when="setup")
+
+    @property
+    def min(self) -> np.ndarray | None:
+        """Lower limit of each state, or ``None`` for no limit."""
+        return self._min
+
+    @min.setter
+    def min(self, value: Any) -> None:
+        self._min = None if value is None else smb.getvector(value, len(self._x0))
+
+    @property
+    def max(self) -> np.ndarray | None:
+        """Upper limit of each state, or ``None`` for no limit."""
+        return self._max
+
+    @max.setter
+    def max(self, value: Any) -> None:
+        self._max = None if value is None else smb.getvector(value, len(self._x0))
 
     def output(self, t: float, u: list[Any], x: np.ndarray) -> list[Any]:
         result = x
@@ -846,23 +884,15 @@ class PID_S(SubsystemBlock):
         if I != 0:
             # if the I term is required, create the block
             type += "I"
-            integ_args: dict[str, Any] = {}
-            if isinstance(I_limit, float):
-                integ_args["min"] = -I_limit
-                integ_args["max"] = I_limit
-            elif isinstance(I_limit, tuple) and len(I_limit) == 2:
-                integ_args["min"] = I_limit[0]
-                integ_args["max"] = I_limit[1]
-
-            if I_band is not None:
-
-                def ifunc(t: float, u: list[Any], x: Any) -> bool:
-                    return abs(u[0]) < I_band
-
-                integ_args["enable"] = ifunc
+            lo, hi = _integral_limits(I_limit)
 
             Iblock = subsystem.INTEGRATOR_S(
-                clock, gain=I, name="I", **integ_args
+                clock,
+                gain=I,
+                name="I",
+                min=lo,
+                max=hi,
+                enable=_band_enable(I_band),
             )  # integral block with gain I
 
         if D != 0:
@@ -943,8 +973,61 @@ class PID_S(SubsystemBlock):
             subsystem.connect(out_sum, outp)
 
         super().__init__(subsystem=subsystem, **blockargs)
+        self._Iblock = Iblock if "I" in type else None
+        self._I_band = I_band
+        self.add_param("P", forward=(Pblock, "K"))
+        if "I" in type:
+            self.add_param("I", forward=(Iblock, "gain"))
+            self.add_param("I_limit", coerce=False)
+            self.add_param("I_band", coerce=False)
+        else:
+            for name in ("I", "I_limit", "I_band"):
+                self.add_param(name, unavailable=_NO_I)
+        if "D" in type:
+            self.add_param("D", forward=(Dblock, "gain"))
+        else:
+            self.add_param("D", unavailable=_NO_D)
         self.add_param("clock", when="never")
         self.add_param("structure", when="never")
+
+    @property
+    def I_limit(self) -> float | tuple[float | None, float | None] | None:
+        """
+        Limit on the integral term: ``None`` for none, a number for the limit
+        :math:`\\pm` that number, or a (lower, upper) pair.
+        """
+        if self._Iblock is None:
+            return None
+        lo, hi = self._Iblock.min, self._Iblock.max
+        lo = None if lo is None else float(lo[0])
+        hi = None if hi is None else float(hi[0])
+        if lo is None and hi is None:
+            return None
+        if lo is not None and hi is not None and lo == -hi:
+            return hi
+        return lo, hi
+
+    @I_limit.setter
+    def I_limit(self, value: Any) -> None:
+        if self._Iblock is None:
+            raise ValueError(_NO_I)
+        lo, hi = _integral_limits(value)
+        self._Iblock.set_param("min", lo)
+        self._Iblock.set_param("max", hi)
+
+    @property
+    def I_band(self) -> float | None:
+        """The integral term only integrates while the error is smaller than this, or ``None``."""
+        return self._I_band
+
+    @I_band.setter
+    def I_band(self, value: float | None) -> None:
+        if self._Iblock is None:
+            raise ValueError(_NO_I)
+        if value is not None and not value > 0:
+            raise ValueError("I_band must be positive")
+        self._Iblock.set_param("enable", _band_enable(value))
+        self._I_band = value
 
 
 # ---------------------------------------------------------------------------

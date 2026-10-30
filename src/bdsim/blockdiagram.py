@@ -110,6 +110,7 @@ class BlockDiagram(BlockDiagramMixin):
         self.ndstates = 0
         self._issubsystem = False
         self.blocknames: dict[str, Any] = {}
+        self.subsystems: dict[str, Any] = {}
         self.options = None
         self.runtime: Any = None  # set by BDSim before compilation
         self.n_auto_sum = Counter()
@@ -121,9 +122,11 @@ class BlockDiagram(BlockDiagramMixin):
         self.compiled = False
 
     def __getitem__(self, id: int | str) -> Block:
-        print(id)
         if isinstance(id, str):
-            return self.blocknames[id]
+            if id in self.blocknames:
+                return self.blocknames[id]
+            # a subsystem block is not in the compiled diagram, its blocks replaced it
+            return self.subsystems[id]  # type: ignore[no-any-return]
         else:
             for b in self.blocklist:
                 if b.id == id:
@@ -429,6 +432,8 @@ class BlockDiagram(BlockDiagramMixin):
         self.statenames = []
         self.dstatenames = []
         self.blocknames = {}
+        # self.subsystems is kept: once flattened, the diagram has no subsystem blocks
+        # left to find again if it is compiled a second time
 
         if not subsystem and verbose:
             if not self.compiled:
@@ -698,6 +703,7 @@ class BlockDiagram(BlockDiagramMixin):
                 # do not add it to the block list, it was just a container for the subsystem blocks and wires
                 if verbose:
                     print(f"{'  ' * (depth + 1)}instantiating subsystem ", b.name)
+                self.subsystems[b.name] = b
                 ssb, ssw = self._subsystem_import(
                     b.subsystem,  # reference to the BlockDiagram that describes the subsystem
                     b.name,  # name of the subsystem block, becomes a prefix for all blocks within the subsystem
@@ -1290,8 +1296,10 @@ class BlockDiagram(BlockDiagramMixin):
            ``never`` (only with ``fixed=True``)
 
         Blocks inside a subsystem are listed with the path of the subsystem, such as
-        ``sub/gain.0:K``.  The ``--param`` option prints this table when the diagram is
-        compiled.
+        ``sub/gain.0:K``.  A subsystem block that declares parameters of its own, such
+        as ``PID``, is listed by its own name, ``pid.0:P``, instead of the blocks inside
+        it, which can still be set by their own names.  The ``--param`` option prints
+        this table when the diagram is compiled.
 
         :seealso: :meth:`Block.add_param` :meth:`Block.set_param`
         """
@@ -1302,16 +1310,35 @@ class BlockDiagram(BlockDiagramMixin):
             Column("when", headalign="^", colalign="<"),
             border="thin",
         )
-        for b in self.blocklist:
+        # A subsystem that declares parameters presents those, and its inner blocks, which
+        # can still be set by their own names, are not listed.  Names are full paths,
+        # so a subsystem inside a subsystem is under the prefix of the outer one.
+        declared = [
+            name
+            for name, sub in self.subsystems.items()
+            if any(
+                p.forward is not None or p.unavailable is not None
+                for p in sub._parameters.values()
+            )
+        ]
+        inside = tuple(name + "/" for name in declared)
+        owners: list[Any] = [
+            self.subsystems[name] for name in declared if not name.startswith(inside)
+        ]
+
+        for b in [*owners, *self.blocklist]:
+            if b.name.startswith(inside) and b not in owners:
+                continue
             for name, param in b._parameters.items():
-                if param.when == "never" and not fixed:
+                when = b._param_when(param)
+                if when == "never" and not fixed:
                     continue
-                value = getattr(b, name, None)
+                value = b._param_value(name)
                 table.row(
                     f"{b.name}:{name}",
                     _value_str(value),
                     _signature_str(Signature.of(value)),
-                    param.when,
+                    when,
                 )
         table.print(**kwargs)
 
