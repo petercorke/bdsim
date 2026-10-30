@@ -290,7 +290,9 @@ class ParamWindow(QWidget):
                 # If the parameter type is a boolean, create the intractable space as a checkbox, otherwise
                 # make an editable line for that parameter, and populate it with the parameters' current value
                 if not issubclass(parameter[1], bool):
-                    self.line = QLineEdit("" if parameter[2] is None else str(parameter[2]))
+                    self.line = QLineEdit(
+                        "" if parameter[2] is None else str(parameter[2])
+                    )
                 else:
                     self.line = QCheckBox()
                     self.line.setChecked(
@@ -432,7 +434,6 @@ class ParamWindow(QWidget):
 
         # Check if the block has parameters, if so, go through the sanity checking of each parameter value
         if self.parameters:
-
             # For each definition of a parameter, in the blocks' defined parameters
             for parameter in self.parameters:
                 if len(parameter) == 5:
@@ -453,7 +454,10 @@ class ParamWindow(QWidget):
                     inputValue = str(self.parameter_values[i].isChecked())
 
                 # If a value has been provided for that parameter, perform sanity checking on that input
-                if inputValue or (not issubclass(paramType, bool) and (paramVal is None or allows_none(paramOptions))):
+                if inputValue or (
+                    not issubclass(paramType, bool)
+                    and (paramVal is None or allows_none(paramOptions))
+                ):
                     if (
                         not issubclass(paramType, bool)
                         and inputValue == ""
@@ -495,13 +499,11 @@ class ParamWindow(QWidget):
 
                     # Once the sanity check has been performed, if the type is valid, check for parameter restrictions
                     if inputInCompatibleFormat != "@InvalidType@":
-
                         # If the sanity check returns that the parameter doesn't meet its restrictions
                         if inputInCompatibleFormat == "@BadFormat@":
                             # Append the parameter edited, and the parameter options, as a bad_input
                             bad_inputs.append([paramName, paramOptions])
                         else:
-
                             # Otherwise if both sanity checks pass, value is safe to update, so
                             # Check if the given value is different to what is already set as the param value
                             # If it is the same, don't update the value
@@ -516,7 +518,6 @@ class ParamWindow(QWidget):
 
                                 # If self.parameter relates to controlling the number of inputs a block has
                                 if self.parameters[i][0] in ["nin", "ops", "signs"]:
-
                                     # Grab the number of required input sockets
                                     if self.parameters[i][0] == "nin":
                                         num_sockets = self.parameters[i][2]
@@ -836,7 +837,6 @@ class ParamWindow(QWidget):
                 returnValue = "@BadFormat@"
                 # For each restriction that is placed onto the parameter
                 for option in options:
-
                     # If the placed restriction is a set of keywords,
                     if option[0] == "keywords":
                         # Check if the given value matches one of those keywords
@@ -929,7 +929,6 @@ class ParamWindow(QWidget):
             if issubclass(requiredType, str):
                 # If the input is not a number, but an acceptable string
                 if isinstance(inputValue, str):
-
                     # Check if no input has been given
                     if len(inputValue) == 0:
                         return "@InvalidType@"

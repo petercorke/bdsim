@@ -19,7 +19,7 @@ class Serializable:
         This allows those classes to package (save) essential variables necessary
         for the later reconstruction of those class instances, into a JSON file.
         """
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def deserialize(self, data, hashmap=None):
         if hashmap is None:
@@ -36,4 +36,4 @@ class Serializable:
         of variables to class instances
         :type hashmap: Dict, required
         """
-        raise NotImplemented()
+        raise NotImplementedError()

@@ -491,7 +491,9 @@ class SubSystem(SubsystemBlock):
         elif isinstance(subsys, BlockDiagram):
             # use an in-memory diagram
 
-            new_subsystem = copy.deepcopy(subsys) # make a snapshot copy to avoid later changes to the original affecting this block
+            new_subsystem = copy.deepcopy(
+                subsys
+            )  # make a snapshot copy to avoid later changes to the original affecting this block
             name = new_subsystem.name
         else:
             raise ValueError("argument must be filename or BlockDiagram instance")

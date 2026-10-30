@@ -277,9 +277,11 @@ class BdrunCliBehaviorTest(unittest.TestCase):
         fake_bd = MagicMock()
         fake_sim.blockdiagram.return_value = MagicMock()
 
-        with patch("sys.argv", ["bdrun", "dummy.bd", "-v"]), patch(
-            "bdsim.bin.bdrun.BDSim", return_value=fake_sim
-        ), patch("bdsim.bin.bdrun.bdload", return_value=fake_bd) as mock_bdload:
+        with (
+            patch("sys.argv", ["bdrun", "dummy.bd", "-v"]),
+            patch("bdsim.bin.bdrun.BDSim", return_value=fake_sim),
+            patch("bdsim.bin.bdrun.bdload", return_value=fake_bd) as mock_bdload,
+        ):
             bdrun()
 
         self.assertTrue(mock_bdload.call_args.kwargs["verbose"])
@@ -290,9 +292,11 @@ class BdrunCliBehaviorTest(unittest.TestCase):
         fake_bd = MagicMock()
         fake_sim.blockdiagram.return_value = MagicMock()
 
-        with patch("sys.argv", ["bdrun", "dummy.bd"]), patch(
-            "bdsim.bin.bdrun.BDSim", return_value=fake_sim
-        ), patch("bdsim.bin.bdrun.bdload", return_value=fake_bd) as mock_bdload:
+        with (
+            patch("sys.argv", ["bdrun", "dummy.bd"]),
+            patch("bdsim.bin.bdrun.BDSim", return_value=fake_sim),
+            patch("bdsim.bin.bdrun.bdload", return_value=fake_bd) as mock_bdload,
+        ):
             bdrun()
 
         self.assertFalse(mock_bdload.call_args.kwargs["verbose"])
@@ -300,9 +304,10 @@ class BdrunCliBehaviorTest(unittest.TestCase):
     def test_help_uses_argparse_and_delegates_to_bdsim(self):
         """-h prints bdrun argparse help then invokes BDSim help path."""
         buf = io.StringIO()
-        with patch("sys.argv", ["bdrun", "-h"]), patch(
-            "bdsim.bin.bdrun.BDSim", side_effect=SystemExit
-        ) as mock_bdsim:
+        with (
+            patch("sys.argv", ["bdrun", "-h"]),
+            patch("bdsim.bin.bdrun.BDSim", side_effect=SystemExit) as mock_bdsim,
+        ):
             with redirect_stdout(buf):
                 bdrun()
 
@@ -315,9 +320,10 @@ class BdrunCliBehaviorTest(unittest.TestCase):
     def test_no_args_prints_same_full_help_path(self):
         """No-arg invocation should show the same full help/delegation path."""
         buf = io.StringIO()
-        with patch("sys.argv", ["bdrun"]), patch(
-            "bdsim.bin.bdrun.BDSim", side_effect=SystemExit
-        ) as mock_bdsim:
+        with (
+            patch("sys.argv", ["bdrun"]),
+            patch("bdsim.bin.bdrun.BDSim", side_effect=SystemExit) as mock_bdsim,
+        ):
             with redirect_stdout(buf):
                 bdrun()
 

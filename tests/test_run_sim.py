@@ -1552,11 +1552,20 @@ class HybridSimGraphicsRegressionTest(unittest.TestCase):
             self.assertTrue(movie_path.exists())
             res = subprocess.run(
                 [
-                    "ffprobe", "-v", "error", "-select_streams", "v:0",
-                    "-count_frames", "-show_entries", "stream=nb_read_frames",
-                    "-of", "default=noprint_wrappers=1:nokey=1", str(movie_path),
+                    "ffprobe",
+                    "-v",
+                    "error",
+                    "-select_streams",
+                    "v:0",
+                    "-count_frames",
+                    "-show_entries",
+                    "stream=nb_read_frames",
+                    "-of",
+                    "default=noprint_wrappers=1:nokey=1",
+                    str(movie_path),
                 ],
-                capture_output=True, text=True,
+                capture_output=True,
+                text=True,
             )
             n_frames = int(res.stdout.strip() or 0)
             self.assertGreater(n_frames, 0)

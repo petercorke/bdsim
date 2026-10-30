@@ -481,9 +481,10 @@ class NotebookBackendNoSwitchTest(unittest.TestCase):
     def _run_create_figure_with_backend(self, backend_name):
         gb = self._make_gb()
         state = _make_gstate()
-        with patch("matplotlib.get_backend", return_value=backend_name), patch(
-            "matplotlib.use"
-        ) as mock_use:
+        with (
+            patch("matplotlib.get_backend", return_value=backend_name),
+            patch("matplotlib.use") as mock_use,
+        ):
             gb.create_figure(state)
             return mock_use
 

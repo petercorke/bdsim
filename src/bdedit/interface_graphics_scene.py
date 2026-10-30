@@ -234,10 +234,8 @@ class GraphicsScene(QGraphicsScene):
         super().mouseMoveEvent(event)
 
         if self.mousePressed:
-
             # For all moveable items which are selected, update their mouseMove related methods
             for item in self.selectedItems():
-
                 # Padding of 20 pixelsis used for how close the item can come up to the border of the scene
                 padding = 20
 
@@ -317,13 +315,10 @@ class GraphicsScene(QGraphicsScene):
 
         # If user has enabled intersections detection
         if self.enable_intersections:
-
             # Check first if any wires are present in the scene
             if self.scene.wires:
-
                 # If there are intersection points to draw
                 if self.scene.intersection_list:
-
                     # Check the current colour mode of the scene and set the pen to that colour
                     self.checkMode()
                     painter.setPen(Qt.NoPen)
@@ -342,7 +337,6 @@ class GraphicsScene(QGraphicsScene):
 
                         # If there are grouping boxes present in the scene
                         if self.scene.grouping_boxes:
-
                             # Find which grouping boxes, if any, this rectangle overlaps
                             for box in self.scene.grouping_boxes:
                                 # Grab QPath of the current location of this grouping box within the scene

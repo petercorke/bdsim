@@ -183,7 +183,9 @@ def main() -> None:
             log_path = source_path.with_suffix(".log")
             if log_path.exists():
                 print(f"--- {log_path} (tail) ---")
-                print("\n".join(log_path.read_text(errors="replace").splitlines()[-20:]))
+                print(
+                    "\n".join(log_path.read_text(errors="replace").splitlines()[-20:])
+                )
     else:
         failed = False
 

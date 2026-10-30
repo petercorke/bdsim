@@ -33,6 +33,7 @@ def test_grab_movie_frame_with_writer_grabs_once() -> None:
 
 def test_grab_movie_frame_raises_on_broken_writer() -> None:
     """A broken writer (no grab_frame) must surface a clear error, not be swallowed."""
+
     # Object without a grab_frame attribute raises AttributeError when called.
     class BrokenWriter:
         pass

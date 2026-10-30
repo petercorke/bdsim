@@ -915,7 +915,6 @@ class InterfaceWindow(QMainWindow):
         print(self.args)
 
         if main_block_found:
-
             # Check if given file_name from the main block, contains a file extension
 
             bdfile = Path(self.filename)
@@ -951,7 +950,7 @@ class InterfaceWindow(QMainWindow):
             self._sim_process = subprocess.Popen(command, shell=False)
 
         except (ValueError, OSError):
-            print(f"failed to spawn subprocess")
+            print("failed to spawn subprocess")
 
     # -----------------------------------------------------------------------------
     def abortButton(self):

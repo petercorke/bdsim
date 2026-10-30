@@ -17,7 +17,6 @@ import importlib.util
 import argparse
 import types
 import time
-import traceback
 import traceback as tb
 import warnings
 from typing import Any, Callable, NoReturn, Sequence
@@ -1401,13 +1400,13 @@ class BDSim(Runner):
                             f"  (remaining are post-integration replay + sink passes)"
                         )
                         print(
-                            f"  bd.evaluate() mean time:   {mean_eval_ms*1000:.1f} us/call"
+                            f"  bd.evaluate() mean time:   {mean_eval_ms * 1000:.1f} us/call"
                             f"  (total {simstate.bdtime * 1000:.1f} ms)"
                         )
                         run_wall_time = time.time() - run_start_time
                         print(
                             f"  clocktime speedup:         {simstate.T / max(run_wall_time, 1e-12):.2f}x"
-                            f"  (simulated {simstate.T:.3g}s in {run_wall_time*1000:.1f} ms)"
+                            f"  (simulated {simstate.T:.3g}s in {run_wall_time * 1000:.1f} ms)"
                         )
                         print(f"  integration time points:   {len(simstate.tlist)}")
                         print("  scheduled event intervals: 0")
@@ -1534,7 +1533,11 @@ class BDSim(Runner):
                 bd.evaluate(bd.state_map(x0, simstate), 0.0, sinks=False)
                 simstate.bdtime += time.time() - eval_start
                 self._record_sample_and_service_hooks(
-                    bd, simstate, 0.0, x0, stop_short_circuit=False,
+                    bd,
+                    simstate,
+                    0.0,
+                    x0,
+                    stop_short_circuit=False,
                 )
                 # refresh() (present + grab_frame) only fires from _anim_frame
                 # at t=interactive_dt — call it once so the IC reaches the live
@@ -1655,13 +1658,13 @@ class BDSim(Runner):
                     f"  (remaining are post-integration replay + sink passes)"
                 )
                 print(
-                    f"  bd.evaluate() mean time:   {mean_eval_ms*1000:.1f} us/call"
+                    f"  bd.evaluate() mean time:   {mean_eval_ms * 1000:.1f} us/call"
                     f"  (total {simstate.bdtime * 1000:.1f} ms)"
                 )
                 run_wall_time = time.time() - run_start_time
                 print(
                     f"  clocktime speedup:         {simstate.T / max(run_wall_time, 1e-12):.2f}x"
-                    f"  (simulated {simstate.T:.3g}s in {run_wall_time*1000:.1f} ms)"
+                    f"  (simulated {simstate.T:.3g}s in {run_wall_time * 1000:.1f} ms)"
                 )
                 print(f"  integration time points:   {len(simstate.tlist)}")
                 # Scheduled events (clock ticks, explicit declare_event calls) are
@@ -2117,12 +2120,25 @@ class BDSim(Runner):
         which are all upper case, for example, the method ``.GAIN`` invokes
         the constructor for the ``Gain`` class.
 
+        If the block library was not loaded, ``BDSim(load=False)``, the diagram
+        has no factory methods and calling one, for example ``bd.GAIN(2)``,
+        raises ``NotImplementedError``.  Import the block classes directly and
+        pass the diagram as ``bd`` instead::
+
+            from bdsim.blocks import Gain
+
+            gain = Gain(2, bd=bd)
+
         :seealso: :func:`BlockDiagram`
         """
 
         # instantiate a new blockdiagram
         #  it includes stubs for factory methods defined in the BlockDiagramMixin class
         bd = BlockDiagram(name=name)
+        bd.runtime = self
+
+        if self._blocklibrary is None:
+            return bd
 
         def new_method(block_name: str, bd: Any) -> Any:
             # return a wrapper for the block constructor that automatically
@@ -2153,8 +2169,6 @@ class BDSim(Runner):
             return f
 
         # bind the block constructors as new methods on this instance
-        if self._blocklibrary is None:
-            raise RuntimeError("block library not loaded")  # pragma: no cover
         for blockname, info in self._blocklibrary.items():
             # create a function to invoke the block's constructor
             f = new_method(blockname, bd)
@@ -2184,10 +2198,6 @@ class BDSim(Runner):
                     )
 
                 setattr(bd, blockname, undefined_block_factory)
-
-        # add a clone of the options
-        # bd.options = copy.copy(self.options)
-        bd.runtime = self
 
         return bd
 
@@ -2437,11 +2447,16 @@ class BDSim(Runner):
             # :type X: type description
             #
             # params[X] = (type description, param description)
+            #
+            # The ``:type X:`` lines are optional: where a parameter has a type hint
+            # in the signature the convention is to omit them, so a docstring may
+            # have ``:param`` lines and no ``:type`` lines at all.  The type is then
+            # None.
             params = {}
             if "param" in dict:
+                types = dict.get("type", {})
                 for var, descrip in dict["param"].items():
-                    typ = dict["type"].get(var, None)
-                    params[var] = (typ, descrip)
+                    params[var] = (types.get(var), descrip)
 
             return params
 
@@ -2611,10 +2626,27 @@ class BDSim(Runner):
                 if block_class is None:
                     continue
 
-                ds = "\n\n".join(
-                    part for part in (meta["class_doc"], meta["init_doc"]) if part
-                )
-                param_dict = parse_docstring(ds)
+                ds = ""
+                try:
+                    ds = "\n\n".join(
+                        part for part in (meta["class_doc"], meta["init_doc"]) if part
+                    )
+                    param_dict = parse_docstring(ds)
+                except Exception as err:
+                    # a problem in one block's docstring, perhaps in a third-party
+                    # block library, must not stop all blocks from loading
+                    self._print_exception_red(
+                        "load_blocks:: could not parse the docstring of block "
+                        f"{name} in {module_file}\n"
+                        "  the block is loaded without parameter metadata.\n"
+                        "  Block docstrings document parameters with reST fields, "
+                        "one per parameter, for example\n"
+                        "      :param gain: the gain, defaults to 1\n"
+                        "  A matching ':type gain: float' line is optional when the "
+                        "signature has a type hint.",
+                        err,
+                    )
+                    param_dict = {}
 
                 info: dict[str, Any] = {}
                 info["path"] = [blocks_path]
