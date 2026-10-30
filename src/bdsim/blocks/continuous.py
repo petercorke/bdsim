@@ -831,17 +831,68 @@ class Deriv2(LTI_SS):
         Choose ``zeta=0.707`` (:math:`1/\sqrt{2}`) for optimal rise time and overshoot (4.3%).
         """
 
+        A, B, C = self._realisation(wn, unit, zeta, gain)
+
+        # this model is strictly proper, D is zero and can be ommitted.
+        super().__init__(A=A, B=B, C=C, x0=x0, **blockargs)
+        self.unit = unit
+        self._wn, self._zeta, self._gain = wn, zeta, gain
+
+        # A, B and C are derived from wn, zeta and gain, so they are not parameters
+        for name in "ABCD":
+            self.remove_param(name)
+        self.add_param("wn")
+        self.add_param("zeta")
+        self.add_param("gain")
+        self.add_param("unit", when="never")
+        self.add_param("x0", when="setup")
+
+    @staticmethod
+    def _realisation(
+        wn: float, unit: str, zeta: float, gain: float
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """State-space matrices A, B and C of ``gain * wn^2 s / (s^2 + 2 zeta wn s + wn^2)``."""
         if unit == "Hz":
             wn = 2 * pi * wn
         N = [gain * wn**2, 0]  # wn^2 s
         D = [1, 2 * zeta * wn, wn**2]  # s^2 + 2 zeta wn s + wn^2
 
         A, B, C, _ = _tf2ss(N, D, form="ocf")
+        return A, B, C
 
-        # this model is strictly proper, D is zero and can be ommitted.
-        super().__init__(A=A, B=B, C=C, x0=x0, **blockargs)
-        self.add_param("unit", when="never")
-        self.add_param("x0", when="setup")
+    def _rebuild(self, wn: float, zeta: float, gain: float) -> None:
+        """Change the dynamics, or raise and leave the block as it was."""
+        if wn <= 0:
+            raise ValueError("wn must be positive")
+        self.A, self.B, self.C = self._realisation(wn, self.unit, zeta, gain)
+        self._wn, self._zeta, self._gain = wn, zeta, gain
+
+    @property
+    def wn(self) -> float:
+        """Natural frequency, in ``unit``."""
+        return self._wn
+
+    @wn.setter
+    def wn(self, value: float) -> None:
+        self._rebuild(value, self._zeta, self._gain)
+
+    @property
+    def zeta(self) -> float:
+        """Damping ratio."""
+        return self._zeta
+
+    @zeta.setter
+    def zeta(self, value: float) -> None:
+        self._rebuild(self._wn, value, self._gain)
+
+    @property
+    def gain(self) -> float:
+        """Gain or scaling factor."""
+        return self._gain
+
+    @gain.setter
+    def gain(self, value: float) -> None:
+        self._rebuild(self._wn, self._zeta, value)
 
 
 # ------------------------------------------------------------------------ #

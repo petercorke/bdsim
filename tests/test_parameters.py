@@ -802,33 +802,11 @@ class ParamOptionTest(ParamTestCase):
 BLOCKS = Path(bdsim.__file__).parent / "blocks"
 
 # Parameters that need a handler (derived state, a unit, an initial state, a
-# structure that may be absent) and do not have one yet.  This list is the work
+# structure that may be absent) and do not have one yet.  All that remain are the
+# blocks built from a subsystem, which is flattened away when the diagram is compiled.  This list is the work
 # still to do: it must shrink, and a parameter that is handled or declared must
 # be removed from it.
 PENDING = {
-    "Piecewise.seq",
-    "Time.value",
-    "Print.fmt",
-    "Stop.func",
-    "Event.direction",
-    "Event.fargs",
-    "Event.fkwargs",
-    "Function.fargs",
-    "Function.fkwargs",
-    "Function.persistent",
-    "Interpolate.x",
-    "Interpolate.y",
-    "Interpolate.xy",
-    "Interpolate.kind",
-    "Norm.ord",
-    "Norm.axis",
-    "Index.index",
-    "Slice1.index",
-    "Slice2.rows",
-    "Slice2.cols",
-    "Deriv2.wn",
-    "Deriv2.zeta",
-    "Deriv2.gain",
     "Deriv.alpha",
     "Deriv.x0",
     "Deriv.y0",
@@ -843,9 +821,6 @@ PENDING = {
     "PID_S.D",
     "PID_S.I_limit",
     "PID_S.I_band",
-    "WaveForm.freq",
-    "WaveForm.min",
-    "WaveForm.max",
 }
 
 
