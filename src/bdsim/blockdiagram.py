@@ -447,6 +447,11 @@ class BlockDiagram(BlockDiagramMixin):
             self, "", verbose=verbose
         )
 
+        # replace the INPORT and OUTPORT blocks of the subsystems by wires
+        for message in self._elide_subsystem_ports():
+            print(f"  ERROR: {message}")
+            error = True
+
         # get all the blocks in the complete wirelist ready for compilation
         #  - create _input_wires and _output_wires lists
         #  - create _inport_slots and _outport_slots lists
@@ -669,6 +674,92 @@ class BlockDiagram(BlockDiagramMixin):
         for b in self.blocklist:
             for slot in b._outport_slots:
                 slot.signature = Signature.of(slot.value)
+
+    def _elide_subsystem_ports(self) -> list[str]:
+        """
+        Replace the INPORT and OUTPORT blocks of instantiated subsystems by wires.
+
+        :return: error messages, empty if all is well
+
+        Flattening leaves the port blocks of each subsystem in the network, each a pass
+        through.  They are blocks with several inputs and outputs, so the loop detector
+        and the scheduler see every output depending on every input, which finds loops
+        that are not there (Issue #84).  Here the wires that leave a port block are
+        started where the signal really comes from, its *source*, and the wires that end
+        on a port block are dropped.  Only the wires are needed, so this is done before
+        the blocks are compiled.
+
+        The source of each subsystem input and output is kept on the subsystem block,
+        see :attr:`SubsystemBlock.inports` and :attr:`SubsystemBlock.outports`, which is
+        how the signals of a subsystem are watched.
+        """
+        pending = [sb for sb in self.subsystems.values() if not sb._ports_elided]
+        if not pending:
+            return []
+
+        owner: dict[Block, Any] = {}  # port block -> its subsystem block
+        for sb in pending:
+            owner[sb.inport] = sb
+            owner[sb.outport] = sb
+
+        # the wire that feeds each input of a port block
+        feeder: dict[tuple[Block, Any], Wire] = {}
+        for w in self.wirelist:
+            if w.end.block in owner:
+                feeder[(w.end.block, w.end.port)] = w
+
+        problems: list[str] = []
+
+        def source(plug: Plug) -> Plug | None:
+            """Follow the plug back through port blocks to the output port that drives it."""
+            seen: set[tuple[Block, Any]] = set()
+            while plug.block in owner:
+                key = (plug.block, plug.port)
+                if key in seen:
+                    problems.append(
+                        f"the ports of subsystem {owner[plug.block].name} are wired "
+                        "in a loop with nothing in between"
+                    )
+                    return None
+                seen.add(key)
+                wire = feeder.get(key)
+                if wire is None:
+                    return None
+                plug = wire.start
+            return plug
+
+        for sb in pending:
+            sb._source_inports = [
+                source(StartPlug(sb.inport, i)) for i in range(sb.inport.nout)
+            ]
+            sb._source_outports = [
+                source(StartPlug(sb.outport, j)) for j in range(sb.outport.nin)
+            ]
+            for i, plug in enumerate(sb._source_inports):
+                if plug is None:
+                    problems.append(
+                        f"input {i} of subsystem {sb.name} is not connected"
+                    )
+            sb._ports_elided = True
+
+        wires = []
+        for w in self.wirelist:
+            if w.end.block in owner:
+                continue  # feeds a port block, the wires that leave it start at its source
+            if w.start.block in owner:
+                plug = source(w.start)
+                if plug is None:
+                    continue  # reported above
+                w.newstart(plug)
+            wires.append(w)
+        self.wirelist = wires
+        self.blocklist = [b for b in self.blocklist if b not in owner]
+        for i, w in enumerate(self.wirelist):
+            w.id = i  # type: ignore[assignment]
+        for i, b in enumerate(self.blocklist):
+            b.id = i  # type: ignore[assignment]
+
+        return list(dict.fromkeys(problems))
 
     def _subsystem_import(
         self, bd: BlockDiagram, sspath: str, verbose: bool = False, depth: int = 0
@@ -1275,6 +1366,47 @@ class BlockDiagram(BlockDiagramMixin):
                         raise ValueError(f"sampled block {b} has no clock")
                     table.row(b.id, b.name, c.name, c.T, c.offset)
             table.print(**kwargs)
+
+    def report_subsystems(self, **kwargs: Any) -> None:
+        """
+        Print a table of the inputs and outputs of the subsystems.
+
+        :param kwargs: options passed to :meth:`ansitable.table.ANSIMatrix.print`
+        :type kwargs: dict
+
+        A subsystem block is not part of the compiled network, and its INPORT and OUTPORT
+        blocks have been replaced by wires, so the signals that cross its boundary are
+        listed here.  The columns are
+
+        1. the port, such as ``pid.0[1]``, which is what can be watched
+        2. ``in`` or ``out``
+        3. the block and port that the signal comes from, the *source*, which for an
+           output is a block inside the subsystem (looking through nested subsystems) and
+           for an input is a block outside it
+        4. the type of the signal, as the signature recorded when the diagram was compiled
+
+        :seealso: :attr:`SubsystemBlock.inports` :attr:`SubsystemBlock.outports`
+        """
+        table = ANSITable(
+            Column("port", headalign="^", colalign="<"),
+            Column("", headalign="^", colalign="<"),
+            Column("source", headalign="^", colalign="<"),
+            Column("type", headalign="^", colalign="<"),
+            border="thin",
+        )
+        for name, sub in self.subsystems.items():
+            for direction, plugs in (("in", sub.inports), ("out", sub.outports)):
+                for port, plug in enumerate(plugs):
+                    if plug is None:
+                        source, signature = "?", None
+                    else:
+                        source = f"{plug.block.name}[{plug.port}]"
+                        sigs = getattr(plug.block, "outsig", None)
+                        signature = sigs[plug.port] if sigs else None
+                    table.row(
+                        f"{name}[{port}]", direction, source, _signature_str(signature)
+                    )
+        table.print(**kwargs)
 
     def report_params(self, fixed: bool = False, **kwargs: Any) -> None:
         """

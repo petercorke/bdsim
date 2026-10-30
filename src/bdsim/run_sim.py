@@ -1283,7 +1283,7 @@ class BDSim(Runner):
                     port_group = m.group("port")
                     port = 0 if port_group is None else int(port_group)
 
-                    b = bd.blocknames[name]
+                    b = bd[name]  # a subsystem block is found by name too
                     plug = b[port]
                 elif isinstance(w, Block):
                     # a block was given, defaults to port 0
@@ -1292,13 +1292,16 @@ class BDSim(Runner):
                     # a plug was given
                     plug: Plug = w  # type: ignore[no-redef]
 
+                watch_plug = plug
                 if plug.block.blockclass == "subsystem":
                     # subsystem blocks no longer exist in the wirelist, and don't have
-                    # their own outputs, so watch the corresponding port of the subsystem's
-                    # OUTPORT block instead.
-                    plug.block = plug.block.outport
+                    # their own outputs, so watch the output port inside the subsystem
+                    # that generates the value.  The name stays that of the subsystem.
+                    watch_plug = plug.block.outports[plug.port]
+                    if watch_plug is None:
+                        raise ValueError(f"cannot watch {plug}, nothing drives it")
 
-                watchlist.append(plug)
+                watchlist.append(watch_plug)
                 watchnamelist.append(str(plug))
             simstate.watchlist = watchlist
             simstate.watchnamelist = watchnamelist
@@ -2854,7 +2857,7 @@ class BDSim(Runner):
 
         :param bd: the block diagram to be reported
         :type bd: :class:`BlockDiagram`
-        :param type: report type, one of: "summary" (default), "lists", "schedule", "params"
+        :param type: report type, one of: "summary" (default), "lists", "schedule", "params", "subsystems"
         :type type: str, optional
         :param style: table style, one of: ansi (default), markdown, latex
         :type style: str
@@ -2862,7 +2865,7 @@ class BDSim(Runner):
         Single method wrapper for various block diagram reports.  Obeys the ``-q``
         option to suppress all reports at runtime.
 
-        :seealso: :meth:`BlockDiagram.report_summary` :meth:`BlockDiagram.report_lists` :meth:`BlockDiagram.report_schedule` :meth:`BlockDiagram.report_params`
+        :seealso: :meth:`BlockDiagram.report_summary` :meth:`BlockDiagram.report_lists` :meth:`BlockDiagram.report_schedule` :meth:`BlockDiagram.report_params` :meth:`BlockDiagram.report_subsystems`
         """
         context: SimulationContext | None = self._get_context()
         if self.options is None:
@@ -2879,6 +2882,8 @@ class BDSim(Runner):
             bd.report_schedule(**kwargs)
         elif type == "params":
             bd.report_params(**kwargs)
+        elif type == "subsystems":
+            bd.report_subsystems(**kwargs)
 
 
 def _parse_param_text(text: str, current: Any) -> Any:

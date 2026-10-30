@@ -2423,6 +2423,40 @@ class SubsystemBlock(Block):
         self.inport = inports[0]
         self.outport = outports[0]
 
+        # set when the diagram is compiled and the INPORT and OUTPORT blocks are replaced
+        # by wires, see BlockDiagram._elide_subsystem_ports
+        self._ports_elided = False
+        self._source_inports: list[Plug | None] = []
+        self._source_outports: list[Plug | None] = []
+
+    @property
+    def inports(self) -> list[Plug]:
+        """
+        The output ports that feed the inputs of the subsystem.
+
+        :return: one plug per input, the block and port that drives it
+        :rtype: list of Plug
+
+        Like :attr:`Block.inports`, but the subsystem block is not part of the compiled
+        network.  Available after the diagram has been compiled.
+        """
+        return self._source_inports  # type: ignore[return-value]
+
+    @property
+    def outports(self) -> list[Plug]:
+        """
+        The output ports that generate the outputs of the subsystem.
+
+        :return: one plug per output, the block and port inside the subsystem whose value
+            is the output.  Nested subsystems are looked through.
+        :rtype: list of Plug
+
+        This is how the output of a subsystem is watched: ``watch=[pid]`` or
+        ``watch=[pid[0]]`` watch the plug found here.  Available after the diagram has
+        been compiled.
+        """
+        return self._source_outports  # type: ignore[return-value]
+
 
 class EventSource:
     pass
