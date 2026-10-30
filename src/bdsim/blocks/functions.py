@@ -423,7 +423,7 @@ class Pow(FunctionBlock):
         """
         :param p: The exponent value, defaults to 1
         :type p: scalar
-        :param matrix: premultiply by constant, default is postmultiply, defaults to False
+        :param matrix: matrix power, not elementwise exponentiation, defaults to False
         :type matrix: bool, optional
         :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict

@@ -329,7 +329,7 @@ class Scope(GraphicsBlock):
         :type styles: str or dict, list of strings or dicts; one per line, optional
         :param stairs: force staircase style plot for all lines, defaults to False
         :type stairs: bool, optional
-        :param scale: fixed y-axis scale or defaults to 'auto'
+        :param scale: fixed y-axis scale, or 'auto', defaults to 'auto'
         :type scale: str or array_like(2)
         :param labels: labels for the plotted signals, defaults to block name and port of the source of each signal if not given. Used
             for vertical axis label, legend and cursor readout.
@@ -787,7 +787,7 @@ class ScopeXY(GraphicsBlock):
         """
         :param style: line style, defaults to None
         :type style: optional str or dict
-        :param scale: fixed y-axis scale or defaults to 'auto'
+        :param scale: fixed y-axis scale, or 'auto', defaults to 'auto'
         :type scale: str or array_like(2) or array_like(4)
         :param aspect: aspect ratio, defaults to "equal"
         :type aspect: str
@@ -1097,7 +1097,7 @@ class ScopeXY1(ScopeXY):
         :type indices: array_like(2)
         :param style: line style
         :type style: optional str or dict
-        :param scale: fixed y-axis scale or defaults to 'auto'
+        :param scale: fixed y-axis scale, or 'auto', defaults to 'auto'
         :type scale: str or array_like(2) or array_like(4)
         :param labels: axis labels (xlabel, ylabel)
         :type labels: 2-element tuple or list
