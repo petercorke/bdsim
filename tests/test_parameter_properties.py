@@ -5,6 +5,9 @@ has to rebuild something.  (The registry and the simple cases are in test_parame
 
 import unittest
 
+import contextlib
+import io
+
 import numpy as np
 import numpy.testing as nt
 from spatialmath import SE3, Twist3
@@ -278,6 +281,19 @@ class FunctionParameterTest(PropTestCase):
         nt.assert_array_equal(sl.test_output(v)[0], v)
         with self.assertRaises(ValueError):
             sl.set_param("index", "oops")
+
+    def test_slice1_integer_index_gives_an_element(self):
+        # as the documentation says: index=2 is element 2, as a scalar
+        sl = self.bd().SLICE1(index=2)
+        self.assertEqual(sl.test_output(np.arange(10))[0], 2)
+        sl.set_param("index", 5)
+        self.assertEqual(sl.test_output(np.arange(10))[0], 5)
+
+    def test_function_start_does_not_print(self):
+        func = self.bd().FUNCTION(lambda x, d: x, persistent=True)
+        with contextlib.redirect_stdout(io.StringIO()) as out:
+            func.start_safe(func.test_start())
+        self.assertEqual(out.getvalue(), "")
 
     def test_slice2_rows_and_cols(self):
         sl = self.bd().SLICE2(rows=(0, 2, 1), cols=(0, 2, 1))

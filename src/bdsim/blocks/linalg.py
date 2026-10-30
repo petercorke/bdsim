@@ -14,10 +14,10 @@ from typing import Any
 
 from bdsim.components import FunctionBlock
 
-IndexSpec = slice | list[Any]
+IndexSpec = slice | list[Any] | int
 
 
-def _index_spec(value: Any, what: str) -> IndexSpec:
+def _index_spec(value: Any, what: str, allow_int: bool = False) -> IndexSpec:
     """
     A slice or list given as a block parameter, in the form NumPy indexes with.
 
@@ -30,6 +30,8 @@ def _index_spec(value: Any, what: str) -> IndexSpec:
         return slice(None, None, None)
     if isinstance(value, (slice, list)):
         return value
+    if allow_int and isinstance(value, (int, np.integer)):
+        return int(value)
     if isinstance(value, tuple) and len(value) == 3:
         return slice(*value)
     raise ValueError(f"bad {what} specifier")
@@ -477,7 +479,7 @@ class Slice1(FunctionBlock):
 
     @index.setter
     def index(self, value: Any) -> None:
-        self._index = _index_spec(value, "index")
+        self._index = _index_spec(value, "index", allow_int=True)
 
     def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         array = inputs[0]

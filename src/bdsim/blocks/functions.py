@@ -696,7 +696,6 @@ class Function(FunctionBlock):
         super().start(simstate)
         if self.userdata is not None:
             self.userdata.clear()
-            print("clearing user data")
 
     @property
     def persistent(self) -> bool:
