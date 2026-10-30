@@ -383,6 +383,7 @@ class TestExport:
         out = self._export("png", tmp_path)
 
         from PySide6.QtGui import QImage
+
         assert out.exists(), "PNG not created"
         assert out.stat().st_size > self.MIN_BYTES, "PNG suspiciously small"
         # Verify PNG magic bytes
