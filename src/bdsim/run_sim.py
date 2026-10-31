@@ -265,7 +265,7 @@ class BDSimState(SimulationState):
     each time run() is called. This keeps BDSim.run() reentrant.
 
     Inherited attributes from ``SimulationState``:
-    ``x``, ``tf``, ``t``, ``fignum``, ``stop``, ``checkfinite``, ``debugger``,
+    ``x``, ``tf``, ``t``, ``fignum``, ``stop``, ``check``, ``debugger``,
     ``t_stop``, ``eventq``, ``options``, ``clock_states``.
 
     Additional attributes
@@ -572,6 +572,7 @@ class BDSim(Runner):
         ``--altscreen``, ``+A``             altscreen       True     display plots on second monitor
         ``--no-altscreen``, ``-A``          altscreen       True     do not display plots on second monitor
         ``--no-progress``                   progress        True     do not display simulation progress bar
+        ``--no-check``                      check           True     do not check block outputs and derivatives during the run (faster)
         ``--backend BE``, ``-b BE``         backend         None     matplotlib backend
         ``--tiles SPEC``, ``-t SPEC``       tiles           None     arrange figure tiles as RxC or square/wide/tall
         ``--shape WxH``                     shape           None     window size (default: matplotlib default)
@@ -1051,7 +1052,8 @@ class BDSim(Runner):
         solver_args: dict[str, Any] | None = None,
         debug: str = "",
         block: bool | None = None,
-        checkfinite: bool = True,
+        check: bool | None = None,
+        checkfinite: bool | None = None,
         minstepsize: float = 1e-12,
         watch: Any = None,
         threaded: bool = False,
@@ -1073,8 +1075,13 @@ class BDSim(Runner):
         :type debug: str, optional
         :param block: matplotlib block-at-end behaviour, default False
         :type block: bool
-        :param checkfinite: error if inf or nan on any wire, default True
-        :type checkfinite: bool
+        :param check: check block outputs and derivatives as they are computed
+            (output form, ``NaN`` or ``Inf``, change of signature, derivative shape),
+            defaults to the ``check`` option which is True.  ``--no-check`` turns
+            it off, which is faster.
+        :type check: bool, optional
+        :param checkfinite: deprecated, use ``check``
+        :type checkfinite: bool, optional
         :param minstepsize: minimum step length guard, default 1e-12
         :type minstepsize: float
         :param watch: list of signals to log (see below)
@@ -1192,7 +1199,18 @@ class BDSim(Runner):
         simstate.solver_args = solver_args
         simstate.minstepsize = minstepsize
         simstate.stop = None  # allow any block to stop.BlockDiagram by setting this to the block's name
-        simstate.checkfinite = checkfinite
+        if checkfinite is not None:
+            warnings.warn(
+                "run(checkfinite=...) is deprecated, use check=",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            if check is None:
+                check = checkfinite
+        if check is None:
+            check = bool(getattr(run_options, "check", True))
+        simstate.check = check
+        bd.check = check
         simstate.options = run_options
         simstate.t_stop = None
 
@@ -3001,6 +3019,7 @@ class Options(OptionsBase):
             "outfile": None,
             "jsonfile": None,
             "quiet": False,
+            "check": True,
             "setparam": [],
             "setglob": [],
         }
@@ -3260,6 +3279,14 @@ class Options(OptionsBase):
                 const=True,
                 default=effective_defaults["quiet"],
                 help="suppress reports and progress bar",
+            )
+            sim.add_argument(
+                "--no-check",
+                action="store_const",
+                const=False,
+                default=effective_defaults["check"],
+                dest="check",
+                help="do not check block outputs during the run (faster)",
             )
             sim.add_argument(
                 "--no-progress",
