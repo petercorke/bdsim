@@ -14,6 +14,15 @@ import matplotlib
 matplotlib.use("Agg")
 
 
+def pytest_addoption(parser):
+    parser.addoption(
+        "--update-golden",
+        action="store_true",
+        default=False,
+        help="rewrite tests/golden/*.npz from the current results instead of comparing",
+    )
+
+
 def pytest_configure(config):
     """
     Strip pytest's own arguments from sys.argv before any test code runs.
@@ -23,3 +32,9 @@ def pytest_configure(config):
     -s, -v, --tb=short, etc.
     """
     sys.argv = sys.argv[:1]
+
+    config.addinivalue_line(
+        "markers",
+        "golden: run the examples and compare with the reference results (about "
+        "25 s), deselect with -m 'not golden'",
+    )
