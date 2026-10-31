@@ -552,6 +552,28 @@ class SubsystemParameterTest(PropTestCase):
         self.assertIn("sub/pid:P", out.getvalue())
         self.assertNotIn("sub/pid/P:K", out.getvalue())
 
+    def test_terms_builds_a_term_whose_gain_is_zero_so_its_parameter_can_be_set(self):
+        # PID(I=0) has no integral term and I cannot be set; terms="PID" builds it
+        _, plain = self.pid(P=1)
+        with self.assertRaises(ValueError):
+            plain.set_param("I", 1)
+        _, pid = self.pid(P=1, terms="PID")
+        self.assertEqual(
+            sorted(pid.parameters()), sorted(["P", "I", "I_limit", "D", "D_pole"])
+        )
+        pid.set_param("I", 2)
+        pid.set_param("D", 3)
+        self.assertEqual(self.inner(pid, "I").gain, 2)
+        self.assertEqual(self.inner(pid, "D", "K").K, 3)
+
+    def test_pid_s_terms(self):
+        bd = self.bd()
+        pid = bd.PID_S(bd.clock(0.1), P=1, terms="PID")
+        pid.set_param("I", 2)
+        pid.set_param("D", 3)
+        self.assertEqual(self.inner(pid, "I").gain, 2)
+        self.assertEqual(pid.parameters()["D"], 3)
+
     def test_deriv_parameters(self):
         deriv = self.bd().DERIV(alpha=2.0, x0=[4.0], gain=3.0)
         self.assertEqual(sorted(deriv.parameters()), ["alpha", "gain", "x0", "y0"])

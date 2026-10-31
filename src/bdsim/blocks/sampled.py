@@ -775,8 +775,27 @@ class PID_S(SubsystemBlock):
 
     Sometimes the gains are written in terms of time constants :math:`T_i = 1/I` and :math:`Td = D`.
 
-    The PID controller is a subsytem comprising a number of blocks. If the I or D gains are
-    zero then a PD or PI controller will be created with fewer blocks.
+    The PID controller is a subsytem comprising a number of blocks.
+
+    **Which terms are built.**  The controller is a subsystem of ordinary blocks, and a
+    term whose gain is zero is normally left out, to save blocks and states.  The
+    proportional term is always built.
+
+    * By default (``terms=None``) the I term is built only if ``I`` is not zero, and the D
+      term only if ``D`` is not zero.  So ``bd.PID_S(P=3, I=1)`` is a PI controller and
+      ``bd.PID_S(P=3)`` is proportional only.
+    * ``terms`` overrides this.  It is one of ``"P"``, ``"PI"``, ``"PD"`` or ``"PID"``, and
+      exactly those terms are built, **even if their gain is zero**.  A term that is
+      built can have its gain changed after the block is created; a term that was left
+      out cannot be added later, because the structure is fixed when the block is
+      created.  For example, a PD controller that starts with no derivative action::
+
+          pid = bd.PID_S(clock, P=3, D=0, terms="PD")
+
+    * A non-zero gain for a term that ``terms`` does not build is an error, not silently
+      ignored.  So is a value of ``terms`` other than the four above.
+    * The cost of building a term at zero gain is its state: an integrator state that
+      stays at zero, or the state of the discrete derivative.
 
     The gain equivalence between the three structures is given by
 
@@ -829,7 +848,10 @@ class PID_S(SubsystemBlock):
 
     Examples::
 
-        pid = bd.PID_S(P=3, D=2, I=1)
+        pid = bd.PID_S(clock, P=3, D=2, I=1)               # PID
+        pid = bd.PID_S(clock, P=3, I=1)                    # PI, no D block
+        pid = bd.PID_S(clock, P=3)                         # P only
+        pid = bd.PID_S(clock, P=3, D=0, terms="PD")        # PD, with a D block that starts at zero
 
     .. warning::
         This block has a direct feedthrough term (by definition), and depending on how it is used
@@ -853,6 +875,7 @@ class PID_S(SubsystemBlock):
         I_limit: float | tuple[float, ...] | list[float] | None = None,
         I_band: float | None = None,
         structure: str = "parallel",
+        terms: str | None = None,
         **blockargs: Any,
     ) -> None:
         r"""
@@ -871,6 +894,9 @@ class PID_S(SubsystemBlock):
         :param I_band: band within which integral action is active
         :type I_band: float
         :param structure: the structure of the PID implementation, "parallel" (default), "series", "standard|ideal"
+        :param terms: the terms to build, one of "P", "PI", "PD" or "PID", even if a gain is zero; the default is P, plus I and D if their gain is not zero
+        :type terms: str, optional
+        :raises ValueError: ``terms`` is not one of those, or a gain is non-zero for a term that is not built
         :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
@@ -879,11 +905,23 @@ class PID_S(SubsystemBlock):
         subsystem = bd.runtime.blockdiagram(name="PID")
 
         Pblock = subsystem.GAIN(P)  # proportional gain block
-        type = "P"
 
-        if I != 0:
+        if terms is None:
+            # the terms with a non-zero gain; P is always built
+            terms = "P" + ("I" if I != 0 else "") + ("D" if D != 0 else "")
+        elif terms not in ("P", "PI", "PD", "PID"):
+            raise ValueError(
+                f"terms must be one of 'P', 'PI', 'PD' or 'PID', got {terms!r}"
+            )
+        else:
+            for name, gain in (("I", I), ("D", D)):
+                if gain != 0 and name not in terms:
+                    raise ValueError(
+                        f"{name}={gain} but terms={terms!r} does not build the {name} term"
+                    )
+
+        if "I" in terms:
             # if the I term is required, create the block
-            type += "I"
             lo, hi = _integral_limits(I_limit)
 
             Iblock = subsystem.INTEGRATOR_S(
@@ -895,8 +933,7 @@ class PID_S(SubsystemBlock):
                 enable=_band_enable(I_band),
             )  # integral block with gain I
 
-        if D != 0:
-            type += "D"
+        if "D" in terms:
             # if the D term is required, create the blocks
             Dblock = subsystem.DERIV_S(clock, gain=D)  # derivative block
 
@@ -908,22 +945,25 @@ class PID_S(SubsystemBlock):
 
         # for each case sum the various terms
         if structure == "parallel":
-            if type == "PID":
+            if terms == "PID":
                 out_sum = subsystem.SUM("+++", name="SUM")
                 subsystem.connect(error_sum, Pblock, Dblock, Iblock)
                 subsystem.connect(Pblock, out_sum[0])
                 subsystem.connect(Iblock, out_sum[1])
                 subsystem.connect(Dblock, out_sum[2])
-            elif type == "PI":
+            elif terms == "PI":
                 out_sum = subsystem.SUM("++", name="SUM")
                 subsystem.connect(error_sum, Pblock, Iblock)
                 subsystem.connect(Pblock, out_sum[0])
                 subsystem.connect(Iblock, out_sum[1])
-            elif type == "PD":
+            elif terms == "PD":
                 out_sum = subsystem.SUM("++", name="SUM")
                 subsystem.connect(error_sum, Pblock, Dblock)
                 subsystem.connect(Pblock, out_sum[0])
                 subsystem.connect(Dblock, out_sum[1])
+            else:  # "P": no summing junction
+                out_sum = Pblock
+                subsystem.connect(error_sum, Pblock)
 
             subsystem.connect(out_sum, outp)
 
@@ -932,7 +972,7 @@ class PID_S(SubsystemBlock):
 
             subsystem.connect(error_sum, Pblock)
 
-            if "I" in type:
+            if "I" in terms:
                 sum1 = subsystem.SUM("++", name="SUM_I")
 
                 subsystem.connect(Pblock, Iblock, sum1[1])
@@ -941,7 +981,7 @@ class PID_S(SubsystemBlock):
             else:
                 I_out = Pblock
 
-            if "D" in type:
+            if "D" in terms:
                 sum2 = subsystem.SUM("++", name="SUM_D")
                 subsystem.connect(I_out, Dblock, sum2[1])
                 subsystem.connect(Dblock, sum2[0])
@@ -953,42 +993,46 @@ class PID_S(SubsystemBlock):
 
         elif structure in ("standard", "ideal"):
             # P in series with parallel D and I
-            if type == "PID":
+            if terms == "PID":
                 out_sum = subsystem.SUM("+++", name="SUM")
                 subsystem.connect(error_sum, Pblock)
                 subsystem.connect(Pblock, out_sum[0], Iblock, Dblock)
                 subsystem.connect(Iblock, out_sum[1])
                 subsystem.connect(Dblock, out_sum[2])
-            elif type == "PI":
+            elif terms == "PI":
                 out_sum = subsystem.SUM("++", name="SUM")
                 subsystem.connect(error_sum, Pblock)
                 subsystem.connect(Pblock, out_sum[0], Iblock)
                 subsystem.connect(Iblock, out_sum[1])
-            elif type == "PD":
+            elif terms == "PD":
                 out_sum = subsystem.SUM("++", name="SUM")
                 subsystem.connect(error_sum, Pblock)
                 subsystem.connect(Pblock, out_sum[0], Dblock)
                 subsystem.connect(Dblock, out_sum[1])
+            else:  # "P": no summing junction
+                out_sum = Pblock
+                subsystem.connect(error_sum, Pblock)
 
             subsystem.connect(out_sum, outp)
 
         super().__init__(subsystem=subsystem, **blockargs)
-        self._Iblock = Iblock if "I" in type else None
+        self._Iblock = Iblock if "I" in terms else None
         self._I_band = I_band
         self.add_param("P", forward=(Pblock, "K"))
-        if "I" in type:
+        if "I" in terms:
             self.add_param("I", forward=(Iblock, "gain"))
             self.add_param("I_limit", coerce=False)
             self.add_param("I_band", coerce=False)
         else:
             for name in ("I", "I_limit", "I_band"):
                 self.add_param(name, unavailable=_NO_I)
-        if "D" in type:
+        if "D" in terms:
             self.add_param("D", forward=(Dblock, "gain"))
         else:
             self.add_param("D", unavailable=_NO_D)
         self.add_param("clock", when="never")
         self.add_param("structure", when="never")
+        self.add_param("terms", when="never")
 
     @property
     def I_limit(self) -> float | tuple[float | None, float | None] | None:

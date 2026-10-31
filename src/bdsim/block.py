@@ -2091,6 +2091,10 @@ class Block(ABC, Port):
         """
         pass
 
+    def _default_name_stem(self) -> str:
+        """Stem of the default instance name ``<stem>.<n>``, the block type unless overridden."""
+        return self.type
+
     def start(self, simstate: SimulationState) -> None:  # begin a simulation
         pass
 

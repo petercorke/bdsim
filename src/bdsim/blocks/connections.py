@@ -511,8 +511,10 @@ class SubSystem(SubsystemBlock):
         else:
             raise ValueError("argument must be filename or BlockDiagram instance")
 
-        if "name" not in blockargs and name is not None:
-            blockargs["name"] = name
+        # the diagram name (or file stem, or module variable name) is the stem
+        # of the default instance name: thing.0, thing.1, ...  An explicit
+        # name= still wins.
+        self._name_stem: str | None = name
         super().__init__(subsystem=new_subsystem, **blockargs)
         self.add_param("subsys", when="never")
         self.add_param("nin", when="never")
@@ -520,6 +522,9 @@ class SubSystem(SubsystemBlock):
         self.add_param("allow_eval", when="never")
         self.add_param("trace_eval", when="never")
         self.add_param("globalvars", when="never")
+
+    def _default_name_stem(self) -> str:
+        return self._name_stem or self.type
 
 
 # ------------------------------------------------------------------------ #

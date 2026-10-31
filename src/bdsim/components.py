@@ -239,6 +239,58 @@ class BDStruct(UserDict):
         with open(outfile, "w") as f:
             json.dump(_to_dict(self), f, cls=_Encoder, indent=2)
 
+    def dump_npz(self, outfile: str) -> None:
+        """Write the struct to a NumPy ``.npz`` archive.
+
+        :param outfile: path to the output file, used exactly as given
+        :type outfile: str
+
+        Every entry is stored as one array, so the archive is compact, keeps
+        full ``float64`` precision, and can be read without pickle::
+
+            data = np.load("bd.npz", allow_pickle=False)
+            data["t"], data["x"], data["xnames"]
+
+        Nested structs (for example a clock's results) become keys joined by
+        ``/``, such as ``clock0/X``, and hidden fields keep their leading dot,
+        such as ``.stats/ydot_calls``.  A list that makes a rectangular array
+        is stored as one array, a ragged list element by element
+        (``.ywatch/0``, ``.ywatch/1``).  ``None`` and other objects that are not
+        data are left out.
+        """
+        import numpy as np
+
+        flat: dict[str, Any] = {}
+
+        def _add(key: str, value: Any) -> None:
+            if isinstance(value, (BDStruct, dict)):
+                for k, v in value.items():
+                    _add(f"{key}/{k}" if key else str(k), v)
+                return
+            if isinstance(value, (list, tuple)):
+                try:
+                    array = np.asarray(value)
+                except ValueError:  # ragged, newer NumPy refuses
+                    array = np.empty(0, dtype=object)
+                if array.dtype == object:
+                    for i, v in enumerate(value):
+                        _add(f"{key}/{i}", v)
+                    return
+                flat[key] = array
+                return
+            if isinstance(
+                value, (np.ndarray, np.generic, bool, int, float, complex, str)
+            ):
+                array = np.asarray(value)
+                if array.dtype != object:
+                    flat[key] = array
+
+        _add("", self)
+
+        # a file object, so that the name is not changed to end in .npz
+        with open(outfile, "wb") as f:
+            np.savez_compressed(f, **flat)
+
 
 class OptionsBase(UserDict):
     """A struct like object for option handling

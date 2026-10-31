@@ -30,6 +30,7 @@ import scipy.integrate as integrate
 import spatialmath.base as smb  # type: ignore[import-not-found]
 from colored import attr, fg
 
+from bdsim.literals import NOT_A_LITERAL, parse_literal
 from bdsim.components import (  # noqa: F401  (TimeQ: re-exported for tests/test_run_sim.py)
     BDStruct,
     Block,
@@ -593,6 +594,7 @@ class BDSim(Runner):
         ``-p [FILE]``, ``--pickle [FILE]``  outfile         None     output pickled results (default: bd.out)
         ``-o [FILE]``, ``--out [FILE]``     outfile         None     *(deprecated, use -p/--pickle)*
         ``-j [FILE]``, ``--json [FILE]``    jsonfile        None     output JSON results (default: bd.json)
+        ``--npz [FILE]``                    npzfile         None     output results as a NumPy ``.npz`` archive (default: bd.npz)
         ``--set P``, ``-s P``               setparam        ``[]``   override block parameter: ``block:param=value``
         ``--global G``                      setglob         ``[]``   override global parameter: ``var=value``
         ==================================  ==============  =======  ==========================================================================================
@@ -1041,6 +1043,33 @@ class BDSim(Runner):
             bd._debugger(simstate)
 
         return False
+
+    def _record_event_sample(
+        self, bd: Any, simstate: BDSimState, t: float, y: np.ndarray
+    ) -> None:
+        """Log one sample at a crossing event that falls between output grid points.
+
+        :param bd: system block diagram
+        :type bd: BlockDiagram
+        :param simstate: per-run simulation state
+        :type simstate: BDSimState
+        :param t: the crossing time
+        :type t: float
+        :param y: continuous state after the event handlers ran
+        :type y: ndarray
+
+        Records what a sample of the run holds, the time, the state, the watched
+        signals and the data logged by sink blocks, so that all of the logs stay the
+        same length.  It does not run the graphics, progress or debugger hooks, which
+        belong to the regular samples.
+        """
+        simstate.t = t
+        bd.evaluate(bd.state_map(y, simstate), t, sinks=False)
+        simstate.tlist.append(t)
+        simstate.xlist.append(np.array(y, copy=True))
+        for i, p in enumerate(simstate.watchlist):
+            simstate.plist[i].append(p.block.outport_value(p.port))
+        bd.record(t)
 
     def run(
         self,
@@ -1749,6 +1778,7 @@ class BDSim(Runner):
             # command line output options:
             #  -o/--out [FILE] writes pickle (default filename: bd.out)
             #  -j/--json [FILE] writes JSON (default filename: bd.json)
+            #  --npz [FILE] writes a NumPy archive (default filename: bd.npz)
             #
             # we can visualize a pickle output file by
             #
@@ -1769,6 +1799,12 @@ class BDSim(Runner):
 
                 if not simstate.options.quiet:
                     print("simulation results JSON --> ", simstate.options.jsonfile)
+
+            if simstate.options.npzfile is not None:
+                out.dump_npz(simstate.options.npzfile)
+
+                if not simstate.options.quiet:
+                    print("simulation results npz --> ", simstate.options.npzfile)
 
             # pause until all graphics blocks close
 
@@ -1821,7 +1857,9 @@ class BDSim(Runner):
         current one, see :meth:`Block.set_param`.  :meth:`BlockDiagram.report_params`
         lists the parameters and their current values.
 
-        ``value`` is the new value of the variable
+        ``value`` is the new value of the variable: an integer, a float, a matrix
+        written ``1 2; 3 4``, or a NumPy dtype literal such as ``float32([1, 2])``
+        or ``uint16(5)``, see :mod:`bdsim.literals`
         """
 
         context: SimulationContext | None = self._get_context()
@@ -2034,6 +2072,7 @@ class BDSim(Runner):
         crossing_times_all = result.t_events if result.t_events is not None else []
         crossing_states = result.y_events if result.y_events is not None else []
         crossing_handled = False
+        t_crossed = float(t0)  # time of the last crossing, the end of this interval
         for i, crossing_times in enumerate(crossing_times_all):
             if len(crossing_times) == 0:
                 continue
@@ -2042,6 +2081,7 @@ class BDSim(Runner):
             state_list = crossing_states[i] if i < len(crossing_states) else []
             for j, t_crossing in enumerate(crossing_times):
                 crossing_handled = True
+                t_crossed = max(t_crossed, float(t_crossing))
                 y_crossing = state_list[j] if j < len(state_list) else None
                 crossing_state_map = bd.state_map(y_crossing, simstate)
                 bd.evaluate(crossing_state_map, float(t_crossing), sinks=False)
@@ -2059,8 +2099,15 @@ class BDSim(Runner):
         # `result.t[-1]` is the last OUTPUT sample, not the integrator's
         # reach; on natural completion it can undershoot t1 and trigger a
         # spurious residual call. Use t1 directly when status == 0.
+        #
+        # An interval stopped by a crossing ends at the crossing, which is not
+        # `result.t[-1]` when there is an output grid (`t_eval`): that is the last
+        # grid point before it.  Restarting from there would run the next segment
+        # from the post-event state but at an earlier time, displacing it.
         if result.status == 0:
             t_final = float(t1)
+        elif crossing_handled:
+            t_final = t_crossed
         else:
             t_final = float(result.t[-1]) if len(result.t) > 0 else float(t0)
         if len(result.t) > 0:
@@ -2069,7 +2116,19 @@ class BDSim(Runner):
 
                 # Ensure logged trajectory reflects any state mutation performed by
                 # crossing handlers (for example STOP handlers that rewrite state).
-                if len(simstate.xlist) > 0:
+                #
+                # Without an output grid the last sample is the crossing itself, and
+                # holds the state before the handler ran: replace it.  With a grid the
+                # last sample is a grid point before the crossing, and is correct as
+                # it stands: the crossing is an interval boundary, so add a sample at
+                # the crossing with the state the next segment starts from.
+                if (
+                    len(simstate.tlist) > 0
+                    and simstate.tlist[-1] < t_final - 1e-12
+                    and simstate.dt is not None
+                ):
+                    self._record_event_sample(bd, simstate, t_final, x_final)
+                elif len(simstate.xlist) > 0:
                     simstate.xlist[-1] = np.array(x_final, copy=True)
 
                 # Move just beyond the crossing so restart does not re-trigger the same event.
@@ -2132,16 +2191,49 @@ class BDSim(Runner):
         t_final = float(t1)
         return np.array(x0), t_final
 
-    def blockdiagram(self, name: str = "main") -> BlockDiagram:
+    def blockdiagram(self, name: str | None = None) -> BlockDiagram:
         """
         Instantiate a new block diagram object.
 
-        :param name: diagram name, defaults to 'main'
+        :param name: diagram name, defaults to None.  See below for how the
+            name is used.
         :type name: str, optional
         :return: parent object for blockdiagram
         :rtype: BlockDiagram
 
         This object describes the connectivity of a set of blocks and wires.
+
+        A diagram is used in one of two ways, and ``name`` means something
+        different in each.
+
+        **Main diagram.**  The top-level diagram that is compiled and run.  It
+        is not a block, so its name cannot clash with a block name.  The name
+        is only a label that appears in messages and reports.  If none is given
+        the diagram is named ``main`` when it is first compiled::
+
+            bd = sim.blockdiagram()  # bd.name is None until compile() gives it "main"
+            bd = sim.blockdiagram(name="plant")  # shown as 'plant'
+
+        **Subsystem.**  A diagram, containing ``INPORT`` and ``OUTPORT`` blocks,
+        that is instantiated inside another diagram by the ``SUBSYSTEM`` block.
+        Each instance is a block, so it needs a name that is unique within the
+        parent diagram.  The diagram's name is the stem of the default instance
+        name, in the same way that the block type is the stem of ``gain.0``,
+        ``gain.1`` and so on::
+
+            ss = sim.blockdiagram(name="thing")
+            ...
+            a = bd.SUBSYSTEM(ss)  # named "thing.0"
+            b = bd.SUBSYSTEM(ss)  # named "thing.1"
+
+        If the subsystem diagram has no name, the stem is ``subsystem``, giving
+        ``subsystem.0``, ``subsystem.1`` and so on.  A subsystem loaded from a
+        ``.bd`` file uses the file name without its extension, and one imported
+        from a module uses the variable name of the diagram.  Passing ``name=``
+        to ``SUBSYSTEM`` overrides the default, but must be unique in the
+        parent diagram.  The instance name becomes the prefix of the names of
+        the blocks cloned from the subsystem into the parent when it is
+        compiled, for example ``thing.0/gain.0``.
 
         It is an instantiation of the ``BlockDiagram`` class with a factory
         method for every dynamically loaded block which returns
@@ -2916,6 +3008,8 @@ def _parse_param_text(text: str, current: Any) -> Any:
     * a bool: ``true``, ``false``, ``yes``, ``no``, ``on``, ``off``, ``1`` or ``0``
     * a string: the text as it is, without surrounding quotes
     * a number: an integer, a float or a complex number
+    * a NumPy dtype literal, such as ``float32([1, 2])`` or ``uint16(5)``, for a number
+      or an array
     * an array: a vector, ``1 2 3`` or ``1,2,3``, or a matrix, ``1 2; 3 4``, with
       integers kept as integers if the current array is of integers
     * nothing to compare with (the current value is ``None``): a number if it looks
@@ -2925,6 +3019,9 @@ def _parse_param_text(text: str, current: Any) -> Any:
     text = text.strip()
 
     if current is None:
+        literal = parse_literal(text)
+        if literal is not NOT_A_LITERAL:
+            return literal
         for convert in (int, float):
             try:
                 return convert(text)
@@ -2944,6 +3041,14 @@ def _parse_param_text(text: str, current: Any) -> Any:
         if len(text) >= 2 and text[0] == text[-1] and text[0] in "'\"":
             text = text[1:-1]
         return text
+
+    if isinstance(current, (numbers.Number, np.ndarray)):
+        # a NumPy dtype literal such as float32([1, 2]) or uint16(5), see bdsim.literals;
+        # it is checked against the current value like any other, so a literal cannot
+        # change the type or shape of a parameter, only say which dtype the value has
+        literal = parse_literal(text)
+        if literal is not NOT_A_LITERAL:
+            return literal
 
     if isinstance(current, numbers.Number):
         for convert in (int, float, complex):
@@ -3018,6 +3123,7 @@ class Options(OptionsBase):
             "param": False,
             "outfile": None,
             "jsonfile": None,
+            "npzfile": None,
             "quiet": False,
             "check": True,
             "setparam": [],
@@ -3338,6 +3444,15 @@ class Options(OptionsBase):
                 metavar="FILE",
                 dest="jsonfile",
                 help="output simulation results as JSON (default filename: bd.json)",
+            )
+            out.add_argument(
+                "--npz",
+                nargs="?",
+                const="bd.npz",
+                default=effective_defaults["npzfile"],
+                metavar="FILE",
+                dest="npzfile",
+                help="output simulation results as a NumPy .npz archive (default filename: bd.npz)",
             )
 
             sol = parser.add_argument_group("Solver")

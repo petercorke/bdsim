@@ -483,7 +483,6 @@ class Scope(GraphicsBlock):
                 self.tdata,
                 self.ydata[i],
                 *args,
-                label=self.styles[i],
                 linewidth=2,
                 **kwargs,
             )
