@@ -81,6 +81,7 @@ class Item(FunctionBlock):
 
         super().__init__(**blockargs)
         self.item: Any = item
+        self.add_param("item")
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         input = inputs[0]
@@ -147,6 +148,7 @@ class Dict(FunctionBlock):
 
         super().__init__(nin=len(keys), **blockargs)
         self.keys: list[str] = keys
+        self.add_param("keys", when="never")
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         return [{key: inputs[i] for i, key in enumerate(self.keys)}]
@@ -200,6 +202,7 @@ class Mux(FunctionBlock):
         :type blockargs: dict
         """
         super().__init__(nin=nin, **blockargs)
+        self.add_param("nin", when="never")
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         # TODO, handle inputs that are vectors themselves
@@ -258,6 +261,7 @@ class DeMux(FunctionBlock):
         :type blockargs: dict
         """
         super().__init__(nout=nout, **blockargs)
+        self.add_param("nout", when="never")
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         input = inputs[0]
@@ -317,24 +321,33 @@ class Index(FunctionBlock):
         """
         super().__init__(**blockargs)
 
-        if index is None:
-            self.index: Any = []
-        elif isinstance(index, str):
-            args: list[int | None] = [
-                None if a == "" else int(a) for a in index.split(":")
-            ]
-            self.index = slice(*args)
-        else:
-            self.index = index
+        self.index = index
+        self.add_param("index", coerce=False)
+
+    @property
+    def index(self) -> Any:
+        """Element(s) to select: a list of integers, an integer or a slice."""
+        return self._index
+
+    @index.setter
+    def index(self, value: Any) -> None:
+        if value is None:
+            value = []
+        elif isinstance(value, str):
+            value = slice(*[None if a == "" else int(a) for a in value.split(":")])
+        self._index = value
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         input = inputs[0]
-        if len(self.index) == 1:
-            return [input[self.index[0]]]
+        index = self._index
+        if isinstance(index, (slice, int)):
+            return [input[index]]
+        if len(index) == 1:
+            return [input[index[0]]]
         elif isinstance(input, np.ndarray):
-            return [np.array([input[i] for i in self.index])]
+            return [np.array([input[i] for i in index])]
         else:
-            return [[input[i] for i in self.index]]
+            return [[input[i] for i in index]]
 
 
 # ------------------------------------------------------------------------ #
@@ -501,6 +514,12 @@ class SubSystem(SubsystemBlock):
         if "name" not in blockargs and name is not None:
             blockargs["name"] = name
         super().__init__(subsystem=new_subsystem, **blockargs)
+        self.add_param("subsys", when="never")
+        self.add_param("nin", when="never")
+        self.add_param("nout", when="never")
+        self.add_param("allow_eval", when="never")
+        self.add_param("trace_eval", when="never")
+        self.add_param("globalvars", when="never")
 
 
 # ------------------------------------------------------------------------ #
@@ -547,6 +566,7 @@ class InPort(FunctionBlock):
         :type blockargs: dict
         """
         super().__init__(nout=nout, **blockargs)
+        self.add_param("nout", when="never")
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         # signal feed through
@@ -599,6 +619,7 @@ class OutPort(FunctionBlock):
         :type blockargs: dict
         """
         super().__init__(nin=nin, **blockargs)
+        self.add_param("nin", when="never")
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         # signal feed through

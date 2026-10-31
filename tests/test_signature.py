@@ -9,7 +9,7 @@ from spatialmath import SE3
 
 import bdsim
 from bdsim.block_types import FunctionBlock, SourceBlock
-from bdsim.signature import Signature
+from bdsim.signature import Signature, maybe_asarray, unify
 
 
 class Emit(SourceBlock):
@@ -85,6 +85,135 @@ class SignatureOfTest(unittest.TestCase):
         self.assertEqual(str(Signature.of(1.5)), "float")
         self.assertEqual(str(Signature.of([1])), "list")
         self.assertEqual(str(Signature.of(np.zeros((2, 3)))), "ndarray(2, 3) float64")
+
+
+class UnifyTest(unittest.TestCase):
+    """unify() makes the values a source block emits one type, or raises."""
+
+    def assertSame(self, got, expected):
+        self.assertEqual(len(got), len(expected))
+        for g, e in zip(got, expected):
+            self.assertIs(type(g), type(e))
+            self.assertEqual(g, e)
+
+    def test_ints_are_unchanged(self):
+        self.assertSame(unify(0, 1), (0, 1))
+
+    def test_numbers_are_promoted_by_the_numeric_tower(self):
+        self.assertSame(unify(0, 1.0), (0.0, 1.0))
+        self.assertSame(unify(1.0, 0), (1.0, 0.0))
+        self.assertSame(unify(1, 2.0j), (1 + 0j, 2.0j))
+        self.assertSame(unify(0, 1, 2.5), (0.0, 1.0, 2.5))
+
+    def test_numpy_scalars_are_promoted(self):
+        got = unify(np.int64(1), 2.5)
+        self.assertIs(type(got[0]), np.float64)
+        self.assertIs(type(got[1]), np.float64)
+
+    def test_bool_is_not_a_number_here(self):
+        self.assertSame(unify(True, False), (True, False))
+        self.assertSame(unify(np.True_, np.False_), (np.True_, np.False_))
+        for values in [(True, 0), (0, True), (False, 1.5)]:
+            with self.subTest(values=values), self.assertRaises(TypeError):
+                unify(*values)
+
+    def test_any_other_type_must_be_the_same_type(self):
+        self.assertSame(unify([0], [1]), ([0], [1]))
+        self.assertSame(unify("zero", "one"), ("zero", "one"))
+        self.assertSame(unify(None, None), (None, None))
+        self.assertSame(unify(SE3(), SE3(1, 2, 3)), (SE3(), SE3(1, 2, 3)))
+        for values in [(0, [1]), ("a", 1), ([1], (1,)), (None, 1), (SE3(), 1)]:
+            with self.subTest(values=values), self.assertRaises(TypeError):
+                unify(*values)
+
+    def test_arrays_must_agree_in_shape_and_dtype(self):
+        a, b = np.zeros(3), np.ones(3)
+        got = unify(a, b)
+        self.assertIs(got[0], a)
+        self.assertIs(got[1], b)
+        with self.assertRaises(ValueError):
+            unify(np.zeros(3), np.zeros(4))
+        with self.assertRaises(ValueError):
+            unify(np.zeros(3), np.zeros(3, dtype=int))
+        with self.assertRaises(ValueError):
+            unify(np.zeros((2, 3)), np.zeros((3, 2)))
+
+    def test_array_and_non_array_never_mix(self):
+        for values in [(np.zeros(1), 0), (0, np.zeros(1)), (np.zeros(1), [0.0])]:
+            with self.subTest(values=values), self.assertRaises(TypeError):
+                unify(*values)
+
+    def test_no_values_and_one_value(self):
+        self.assertEqual(unify(), ())
+        self.assertSame(unify(3), (3,))
+
+    def test_error_names_the_parameters(self):
+        with self.assertRaises(TypeError) as cm:
+            unify(0, [1], names=("off", "on"))
+        msg = str(cm.exception)
+        for word in ("off", "on", "int", "list"):
+            self.assertIn(word, msg)
+
+        with self.assertRaises(ValueError) as cm:
+            unify(np.zeros(3), np.zeros(4), names=("off", "on"))
+        self.assertIn("off", str(cm.exception))
+        self.assertIn("(3,)", str(cm.exception))
+        self.assertIn("(4,)", str(cm.exception))
+
+
+class MaybeAsarrayTest(unittest.TestCase):
+    """maybe_asarray() turns a non-empty list or tuple of numbers into an ndarray."""
+
+    def test_numeric_sequences_become_arrays(self):
+        for value, dtype in [
+            ([1, 2, 3], np.int64),
+            ((1.0, 2.0), np.float64),
+            ([True, False], np.bool_),
+            ([1, 2.5], np.float64),
+            ([1j, 2], np.complex128),
+            ([np.float32(1), np.float32(2)], np.float32),
+        ]:
+            with self.subTest(value=value):
+                out = maybe_asarray(value)
+                self.assertIsInstance(out, np.ndarray)
+                self.assertEqual(out.dtype, dtype)
+
+    def test_nested_numeric_lists_are_2d(self):
+        self.assertEqual(maybe_asarray([[1, 2], [3, 4]]).shape, (2, 2))
+
+    def test_a_list_of_arrays_is_stacked(self):
+        out = maybe_asarray([np.r_[1.0, 2.0], np.r_[3.0, 4.0]])
+        self.assertEqual(out.shape, (2, 2))
+
+    def test_default_dtypes(self):
+        # int64 for integers and float64 for floats, as the docstrings say
+        self.assertEqual(maybe_asarray([1, 2, 3]).dtype, np.dtype("int64"))
+        self.assertEqual(maybe_asarray([1, 2.5]).dtype, np.dtype("float64"))
+        self.assertEqual(maybe_asarray([1.0, 2.0]).dtype, np.dtype("float64"))
+
+    def test_anything_else_is_returned_as_given(self):
+        for value in (
+            ["a", "b"],
+            [1, "a"],
+            [None, 1],
+            [SE3(), SE3()],
+            [SE3()],
+            [[1, 2], [3]],
+            [],
+            [[]],
+            5,
+            2.5,
+            "text",
+            None,
+            {"a": 1},
+            np.zeros(3),
+        ):
+            with self.subTest(value=repr(value)):
+                self.assertIs(maybe_asarray(value), value)
+
+    def test_switched_off(self):
+        value = [1, 2, 3]
+        self.assertIs(maybe_asarray(value, asarray=False), value)
 
 
 class ScalarCollapseTest(unittest.TestCase):

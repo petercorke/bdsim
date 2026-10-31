@@ -24,6 +24,7 @@ from typing import Any, Callable, NoReturn, Sequence
 import matplotlib
 
 import matplotlib.pyplot as plt
+import numbers
 import numpy as np
 import scipy.integrate as integrate
 import spatialmath.base as smb  # type: ignore[import-not-found]
@@ -264,7 +265,7 @@ class BDSimState(SimulationState):
     each time run() is called. This keeps BDSim.run() reentrant.
 
     Inherited attributes from ``SimulationState``:
-    ``x``, ``tf``, ``t``, ``fignum``, ``stop``, ``checkfinite``, ``debugger``,
+    ``x``, ``tf``, ``t``, ``fignum``, ``stop``, ``check``, ``debugger``,
     ``t_stop``, ``eventq``, ``options``, ``clock_states``.
 
     Additional attributes
@@ -571,12 +572,14 @@ class BDSim(Runner):
         ``--altscreen``, ``+A``             altscreen       True     display plots on second monitor
         ``--no-altscreen``, ``-A``          altscreen       True     do not display plots on second monitor
         ``--no-progress``                   progress        True     do not display simulation progress bar
+        ``--no-check``                      check           True     do not check block outputs and derivatives during the run (faster)
         ``--backend BE``, ``-b BE``         backend         None     matplotlib backend
         ``--tiles SPEC``, ``-t SPEC``       tiles           None     arrange figure tiles as RxC or square/wide/tall
         ``--shape WxH``                     shape           None     window size (default: matplotlib default)
         ``--movies [DIR]``, ``-m [DIR]``    movies          None     record all graphics blocks to MP4 files in DIR (default: .), sampled at ``animation_rate``
         ``--no-movies``                     movies          None     disable automatic movie recording
         ``--blocks``                        blocks          False    display block list at startup
+        ``--param``                         param           False    display the parameters of all blocks, as used by ``--set``, and their values after compiling
         ``--debug F``, ``-d F``             debug           ``''``   debug flags: p/ropagate, s/tate, d/eriv, i/nteractive, g/raphics-diagnostics
         ``--animation-rate R``              animation_rate  20.0     target update rate for animation/debugger (Hz)
         ``--simtime T[,dt]``, ``-S``        simtime         None     simulation time as T or T,dt
@@ -1049,7 +1052,8 @@ class BDSim(Runner):
         solver_args: dict[str, Any] | None = None,
         debug: str = "",
         block: bool | None = None,
-        checkfinite: bool = True,
+        check: bool | None = None,
+        checkfinite: bool | None = None,
         minstepsize: float = 1e-12,
         watch: Any = None,
         threaded: bool = False,
@@ -1071,8 +1075,13 @@ class BDSim(Runner):
         :type debug: str, optional
         :param block: matplotlib block-at-end behaviour, default False
         :type block: bool
-        :param checkfinite: error if inf or nan on any wire, default True
-        :type checkfinite: bool
+        :param check: check block outputs and derivatives as they are computed
+            (output form, ``NaN`` or ``Inf``, change of signature, derivative shape),
+            defaults to the ``check`` option which is True.  ``--no-check`` turns
+            it off, which is faster.
+        :type check: bool, optional
+        :param checkfinite: deprecated, use ``check``
+        :type checkfinite: bool, optional
         :param minstepsize: minimum step length guard, default 1e-12
         :type minstepsize: float
         :param watch: list of signals to log (see below)
@@ -1190,7 +1199,18 @@ class BDSim(Runner):
         simstate.solver_args = solver_args
         simstate.minstepsize = minstepsize
         simstate.stop = None  # allow any block to stop.BlockDiagram by setting this to the block's name
-        simstate.checkfinite = checkfinite
+        if checkfinite is not None:
+            warnings.warn(
+                "run(checkfinite=...) is deprecated, use check=",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            if check is None:
+                check = checkfinite
+        if check is None:
+            check = bool(getattr(run_options, "check", True))
+        simstate.check = check
+        bd.check = check
         simstate.options = run_options
         simstate.t_stop = None
 
@@ -1281,7 +1301,7 @@ class BDSim(Runner):
                     port_group = m.group("port")
                     port = 0 if port_group is None else int(port_group)
 
-                    b = bd.blocknames[name]
+                    b = bd[name]  # a subsystem block is found by name too
                     plug = b[port]
                 elif isinstance(w, Block):
                     # a block was given, defaults to port 0
@@ -1290,16 +1310,23 @@ class BDSim(Runner):
                     # a plug was given
                     plug: Plug = w  # type: ignore[no-redef]
 
+                watch_plug = plug
                 if plug.block.blockclass == "subsystem":
                     # subsystem blocks no longer exist in the wirelist, and don't have
-                    # their own outputs, so watch the corresponding port of the subsystem's
-                    # OUTPORT block instead.
-                    plug.block = plug.block.outport
+                    # their own outputs, so watch the output port inside the subsystem
+                    # that generates the value.  The name stays that of the subsystem.
+                    watch_plug = plug.block.outports[plug.port]
+                    if watch_plug is None:
+                        raise ValueError(f"cannot watch {plug}, nothing drives it")
 
-                watchlist.append(plug)
+                watchlist.append(watch_plug)
                 watchnamelist.append(str(plug))
             simstate.watchlist = watchlist
             simstate.watchnamelist = watchnamelist
+
+            # update block parameters given on command line; this must come before the
+            # initial state is collected, which a setup parameter such as x0 changes
+            self.update_parameters(bd)
 
             x0 = bd.getstate0()
 
@@ -1333,9 +1360,6 @@ class BDSim(Runner):
 
             if not simstate.options.quiet:
                 print(attr(0))
-
-            # update block parameters given on command line
-            self.update_parameters(bd)
 
             if bool(getattr(simstate, "notebook_backend", False)):
                 patch_roboticstoolbox_pyplot_launch_for_notebook()
@@ -1791,7 +1815,11 @@ class BDSim(Runner):
         - the block's name as a string, either user assigned or bdsim assigned
         - the block ``id`` as displayed by the ``report`` method
 
-        ``param`` is the name of the parameter used in the constructor
+        ``param`` is the name of the parameter used in the constructor.  It must be
+        a registered parameter that can be set before the run starts, see
+        :meth:`Block.add_param`, and the new value must be of the same kind as the
+        current one, see :meth:`Block.set_param`.  :meth:`BlockDiagram.report_params`
+        lists the parameters and their current values.
 
         ``value`` is the new value of the variable
         """
@@ -1801,7 +1829,7 @@ class BDSim(Runner):
             raise RuntimeError("options not initialised")  # pragma: no cover
         options: OptionsBase = context.options if context is not None else self.options
         re_set: re.Pattern[str] = re.compile(
-            r"(?P<block>[\w\.]+):(?P<param>[\w]+)=(?P<value>.*)"
+            r"(?P<block>[\w\./]+):(?P<param>[\w]+)=(?P<value>.*)"
         )
         for s in options.setparam:
             m: re.Match[str] | None = re_set.match(s)
@@ -1819,27 +1847,28 @@ class BDSim(Runner):
 
             param: str | Any = m["param"]
             try:
-                prev_value = getattr(block, param)
-            except ValueError:
-                raise ValueError(f"block {block.name} has no parameter '{param}'")
+                block._lookup_param(param)  # is there such a parameter, can it be set?
+            except ValueError as err:
+                raise ValueError(f"cannot set {block.name}:{param}: {err}") from err
+            if callable(block._param_value(param)):
+                raise ValueError(
+                    f"cannot set {block.name}:{param} from text: it is a function, "
+                    "set it from code with block.set_param"
+                )
 
-            # get the parameter
-            value: str | Any = m["value"]
-            new_value = None
-
+            # get the new value; the type of the current value says how to read the text
             try:
-                if ";" in value:
-                    new_value = smb.str2array(value)
-                else:
-                    try:
-                        new_value = int(value)
-                    except ValueError:
-                        new_value = float(value)
-            except ValueError:
-                raise ValueError("cannot parse value " + value)
+                new_value = _parse_param_text(m["value"], block._param_value(param))
+            except ValueError as err:
+                raise ValueError(
+                    f"cannot set {block.name}:{param}: cannot read {m['value']!r}: {err}"
+                ) from err
 
-            # change the value
-            setattr(block, param, new_value)
+            # change the value; the old value decides what types are acceptable
+            try:
+                prev_value = block.set_param(param, new_value)
+            except (TypeError, ValueError) as err:
+                raise ValueError(f"cannot set {block.name}:{param}: {err}") from err
             print(
                 f"changed value of {block.name}:{param} from {prev_value} ->"
                 f" {new_value}"
@@ -2846,7 +2875,7 @@ class BDSim(Runner):
 
         :param bd: the block diagram to be reported
         :type bd: :class:`BlockDiagram`
-        :param type: report type, one of: "summary" (default), "lists", "schedule"
+        :param type: report type, one of: "summary" (default), "lists", "schedule", "params", "subsystems"
         :type type: str, optional
         :param style: table style, one of: ansi (default), markdown, latex
         :type style: str
@@ -2854,7 +2883,7 @@ class BDSim(Runner):
         Single method wrapper for various block diagram reports.  Obeys the ``-q``
         option to suppress all reports at runtime.
 
-        :seealso: :meth:`BlockDiagram.report_summary` :meth:`BlockDiagram.report_lists` :meth:`BlockDiagram.report_schedule`
+        :seealso: :meth:`BlockDiagram.report_summary` :meth:`BlockDiagram.report_lists` :meth:`BlockDiagram.report_schedule` :meth:`BlockDiagram.report_params` :meth:`BlockDiagram.report_subsystems`
         """
         context: SimulationContext | None = self._get_context()
         if self.options is None:
@@ -2869,6 +2898,78 @@ class BDSim(Runner):
             bd.report_summary(**kwargs)
         elif type == "schedule":
             bd.report_schedule(**kwargs)
+        elif type == "params":
+            bd.report_params(**kwargs)
+        elif type == "subsystems":
+            bd.report_subsystems(**kwargs)
+
+
+def _parse_param_text(text: str, current: Any) -> Any:
+    """
+    Read the text of a ``--set`` value according to the type of the current value.
+
+    :param text: the text after the ``=``
+    :param current: the current value of the parameter, or ``None`` if there is none
+    :return: the value, which :meth:`Block.set_param` then checks against the current one
+    :raises ValueError: the text cannot be read as that type
+
+    * a bool: ``true``, ``false``, ``yes``, ``no``, ``on``, ``off``, ``1`` or ``0``
+    * a string: the text as it is, without surrounding quotes
+    * a number: an integer, a float or a complex number
+    * an array: a vector, ``1 2 3`` or ``1,2,3``, or a matrix, ``1 2; 3 4``, with
+      integers kept as integers if the current array is of integers
+    * nothing to compare with (the current value is ``None``): a number if it looks
+      like one, otherwise the text
+    * anything else, such as a list, a dict or a function, cannot be set from text
+    """
+    text = text.strip()
+
+    if current is None:
+        for convert in (int, float):
+            try:
+                return convert(text)
+            except ValueError:
+                pass
+        return text
+
+    if isinstance(current, (bool, np.bool_)):
+        low = text.lower()
+        if low in ("true", "yes", "on", "1"):
+            return True
+        if low in ("false", "no", "off", "0"):
+            return False
+        raise ValueError("expected true or false")
+
+    if isinstance(current, str):
+        if len(text) >= 2 and text[0] == text[-1] and text[0] in "'\"":
+            text = text[1:-1]
+        return text
+
+    if isinstance(current, numbers.Number):
+        for convert in (int, float, complex):
+            try:
+                return convert(text)
+            except ValueError:
+                pass
+        raise ValueError("expected a number")
+
+    if isinstance(current, np.ndarray):
+        try:
+            if ";" in text:
+                array = np.asarray(smb.str2array(text), dtype=float)
+            else:
+                array = np.array(text.replace(",", " ").split(), dtype=float)
+        except ValueError:
+            raise ValueError(
+                "expected numbers, such as '1 2 3' or '1 2; 3 4'"
+            ) from None
+        if current.dtype.kind in "iu" and np.all(array == np.round(array)):
+            array = array.astype(current.dtype)
+        return array
+
+    raise ValueError(
+        f"a {type(current).__name__} cannot be set from text, use block.set_param in code"
+    )
 
 
 class Options(OptionsBase):
@@ -2914,9 +3015,11 @@ class Options(OptionsBase):
             "debug": "",
             "simtime": None,
             "blocks": False,
+            "param": False,
             "outfile": None,
             "jsonfile": None,
             "quiet": False,
+            "check": True,
             "setparam": [],
             "setglob": [],
         }
@@ -3154,6 +3257,14 @@ class Options(OptionsBase):
                 help="Display blocks at startup",
             )
             sim.add_argument(
+                "--param",
+                action="store_const",
+                const=True,
+                default=effective_defaults["param"],
+                dest="param",
+                help="Display the block parameters and their values after compiling",
+            )
+            sim.add_argument(
                 "--verbose",
                 "-v",
                 action="store_const",
@@ -3168,6 +3279,14 @@ class Options(OptionsBase):
                 const=True,
                 default=effective_defaults["quiet"],
                 help="suppress reports and progress bar",
+            )
+            sim.add_argument(
+                "--no-check",
+                action="store_const",
+                const=False,
+                default=effective_defaults["check"],
+                dest="check",
+                help="do not check block outputs during the run (faster)",
             )
             sim.add_argument(
                 "--no-progress",
