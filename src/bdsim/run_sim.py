@@ -1039,6 +1039,33 @@ class BDSim(Runner):
 
         return False
 
+    def _record_event_sample(
+        self, bd: Any, simstate: BDSimState, t: float, y: np.ndarray
+    ) -> None:
+        """Log one sample at a crossing event that falls between output grid points.
+
+        :param bd: system block diagram
+        :type bd: BlockDiagram
+        :param simstate: per-run simulation state
+        :type simstate: BDSimState
+        :param t: the crossing time
+        :type t: float
+        :param y: continuous state after the event handlers ran
+        :type y: ndarray
+
+        Records what a sample of the run holds, the time, the state, the watched
+        signals and the data logged by sink blocks, so that all of the logs stay the
+        same length.  It does not run the graphics, progress or debugger hooks, which
+        belong to the regular samples.
+        """
+        simstate.t = t
+        bd.evaluate(bd.state_map(y, simstate), t, sinks=False)
+        simstate.tlist.append(t)
+        simstate.xlist.append(np.array(y, copy=True))
+        for i, p in enumerate(simstate.watchlist):
+            simstate.plist[i].append(p.block.outport_value(p.port))
+        bd.record(t)
+
     def run(
         self,
         bd: Any,
@@ -2005,6 +2032,7 @@ class BDSim(Runner):
         crossing_times_all = result.t_events if result.t_events is not None else []
         crossing_states = result.y_events if result.y_events is not None else []
         crossing_handled = False
+        t_crossed = float(t0)  # time of the last crossing, the end of this interval
         for i, crossing_times in enumerate(crossing_times_all):
             if len(crossing_times) == 0:
                 continue
@@ -2013,6 +2041,7 @@ class BDSim(Runner):
             state_list = crossing_states[i] if i < len(crossing_states) else []
             for j, t_crossing in enumerate(crossing_times):
                 crossing_handled = True
+                t_crossed = max(t_crossed, float(t_crossing))
                 y_crossing = state_list[j] if j < len(state_list) else None
                 crossing_state_map = bd.state_map(y_crossing, simstate)
                 bd.evaluate(crossing_state_map, float(t_crossing), sinks=False)
@@ -2030,8 +2059,15 @@ class BDSim(Runner):
         # `result.t[-1]` is the last OUTPUT sample, not the integrator's
         # reach; on natural completion it can undershoot t1 and trigger a
         # spurious residual call. Use t1 directly when status == 0.
+        #
+        # An interval stopped by a crossing ends at the crossing, which is not
+        # `result.t[-1]` when there is an output grid (`t_eval`): that is the last
+        # grid point before it.  Restarting from there would run the next segment
+        # from the post-event state but at an earlier time, displacing it.
         if result.status == 0:
             t_final = float(t1)
+        elif crossing_handled:
+            t_final = t_crossed
         else:
             t_final = float(result.t[-1]) if len(result.t) > 0 else float(t0)
         if len(result.t) > 0:
@@ -2040,7 +2076,19 @@ class BDSim(Runner):
 
                 # Ensure logged trajectory reflects any state mutation performed by
                 # crossing handlers (for example STOP handlers that rewrite state).
-                if len(simstate.xlist) > 0:
+                #
+                # Without an output grid the last sample is the crossing itself, and
+                # holds the state before the handler ran: replace it.  With a grid the
+                # last sample is a grid point before the crossing, and is correct as
+                # it stands: the crossing is an interval boundary, so add a sample at
+                # the crossing with the state the next segment starts from.
+                if (
+                    len(simstate.tlist) > 0
+                    and simstate.tlist[-1] < t_final - 1e-12
+                    and simstate.dt is not None
+                ):
+                    self._record_event_sample(bd, simstate, t_final, x_final)
+                elif len(simstate.xlist) > 0:
                     simstate.xlist[-1] = np.array(x_final, copy=True)
 
                 # Move just beyond the crossing so restart does not re-trigger the same event.
