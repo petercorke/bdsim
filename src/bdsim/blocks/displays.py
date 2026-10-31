@@ -329,7 +329,7 @@ class Scope(GraphicsBlock):
         :type styles: str or dict, list of strings or dicts; one per line, optional
         :param stairs: force staircase style plot for all lines, defaults to False
         :type stairs: bool, optional
-        :param scale: fixed y-axis scale or defaults to 'auto'
+        :param scale: fixed y-axis scale, or 'auto', defaults to 'auto'
         :type scale: str or array_like(2)
         :param labels: labels for the plotted signals, defaults to block name and port of the source of each signal if not given. Used
             for vertical axis label, legend and cursor readout.
@@ -422,6 +422,15 @@ class Scope(GraphicsBlock):
         self._cursor_text_xy: tuple[float, float] = (0.02, 0.98)
         self._cursor_dragging: bool = False
         self._cursor_drag_offset: tuple[float, float] = (0.0, 0.0)
+        self.add_param("nin", when="never")
+        self.add_param("vector", when="setup")
+        self.add_param("styles", when="setup")
+        self.add_param("stairs", when="setup")
+        self.add_param("scale", when="setup")
+        self.add_param("labels", when="setup")
+        self.add_param("grid", when="setup")
+        self.add_param("title", when="setup")
+        self.add_param("loc", when="setup")
 
         # TODO, wire width
         # inherit names from wires, block needs to be able to introspect
@@ -778,7 +787,7 @@ class ScopeXY(GraphicsBlock):
         """
         :param style: line style, defaults to None
         :type style: optional str or dict
-        :param scale: fixed y-axis scale or defaults to 'auto'
+        :param scale: fixed y-axis scale, or 'auto', defaults to 'auto'
         :type scale: str or array_like(2) or array_like(4)
         :param aspect: aspect ratio, defaults to "equal"
         :type aspect: str
@@ -814,6 +823,11 @@ class ScopeXY(GraphicsBlock):
         self._cursor_text_xy: tuple[float, float] = (0.02, 0.98)
         self._cursor_dragging: bool = False
         self._cursor_drag_offset: tuple[float, float] = (0.0, 0.0)
+        self.add_param("style", when="setup")
+        self.add_param("scale", when="setup")
+        self.add_param("aspect", when="setup")
+        self.add_param("labels", when="setup")
+        self.add_param("init", when="setup")
 
     def start(self, simstate: Any) -> None:
         super().start(simstate)
@@ -1083,7 +1097,7 @@ class ScopeXY1(ScopeXY):
         :type indices: array_like(2)
         :param style: line style
         :type style: optional str or dict
-        :param scale: fixed y-axis scale or defaults to 'auto'
+        :param scale: fixed y-axis scale, or 'auto', defaults to 'auto'
         :type scale: str or array_like(2) or array_like(4)
         :param labels: axis labels (xlabel, ylabel)
         :type labels: 2-element tuple or list
@@ -1098,6 +1112,8 @@ class ScopeXY1(ScopeXY):
         if len(indices) != 2:
             raise ValueError("indices must have 2 elements")
         self.indices = [int(x) for x in indices]
+        self.add_param("indices", when="setup")
+        self.add_param("labels", when="setup")
 
     def step(self, t: float, inports: list[Any]) -> None:
         if not self._enabled:
@@ -1169,6 +1185,8 @@ class Animation(GraphicsBlock):
             raise ValueError("update must be callable")
         self.init = init
         self.update = update
+        self.add_param("init", when="setup")
+        self.add_param("update")
 
     def start(self, simstate: Any) -> None:
         super().start(simstate)

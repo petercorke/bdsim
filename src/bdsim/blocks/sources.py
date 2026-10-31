@@ -74,6 +74,7 @@ class Constant(SourceBlock):
         self.value = maybe_asarray(value, asarray)
 
         self.add_param("value")
+        self.add_param("asarray", when="never")
 
     def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         return [self.value]
@@ -120,6 +121,7 @@ class Time(SourceBlock):
         :type blockargs: dict
         """
         super().__init__(**blockargs)
+        self.add_param("value", when="never")  # accepted and ignored
 
     def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         return [t]
@@ -227,14 +229,10 @@ class WaveForm(SourceBlock, EventSource):
             self.wave: str = wave
         else:
             raise ValueError("bad waveform")
-        frequency: float
-        if unit == "Hz":
-            frequency = freq
-        elif unit == "rad/s":
-            frequency = freq / (2 * math.pi)
-        else:
+        if unit not in ("Hz", "rad/s"):
             raise ValueError("bad unit")
-        self.freq: float = frequency
+        self.unit = unit
+        self.freq = freq
         if 0 <= phase <= 1:
             self.phase: float = phase
         else:
@@ -242,14 +240,59 @@ class WaveForm(SourceBlock, EventSource):
         if max is not None and min is not None:
             amplitude = (max - min) / 2
             offset = (max + min) / 2
-            self.min = min
-            self.mablock = max
         if 0 <= duty <= 1:
             self.duty: float = duty
         else:
             raise ValueError("duty out of range")
         self.amplitude = amplitude
         self.offset = offset
+        self.add_param("wave", when="setup")
+        self.add_param("freq", when="setup", validate=self._check_freq)
+        self.add_param("unit", when="never")
+        self.add_param("phase", when="setup")
+        self.add_param("amplitude")
+        self.add_param("offset")
+        self.add_param("min")
+        self.add_param("max")
+        self.add_param("duty", when="setup")
+
+    @staticmethod
+    def _check_freq(value: float) -> None:
+        if value <= 0:
+            raise ValueError("freq must be positive")
+
+    @property
+    def freq(self) -> float:
+        """Frequency, in ``unit``."""
+        return self._hz if self.unit == "Hz" else self._hz * (2 * math.pi)
+
+    @freq.setter
+    def freq(self, value: float) -> None:
+        self._hz = value if self.unit == "Hz" else value / (2 * math.pi)
+
+    @property
+    def min(self) -> float:
+        """Minimum value of the signal, derived from ``amplitude`` and ``offset``."""
+        return self.offset - self.amplitude
+
+    @min.setter
+    def min(self, value: float) -> None:
+        self._set_range(value, self.max)
+
+    @property
+    def max(self) -> float:
+        """Maximum value of the signal, derived from ``amplitude`` and ``offset``."""
+        return self.offset + self.amplitude
+
+    @max.setter
+    def max(self, value: float) -> None:
+        self._set_range(self.min, value)
+
+    def _set_range(self, lo: float, hi: float) -> None:
+        if lo >= hi:
+            raise ValueError(f"min ({lo}) must be less than max ({hi})")
+        self.amplitude = (hi - lo) / 2
+        self.offset = (hi + lo) / 2
 
     def start(self, simstate: Any) -> None:
         super().start(simstate)
@@ -257,16 +300,16 @@ class WaveForm(SourceBlock, EventSource):
         t1: float
         t2: float
         if self.wave == "square":
-            t1 = self.phase / self.freq
-            t2 = (self.duty + self.phase) / self.freq
+            t1 = self.phase / self._hz
+            t2 = (self.duty + self.phase) / self._hz
         elif self.wave == "triangle":
-            t1 = (0.25 + self.phase) / self.freq
-            t2 = (0.75 + self.phase) / self.freq
+            t1 = (0.25 + self.phase) / self._hz
+            t2 = (0.75 + self.phase) / self._hz
         else:
             return
 
         # t1 < t2
-        T: float = 1.0 / self.freq
+        T: float = 1.0 / self._hz
         if simstate is not None:
             while t1 < simstate.tf:
                 simstate.declare_event(self, t1)
@@ -275,7 +318,7 @@ class WaveForm(SourceBlock, EventSource):
                 t2 += T
 
     def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
-        phase = (t * self.freq - self.phase) % 1.0
+        phase = (t * self._hz - self.phase) % 1.0
 
         # define all signals in the range -1 to 1
         out: float
@@ -390,13 +433,33 @@ class Piecewise(SourceBlock, EventSource):
         if _seq is None:
             raise ValueError("no sequence provided")
 
-        self.t = [x[0] for x in _seq]
-        self.y = list(
-            unify(
-                *[maybe_asarray(x[1], asarray) for x in _seq],
-                names=[f"seq[{i}] value" for i in range(len(_seq))],
-            )
-        )
+        self.asarray = asarray
+        self.seq = _seq
+        self.add_param("seq", coerce=False)
+        self.add_param("asarray", when="never")
+
+    @property
+    def seq(self) -> list[tuple[float, Any]]:
+        """The (time, value) pairs, in order of time."""
+        return list(zip(self.t, self.y))
+
+    @seq.setter
+    def seq(self, value: Any) -> None:
+        pairs = list(value)
+        if any(len(pair) != 2 for pair in pairs):
+            raise ValueError("seq must be a sequence of (time, value) pairs")
+        times = [pair[0] for pair in pairs]
+        if any(b < a for a, b in zip(times, times[1:])):
+            raise ValueError("the times in seq must not decrease")
+        names = [f"seq[{i}] value" for i in range(len(pairs))]
+        values = [maybe_asarray(pair[1], self.asarray) for pair in pairs]
+        old = getattr(self, "y", None)
+        if old:
+            # stay of the type the output has already been seen to have
+            values = list(unify(old[0], *values, names=["current", *names]))[1:]
+        else:
+            values = list(unify(*values, names=names))
+        self.t, self.y = times, values
 
     def start(self, simstate: Any) -> None:
         super().start(simstate)
@@ -413,6 +476,28 @@ class Piecewise(SourceBlock, EventSource):
 
 
 # ------------------------------------------------------------------------ #
+
+
+def _promote_pair(block: Any, name: str, partner: str, value: Any) -> Any:
+    """
+    Check a new value against the parameter it is paired with, and promote both.
+
+    :param block: the block
+    :param name: the parameter being set
+    :param partner: the parameter it must stay consistent with
+    :param value: the new value of ``name``
+    :return: the new value, promoted to a common type with the partner
+    :raises TypeError: the two are of different types
+    :raises ValueError: the two are arrays of different shape or dtype
+
+    The values of a ``Step`` or ``Ramp`` are the signal itself, so they must stay one
+    type (:func:`~bdsim.signature.unify`).  If setting one from an integer to a float
+    promotes the pair, the partner follows, otherwise neither could ever be changed
+    without the other.
+    """
+    new, other = unify(value, getattr(block, partner), names=(name, partner))
+    setattr(block, partner, other)
+    return new
 
 
 class Step(SourceBlock, EventSource):
@@ -496,9 +581,19 @@ class Step(SourceBlock, EventSource):
             maybe_asarray(on, asarray),
             names=("off", "on"),
         )
+        self.add_param("T", when="setup")
+        self.add_param("off", validate=self._check_off)
+        self.add_param("on", validate=self._check_on)
+        self.add_param("asarray", when="never")
 
     def start(self, simstate: Any) -> None:
         simstate.declare_event(self, self.T)
+
+    def _check_off(self, value: Any) -> Any:
+        return _promote_pair(self, "off", "on", value)
+
+    def _check_on(self, value: Any) -> Any:
+        return _promote_pair(self, "on", "off", value)
 
     def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[float]:
         out: float
@@ -583,9 +678,18 @@ class Ramp(SourceBlock, EventSource):
         self.T: float = T
         self.off = off
         self.slope = slope
+        self.add_param("T", when="setup")
+        self.add_param("off", validate=self._check_off)
+        self.add_param("slope", validate=self._check_slope)
 
     def start(self, simstate: Any) -> None:
         simstate.declare_event(self, self.T)
+
+    def _check_off(self, value: Any) -> Any:
+        return _promote_pair(self, "off", "slope", value)
+
+    def _check_slope(self, value: Any) -> Any:
+        return _promote_pair(self, "slope", "off", value)
 
     def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         out: float | int
