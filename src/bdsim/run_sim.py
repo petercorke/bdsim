@@ -591,6 +591,7 @@ class BDSim(Runner):
         ``-p [FILE]``, ``--pickle [FILE]``  outfile         None     output pickled results (default: bd.out)
         ``-o [FILE]``, ``--out [FILE]``     outfile         None     *(deprecated, use -p/--pickle)*
         ``-j [FILE]``, ``--json [FILE]``    jsonfile        None     output JSON results (default: bd.json)
+        ``--npz [FILE]``                    npzfile         None     output results as a NumPy ``.npz`` archive (default: bd.npz)
         ``--set P``, ``-s P``               setparam        ``[]``   override block parameter: ``block:param=value``
         ``--global G``                      setglob         ``[]``   override global parameter: ``var=value``
         ==================================  ==============  =======  ==========================================================================================
@@ -1753,6 +1754,7 @@ class BDSim(Runner):
             # command line output options:
             #  -o/--out [FILE] writes pickle (default filename: bd.out)
             #  -j/--json [FILE] writes JSON (default filename: bd.json)
+            #  --npz [FILE] writes a NumPy archive (default filename: bd.npz)
             #
             # we can visualize a pickle output file by
             #
@@ -1773,6 +1775,12 @@ class BDSim(Runner):
 
                 if not simstate.options.quiet:
                     print("simulation results JSON --> ", simstate.options.jsonfile)
+
+            if simstate.options.npzfile is not None:
+                out.dump_npz(simstate.options.npzfile)
+
+                if not simstate.options.quiet:
+                    print("simulation results npz --> ", simstate.options.npzfile)
 
             # pause until all graphics blocks close
 
@@ -3007,6 +3015,7 @@ class Options(OptionsBase):
             "blocks": False,
             "outfile": None,
             "jsonfile": None,
+            "npzfile": None,
             "quiet": False,
             "setparam": [],
             "setglob": [],
@@ -3310,6 +3319,15 @@ class Options(OptionsBase):
                 metavar="FILE",
                 dest="jsonfile",
                 help="output simulation results as JSON (default filename: bd.json)",
+            )
+            out.add_argument(
+                "--npz",
+                nargs="?",
+                const="bd.npz",
+                default=effective_defaults["npzfile"],
+                metavar="FILE",
+                dest="npzfile",
+                help="output simulation results as a NumPy .npz archive (default filename: bd.npz)",
             )
 
             sol = parser.add_argument_group("Solver")
