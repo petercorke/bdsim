@@ -9,7 +9,7 @@ from spatialmath import SE3
 
 import bdsim
 from bdsim.block_types import FunctionBlock, SourceBlock
-from bdsim.signature import Signature, unify
+from bdsim.signature import Signature, maybe_asarray, unify
 
 
 class Emit(SourceBlock):
@@ -159,6 +159,61 @@ class UnifyTest(unittest.TestCase):
         self.assertIn("off", str(cm.exception))
         self.assertIn("(3,)", str(cm.exception))
         self.assertIn("(4,)", str(cm.exception))
+
+
+class MaybeAsarrayTest(unittest.TestCase):
+    """maybe_asarray() turns a non-empty list or tuple of numbers into an ndarray."""
+
+    def test_numeric_sequences_become_arrays(self):
+        for value, dtype in [
+            ([1, 2, 3], np.int64),
+            ((1.0, 2.0), np.float64),
+            ([True, False], np.bool_),
+            ([1, 2.5], np.float64),
+            ([1j, 2], np.complex128),
+            ([np.float32(1), np.float32(2)], np.float32),
+        ]:
+            with self.subTest(value=value):
+                out = maybe_asarray(value)
+                self.assertIsInstance(out, np.ndarray)
+                self.assertEqual(out.dtype, dtype)
+
+    def test_nested_numeric_lists_are_2d(self):
+        self.assertEqual(maybe_asarray([[1, 2], [3, 4]]).shape, (2, 2))
+
+    def test_a_list_of_arrays_is_stacked(self):
+        out = maybe_asarray([np.r_[1.0, 2.0], np.r_[3.0, 4.0]])
+        self.assertEqual(out.shape, (2, 2))
+
+    def test_default_dtypes(self):
+        # int64 for integers and float64 for floats, as the docstrings say
+        self.assertEqual(maybe_asarray([1, 2, 3]).dtype, np.dtype("int64"))
+        self.assertEqual(maybe_asarray([1, 2.5]).dtype, np.dtype("float64"))
+        self.assertEqual(maybe_asarray([1.0, 2.0]).dtype, np.dtype("float64"))
+
+    def test_anything_else_is_returned_as_given(self):
+        for value in (
+            ["a", "b"],
+            [1, "a"],
+            [None, 1],
+            [SE3(), SE3()],
+            [SE3()],
+            [[1, 2], [3]],
+            [],
+            [[]],
+            5,
+            2.5,
+            "text",
+            None,
+            {"a": 1},
+            np.zeros(3),
+        ):
+            with self.subTest(value=repr(value)):
+                self.assertIs(maybe_asarray(value), value)
+
+    def test_switched_off(self):
+        value = [1, 2, 3]
+        self.assertIs(maybe_asarray(value, asarray=False), value)
 
 
 class ScalarCollapseTest(unittest.TestCase):
