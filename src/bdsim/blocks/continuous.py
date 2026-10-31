@@ -1010,7 +1010,6 @@ class PID(SubsystemBlock):
 
         subsystem.connect(inp, error_sum)
 
-        print("PID type:", type, "structure:", structure)
         # for each case sum the various terms
         if structure == "parallel":
             if type == "PID":
@@ -1029,8 +1028,13 @@ class PID(SubsystemBlock):
                 subsystem.connect(error_sum, Pblock, Dblock)
                 subsystem.connect(Pblock, out_sum[0])
                 subsystem.connect(Dblock, out_sum[1])
+            elif type == "P":
+                subsystem.connect(error_sum, Pblock)
 
-            subsystem.connect(out_sum, outp)
+            if type == "P":
+                subsystem.connect(Pblock, outp)
+            else:
+                subsystem.connect(out_sum, outp)
 
         elif structure == "series":
             # cascade of P, I and D blocks with summing junctions between them
@@ -1074,8 +1078,13 @@ class PID(SubsystemBlock):
                 subsystem.connect(error_sum, Pblock)
                 subsystem.connect(Pblock, out_sum[0], Dblock)
                 subsystem.connect(Dblock, out_sum[1])
+            elif type == "P":
+                subsystem.connect(error_sum, Pblock)
 
-            subsystem.connect(out_sum, outp)
+            if type == "P":
+                subsystem.connect(Pblock, outp)
+            else:
+                subsystem.connect(out_sum, outp)
 
         super().__init__(subsystem=subsystem, **blockargs)
 

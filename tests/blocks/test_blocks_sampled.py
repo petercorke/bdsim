@@ -415,6 +415,37 @@ class SampledSim(unittest.TestCase):
         nt.assert_almost_equal(out.y[0, 2], 0)
         nt.assert_almost_equal(out.y[-1, 2], 43.4, decimal=1)
 
+    def test_p(self):
+        bd = self.sim.blockdiagram()
+
+        clock = bd.clock(10, "Hz")
+        signal = bd.RAMP(T=1)
+        sink1 = bd.NULL()
+        sink2 = bd.NULL()
+        sink3 = bd.NULL()
+        zero = bd.CONSTANT(0.0, name="zero")
+
+        P = 5
+        pid1 = bd.PID_S(clock, P=P, I=0, D=0)
+        pid2 = bd.PID_S(clock, P=P, I=0, D=0, structure="ideal")
+        pid3 = bd.PID_S(clock, P=P, I=0, D=0, structure="series")
+
+        bd.connect(signal, pid1[1], pid2[1], pid3[1])  # reference
+        bd.connect(zero, pid1[0], pid2[0], pid3[0])  # plant output
+        bd.connect(pid1, sink1)
+        bd.connect(pid2, sink2)
+        bd.connect(pid3, sink3)
+
+        bd.compile()
+        out = self.sim.run(bd, T=5, watch=[pid1, pid2, pid3])
+
+        nt.assert_almost_equal(out.y[0, 0], 0)
+        nt.assert_almost_equal(out.y[0, 1], 0)
+        nt.assert_almost_equal(out.y[0, 2], 0)
+        nt.assert_almost_equal(out.y[-1, 0], out.y[-1, 1])
+        nt.assert_almost_equal(out.y[-1, 0], out.y[-1, 2])
+        nt.assert_almost_equal(out.y[-1, 0], 20, decimal=1)
+
 
 # ---------------------------------------------------------------------------------------#
 if __name__ == "__main__":
