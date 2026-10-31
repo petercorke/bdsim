@@ -67,8 +67,10 @@ class BlockDiagram(BlockDiagramMixin):
     :vartype blockcounter: defaultdict of Counter
     :ivar blockdict: index of all blocks by category
     :vartype blockdict: dict of lists
-    :ivar name: name of this diagram
-    :vartype name: str
+    :ivar name: name of this diagram, ``None`` until given one.  A main diagram
+        is named ``main`` when first compiled; a subsystem diagram's name is the stem of its
+        instances' names, see :meth:`BDSim.blockdiagram`
+    :vartype name: str or None
 
     This object:
 
@@ -78,7 +80,7 @@ class BlockDiagram(BlockDiagramMixin):
     * evaluates the entire diagram as a function to compute :meth:`\dot{x} = f(x, t)`
     """
 
-    def __init__(self, name: str = "main", **kwargs: Any) -> None:
+    def __init__(self, name: str | None = None, **kwargs: Any) -> None:
         self.wirelist: list[Wire] = []  # list of all wires
         self.blocklist: list[Block] = []  # list of all blocks
         self.clocklist: list[Clock] = []  # list of all clock sources
@@ -86,7 +88,7 @@ class BlockDiagram(BlockDiagramMixin):
         self.blockcounter: defaultdict = defaultdict(Counter)
         self._block_id_counter = Counter()
         self._wire_id_counter = Counter()
-        self.name: str = name
+        self.name: str | None = name
         self.nstates = 0
         self.ndstates = 0
         self._issubsystem = False
@@ -133,7 +135,8 @@ class BlockDiagram(BlockDiagramMixin):
         return result
 
     def __repr__(self) -> str:
-        return f"BlockDiagram(name={self.name}, nblocks={len(self.blocklist)}, nwires={len(self.wirelist)})"
+        name = f"name={self.name}, " if self.name is not None else ""
+        return f"BlockDiagram({name}nblocks={len(self.blocklist)}, nwires={len(self.wirelist)})"
 
     def ls(self) -> None:
         for k, v in self.blocknames.items():
@@ -291,17 +294,25 @@ class BlockDiagram(BlockDiagramMixin):
                 raise ValueError("bad start type")
 
     def add_block(self, block: Block) -> None:
-        if block.name in self.blocknames:
-            raise ValueError("block {} already added".format(block.name))
+        if block.name is not None and block.name in self.blocknames:
+            existing = self.blocknames[block.name]
+            raise ValueError(
+                f"block name '{block.name}' is already used in this diagram "
+                f"by a {existing.type} block; block names must be unique. "
+                "Pass a different name=, or omit it to get a default name."
+            )
         block.id = next(self._block_id_counter)
         if block.name is None:
-            block.name = "{:s}.{:d}".format(
-                block.type, next(self.blockcounter[block.type])
-            )
+            # default name is <stem>.<n>; skip any name already taken, for
+            # example one the user chose that matches the next count
+            stem = block._default_name_stem()
+            while True:
+                name = "{:s}.{:d}".format(stem, next(self.blockcounter[stem]))
+                if name not in self.blocknames:
+                    break
+            block.name = name
         block._bd = self
         self.blocklist.append(block)  # add to the list of available blocks
-        if block in self.blocknames:
-            raise Warning(f"block name {block} is not unique")
         self.blocknames[block.name] = block
 
     _this_file = os.path.abspath(__file__)
@@ -410,6 +421,12 @@ class BlockDiagram(BlockDiagramMixin):
         self.statenames = []
         self.dstatenames = []
         self.blocknames = {}
+
+        if not subsystem and self.name is None:
+            # a top-level diagram is not a block, so its name cannot clash;
+            # name it for messages and reports.  Not done for a subsystem: its
+            # name, if it has one, is the stem of its instances' names.
+            self.name = "main"
 
         if not subsystem and verbose:
             if not self.compiled:
