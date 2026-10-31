@@ -110,6 +110,7 @@ class BlockDiagram(BlockDiagramMixin):
         self.ndstates = 0
         self._issubsystem = False
         self.blocknames: dict[str, Any] = {}
+        self.subsystems: dict[str, Any] = {}
         self.options = None
         self.runtime: Any = None  # set by BDSim before compilation
         self.n_auto_sum = Counter()
@@ -121,9 +122,11 @@ class BlockDiagram(BlockDiagramMixin):
         self.compiled = False
 
     def __getitem__(self, id: int | str) -> Block:
-        print(id)
         if isinstance(id, str):
-            return self.blocknames[id]
+            if id in self.blocknames:
+                return self.blocknames[id]
+            # a subsystem block is not in the compiled diagram, its blocks replaced it
+            return self.subsystems[id]  # type: ignore[no-any-return]
         else:
             for b in self.blocklist:
                 if b.id == id:
@@ -429,6 +432,8 @@ class BlockDiagram(BlockDiagramMixin):
         self.statenames = []
         self.dstatenames = []
         self.blocknames = {}
+        # self.subsystems is kept: once flattened, the diagram has no subsystem blocks
+        # left to find again if it is compiled a second time
 
         if not subsystem and verbose:
             if not self.compiled:
@@ -441,6 +446,11 @@ class BlockDiagram(BlockDiagramMixin):
         self.blocklist, self.wirelist = self._subsystem_import(
             self, "", verbose=verbose
         )
+
+        # replace the INPORT and OUTPORT blocks of the subsystems by wires
+        for message in self._elide_subsystem_ports():
+            print(f"  ERROR: {message}")
+            error = True
 
         # get all the blocks in the complete wirelist ready for compilation
         #  - create _input_wires and _output_wires lists
@@ -665,6 +675,92 @@ class BlockDiagram(BlockDiagramMixin):
             for slot in b._outport_slots:
                 slot.signature = Signature.of(slot.value)
 
+    def _elide_subsystem_ports(self) -> list[str]:
+        """
+        Replace the INPORT and OUTPORT blocks of instantiated subsystems by wires.
+
+        :return: error messages, empty if all is well
+
+        Flattening leaves the port blocks of each subsystem in the network, each a pass
+        through.  They are blocks with several inputs and outputs, so the loop detector
+        and the scheduler see every output depending on every input, which finds loops
+        that are not there (Issue #84).  Here the wires that leave a port block are
+        started where the signal really comes from, its *source*, and the wires that end
+        on a port block are dropped.  Only the wires are needed, so this is done before
+        the blocks are compiled.
+
+        The source of each subsystem input and output is kept on the subsystem block,
+        see :attr:`SubsystemBlock.inports` and :attr:`SubsystemBlock.outports`, which is
+        how the signals of a subsystem are watched.
+        """
+        pending = [sb for sb in self.subsystems.values() if not sb._ports_elided]
+        if not pending:
+            return []
+
+        owner: dict[Block, Any] = {}  # port block -> its subsystem block
+        for sb in pending:
+            owner[sb.inport] = sb
+            owner[sb.outport] = sb
+
+        # the wire that feeds each input of a port block
+        feeder: dict[tuple[Block, Any], Wire] = {}
+        for w in self.wirelist:
+            if w.end.block in owner:
+                feeder[(w.end.block, w.end.port)] = w
+
+        problems: list[str] = []
+
+        def source(plug: Plug) -> Plug | None:
+            """Follow the plug back through port blocks to the output port that drives it."""
+            seen: set[tuple[Block, Any]] = set()
+            while plug.block in owner:
+                key = (plug.block, plug.port)
+                if key in seen:
+                    problems.append(
+                        f"the ports of subsystem {owner[plug.block].name} are wired "
+                        "in a loop with nothing in between"
+                    )
+                    return None
+                seen.add(key)
+                wire = feeder.get(key)
+                if wire is None:
+                    return None
+                plug = wire.start
+            return plug
+
+        for sb in pending:
+            sb._source_inports = [
+                source(StartPlug(sb.inport, i)) for i in range(sb.inport.nout)
+            ]
+            sb._source_outports = [
+                source(StartPlug(sb.outport, j)) for j in range(sb.outport.nin)
+            ]
+            for i, plug in enumerate(sb._source_inports):
+                if plug is None:
+                    problems.append(
+                        f"input {i} of subsystem {sb.name} is not connected"
+                    )
+            sb._ports_elided = True
+
+        wires = []
+        for w in self.wirelist:
+            if w.end.block in owner:
+                continue  # feeds a port block, the wires that leave it start at its source
+            if w.start.block in owner:
+                plug = source(w.start)
+                if plug is None:
+                    continue  # reported above
+                w.newstart(plug)
+            wires.append(w)
+        self.wirelist = wires
+        self.blocklist = [b for b in self.blocklist if b not in owner]
+        for i, w in enumerate(self.wirelist):
+            w.id = i  # type: ignore[assignment]
+        for i, b in enumerate(self.blocklist):
+            b.id = i  # type: ignore[assignment]
+
+        return list(dict.fromkeys(problems))
+
     def _subsystem_import(
         self, bd: BlockDiagram, sspath: str, verbose: bool = False, depth: int = 0
     ) -> tuple[list[Block], list[Wire]]:
@@ -698,6 +794,7 @@ class BlockDiagram(BlockDiagramMixin):
                 # do not add it to the block list, it was just a container for the subsystem blocks and wires
                 if verbose:
                     print(f"{'  ' * (depth + 1)}instantiating subsystem ", b.name)
+                self.subsystems[b.name] = b
                 ssb, ssw = self._subsystem_import(
                     b.subsystem,  # reference to the BlockDiagram that describes the subsystem
                     b.name,  # name of the subsystem block, becomes a prefix for all blocks within the subsystem
@@ -1270,6 +1367,47 @@ class BlockDiagram(BlockDiagramMixin):
                     table.row(b.id, b.name, c.name, c.T, c.offset)
             table.print(**kwargs)
 
+    def report_subsystems(self, **kwargs: Any) -> None:
+        """
+        Print a table of the inputs and outputs of the subsystems.
+
+        :param kwargs: options passed to :meth:`ansitable.table.ANSIMatrix.print`
+        :type kwargs: dict
+
+        A subsystem block is not part of the compiled network, and its INPORT and OUTPORT
+        blocks have been replaced by wires, so the signals that cross its boundary are
+        listed here.  The columns are
+
+        1. the port, such as ``pid.0[1]``, which is what can be watched
+        2. ``in`` or ``out``
+        3. the block and port that the signal comes from, the *source*, which for an
+           output is a block inside the subsystem (looking through nested subsystems) and
+           for an input is a block outside it
+        4. the type of the signal, as the signature recorded when the diagram was compiled
+
+        :seealso: :attr:`SubsystemBlock.inports` :attr:`SubsystemBlock.outports`
+        """
+        table = ANSITable(
+            Column("port", headalign="^", colalign="<"),
+            Column("", headalign="^", colalign="<"),
+            Column("source", headalign="^", colalign="<"),
+            Column("type", headalign="^", colalign="<"),
+            border="thin",
+        )
+        for name, sub in self.subsystems.items():
+            for direction, plugs in (("in", sub.inports), ("out", sub.outports)):
+                for port, plug in enumerate(plugs):
+                    if plug is None:
+                        source, signature = "?", None
+                    else:
+                        source = f"{plug.block.name}[{plug.port}]"
+                        sigs = getattr(plug.block, "outsig", None)
+                        signature = sigs[plug.port] if sigs else None
+                    table.row(
+                        f"{name}[{port}]", direction, source, _signature_str(signature)
+                    )
+        table.print(**kwargs)
+
     def report_params(self, fixed: bool = False, **kwargs: Any) -> None:
         """
         Print a table of the parameters of all blocks and their current values.
@@ -1290,8 +1428,10 @@ class BlockDiagram(BlockDiagramMixin):
            ``never`` (only with ``fixed=True``)
 
         Blocks inside a subsystem are listed with the path of the subsystem, such as
-        ``sub/gain.0:K``.  The ``--param`` option prints this table when the diagram is
-        compiled.
+        ``sub/gain.0:K``.  A subsystem block that declares parameters of its own, such
+        as ``PID``, is listed by its own name, ``pid.0:P``, instead of the blocks inside
+        it, which can still be set by their own names.  The ``--param`` option prints
+        this table when the diagram is compiled.
 
         :seealso: :meth:`Block.add_param` :meth:`Block.set_param`
         """
@@ -1302,16 +1442,35 @@ class BlockDiagram(BlockDiagramMixin):
             Column("when", headalign="^", colalign="<"),
             border="thin",
         )
-        for b in self.blocklist:
+        # A subsystem that declares parameters presents those, and its inner blocks, which
+        # can still be set by their own names, are not listed.  Names are full paths,
+        # so a subsystem inside a subsystem is under the prefix of the outer one.
+        declared = [
+            name
+            for name, sub in self.subsystems.items()
+            if any(
+                p.forward is not None or p.unavailable is not None
+                for p in sub._parameters.values()
+            )
+        ]
+        inside = tuple(name + "/" for name in declared)
+        owners: list[Any] = [
+            self.subsystems[name] for name in declared if not name.startswith(inside)
+        ]
+
+        for b in [*owners, *self.blocklist]:
+            if b.name.startswith(inside) and b not in owners:
+                continue
             for name, param in b._parameters.items():
-                if param.when == "never" and not fixed:
+                when = b._param_when(param)
+                if when == "never" and not fixed:
                     continue
-                value = getattr(b, name, None)
+                value = b._param_value(name)
                 table.row(
                     f"{b.name}:{name}",
                     _value_str(value),
                     _signature_str(Signature.of(value)),
-                    param.when,
+                    when,
                 )
         table.print(**kwargs)
 

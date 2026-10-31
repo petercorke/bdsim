@@ -62,9 +62,13 @@ class Parameter:
     :param when: ``"anytime"``, ``"setup"`` or ``"never"``
     :param validate: optional check of a new value, which raises if it is not acceptable
     :param coerce: check the new value against the type of the current one
+    :param forward: ``(block, name)``, the parameter of another block that this one
+        stands for, see :meth:`Block.add_param`
+    :param unavailable: why the parameter cannot be used, for a block that was built
+        without the part it belongs to
     """
 
-    __slots__ = ("name", "when", "validate", "coerce")
+    __slots__ = ("name", "when", "validate", "coerce", "forward", "unavailable")
 
     def __init__(
         self,
@@ -72,6 +76,8 @@ class Parameter:
         when: Literal["anytime", "setup", "never"] = "anytime",
         validate: Callable[[Any], None] | None = None,
         coerce: bool = True,
+        forward: tuple[Block, str] | None = None,
+        unavailable: str | None = None,
     ) -> None:
         if when not in ("anytime", "setup", "never"):
             raise ValueError(
@@ -81,6 +87,8 @@ class Parameter:
         self.when = when
         self.validate = validate
         self.coerce = coerce
+        self.forward = forward
+        self.unavailable = unavailable
 
 
 def _coerce_parameter(block: Block, name: str, old: Any, new: Any) -> Any:
@@ -92,6 +100,7 @@ def _coerce_parameter(block: Block, name: str, old: Any, new: Any) -> Any:
     * an ``ndarray`` keeps its shape and dtype; a list of numbers becomes an array,
       and an array that can be cast safely to the dtype is cast (an integer array
       into a float one)
+      A one-element array also accepts a number.
     * a ``bool`` stays a bool
     * a number may be any other number, and is widened (an integer parameter can
       become a float, a float parameter stays a float), never narrowed
@@ -105,6 +114,12 @@ def _coerce_parameter(block: Block, name: str, old: Any, new: Any) -> Any:
         return maybe_asarray(new)
 
     if isinstance(old, np.ndarray):
+        if (
+            old.size == 1
+            and isinstance(new, numbers.Number)
+            and not isinstance(new, (bool, np.bool_))
+        ):
+            new = np.full(old.shape, new)  # a number for a one-element array
         new = maybe_asarray(new)
         if not isinstance(new, np.ndarray):
             raise TypeError(f"{where} is {Signature.of(old)}, not {Signature.of(new)}")
@@ -537,6 +552,8 @@ class Block(ABC, Port):
         when: Literal["anytime", "setup", "never"] = "anytime",
         validate: Callable[[Any], None] | None = None,
         coerce: bool = True,
+        forward: tuple[Block, str] | None = None,
+        unavailable: str | None = None,
     ) -> None:
         """
         Register a parameter of the block, one per call.
@@ -567,6 +584,18 @@ class Block(ABC, Port):
             polynomial that may be given as coefficients or as factors, and let the
             ``property`` setter or ``validate`` deal with the value
         :type coerce: bool, optional
+        :param forward: for a block made of other blocks, such as a subsystem: the
+            parameter of an inner block that this one stands for, as ``(block, name)``.
+            The value lives in the inner block, which does all the checking, so
+            ``set_param`` and the current value are simply passed on.  The inner
+            parameter can itself be forwarded, so subsystems nest.  The block is given
+            as an object, which stays the right one when the subsystem is flattened into
+            its parent diagram and its blocks are renamed.
+        :type forward: tuple(Block, str), optional
+        :param unavailable: for a parameter that belongs to a part the block was built
+            without, such as the integral term of a PID block with ``I=0``: the reason,
+            which is the message if someone tries to set it
+        :type unavailable: str, optional
 
         Every ``__init__`` argument of a block is registered, each with a decision
         about when it can be set.  A parameter whose value is not kept under its own
@@ -575,7 +604,34 @@ class Block(ABC, Port):
 
         :seealso: :meth:`set_param` :meth:`parameters`
         """
-        self.__dict__["_parameters"][name] = Parameter(name, when, validate, coerce)
+        if forward is not None:
+            target, target_name = forward
+            inner = target._parameters.get(target_name)
+            if inner is None or inner.when == "never":
+                raise ValueError(
+                    f"{name} cannot stand for {target.name}:{target_name}, which is not "
+                    "a parameter that can be set"
+                )
+        self.__dict__["_parameters"][name] = Parameter(
+            name, when, validate, coerce, forward, unavailable
+        )
+
+    def _param_when(self, param: Parameter) -> str:
+        """When a parameter can be set; that of the inner parameter if it is forwarded."""
+        if param.unavailable is not None:
+            return "never"
+        if param.forward is not None:
+            target, name = param.forward
+            return target._param_when(target._parameters[name])
+        return param.when
+
+    def _param_value(self, name: str) -> Any:
+        """The current value of a parameter, from the inner block if it is forwarded."""
+        param = self._parameters.get(name)
+        if param is not None and param.forward is not None:
+            target, target_name = param.forward
+            return target._param_value(target_name)
+        return getattr(self, name, None)
 
     def remove_param(self, name: str) -> None:
         """
@@ -596,7 +652,11 @@ class Block(ABC, Port):
                 f"block {self.name} ({self.type}) has no settable parameter '{name}'; "
                 f"settable parameters: {settable}"
             )
-        if param.when == "never":
+        if param.unavailable is not None:
+            raise ValueError(
+                f"block {self.name}: parameter '{name}' cannot be set, {param.unavailable}"
+            )
+        if self._param_when(param) == "never":
             raise ValueError(
                 f"block {self.name}: parameter '{name}' is fixed when the block is "
                 "created and cannot be set"
@@ -623,6 +683,9 @@ class Block(ABC, Port):
         :seealso: :meth:`add_param` :meth:`parameters`
         """
         param = self._lookup_param(name)
+        if param.forward is not None:
+            target, target_name = param.forward
+            return target.set_param(target_name, newvalue)
         if param.when == "setup" and self._running:
             raise ValueError(
                 f"block {self.name}: parameter '{name}' can only be set before the "
@@ -648,9 +711,9 @@ class Block(ABC, Port):
         :seealso: :meth:`add_param` :meth:`set_param`
         """
         return {
-            name: getattr(self, name, None)
+            name: self._param_value(name)
             for name, param in self._parameters.items()
-            if param.when != "never"
+            if self._param_when(param) != "never"
         }
 
     @property
@@ -2144,6 +2207,17 @@ class FunctionBlock(Block):
         raise NotImplementedError
 
 
+def _initial_state(block: Any, value: Any) -> np.ndarray:
+    """An initial state vector for the block, as a float array with one element per state."""
+    x0 = smb.getvector(value, dtype=float)
+    n = len(block._x0)
+    if x0.shape != (n,):
+        raise ValueError(
+            f"x0 must have {n} element{'s' if n != 1 else ''}, one per state, not {len(x0)}"
+        )
+    return x0
+
+
 class ContinuousBlock(Block):
     """
     A ContinuousBlock is a subclass of Block that represents a block with inputs,
@@ -2195,6 +2269,15 @@ class ContinuousBlock(Block):
     def setstate(self, x: np.ndarray) -> np.ndarray:
         self._x_view = x[: self.nstates]
         return x[self.nstates :]
+
+    @property
+    def x0(self) -> np.ndarray:
+        """Initial state vector.  It can be set until the run starts."""
+        return self._x0  # type: ignore[no-any-return]
+
+    @x0.setter
+    def x0(self, value: Any) -> None:
+        self._x0 = _initial_state(self, value)
 
     def getstate0(self) -> np.ndarray:
         return self._x0
@@ -2270,6 +2353,15 @@ class SampledBlock(Block):
         self._x_view = x[: self.ndstates]
         return x[self.ndstates :]
 
+    @property
+    def x0(self) -> np.ndarray:
+        """Initial state vector.  It can be set until the run starts."""
+        return self._x0  # type: ignore[no-any-return]
+
+    @x0.setter
+    def x0(self, value: Any) -> None:
+        self._x0 = _initial_state(self, value)
+
     def getstate0(self) -> np.ndarray:
         return self._x0
 
@@ -2330,6 +2422,40 @@ class SubsystemBlock(Block):
         self.subsystem = subsystem
         self.inport = inports[0]
         self.outport = outports[0]
+
+        # set when the diagram is compiled and the INPORT and OUTPORT blocks are replaced
+        # by wires, see BlockDiagram._elide_subsystem_ports
+        self._ports_elided = False
+        self._source_inports: list[Plug | None] = []
+        self._source_outports: list[Plug | None] = []
+
+    @property
+    def inports(self) -> list[Plug]:
+        """
+        The output ports that feed the inputs of the subsystem.
+
+        :return: one plug per input, the block and port that drives it
+        :rtype: list of Plug
+
+        Like :attr:`Block.inports`, but the subsystem block is not part of the compiled
+        network.  Available after the diagram has been compiled.
+        """
+        return self._source_inports  # type: ignore[return-value]
+
+    @property
+    def outports(self) -> list[Plug]:
+        """
+        The output ports that generate the outputs of the subsystem.
+
+        :return: one plug per output, the block and port inside the subsystem whose value
+            is the output.  Nested subsystems are looked through.
+        :rtype: list of Plug
+
+        This is how the output of a subsystem is watched: ``watch=[pid]`` or
+        ``watch=[pid[0]]`` watch the plug found here.  Available after the diagram has
+        been compiled.
+        """
+        return self._source_outports  # type: ignore[return-value]
 
 
 class EventSource:

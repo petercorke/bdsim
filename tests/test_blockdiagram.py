@@ -952,8 +952,10 @@ class ImportTest(unittest.TestCase):
 
         bd.compile(verbose=False)
 
-        self.assertEqual(len(bd.blocklist), 5)
-        self.assertEqual(len(bd.wirelist), 4)
+        # the INPORT and OUTPORT blocks are replaced by wires:
+        #   const -> function -> scope
+        self.assertEqual(len(bd.blocklist), 3)
+        self.assertEqual(len(bd.wirelist), 2)
 
 
 #     def test_import2(self):

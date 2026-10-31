@@ -72,6 +72,23 @@ class Wire:
         else:
             self._value = v
 
+    def newstart(self, plug: Plug) -> None:
+        """
+        Change the output port that the wire starts at.
+
+        :param plug: the new start of the wire
+        :type plug: Plug
+        :raises RuntimeError: the wire is already connected to its blocks
+
+        The wire takes a copy of the plug, so that changing one wire can never change
+        another that shares the plug.  It is used while the diagram is being flattened,
+        before :meth:`BlockDiagram.compile` connects the wires to the blocks.
+        """
+        wires = self.start.block.__dict__.get("_output_wires")
+        if wires is not None and any(self in ws for ws in wires):
+            raise RuntimeError(f"{self} is connected to its blocks, its start is fixed")
+        self.start = StartPlug(plug.block, plug.port)
+
     def bind_slot(self, slot: Any) -> None:
         self._slot = slot
         self._value = None

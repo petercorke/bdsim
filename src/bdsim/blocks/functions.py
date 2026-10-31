@@ -16,7 +16,7 @@ import math
 import inspect
 import warnings
 import spatialmath.base as smb
-from typing import Any, Union, Callable, Optional
+from typing import Any, Literal, Union, Callable, Optional
 from numpy.typing import ArrayLike
 
 Vector1D = Union[int, float, tuple[float, ...], list[float], np.ndarray]
@@ -423,7 +423,7 @@ class Pow(FunctionBlock):
         """
         :param p: The exponent value, defaults to 1
         :type p: scalar
-        :param matrix: premultiply by constant, default is postmultiply, defaults to False
+        :param matrix: matrix power, not elementwise exponentiation, defaults to False
         :type matrix: bool, optional
         :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
@@ -682,14 +682,13 @@ class Function(FunctionBlock):
             # self.nout = nout
 
         self.func = func
-        if persistent:
-            self.userdata: dict[Any, Any] | None = dict()
-            fargs += (self.userdata,)
-        else:
-            self.userdata = None
-        self.args = fargs
-        self.kwargs = fkwargs
+        self.userdata: dict[Any, Any] | None = dict() if persistent else None
+        self.fargs = list(fargs)
+        self.fkwargs = fkwargs
         self.add_param("func", validate=self._check_func)
+        self.add_param("fargs", coerce=False, validate=list)
+        self.add_param("fkwargs", coerce=False, validate=dict)
+        self.add_param("persistent", when="setup")
         self.add_param("nin", when="never")
         self.add_param("nout", when="never")
 
@@ -697,7 +696,29 @@ class Function(FunctionBlock):
         super().start(simstate)
         if self.userdata is not None:
             self.userdata.clear()
-            print("clearing user data")
+
+    @property
+    def persistent(self) -> bool:
+        """Whether the function is passed a dictionary to hold state between calls."""
+        return self.userdata is not None
+
+    @persistent.setter
+    def persistent(self, value: bool) -> None:
+        if value and self.userdata is None:
+            self.userdata = dict()
+        elif not value:
+            self.userdata = None
+
+    @property
+    def args(self) -> list[Any]:
+        """The extra positional arguments, ``fargs`` and then the state dictionary if persistent."""
+        if self.userdata is None:
+            return self.fargs
+        return [*self.fargs, self.userdata]
+
+    @property
+    def kwargs(self) -> dict[str, Any]:
+        return self.fkwargs
 
     def _check_func(self, value: Any) -> None:
         if isinstance(value, (list, tuple)):
@@ -844,35 +865,83 @@ class Interpolate(FunctionBlock):
             # process separate x and y vectors
             x = np.array(x)
             y = np.array(y)
-            if x.shape[0] != y.shape[0]:
-                raise ValueError("x and y data must be same length")
-        else:
+        elif isinstance(xy, (list, tuple)):
             # process mixed xy data
-            if isinstance(xy, (list, tuple)):
-                x = [_[0] for _ in xy]
-                y = [_[1] for _ in xy]
-                # x = np.array(x).T
-                # y = np.array(y).T
-                print(x, y)
-            elif isinstance(xy, np.ndarray):
-                x = xy[:, 0]
-                y = xy[:, 1:]
-        self.f: scipy.interpolate.interp1d = scipy.interpolate.interp1d(
-            x=x, y=y, kind=kind, axis=0
-        )
-        self.xpts = x
+            x = np.array([_[0] for _ in xy])
+            y = np.array([_[1] for _ in xy])
+        else:
+            x = xy[:, 0]
+            y = xy[:, 1:]
+        self._set_data(x, y, kind)
+
+        # with time=True the data must cover the run, which is checked by start()
+        when: Literal["anytime", "setup"] = "setup" if time else "anytime"
+        self.add_param("x", when=when, coerce=False)
+        self.add_param("y", when=when, coerce=False)
+        self.add_param("xy", when=when, coerce=False)
+        self.add_param("kind", when=when)
         self.add_param("time", when="never")
+
+    def _set_data(self, x: np.ndarray, y: np.ndarray, kind: str) -> None:
+        """Make the interpolant from new data, or raise and leave the block as it was."""
+        if x.shape[0] != y.shape[0]:
+            raise ValueError(
+                f"x and y data must be same length, not {x.shape[0]} and {y.shape[0]}"
+            )
+        try:
+            f = scipy.interpolate.interp1d(x=x, y=y, kind=kind, axis=0)
+        except NotImplementedError:
+            raise ValueError(f"unknown interpolation kind '{kind}'") from None
+        self.f: scipy.interpolate.interp1d = f
+        self._x, self._y, self._kind = x, y, kind
+
+    @property
+    def x(self) -> np.ndarray:
+        """The x-values of the function."""
+        return self._x
+
+    @x.setter
+    def x(self, value: Any) -> None:
+        self._set_data(np.array(value), self._y, self._kind)
+
+    @property
+    def y(self) -> np.ndarray:
+        """The y-values of the function, one row per x-value."""
+        return self._y
+
+    @y.setter
+    def y(self, value: Any) -> None:
+        self._set_data(self._x, np.array(value), self._kind)
+
+    @property
+    def xy(self) -> np.ndarray:
+        """The x- and y-values together, the first column is x.  Setting it can change the length."""
+        return np.column_stack((self._x, self._y))
+
+    @xy.setter
+    def xy(self, value: Any) -> None:
+        xy = np.array(value)
+        self._set_data(xy[:, 0], xy[:, 1:] if xy.shape[1] > 2 else xy[:, 1], self._kind)
+
+    @property
+    def kind(self) -> str:
+        """The interpolation method, see :func:`scipy.interpolate.interp1d`."""
+        return self._kind
+
+    @kind.setter
+    def kind(self, value: str) -> None:
+        self._set_data(self._x, self._y, value)
 
     def start(self, simstate: Any, **blockargs: Any) -> None:
         super().start(simstate)
 
         if simstate is not None:
             if self.time:
-                if self.xpts[0] < 0:
+                if self._x[0] < 0:
                     raise ValueError("interpolation not defined for t<0")
-                if self.xpts[-1] is np.inf:
-                    self.xpts[-1] = simstate.tf
-                if self.xpts[-1] < simstate.tf:
+                if self._x[-1] is np.inf:
+                    self._x[-1] = simstate.tf
+                if self._x[-1] < simstate.tf:
                     raise ValueError("interpolation not defined for t>T")
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:

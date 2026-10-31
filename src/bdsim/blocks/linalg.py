@@ -14,7 +14,27 @@ from typing import Any
 
 from bdsim.components import FunctionBlock
 
-IndexSpec = slice | list[Any]
+IndexSpec = slice | list[Any] | int
+
+
+def _index_spec(value: Any, what: str, allow_int: bool = False) -> IndexSpec:
+    """
+    A slice or list given as a block parameter, in the form NumPy indexes with.
+
+    :param value: ``None`` for everything, a list for fancy indexing, or a 3-tuple
+        ``(start, stop, step)`` for a slice
+    :param what: the name of the parameter, for the error message
+    :raises ValueError: the value is none of these
+    """
+    if value is None:
+        return slice(None, None, None)
+    if isinstance(value, (slice, list)):
+        return value
+    if allow_int and isinstance(value, (int, np.integer)):
+        return int(value)
+    if isinstance(value, tuple) and len(value) == 3:
+        return slice(*value)
+    raise ValueError(f"bad {what} specifier")
 
 
 class Inverse(FunctionBlock):
@@ -204,11 +224,14 @@ class Norm(FunctionBlock):
         :type blockargs: dict
         """
         super().__init__(**blockargs)
-        self.args = dict(ord=ord, axis=axis)
+        self.ord = ord
+        self.axis = axis
+        self.add_param("ord", coerce=False)
+        self.add_param("axis", coerce=False)
 
     def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         vec = inputs[0]
-        out = np.linalg.norm(vec, **self.args)
+        out = np.linalg.norm(vec, ord=self.ord, axis=self.axis)
         return [out]
 
 
@@ -345,29 +368,34 @@ class Slice2(FunctionBlock):
         """
         super().__init__(**blockargs)
 
-        if rows is None:
-            self.rows: IndexSpec = slice(None, None, None)
-        elif isinstance(rows, list):
-            self.rows = rows
-        elif isinstance(rows, tuple) and len(rows) == 3:
-            self.rows = slice(*rows)
-        else:
-            raise ValueError("bad rows specifier")
+        self.rows = rows
+        self.cols = cols
+        self.add_param("rows", coerce=False)
+        self.add_param("cols", coerce=False)
 
-        if cols is None:
-            self.cols: IndexSpec = slice(None, None, None)
-        elif isinstance(cols, list):
-            self.cols = cols
-        elif isinstance(cols, tuple) and len(cols) == 3:
-            self.cols = slice(*cols)
-        else:
-            raise ValueError("bad columns specifier")
+    @property
+    def rows(self) -> IndexSpec:
+        """Rows to select, a slice or a list of row numbers."""
+        return self._rows
+
+    @rows.setter
+    def rows(self, value: Any) -> None:
+        self._rows = _index_spec(value, "rows")
+
+    @property
+    def cols(self) -> IndexSpec:
+        """Columns to select, a slice or a list of column numbers."""
+        return self._cols
+
+    @cols.setter
+    def cols(self, value: Any) -> None:
+        self._cols = _index_spec(value, "columns")
 
     def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         array = inputs[0]
         if array.ndim != 2:
             raise RuntimeError("Slice2 block expecting 2d array")
-        return [array[self.rows, self.cols]]
+        return [array[self._rows, self._cols]]
 
 
 # ------------------------------------------------------------------------ #
@@ -441,20 +469,23 @@ class Slice1(FunctionBlock):
         """
         super().__init__(**blockargs)
 
-        if index is None:
-            self.index: IndexSpec = slice(None, None, None)
-        elif isinstance(index, list):
-            self.index = index
-        elif isinstance(index, tuple) and len(index) == 3:
-            self.index = slice(*index)
-        else:
-            raise ValueError("bad index specifier")
+        self.index = index
+        self.add_param("index", coerce=False)
+
+    @property
+    def index(self) -> IndexSpec:
+        """Elements to select, a slice or a list of element numbers."""
+        return self._index
+
+    @index.setter
+    def index(self, value: Any) -> None:
+        self._index = _index_spec(value, "index", allow_int=True)
 
     def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         array = inputs[0]
         if array.ndim != 1:
             raise RuntimeError("Slice1 block expecting 1d array")
-        return [array[self.index]]
+        return [array[self._index]]
 
 
 # ------------------------------------------------------------------------ #

@@ -1283,7 +1283,7 @@ class BDSim(Runner):
                     port_group = m.group("port")
                     port = 0 if port_group is None else int(port_group)
 
-                    b = bd.blocknames[name]
+                    b = bd[name]  # a subsystem block is found by name too
                     plug = b[port]
                 elif isinstance(w, Block):
                     # a block was given, defaults to port 0
@@ -1292,16 +1292,23 @@ class BDSim(Runner):
                     # a plug was given
                     plug: Plug = w  # type: ignore[no-redef]
 
+                watch_plug = plug
                 if plug.block.blockclass == "subsystem":
                     # subsystem blocks no longer exist in the wirelist, and don't have
-                    # their own outputs, so watch the corresponding port of the subsystem's
-                    # OUTPORT block instead.
-                    plug.block = plug.block.outport
+                    # their own outputs, so watch the output port inside the subsystem
+                    # that generates the value.  The name stays that of the subsystem.
+                    watch_plug = plug.block.outports[plug.port]
+                    if watch_plug is None:
+                        raise ValueError(f"cannot watch {plug}, nothing drives it")
 
-                watchlist.append(plug)
+                watchlist.append(watch_plug)
                 watchnamelist.append(str(plug))
             simstate.watchlist = watchlist
             simstate.watchnamelist = watchnamelist
+
+            # update block parameters given on command line; this must come before the
+            # initial state is collected, which a setup parameter such as x0 changes
+            self.update_parameters(bd)
 
             x0 = bd.getstate0()
 
@@ -1335,9 +1342,6 @@ class BDSim(Runner):
 
             if not simstate.options.quiet:
                 print(attr(0))
-
-            # update block parameters given on command line
-            self.update_parameters(bd)
 
             if bool(getattr(simstate, "notebook_backend", False)):
                 patch_roboticstoolbox_pyplot_launch_for_notebook()
@@ -1828,7 +1832,7 @@ class BDSim(Runner):
                 block._lookup_param(param)  # is there such a parameter, can it be set?
             except ValueError as err:
                 raise ValueError(f"cannot set {block.name}:{param}: {err}") from err
-            if callable(getattr(block, param, None)):
+            if callable(block._param_value(param)):
                 raise ValueError(
                     f"cannot set {block.name}:{param} from text: it is a function, "
                     "set it from code with block.set_param"
@@ -1836,7 +1840,7 @@ class BDSim(Runner):
 
             # get the new value; the type of the current value says how to read the text
             try:
-                new_value = _parse_param_text(m["value"], getattr(block, param, None))
+                new_value = _parse_param_text(m["value"], block._param_value(param))
             except ValueError as err:
                 raise ValueError(
                     f"cannot set {block.name}:{param}: cannot read {m['value']!r}: {err}"
@@ -2853,7 +2857,7 @@ class BDSim(Runner):
 
         :param bd: the block diagram to be reported
         :type bd: :class:`BlockDiagram`
-        :param type: report type, one of: "summary" (default), "lists", "schedule", "params"
+        :param type: report type, one of: "summary" (default), "lists", "schedule", "params", "subsystems"
         :type type: str, optional
         :param style: table style, one of: ansi (default), markdown, latex
         :type style: str
@@ -2861,7 +2865,7 @@ class BDSim(Runner):
         Single method wrapper for various block diagram reports.  Obeys the ``-q``
         option to suppress all reports at runtime.
 
-        :seealso: :meth:`BlockDiagram.report_summary` :meth:`BlockDiagram.report_lists` :meth:`BlockDiagram.report_schedule` :meth:`BlockDiagram.report_params`
+        :seealso: :meth:`BlockDiagram.report_summary` :meth:`BlockDiagram.report_lists` :meth:`BlockDiagram.report_schedule` :meth:`BlockDiagram.report_params` :meth:`BlockDiagram.report_subsystems`
         """
         context: SimulationContext | None = self._get_context()
         if self.options is None:
@@ -2878,6 +2882,8 @@ class BDSim(Runner):
             bd.report_schedule(**kwargs)
         elif type == "params":
             bd.report_params(**kwargs)
+        elif type == "subsystems":
+            bd.report_subsystems(**kwargs)
 
 
 def _parse_param_text(text: str, current: Any) -> Any:
