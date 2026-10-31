@@ -609,6 +609,8 @@ class _TFParams:
 
     def _set_tf(self: Any, num: Any, den: Any) -> None:
         """Rebuild the realisation from a new numerator and denominator, or raise."""
+        # A is set by LTI_SS, the other class this is mixed into, not by this one
+        # pylint: disable=access-member-before-definition
         num_c, den_c = _expand_poly(num), _expand_poly(den)
         if den_c.size == 0 or den_c[0] == 0:
             raise ValueError(

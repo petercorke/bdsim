@@ -681,7 +681,7 @@ class TextValueTest(ParamTestCase):
 
     def test_a_list_cannot_be_set_from_text(self):
         bd = self.bd()
-        scope = bd.SCOPE(labels=["a"], name="sc")
+        bd.SCOPE(labels=["a"], name="sc")
         with self.assertRaises(ValueError) as cm:
             self.update(bd, "sc:labels=a b")
         self.assertIn("text", str(cm.exception))
