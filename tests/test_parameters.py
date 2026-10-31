@@ -812,7 +812,7 @@ def block_parameters():
     """{Class.param: registered or not} from the source of every block module."""
     found = {}
     for path in sorted(BLOCKS.glob("*.py")):
-        tree = ast.parse(path.read_text())
+        tree = ast.parse(path.read_text(encoding="utf-8"))
         for cls in [n for n in tree.body if isinstance(n, ast.ClassDef)]:
             init = next(
                 (
