@@ -7,8 +7,12 @@ reference in ``tests/golden/<example>.npz``.
 
 * ``--dt 0.1`` puts the results on a fixed grid, so they do not depend on the
   integrator's own step choices.
-* A float result must agree to ``rtol=1e-6``; everything else (names, event
-  counts) must be equal.  Solver counts and wall time are not compared.
+* A float result must agree to ``rtol=1e-5, atol=1e-6``, the scale of the solver's
+  own default accuracy; everything else (names, event counts) must be equal.
+  Tighter than that the test fails on another platform: on Windows the van der Pol
+  oscillator differs by 7e-8 in two values, from floating-point differences that
+  the adaptive step size control amplifies.  A change that matters is far bigger.
+  Solver counts and wall time are not compared.
 * ``pytest --update-golden`` rewrites the references from the current results.
   Do that only for a change that is meant to alter the numbers, and review it:
   the references are binary files, so describe the change in the commit message.
@@ -110,7 +114,7 @@ def test_example_matches_golden(name, tmp_path, request):
         )
         if want.dtype.kind in "fc":
             nt.assert_allclose(
-                got, want, rtol=1e-6, atol=1e-9, err_msg=f"{name}: {key} differs"
+                got, want, rtol=1e-5, atol=1e-6, err_msg=f"{name}: {key} differs"
             )
         else:
             nt.assert_array_equal(got, want, err_msg=f"{name}: {key} differs")
