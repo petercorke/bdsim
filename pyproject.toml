@@ -25,6 +25,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Typing :: Typed",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
@@ -42,6 +43,7 @@ dev = [
     "pytest",
     "pytest-timeout",
     "coverage",
+    "mypy>=2.4,<2.5",
     "ruff>=0.17,<0.18",
     "ipython",
 ]
@@ -127,6 +129,9 @@ ignore = [
 
 [tool.ruff.format]
 quote-style = "double"
+
+[tool.mypy]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = "tests"
