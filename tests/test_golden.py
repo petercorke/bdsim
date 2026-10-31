@@ -72,7 +72,9 @@ def golden_view(data: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
 
 def run_example(name: str, outfile: Path) -> dict[str, np.ndarray]:
     env = dict(os.environ, MPLBACKEND="Agg", PYTHONPATH=str(SRC))
-    result = subprocess.run(
+    # The command is this repository's own example script, named in NAMES above, run
+    # with fixed arguments; nothing here comes from outside.
+    result = subprocess.run(  # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-audit.dangerous-subprocess-use-audit
         [sys.executable, f"{name}.py", *ARGS, "--npz", str(outfile)],
         cwd=EXAMPLES,
         env=env,
