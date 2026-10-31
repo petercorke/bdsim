@@ -143,7 +143,7 @@ class WiringTest(unittest.TestCase):
 
     def test_ports2(self):
         bd = self.sim.blockdiagram()
-        const = bd.CONSTANT([2, 3])
+        const = bd.CONSTANT(np.array([2, 3]))
         src = bd.DEMUX(2)
         bd.connect(const, src)
 
@@ -160,7 +160,7 @@ class WiringTest(unittest.TestCase):
     def test_ports3(self):
         bd = self.sim.blockdiagram()
 
-        const = bd.CONSTANT([2, 3, 4, 5])
+        const = bd.CONSTANT(np.array([2, 3, 4, 5]))
         src = bd.DEMUX(4)
         bd.connect(const, src)
 
@@ -187,7 +187,7 @@ class WiringTest(unittest.TestCase):
     def test_slice2(self):
         bd = self.sim.blockdiagram()
 
-        const = bd.CONSTANT([2, 3, 4, 5])
+        const = bd.CONSTANT(np.array([2, 3, 4, 5]))
         src = bd.DEMUX(4)
         bd.connect(const, src)
 
@@ -200,7 +200,7 @@ class WiringTest(unittest.TestCase):
     def test_slice3(self):
         bd = self.sim.blockdiagram()
 
-        const = bd.CONSTANT([2, 3, 4, 5])
+        const = bd.CONSTANT(np.array([2, 3, 4, 5]))
         src = bd.DEMUX(4)
         bd.connect(const, src)
 
@@ -213,7 +213,7 @@ class WiringTest(unittest.TestCase):
     def test_slice4(self):
         bd = self.sim.blockdiagram()
 
-        const = bd.CONSTANT([2, 3, 4, 5])
+        const = bd.CONSTANT(np.array([2, 3, 4, 5]))
         src = bd.DEMUX(4)
         bd.connect(const, src)
 
@@ -226,7 +226,7 @@ class WiringTest(unittest.TestCase):
     def test_slice5(self):
         bd = self.sim.blockdiagram()
 
-        const = bd.CONSTANT([2, 3, 4, 5])
+        const = bd.CONSTANT(np.array([2, 3, 4, 5]))
         src = bd.DEMUX(4)
         bd.connect(const, src)
 
@@ -240,7 +240,7 @@ class WiringTest(unittest.TestCase):
     def test_slice5a(self):
         bd = self.sim.blockdiagram()
 
-        const = bd.CONSTANT([2, 3, 4, 5])
+        const = bd.CONSTANT(np.array([2, 3, 4, 5]))
         src = bd.DEMUX(4)
         bd.connect(const, src)
 
@@ -254,7 +254,7 @@ class WiringTest(unittest.TestCase):
     def test_slice6(self):
         bd = self.sim.blockdiagram()
 
-        const = bd.CONSTANT([2, 3, 4, 5])
+        const = bd.CONSTANT(np.array([2, 3, 4, 5]))
         src = bd.DEMUX(4)
         bd.connect(const, src)
 
@@ -294,7 +294,7 @@ class WiringTest(unittest.TestCase):
     def test_assignment3(self):
         bd = self.sim.blockdiagram()
 
-        const = bd.CONSTANT([2, 3, 4, 5])
+        const = bd.CONSTANT(np.array([2, 3, 4, 5]))
         src = bd.DEMUX(4)
         bd.connect(const, src)
 
@@ -332,7 +332,7 @@ class WiringTest(unittest.TestCase):
         connected to dst's named port)."""
         bd = self.sim.blockdiagram()
 
-        const = bd.CONSTANT([2, 3, 4, 5])
+        const = bd.CONSTANT(np.array([2, 3, 4, 5]))
         src = bd.DEMUX(4)
         bd.connect(const, src)
 
@@ -369,7 +369,7 @@ class WiringTest(unittest.TestCase):
     def test_chain3(self):
         bd = self.sim.blockdiagram()
 
-        const = bd.CONSTANT([2, 3])
+        const = bd.CONSTANT(np.array([2, 3]))
         src = bd.DEMUX(2)
         bd.connect(const, src)
 
@@ -952,8 +952,10 @@ class ImportTest(unittest.TestCase):
 
         bd.compile(verbose=False)
 
-        self.assertEqual(len(bd.blocklist), 5)
-        self.assertEqual(len(bd.wirelist), 4)
+        # the INPORT and OUTPORT blocks are replaced by wires:
+        #   const -> function -> scope
+        self.assertEqual(len(bd.blocklist), 3)
+        self.assertEqual(len(bd.wirelist), 2)
 
 
 #     def test_import2(self):
@@ -1124,7 +1126,7 @@ class ConnectVariantsTest(SetUpMixin, unittest.TestCase):
     def test_connect_block_to_wide_slice_plug(self):
         """connect(Block_nout2, Plug_slice_width2): multi-output -> matching slice."""
         bd = self.sim.blockdiagram()
-        const = bd.CONSTANT([7, 8])
+        const = bd.CONSTANT(np.array([7, 8]))
         demux = bd.DEMUX(2)
         dst = bd.NULL(2)
         bd.connect(const, demux)
@@ -1150,7 +1152,7 @@ class ConnectVariantsTest(SetUpMixin, unittest.TestCase):
     def test_connect_slice_to_block_raises(self):
         """connect(Plug_slice, Block) raises ValueError due to if/elif bug in source."""
         bd = self.sim.blockdiagram()
-        const = bd.CONSTANT([3, 4])
+        const = bd.CONSTANT(np.array([3, 4]))
         demux = bd.DEMUX(2)
         dst1 = bd.NULL(1)
         bd.connect(const, demux)
@@ -1162,7 +1164,7 @@ class ConnectVariantsTest(SetUpMixin, unittest.TestCase):
     def test_connect_slice_to_plug_raises(self):
         """connect(Plug_slice, non-slice Plug) falls through to ValueError."""
         bd = self.sim.blockdiagram()
-        const = bd.CONSTANT([5, 6])
+        const = bd.CONSTANT(np.array([5, 6]))
         demux = bd.DEMUX(2)
         dst = bd.NULL(2)
         bd.connect(const, demux)

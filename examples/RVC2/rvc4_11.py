@@ -7,6 +7,7 @@ Robotics, Vision & Control: 2nd edition, Fig 4.11
 # run with command line +a switch to show animation
 
 import bdsim
+import numpy as np
 from math import pi, sqrt, atan, atan2
 
 sim = bdsim.BDSim(animation=True)
@@ -67,7 +68,7 @@ def polar(x, dict):
 
 
 # constants
-goal0 = bd.CONSTANT([xg[0], xg[1], 0], name="goal_pos")
+goal0 = bd.CONSTANT(np.r_[xg[0], xg[1], 0], name="goal_pos")
 goalh = bd.CONSTANT(xg[2], name="goal_heading")
 
 # stateful blocks
