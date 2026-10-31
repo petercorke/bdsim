@@ -1736,6 +1736,10 @@ class Block(ABC, Port):
         for slot in getattr(self, "_outport_slots", []):
             slot.value = None
 
+    def _default_name_stem(self) -> str:
+        """Stem of the default instance name ``<stem>.<n>``, the block type unless overridden."""
+        return self.type
+
     def start(self, simstate: SimulationState) -> None:  # begin a simulation
         pass
 

@@ -2151,16 +2151,49 @@ class BDSim(Runner):
         t_final = float(t1)
         return np.array(x0), t_final
 
-    def blockdiagram(self, name: str = "main") -> BlockDiagram:
+    def blockdiagram(self, name: str | None = None) -> BlockDiagram:
         """
         Instantiate a new block diagram object.
 
-        :param name: diagram name, defaults to 'main'
+        :param name: diagram name, defaults to None.  See below for how the
+            name is used.
         :type name: str, optional
         :return: parent object for blockdiagram
         :rtype: BlockDiagram
 
         This object describes the connectivity of a set of blocks and wires.
+
+        A diagram is used in one of two ways, and ``name`` means something
+        different in each.
+
+        **Main diagram.**  The top-level diagram that is compiled and run.  It
+        is not a block, so its name cannot clash with a block name.  The name
+        is only a label that appears in messages and reports.  If none is given
+        the diagram is named ``main`` when it is first compiled::
+
+            bd = sim.blockdiagram()  # bd.name is None until compile() gives it "main"
+            bd = sim.blockdiagram(name="plant")  # shown as 'plant'
+
+        **Subsystem.**  A diagram, containing ``INPORT`` and ``OUTPORT`` blocks,
+        that is instantiated inside another diagram by the ``SUBSYSTEM`` block.
+        Each instance is a block, so it needs a name that is unique within the
+        parent diagram.  The diagram's name is the stem of the default instance
+        name, in the same way that the block type is the stem of ``gain.0``,
+        ``gain.1`` and so on::
+
+            ss = sim.blockdiagram(name="thing")
+            ...
+            a = bd.SUBSYSTEM(ss)  # named "thing.0"
+            b = bd.SUBSYSTEM(ss)  # named "thing.1"
+
+        If the subsystem diagram has no name, the stem is ``subsystem``, giving
+        ``subsystem.0``, ``subsystem.1`` and so on.  A subsystem loaded from a
+        ``.bd`` file uses the file name without its extension, and one imported
+        from a module uses the variable name of the diagram.  Passing ``name=``
+        to ``SUBSYSTEM`` overrides the default, but must be unique in the
+        parent diagram.  The instance name becomes the prefix of the names of
+        the blocks cloned from the subsystem into the parent when it is
+        compiled, for example ``thing.0/gain.0``.
 
         It is an instantiation of the ``BlockDiagram`` class with a factory
         method for every dynamically loaded block which returns
