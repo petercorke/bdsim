@@ -29,6 +29,7 @@ import scipy.integrate as integrate
 import spatialmath.base as smb  # type: ignore[import-not-found]
 from colored import attr, fg
 
+from bdsim.literals import NOT_A_LITERAL, parse_literal
 from bdsim.components import (  # noqa: F401  (TimeQ: re-exported for tests/test_run_sim.py)
     BDStruct,
     Block,
@@ -1820,7 +1821,9 @@ class BDSim(Runner):
 
         ``param`` is the name of the parameter used in the constructor
 
-        ``value`` is the new value of the variable
+        ``value`` is the new value of the variable: an integer, a float, a matrix
+        written ``1 2; 3 4``, or a NumPy dtype literal such as ``float32([1, 2])``
+        or ``uint16(5)``, see :mod:`bdsim.literals`
         """
 
         context: SimulationContext | None = self._get_context()
@@ -1855,7 +1858,14 @@ class BDSim(Runner):
             new_value = None
 
             try:
-                if ";" in value:
+                literal = parse_literal(value)
+            except ValueError as err:
+                raise ValueError(f"cannot parse value {value}") from err
+            try:
+                if literal is not NOT_A_LITERAL:
+                    # a NumPy dtype literal such as float32([1, 2]) or uint16(5)
+                    new_value = literal
+                elif ";" in value:
                     new_value = smb.str2array(value)
                 else:
                     try:
