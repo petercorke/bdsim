@@ -15,6 +15,15 @@ from typing import Any, Callable, TextIO
 
 from bdsim.components import SinkBlock
 
+_EVENT_DIRECTIONS = {"^": 1.0, "+": 1.0, "v": -1.0, "-": -1.0}
+
+
+def _check_callable(value: Any) -> None:
+    """Validator for a parameter that is a function; ``None`` is allowed where it means none."""
+    if value is not None and not callable(value):
+        raise TypeError("argument must be a callable")
+
+
 # ------------------------------------------------------------------------ #
 
 
@@ -84,15 +93,17 @@ class Print(SinkBlock):
         :rtype: Print instance
         """
         super().__init__(**blockargs)
-        self.format = fmt
+        self.fmt = fmt
         self.file = file
+        self.add_param("fmt")
+        self.add_param("file", when="setup")
 
         # TODO format can be a string or function
 
     def step(self, t: float, inputs: list[Any]) -> None:
         prefix: str = "{:12s}".format("PRINT({:s} (t={:.3f})".format(self.name, t))
         value = inputs[0]
-        if self.format is None:
+        if self.fmt is None:
             # no format string
             if hasattr(value, "strline"):
                 print(prefix, value.strline(), file=self.file)
@@ -101,10 +112,10 @@ class Print(SinkBlock):
         else:
             # format string provided
             if isinstance(value, (int, float)):
-                print(prefix, self.format.format(value), file=self.file)
+                print(prefix, self.fmt.format(value), file=self.file)
 
             elif isinstance(value, np.ndarray):
-                fmt = self.format
+                fmt = self.fmt
                 if fmt is None:
                     raise RuntimeError("format string not set")  # pragma: no cover
                 with np.printoptions(
@@ -165,8 +176,9 @@ class Stop(SinkBlock):
 
         if func is not None and not callable(func):
             raise TypeError("argument must be a callable")
-        self.stopfunc: None | Callable[..., object] = func
+        self.func: None | Callable[..., object] = func
         self._event_detector: Callable[[float, Any], float] | None = None
+        self.add_param("func", validate=_check_callable)
 
     @staticmethod
     def _coerce_scalar_metric(metric: Any) -> Any:
@@ -189,7 +201,7 @@ class Stop(SinkBlock):
             raise RuntimeError("bad input type to stop block") from exc
 
     def _stop_metric(self, value: Any) -> float:
-        metric = self.stopfunc(value) if self.stopfunc is not None else value
+        metric = self.func(value) if self.func is not None else value
         metric = self._coerce_scalar_metric(metric)
         if isinstance(metric, bool):
             return 1.0 if metric else -1.0
@@ -229,7 +241,7 @@ class Stop(SinkBlock):
         simstate.stop = self
 
     def step(self, t: float, inputs: list[Any]) -> None:
-        metric = self.stopfunc(inputs[0]) if self.stopfunc is not None else inputs[0]
+        metric = self.func(inputs[0]) if self.func is not None else inputs[0]
         stop = self._metric_to_stop(metric)
 
         # we signal stop condition by setting simstate.stop to the block calling
@@ -291,17 +303,49 @@ class Event(SinkBlock):
         """
         super().__init__(**blockargs)
 
-        direction_map = {"^": 1.0, "+": 1.0, "v": -1.0, "-": -1.0}
-        if direction not in direction_map:
+        if direction not in _EVENT_DIRECTIONS:
             raise ValueError("direction must be one of '^', 'v', '+', '-' ")
         if not callable(func):
             raise TypeError("func must be callable")
 
-        self.direction = direction_map[direction]
+        self._direction = _EVENT_DIRECTIONS[direction]
         self.func = func
         self.args = [] if fargs is None else list(fargs)
         self.kwargs = {} if fkwargs is None else dict(fkwargs)
         self._event_detector: Callable[[float, Any], float] | None = None
+        self.add_param("direction", when="setup")
+        self.add_param("func", validate=_check_callable)
+        self.add_param("fargs", coerce=False)
+        self.add_param("fkwargs", coerce=False)
+
+    @property
+    def direction(self) -> str:
+        """Crossing direction, ``'^'`` for positive-going or ``'v'`` for negative-going."""
+        return "^" if self._direction > 0 else "v"
+
+    @direction.setter
+    def direction(self, value: str) -> None:
+        if value not in _EVENT_DIRECTIONS:
+            raise ValueError("direction must be one of '^', 'v', '+', '-' ")
+        self._direction = _EVENT_DIRECTIONS[value]
+
+    @property
+    def fargs(self) -> list[Any]:
+        """Extra positional arguments passed to the callback."""
+        return self.args
+
+    @fargs.setter
+    def fargs(self, value: Any) -> None:
+        self.args = list(value)
+
+    @property
+    def fkwargs(self) -> dict[str, Any]:
+        """Extra keyword arguments passed to the callback."""
+        return self.kwargs
+
+    @fkwargs.setter
+    def fkwargs(self, value: Any) -> None:
+        self.kwargs = dict(value)
 
     def start(self, simstate: Any) -> None:
         # Build an event function from the current input value. solve_ivp reads
@@ -339,7 +383,7 @@ class Event(SinkBlock):
             return float(value)
 
         event_detector.terminal = True  # type: ignore[attr-defined]
-        event_detector.direction = self.direction  # type: ignore[attr-defined]
+        event_detector.direction = self._direction  # type: ignore[attr-defined]
         self._event_detector = event_detector
 
         if not hasattr(simstate, "declare_crossing_event"):
@@ -406,6 +450,7 @@ class Null(SinkBlock):
         :type blockargs: dict
         """
         super().__init__(nin=nin, **blockargs)
+        self.add_param("nin", when="never")
 
     def step(self, t: float, inputs: list[Any]) -> None:
         pass  # do nothing
@@ -462,6 +507,7 @@ class Watch(SinkBlock):
         :type blockargs: dict
         """
         super().__init__(nin=nin, **blockargs)
+        self.add_param("nin", when="never")
 
     def start(self, simstate: Any) -> None:
         # called at start of simulation, add this block to the watchlist

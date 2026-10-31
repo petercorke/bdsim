@@ -65,6 +65,7 @@ class Pose_postmul(FunctionBlock):
 
         super().__init__(**blockargs)
         self.pose = pose
+        self.add_param("pose")
 
     def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         input = inputs[0]
@@ -124,6 +125,7 @@ class Pose_premul(FunctionBlock):
 
         super().__init__(**blockargs)
         self.pose = pose
+        self.add_param("pose")
 
     def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         input = inputs[0]
@@ -290,6 +292,20 @@ class PoseIntegrator(ContinuousBlock):
         super().__init__(nstates=nstates, **blockargs)
 
         self._x0 = _x0
+        self.add_param("x0", when="setup", coerce=False)
+
+    @property
+    def x0(self) -> np.ndarray:
+        """Initial state, the twist of the initial pose.  Set it with an SE3, a Twist3 or a 6-vector."""
+        return self._x0  # type: ignore[no-any-return]
+
+    @x0.setter
+    def x0(self, value: Any) -> None:
+        if isinstance(value, SE3):
+            value = Twist3(value).A
+        elif isinstance(value, Twist3):
+            value = value.A
+        ContinuousBlock.x0.fset(self, value)  # type: ignore[attr-defined]
 
     def output(self, t: float, u: list[Any], x: np.ndarray) -> list[SE3]:
         return [Twist3(x).SE3(1)]
@@ -365,6 +381,21 @@ class PoseIntegrator_S(SampledBlock):
             x0 = smb.getvector(x0, 6)
 
         super().__init__(clock=clock, x0=x0, **blockargs)
+        self.add_param("clock", when="never")
+        self.add_param("x0", when="setup", coerce=False)
+
+    @property
+    def x0(self) -> np.ndarray:
+        """Initial state, the twist of the initial pose.  Set it with an SE3, a Twist3 or a 6-vector."""
+        return self._x0  # type: ignore[no-any-return]
+
+    @x0.setter
+    def x0(self, value: Any) -> None:
+        if isinstance(value, SE3):
+            value = Twist3(value).A
+        elif isinstance(value, Twist3):
+            value = value.A
+        SampledBlock.x0.fset(self, value)  # type: ignore[attr-defined]
 
     def output(self, t: float, u: list[Any], x: np.ndarray) -> list[SE3]:
         return [Twist3(x).SE3()]
