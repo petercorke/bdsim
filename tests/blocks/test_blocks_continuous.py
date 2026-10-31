@@ -79,27 +79,27 @@ class TransferTest(unittest.TestCase):
         # more robust test than comparing the A, B, C matrices directly since there are
         # many equivalent state-space realizations of the same transfer function.
 
-        block = LTI_SISO(N=N, D=D)
+        block = LTI_SISO(num=N, den=D)
         n, d = ss2tf(block.A, block.B, block.C, np.zeros((1, 1)), input=0)
         nt.assert_almost_equal(n[0], Nr)
         nt.assert_almost_equal(d, Dr)
 
-        block = LTI_SISO(N=N, D=D, form="ocf", order="backward")
+        block = LTI_SISO(num=N, den=D, form="ocf", order="backward")
         n, d = ss2tf(block.A, block.B, block.C, np.zeros((1, 1)), input=0)
         nt.assert_almost_equal(n[0], Nr)
         nt.assert_almost_equal(d, Dr)
 
-        block = LTI_SISO(N=N, D=D, form="ocf", order="forward")
+        block = LTI_SISO(num=N, den=D, form="ocf", order="forward")
         n, d = ss2tf(block.A, block.B, block.C, np.zeros((1, 1)), input=0)
         nt.assert_almost_equal(n[0], Nr)
         nt.assert_almost_equal(d, Dr)
 
-        block = LTI_SISO(N=N, D=D, form="ccf", order="backward")
+        block = LTI_SISO(num=N, den=D, form="ccf", order="backward")
         n, d = ss2tf(block.A, block.B, block.C, np.zeros((1, 1)), input=0)
         nt.assert_almost_equal(n[0], Nr)
         nt.assert_almost_equal(d, Dr)
 
-        block = LTI_SISO(N=N, D=D, form="ccf", order="forward")
+        block = LTI_SISO(num=N, den=D, form="ccf", order="forward")
         n, d = ss2tf(block.A, block.B, block.C, np.zeros((1, 1)), input=0)
         nt.assert_almost_equal(n[0], Nr)
         nt.assert_almost_equal(d, Dr)
