@@ -342,33 +342,55 @@ class BdloadTest(unittest.TestCase):
 
 
 class SetOptionTest(unittest.TestCase):
-    def test_set_accepts_a_literal(self):
-        sim = bdsim.BDSim(
+    """--set reads the text by the type of the current value (Block.set_param), and a
+    dtype literal gives the dtype, so the parameter must already be a number or array."""
+
+    def setparam(self, *args):
+        return bdsim.BDSim(
             graphics=None,
             progress=False,
             banner=False,
             quiet=True,
-            setparam=["gain.0:K=float32([1,2])", "const.0:value=uint16(5)"],
+            setparam=list(args),
         )
+
+    def test_set_accepts_a_literal(self):
+        sim = self.setparam("gain.0:K=float32([1,2])", "const.0:value=uint16(5)")
         bd = sim.blockdiagram()
-        bd.connect(bd.CONSTANT(0, name="const.0"), bd.GAIN(1, name="gain.0"))
+        bd.connect(
+            bd.CONSTANT(np.uint16(0), name="const.0"),
+            bd.GAIN(np.float32([1, 1]), name="gain.0"),
+        )
         sim.update_parameters(bd)
         self.assertEqual(bd["gain.0"].K.dtype, np.float32)
+        nt.assert_array_equal(bd["gain.0"].K, [1, 2])
         self.assertIs(type(bd["const.0"].value), np.uint16)
+        self.assertEqual(bd["const.0"].value, 5)
 
-    def test_set_still_accepts_numbers_and_matrices(self):
-        sim = bdsim.BDSim(
-            graphics=None,
-            progress=False,
-            banner=False,
-            quiet=True,
-            setparam=["gain.0:K=3", "const.0:value=1 2; 3 4"],
-        )
+    def test_a_literal_cannot_change_the_type_of_the_parameter(self):
+        sim = self.setparam("gain.0:K=float32([1,2])")
         bd = sim.blockdiagram()
         bd.connect(bd.CONSTANT(0, name="const.0"), bd.GAIN(1, name="gain.0"))
+        with self.assertRaises(ValueError) as cm:
+            sim.update_parameters(bd)
+        self.assertIn("gain.0:K", str(cm.exception))
+
+    def test_a_literal_out_of_range_is_an_error(self):
+        sim = self.setparam("const.0:value=uint8(300)")
+        bd = sim.blockdiagram()
+        bd.connect(bd.CONSTANT(np.uint8(0), name="const.0"), bd.GAIN(1, name="gain.0"))
+        with self.assertRaises(ValueError):
+            sim.update_parameters(bd)
+
+    def test_set_still_accepts_numbers_and_matrices(self):
+        sim = self.setparam("gain.0:K=3", "const.0:value=1 2; 3 4")
+        bd = sim.blockdiagram()
+        bd.connect(
+            bd.CONSTANT(np.zeros((2, 2)), name="const.0"), bd.GAIN(1, name="gain.0")
+        )
         sim.update_parameters(bd)
         self.assertEqual(bd["gain.0"].K, 3)
-        self.assertEqual(bd["const.0"].value.shape, (2, 2))
+        nt.assert_array_equal(bd["const.0"].value, [[1, 2], [3, 4]])
 
 
 if __name__ == "__main__":

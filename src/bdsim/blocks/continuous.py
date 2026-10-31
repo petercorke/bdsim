@@ -10,6 +10,9 @@ from __future__ import annotations
 from typing import Any
 
 
+import warnings
+import numbers
+
 import numpy as np
 from math import pi
 import spatialmath.base as smb  # type: ignore[import-not-found]
@@ -119,15 +122,32 @@ class Integrator(ContinuousBlock):
 
         super().__init__(nstates=nstates, **blockargs)
 
-        if min is not None:
-            min = smb.getvector(min, nstates)
-        if max is not None:
-            max = smb.getvector(max, nstates)
-
         self._x0 = x0
         self.min = min
         self.max = max
         self.gain: float = gain
+        self.add_param("gain")
+        self.add_param("min", coerce=False)
+        self.add_param("max", coerce=False)
+        self.add_param("x0", when="setup")
+
+    @property
+    def min(self) -> np.ndarray | None:
+        """Lower limit of each state, or ``None`` for no limit."""
+        return self._min
+
+    @min.setter
+    def min(self, value: Any) -> None:
+        self._min = None if value is None else smb.getvector(value, len(self._x0))
+
+    @property
+    def max(self) -> np.ndarray | None:
+        """Upper limit of each state, or ``None`` for no limit."""
+        return self._max
+
+    @max.setter
+    def max(self, value: Any) -> None:
+        self._max = None if value is None else smb.getvector(value, len(self._x0))
 
         # TODO: event
         # self.enable = enable
@@ -159,6 +179,43 @@ class Integrator(ContinuousBlock):
 
 
 # ------------------------------------------------------------------------ #
+
+
+def _conform_D(block: Any, value: Any) -> np.ndarray | None:
+    """
+    The feedthrough matrix ``D`` as an LTI block stores it.
+
+    :param block: the LTI block, which has ``B``, ``C`` and ``_feedthrough``
+    :param value: the new ``D``, an array, a list, or None for zero
+    :return: an ``(nout, nin)`` array, or ``None`` if it is zero and the block has no
+        feedthrough
+    :raises ValueError: ``D`` does not conform to ``B`` and ``C``, or it is non-zero
+        and the block was created without feedthrough
+
+    A block created with ``D = 0`` has no direct feedthrough, which decides where it
+    sits in the execution order: its output is computed before its input is known.
+    So ``D`` can change from one non-zero value to another, but not from zero to
+    non-zero.
+    """
+    nout, nin = block.C.shape[0], block.B.shape[1]
+    if value is None:
+        D = np.zeros((nout, nin))
+    else:
+        D = np.asarray(value, dtype=float)
+        if D.ndim < 2 and D.size == nin * nout:  # a number, or a flat list of numbers
+            D = D.reshape((nout, nin))
+        if D.shape != (nout, nin):
+            raise ValueError(
+                f"D must be {nout}x{nin} to conform to B and C, not {D.shape}"
+            )
+    if np.any(D != 0):
+        if not block._feedthrough:
+            raise ValueError(
+                "D cannot be non-zero: the block was created with D = 0, so it has no "
+                "direct feedthrough, which fixes its place in the execution order"
+            )
+        return D
+    return D if block._feedthrough else None
 
 
 class LTI_SS(ContinuousBlock):
@@ -275,20 +332,34 @@ class LTI_SS(ContinuousBlock):
 
         if np.any(D != 0):
             # flag we have feedthrough, which may create an algebraic loop
-            self.D: np.ndarray | None = D
+            self._D: np.ndarray | None = D
             feedthrough = True
         else:
-            self.D = None
+            self._D = None
             feedthrough = False
 
         super().__init__(
             nstates=n, nin=nin, nout=nout, x0=x0, feedthrough=feedthrough, **blockargs
         )
+        self.add_param("A")
+        self.add_param("B")
+        self.add_param("C")
+        self.add_param("D")
+        self.add_param("x0", when="setup")
+
+    @property
+    def D(self) -> np.ndarray | None:
+        """The feedthrough matrix, ``None`` if it is zero."""
+        return self._D
+
+    @D.setter
+    def D(self, value: Any) -> None:
+        self._D = _conform_D(self, value)
 
     def output(self, t: float, u: list[Any], x: np.ndarray) -> list[Any]:
         y = self.C @ x
-        if self.D is not None:
-            y = y + self.D @ np.array(u)
+        if self._D is not None:
+            y = y + self._D @ np.array(u)
         if y.size == 1:
             return [y.item()]
         return [y]
@@ -305,6 +376,31 @@ class LTI_SS(ContinuousBlock):
 # ------------------------------------------------------------------------ #
 
 
+def _expand_poly(x: Any) -> np.ndarray:
+    """
+    Coefficients of a polynomial given as coefficients or as factors.
+
+    :param x: a number, a vector of coefficients in descending powers, or a sequence of
+        factors to be convolved
+    :return: the coefficients as a float array
+
+    * ``[1, 2]`` is already the coefficients of :math:`s+2`
+    * ``[[1, 1], [1, 2]]`` is the factors :math:`(s+1)(s+2)`, convolved to give the
+      coefficients of :math:`s^2 + 3s + 2`
+    * ``[2, [1, 1], [1, 2]]`` is :math:`2(s+1)(s+2)`
+    """
+    if isinstance(x, (int, float)):
+        return np.array([x], dtype=float)
+    if smb.isvector(x):
+        # directly equivalent to a 1D array
+        return smb.getvector(x, dtype="float")
+
+    coeffs: Any = [1]
+    for t in x:
+        coeffs = np.convolve(coeffs, t)
+    return np.asarray(coeffs, dtype=float)
+
+
 def _tf2ss(
     num: Vector1D,
     den: Vector1D,
@@ -313,11 +409,11 @@ def _tf2ss(
     verbose: bool = False,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     r"""
-    :param N: Numerator coefficients in descending powers of :math:`s`.
-    :type N: array_like
-    :param D: Denominator coefficients in descending powers of :math:`s`.
+    :param num: Numerator coefficients in descending powers of :math:`s`.
+    :type num: array_like
+    :param den: Denominator coefficients in descending powers of :math:`s`.
         Does not have to be normalized.
-    :type D: array_like
+    :type den: array_like
     :param form: The canonical form of the realization, defaults to 'ccf'.
     :type form: str, optional
     :param order: The state ordering convention
@@ -356,27 +452,8 @@ def _tf2ss(
     """
     # normalize polynomials so leading coefficient of denominator is one
 
-    def expand_poly(x: Any) -> np.ndarray:
-        # if x is an array of scalars, assume it's already in the correct form
-        # otherwise assume it's an array of factors and convolve them together to get the coefficients
-        #
-        # eg. [1, 2] is already the coefficients of s+2,
-        # eg. [[1, 1], [1, 2]] is the factors (s+1)(s+2) which are convolved to get the coefficients of s^2 + 3s + 2
-        # eg. [2,[1,1], [1,2]] is the factors 2(s+1)(s+2) which are convolved to get the coefficients of 2s^2 + 6s + 4
-        if isinstance(x, (int, float)):
-            return np.array([x], dtype=float)
-        if smb.isvector(x):
-            # is directly equivalent to a 1D array, convert to array
-            return smb.getvector(x, dtype="float")
-
-        coeffs: Any = [1]
-        for t in x:
-            print(coeffs, t)
-            coeffs = np.convolve(coeffs, t)
-        return coeffs
-
-    num_arr = expand_poly(num)
-    den_arr = expand_poly(den)
+    num_arr = _expand_poly(num)
+    den_arr = _expand_poly(den)
 
     D0 = den_arr[0]
     den_arr = den_arr / D0
@@ -456,7 +533,106 @@ def _tf2ss(
     return A, B, C, D
 
 
-class LTI_SISO(LTI_SS):
+def _old_tf_names(num: Any, den: Any, blockargs: dict[str, Any]) -> tuple[Any, Any]:
+    """
+    Accept the old ``N=`` and ``D=`` keywords of the transfer function blocks.
+
+    :param num: the ``num`` argument as received
+    :param den: the ``den`` argument as received
+    :param blockargs: the remaining keyword arguments, from which ``N`` and ``D`` are removed
+    :return: ``(num, den)``
+    :raises TypeError: both an old and its new keyword were given
+
+    The numerator and denominator were ``N`` and ``D``, and ``D`` clashed with the
+    ``D`` matrix of the state-space parent.  They are ``num`` and ``den``.  The old
+    keywords still work, with a ``DeprecationWarning``, and are not in the signature
+    so that they are not offered as parameters.
+    """
+    defaults = {"num": 1, "den": [1, 1]}
+    given = {"num": num, "den": den}
+    for old, new in (("N", "num"), ("D", "den")):
+        if old in blockargs:
+            if not np.array_equal(given[new], defaults[new]):
+                raise TypeError(f"give '{new}', not both '{old}' and '{new}'")
+            warnings.warn(
+                f"the '{old}' argument is deprecated, use '{new}'",
+                DeprecationWarning,
+                stacklevel=3,
+            )
+            given[new] = blockargs.pop(old)
+    return given["num"], given["den"]
+
+
+class _TFParams:
+    """
+    The numerator ``num`` and denominator ``den`` of a transfer function block as parameters.
+
+    A mixin for :class:`LTI_SISO` and :class:`LTI_SISO_S`.  The state-space matrices
+    ``A``, ``B``, ``C`` and ``D`` are derived from the two polynomials, so changing
+    either rebuilds ``A``, ``B`` and ``C`` from it and the other.  The order of the
+    system cannot change, because that is the number of states, and a numerator that
+    makes the system non-causal is refused.
+    """
+
+    def _init_tf(
+        self: Any, num: Any, den: Any, form: str, order: str, verbose: bool
+    ) -> None:
+        """Keep what is needed to rebuild the realisation; call after ``super().__init__``."""
+        self._num = _expand_poly(num)
+        self._den = _expand_poly(den)
+        self.form = form
+        self.order = order
+        self.verbose = verbose
+
+        # A, B, C and D are derived from num and den, so they are not parameters; the
+        # subclass registers num and den itself
+        for name in "ABCD":
+            self.remove_param(name)
+
+    @property
+    def num(self) -> np.ndarray:
+        """Numerator coefficients in descending powers of :math:`s` (or :math:`z`)."""
+        return self._num  # type: ignore[attr-defined, no-any-return]
+
+    @num.setter
+    def num(self, value: Any) -> None:
+        self._set_tf(value, self._den)  # type: ignore[attr-defined]
+
+    @property
+    def den(self) -> np.ndarray:
+        """Denominator coefficients in descending powers of :math:`s` (or :math:`z`)."""
+        return self._den  # type: ignore[attr-defined, no-any-return]
+
+    @den.setter
+    def den(self, value: Any) -> None:
+        self._set_tf(self._num, value)  # type: ignore[attr-defined]
+
+    def _set_tf(self: Any, num: Any, den: Any) -> None:
+        """Rebuild the realisation from a new numerator and denominator, or raise."""
+        # A is set by LTI_SS, the other class this is mixed into, not by this one
+        # pylint: disable=access-member-before-definition
+        num_c, den_c = _expand_poly(num), _expand_poly(den)
+        if den_c.size == 0 or den_c[0] == 0:
+            raise ValueError(
+                "the leading coefficient of the denominator cannot be zero"
+            )
+        A, B, C, D = _tf2ss(num_c, den_c, form=self.form, order=self.order)
+        if A.shape != self.A.shape:
+            raise ValueError(
+                f"the order of the system cannot change: it has {self.A.shape[0]} "
+                f"states and the new denominator would have {A.shape[0]}"
+            )
+        if np.any(D != 0) and not self._feedthrough:
+            raise ValueError(
+                "the new numerator would give direct feedthrough, but the block was "
+                "created strictly proper, which fixes its place in the execution order"
+            )
+        self.A, self.B, self.C = A, B, C
+        self._D = D if self._feedthrough else None
+        self._num, self._den = num_c, den_c
+
+
+class LTI_SISO(_TFParams, LTI_SS):
     r"""
     :blockname:`LTI_SISO`
 
@@ -515,8 +691,8 @@ class LTI_SISO(LTI_SS):
 
     def __init__(
         self,
-        N: Vector1D = 1,
-        D: Vector1D = [1, 1],
+        num: Vector1D = 1,
+        den: Vector1D = [1, 1],
         x0: np.ndarray | None = None,
         form: str = "ccf",
         order: str = "backward",
@@ -524,11 +700,11 @@ class LTI_SISO(LTI_SS):
         **blockargs: Any,
     ) -> None:
         r"""
-        :param N: Numerator coefficients in descending powers of :math:`s`.
-        :type N: array_like
-        :param D: Denominator coefficients in descending powers of :math:`s`.
+        :param num: Numerator coefficients in descending powers of :math:`s`.
+        :type num: array_like
+        :param den: Denominator coefficients in descending powers of :math:`s`.
             Does not have to be normalized.
-        :type D: array_like
+        :type den: array_like
         :param form: The canonical form of the realization, defaults to 'ccf'.
         :type form: str, optional
         :param order: The state ordering convention
@@ -538,7 +714,7 @@ class LTI_SISO(LTI_SS):
         :return: LTI_SISO block
         :rtype: ``LTI_SISO`` instance
 
-        Coefficients ``N`` and ``D`` can be specified in the form of an array of coefficients, or an array of factors.
+        Coefficients ``num`` and ``den`` can be specified in the form of an array of coefficients, or an array of factors.
         The coefficients and factors are arrays of coefficients in decreasing powers of :math:`s`.
         For example:
 
@@ -565,31 +741,37 @@ class LTI_SISO(LTI_SS):
         .. note::
             - The transfer function is assumed to be strictly proper (:math:`deg(N) < deg(D)`).
             - The default ``form='ccf', order='backward'`` corresponds to the state-space realization returned by ``scipy.signal.tf2ss`` and MATLAB's ``tf2ss``.
+            - ``num`` and ``den`` are attributes holding the numerator and denominator coefficients (expanded
+              if they were given as factors), and can be changed after the block is created (they are
+              parameters).  The state-space matrices are rebuilt from them.  The order of the system, the
+              length of ``den`` minus one, cannot change.
             - The state-space matrices are available in the ``A``, ``B``, ``C``, and ``D`` attributes of the block.
-            - If D is zero, then the block has no feedthrough and the D matrix is set to None. If D is nonzero, then the block has feedthrough and the D matrix is stored in the D attribute.
-            - The ``_feedthrough`` attribute of the block is set to True if D is nonzero. This can be used to check for feedthrough without having to check the D matrix directly, and is used
+            - If the numerator degree is less than the denominator degree, the block has no feedthrough and ``D`` is None.
+              The ``_feedthrough`` attribute of the block is set to True otherwise. It is used
               by the scheduler to ensure correct block evaluation order.
+
+        .. versionchanged:: next
+            The arguments ``N`` and ``D`` are renamed ``num`` and ``den``, because ``D`` is also the feedthrough
+            matrix of the state-space realisation.  The old keywords still work, with a ``DeprecationWarning``,
+            and will be removed in a later release.
 
         """
 
-        A, B, C, _D = _tf2ss(N, D, form=form, order=order, verbose=verbose)
+        num, den = _old_tf_names(num, den, blockargs)
+        A, B, C, _D = _tf2ss(num, den, form=form, order=order, verbose=verbose)
 
         n = A.shape[0]
         if x0 is None:
             x0 = np.zeros((n,))
 
         super().__init__(A=A, B=B, C=C, D=_D, x0=x0, **blockargs)
-
-        # TODO: param
-        #  def change_param(self, param: str, newvalue: np.ndarray) -> None:
-        #     if param == "num":
-        #         self.num = newvalue
-        #     elif param == "den":
-        #         self.den = newvalue
-        #     self.A, self.B, self.C, self.D = scipy.signal.tf2ss(self.num, self.den)
-
-        # self.add_param("num", change_param)
-        # self.add_param("den", change_param)
+        self._init_tf(num, den, form, order, verbose)
+        self.add_param("num", coerce=False)  # a polynomial may change length
+        self.add_param("den", coerce=False)
+        self.add_param("form", when="never")
+        self.add_param("order", when="never")
+        self.add_param("verbose", when="never")
+        self.add_param("x0", when="setup")
 
 
 # ------------------------------------------------------------------------ #
@@ -666,15 +848,68 @@ class Deriv2(LTI_SS):
         Choose ``zeta=0.707`` (:math:`1/\sqrt{2}`) for optimal rise time and overshoot (4.3%).
         """
 
+        A, B, C = self._realisation(wn, unit, zeta, gain)
+
+        # this model is strictly proper, D is zero and can be ommitted.
+        super().__init__(A=A, B=B, C=C, x0=x0, **blockargs)
+        self.unit = unit
+        self._wn, self._zeta, self._gain = wn, zeta, gain
+
+        # A, B and C are derived from wn, zeta and gain, so they are not parameters
+        for name in "ABCD":
+            self.remove_param(name)
+        self.add_param("wn")
+        self.add_param("zeta")
+        self.add_param("gain")
+        self.add_param("unit", when="never")
+        self.add_param("x0", when="setup")
+
+    @staticmethod
+    def _realisation(
+        wn: float, unit: str, zeta: float, gain: float
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """State-space matrices A, B and C of ``gain * wn^2 s / (s^2 + 2 zeta wn s + wn^2)``."""
         if unit == "Hz":
             wn = 2 * pi * wn
         N = [gain * wn**2, 0]  # wn^2 s
         D = [1, 2 * zeta * wn, wn**2]  # s^2 + 2 zeta wn s + wn^2
 
         A, B, C, _ = _tf2ss(N, D, form="ocf")
+        return A, B, C
 
-        # this model is strictly proper, D is zero and can be ommitted.
-        super().__init__(A=A, B=B, C=C, x0=x0, **blockargs)
+    def _rebuild(self, wn: float, zeta: float, gain: float) -> None:
+        """Change the dynamics, or raise and leave the block as it was."""
+        if wn <= 0:
+            raise ValueError("wn must be positive")
+        self.A, self.B, self.C = self._realisation(wn, self.unit, zeta, gain)
+        self._wn, self._zeta, self._gain = wn, zeta, gain
+
+    @property
+    def wn(self) -> float:
+        """Natural frequency, in ``unit``."""
+        return self._wn
+
+    @wn.setter
+    def wn(self, value: float) -> None:
+        self._rebuild(value, self._zeta, self._gain)
+
+    @property
+    def zeta(self) -> float:
+        """Damping ratio."""
+        return self._zeta
+
+    @zeta.setter
+    def zeta(self, value: float) -> None:
+        self._rebuild(self._wn, value, self._gain)
+
+    @property
+    def gain(self) -> float:
+        """Gain or scaling factor."""
+        return self._gain
+
+    @gain.setter
+    def gain(self, value: float) -> None:
+        self._rebuild(self._wn, self._zeta, value)
 
 
 # ------------------------------------------------------------------------ #
@@ -781,23 +1016,64 @@ class Deriv(SubsystemBlock):
         inp = subsystem.INPORT(1, name="IN")
         outp = subsystem.OUTPORT(1, name="OUT")
         sum = subsystem.SUM("+-", name="SUM")
-        alpha = subsystem.GAIN(alpha, name="alpha")
+        alpha_block = subsystem.GAIN(alpha, name="alpha")
+        gain_block = subsystem.GAIN(
+            gain, name="K"
+        )  # always present, so gain can be set
 
         subsystem.connect(inp, sum[0])
-        subsystem.connect(sum[0], alpha)
-        subsystem.connect(alpha, integrator)
+        subsystem.connect(sum[0], alpha_block)
+        subsystem.connect(alpha_block, integrator)
         subsystem.connect(integrator, sum[1])
-        if gain != 1.0:
-            gain = subsystem.GAIN(gain, name="K")
-            subsystem.connect(alpha, gain)
-            subsystem.connect(gain, outp)
-        else:
-            subsystem.connect(alpha, outp)
+        subsystem.connect(alpha_block, gain_block)
+        subsystem.connect(gain_block, outp)
 
         super().__init__(subsystem=subsystem, **blockargs)
+        self._integrator = integrator
+        self._alpha_block = alpha_block
+        self.add_param("alpha", forward=(alpha_block, "K"))
+        self.add_param("gain", forward=(gain_block, "K"))
+        self.add_param("x0", forward=(integrator, "x0"))
+        self.add_param("y0", when="setup")
+
+    @property
+    def y0(self) -> np.ndarray:
+        """
+        The initial output, which is the initial state :math:`x_0` scaled by the pole
+        :math:`\\alpha`: :math:`y_0 = -x_0/\\alpha`.  Setting it sets the state.
+        """
+        return -self._integrator.x0 / self._alpha_block.K  # type: ignore[no-any-return]
+
+    @y0.setter
+    def y0(self, value: Any) -> None:
+        y0 = np.array(smb.getvector(value), dtype=float).reshape(-1)
+        self._integrator.set_param("x0", -y0 * self._alpha_block.K)
 
 
 # ------------------------------------------------------------------------ #
+
+
+def _integral_limits(I_limit: Any) -> tuple[float | None, float | None]:
+    """
+    The lower and upper limit of the integral term of a PID block.
+
+    :param I_limit: ``None`` for no limit, a number for the symmetric limit
+        :math:`\\pm` that number, or a lower and an upper limit, either of which can be
+        ``None``
+    :raises ValueError: it is none of these
+    """
+    if I_limit is None:
+        return None, None
+    if isinstance(I_limit, numbers.Real) and not isinstance(I_limit, bool):
+        return -float(I_limit), float(I_limit)
+    if isinstance(I_limit, (tuple, list, np.ndarray)) and len(I_limit) == 2:
+        lo, hi = I_limit
+        return (None if lo is None else float(lo)), (None if hi is None else float(hi))
+    raise ValueError("I_limit must be None, a number, or a lower and an upper limit")
+
+
+_NO_I = "the block was built without an integral term (I=0), which cannot be added"
+_NO_D = "the block was built without a derivative term (D=0), which cannot be added"
 
 
 class PID(SubsystemBlock):
@@ -1025,16 +1301,9 @@ class PID(SubsystemBlock):
 
         if "I" in terms:
             # if the I term is required, create the block
-            integ_args = {}
-            if isinstance(I_limit, float):
-                integ_args["min"] = -I_limit
-                integ_args["max"] = I_limit
-            elif isinstance(I_limit, tuple) and len(I_limit) == 2:
-                integ_args["min"] = I_limit[0]
-                integ_args["max"] = I_limit[1]
-
+            lo, hi = _integral_limits(I_limit)
             Iblock = subsystem.INTEGRATOR(
-                gain=I, name="I", **integ_args
+                gain=I, name="I", min=lo, max=hi
             )  # integral block with gain I
 
         if "D" in terms:
@@ -1120,6 +1389,47 @@ class PID(SubsystemBlock):
             subsystem.connect(out_sum, outp)
 
         super().__init__(subsystem=subsystem, **blockargs)
+        self._Iblock = Iblock if "I" in terms else None
+        self.add_param("P", forward=(Pblock, "K"))
+        if "I" in terms:
+            self.add_param("I", forward=(Iblock, "gain"))
+            self.add_param("I_limit", coerce=False)
+        else:
+            self.add_param("I", unavailable=_NO_I)
+            self.add_param("I_limit", unavailable=_NO_I)
+        if "D" in terms:
+            self.add_param("D", forward=(Dblock, "gain"))
+            self.add_param("D_pole", forward=(Dblock, "alpha"))
+        else:
+            self.add_param("D", unavailable=_NO_D)
+            self.add_param("D_pole", unavailable=_NO_D)
+        self.add_param("structure", when="never")
+        self.add_param("terms", when="never")
+
+    @property
+    def I_limit(self) -> float | tuple[float | None, float | None] | None:
+        """
+        Limit on the integral term: ``None`` for none, a number for the limit
+        :math:`\\pm` that number, or a (lower, upper) pair.
+        """
+        if self._Iblock is None:
+            return None
+        lo, hi = self._Iblock.min, self._Iblock.max
+        lo = None if lo is None else float(lo[0])
+        hi = None if hi is None else float(hi[0])
+        if lo is None and hi is None:
+            return None
+        if lo is not None and hi is not None and lo == -hi:
+            return hi
+        return lo, hi
+
+    @I_limit.setter
+    def I_limit(self, value: Any) -> None:
+        if self._Iblock is None:
+            raise ValueError(_NO_I)
+        lo, hi = _integral_limits(value)
+        self._Iblock.set_param("min", lo)
+        self._Iblock.set_param("max", hi)
 
 
 if __name__ == "__main__":  # pragma: no cover

@@ -10,7 +10,7 @@ import numpy.testing as nt
 from contextlib import redirect_stdout
 
 from bdsim.blocks import Gain
-from bdsim.block_types import ContinuousBlock
+from bdsim.block_types import ContinuousBlock, FunctionBlock
 
 
 class FeedthroughContinuous(ContinuousBlock):
@@ -143,7 +143,7 @@ class WiringTest(unittest.TestCase):
 
     def test_ports2(self):
         bd = self.sim.blockdiagram()
-        const = bd.CONSTANT([2, 3])
+        const = bd.CONSTANT(np.array([2, 3]))
         src = bd.DEMUX(2)
         bd.connect(const, src)
 
@@ -160,7 +160,7 @@ class WiringTest(unittest.TestCase):
     def test_ports3(self):
         bd = self.sim.blockdiagram()
 
-        const = bd.CONSTANT([2, 3, 4, 5])
+        const = bd.CONSTANT(np.array([2, 3, 4, 5]))
         src = bd.DEMUX(4)
         bd.connect(const, src)
 
@@ -187,7 +187,7 @@ class WiringTest(unittest.TestCase):
     def test_slice2(self):
         bd = self.sim.blockdiagram()
 
-        const = bd.CONSTANT([2, 3, 4, 5])
+        const = bd.CONSTANT(np.array([2, 3, 4, 5]))
         src = bd.DEMUX(4)
         bd.connect(const, src)
 
@@ -200,7 +200,7 @@ class WiringTest(unittest.TestCase):
     def test_slice3(self):
         bd = self.sim.blockdiagram()
 
-        const = bd.CONSTANT([2, 3, 4, 5])
+        const = bd.CONSTANT(np.array([2, 3, 4, 5]))
         src = bd.DEMUX(4)
         bd.connect(const, src)
 
@@ -213,7 +213,7 @@ class WiringTest(unittest.TestCase):
     def test_slice4(self):
         bd = self.sim.blockdiagram()
 
-        const = bd.CONSTANT([2, 3, 4, 5])
+        const = bd.CONSTANT(np.array([2, 3, 4, 5]))
         src = bd.DEMUX(4)
         bd.connect(const, src)
 
@@ -226,7 +226,7 @@ class WiringTest(unittest.TestCase):
     def test_slice5(self):
         bd = self.sim.blockdiagram()
 
-        const = bd.CONSTANT([2, 3, 4, 5])
+        const = bd.CONSTANT(np.array([2, 3, 4, 5]))
         src = bd.DEMUX(4)
         bd.connect(const, src)
 
@@ -240,7 +240,7 @@ class WiringTest(unittest.TestCase):
     def test_slice5a(self):
         bd = self.sim.blockdiagram()
 
-        const = bd.CONSTANT([2, 3, 4, 5])
+        const = bd.CONSTANT(np.array([2, 3, 4, 5]))
         src = bd.DEMUX(4)
         bd.connect(const, src)
 
@@ -254,7 +254,7 @@ class WiringTest(unittest.TestCase):
     def test_slice6(self):
         bd = self.sim.blockdiagram()
 
-        const = bd.CONSTANT([2, 3, 4, 5])
+        const = bd.CONSTANT(np.array([2, 3, 4, 5]))
         src = bd.DEMUX(4)
         bd.connect(const, src)
 
@@ -294,7 +294,7 @@ class WiringTest(unittest.TestCase):
     def test_assignment3(self):
         bd = self.sim.blockdiagram()
 
-        const = bd.CONSTANT([2, 3, 4, 5])
+        const = bd.CONSTANT(np.array([2, 3, 4, 5]))
         src = bd.DEMUX(4)
         bd.connect(const, src)
 
@@ -332,7 +332,7 @@ class WiringTest(unittest.TestCase):
         connected to dst's named port)."""
         bd = self.sim.blockdiagram()
 
-        const = bd.CONSTANT([2, 3, 4, 5])
+        const = bd.CONSTANT(np.array([2, 3, 4, 5]))
         src = bd.DEMUX(4)
         bd.connect(const, src)
 
@@ -369,7 +369,7 @@ class WiringTest(unittest.TestCase):
     def test_chain3(self):
         bd = self.sim.blockdiagram()
 
-        const = bd.CONSTANT([2, 3])
+        const = bd.CONSTANT(np.array([2, 3]))
         src = bd.DEMUX(2)
         bd.connect(const, src)
 
@@ -952,8 +952,10 @@ class ImportTest(unittest.TestCase):
 
         bd.compile(verbose=False)
 
-        self.assertEqual(len(bd.blocklist), 5)
-        self.assertEqual(len(bd.wirelist), 4)
+        # the INPORT and OUTPORT blocks are replaced by wires:
+        #   const -> function -> scope
+        self.assertEqual(len(bd.blocklist), 3)
+        self.assertEqual(len(bd.wirelist), 2)
 
 
 class DefaultNamingTest(unittest.TestCase):
@@ -1273,7 +1275,7 @@ class ConnectVariantsTest(SetUpMixin, unittest.TestCase):
     def test_connect_block_to_wide_slice_plug(self):
         """connect(Block_nout2, Plug_slice_width2): multi-output -> matching slice."""
         bd = self.sim.blockdiagram()
-        const = bd.CONSTANT([7, 8])
+        const = bd.CONSTANT(np.array([7, 8]))
         demux = bd.DEMUX(2)
         dst = bd.NULL(2)
         bd.connect(const, demux)
@@ -1299,7 +1301,7 @@ class ConnectVariantsTest(SetUpMixin, unittest.TestCase):
     def test_connect_slice_to_block_raises(self):
         """connect(Plug_slice, Block) raises ValueError due to if/elif bug in source."""
         bd = self.sim.blockdiagram()
-        const = bd.CONSTANT([3, 4])
+        const = bd.CONSTANT(np.array([3, 4]))
         demux = bd.DEMUX(2)
         dst1 = bd.NULL(1)
         bd.connect(const, demux)
@@ -1311,7 +1313,7 @@ class ConnectVariantsTest(SetUpMixin, unittest.TestCase):
     def test_connect_slice_to_plug_raises(self):
         """connect(Plug_slice, non-slice Plug) falls through to ValueError."""
         bd = self.sim.blockdiagram()
-        const = bd.CONSTANT([5, 6])
+        const = bd.CONSTANT(np.array([5, 6]))
         demux = bd.DEMUX(2)
         dst = bd.NULL(2)
         bd.connect(const, demux)
@@ -1852,6 +1854,62 @@ class AddDeleteBlockTest(unittest.TestCase):
         bd.delete_block(dst1)
         bd.connect(src, dst2)
         self.assertNotEqual(bd.wirelist[0].id, w_id)
+
+
+class ResetLifecycleTest(unittest.TestCase):
+    """reset() restores a block's own state once per run, before start()."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.sim = bdsim.BDSim(graphics=None, progress=False, banner=False)
+
+    def _diagram(self):
+        calls = []
+
+        class Probe(FunctionBlock):
+            nin = 1
+            nout = 1
+
+            def output(self, t, inputs, x):
+                return [inputs[0]]
+
+            def reset(self):
+                calls.append("reset")
+
+            def start(self, simstate):
+                calls.append("start")
+
+        bd = self.sim.blockdiagram()
+        probe = Probe(bd=bd)
+        bd.connect(bd.CONSTANT(1), probe)
+        bd.connect(probe, bd.NULL(1))
+        return bd, probe, calls
+
+    def test_compile_and_evaluate_do_not_reset(self):
+        bd, probe, calls = self._diagram()
+        bd.compile(verbose=False)
+        bd.evaluate(bd.initial_state_map(), 0.0)
+        self.assertEqual(calls, [])
+
+    def test_evaluate_keeps_the_values_on_the_wires(self):
+        bd, probe, calls = self._diagram()
+        bd.compile(verbose=False)
+        slot = probe.outport_slot(0)
+        self.assertEqual(slot.value, 1)
+        slot.value = "sentinel"
+        bd.evaluate(bd.initial_state_map(), 0.0, sinks=False)
+        # every block in the plan is recomputed, so the slot is overwritten
+        # rather than first cleared
+        self.assertEqual(slot.value, 1)
+
+    def test_run_resets_once_before_start(self):
+        bd, probe, calls = self._diagram()
+        bd.compile(verbose=False)
+        self.sim.run(bd, T=0.1)
+        self.assertEqual(calls, ["reset", "start"])
+        calls.clear()
+        self.sim.run(bd, T=0.1)  # a second run resets again
+        self.assertEqual(calls, ["reset", "start"])
 
 
 if __name__ == "__main__":

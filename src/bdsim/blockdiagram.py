@@ -17,11 +17,13 @@ from typing import TYPE_CHECKING, Any, Callable, NoReturn
 if TYPE_CHECKING:
     from typing import Self
 
+import math
 import numpy as np
 from ansitable import ANSITable, Column  # type: ignore[import-not-found]
 from colored import attr, fg
 
 from bdsim.exceptions import BlockRuntimeError
+from bdsim.signature import Signature
 from bdsim.literals import NOT_A_LITERAL, parse_literal
 
 if TYPE_CHECKING:
@@ -47,6 +49,40 @@ from bdsim.components import (
 from bdsim.connect import EndPlug, Plug, Port, StartPlug, Wire
 
 # ------------------------------------------------------------------------- #
+
+
+def _is_finite(value: Any) -> bool:
+    """False for a float or complex value, or an array of them, containing NaN or Inf.
+
+    Integers, booleans and any other object are finite as far as this is
+    concerned, and are not examined.
+    """
+    if type(value) is float:
+        return math.isfinite(value)
+    if isinstance(value, np.ndarray):
+        return value.dtype.kind not in "fc" or bool(np.isfinite(value).all())
+    if isinstance(value, (float, complex, np.floating, np.complexfloating)):
+        return bool(np.isfinite(value))
+    return True
+
+
+def _value_str(value: Any, width: int = 40) -> str:
+    """A value for display in a table: on one line, abbreviated if it is long."""
+    if isinstance(value, np.ndarray):
+        text = np.array2string(
+            value, precision=4, threshold=6, edgeitems=2, max_line_width=1000
+        )
+    elif callable(value):
+        text = f"<{getattr(value, '__name__', type(value).__name__)}>"
+    else:
+        text = repr(value)
+    text = " ".join(text.split())
+    return text if len(text) <= width else text[: width - 1] + "…"
+
+
+def _signature_str(signature: Signature | None) -> str:
+    """Signature for display in a report, ``?`` if the wire was not observed."""
+    return "?" if signature is None else str(signature)
 
 
 # class BlockDiagram(BlockDiagramMixin):
@@ -89,10 +125,12 @@ class BlockDiagram(BlockDiagramMixin):
         self._block_id_counter = Counter()
         self._wire_id_counter = Counter()
         self.name: str | None = name
+        self.check: bool = True  # run-time checks on, see evaluate()
         self.nstates = 0
         self.ndstates = 0
         self._issubsystem = False
         self.blocknames: dict[str, Any] = {}
+        self.subsystems: dict[str, Any] = {}
         self.options = None
         self.runtime: Any = None  # set by BDSim before compilation
         self.n_auto_sum = Counter()
@@ -104,9 +142,11 @@ class BlockDiagram(BlockDiagramMixin):
         self.compiled = False
 
     def __getitem__(self, id: int | str) -> Block:
-        print(id)
         if isinstance(id, str):
-            return self.blocknames[id]
+            if id in self.blocknames:
+                return self.blocknames[id]
+            # a subsystem block is not in the compiled diagram, its blocks replaced it
+            return self.subsystems[id]  # type: ignore[no-any-return]
         else:
             for b in self.blocklist:
                 if b.id == id:
@@ -421,6 +461,8 @@ class BlockDiagram(BlockDiagramMixin):
         self.statenames = []
         self.dstatenames = []
         self.blocknames = {}
+        # self.subsystems is kept: once flattened, the diagram has no subsystem blocks
+        # left to find again if it is compiled a second time
 
         if not subsystem and self.name is None:
             # a top-level diagram is not a block, so its name cannot clash;
@@ -439,6 +481,11 @@ class BlockDiagram(BlockDiagramMixin):
         self.blocklist, self.wirelist = self._subsystem_import(
             self, "", verbose=verbose
         )
+
+        # replace the INPORT and OUTPORT blocks of the subsystems by wires
+        for message in self._elide_subsystem_ports():
+            print(f"  ERROR: {message}")
+            error = True
 
         # get all the blocks in the complete wirelist ready for compilation
         #  - create _input_wires and _output_wires lists
@@ -631,6 +678,9 @@ class BlockDiagram(BlockDiagramMixin):
             # run all the blocks for one step
             self.evaluate(state_map, 0.0, sinks=False)
 
+            # the values it left on the wires give each wire's signature
+            self._record_signatures()
+
         if error:
             # show report if there was an error
             if not report:
@@ -640,7 +690,111 @@ class BlockDiagram(BlockDiagramMixin):
         else:
             self.compiled = True
 
+        # --param asks for the table of parameters; it is an explicit request so it
+        # is printed even with -q
+        options = getattr(getattr(self, "runtime", None), "options", None)
+        if not subsystem and options is not None and getattr(options, "param", False):
+            self.report_params()
+
         return self.compiled
+
+    def _record_signatures(self) -> None:
+        """Record the signature of every wire from the values now on the slots.
+
+        Called by :meth:`compile` after the trial evaluation, which has run
+        every block once in schedule order.  The signature is kept on the slot,
+        so it is shared by the producer's output port and every input port wired
+        to it, and :meth:`reset` does not clear it.
+        """
+        for b in self.blocklist:
+            for slot in b._outport_slots:
+                slot.signature = Signature.of(slot.value)
+
+    def _elide_subsystem_ports(self) -> list[str]:
+        """
+        Replace the INPORT and OUTPORT blocks of instantiated subsystems by wires.
+
+        :return: error messages, empty if all is well
+
+        Flattening leaves the port blocks of each subsystem in the network, each a pass
+        through.  They are blocks with several inputs and outputs, so the loop detector
+        and the scheduler see every output depending on every input, which finds loops
+        that are not there (Issue #84).  Here the wires that leave a port block are
+        started where the signal really comes from, its *source*, and the wires that end
+        on a port block are dropped.  Only the wires are needed, so this is done before
+        the blocks are compiled.
+
+        The source of each subsystem input and output is kept on the subsystem block,
+        see :attr:`SubsystemBlock.inports` and :attr:`SubsystemBlock.outports`, which is
+        how the signals of a subsystem are watched.
+        """
+        pending = [sb for sb in self.subsystems.values() if not sb._ports_elided]
+        if not pending:
+            return []
+
+        owner: dict[Block, Any] = {}  # port block -> its subsystem block
+        for sb in pending:
+            owner[sb.inport] = sb
+            owner[sb.outport] = sb
+
+        # the wire that feeds each input of a port block
+        feeder: dict[tuple[Block, Any], Wire] = {}
+        for w in self.wirelist:
+            if w.end.block in owner:
+                feeder[(w.end.block, w.end.port)] = w
+
+        problems: list[str] = []
+
+        def source(plug: Plug) -> Plug | None:
+            """Follow the plug back through port blocks to the output port that drives it."""
+            seen: set[tuple[Block, Any]] = set()
+            while plug.block in owner:
+                key = (plug.block, plug.port)
+                if key in seen:
+                    problems.append(
+                        f"the ports of subsystem {owner[plug.block].name} are wired "
+                        "in a loop with nothing in between"
+                    )
+                    return None
+                seen.add(key)
+                wire = feeder.get(key)
+                if wire is None:
+                    return None
+                plug = wire.start
+            return plug
+
+        for sb in pending:
+            sb._source_inports = [
+                source(StartPlug(sb.inport, i)) for i in range(sb.inport.nout)
+            ]
+            sb._source_outports = [
+                source(StartPlug(sb.outport, j)) for j in range(sb.outport.nin)
+            ]
+            for i, plug in enumerate(sb._source_inports):
+                if plug is None:
+                    problems.append(
+                        f"input {i} of subsystem {sb.name} is not connected"
+                    )
+            sb._ports_elided = True
+
+        wires = []
+        for w in self.wirelist:
+            if w.end.block in owner:
+                continue  # feeds a port block, the wires that leave it start at its source
+            if w.start.block in owner:
+                plug = source(w.start)
+                if plug is None:
+                    continue  # reported above
+                w.newstart(plug)
+            wires.append(w)
+        self.wirelist = wires
+        self.blocklist = [b for b in self.blocklist if b not in owner]
+        for i, w in enumerate(self.wirelist):
+            w.id = i  # type: ignore[assignment]
+        for i, b in enumerate(self.blocklist):
+            b.id = i  # type: ignore[assignment]
+
+        return list(dict.fromkeys(problems))
 
     def _subsystem_import(
         self, bd: BlockDiagram, sspath: str, verbose: bool = False, depth: int = 0
@@ -675,6 +829,7 @@ class BlockDiagram(BlockDiagramMixin):
                 # do not add it to the block list, it was just a container for the subsystem blocks and wires
                 if verbose:
                     print(f"{'  ' * (depth + 1)}instantiating subsystem ", b.name)
+                self.subsystems[b.name] = b
                 ssb, ssw = self._subsystem_import(
                     b.subsystem,  # reference to the BlockDiagram that describes the subsystem
                     b.name,  # name of the subsystem block, becomes a prefix for all blocks within the subsystem
@@ -785,8 +940,9 @@ class BlockDiagram(BlockDiagramMixin):
         self,
         state_map: dict[Block, np.ndarray | None],
         t: float,
-        checkfinite: bool = True,
         sinks: bool = True,
+        *,
+        check: bool | None = None,
     ) -> None:
         """
         Evaluate all blocks in the network using the compiled execution schedule
@@ -795,11 +951,11 @@ class BlockDiagram(BlockDiagramMixin):
         :type state_map: dict
         :param t: current time
         :type t: float
-        :param checkfinite: check for Inf or Nan values in block outputs
-        :type checkfinite: bool
-        :param sinks: evaluate sink blocks, defaults to Trye
+        :param sinks: evaluate sink blocks, defaults to True
         :type sinks: bool, optional
-        :param simstate: simulation state
+        :param check: check the block outputs, defaults to the diagram's ``check``
+            attribute, which :meth:`BDSim.run` sets from the ``check`` option
+        :type check: bool, optional
 
         Performs the following steps:
 
@@ -809,7 +965,13 @@ class BlockDiagram(BlockDiagramMixin):
 
         Sink blocks are not executed here, but after completion their inputs
         will all be valid.
+
+        If ``check`` is true every block's output is checked as it is produced,
+        see :meth:`_check_output_form` and :meth:`_check_published`.  The
+        checks cost time, ``--no-check`` skips them.
         """
+        if check is None:
+            check = self.check
 
         # TODO: don't copy outputs to inputs of next block, have inputs
         # pull the value from connected inputs
@@ -818,9 +980,6 @@ class BlockDiagram(BlockDiagramMixin):
             self.runtime.DEBUG(
                 "state", ">>>>>>>>> t={}, x={} >>>>>>>>>>>>>>>>", t, state_map
             )
-
-            # reset all the blocks ready for the evalation
-            self.reset()
 
             self._state_map = state_map
 
@@ -835,41 +994,13 @@ class BlockDiagram(BlockDiagramMixin):
 
                     self.runtime.DEBUG("propagate", "block {:s}: output = {}", b, out)
 
-                    if not isinstance(out, (tuple, list)):
-                        b._raise_runtime_error(
-                            "output",
-                            AssertionError(
-                                f"block {b} output {b} must be a list: {type(out)}"
-                            ),
-                            t=t,
-                            inputs=inports,
-                            state=block_state,
-                        )
-                    if len(out) != b.nout:
-                        b._raise_runtime_error(
-                            "output",
-                            AssertionError(
-                                f"block {b} output {b} has incorrect length: {len(out)} instead of {b.nout}"
-                            ),
-                            t=t,
-                            inputs=inports,
-                            state=block_state,
-                        )
-
-                    if (
-                        checkfinite
-                        and isinstance(out, (int, float, np.ndarray))
-                        and not np.isfinite(out).any()
-                    ):
-                        b._raise_runtime_error(
-                            "output",
-                            RuntimeError(f"block {b} output contains NaN"),
-                            t=t,
-                            inputs=inports,
-                            state=block_state,
-                        )
+                    if check and (type(out) is not list or len(out) != b.nout):
+                        self._check_output_form(b, out, t, inports, block_state)
 
                     b._publish_output_values(out)
+
+                    if check:
+                        self._check_published(b, t, inports, block_state)
 
             if sinks:
                 for b in self.blocklist:
@@ -877,6 +1008,121 @@ class BlockDiagram(BlockDiagramMixin):
                         b.step_safe(t, b.inport_values)
         except BlockRuntimeError as err:
             self._handle_block_runtime_error(err)
+
+    # ---------------------------------------------------------------------- #
+    # run-time checks, all switched by ``check``, see evaluate(), deriv(), next()
+
+    @staticmethod
+    def _check_failed(
+        b: Block, operation: str, message: str, t: float, inputs: Any, state: Any
+    ) -> NoReturn:
+        b._raise_runtime_error(
+            operation, AssertionError(message), t=t, inputs=inputs, state=state
+        )
+        raise AssertionError(message)  # pragma: no cover, _raise_runtime_error raises
+
+    def _check_output_form(
+        self, b: Block, out: Any, t: float, inputs: Any, state: Any
+    ) -> None:
+        """The block returned a list with one value per output port."""
+        if not isinstance(out, (tuple, list)):
+            self._check_failed(
+                b,
+                "output",
+                f"block {b} output must be a list: {type(out)}",
+                t,
+                inputs,
+                state,
+            )
+        if len(out) != b.nout:
+            self._check_failed(
+                b,
+                "output",
+                f"block {b} output has incorrect length: {len(out)} instead of {b.nout}",
+                t,
+                inputs,
+                state,
+            )
+
+    def _check_published(self, b: Block, t: float, inputs: Any, state: Any) -> None:
+        """What the block published is finite and has the signature seen at compile time.
+
+        Looks at the value as published, after the scalar collapse.  An output
+        with no recorded signature, because the diagram was compiled with
+        ``evaluate=False``, is not compared.
+
+        This runs for every block on every evaluation, so the common cases, a
+        float or an int of the type recorded at compile time, are handled
+        before any function call.
+        """
+        for port, slot in enumerate(b._outport_slots):
+            value = slot.value
+            kind = type(value)
+
+            if kind is float:
+                finite = math.isfinite(value)
+            elif kind is int or kind is bool:
+                finite = True
+            else:
+                finite = _is_finite(value)
+            if not finite:
+                self._check_failed(
+                    b,
+                    "output",
+                    f"output {port} contains NaN or Inf",
+                    t,
+                    inputs,
+                    state,
+                )
+
+            signature = slot.signature
+            if signature is None:
+                continue
+            if kind is signature.type and kind is not np.ndarray:
+                continue
+            if not signature.matches_value(value):
+                self._check_failed(
+                    b,
+                    "output",
+                    f"output {port} changed signature: "
+                    f"was {signature}, now {Signature.of(value)}",
+                    t,
+                    inputs,
+                    state,
+                )
+
+    def _check_deriv(self, b: Block, yd: Any, t: float, state: Any) -> None:
+        """The derivative is a 1-D ndarray with one element per continuous state."""
+        if not isinstance(yd, np.ndarray):
+            self._check_failed(
+                b,
+                "deriv",
+                f"deriv: block {b} did not return ndarray",
+                t,
+                b.inport_values,
+                state,
+            )
+        if yd.ndim != 1 or yd.shape[0] != b.nstates:
+            self._check_failed(
+                b,
+                "deriv",
+                f"deriv: block {b} returns wrong shape {yd.shape}, should be ({b.nstates},)",
+                t,
+                b.inport_values,
+                state,
+            )
+
+    def _check_next(self, b: Block, xb: Any, t: float, state: Any) -> None:
+        """The next discrete state is an ndarray."""
+        if not isinstance(xb, np.ndarray):
+            self._check_failed(
+                b,
+                "next",
+                f"next: block {b} did not return ndarray",
+                t,
+                b.inport_values,
+                state,
+            )
 
     def schedule_generate(self) -> None:
         """
@@ -1147,10 +1393,7 @@ class BlockDiagram(BlockDiagramMixin):
             if b.nin > 0:
                 # non source block, list all its inputs, one per row
                 for port, source in enumerate(b.inports):
-                    value = source.block.outport_value(source.port)  # type: ignore[arg-type]
-                    typ = type(value).__name__
-                    if isinstance(value, np.ndarray):
-                        typ += "{:s}.{:s}".format(str(value.shape), str(value.dtype))
+                    typ = _signature_str(b.insig[port])
                     src_name = source.block.name or ""
                     if source.block.nout > 1:
                         src_name += f"[{source.port}]"
@@ -1230,13 +1473,7 @@ class BlockDiagram(BlockDiagramMixin):
             start: str = "{}[{}]".format(wire.start.block.id, wire.start.port)
             end: str = "{}[{}]".format(wire.end.block.id, wire.end.port)
 
-            try:
-                value = wire.end.block.inport_value(wire.end.port)  # type: ignore[arg-type]
-                typ: str = type(value).__name__
-                if isinstance(value, np.ndarray):
-                    typ += "{:s}.{:s}".format(str(value.shape), str(value.dtype))
-            except:
-                typ = "??"
+            typ = _signature_str(wire.end.block.insig[wire.end.port])  # type: ignore[index]
             table.row(wire.id, start, end, wire.fullname, typ)
         table.print(**kwargs)
 
@@ -1258,6 +1495,113 @@ class BlockDiagram(BlockDiagramMixin):
                         raise ValueError(f"sampled block {b} has no clock")
                     table.row(b.id, b.name, c.name, c.T, c.offset)
             table.print(**kwargs)
+
+    def report_subsystems(self, **kwargs: Any) -> None:
+        """
+        Print a table of the inputs and outputs of the subsystems.
+
+        :param kwargs: options passed to :meth:`ansitable.table.ANSIMatrix.print`
+        :type kwargs: dict
+
+        A subsystem block is not part of the compiled network, and its INPORT and OUTPORT
+        blocks have been replaced by wires, so the signals that cross its boundary are
+        listed here.  The columns are
+
+        1. the port, such as ``pid.0[1]``, which is what can be watched
+        2. ``in`` or ``out``
+        3. the block and port that the signal comes from, the *source*, which for an
+           output is a block inside the subsystem (looking through nested subsystems) and
+           for an input is a block outside it
+        4. the type of the signal, as the signature recorded when the diagram was compiled
+
+        :seealso: :attr:`SubsystemBlock.inports` :attr:`SubsystemBlock.outports`
+        """
+        table = ANSITable(
+            Column("port", headalign="^", colalign="<"),
+            Column("", headalign="^", colalign="<"),
+            Column("source", headalign="^", colalign="<"),
+            Column("type", headalign="^", colalign="<"),
+            border="thin",
+        )
+        for name, sub in self.subsystems.items():
+            for direction, plugs in (("in", sub.inports), ("out", sub.outports)):
+                for port, plug in enumerate(plugs):
+                    if plug is None:
+                        source, signature = "?", None
+                    else:
+                        source = f"{plug.block.name}[{plug.port}]"
+                        sigs = getattr(plug.block, "outsig", None)
+                        signature = sigs[plug.port] if sigs else None
+                    table.row(
+                        f"{name}[{port}]", direction, source, _signature_str(signature)
+                    )
+        table.print(**kwargs)
+
+    def report_params(self, fixed: bool = False, **kwargs: Any) -> None:
+        """
+        Print a table of the parameters of all blocks and their current values.
+
+        :param fixed: also list the parameters that are fixed when the block is
+            created, defaults to False
+        :type fixed: bool, optional
+        :param kwargs: options passed to :meth:`ansitable.table.ANSIMatrix.print`
+        :type kwargs: dict
+
+        The first column is the name exactly as it is used by the ``--set`` option,
+        ``block:param``, and by :meth:`Block.set_param`.  The columns are
+
+        1. the name, ``block:param``
+        2. the current value, abbreviated if it is long
+        3. its type, as the signature of the value
+        4. when it can be set: ``anytime``, ``setup`` (before the run starts), or
+           ``never`` (only with ``fixed=True``)
+
+        Blocks inside a subsystem are listed with the path of the subsystem, such as
+        ``sub/gain.0:K``.  A subsystem block that declares parameters of its own, such
+        as ``PID``, is listed by its own name, ``pid.0:P``, instead of the blocks inside
+        it, which can still be set by their own names.  The ``--param`` option prints
+        this table when the diagram is compiled.
+
+        :seealso: :meth:`Block.add_param` :meth:`Block.set_param`
+        """
+        table = ANSITable(
+            Column("parameter", headalign="^", colalign="<"),
+            Column("value", headalign="^", colalign="<"),
+            Column("type", headalign="^", colalign="<"),
+            Column("when", headalign="^", colalign="<"),
+            border="thin",
+        )
+        # A subsystem that declares parameters presents those, and its inner blocks, which
+        # can still be set by their own names, are not listed.  Names are full paths,
+        # so a subsystem inside a subsystem is under the prefix of the outer one.
+        declared = [
+            name
+            for name, sub in self.subsystems.items()
+            if any(
+                p.forward is not None or p.unavailable is not None
+                for p in sub._parameters.values()
+            )
+        ]
+        inside = tuple(name + "/" for name in declared)
+        owners: list[Any] = [
+            self.subsystems[name] for name in declared if not name.startswith(inside)
+        ]
+
+        for b in [*owners, *self.blocklist]:
+            if b.name.startswith(inside) and b not in owners:
+                continue
+            for name, param in b._parameters.items():
+                when = b._param_when(param)
+                if when == "never" and not fixed:
+                    continue
+                value = b._param_value(name)
+                table.row(
+                    f"{b.name}:{name}",
+                    _value_str(value),
+                    _signature_str(Signature.of(value)),
+                    when,
+                )
+        table.print(**kwargs)
 
     def report_schedule(self, **kwargs: Any) -> None:
         """
@@ -1340,10 +1684,11 @@ class BlockDiagram(BlockDiagramMixin):
 
     def reset(self) -> None:
         """
-        Reset conditions within every active block.  Most importantly, all
-        inputs are marked as unknown.
+        Restore the initial internal state of every block.
 
-        Invokes the `reset` method on all blocks.
+        Invokes the ``reset`` method on all blocks.  Called by :meth:`start`,
+        once per run, before the blocks are started.  It does not clear the
+        values on the wires.
 
         """
         try:
@@ -1420,24 +1765,8 @@ class BlockDiagram(BlockDiagramMixin):
                 if b.blockclass == "continuous":
                     block_state = active_state_map.get(b)
                     yd = b.deriv_safe(t, b.inport_values, block_state)
-                    if not isinstance(yd, np.ndarray):
-                        b._raise_runtime_error(
-                            "deriv",
-                            AssertionError(f"deriv: block {b} did not return ndarray"),
-                            t=t,
-                            inputs=b.inport_values,
-                            state=block_state,
-                        )
-                    if yd.ndim != 1 or yd.shape[0] != b.nstates:
-                        b._raise_runtime_error(
-                            "deriv",
-                            AssertionError(
-                                f"deriv: block {b} returns wrong shape {yd.shape}, should be ({b.nstates},)"
-                            ),
-                            t=t,
-                            inputs=b.inport_values,
-                            state=block_state,
-                        )
+                    if self.check:
+                        self._check_deriv(b, yd, t, block_state)
                     YD = np.r_[YD, yd]
             self.runtime.DEBUG("deriv", YD)
             return YD
@@ -1457,14 +1786,8 @@ class BlockDiagram(BlockDiagramMixin):
             for b in clock.blocklist:
                 block_state = active_state_map.get(b)
                 xb = b.next_safe(t, b.inport_values, block_state)
-                if not isinstance(xb, np.ndarray):
-                    b._raise_runtime_error(
-                        "next",
-                        AssertionError(f"next: block {b} did not return ndarray"),
-                        t=t,
-                        inputs=b.inport_values,
-                        state=block_state,
-                    )
+                if self.check:
+                    self._check_next(b, xb, t, block_state)
                 x_next = np.r_[x_next, xb.flatten()]
             clock_next[clock] = x_next
         return clock_next
@@ -1503,6 +1826,17 @@ class BlockDiagram(BlockDiagramMixin):
                 )
                 print(attr(0))
                 raise RuntimeError("Fatal failure") from None
+
+        # undo anything the compile-time trial evaluation or a previous run did
+        # to the blocks' own state
+        self.reset()
+
+        # let each block read the signatures compile() recorded
+        try:
+            for b in self.blocklist:
+                b.configure_safe()
+        except BlockRuntimeError as err:
+            self._handle_block_runtime_error(err)
 
         try:
             for b in self.blocklist:

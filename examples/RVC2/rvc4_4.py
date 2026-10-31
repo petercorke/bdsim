@@ -8,6 +8,7 @@ Robotics, Vision & Control: 2nd edition, Fig 4.4
 
 import bdsim
 import math
+import numpy as np
 
 sim = bdsim.BDSim(animation=True)
 bd = sim.blockdiagram()
@@ -18,7 +19,7 @@ def background_graphics(ax):
     ax.plot(5, 2, "o")
 
 
-goal = bd.CONSTANT([5, 5])
+goal = bd.CONSTANT(np.r_[5, 5])
 error = bd.SUM("+-", name="error")
 d2goal = bd.FUNCTION(lambda d: math.sqrt(d[0] ** 2 + d[1] ** 2))
 h2goal = bd.FUNCTION(lambda d: math.atan2(d[1], d[0]))
