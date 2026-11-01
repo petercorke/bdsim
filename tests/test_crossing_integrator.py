@@ -163,5 +163,77 @@ class IntegratorLimitTestCase(unittest.TestCase):
         nt.assert_array_equal(a.x, b.x)
 
 
+class IntegratorEnableTestCase(unittest.TestCase):
+    """The optional ``enable`` input: false zeroes and holds the state."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.sim = bdsim.BDSim(graphics=None, progress=False, banner=False, quiet=True)
+
+    def run_enabled(self, enable, T=3.0, **integ):
+        """``CONSTANT(1) -> INTEGRATOR(enable=True)``, enable driven by ``enable(t)``."""
+        bd = self.sim.blockdiagram()
+        x = bd.INTEGRATOR(enable=True, **integ)
+        e = bd.FUNCTION(enable)
+        bd.connect(bd.CONSTANT(1.0), x[0])
+        bd.connect(bd.TIME(), e)
+        bd.connect(e, x[1])
+        bd.compile(verbose=False)
+        out = self.sim.run(bd, T=T, solver_args=SOLVER)
+        return out, np.asarray(out.x).reshape(len(out.t), -1)
+
+    def test_has_a_second_input_only_when_asked(self):
+        bd = self.sim.blockdiagram()
+        self.assertEqual(bd.INTEGRATOR().nin, 1)
+        self.assertEqual(bd.INTEGRATOR(enable=True).nin, 2)
+
+    def test_disabled_then_enabled(self):
+        # enabled for t < 1, disabled for 1 <= t < 2, enabled again from t = 2
+        out, x = self.run_enabled(lambda t: 1.0 if (t < 1 or t >= 2) else 0.0)
+        t = out.t
+        a = t < 1 - 1e-6
+        nt.assert_allclose(x[a, 0], t[a], atol=1e-8)
+        held = (t > 1 + 1e-6) & (t < 2 - 1e-6)
+        nt.assert_array_equal(x[held, 0], 0.0)
+        c = t > 2 + 1e-6
+        nt.assert_allclose(x[c, 0], t[c] - 2.0, atol=1e-7)
+        self.assertEqual(out.stats.events_detected_total, 2)
+
+    def test_disabled_at_the_start_zeroes_the_initial_state(self):
+        out, x = self.run_enabled(lambda t: 0.0 if t < 1 else 1.0, x0=5.0)
+        t = out.t
+        # the first sample is the initial condition, before the event at t = 0
+        self.assertEqual(x[0, 0], 5.0)
+        nt.assert_array_equal(x[(t > 0) & (t < 1 - 1e-6), 0], 0.0)
+        nt.assert_allclose(x[t > 1 + 1e-6, 0], t[t > 1 + 1e-6] - 1.0, atol=1e-7)
+
+    def test_limits_apply_after_re_enabling(self):
+        out, x = self.run_enabled(
+            lambda t: 1.0 if (t < 0.5 or t >= 1) else 0.0, max=0.25
+        )
+        t = out.t
+        nt.assert_array_equal(x[(t > 0.25 + 1e-6) & (t < 0.5 - 1e-6), 0], 0.25)
+        nt.assert_array_equal(x[(t > 0.5 + 1e-6) & (t < 1 - 1e-6), 0], 0.0)
+        nt.assert_allclose(
+            x[(t > 1 + 1e-6) & (t < 1.25 - 1e-6), 0],
+            t[(t > 1 + 1e-6) & (t < 1.25 - 1e-6)] - 1.0,
+            atol=1e-7,
+        )
+        nt.assert_array_equal(x[t > 1.25 + 1e-6, 0], 0.25)
+
+    def test_rerun_after_ending_disabled(self):
+        # the run ends disabled; a second run must start enabled again
+        bd = self.sim.blockdiagram()
+        x = bd.INTEGRATOR(enable=True)
+        e = bd.FUNCTION(lambda t: 1.0 if t < 1 else 0.0)
+        bd.connect(bd.CONSTANT(1.0), x[0])
+        bd.connect(bd.TIME(), e)
+        bd.connect(e, x[1])
+        bd.compile(verbose=False)
+        a = self.sim.run(bd, T=2.0, solver_args=SOLVER)
+        b = self.sim.run(bd, T=2.0, solver_args=SOLVER)
+        nt.assert_array_equal(a.x, b.x)
+
+
 if __name__ == "__main__":
     unittest.main()
