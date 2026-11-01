@@ -16,10 +16,10 @@ import math
 import inspect
 import warnings
 import spatialmath.base as smb
-from typing import Any, Literal, Union, Callable, Optional
+from typing import Any, Literal, Callable
 from numpy.typing import ArrayLike
 
-Vector1D = Union[int, float, tuple[float, ...], list[float], np.ndarray]
+Vector1D = int | float | tuple[float, ...] | list[float] | np.ndarray
 
 from bdsim.components import FunctionBlock
 
@@ -78,7 +78,7 @@ class Sum(FunctionBlock):
     }
 
     def __init__(
-        self, signs: str = "++", mode: Optional[str] = None, **blockargs: Any
+        self, signs: str = "++", mode: str | None = None, **blockargs: Any
     ) -> None:
         """
         :param signs: a string comprising ``+`` or ``-`` characters, defaults to ``++``
@@ -115,7 +115,7 @@ class Sum(FunctionBlock):
         if not all(x in "+-" for x in signs):
             raise ValueError("invalid sign")
         self.signs: str = signs
-        self.mode: Optional[str] = mode
+        self.mode: str | None = mode
         self.add_param("signs", validate=self._check_signs)
         self.add_param("mode", validate=self._check_mode)
 
@@ -127,7 +127,7 @@ class Sum(FunctionBlock):
                 f"signs must have {self.nin} characters, one per input, not {len(value)}"
             )
 
-    def _check_mode(self, value: Optional[str]) -> None:
+    def _check_mode(self, value: str | None) -> None:
         if value is not None and not all(x in "rcCL" for x in value):
             raise ValueError("mode must be a string of r, c, C or L characters")
 
@@ -334,7 +334,7 @@ class Gain(FunctionBlock):
 
     def __init__(
         self,
-        K: Union[int, float, np.ndarray] = 1,
+        K: int | float | np.ndarray = 1,
         premul: bool = False,
         **blockargs: Any,
     ) -> None:
@@ -418,7 +418,7 @@ class Pow(FunctionBlock):
     nout = 1
 
     def __init__(
-        self, p: Union[int, float] = 1, matrix: bool = False, **blockargs: Any
+        self, p: int | float = 1, matrix: bool = False, **blockargs: Any
     ) -> None:
         """
         :param p: The exponent value, defaults to 1
@@ -612,16 +612,17 @@ class Function(FunctionBlock):
 
     def __init__(
         self,
-        func: Optional[
+        func: (
             Callable[..., Any]
             | list[Callable[..., Any]]
             | tuple[Callable[..., Any], ...]
-        ] = None,
+            | None
+        ) = None,
         nin: int = 1,
         nout: int = 1,
         persistent: bool = False,
-        fargs: Optional[list[Any]] = None,
-        fkwargs: Optional[dict[str, Any]] = None,
+        fargs: list[Any] | None = None,
+        fkwargs: dict[str, Any] | None = None,
         **blockargs: Any,
     ) -> None:
         """
@@ -832,9 +833,9 @@ class Interpolate(FunctionBlock):
 
     def __init__(
         self,
-        x: Optional[Union[list[Any], tuple[Any, ...], np.ndarray]] = None,
-        y: Optional[Union[list[Any], tuple[Any, ...], np.ndarray]] = None,
-        xy: Optional[np.ndarray] = None,
+        x: list[Any] | tuple[Any, ...] | np.ndarray | None = None,
+        y: list[Any] | tuple[Any, ...] | np.ndarray | None = None,
+        xy: np.ndarray | None = None,
         time: bool = False,
         kind: str = "linear",
         **blockargs: Any,

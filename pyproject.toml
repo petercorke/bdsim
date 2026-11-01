@@ -112,7 +112,12 @@ extend-exclude = [
 ]
 
 [tool.ruff.lint]
-select = ["F"]
+select = [
+    "F",
+    "UP006",  # list[X], not List[X]
+    "UP007",  # X | Y, not Union[X, Y]
+    "UP045",  # X | None, not Optional[X]
+]
 ignore = [
     "F403",  # star imports are used deliberately by the block modules
     "F405",  # ...and the names they bring in
