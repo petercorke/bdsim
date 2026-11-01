@@ -172,9 +172,14 @@ class Integrator(CrossingMixin, ContinuousBlock):
         # gated by the element's mode: an inactive detector returns a nonzero
         # constant, since solve_ivp counts an exact zero as a crossing.  The
         # limits are read here, so a change between runs takes effect.
+        x0 = self.getstate0()
         for i in range(self.nstates):
             hi = np.inf if self.max is None else float(self.max[i])
             lo = -np.inf if self.min is None else float(self.min[i])
+            if not lo <= x0[i] <= hi:
+                raise ValueError(
+                    f"initial state x0[{i}]={x0[i]} is outside the limits [{lo}, {hi}]"
+                )
             if np.isfinite(hi):
                 self.declare_crossing(
                     simstate, self._upper_detector(i, hi), +1, ("upper", i)
@@ -188,30 +193,45 @@ class Integrator(CrossingMixin, ContinuousBlock):
                     simstate, self._release_detector(i), -1, ("release", i)
                 )
 
+    # A detector that is already past its threshold when an interval starts reports
+    # the crossing from the first point (see CrossingMixin.declare_crossing), since
+    # the solver restarts just beyond the earliest of several simultaneous crossings.
+
     def _upper_detector(self, i: int, limit: float) -> Any:
-        def detector(x: np.ndarray, u: list[Any]) -> float:
-            # at the limit and not heading out of it is not a crossing
-            if self._mode[i] != self._FREE or (x[i] >= limit and self._rate(u, i) <= 0):
+        def detector(x: np.ndarray, u: list[Any], at_start: bool) -> float:
+            if self._mode[i] != self._FREE:
                 return -1.0
-            return float(x[i] - limit)
+            g = float(x[i] - limit)
+            if g >= 0:
+                # at or past the limit: a crossing only if still heading out
+                if self._rate(u, i) <= 0:
+                    return -1.0
+                return 0.0 if at_start else g
+            return g
 
         return detector
 
     def _lower_detector(self, i: int, limit: float) -> Any:
-        def detector(x: np.ndarray, u: list[Any]) -> float:
-            if self._mode[i] != self._FREE or (x[i] <= limit and self._rate(u, i) >= 0):
+        def detector(x: np.ndarray, u: list[Any], at_start: bool) -> float:
+            if self._mode[i] != self._FREE:
                 return 1.0
-            return float(x[i] - limit)
+            g = float(x[i] - limit)
+            if g <= 0:
+                if self._rate(u, i) >= 0:
+                    return 1.0
+                return 0.0 if at_start else g
+            return g
 
         return detector
 
     def _release_detector(self, i: int) -> Any:
         # UPPER is released when the rate falls through zero, LOWER when it rises
         # through zero, which is the rate times the mode falling through zero.
-        def detector(x: np.ndarray, u: list[Any]) -> float:
+        def detector(x: np.ndarray, u: list[Any], at_start: bool) -> float:
             if self._mode[i] == self._FREE:
                 return 1.0
-            return self._rate(u, i) * self._mode[i]
+            g = self._rate(u, i) * self._mode[i]
+            return 0.0 if at_start and g <= 0 else g
 
         return detector
 

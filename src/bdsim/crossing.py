@@ -34,7 +34,7 @@ class CrossingMixin:
     def declare_crossing(
         self,
         simstate: Any,
-        func: Callable[[np.ndarray, list[Any]], float],
+        func: Callable[[np.ndarray, list[Any], bool], float],
         direction: float,
         tag: Any,
     ) -> None:
@@ -42,8 +42,9 @@ class CrossingMixin:
         Register one terminal scalar detector.
 
         :param simstate: the run's simulation state, as passed to ``start``
-        :param func: ``func(x, u) -> float``, given the block's state vector and
-            its input port values at the probe point
+        :param func: ``func(x, u, at_start) -> float``, given the block's state
+            vector, its input port values at the probe point, and whether the
+            probe is the first point of the solver interval
         :param direction: ``+1`` fires on a rising zero crossing, ``-1`` on a
             falling one, ``0`` on either
         :param tag: identifies the detector, handed back to :meth:`crossing_event`
@@ -52,6 +53,14 @@ class CrossingMixin:
         A detector that is currently inactive should return a nonzero constant, not
         zero: solve_ivp counts a value of exactly zero at the start of an interval
         as a crossing.
+
+        The solver reports only the earliest of several simultaneous crossings and
+        restarts just beyond it, so another detector may by then be past its
+        threshold and would never fire.  At the start of an interval, and only
+        there, a detector that is already past its threshold in its direction
+        should return exactly zero, which reports the crossing at once.  Elsewhere
+        it must return the true value, or the root is found at the step end and
+        not at the crossing.
         """
         if tag is None:
             raise ValueError("a crossing detector needs a tag")
@@ -66,7 +75,13 @@ class CrossingMixin:
             # one shared propagation per probe point, however many detectors
             simstate.ensure_event_probe_evaluated(self.bd, t, y)  # type: ignore[attr-defined]
             x = self.bd._state_map[self]  # type: ignore[attr-defined]
-            return float(func(x, self.inport_values))  # type: ignore[attr-defined]
+            return float(
+                func(
+                    x,
+                    self.inport_values,  # type: ignore[attr-defined]
+                    simstate.at_event_interval_start(t),
+                )
+            )
 
         detector.terminal = True  # type: ignore[attr-defined]
         detector.direction = float(direction)  # type: ignore[attr-defined]

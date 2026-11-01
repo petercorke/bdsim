@@ -385,6 +385,15 @@ class BDSimState(SimulationState):
         """
         self.crossing_detectors.append((detector, block))
 
+    def at_event_interval_start(self, t: float) -> bool:
+        """True if ``t`` is the first point of the active solve_ivp interval.
+
+        solve_ivp evaluates every detector there before it takes a step, and a
+        crossing already passed at that point can only be reported from it.
+        """
+        t0 = self._event_probe_interval_start
+        return t0 is not None and t <= t0
+
     def reset_event_probe_cache(self) -> None:
         """Invalidate cached solve_ivp event-probe evaluation state."""
         self._event_probe_t = None

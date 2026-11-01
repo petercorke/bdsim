@@ -108,6 +108,50 @@ class IntegratorLimitTestCase(unittest.TestCase):
         nt.assert_array_equal(x[out.t > 0.5 + 1e-6, 0], 1.0)
         self.assertTrue(np.all(np.diff(out.t) > 0))
 
+    def test_simultaneous_limits_are_both_held(self):
+        # the solver reports only the earlier of two crossings at the same instant,
+        # and restarts just past it: the other must not be lost
+        out, x = self.run_integrator(
+            lambda bd: bd.CONSTANT([1.0, 1.0]), 2.0, x0=[0, 0], max=[1.0, 1.0]
+        )
+        nt.assert_array_equal(x[out.t > 1 + 1e-6], 1.0)
+        self.assertLessEqual(x.max(), 1.0)
+
+    def test_simultaneous_lower_limits_are_both_held(self):
+        out, x = self.run_integrator(
+            lambda bd: bd.CONSTANT([-1.0, -1.0]), 2.0, x0=[0, 0], min=[-1.0, -1.0]
+        )
+        nt.assert_array_equal(x[out.t > 1 + 1e-6], -1.0)
+
+    def test_one_element_released_as_another_reaches_its_limit(self):
+        # element 0 reaches its limit at t = 1, when element 1, held since t = 0.5,
+        # is released because u1 = 2 - 2t falls through zero
+        def source(bd):
+            f = bd.FUNCTION(lambda t: np.array([1.0, 2.0 - 2.0 * t]))
+            bd.connect(bd.TIME(), f)
+            return f
+
+        out, x = self.run_integrator(source, 2.0, x0=[0, 0], max=[1.0, 0.75])
+        t = out.t
+        nt.assert_array_equal(x[t > 1 + 1e-6, 0], 1.0)
+        held = (t > 0.5 + 1e-6) & (t < 1 - 1e-6)
+        nt.assert_array_equal(x[held, 1], 0.75)
+        after = (t > 1 + 1e-6) & (t < 2)
+        nt.assert_allclose(x[after, 1], 2 * t[after] - t[after] ** 2 - 0.25, atol=1e-7)
+
+    def test_initial_state_outside_the_limits_is_an_error(self):
+        with self.assertRaises(RuntimeError):
+            self.run_integrator(lambda bd: bd.CONSTANT(1.0), 1.0, x0=2.0, max=1.0)
+
+    def test_limits_changed_after_creation_are_checked_at_start(self):
+        bd = self.sim.blockdiagram()
+        x = bd.INTEGRATOR(x0=0.5, max=1.0)
+        bd.connect(bd.CONSTANT(1.0), x)
+        bd.compile(verbose=False)
+        x.max = 0.25
+        with self.assertRaises(RuntimeError):
+            self.sim.run(bd, T=1.0)
+
     def test_rerun_gives_identical_results(self):
         bd = self.sim.blockdiagram()
         x = bd.INTEGRATOR(max=1.0)
