@@ -1,5 +1,50 @@
 # Changelog
 
+## [1.5.0](https://github.com/petercorke/bdsim/compare/v1.4.1...v1.5.0) (2026-11-01)
+
+
+### Features
+
+* --npz writes the results as a NumPy archive ([#154](https://github.com/petercorke/bdsim/issues/154)) ([6ee2a19](https://github.com/petercorke/bdsim/commit/6ee2a193232d5b995021d851af203e799146b3dd))
+* a list of numbers becomes an ndarray by default, with asarray=False to opt out ([dd55a75](https://github.com/petercorke/bdsim/commit/dd55a7573adbb305b210159b5cfe06d1cc6d1843))
+* a list of numbers becomes an ndarray by default; asarray=False to opt out ([93bef9d](https://github.com/petercorke/bdsim/commit/93bef9d1c8bfe4378270a0d80cac9a75f366d304))
+* add Sqrt, Sign, Abs and Deadband function blocks ([#178](https://github.com/petercorke/bdsim/issues/178)) ([e89e173](https://github.com/petercorke/bdsim/commit/e89e173363e2d57f844c08f9fb04ab9d7a374ea5))
+* add the Block.configure() hook, run once per run before start() ([70656dc](https://github.com/petercorke/bdsim/commit/70656dc5b0e6f703605b7ac2d05a324acdac5357))
+* block parameters: one registry, type enforcement, --set and --param ([dee08f6](https://github.com/petercorke/bdsim/commit/dee08f6ada5c72d7fbdd1f5f354231bb84570fa3))
+* block parameters: one registry, type enforcement, --set and --param ([4c64920](https://github.com/petercorke/bdsim/commit/4c649209f25f701f09acfe516e40ffdaac0587db))
+* initial states are parameters, and --set is applied before they are collected ([4646bf2](https://github.com/petercorke/bdsim/commit/4646bf21e5adeda1063c2b43db4bc6a6dd7785ff))
+* NumPy dtype literals for parameters given as text, float32([1, 2]) ([#157](https://github.com/petercorke/bdsim/issues/157)) ([8a04025](https://github.com/petercorke/bdsim/commit/8a040258f1e4b1df224d2e4aba1f12ee5fbfe499))
+* NumPy dtype literals for parameters given as text: float32([1, 2]), uint16(5) ([8a04025](https://github.com/petercorke/bdsim/commit/8a040258f1e4b1df224d2e4aba1f12ee5fbfe499))
+* one switch for the run-time checks, and a check for change of signature ([c6de015](https://github.com/petercorke/bdsim/commit/c6de01568c478f9ee4512ed70ce96afad005f00c))
+* one switch for the run-time checks, and a check for change of signature ([615a924](https://github.com/petercorke/bdsim/commit/615a9241e38c7e7098becde6b8f192a7510786a1))
+* PID and PID_S take terms= to say which terms to build; fixes pure P ([#163](https://github.com/petercorke/bdsim/issues/163)) ([b4b5f01](https://github.com/petercorke/bdsim/commit/b4b5f010f03563b3e8577db6b029a5692c5e7b8a))
+* properties and forwarding for every block parameter ([f5b58c3](https://github.com/petercorke/bdsim/commit/f5b58c3e6ddb2e27f02d9619df9603574035cd31))
+* properties for the parameters of single blocks with derived state ([4b0def1](https://github.com/petercorke/bdsim/commit/4b0def1b39a0165a7625ca044cd0efdd5ae092af))
+* record the signature of every wire at compile time ([6eb8240](https://github.com/petercorke/bdsim/commit/6eb82403491cd1bd6fd107f0315839aceba6886f))
+* record wire signatures at compile time; Block.configure(); reset() restores block state ([dea411d](https://github.com/petercorke/bdsim/commit/dea411db491eb8f4b851129617792403f69462cc))
+* replace subsystem INPORT/OUTPORT blocks by wires (fixes [#84](https://github.com/petercorke/bdsim/issues/84)) ([32a259f](https://github.com/petercorke/bdsim/commit/32a259f933b9a7900a29506acac5cc007650b755))
+* replace the INPORT and OUTPORT blocks of a subsystem by wires ([#84](https://github.com/petercorke/bdsim/issues/84)) ([ed7e5fe](https://github.com/petercorke/bdsim/commit/ed7e5fedb12c5316a4373c077b48c3434b4f5e0b))
+* source blocks emit one type, checked when the block is created ([6cccba5](https://github.com/petercorke/bdsim/commit/6cccba50187e281affea64b5c9421efe5bc94f99))
+* source blocks emit one type, checked when the block is created ([a390432](https://github.com/petercorke/bdsim/commit/a390432fc7f0bae61ca71b810415962ab926ab23))
+* subsystem blocks forward their parameters to the blocks inside ([1695667](https://github.com/petercorke/bdsim/commit/1695667701c5e107e156f0d28b5a0b2f9986721c))
+
+
+### Bug Fixes
+
+* a crossing event with a fixed output grid restarts at the event time ([#159](https://github.com/petercorke/bdsim/issues/159)) ([e95592b](https://github.com/petercorke/bdsim/commit/e95592bd945a79fc4466c70ff731735bb8c5a1e4))
+* avoid endless repainting when setting background brush in bdedit ([#145](https://github.com/petercorke/bdsim/issues/145)) ([b6e23a0](https://github.com/petercorke/bdsim/commit/b6e23a0e25945d3ce090ce446b9107de3f598bc5))
+* **bdedit:** render the screenshot region for PNG export ([#142](https://github.com/petercorke/bdsim/issues/142)) ([0d51208](https://github.com/petercorke/bdsim/commit/0d5120844363a02aa7c378ef7970bc6a5f56f9fc))
+* give subsystem instances unique default names, and stop defaulting the diagram name to "main" ([0540805](https://github.com/petercorke/bdsim/commit/0540805522d56d11bb0ff8fa25cfab3cfed2137e))
+* Scope no longer passes the line style to matplotlib as its label ([#147](https://github.com/petercorke/bdsim/issues/147)) ([ea5084a](https://github.com/petercorke/bdsim/commit/ea5084a3f9ec4bbc20f84d0ad3b40538a97e3333))
+* Slice1 accepts an integer index as documented; drop a debug print in Function.start ([af9202b](https://github.com/petercorke/bdsim/commit/af9202bb1619bd29b97e7b0dcd5c5681f0d7e0ac))
+* unique default names for subsystem instances; diagram name defaults to None ([#148](https://github.com/petercorke/bdsim/issues/148)) ([0540805](https://github.com/petercorke/bdsim/commit/0540805522d56d11bb0ff8fa25cfab3cfed2137e))
+
+
+### Documentation
+
+* correct the Pow matrix and Scope scale parameter descriptions ([c0e7adc](https://github.com/petercorke/bdsim/commit/c0e7adcd992c23334491773c9e840a8320466402))
+* say that supported Python versions are those in the pyproject classifiers ([#173](https://github.com/petercorke/bdsim/issues/173)) ([b01dab2](https://github.com/petercorke/bdsim/commit/b01dab22e5a701bf13c7aee9776b8721bf98c185))
+
 ## [1.4.1](https://github.com/petercorke/bdsim/compare/v1.4.0...v1.4.1) (2026-10-19)
 
 ### Highlights
