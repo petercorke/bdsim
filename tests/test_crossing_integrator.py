@@ -245,7 +245,7 @@ class ClipEventsTestCase(unittest.TestCase):
         cls.sim = bdsim.BDSim(graphics=None, progress=False, banner=False, quiet=True)
 
     def integrate_clipped(
-        self, source, T, x0=0, solver_args=SOLVER, block="CLIP", dt=None, **kwargs
+        self, source, T, x0=0, solver_args=None, block="CLIP", dt=None, **kwargs
     ):
         """``source -> CLIP -> INTEGRATOR``, returning the run and the final integral."""
         bd = self.sim.blockdiagram()
@@ -254,7 +254,7 @@ class ClipEventsTestCase(unittest.TestCase):
         bd.connect(source(bd), c)
         bd.connect(c, i)
         bd.compile(verbose=False)
-        out = self.sim.run(bd, T=T, dt=dt, solver_args=solver_args)
+        out = self.sim.run(bd, T=T, dt=dt, solver_args=solver_args or SOLVER)
         return out, np.asarray(out.x).reshape(len(out.t), -1)[-1]
 
     def test_state_at_the_corner_is_accurate_at_loose_tolerance(self):
