@@ -150,6 +150,11 @@ class Integrator_S(SampledBlock):
     The state can be a scalar or a vector. The initial state, and type, is given by
     ``x0``.  The shape of the input signal must match ``x0``.
 
+    The gain is applied to the input, before accumulation, as in the update
+    equation above.  The limits ``min`` and ``max`` apply to the resulting state,
+    which is also the output.  They are applied at each sample time, so no crossing
+    events are needed.
+
     The minimum and maximum output values can be:
 
         - a scalar, in which case the same value applies to every element of
@@ -157,8 +162,9 @@ class Integrator_S(SampledBlock):
         - a vector, of the same shape as ``x0`` that applies elementwise to
           the state.
 
-    .. note:: The minimum and maximum prevent integration outside the limits,
-        but assume that the initial state is within the limits.
+    .. note:: The minimum and maximum clip the next state, so a state that would pass
+        a limit is held at it until the input reverses.  An initial state outside
+        the limits is clipped at the first sample.
 
     Integration can be controlled by an ``enable`` function::
 

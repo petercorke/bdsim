@@ -113,14 +113,20 @@ class TransferTest(unittest.TestCase):
         nt.assert_equal(block.test_deriv(u, x=x), u)
         nt.assert_equal(block.getstate0(), np.r_[30])
 
+        # limits do not alter the derivative of a free state, only a held one
         block = Integrator(x0=5, min=-10, max=10)  # state is scalar
-        x = np.r_[11]
+        x = np.r_[9]
         u = 2
-        nt.assert_equal(block.test_deriv(u, x=x), 0)
+        nt.assert_equal(block.test_deriv(u, x=x), 2)
 
-        x = np.r_[-11]
-        u = -2
-        nt.assert_equal(block.test_deriv(u, x=x), 0)
+        block._mode[0] = Integrator._UPPER
+        nt.assert_equal(block.test_deriv(u, x=np.r_[10]), 0)
+
+        block._mode[0] = Integrator._LOWER
+        nt.assert_equal(block.test_deriv(-u, x=np.r_[-10]), 0)
+
+        block.reset()
+        nt.assert_equal(block.test_deriv(u, x=x), 2)
 
     def test_integrator_vec(self):
         block = Integrator(x0=[5, 6])  # state is vector
@@ -134,15 +140,15 @@ class TransferTest(unittest.TestCase):
         nt.assert_equal(block.test_output(u, x=x)[0], x)
         nt.assert_equal(block.test_deriv(u, x=x), u)
 
-        # test with limits
+        # test with limits: only the held element stops
         block = Integrator(x0=[5, 6], min=[-5, -10], max=[5, 10])  # state is vector
-        x = np.r_[-6, -11]
-        u = np.r_[-2, -3]
-        nt.assert_equal(block.test_deriv(u, x=x), [0, 0])
-
-        x = np.r_[6, 11]
+        block._mode[:] = [Integrator._UPPER, Integrator._FREE]
         u = np.r_[2, 3]
-        nt.assert_equal(block.test_deriv(u, x=x), [0, 0])
+        nt.assert_equal(block.test_deriv(u, x=np.r_[5, 0]), [0, 3])
+
+        block._mode[:] = [Integrator._FREE, Integrator._LOWER]
+        u = np.r_[-2, -3]
+        nt.assert_equal(block.test_deriv(u, x=np.r_[0, -10]), [-2, 0])
 
     def test_pose_integrator_s(self):
 

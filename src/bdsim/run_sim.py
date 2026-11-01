@@ -948,11 +948,19 @@ class BDSim(Runner):
         y_crossing: Any,
         simstate: BDSimState,
         state_map: dict[Block, np.ndarray],
+        tag: Any = None,
     ) -> None:
         """Invoke a crossing event handler if one is defined on the block.
 
-        Called when a zero-crossing is detected by the solver.
+        Called when a zero-crossing is detected by the solver.  A detector with a
+        ``tag`` (see :class:`~bdsim.crossing.CrossingMixin`) is routed to the
+        block's ``crossing_event``, which is told which detector fired.
         """
+        if tag is not None:
+            block.crossing_event(  # type: ignore[attr-defined]
+                tag, t_crossing, y_crossing, state_map, simstate
+            )
+            return
         for handler_name in ("event_handler", "on_event", "handle_event"):
             handler = getattr(block, handler_name, None)
             if callable(handler):
@@ -2076,7 +2084,8 @@ class BDSim(Runner):
         for i, crossing_times in enumerate(crossing_times_all):
             if len(crossing_times) == 0:
                 continue
-            _, block = simstate.crossing_detectors[i]
+            detector, block = simstate.crossing_detectors[i]
+            tag = getattr(detector, "tag", None)
             source_name = getattr(block, "name", str(block))
             state_list = crossing_states[i] if i < len(crossing_states) else []
             for j, t_crossing in enumerate(crossing_times):
@@ -2093,6 +2102,7 @@ class BDSim(Runner):
                     y_crossing,
                     simstate,
                     crossing_state_map,
+                    tag,
                 )
 
         # return final continuous state and actual end time reached.
