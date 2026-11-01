@@ -1928,7 +1928,7 @@ class Block(ABC, Port):
             return Prod("**", inputs=[self, other], name=name, bd=self.bd)
 
     @oodebug
-    def __rmul__(self, other: Block | Plug | int | float | np.ndarray) -> Block | None:
+    def __rmul__(self, other: int | float | np.ndarray) -> Block | None:
         """
         Overloaded * operator for implicit block creation.
 
@@ -2004,6 +2004,7 @@ class Block(ABC, Port):
         name = "_prod.{:d}".format(next(self.bd.n_auto_prod))
         if isinstance(other, (int, float, np.ndarray)):
             # block / constant, create a GAIN block
+            inverse: np.ndarray | float
             if isinstance(other, np.ndarray):
                 inverse = np.linalg.inv(other)
             else:
@@ -2228,6 +2229,8 @@ class ContinuousBlock(Block):
     outputs and states. Typically used to describe a continuous-time dynamic
     system, either linear or nonlinear.
     """
+
+    _x0: np.ndarray
 
     def __init__(
         self,
@@ -2489,7 +2492,7 @@ def deprecated_block(new_name: str) -> Callable[[type], type]:
     """
 
     def decorator(cls: type) -> type:
-        orig_init = cls.__init__
+        orig_init = getattr(cls, "__init__")
 
         def __init__(self: Any, *args: Any, **kwargs: Any) -> None:
             warnings.warn(
@@ -2499,7 +2502,7 @@ def deprecated_block(new_name: str) -> Callable[[type], type]:
             )
             orig_init(self, *args, **kwargs)
 
-        cls.__init__ = __init__
+        setattr(cls, "__init__", __init__)
         return cls
 
     return decorator

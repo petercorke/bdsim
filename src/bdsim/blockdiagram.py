@@ -12,7 +12,7 @@ import sys
 from tempfile import _TemporaryFileWrapper
 import traceback
 import warnings
-from typing import TYPE_CHECKING, Any, Callable, NoReturn
+from typing import TYPE_CHECKING, Any, Callable, NoReturn, cast
 
 if TYPE_CHECKING:
     from typing import Self
@@ -546,7 +546,7 @@ class BlockDiagram(BlockDiagramMixin):
                     self.dstatenames.extend(b._state_names)
                 else:
                     # create default state names
-                    b._clock.statenames.extend(
+                    cast(Clock, b._clock).statenames.extend(
                         [(b.name or "") + ":X_" + str(i) for i in range(0, b.ndstates)]
                     )
 
@@ -819,8 +819,10 @@ class BlockDiagram(BlockDiagramMixin):
             if b.name is None:
                 raise RuntimeError("a block in a diagram is always named")
             # rename the block to include subsystem path
+            block_name = cast(str, b.name)
             if sspath:
-                b.name = sspath + "/" + b.name
+                block_name = sspath + "/" + block_name
+                b.name = block_name
 
             if not isinstance(b, SubsystemBlock):
                 # not a Subsystem block, just add the block to the list
@@ -834,7 +836,7 @@ class BlockDiagram(BlockDiagramMixin):
                 self.subsystems[b.name] = b
                 ssb, ssw = self._subsystem_import(
                     b.subsystem,  # reference to the BlockDiagram that describes the subsystem
-                    b.name,  # name of the subsystem block, becomes a prefix for all blocks within the subsystem
+                    block_name,  # name of the subsystem block, becomes a prefix for all blocks within the subsystem
                     depth=depth + 1,  # increase subsystem nesting depth
                     verbose=verbose,
                 )
@@ -1621,7 +1623,7 @@ class BlockDiagram(BlockDiagramMixin):
         )
 
         for sequence, group in enumerate(self.plan):
-            table.row(sequence, ", ".join([b.name for b in group]))
+            table.row(sequence, ", ".join(cast(str, b.name) for b in group))
 
         table.print(**kwargs)
 
@@ -2034,14 +2036,13 @@ class BlockDiagram(BlockDiagramMixin):
         """
 
         graph_format = format.lower()
+        node_ids: dict[Any, str] = {}
         if graph_format == "dot":
             stream: Any = io.StringIO()
             self.dotfile(stream, shapes=shapes)
             text = stream.getvalue()
         elif graph_format in ("mermaid", "mermaid_fenced"):
             lines = ["flowchart LR"]
-            node_ids: dict[Any, str] = {}
-
             for i, b in enumerate(self.blocklist):
                 node_id = f"b{i}"
                 node_ids[b] = node_id
@@ -2079,7 +2080,6 @@ class BlockDiagram(BlockDiagramMixin):
             if graph_format == "mermaid_fenced":
                 text = "```mermaid\n" + text + "```\n"
         elif graph_format == "graphml":
-            node_ids: dict[Any, str] = {}
 
             def _xml_escape(value: str) -> str:
                 return (
@@ -2138,7 +2138,6 @@ class BlockDiagram(BlockDiagramMixin):
             lines.extend(["  </graph>", "</graphml>"])
             text = "\n".join(lines) + "\n"
         elif graph_format == "elk":
-            node_ids: dict[Any, str] = {}
             port_ids: dict[tuple[Any, str, int], str] = {}
 
             children = []
