@@ -74,7 +74,7 @@ class Parameter:
         self,
         name: str,
         when: Literal["anytime", "setup", "never"] = "anytime",
-        validate: Callable[[Any], None] | None = None,
+        validate: Callable[[Any], Any] | None = None,
         coerce: bool = True,
         forward: tuple[Block, str] | None = None,
         unavailable: str | None = None,
@@ -143,7 +143,7 @@ def _coerce_parameter(block: Block, name: str, old: Any, new: Any) -> Any:
             raise TypeError(
                 f"{where} is a number ({Signature.of(old)}), not {Signature.of(new)}"
             )
-        return type(old + new)(new)  # widen, never narrow
+        return type(cast(Any, old) + new)(new)  # widen, never narrow
 
     if callable(old):
         if not callable(new):
@@ -550,7 +550,7 @@ class Block(ABC, Port):
         name: str,
         *,
         when: Literal["anytime", "setup", "never"] = "anytime",
-        validate: Callable[[Any], None] | None = None,
+        validate: Callable[[Any], Any] | None = None,
         coerce: bool = True,
         forward: tuple[Block, str] | None = None,
         unavailable: str | None = None,

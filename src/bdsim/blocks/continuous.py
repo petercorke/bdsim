@@ -548,8 +548,8 @@ def _old_tf_names(num: Any, den: Any, blockargs: dict[str, Any]) -> tuple[Any, A
     keywords still work, with a ``DeprecationWarning``, and are not in the signature
     so that they are not offered as parameters.
     """
-    defaults = {"num": 1, "den": [1, 1]}
-    given = {"num": num, "den": den}
+    defaults: dict[str, Any] = {"num": 1, "den": [1, 1]}
+    given: dict[str, Any] = {"num": num, "den": den}
     for old, new in (("N", "num"), ("D", "den")):
         if old in blockargs:
             if not np.array_equal(given[new], defaults[new]):

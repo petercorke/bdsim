@@ -816,6 +816,7 @@ class BlockDiagram(BlockDiagramMixin):
         wires = bd.wirelist  # start with wires in the current diagram
 
         for b in bd.blocklist:
+            assert b.name is not None, "a block in a diagram is always named"
             # rename the block to include subsystem path
             if sspath:
                 b.name = sspath + "/" + b.name
@@ -1473,7 +1474,7 @@ class BlockDiagram(BlockDiagramMixin):
             start: str = "{}[{}]".format(wire.start.block.id, wire.start.port)
             end: str = "{}[{}]".format(wire.end.block.id, wire.end.port)
 
-            typ = _signature_str(wire.end.block.insig[wire.end.port])  # type: ignore[index]
+            typ = _signature_str(wire.end.block.insig[wire.end.port])  # type: ignore[index, arg-type]
             table.row(wire.id, start, end, wire.fullname, typ)
         table.print(**kwargs)
 
