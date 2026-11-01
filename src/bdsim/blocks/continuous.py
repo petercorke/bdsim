@@ -269,6 +269,13 @@ class Integrator(CrossingMixin, ContinuousBlock):
 
         return detector
 
+    @staticmethod
+    def _limit(limits: np.ndarray | None, i: int) -> float:
+        """Limit of element ``i``; a detector only fires for a limit that exists."""
+        if limits is None:
+            raise RuntimeError("a limit crossing fired for a limit that is not set")
+        return float(limits[i])
+
     def crossing_event(
         self,
         tag: Any,
@@ -286,12 +293,10 @@ class Integrator(CrossingMixin, ContinuousBlock):
         elif kind == "enable":
             self._enabled = True
         elif kind == "upper":
-            assert self.max is not None
-            x[i] = self.max[i]
+            x[i] = self._limit(self.max, i)
             self._mode[i] = self._UPPER
         elif kind == "lower":
-            assert self.min is not None
-            x[i] = self.min[i]
+            x[i] = self._limit(self.min, i)
             self._mode[i] = self._LOWER
         else:
             self._mode[i] = self._FREE
