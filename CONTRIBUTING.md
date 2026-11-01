@@ -35,6 +35,7 @@ Several people (and AI coding agents) often pick up the same issue at about the 
   ```
 
   `pip install -e '.[dev]'` installs the pinned ruff version. Please don't reformat code you are not otherwise changing.
+- Code must work on every Python version bdsim supports, which are the `Programming Language :: Python :: 3.x` classifiers (and `requires-python`) in `pyproject.toml`. CI runs the test suite on all of them, on Linux, macOS and Windows. Check the oldest one before using a newer standard-library feature or syntax, since a feature added in a later release passes locally and fails there.
 - New or changed code should be type-hinted using modern syntax (`X | Y`, `X | None`, `list[X]`, `dict[K, V]` — not `Union`, `Optional`, `List`, `Dict`).
 - Docstrings use reST style (`:param:`, `:returns:`). Type hints in the function signature already cover types, so `:type:`/`:rtype:` are rarely needed.
 - Any code change should be covered by tests and must not break existing ones. Tests live in `tests/`. Install the dev dependencies with `pip install -e '.[dev]'` (add `,docs` too if you're touching documentation), then run:
