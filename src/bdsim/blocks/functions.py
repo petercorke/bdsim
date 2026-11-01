@@ -520,7 +520,7 @@ class Sqrt(FunctionBlock):
 # ------------------------------------------------------------------------ #
 
 
-class Sign(FunctionBlock):
+class Sign(CrossingMixin, FunctionBlock):
     r"""
     :blockname:`SIGN`
 
@@ -568,6 +568,10 @@ class Sign(FunctionBlock):
         """
         super().__init__(**blockargs)
 
+    def start(self, simstate: Any) -> None:
+        # the output jumps at zero: restart the solver there
+        self.declare_thresholds(simstate, [(i, 0.0) for i in range(self.signal_size())])
+
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         input = inputs[0]
 
@@ -578,7 +582,7 @@ class Sign(FunctionBlock):
 # ------------------------------------------------------------------------ #
 
 
-class Abs(FunctionBlock):
+class Abs(CrossingMixin, FunctionBlock):
     r"""
     :blockname:`ABS`
 
@@ -624,6 +628,10 @@ class Abs(FunctionBlock):
 
         """
         super().__init__(**blockargs)
+
+    def start(self, simstate: Any) -> None:
+        # the output has a corner at zero: restart the solver there
+        self.declare_thresholds(simstate, [(i, 0.0) for i in range(self.signal_size())])
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         input = inputs[0]
@@ -723,7 +731,7 @@ class Clip(CrossingMixin, FunctionBlock):
 # ------------------------------------------------------------------------ #
 
 
-class Deadband(FunctionBlock):
+class Deadband(CrossingMixin, FunctionBlock):
     r"""
     :blockname:`DEADBAND`
 
@@ -825,6 +833,15 @@ class Deadband(FunctionBlock):
     def upper(self) -> float:
         """Upper edge of the band."""
         return self._band(self.d)[1]
+
+    def start(self, simstate: Any) -> None:
+        # the output has a corner at each edge of the band: restart the solver there
+        lower, upper = self._band(self.d)
+        self.declare_thresholds(
+            simstate,
+            [(i, lower) for i in range(self.signal_size())]
+            + [(i, upper) for i in range(self.signal_size())],
+        )
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         input = inputs[0]
