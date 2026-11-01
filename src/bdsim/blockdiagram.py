@@ -816,7 +816,8 @@ class BlockDiagram(BlockDiagramMixin):
         wires = bd.wirelist  # start with wires in the current diagram
 
         for b in bd.blocklist:
-            assert b.name is not None, "a block in a diagram is always named"
+            if b.name is None:
+                raise RuntimeError("a block in a diagram is always named")
             # rename the block to include subsystem path
             if sspath:
                 b.name = sspath + "/" + b.name
