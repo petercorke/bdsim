@@ -3051,9 +3051,9 @@ def _parse_param_text(text: str, current: Any) -> Any:
             return literal
 
     if isinstance(current, numbers.Number):
-        for convert in (int, float, complex):
+        for convert_number in (int, float, complex):
             try:
-                return convert(text)
+                return convert_number(text)
             except ValueError:
                 pass
         raise ValueError("expected a number")
