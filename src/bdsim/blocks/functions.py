@@ -374,7 +374,7 @@ class Gain(FunctionBlock):
 
 
 class Pow(FunctionBlock):
-    """
+    r"""
     :blockname:`POW`
 
     Power block.
@@ -444,9 +444,9 @@ class Pow(FunctionBlock):
             # input is an array
             if self.matrix:
                 # matrixwise exponentiation
-                if isinstance(self.p, int):
+                if float(self.p).is_integer():
                     # integer case
-                    return [np.linalg.matrix_power(input, self.p)]
+                    return [np.linalg.matrix_power(input, int(self.p))]
                 else:
                     # general fractional case
                     return [linalg.fractional_matrix_power(input, self.p)]
@@ -455,6 +455,181 @@ class Pow(FunctionBlock):
                 return [input**self.p]
         else:
             return [input**self.p]
+
+
+# ------------------------------------------------------------------------ #
+
+
+class Sqrt(FunctionBlock):
+    r"""
+    :blockname:`SQRT`
+
+    Square root block.
+
+    :inputs: 1
+    :outputs: 1
+    :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Port type
+          - Port number
+          - Types
+          - Description
+        * - Input
+          - 0
+          - int, float, ndarray
+          - :math:`x`
+        * - Output
+          - 0
+          - int, float, ndarray
+          - :math:`\operatorname{sgn}(x)\sqrt{|x|}`
+
+    The block computes the signed square root of the input, which is defined for
+    negative inputs: it returns the negative of the square root of the absolute
+    value.  If the input is a Numpy array, this operation is performed elementwise.
+
+    For example::
+
+        sqrt = bd.SQRT()
+
+    Useful for square-root controller.
+
+    :seealso: :class:`Pow`
+    """
+
+    nin = 1
+    nout = 1
+
+    def __init__(self, **blockargs: Any) -> None:
+        """
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        :type blockargs: dict
+
+        """
+        super().__init__(**blockargs)
+
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
+        input = inputs[0]
+
+        # works for scalars and, elementwise, for arrays
+        return [np.sign(input) * np.sqrt(np.abs(input))]
+
+
+# ------------------------------------------------------------------------ #
+
+
+class Sign(FunctionBlock):
+    r"""
+    :blockname:`SIGN`
+
+    Sign block.
+
+    :inputs: 1
+    :outputs: 1
+    :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Port type
+          - Port number
+          - Types
+          - Description
+        * - Input
+          - 0
+          - int, float, ndarray
+          - :math:`x`
+        * - Output
+          - 0
+          - int, float, ndarray
+          - :math:`\operatorname{sgn}(x)`
+
+    The output is -1, 0 or +1 according to whether the input is negative, zero
+    or positive.  If the input is a Numpy array, this operation is performed
+    elementwise.
+
+    For example::
+
+        sign = bd.SIGN()
+
+    :seealso: :class:`Sqrt`
+    """
+
+    nin = 1
+    nout = 1
+
+    def __init__(self, **blockargs: Any) -> None:
+        """
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        :type blockargs: dict
+
+        """
+        super().__init__(**blockargs)
+
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
+        input = inputs[0]
+
+        # works for scalars and, elementwise, for arrays
+        return [np.sign(input)]
+
+
+# ------------------------------------------------------------------------ #
+
+
+class Abs(FunctionBlock):
+    r"""
+    :blockname:`ABS`
+
+    Absolute value block.
+
+    :inputs: 1
+    :outputs: 1
+    :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Port type
+          - Port number
+          - Types
+          - Description
+        * - Input
+          - 0
+          - int, float, ndarray
+          - :math:`x`
+        * - Output
+          - 0
+          - int, float, ndarray
+          - :math:`|x|`
+
+    The output is the absolute value of the input.  If the input is a Numpy
+    array, this operation is performed elementwise.
+
+    For example::
+
+        absval = bd.ABS()
+
+    :seealso: :class:`Sign`
+    """
+
+    nin = 1
+    nout = 1
+
+    def __init__(self, **blockargs: Any) -> None:
+        """
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        :type blockargs: dict
+
+        """
+        super().__init__(**blockargs)
+
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
+        input = inputs[0]
+
+        # works for scalars and, elementwise, for arrays
+        return [np.abs(input)]
 
 
 # ------------------------------------------------------------------------ #
@@ -542,6 +717,128 @@ class Clip(CrossingMixin, FunctionBlock):
             out = np.clip(input, self.min, self.max)
         else:
             out = min(self.max, max(input, self.min))  # type: ignore[arg-type]
+        return [out]
+
+
+# ------------------------------------------------------------------------ #
+
+
+class Deadband(FunctionBlock):
+    r"""
+    :blockname:`DEADBAND`
+
+    Dead band (dead zone).
+
+    :inputs: 1
+    :outputs: 1
+    :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - int, float, ndarray
+            - :math:`x`
+        *   - Output
+            - 0
+            - int, float, ndarray
+            - :math:`y`
+
+    The output is zero while the input is within the band from :math:`a` to
+    :math:`b` inclusive.  Outside the band the output is the distance of the
+    input from the nearest edge of the band, so the output is continuous:
+
+    .. math::
+
+        y = \begin{cases}
+            x - b & x > b \\
+            0 & a \le x \le b \\
+            x - a & x < a
+        \end{cases}
+
+    The band is specified by ``d`` which can be:
+
+        - a scalar, in which case the band is :math:`-d` to :math:`+d`, or
+        - a 2-element array_like, the lower and upper edges of the band
+          :math:`(a, b)`.
+
+    If the input is a Numpy array the same band is applied to every element.
+
+    For example::
+
+        deadband = bd.DEADBAND(0.1)         # band is -0.1 to 0.1
+        deadband = bd.DEADBAND([-0.1, 0.3]) # band is -0.1 to 0.3
+
+    :seealso: :class:`Clip`
+    """
+
+    nin = 1
+    nout = 1
+
+    def __init__(self, d: float | ArrayLike = 1, **blockargs: Any) -> None:
+        """
+        :param d: Half-width of a symmetric band, or the lower and upper edges
+            of the band, defaults to 1
+        :type d: float or array_like(2)
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        :type blockargs: dict
+        :raises ValueError: ``d`` is not a scalar or 2-element array_like, or
+            the band is empty (lower edge above upper edge)
+        """
+        super().__init__(**blockargs)
+
+        self._band(d)  # raises ValueError for a bad band
+        self.d = d
+        self.add_param("d", coerce=False, validate=self._check_d)
+
+    def _check_d(self, d: float | ArrayLike) -> None:
+        self._band(d)  # a validator must return None: a value would replace d
+
+    @staticmethod
+    def _band(d: float | ArrayLike) -> tuple[float, float]:
+        """The lower and upper edges of the band described by ``d``."""
+        arr = np.asarray(d, dtype=float)
+        if arr.ndim == 0:
+            if arr < 0:
+                raise ValueError("scalar deadband d must be non-negative")
+            return -float(arr), float(arr)
+        if arr.shape == (2,):
+            lower, upper = float(arr[0]), float(arr[1])
+            if lower > upper:
+                raise ValueError(
+                    f"deadband lower edge {lower} must not exceed upper edge {upper}"
+                )
+            return lower, upper
+        raise ValueError("d must be a scalar or a 2-element array_like")
+
+    @property
+    def lower(self) -> float:
+        """Lower edge of the band."""
+        return self._band(self.d)[0]
+
+    @property
+    def upper(self) -> float:
+        """Upper edge of the band."""
+        return self._band(self.d)[1]
+
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
+        input = inputs[0]
+
+        lower, upper = self._band(self.d)
+
+        # np.where handles scalars and, elementwise, arrays
+        out = np.where(
+            input > upper,
+            input - upper,
+            np.where(input < lower, input - lower, 0.0),
+        )
+        if np.ndim(input) == 0:
+            out = out.item()
         return [out]
 
 
