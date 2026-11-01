@@ -244,32 +244,36 @@ class ClipEventsTestCase(unittest.TestCase):
     def setUpClass(cls):
         cls.sim = bdsim.BDSim(graphics=None, progress=False, banner=False, quiet=True)
 
-    def integrate_clipped(self, source, T, x0=0, solver_args=SOLVER, **clip):
+    def integrate_clipped(
+        self, source, T, x0=0, solver_args=SOLVER, block="CLIP", dt=None, **kwargs
+    ):
         """``source -> CLIP -> INTEGRATOR``, returning the run and the final integral."""
         bd = self.sim.blockdiagram()
-        c = bd.CLIP(**clip)
+        c = getattr(bd, block)(**kwargs)
         i = bd.INTEGRATOR(x0=x0)
         bd.connect(source(bd), c)
         bd.connect(c, i)
         bd.compile(verbose=False)
-        out = self.sim.run(bd, T=T, solver_args=solver_args)
+        out = self.sim.run(bd, T=T, dt=dt, solver_args=solver_args)
         return out, np.asarray(out.x).reshape(len(out.t), -1)[-1]
 
-    def test_restarting_at_the_corner_is_more_accurate(self):
-        # the integral of min(t, 1) over [0, 3] is 0.5 + 2.  A step that straddles the
-        # corner is wrong by an amount set by the tolerance; restarted at the corner
-        # both sides are straight lines.  The state at the crossing still comes from
-        # the solver's interpolation, so the result is better, not exact.
+    def test_state_at_the_corner_is_accurate_at_loose_tolerance(self):
+        # the integral of min(t, 1) over [0, 3] is 0.5 + 2.  The solver takes the
+        # state at a crossing from the interpolant of the step that contained it, and
+        # a step that straddled the corner is wrong by an amount set by the
+        # tolerance.  The state is recomputed up to the crossing, so it is
+        # accurate however loose the tolerance.
         loose = dict(rtol=1e-3, atol=1e-6, max_step=10.0)
         out, x = self.integrate_clipped(
             lambda bd: bd.TIME(), 3.0, solver_args=loose, max=1.0
         )
         self.assertEqual(out.stats.events_detected_total, 1)
+        self.assertAlmostEqual(x[0], 2.5, delta=1e-8)
         with mock.patch.object(CrossingMixin, "declare_thresholds"):
             _, x_without = self.integrate_clipped(
                 lambda bd: bd.TIME(), 3.0, solver_args=loose, max=1.0
             )
-        self.assertLess(abs(x[0] - 2.5), abs(x_without[0] - 2.5) / 3)
+        self.assertGreater(abs(x_without[0] - 2.5), 1e-3)  # what it protects against
 
     def test_both_limits(self):
         # clip(t - 1, -0.5, 0.5) over [0, 3]
@@ -319,6 +323,89 @@ class ClipEventsTestCase(unittest.TestCase):
         # the sink integrates 0.25 + (3 - 0.5) = 2.75
         self.assertAlmostEqual(np.asarray(out.x)[-1, -1], 2.75, delta=1e-7)
         self.assertLess(out.stats.events_detected_total, 8)
+
+
+class CornerBlockEventsTestCase(ClipEventsTestCase):
+    """DEADBAND and ABS have corners, SIGN a jump: the solver restarts at each."""
+
+    LOOSE = dict(rtol=1e-3, atol=1e-6, max_step=10.0)
+
+    @staticmethod
+    def shifted(bd):
+        """The signal t - 1, which crosses zero at t = 1."""
+        f = bd.FUNCTION(lambda t: t - 1.0)
+        bd.connect(bd.TIME(), f)
+        return f
+
+    def check_better_with_events(self, expected, block, T=3.0, **kwargs):
+        out, x = self.integrate_clipped(
+            self.shifted, T, solver_args=self.LOOSE, block=block, **kwargs
+        )
+        with mock.patch.object(CrossingMixin, "declare_thresholds"):
+            _, x_without = self.integrate_clipped(
+                self.shifted, T, solver_args=self.LOOSE, block=block, **kwargs
+            )
+        self.assertLess(abs(x[0] - expected), 1e-8)
+        self.assertGreater(abs(x_without[0] - expected), 1e-4)
+        return out
+
+    def test_samples_inside_the_straddling_step_are_corrected(self):
+        # on a fixed output grid, samples that fall inside the step that contained the
+        # corner come from its interpolant too, and are recomputed with the state
+        out, _ = self.integrate_clipped(
+            self.shifted,
+            3.0,
+            solver_args=self.LOOSE,
+            block="ABS",
+            dt=0.05,
+        )
+        t = out.t
+        x = np.asarray(out.x).reshape(len(t), -1)[:, 0]
+        exact = np.where(t < 1, t - t**2 / 2, 0.5 + (t - 1) ** 2 / 2)
+        nt.assert_allclose(x, exact, atol=1e-8)
+
+    def test_abs_corner_at_zero(self):
+        # integral of |t - 1| over [0, 3] is 0.5 + 2
+        out = self.check_better_with_events(2.5, "ABS")
+        self.assertEqual(out.stats.events_detected_total, 1)
+
+    def test_sign_jump_at_zero(self):
+        # integral of sign(t - 1) over [0, 3] is -1 + 2
+        out = self.check_better_with_events(1.0, "SIGN")
+        self.assertEqual(out.stats.events_detected_total, 1)
+
+    def test_deadband_corner_at_each_edge(self):
+        # deadband(t - 1, 0.5) over [0, 3]: -0.125 on [0, 0.5], 0 until 1.5, then
+        # 1.125 on [1.5, 3]
+        out = self.check_better_with_events(1.0, "DEADBAND", d=0.5)
+        self.assertEqual(out.stats.events_detected_total, 2)
+
+    def test_deadband_with_asymmetric_edges(self):
+        out, x = self.integrate_clipped(
+            self.shifted, 3.0, block="DEADBAND", d=[-0.25, 0.5]
+        )
+        self.assertEqual(out.stats.events_detected_total, 2)
+        # -0.5*0.75^2/2... integral of (t-1+0.25) on [0, 0.75] is -0.28125; zero until
+        # 1.5; then 1.125
+        self.assertAlmostEqual(x[0], -0.28125 + 1.125, delta=1e-7)
+
+    def test_signal_sitting_on_zero_does_not_chatter(self):
+        for block in ("ABS", "SIGN"):
+            out, x = self.integrate_clipped(
+                lambda bd: bd.CONSTANT(0.0), 2.0, block=block
+            )
+            self.assertEqual(out.stats.events_detected_total, 0, block)
+
+    def test_vector_input(self):
+        def source(bd):
+            f = bd.FUNCTION(lambda t: np.array([t - 1.0, t - 2.0]))
+            bd.connect(bd.TIME(), f)
+            return f
+
+        out, x = self.integrate_clipped(source, 3.0, x0=[0, 0], block="ABS")
+        self.assertEqual(out.stats.events_detected_total, 2)
+        self.assertAlmostEqual(x[0], 2.5, delta=1e-7)  # |t-1| over [0, 3]
+        self.assertAlmostEqual(x[1], 2.5, delta=1e-7)  # |t-2| over [0, 3]
 
 
 if __name__ == "__main__":
