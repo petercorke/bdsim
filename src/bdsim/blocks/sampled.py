@@ -95,6 +95,168 @@ class ZOH(SampledBlock):
 # ------------------------------------------------------------------------ #
 
 
+class Hysteresis_S(SampledBlock):
+    r"""
+    :blockname:`HYSTERESIS_S`
+
+    Discrete-time hysteresis (relay with memory, Schmitt trigger).
+
+    :inputs: 1
+    :outputs: 1
+    :states: N
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - float, ndarray
+            - :math:`u`
+        *   - Output
+            - 0
+            - float, ndarray
+            - :math:`y`
+
+    The state is the output, which switches between two levels.  It switches on
+    when the input reaches ``switch_on`` and off when the input falls to
+    ``switch_off``.  Between the two it keeps its value, which is the memory:
+
+    .. math::
+
+        y_{k+1} = \begin{cases}
+            y_\mathrm{on} & u_k \ge u_\mathrm{on} \\
+            y_\mathrm{off} & u_k \le u_\mathrm{off} \\
+            y_k & \text{otherwise}
+        \end{cases}
+
+    The input is sampled at each tick of the clock and the output is constant between
+    ticks, as for :class:`ZOH`: the output from tick :math:`k` until the next is decided
+    by the input at tick :math:`k`.  Until the first tick after the start of the run the
+    output is ``x0``.  A logged value at a tick instant is the value held *before* that
+    tick's update.
+
+    The state can be a scalar or a vector, given by the shape of ``x0`` and of the
+    parameters.  The switching points and output levels can each be:
+
+        - a scalar, in which case the same value applies to every element, or
+        - a vector, of the same shape as the state, that applies elementwise.
+
+    .. note:: The switching points must satisfy ``switch_off <= switch_on``.  If they
+        are equal the block is an ideal relay with no hysteresis, and the input exactly at
+        the switching point switches on.
+
+    For example, a Schmitt trigger that turns on above 0.6 and off below 0.4::
+
+        clock = bd.clock(0.01)
+        trigger = bd.HYSTERESIS_S(clock, switch_on=0.6, switch_off=0.4)
+
+    :seealso: :class:`ZOH`
+    """
+
+    nin = 1
+    nout = 1
+
+    def __init__(
+        self,
+        clock: Clock,
+        switch_on: Vector1D = 0.5,
+        switch_off: Vector1D = -0.5,
+        output_on: Vector1D = 1.0,
+        output_off: Vector1D = 0.0,
+        x0: Vector1D | None = None,
+        **blockargs: Any,
+    ) -> None:
+        r"""
+        :param clock: clock source
+        :type clock: Clock
+        :param switch_on: input at or above which the output switches on, defaults to 0.5
+        :type switch_on: float or array_like, optional
+        :param switch_off: input at or below which the output switches off, defaults to -0.5
+        :type switch_off: float or array_like, optional
+        :param output_on: output level when on, defaults to 1
+        :type output_on: float or array_like, optional
+        :param output_off: output level when off, defaults to 0
+        :type output_off: float or array_like, optional
+        :param x0: initial output, which must be ``output_on`` or ``output_off``,
+            defaults to ``output_off``
+        :type x0: float or array_like, optional
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        :type blockargs: dict
+        :raises ValueError: ``switch_off`` is above ``switch_on``, the two output levels
+            are equal, or ``x0`` is not one of them
+        """
+        parts = [switch_on, switch_off, output_on, output_off]
+        if x0 is not None:
+            parts.append(x0)
+        shape = np.broadcast_shapes(*[np.shape(p) for p in parts])
+        initial = output_off if x0 is None else x0
+        initial = np.array(np.broadcast_to(initial, shape), dtype=float).reshape(-1)
+
+        super().__init__(clock=clock, nin=1, nout=1, x0=initial, **blockargs)
+
+        self.switch_on = switch_on
+        self.switch_off = switch_off
+        self.output_on = output_on
+        self.output_off = output_off
+        self._check_levels(output_on, output_off, initial)
+        self._check_switch(switch_on, switch_off)
+
+        self.add_param("clock", when="never")
+        self.add_param("switch_on", coerce=False, validate=self._check_switch_on)
+        self.add_param("switch_off", coerce=False, validate=self._check_switch_off)
+        self.add_param("output_on", coerce=False, validate=self._check_output_on)
+        self.add_param("output_off", coerce=False, validate=self._check_output_off)
+        self.add_param("x0", when="setup")
+
+    @staticmethod
+    def _check_switch(switch_on: Any, switch_off: Any) -> None:
+        if np.any(np.asarray(switch_off) > np.asarray(switch_on)):
+            raise ValueError("switch_off must not be above switch_on")
+
+    @staticmethod
+    def _check_levels(output_on: Any, output_off: Any, x: Any) -> None:
+        on, off = np.asarray(output_on), np.asarray(output_off)
+        if np.any(on == off):
+            raise ValueError("output_on and output_off must differ")
+        x = np.asarray(x)
+        if not np.all((x == on) | (x == off)):
+            raise ValueError("x0 must be output_on or output_off")
+
+    def _check_switch_on(self, value: Any) -> None:
+        self._check_switch(value, self.switch_off)
+
+    def _check_switch_off(self, value: Any) -> None:
+        self._check_switch(self.switch_on, value)
+
+    def _check_output_on(self, value: Any) -> None:
+        self._check_levels(value, self.output_off, self._x0)
+
+    def _check_output_off(self, value: Any) -> None:
+        self._check_levels(self.output_on, value, self._x0)
+
+    def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
+        if x.size == 1:
+            return [x.item()]
+        return [x]
+
+    def next(self, t: float, inputs: list[Any], x: np.ndarray) -> np.ndarray:
+        u = np.broadcast_to(np.asarray(inputs[0], dtype=float), x.shape)
+        on = np.broadcast_to(np.asarray(self.output_on, dtype=float), x.shape)
+        off = np.broadcast_to(np.asarray(self.output_off, dtype=float), x.shape)
+
+        is_on = np.where(
+            u >= self.switch_on, True, np.where(u <= self.switch_off, False, x == on)
+        )
+        return np.where(is_on, on, off).astype(float)
+
+
+# ------------------------------------------------------------------------ #
+
+
 def _check_enable(value: Any) -> None:
     """Validator for ``enable``, a function or ``None``."""
     if value is not None and not callable(value):
