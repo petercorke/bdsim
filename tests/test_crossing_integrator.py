@@ -244,7 +244,7 @@ class ClipEventsTestCase(unittest.TestCase):
     def setUpClass(cls):
         cls.sim = bdsim.BDSim(graphics=None, progress=False, banner=False, quiet=True)
 
-    def integrate_clipped(self, source, T, x0=0, solver_args=SOLVER, **clip):
+    def integrate_clipped(self, source, T, x0=0, solver_args=None, **clip):
         """``source -> CLIP -> INTEGRATOR``, returning the run and the final integral."""
         bd = self.sim.blockdiagram()
         c = bd.CLIP(**clip)
@@ -252,7 +252,7 @@ class ClipEventsTestCase(unittest.TestCase):
         bd.connect(source(bd), c)
         bd.connect(c, i)
         bd.compile(verbose=False)
-        out = self.sim.run(bd, T=T, solver_args=solver_args)
+        out = self.sim.run(bd, T=T, solver_args=solver_args or SOLVER)
         return out, np.asarray(out.x).reshape(len(out.t), -1)[-1]
 
     def test_restarting_at_the_corner_is_more_accurate(self):
