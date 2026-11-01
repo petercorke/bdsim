@@ -6,11 +6,13 @@ derivative reverses, rather than clipping the state.  Each case has an exact ans
 """
 
 import unittest
+from unittest import mock
 
 import numpy as np
 import numpy.testing as nt
 
 import bdsim
+from bdsim.crossing import CrossingMixin
 
 SOLVER = dict(rtol=1e-10, atol=1e-12)
 
@@ -233,6 +235,90 @@ class IntegratorEnableTestCase(unittest.TestCase):
         a = self.sim.run(bd, T=2.0, solver_args=SOLVER)
         b = self.sim.run(bd, T=2.0, solver_args=SOLVER)
         nt.assert_array_equal(a.x, b.x)
+
+
+class ClipEventsTestCase(unittest.TestCase):
+    """CLIP has a corner at each limit: the solver is restarted exactly there."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.sim = bdsim.BDSim(graphics=None, progress=False, banner=False, quiet=True)
+
+    def integrate_clipped(self, source, T, x0=0, solver_args=SOLVER, **clip):
+        """``source -> CLIP -> INTEGRATOR``, returning the run and the final integral."""
+        bd = self.sim.blockdiagram()
+        c = bd.CLIP(**clip)
+        i = bd.INTEGRATOR(x0=x0)
+        bd.connect(source(bd), c)
+        bd.connect(c, i)
+        bd.compile(verbose=False)
+        out = self.sim.run(bd, T=T, solver_args=solver_args)
+        return out, np.asarray(out.x).reshape(len(out.t), -1)[-1]
+
+    def test_restarting_at_the_corner_is_more_accurate(self):
+        # the integral of min(t, 1) over [0, 3] is 0.5 + 2.  A step that straddles the
+        # corner is wrong by an amount set by the tolerance; restarted at the corner
+        # both sides are straight lines.  The state at the crossing still comes from
+        # the solver's interpolation, so the result is better, not exact.
+        loose = dict(rtol=1e-3, atol=1e-6, max_step=10.0)
+        out, x = self.integrate_clipped(
+            lambda bd: bd.TIME(), 3.0, solver_args=loose, max=1.0
+        )
+        self.assertEqual(out.stats.events_detected_total, 1)
+        with mock.patch.object(CrossingMixin, "declare_thresholds"):
+            _, x_without = self.integrate_clipped(
+                lambda bd: bd.TIME(), 3.0, solver_args=loose, max=1.0
+            )
+        self.assertLess(abs(x[0] - 2.5), abs(x_without[0] - 2.5) / 3)
+
+    def test_both_limits(self):
+        # clip(t - 1, -0.5, 0.5) over [0, 3]
+        def source(bd):
+            f = bd.FUNCTION(lambda t: t - 1.0)
+            bd.connect(bd.TIME(), f)
+            return f
+
+        out, x = self.integrate_clipped(source, 3.0, min=-0.5, max=0.5)
+        # -0.5 on [0, 0.5], ramp -0.5..0.5 on [0.5, 1.5] (integral 0), 0.5 on [1.5, 3]
+        self.assertAlmostEqual(x[0], -0.25 + 0.0 + 0.75, delta=1e-7)
+        self.assertEqual(out.stats.events_detected_total, 2)
+
+    def test_no_events_without_finite_limits(self):
+        out, x = self.integrate_clipped(lambda bd: bd.TIME(), 2.0)
+        self.assertEqual(out.stats.events_detected_total, 0)
+
+    def test_vector_with_elementwise_limits(self):
+        def source(bd):
+            f = bd.FUNCTION(lambda t: np.array([t, t]))
+            bd.connect(bd.TIME(), f)
+            return f
+
+        out, x = self.integrate_clipped(source, 3.0, x0=[0, 0], max=[1.0, 2.0])
+        self.assertAlmostEqual(x[0], 2.5, delta=1e-7)  # 0.5 + 2
+        self.assertAlmostEqual(x[1], 4.0, delta=1e-7)  # 2 + 2
+        self.assertEqual(out.stats.events_detected_total, 2)
+
+    def test_signal_sitting_on_the_limit_does_not_chatter(self):
+        # a constant exactly at the limit must not be reported as a crossing at
+        # every restart
+        out, x = self.integrate_clipped(lambda bd: bd.CONSTANT(1.0), 2.0, max=1.0)
+        self.assertEqual(out.stats.events_detected_total, 0)
+        self.assertAlmostEqual(x[0], 2.0, delta=1e-7)
+
+    def test_integrator_held_at_a_limit_feeding_a_clip_with_the_same_limit(self):
+        bd = self.sim.blockdiagram()
+        held = bd.INTEGRATOR(max=1.0)
+        c = bd.CLIP(max=1.0)
+        sink = bd.INTEGRATOR()
+        bd.connect(bd.CONSTANT(2.0), held)
+        bd.connect(held, c)
+        bd.connect(c, sink)
+        bd.compile(verbose=False)
+        out = self.sim.run(bd, T=3.0, solver_args=SOLVER)
+        # held reaches 1 at t = 0.5 and stays: the clip output is 1 from there, so
+        # the sink integrates 0.25 + (3 - 0.5) = 2.75
+        self.assertAlmostEqual(np.asarray(out.x)[-1, -1], 2.75, delta=1e-7)
+        self.assertLess(out.stats.events_detected_total, 8)
 
 
 if __name__ == "__main__":

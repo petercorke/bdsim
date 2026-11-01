@@ -10,9 +10,14 @@ so that a block only supplies the scalar function and the response.
 
 from __future__ import annotations
 
-from typing import Any, Callable
+from typing import Any, Callable, Sequence
 
 import numpy as np
+
+# A signal exactly on a threshold counts as being above it.  Otherwise a signal that
+# dwells on a threshold, such as an integrator held at a limit feeding a CLIP with
+# the same limit, would read as a crossing at every restart.
+_ABOVE = 1e-300
 
 
 class CrossingMixin:
@@ -74,7 +79,8 @@ class CrossingMixin:
             simstate.count += 1
             # one shared propagation per probe point, however many detectors
             simstate.ensure_event_probe_evaluated(self.bd, t, y)  # type: ignore[attr-defined]
-            x = self.bd._state_map[self]  # type: ignore[attr-defined]
+            # stateless blocks have no entry in the state map
+            x = self.bd._state_map.get(self, np.empty(0))  # type: ignore[attr-defined]
             return float(
                 func(
                     x,
@@ -87,6 +93,63 @@ class CrossingMixin:
         detector.direction = float(direction)  # type: ignore[attr-defined]
         detector.tag = tag  # type: ignore[attr-defined]
         simstate.declare_crossing_event(detector, self)
+
+    def signal_size(self, port: int = 0) -> int:
+        """
+        Number of elements in the signal on an input port.
+
+        :param port: input port index, defaults to 0
+        :return: 1 for a scalar, the size of an array otherwise; 1 if the diagram
+            has not been compiled with evaluation, so the signal is unknown
+        """
+        sig = self.insig[port]  # type: ignore[attr-defined]
+        if sig is None or sig.shape is None:
+            return 1
+        return int(np.prod(sig.shape))
+
+    def declare_thresholds(
+        self,
+        simstate: Any,
+        thresholds: Sequence[tuple[int, float]],
+        port: int = 0,
+    ) -> None:
+        """
+        Break the solver step wherever an input signal crosses a threshold.
+
+        :param simstate: the run's simulation state, as passed to ``start``
+        :param thresholds: ``(element, value)`` pairs; infinite values are skipped
+        :param port: input port whose signal is watched, defaults to 0
+
+        For a stateless block whose output is continuous but whose slope jumps
+        (CLIP, DEADBAND, ABS) or whose output jumps (SIGN) at a threshold.  Nothing
+        changes at the crossing: the point is that the solver restarts exactly
+        there, so no step straddles the corner.  Crossings in either direction
+        are found, and a signal exactly on a threshold counts as above it.
+
+        Several thresholds crossed at the same instant are harmless: the restart
+        is just beyond the earliest, and the others lie within that gap.
+        """
+        if not hasattr(simstate, "declare_crossing_event"):
+            return  # a refinement only: runtimes without detectors lose accuracy, not correctness
+        for element, value in thresholds:
+            if not np.isfinite(value):
+                continue
+            self.declare_crossing(
+                simstate,
+                self._threshold_detector(element, float(value), port),
+                0,
+                ("threshold", element, float(value)),
+            )
+
+    @staticmethod
+    def _threshold_detector(
+        element: int, value: float, port: int
+    ) -> Callable[[np.ndarray, list[Any], bool], float]:
+        def detector(x: np.ndarray, u: list[Any], at_start: bool) -> float:
+            g = float(np.atleast_1d(u[port])[element]) - value
+            return g if g != 0.0 else _ABOVE
+
+        return detector
 
     def crossing_event(
         self,
@@ -107,7 +170,12 @@ class CrossingMixin:
         :param simstate: the run's simulation state
 
         The solver restarts from the state map after this returns.
+
+        The default does nothing for the threshold crossings declared by
+        :meth:`declare_thresholds` and raises for anything else.
         """
+        if isinstance(tag, tuple) and tag and tag[0] == "threshold":
+            return
         raise NotImplementedError(
             f"{type(self).__name__} declares crossings but does not implement crossing_event"
         )
