@@ -14,6 +14,11 @@ Part of the RVC ecosystem. **Read [rvc-ecosystem/AGENTS.md](https://github.com/p
 
 ## Notes specific to this repo
 
+- **Supported Python versions are the classifiers in `pyproject.toml`** (with `requires-python`),
+  not a number written here. CI tests every one of them on Linux, macOS and Windows, so don't use
+  a standard-library function or syntax newer than the oldest (a newer feature passes locally
+  and fails on the oldest job). Type hints use modern syntax, enforced by ruff's `UP` rules.
+
 - Depends on `spatialmath`, `ansitable`. Integrates with `robotics-toolbox-python`
   *optionally* (notebook helpers, examples) — not a hard package dependency, don't add one
   without discussion.
