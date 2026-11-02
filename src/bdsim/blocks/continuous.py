@@ -322,6 +322,26 @@ class Integrator(CrossingMixin, ContinuousBlock):
 # ------------------------------------------------------------------------ #
 
 
+def _as_D(value: Any, nout: int, nin: int) -> np.ndarray | None:
+    """
+    A feedthrough matrix as an ``(nout, nin)`` array.
+
+    :param value: ``D``, an array, a list, a number, or None for no ``D``
+    :param nout: number of outputs, the rows of ``D``
+    :param nin: number of inputs, the columns of ``D``
+    :return: the array, or ``None`` if ``value`` is None
+    :raises ValueError: ``value`` does not conform to ``nout`` and ``nin``
+    """
+    if value is None:
+        return None
+    D = np.asarray(value, dtype=float)
+    if D.ndim < 2 and D.size == nin * nout:  # a number, or a flat list of numbers
+        D = D.reshape((nout, nin))
+    if D.shape != (nout, nin):
+        raise ValueError(f"D must be {nout}x{nin} to conform to B and C, not {D.shape}")
+    return D
+
+
 def _conform_D(block: Any, value: Any) -> np.ndarray | None:
     """
     The feedthrough matrix ``D`` as an LTI block stores it.
@@ -339,24 +359,15 @@ def _conform_D(block: Any, value: Any) -> np.ndarray | None:
     non-zero.
     """
     nout, nin = block.C.shape[0], block.B.shape[1]
-    if value is None:
-        D = np.zeros((nout, nin))
-    else:
-        D = np.asarray(value, dtype=float)
-        if D.ndim < 2 and D.size == nin * nout:  # a number, or a flat list of numbers
-            D = D.reshape((nout, nin))
-        if D.shape != (nout, nin):
-            raise ValueError(
-                f"D must be {nout}x{nin} to conform to B and C, not {D.shape}"
-            )
-    if np.any(D != 0):
-        if not block.feedthrough:
-            raise ValueError(
-                "D cannot be non-zero: the block was created with D = 0, so it has no "
-                "direct feedthrough, which fixes its place in the execution order"
-            )
-        return D
-    return D if block.feedthrough else None
+    D = _as_D(value, nout, nin)
+    if D is not None and np.any(D != 0) and not block.feedthrough:
+        raise ValueError(
+            "D cannot be non-zero: the block was created with D = 0, so it has no "
+            "direct feedthrough, which fixes its place in the execution order"
+        )
+    if not block.feedthrough:
+        return None
+    return np.zeros((nout, nin)) if D is None else D
 
 
 class LTI_SS(ContinuousBlock):
@@ -456,27 +467,16 @@ class LTI_SS(ContinuousBlock):
             if C.shape[1] != n:
                 raise ValueError("C must have same number of columns as A")
 
-        if D is None:
-            D = np.zeros((nout, n))
-        elif len(D.shape) == 1:
-            if len(D) != nin * nout:
-                raise ValueError("D must conform to B and C dimensions")
-            D = D.reshape((nout, nin))
-        else:
-            if D.shape != (nout, nin):
-                raise ValueError("D must conform to B and C dimensions")
+        D = _as_D(D, nout, nin)
 
         self.A = A
         self.B = B
         self.C = C
 
-        if np.any(D != 0):
-            # flag we have feedthrough, which may create an algebraic loop
-            self._D: np.ndarray | None = D
-            feedthrough = True
-        else:
-            self._D = None
-            feedthrough = False
+        # a nonzero D is direct feedthrough, which may create an algebraic loop, so the
+        # base class is told; without one there is no D to store
+        feedthrough = D is not None and bool(np.any(D != 0))
+        self._D: np.ndarray | None = D if feedthrough else None
 
         super().__init__(
             nstates=n, nin=nin, nout=nout, x0=x0, feedthrough=feedthrough, **blockargs
