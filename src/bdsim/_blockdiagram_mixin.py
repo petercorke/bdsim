@@ -110,6 +110,17 @@ class BlockDiagramMixin:
             "onto BlockDiagram at import time by the @block decorator"
         )
 
+    # bdsim.blocks.functions.Abs
+    def ABS(self, **blockargs: Any) -> Any:
+        """
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        """
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
+
     # bdsim.blocks.functions.Clip
     def CLIP(self, min: Vector1D = -inf, max: ArrayLike = inf, **blockargs: Any) -> Any:
         """
@@ -171,6 +182,20 @@ class BlockDiagramMixin:
     # roboticstoolbox.blocks.spatial.Delta2Tr
     def DELTA2TR(self, **blockargs: Any) -> Any:
         """
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        """
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
+
+    # bdsim.blocks.functions.Deadband
+    def DEADBAND(self, d: float | ArrayLike = 1, **blockargs: Any) -> Any:
+        """
+        :param d: Half-width of a symmetric band, or the lower and upper edges
+            of the band, defaults to 1
+        :type d: float or array_like(2)
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
@@ -1300,6 +1325,17 @@ class BlockDiagramMixin:
             "onto BlockDiagram at import time by the @block decorator"
         )
 
+    # bdsim.blocks.functions.Sign
+    def SIGN(self, **blockargs: Any) -> Any:
+        """
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        """
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
+
     # bdsim.blocks.linalg.Slice1
     def SLICE1(self, index: Any, **blockargs: Any) -> Any:
         """
@@ -1320,6 +1356,17 @@ class BlockDiagramMixin:
         :type rows: tuple(3) or list
         :param cols: column selection, defaults to None
         :type cols: tuple(3) or list
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        """
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
+
+    # bdsim.blocks.functions.Sqrt
+    def SQRT(self, **blockargs: Any) -> Any:
+        """
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
