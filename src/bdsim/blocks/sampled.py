@@ -298,14 +298,16 @@ class Deriv_S(SampledBlock):
             - float
             - :math:`y`
 
-    Implements the dynamics of a derivative filter, but to be causal (proper) it includes a first-order
-    low-pass filter.  The dynamics are
+    Implements a discrete-time derivative as a backward difference, with transfer function
 
-    .. math:: \frac{1 - z^{-1}}{T}
+    .. math:: g \, \frac{1 - z^{-1}}{T}
 
-    where :math:`T` is the sampling time.
+    where :math:`g` is the gain and :math:`T` is the sampling time.  The block is causal
+    because the output uses the current input and the input at the previous tick, and no
+    filter is needed.
 
-    Unlike the continuous-time derivative blocks, this one includes no smoothing filter.
+    Unlike the continuous-time derivative blocks, this one includes no smoothing filter,
+    so noise on its input is amplified.
 
     The state is the input at the most recent tick, so the output is the difference
     between the current input and the input at that tick, scaled by the gain and :math:`1/T`.
