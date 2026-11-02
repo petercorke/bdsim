@@ -326,7 +326,7 @@ def _conform_D(block: Any, value: Any) -> np.ndarray | None:
     """
     The feedthrough matrix ``D`` as an LTI block stores it.
 
-    :param block: the LTI block, which has ``B``, ``C`` and ``_feedthrough``
+    :param block: the LTI block, which has ``B``, ``C`` and ``feedthrough``
     :param value: the new ``D``, an array, a list, or None for zero
     :return: an ``(nout, nin)`` array, or ``None`` if it is zero and the block has no
         feedthrough
@@ -350,13 +350,13 @@ def _conform_D(block: Any, value: Any) -> np.ndarray | None:
                 f"D must be {nout}x{nin} to conform to B and C, not {D.shape}"
             )
     if np.any(D != 0):
-        if not block._feedthrough:
+        if not block.feedthrough:
             raise ValueError(
                 "D cannot be non-zero: the block was created with D = 0, so it has no "
                 "direct feedthrough, which fixes its place in the execution order"
             )
         return D
-    return D if block._feedthrough else None
+    return D if block.feedthrough else None
 
 
 class LTI_SS(ContinuousBlock):
@@ -763,13 +763,13 @@ class _TFParams:
                 f"the order of the system cannot change: it has {self.A.shape[0]} "
                 f"states and the new denominator would have {A.shape[0]}"
             )
-        if np.any(D != 0) and not self._feedthrough:
+        if np.any(D != 0) and not self.feedthrough:
             raise ValueError(
                 "the new numerator would give direct feedthrough, but the block was "
                 "created strictly proper, which fixes its place in the execution order"
             )
         self.A, self.B, self.C = A, B, C
-        self._D = D if self._feedthrough else None
+        self._D = D if self.feedthrough else None
         self._num, self._den = num_c, den_c
 
 
@@ -888,7 +888,7 @@ class LTI_SISO(_TFParams, LTI_SS):
               length of ``den`` minus one, cannot change.
             - The state-space matrices are available in the ``A``, ``B``, ``C``, and ``D`` attributes of the block.
             - If the numerator degree is less than the denominator degree, the block has no feedthrough and ``D`` is None.
-              The ``_feedthrough`` attribute of the block is set to True otherwise. It is used
+              The ``feedthrough`` attribute of the block is set to True otherwise. It is used
               by the scheduler to ensure correct block evaluation order.
 
         .. versionchanged:: next

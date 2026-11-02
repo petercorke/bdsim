@@ -849,7 +849,7 @@ class LTI_SISO_S(_TFParams, LTI_SS_S):
               length of ``den`` minus one, cannot change.
             - The state-space matrices are available in the ``A``, ``B``, ``C``, and ``D`` attributes of the block.
             - If the numerator degree is less than the denominator degree, the block has no feedthrough and ``D`` is None.
-              The ``_feedthrough`` attribute of the block is set to True otherwise. It is used
+              The ``feedthrough`` attribute of the block is set to True otherwise. It is used
               by the scheduler to ensure correct block evaluation order.
 
         .. versionchanged:: next
