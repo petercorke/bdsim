@@ -602,7 +602,7 @@ class BlockDiagram(BlockDiagramMixin):
 
         def _is_algebraic_participant(block: Block) -> bool:
             return block.blockclass == "function" or (
-                block.hasstate and block._feedthrough
+                block.hasstate and block.feedthrough
             )
 
         visited: set[Block] = set()
@@ -1153,7 +1153,7 @@ class BlockDiagram(BlockDiagramMixin):
         group = []
         for b in self.blocklist:
             b._sequence = None
-            if b.blockclass == "source" or (b.hasstate and not b._feedthrough):
+            if b.blockclass == "source" or (b.hasstate and not b.feedthrough):
                 b._sequence = 0
                 group.append(b)
         plan.append(group)
