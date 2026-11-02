@@ -514,6 +514,95 @@ class SampledSim(unittest.TestCase):
         nt.assert_almost_equal(out.y[-1, 2], 43.4, decimal=1)
 
 
+class LTISSSNotationTest(unittest.TestCase):
+    """Phi and Gamma as synonyms for A and B, and D, the feedthrough matrix."""
+
+    def block(self, **kw):
+        args = dict(
+            A=np.array([[0.5, 0.1], [0.0, 0.25]]),
+            B=np.array([1.0, 2.0]),
+            C=np.array([3.0, 4.0]),
+            x0=[0.0, 0.0],
+        )
+        args.update(kw)
+        return LTI_SS_S(Clock(2, "Hz"), **args)
+
+    def test_docstring_example(self):
+        block = LTI_SS_S(
+            Clock(2, "Hz"),
+            A=np.array([[-2.0]]),
+            B=np.array([1.0]),
+            C=np.array([-1.0]),
+            x0=[0.0],
+        )
+        # x_k = -2 x_{k-1} + u_k and y_k = -x_k
+        nt.assert_equal(block.test_next(3.0, x=np.r_[5.0]), [-7.0])
+        nt.assert_equal(block.test_output(0.0, x=np.r_[5.0])[0], -5.0)
+
+    def test_phi_and_gamma_are_a_and_b(self):
+        block = self.block()
+        for name in ("Phi", "Φ"):
+            self.assertIs(getattr(block, name), block.A)
+        for name in ("Gamma", "Γ"):
+            self.assertIs(getattr(block, name), block.B)
+
+    def test_phi_and_gamma_follow_a_change_of_a_and_b(self):
+        block = self.block()
+        new = np.array([[0.1, 0.0], [0.0, 0.2]])
+        block.set_param("A", new)
+        nt.assert_equal(block.Phi, new)
+        nt.assert_equal(block.Φ, new)
+
+    def test_phi_and_gamma_can_be_set(self):
+        block = self.block()
+        new = np.array([[0.7, 0.0], [0.0, 0.8]])
+        block.Phi = new
+        self.assertIs(block.A, new)
+        block.Φ = 2 * new
+        nt.assert_equal(block.A, 2 * new)
+        gamma = np.array([[5.0], [6.0]])
+        block.Gamma = gamma
+        self.assertIs(block.B, gamma)
+        block.Γ = 2 * gamma
+        nt.assert_equal(block.B, 2 * gamma)
+
+    def test_the_names_are_synonyms_of_one_property(self):
+        self.assertIs(LTI_SS_S.Φ, LTI_SS_S.Phi)
+        self.assertIs(LTI_SS_S.Γ, LTI_SS_S.Gamma)
+
+    def test_subclass_has_them_too(self):
+        block = LTI_SISO_S(Clock(2, "Hz"), num=[1.0], den=[1.0, -0.5])
+        self.assertIs(block.Phi, block.A)
+        self.assertIs(block.Gamma, block.B)
+
+    def test_no_d_means_no_feedthrough(self):
+        block = self.block()
+        self.assertFalse(block._feedthrough)
+        self.assertIsNone(block.D)
+        x, u = np.r_[1.0, 2.0], 5.0
+        nt.assert_allclose(block.test_output(u, x=x)[0], 3.0 + 8.0)
+
+    def test_zero_d_means_no_feedthrough(self):
+        block = self.block(D=np.zeros((1, 1)))
+        self.assertFalse(block._feedthrough)
+
+    def test_nonzero_d_is_feedthrough(self):
+        block = self.block(D=np.array([[2.0]]))
+        self.assertTrue(block._feedthrough)
+        x, u = np.r_[1.0, 2.0], 5.0
+        nt.assert_allclose(block.test_output(u, x=x)[0], 3.0 + 8.0 + 2.0 * 5.0)
+        # D does not enter the next state
+        nt.assert_allclose(block.test_next(u, x=x), block.A @ x + (block.B @ np.r_[u]))
+
+    def test_d_can_be_given_as_a_1d_array(self):
+        block = self.block(D=np.array([2.0]))
+        self.assertTrue(block._feedthrough)
+
+    def test_d_of_the_wrong_shape_is_rejected(self):
+        with self.assertRaises(ValueError):
+            self.block(D=np.ones((2, 2)))
+
+
 # ---------------------------------------------------------------------------------------#
 if __name__ == "__main__":
     unittest.main()
