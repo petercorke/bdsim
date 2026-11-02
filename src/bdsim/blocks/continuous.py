@@ -326,7 +326,7 @@ def _conform_D(block: Any, value: Any) -> np.ndarray | None:
     """
     The feedthrough matrix ``D`` as an LTI block stores it.
 
-    :param block: the LTI block, which has ``B``, ``C`` and ``_feedthrough``
+    :param block: the LTI block, which has ``B``, ``C`` and ``feedthrough``
     :param value: the new ``D``, an array, a list, or None for zero
     :return: an ``(nout, nin)`` array, or ``None`` if it is zero and the block has no
         feedthrough
@@ -350,13 +350,13 @@ def _conform_D(block: Any, value: Any) -> np.ndarray | None:
                 f"D must be {nout}x{nin} to conform to B and C, not {D.shape}"
             )
     if np.any(D != 0):
-        if not block._feedthrough:
+        if not block.feedthrough:
             raise ValueError(
                 "D cannot be non-zero: the block was created with D = 0, so it has no "
                 "direct feedthrough, which fixes its place in the execution order"
             )
         return D
-    return D if block._feedthrough else None
+    return D if block.feedthrough else None
 
 
 class LTI_SS(ContinuousBlock):
@@ -392,15 +392,16 @@ class LTI_SS(ContinuousBlock):
 
         \begin{aligned}
         \dot{x} &= A x + B u \\
-        y &= C x
+        y &= C x + D u
         \end{aligned}
 
-    A direct passthrough component, typically :math:`D`, is not allowed in order
-    to avoid algebraic loops.
+    ``D`` is optional and defaults to zero.  If it is nonzero the block has direct
+    feedthrough, the output depends on the input at the same instant, which creates an
+    algebraic loop if the output feeds back to the input without a delay.
 
     Examples::
 
-        lti = bd.LTI_SS(A=-2, B=1, C=-1)
+        lti = bd.LTI_SS(A=np.array([[-2.0]]), B=np.array([1.0]), C=np.array([-1.0]))
 
     is the system :math:`\dot{x}=-2x+u, y=-x`.
     """
@@ -418,16 +419,14 @@ class LTI_SS(ContinuousBlock):
         **blockargs: Any,
     ) -> None:
         r"""
-        :param N: numerator coefficients, defaults to 1
-        :type N: array_like, optional
-        :param A: system matrix, defaults to [1,1]
-        :type A: array_like, optional
-        :param B: input matrix, defaults to [1]
-        :type B: array_like, optional
-        :param C: output matrix, defaults to [1]
-        :type C: array_like, optional
-        :param D: feedthrough matrix, defaults to None
-        :type D: array_like, optional
+        :param A: system matrix
+        :type A: ndarray(n,n)
+        :param B: input matrix; a 1D array is a column vector
+        :type B: ndarray(n,m)
+        :param C: output matrix; a 1D array is a row vector
+        :type C: ndarray(p,n)
+        :param D: feedthrough matrix, defaults to zero
+        :type D: ndarray(p,m), optional
         :param x0: initial states, defaults to None
         :type x0: array_like, optional
         :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
@@ -763,13 +762,13 @@ class _TFParams:
                 f"the order of the system cannot change: it has {self.A.shape[0]} "
                 f"states and the new denominator would have {A.shape[0]}"
             )
-        if np.any(D != 0) and not self._feedthrough:
+        if np.any(D != 0) and not self.feedthrough:
             raise ValueError(
                 "the new numerator would give direct feedthrough, but the block was "
                 "created strictly proper, which fixes its place in the execution order"
             )
         self.A, self.B, self.C = A, B, C
-        self._D = D if self._feedthrough else None
+        self._D = D if self.feedthrough else None
         self._num, self._den = num_c, den_c
 
 
@@ -888,7 +887,7 @@ class LTI_SISO(_TFParams, LTI_SS):
               length of ``den`` minus one, cannot change.
             - The state-space matrices are available in the ``A``, ``B``, ``C``, and ``D`` attributes of the block.
             - If the numerator degree is less than the denominator degree, the block has no feedthrough and ``D`` is None.
-              The ``_feedthrough`` attribute of the block is set to True otherwise. It is used
+              The ``feedthrough`` attribute of the block is set to True otherwise. It is used
               by the scheduler to ensure correct block evaluation order.
 
         .. versionchanged:: next

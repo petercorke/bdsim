@@ -25,6 +25,8 @@ bdtex2icon -r 180 -o inverse.png -t '\mat{A}^{\!-\!1}'
 
 bdtex2icon -r 250 -o integrator.png -t '\frac{1}{s}'
 bdtex2icon -r 220 -o dintegrator.png -t '\frac{z}{z-1}'
+# INTEGRATOR_S shows the same picture as the deprecated DIntegrator; the committed file is a copy
+cp dintegrator.png integrator_s.png
 
 bdtex2icon -r 150 -o lti_siso.png -t '\frac{N(s)}{D(s)}'
 bdtex2icon -r 90 -o lti_ss.png -t '\begin{array}{c|c} A & B\\ \hline C & D \end{array}'
@@ -45,8 +47,15 @@ bdtex2icon -r 179 -o pose_postmul.png -t '\mathbf{\oplus\!\pose[x]_y}'
 bdtex2icon -r 180 -o pose_premul.png -t '\mathbf{\pose[x]_y\!\oplus}'
 bdtex2icon -r 170 -o pose_inverse.png -t '\mathbf{\ominus}'
 bdtex2icon -r 150 -o transform_vector.png -t '\mathbf{\pose[x]_y}\!\sbullet\!\vec{p}'
-bdtex2icon -r 140 -o poseintegerator.png -t "\int\! \nu\, dt"
+bdtex2icon -r 140 -o poseintegrator.png -t "\int\! \nu\, dt"
 
-bdtex2icon -r 192 -o pid.png -t '\mbox{PID}'
-bdtex2icon -r 190 -o deriv.png -t 's'
+bdtex2icon -r 118 -o pid.png -t '\mbox{PID}(s)'
+bdtex2icon -r 118 -o pid_s.png -t '\mbox{PID}(z)'
 bdtex2icon -r 300 -o deriv.png -t 's'
+
+# the sampled variants, and the second-order derivative filter
+bdtex2icon -r 190 -o deriv2.png -t '\frac{s}{F(s)}'
+bdtex2icon -r 220 -o deriv_s.png -t '\frac{z-1}{z}'
+bdtex2icon -r 150 -o lti_siso_s.png -t '\frac{N(z)}{D(z)}'
+# Phi and Gamma, as in Astrom and Wittenmark, for the discrete-time system
+bdtex2icon -r 90 -o lti_ss_s.png -t '\begin{array}{c|c} \Phi & \Gamma\\ \hline C & D \end{array}'

@@ -558,19 +558,27 @@ class LTI_SS_S(SampledBlock):
     .. math::
 
         \begin{aligned}
-        x_k &= A x_{k-1} + B u_k \\
-        y_k &= C x_k
+        x_k &= \Phi x_{k-1} + \Gamma u_k \\
+        y_k &= C x_k + D u_k
         \end{aligned}
 
     where :math:`x_0` is ``x0``.  The input at a tick takes effect in the output from
     that tick, as it does for all sampled blocks.
 
-    A direct passthrough component, typically :math:`D`, is not allowed in order
-    to avoid algebraic loops.
+    :math:`\Phi` and :math:`\Gamma` are the usual symbols for the discrete-time system
+    and input matrices.  They are given by the arguments ``A`` and ``B``, the names
+    used for the continuous-time ``LTI_SS``, and are also available as the attributes
+    ``Phi`` and ``Gamma`` (or ``Φ`` and ``Γ``), which are synonyms for ``A`` and ``B``.
+
+    ``D`` is optional and defaults to zero.  If it is nonzero the block has direct
+    feedthrough, the output depends on the input at the same instant, which creates an
+    algebraic loop if the output feeds back to the input without a delay.
 
     Examples::
 
-        lti = bd.LTI_SS_S(A=-2, B=1, C=-1)
+        lti = bd.LTI_SS_S(
+            clock, A=np.array([[-2.0]]), B=np.array([1.0]), C=np.array([-1.0])
+        )
 
     is the system :math:`x_k=-2x_{k-1}+u_k, y_k=-x_k`.
 
@@ -593,14 +601,15 @@ class LTI_SS_S(SampledBlock):
         r"""
         :param clock: clock source
         :type clock: Clock
-        :param A: system matrix, defaults to [1,1]
-        :type A: array_like, optional
-        :param B: input matrix, defaults to [1]
-        :type B: array_like, optional
-        :param C: output matrix, defaults to [1]
-        :type C: array_like, optional
-        :param D: feedthrough matrix, defaults to None
-        :type D: array_like, optional
+        :param A: system matrix :math:`\Phi`, also available as the attribute ``Phi``
+        :type A: ndarray(n,n)
+        :param B: input matrix :math:`\Gamma`, also available as the attribute ``Gamma``;
+            a 1D array is a column vector
+        :type B: ndarray(n,m)
+        :param C: output matrix; a 1D array is a row vector
+        :type C: ndarray(p,n)
+        :param D: feedthrough matrix, defaults to zero
+        :type D: ndarray(p,m), optional
         :param x0: initial states, defaults to None
         :type x0: array_like, optional
         :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
@@ -678,6 +687,28 @@ class LTI_SS_S(SampledBlock):
     @D.setter
     def D(self, value: Any) -> None:
         self._D = _conform_D(self, value)
+
+    # the usual names for the discrete-time system and input matrices, as synonyms
+    @property
+    def Phi(self) -> np.ndarray:
+        r"""The system matrix :math:`\Phi`, a synonym for ``A``."""
+        return self.A  # type: ignore[no-any-return]
+
+    @Phi.setter
+    def Phi(self, value: Any) -> None:
+        self.A = value
+
+    @property
+    def Gamma(self) -> np.ndarray:
+        r"""The input matrix :math:`\Gamma`, a synonym for ``B``."""
+        return self.B  # type: ignore[no-any-return]
+
+    @Gamma.setter
+    def Gamma(self, value: Any) -> None:
+        self.B = value
+
+    Φ = Phi
+    Γ = Gamma
 
     def output(self, t: float, u: list[Any], x: np.ndarray) -> list[Any]:
         y = self.C @ x
@@ -849,7 +880,7 @@ class LTI_SISO_S(_TFParams, LTI_SS_S):
               length of ``den`` minus one, cannot change.
             - The state-space matrices are available in the ``A``, ``B``, ``C``, and ``D`` attributes of the block.
             - If the numerator degree is less than the denominator degree, the block has no feedthrough and ``D`` is None.
-              The ``_feedthrough`` attribute of the block is set to True otherwise. It is used
+              The ``feedthrough`` attribute of the block is set to True otherwise. It is used
               by the scheduler to ensure correct block evaluation order.
 
         .. versionchanged:: next
@@ -972,8 +1003,8 @@ class PID_S(SubsystemBlock):
     proportional term is always built.
 
     * By default (``terms=None``) the I term is built only if ``I`` is not zero, and the D
-      term only if ``D`` is not zero.  So ``bd.PID_S(P=3, I=1)`` is a PI controller and
-      ``bd.PID_S(P=3)`` is proportional only.
+      term only if ``D`` is not zero.  So ``bd.PID_S(clock, P=3, I=1)`` is a PI controller and
+      ``bd.PID_S(clock, P=3)`` is proportional only.
     * ``terms`` overrides this.  It is one of ``"P"``, ``"PI"``, ``"PD"`` or ``"PID"``, and
       exactly those terms are built, **even if their gain is zero**.  A term that is
       built can have its gain changed after the block is created; a term that was left

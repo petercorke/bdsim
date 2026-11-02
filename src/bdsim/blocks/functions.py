@@ -13,6 +13,7 @@ import numpy as np
 from scipy import linalg
 import scipy.interpolate
 import math
+import numbers
 import inspect
 import warnings
 import spatialmath.base as smb
@@ -857,6 +858,170 @@ class Deadband(CrossingMixin, FunctionBlock):
         if np.ndim(input) == 0:
             out = out.item()
         return [out]
+
+
+# ------------------------------------------------------------------------ #
+
+
+class Switch(CrossingMixin, FunctionBlock):
+    r"""
+    :blockname:`SWITCH`
+
+    Select one of two signals.
+
+    :inputs: 3
+    :outputs: 1
+    :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Port type
+          - Port number
+          - Types
+          - Description
+        * - Input
+          - 0, ``X``
+          - any
+          - signal passed to the output when ``S`` selects it
+        * - Input
+          - 1, ``Y``
+          - same as ``X``
+          - signal passed to the output otherwise
+        * - Input
+          - 2, ``S``
+          - scalar
+          - the selector
+        * - Output
+          - 0, ``Z``
+          - same as ``X``
+          - ``X`` or ``Y``
+
+    The output is ``X`` or ``Y``, whichever ``S`` selects.  ``X`` and ``Y`` can be of any
+    type but must be of the same type and, if they are arrays, of the same shape, which
+    is checked when the diagram is compiled.  An ``int`` and a ``float`` are not the same
+    type, so a ``float`` signal switched against a constant needs ``CONSTANT(0.0)``,
+    not ``CONSTANT(0)``.  The input that is not selected is not used, so a ``nan`` or
+    ``inf`` on it does not reach the output.
+
+    ``S`` is a scalar and selects ``X`` as follows:
+
+    .. list-table::
+        :header-rows: 1
+
+        * - ``S``
+          - ``Z`` is ``X`` when
+          - Notes
+        * - ``bool``
+          - ``S`` is true
+          -
+        * - ``int``
+          - ``S != 0``
+          - unless ``threshold`` is given
+        * - ``float``
+          - ``S >= threshold``
+          - ``threshold`` defaults to 0, so ``S = 0.0`` selects ``X``
+        * - ``int`` or ``float`` with ``threshold`` given
+          - ``S >= threshold``
+          -
+        * - anything else, such as ``None``, a string or a list
+          - ``bool(S)``
+          - an empty list is false
+        * - array with more than one element
+          - error
+          - ``S`` must be a scalar
+
+    A size-1 array counts as a scalar.  A ``nan`` on a ``float`` ``S`` compares false
+    and selects ``Y``.
+
+    The output jumps when ``S`` changes the selection and ``X`` and ``Y`` differ at that
+    instant.  For a numeric ``S`` that changes continuously, the solver is restarted
+    exactly where ``S`` crosses its threshold, so no step straddles the jump.
+
+    For example::
+
+        switch = bd.SWITCH(threshold=0.5)
+        bd.connect(x, switch.X)
+        bd.connect(y, switch.Y)
+        bd.connect(s, switch.S)
+
+    :seealso: :class:`Clip` :class:`Sign`
+    """
+
+    nin = 3
+    nout = 1
+
+    def __init__(self, threshold: float | None = None, **blockargs: Any) -> None:
+        """
+        :param threshold: ``S`` selects ``X`` when ``S >= threshold``; ``None`` (the
+            default) uses the rule for the type of ``S`` in the table above
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        :type blockargs: dict
+        :raises ValueError: ``threshold`` is not a real number
+        """
+        super().__init__(inames=("X", "Y", "S"), onames=("Z",), **blockargs)
+        self._check_threshold(threshold)
+        self.threshold = threshold
+        self.add_param(
+            "threshold", coerce=False, when="setup", validate=self._check_threshold
+        )
+
+    @staticmethod
+    def _check_threshold(value: Any) -> None:
+        if value is not None and (
+            isinstance(value, bool)
+            or not isinstance(value, numbers.Real)
+            or np.isnan(float(value))
+        ):
+            raise ValueError(f"threshold must be a real number or None, got {value!r}")
+
+    def _selects_x(self, s: Any) -> bool:
+        """Does the selector ``s`` pass ``X``?  The rule is in the class docstring."""
+        if isinstance(s, np.ndarray):
+            if s.size != 1:
+                raise ValueError(f"S must be a scalar, got an array of shape {s.shape}")
+            s = s.item()
+        if isinstance(s, (bool, np.bool_)):
+            return bool(s)
+        if isinstance(s, numbers.Real):
+            if self.threshold is not None:
+                return bool(float(s) >= self.threshold)
+            if isinstance(s, numbers.Integral):
+                return s != 0
+            return bool(float(s) >= 0.0)
+        return bool(s)
+
+    def configure(self) -> None:
+        sx, sy, ss = self.insig[0], self.insig[1], self.insig[2]
+        if sx is not None and sy is not None and not sx.matches(sy):
+            raise ValueError(
+                f"X and Y must have the same type and shape, got {sx} and {sy}"
+            )
+        if (
+            ss is not None
+            and ss.type is np.ndarray
+            and int(np.prod(ss.shape or ())) != 1
+        ):
+            raise ValueError(f"S must be a scalar, got an array of shape {ss.shape}")
+
+    def start(self, simstate: Any) -> None:
+        # the output jumps where S changes the selection: restart the solver there
+        ss = self.insig[2]
+        kind = None if ss is None else ss.type
+        if kind is not None and issubclass(kind, (bool, np.bool_)):
+            thresholds = [0.5]
+        elif self.threshold is not None:
+            thresholds = [float(self.threshold)]
+        elif kind is not None and issubclass(kind, (int, np.integer)):
+            thresholds = [-0.5, 0.5]  # selection changes between 0 and nonzero
+        elif kind is not None and issubclass(kind, (float, np.floating)):
+            thresholds = [0.0]
+        else:
+            return  # non-numeric, or a signal of unknown type, for which there is nothing to find
+        self.declare_thresholds(simstate, [(0, v) for v in thresholds], port=2)
+
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
+        return [inputs[0] if self._selects_x(inputs[2]) else inputs[1]]
 
 
 # ------------------------------------------------------------------------ #

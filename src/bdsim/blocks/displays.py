@@ -470,10 +470,10 @@ class Scope(GraphicsBlock):
         # create empty lines with defined styles
         for i in range(0, self.nplots):
             args = []
-            kwargs = {}
+            kwargs: dict[str, Any] = {"linewidth": 2}  # a style dict can override this
             style = self.styles[i]
             if isinstance(style, dict):
-                kwargs = style
+                kwargs |= style  # into our own dict: the caller's is never modified
             elif isinstance(style, str):
                 args = [style]
             if self.stairs:
@@ -483,7 +483,6 @@ class Scope(GraphicsBlock):
                 self.tdata,
                 self.ydata[i],
                 *args,
-                linewidth=2,
                 **kwargs,
             )
 
