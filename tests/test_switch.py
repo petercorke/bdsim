@@ -116,7 +116,7 @@ class SwitchSimulationTest(unittest.TestCase):
     def setUpClass(cls):
         cls.sim = bdsim.BDSim(graphics=None, progress=False, banner=False, quiet=True)
 
-    def integrate(self, x, y, s, T=3.0, x0=0, solver_args=LOOSE, **kw):
+    def integrate(self, x, y, s, T=3.0, x0=0, solver_args=None, **kw):
         """Final integral of SWITCH(x, y, s); x, y and s are functions of the diagram."""
         bd = self.sim.blockdiagram()
         sw = bd.SWITCH(**kw)
@@ -126,7 +126,7 @@ class SwitchSimulationTest(unittest.TestCase):
         area = bd.INTEGRATOR(x0=x0)
         bd.connect(sw, area)
         bd.compile(verbose=False)
-        out = self.sim.run(bd, T=T, solver_args=solver_args)
+        out = self.sim.run(bd, T=T, solver_args=solver_args or LOOSE)
         return out, np.asarray(out.x).reshape(len(out.t), -1)[-1]
 
     @staticmethod
