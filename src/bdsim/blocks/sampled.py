@@ -5,6 +5,16 @@ Sampled-time blocks:
 - have discrete-time state variables that are sampled/updated at the times
   specified by the associated clock
 - are a subclass of ``SampledBlock`` |rarr| ``Block``
+
+**Timing.**  At each clock tick :math:`t_k` with :math:`k \ge 1` the block computes its
+next state from the inputs *at that instant* and the previous state, and that new state is
+the block's output until the next tick.  The tick at :math:`t = 0` does not update the
+state, so the output holds ``x0`` for the first sample period.  The block formulas below
+are written for this: :math:`x_k` is the state held over :math:`[t_k, t_{k+1})`,
+and :math:`x_0` is ``x0``.  A block with feedthrough (``DERIV_S``) also sees the current input.
+
+Note that the value *logged* at a tick instant is the one from before that tick's
+update, so it appears one sample late.  It is the logging, not the block, that lags.
 """
 
 from __future__ import annotations
@@ -56,8 +66,10 @@ class ZOH(SampledBlock):
             - float, ndarray
             - :math:`y`
 
-    Output is the input at the previous clock time $y_{k} = x_{k-1}.  The state can be a
-    scalar or a vector, this is given by the type of ``x0``.
+    The output is the input as sampled at the most recent clock tick, :math:`y_k = u_k`
+    for :math:`k \ge 1`, and ``x0`` during the first sample period.  There is no
+    further delay.  The state can be a scalar or a vector, this is given by the type
+    of ``x0``.
 
     .. note:: If input is not a scalar, ``x0`` must have the shape of the
         input signal.
@@ -138,14 +150,17 @@ class Integrator_S(SampledBlock):
             - float, ndarray
             - :math:`y`
 
-    This block implements the dynamics of a discrete-time integrator with gain :math:`k`, which is given by
+    This block implements the dynamics of a discrete-time integrator with gain :math:`g`, which is given by
 
     .. math::
 
         \begin{aligned}
-        x_{k+1} &= x_k + k \cdot u_k \cdot T \\
+        x_k &= x_{k-1} + g \cdot u_k \cdot T \\
         y_k &= x_k
         \end{aligned}
+
+    This is backward-Euler (rectangular) integration: the input at a tick contributes to
+    the output from that tick, and :math:`x_0` is ``x0``.
 
     The state can be a scalar or a vector. The initial state, and type, is given by
     ``x0``.  The shape of the input signal must match ``x0``.
@@ -292,7 +307,9 @@ class Deriv_S(SampledBlock):
 
     Unlike the continuous-time derivative blocks, this one includes no smoothing filter.
 
-    The initial output of the derivative block is given by the initial state ``x0``.
+    The state is the input at the most recent tick, so the output is the difference
+    between the current input and the input at that tick, scaled by the gain and :math:`1/T`.
+    The state is ``x0`` during the first sample period.
 
     .. versionadded:: 1.2.0
 
@@ -371,9 +388,12 @@ class LTI_SS_S(SampledBlock):
     .. math::
 
         \begin{aligned}
-        x_{k+1} &= A x_k + B u_k \\
+        x_k &= A x_{k-1} + B u_k \\
         y_k &= C x_k
         \end{aligned}
+
+    where :math:`x_0` is ``x0``.  The input at a tick takes effect in the output from
+    that tick, as it does for all sampled blocks.
 
     A direct passthrough component, typically :math:`D`, is not allowed in order
     to avoid algebraic loops.
@@ -382,7 +402,7 @@ class LTI_SS_S(SampledBlock):
 
         lti = bd.LTI_SS_S(A=-2, B=1, C=-1)
 
-    is the system :math:`x_{k+1}=-2x_k+u_k, y_k=-x_k`.
+    is the system :math:`x_k=-2x_{k-1}+u_k, y_k=-x_k`.
 
     .. versionadded:: 1.2.0
     """
