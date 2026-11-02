@@ -5,6 +5,16 @@ Sampled-time blocks:
 - have discrete-time state variables that are sampled/updated at the times
   specified by the associated clock
 - are a subclass of ``SampledBlock`` |rarr| ``Block``
+
+**Timing.**  At each clock tick :math:`t_k` with :math:`k \ge 1` the block computes its
+next state from the inputs *at that instant* and the previous state, and that new state is
+the block's output until the next tick.  The tick at :math:`t = 0` does not update the
+state, so the output holds ``x0`` for the first sample period.  The block formulas below
+are written for this: :math:`x_k` is the state held over :math:`[t_k, t_{k+1})`,
+and :math:`x_0` is ``x0``.  A block with feedthrough (``DERIV_S``) also sees the current input.
+
+Note that the value *logged* at a tick instant is the one from before that tick's
+update, so it appears one sample late.  It is the logging, not the block, that lags.
 """
 
 from __future__ import annotations
@@ -56,8 +66,10 @@ class ZOH(SampledBlock):
             - float, ndarray
             - :math:`y`
 
-    Output is the input at the previous clock time $y_{k} = x_{k-1}.  The state can be a
-    scalar or a vector, this is given by the type of ``x0``.
+    The output is the input as sampled at the most recent clock tick, :math:`y_k = u_k`
+    for :math:`k \ge 1`, and ``x0`` during the first sample period.  There is no
+    further delay.  The state can be a scalar or a vector, this is given by the type
+    of ``x0``.
 
     .. note:: If input is not a scalar, ``x0`` must have the shape of the
         input signal.
@@ -90,6 +102,168 @@ class ZOH(SampledBlock):
     def next(self, t: float, inputs: list[Any], x: np.ndarray) -> np.ndarray:
         u = smb.getvector(inputs[0])
         return u  # must be an ndarray
+
+
+# ------------------------------------------------------------------------ #
+
+
+class Hysteresis_S(SampledBlock):
+    r"""
+    :blockname:`HYSTERESIS_S`
+
+    Discrete-time hysteresis (relay with memory, Schmitt trigger).
+
+    :inputs: 1
+    :outputs: 1
+    :states: N
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - float, ndarray
+            - :math:`u`
+        *   - Output
+            - 0
+            - float, ndarray
+            - :math:`y`
+
+    The state is the output, which switches between two levels.  It switches on
+    when the input reaches ``switch_on`` and off when the input falls to
+    ``switch_off``.  Between the two it keeps its value, which is the memory:
+
+    .. math::
+
+        y_{k+1} = \begin{cases}
+            y_\mathrm{on} & u_k \ge u_\mathrm{on} \\
+            y_\mathrm{off} & u_k \le u_\mathrm{off} \\
+            y_k & \text{otherwise}
+        \end{cases}
+
+    The input is sampled at each tick of the clock and the output is constant between
+    ticks, as for :class:`ZOH`: the output from tick :math:`k` until the next is decided
+    by the input at tick :math:`k`.  Until the first tick after the start of the run the
+    output is ``x0``.  A logged value at a tick instant is the value held *before* that
+    tick's update.
+
+    The state can be a scalar or a vector, given by the shape of ``x0`` and of the
+    parameters.  The switching points and output levels can each be:
+
+        - a scalar, in which case the same value applies to every element, or
+        - a vector, of the same shape as the state, that applies elementwise.
+
+    .. note:: The switching points must satisfy ``switch_off <= switch_on``.  If they
+        are equal the block is an ideal relay with no hysteresis, and the input exactly at
+        the switching point switches on.
+
+    For example, a Schmitt trigger that turns on above 0.6 and off below 0.4::
+
+        clock = bd.clock(0.01)
+        trigger = bd.HYSTERESIS_S(clock, switch_on=0.6, switch_off=0.4)
+
+    :seealso: :class:`ZOH`
+    """
+
+    nin = 1
+    nout = 1
+
+    def __init__(
+        self,
+        clock: Clock,
+        switch_on: Vector1D = 0.5,
+        switch_off: Vector1D = -0.5,
+        output_on: Vector1D = 1.0,
+        output_off: Vector1D = 0.0,
+        x0: Vector1D | None = None,
+        **blockargs: Any,
+    ) -> None:
+        r"""
+        :param clock: clock source
+        :type clock: Clock
+        :param switch_on: input at or above which the output switches on, defaults to 0.5
+        :type switch_on: float or array_like, optional
+        :param switch_off: input at or below which the output switches off, defaults to -0.5
+        :type switch_off: float or array_like, optional
+        :param output_on: output level when on, defaults to 1
+        :type output_on: float or array_like, optional
+        :param output_off: output level when off, defaults to 0
+        :type output_off: float or array_like, optional
+        :param x0: initial output, which must be ``output_on`` or ``output_off``,
+            defaults to ``output_off``
+        :type x0: float or array_like, optional
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        :type blockargs: dict
+        :raises ValueError: ``switch_off`` is above ``switch_on``, the two output levels
+            are equal, or ``x0`` is not one of them
+        """
+        parts = [switch_on, switch_off, output_on, output_off]
+        if x0 is not None:
+            parts.append(x0)
+        shape = np.broadcast_shapes(*[np.shape(p) for p in parts])
+        initial = output_off if x0 is None else x0
+        initial = np.array(np.broadcast_to(initial, shape), dtype=float).reshape(-1)
+
+        super().__init__(clock=clock, nin=1, nout=1, x0=initial, **blockargs)
+
+        self.switch_on = switch_on
+        self.switch_off = switch_off
+        self.output_on = output_on
+        self.output_off = output_off
+        self._check_levels(output_on, output_off, initial)
+        self._check_switch(switch_on, switch_off)
+
+        self.add_param("clock", when="never")
+        self.add_param("switch_on", coerce=False, validate=self._check_switch_on)
+        self.add_param("switch_off", coerce=False, validate=self._check_switch_off)
+        self.add_param("output_on", coerce=False, validate=self._check_output_on)
+        self.add_param("output_off", coerce=False, validate=self._check_output_off)
+        self.add_param("x0", when="setup")
+
+    @staticmethod
+    def _check_switch(switch_on: Any, switch_off: Any) -> None:
+        if np.any(np.asarray(switch_off) > np.asarray(switch_on)):
+            raise ValueError("switch_off must not be above switch_on")
+
+    @staticmethod
+    def _check_levels(output_on: Any, output_off: Any, x: Any) -> None:
+        on, off = np.asarray(output_on), np.asarray(output_off)
+        if np.any(on == off):
+            raise ValueError("output_on and output_off must differ")
+        x = np.asarray(x)
+        if not np.all((x == on) | (x == off)):
+            raise ValueError("x0 must be output_on or output_off")
+
+    def _check_switch_on(self, value: Any) -> None:
+        self._check_switch(value, self.switch_off)
+
+    def _check_switch_off(self, value: Any) -> None:
+        self._check_switch(self.switch_on, value)
+
+    def _check_output_on(self, value: Any) -> None:
+        self._check_levels(value, self.output_off, self._x0)
+
+    def _check_output_off(self, value: Any) -> None:
+        self._check_levels(self.output_on, value, self._x0)
+
+    def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
+        if x.size == 1:
+            return [x.item()]
+        return [x]
+
+    def next(self, t: float, inputs: list[Any], x: np.ndarray) -> np.ndarray:
+        u = np.broadcast_to(np.asarray(inputs[0], dtype=float), x.shape)
+        on = np.broadcast_to(np.asarray(self.output_on, dtype=float), x.shape)
+        off = np.broadcast_to(np.asarray(self.output_off, dtype=float), x.shape)
+
+        is_on = np.where(
+            u >= self.switch_on, True, np.where(u <= self.switch_off, False, x == on)
+        )
+        return np.where(is_on, on, off).astype(float)
 
 
 # ------------------------------------------------------------------------ #
@@ -138,17 +312,25 @@ class Integrator_S(SampledBlock):
             - float, ndarray
             - :math:`y`
 
-    This block implements the dynamics of a discrete-time integrator with gain :math:`k`, which is given by
+    This block implements the dynamics of a discrete-time integrator with gain :math:`g`, which is given by
 
     .. math::
 
         \begin{aligned}
-        x_{k+1} &= x_k + k \cdot u_k \cdot T \\
+        x_k &= x_{k-1} + g \cdot u_k \cdot T \\
         y_k &= x_k
         \end{aligned}
 
+    This is backward-Euler (rectangular) integration: the input at a tick contributes to
+    the output from that tick, and :math:`x_0` is ``x0``.
+
     The state can be a scalar or a vector. The initial state, and type, is given by
     ``x0``.  The shape of the input signal must match ``x0``.
+
+    The gain is applied to the input, before accumulation, as in the update
+    equation above.  The limits ``min`` and ``max`` apply to the resulting state,
+    which is also the output.  They are applied at each sample time, so no crossing
+    events are needed.
 
     The minimum and maximum output values can be:
 
@@ -157,8 +339,9 @@ class Integrator_S(SampledBlock):
         - a vector, of the same shape as ``x0`` that applies elementwise to
           the state.
 
-    .. note:: The minimum and maximum prevent integration outside the limits,
-        but assume that the initial state is within the limits.
+    .. note:: The minimum and maximum clip the next state, so a state that would pass
+        a limit is held at it until the input reverses.  An initial state outside
+        the limits is clipped at the first sample.
 
     Integration can be controlled by an ``enable`` function::
 
@@ -283,16 +466,20 @@ class Deriv_S(SampledBlock):
             - float
             - :math:`y`
 
-    Implements the dynamics of a derivative filter, but to be causal (proper) it includes a first-order
-    low-pass filter.  The dynamics are
+    Implements a discrete-time derivative as a backward difference, with transfer function
 
-    .. math:: \frac{1 - z^{-1}}{T}
+    .. math:: g \, \frac{1 - z^{-1}}{T}
 
-    where :math:`T` is the sampling time.
+    where :math:`g` is the gain and :math:`T` is the sampling time.  The block is causal
+    because the output uses the current input and the input at the previous tick, and no
+    filter is needed.
 
-    Unlike the continuous-time derivative blocks, this one includes no smoothing filter.
+    Unlike the continuous-time derivative blocks, this one includes no smoothing filter,
+    so noise on its input is amplified.
 
-    The initial output of the derivative block is given by the initial state ``x0``.
+    The state is the input at the most recent tick, so the output is the difference
+    between the current input and the input at that tick, scaled by the gain and :math:`1/T`.
+    The state is ``x0`` during the first sample period.
 
     .. versionadded:: 1.2.0
 
@@ -371,9 +558,12 @@ class LTI_SS_S(SampledBlock):
     .. math::
 
         \begin{aligned}
-        x_{k+1} &= A x_k + B u_k \\
+        x_k &= A x_{k-1} + B u_k \\
         y_k &= C x_k
         \end{aligned}
+
+    where :math:`x_0` is ``x0``.  The input at a tick takes effect in the output from
+    that tick, as it does for all sampled blocks.
 
     A direct passthrough component, typically :math:`D`, is not allowed in order
     to avoid algebraic loops.
@@ -382,7 +572,7 @@ class LTI_SS_S(SampledBlock):
 
         lti = bd.LTI_SS_S(A=-2, B=1, C=-1)
 
-    is the system :math:`x_{k+1}=-2x_k+u_k, y_k=-x_k`.
+    is the system :math:`x_k=-2x_{k-1}+u_k, y_k=-x_k`.
 
     .. versionadded:: 1.2.0
     """

@@ -3,7 +3,13 @@
 import numpy as np
 import math
 
-from bdsim.blocks.sampled import Integrator_S, LTI_SISO_S, LTI_SS_S, ZOH
+from bdsim.blocks.sampled import (
+    Hysteresis_S,
+    Integrator_S,
+    LTI_SISO_S,
+    LTI_SS_S,
+    ZOH,
+)
 from bdsim import Clock
 
 import unittest
@@ -110,6 +116,98 @@ class DiscreteTest(unittest.TestCase):
         with self.assertWarns(FutureWarning):
             deprecated_block = DPoseIntegrator(clock)
         nt.assert_equal(deprecated_block.getstate0(), np.zeros(6))
+
+
+class HysteresisTest(unittest.TestCase):
+    clock = Clock(10, "Hz")
+
+    def block(self, **kw):
+        return Hysteresis_S(self.clock, switch_on=1.0, switch_off=0.0, **kw)
+
+    def test_defaults(self):
+        block = Hysteresis_S(self.clock)
+        self.assertEqual((block.switch_on, block.switch_off), (0.5, -0.5))
+        self.assertEqual((block.output_on, block.output_off), (1.0, 0.0))
+        self.assertEqual(block.ndstates, 1)
+        nt.assert_equal(block.getstate0(), np.r_[0.0])  # initially off
+
+    def test_switches_on_and_off(self):
+        block = self.block()
+        off, on = np.r_[0.0], np.r_[1.0]
+        nt.assert_equal(block.test_next(2.0, x=off), on)
+        nt.assert_equal(block.test_next(-1.0, x=on), off)
+
+    def test_keeps_its_value_between_the_switching_points(self):
+        block = self.block()
+        off, on = np.r_[0.0], np.r_[1.0]
+        nt.assert_equal(block.test_next(0.5, x=off), off)
+        nt.assert_equal(block.test_next(0.5, x=on), on)
+
+    def test_the_switching_points_themselves_switch(self):
+        block = self.block()
+        off, on = np.r_[0.0], np.r_[1.0]
+        nt.assert_equal(block.test_next(1.0, x=off), on)  # at switch_on
+        nt.assert_equal(block.test_next(0.0, x=on), off)  # at switch_off
+
+    def test_equal_switching_points_are_an_ideal_relay(self):
+        block = Hysteresis_S(self.clock, switch_on=0.0, switch_off=0.0)
+        off, on = np.r_[0.0], np.r_[1.0]
+        nt.assert_equal(block.test_next(0.0, x=off), on)  # exactly at it: on
+        nt.assert_equal(block.test_next(-0.1, x=on), off)
+        nt.assert_equal(block.test_next(0.1, x=off), on)
+
+    def test_output_levels(self):
+        block = self.block(output_on=5.0, output_off=-2.0)
+        nt.assert_equal(block.getstate0(), np.r_[-2.0])
+        nt.assert_equal(block.test_next(2.0, x=np.r_[-2.0]), np.r_[5.0])
+        nt.assert_equal(block.test_next(-1.0, x=np.r_[5.0]), np.r_[-2.0])
+        self.assertEqual(block.test_output(0, x=np.r_[5.0])[0], 5.0)
+
+    def test_initial_output(self):
+        block = self.block(x0=1.0)
+        nt.assert_equal(block.getstate0(), np.r_[1.0])
+        # in the band it keeps the initial value
+        nt.assert_equal(block.test_next(0.5, x=block.getstate0()), np.r_[1.0])
+
+    def test_vector_with_elementwise_parameters(self):
+        block = Hysteresis_S(
+            self.clock,
+            switch_on=[1.0, 10.0],
+            switch_off=[0.0, 5.0],
+            x0=[0.0, 1.0],
+        )
+        self.assertEqual(block.ndstates, 2)
+        x = np.r_[0.0, 1.0]
+        # element 0 at 2 switches on; element 1 at 7 is in its band and stays on
+        nt.assert_equal(block.test_next(np.r_[2.0, 7.0], x=x), np.r_[1.0, 1.0])
+        # element 0 at 0.5 stays; element 1 at 4 switches off
+        nt.assert_equal(
+            block.test_next(np.r_[0.5, 4.0], x=np.r_[1.0, 1.0]), np.r_[1.0, 0.0]
+        )
+
+    def test_scalar_state_gives_a_scalar_output(self):
+        out = self.block().test_output(0, x=np.r_[1.0])[0]
+        self.assertNotIsInstance(out, np.ndarray)
+
+    def test_bad_parameters(self):
+        with self.assertRaises(ValueError):
+            Hysteresis_S(self.clock, switch_on=0.0, switch_off=1.0)
+        with self.assertRaises(ValueError):
+            Hysteresis_S(self.clock, output_on=1.0, output_off=1.0)
+        with self.assertRaises(ValueError):
+            self.block(x0=0.5)  # neither output level
+
+    def test_parameters_are_validated_when_set(self):
+        block = self.block()
+        block.set_param("switch_on", 2.0)
+        self.assertEqual(block.switch_on, 2.0)
+        with self.assertRaises(ValueError):
+            block.set_param("switch_off", 3.0)  # above switch_on
+        with self.assertRaises(ValueError):
+            block.set_param("switch_on", -1.0)  # below switch_off
+        with self.assertRaises(ValueError):
+            block.set_param("output_on", 0.0)  # equals output_off
+        self.assertEqual((block.switch_on, block.switch_off), (2.0, 0.0))
 
 
 class DiscreteTransferTest(unittest.TestCase):

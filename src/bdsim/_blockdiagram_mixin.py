@@ -110,6 +110,17 @@ class BlockDiagramMixin:
             "onto BlockDiagram at import time by the @block decorator"
         )
 
+    # bdsim.blocks.functions.Abs
+    def ABS(self, **blockargs: Any) -> Any:
+        """
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        """
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
+
     # bdsim.blocks.sampled.Anoise_S
     def ANOISE_S(self, clock: Clock, sigma: Vector1D = 1, seed: int | None = None, x0: Vector1D | None = None, **blockargs: Any) -> Any:
         """
@@ -188,6 +199,20 @@ class BlockDiagramMixin:
     # roboticstoolbox.blocks.spatial.Delta2Tr
     def DELTA2TR(self, **blockargs: Any) -> Any:
         """
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        """
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
+
+    # bdsim.blocks.functions.Deadband
+    def DEADBAND(self, d: float | ArrayLike = 1, **blockargs: Any) -> Any:
+        """
+        :param d: Half-width of a symmetric band, or the lower and upper edges
+            of the band, defaults to 1
+        :type d: float or array_like(2)
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
@@ -571,6 +596,30 @@ class BlockDiagramMixin:
             "onto BlockDiagram at import time by the @block decorator"
         )
 
+    # bdsim.blocks.sampled.Hysteresis_S
+    def HYSTERESIS_S(self, clock: Clock, switch_on: Vector1D = 0.5, switch_off: Vector1D = -0.5, output_on: Vector1D = 1.0, output_off: Vector1D = 0.0, x0: Vector1D | None = None, **blockargs: Any) -> Any:
+        """
+        :param clock: clock source
+        :type clock: Clock
+        :param switch_on: input at or above which the output switches on, defaults to 0.5
+        :type switch_on: float or array_like, optional
+        :param switch_off: input at or below which the output switches off, defaults to -0.5
+        :type switch_off: float or array_like, optional
+        :param output_on: output level when on, defaults to 1
+        :type output_on: float or array_like, optional
+        :param output_off: output level when off, defaults to 0
+        :type output_off: float or array_like, optional
+        :param x0: initial output, which must be ``output_on`` or ``output_off``,
+            defaults to ``output_off``
+        :type x0: float or array_like, optional
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        """
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
+
     # bdsim.blocks.connections.Index
     def INDEX(self, index: list[int] | slice | str | None = None, **blockargs: Any) -> Any:
         """
@@ -628,7 +677,7 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.continuous.Integrator
-    def INTEGRATOR(self, x0: Vector1D = 0, gain: float = 1.0, min: Vector1D | None = None, max: Vector1D | None = None, **blockargs: Any) -> Any:
+    def INTEGRATOR(self, x0: Vector1D = 0, gain: float = 1.0, min: Vector1D | None = None, max: Vector1D | None = None, enable: bool = False, **blockargs: Any) -> Any:
         """
         :param x0: Initial state, defaults to 0
         :type x0: array_like, optional
@@ -638,6 +687,8 @@ class BlockDiagramMixin:
         :type min: float or array_like, optional
         :param max: Maximum value of state, defaults to None
         :type max: float or array_like, optional
+        :param enable: add a second input port that enables integration, defaults to False
+        :type enable: bool
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
@@ -1334,6 +1385,17 @@ class BlockDiagramMixin:
             "onto BlockDiagram at import time by the @block decorator"
         )
 
+    # bdsim.blocks.functions.Sign
+    def SIGN(self, **blockargs: Any) -> Any:
+        """
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        """
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
+
     # bdsim.blocks.linalg.Slice1
     def SLICE1(self, index: Any, **blockargs: Any) -> Any:
         """
@@ -1354,6 +1416,17 @@ class BlockDiagramMixin:
         :type rows: tuple(3) or list
         :param cols: column selection, defaults to None
         :type cols: tuple(3) or list
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        """
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
+
+    # bdsim.blocks.functions.Sqrt
+    def SQRT(self, **blockargs: Any) -> Any:
+        """
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
