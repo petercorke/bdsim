@@ -26,9 +26,11 @@ There are three ways an icon gets made, depending on what it needs to show:
   `make_io_icons.py` in this folder. Run it directly (`python make_io_icons.py`) to regenerate
   that set; see its module docstring for the drawing convention it follows.
   The function and noise block icons (`deadband`, `abs`, `sqrt`, `sign`, `hysteresis_s`,
-  `anoise_s`, `mnoise_s`) come from `make_function_icons.py` in the same way. They follow
+  `anoise_s`, `mnoise_s`, `switch`) come from `make_function_icons.py` in the same way. They follow
   `clip.png`: thin axes and a thick curve. The drawing helpers both scripts use are in
   `_icondraw.py`.
+  The structural and graphics block icons (`subsystem`, `inport`, `outport`, `event`,
+  `animation`) come from `make_system_icons.py`.
 
 # Creating icons from LaTeX
 
