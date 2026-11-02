@@ -579,6 +579,30 @@ class BlockDiagramMixin:
             "onto BlockDiagram at import time by the @block decorator"
         )
 
+    # bdsim.blocks.sampled.Hysteresis_S
+    def HYSTERESIS_S(self, clock: Clock, switch_on: Vector1D = 0.5, switch_off: Vector1D = -0.5, output_on: Vector1D = 1.0, output_off: Vector1D = 0.0, x0: Vector1D | None = None, **blockargs: Any) -> Any:
+        """
+        :param clock: clock source
+        :type clock: Clock
+        :param switch_on: input at or above which the output switches on, defaults to 0.5
+        :type switch_on: float or array_like, optional
+        :param switch_off: input at or below which the output switches off, defaults to -0.5
+        :type switch_off: float or array_like, optional
+        :param output_on: output level when on, defaults to 1
+        :type output_on: float or array_like, optional
+        :param output_off: output level when off, defaults to 0
+        :type output_off: float or array_like, optional
+        :param x0: initial output, which must be ``output_on`` or ``output_off``,
+            defaults to ``output_off``
+        :type x0: float or array_like, optional
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        """
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
+
     # bdsim.blocks.connections.Index
     def INDEX(self, index: list[int] | slice | str | None = None, **blockargs: Any) -> Any:
         """
