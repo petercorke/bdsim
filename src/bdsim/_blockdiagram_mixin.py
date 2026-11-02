@@ -611,7 +611,7 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.continuous.Integrator
-    def INTEGRATOR(self, x0: Vector1D = 0, gain: float = 1.0, min: Vector1D | None = None, max: Vector1D | None = None, **blockargs: Any) -> Any:
+    def INTEGRATOR(self, x0: Vector1D = 0, gain: float = 1.0, min: Vector1D | None = None, max: Vector1D | None = None, enable: bool = False, **blockargs: Any) -> Any:
         """
         :param x0: Initial state, defaults to 0
         :type x0: array_like, optional
@@ -621,6 +621,8 @@ class BlockDiagramMixin:
         :type min: float or array_like, optional
         :param max: Maximum value of state, defaults to None
         :type max: float or array_like, optional
+        :param enable: add a second input port that enables integration, defaults to False
+        :type enable: bool
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
