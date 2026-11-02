@@ -180,7 +180,7 @@ class BlockDiagram(BlockDiagramMixin):
 
     def ls(self) -> None:
         for k, v in self.blocknames.items():
-            print("{:12s}: ".format(k), ", ".join(v))
+            print(f"{k:12s}: ", ", ".join(v))
 
     @property
     def issubsystem(self) -> bool:
@@ -347,7 +347,7 @@ class BlockDiagram(BlockDiagramMixin):
             # example one the user chose that matches the next count
             stem = block._default_name_stem()
             while True:
-                name = "{:s}.{:d}".format(stem, next(self.blockcounter[stem]))
+                name = f"{stem}.{next(self.blockcounter[stem])}"
                 if name not in self.blocknames:
                     break
             block.name = name
@@ -534,7 +534,7 @@ class BlockDiagram(BlockDiagramMixin):
                 else:
                     # create default state names
                     self.statenames.extend(
-                        [(b.name or "") + ":x_" + str(i) for i in range(0, b.nstates)]
+                        [f"{b.name or ''}:x_{i}" for i in range(0, b.nstates)]
                     )
             if b.blockclass == "sampled":
                 self.ndstates += b.ndstates
@@ -547,7 +547,7 @@ class BlockDiagram(BlockDiagramMixin):
                 else:
                     # create default state names
                     b._clock.statenames.extend(
-                        [(b.name or "") + ":X_" + str(i) for i in range(0, b.ndstates)]
+                        [f"{b.name or ''}:X_{i}" for i in range(0, b.ndstates)]
                     )
 
         # connect the source and destination blocks to each wire
@@ -573,28 +573,20 @@ class BlockDiagram(BlockDiagramMixin):
             # check all inputs are connected
             for port, w in enumerate(b._input_wires):  # type: ignore[assignment]
                 if w is None:
-                    print(
-                        "  ERROR: [{:s}] input {:d} is not connected".format(
-                            str(b), port
-                        )
-                    )
+                    print(f"  ERROR: [{b}] input {port} is not connected")
                     error = True
 
             # check all outputs are connected
             for port, ws in enumerate(b._output_wires):
                 if len(ws) == 0:
-                    print(
-                        "  INFORMATION: [{:s}] output {:d} is not connected".format(
-                            str(b), port
-                        )
-                    )
+                    print(f"  INFORMATION: [{b}] output {port} is not connected")
 
             if b._inport_names is not None and len(b._inport_names) != b.nin:
-                raise ValueError("incorrect number of input names given: " + str(b))
+                raise ValueError(f"incorrect number of input names given: {b}")
             if b._outport_names is not None and len(b._outport_names) != b.nout:
-                raise ValueError("incorrect number of output names given: " + str(b))
+                raise ValueError(f"incorrect number of output names given: {b}")
             if b._state_names is not None and len(b._state_names) != b.nstates:
-                raise ValueError("incorrect number of state names given: " + str(b))
+                raise ValueError(f"incorrect number of state names given: {b}")
 
         # check for cycles of function blocks
         if verbose:
@@ -1220,11 +1212,11 @@ class BlockDiagram(BlockDiagramMixin):
 
         for sequence, group in enumerate(self.plan):
             # for each execution group, place the blocks in a subgraph
-            file.write("\tsubgraph step{:d} {{\n".format(sequence))
+            file.write(f"\tsubgraph step{sequence} {{\n")
             file.write("\t\trank=same;\n")
 
             for b in group:
-                file.write('\t\t"{:s}"\n'.format(b.name))
+                file.write(f'\t\t"{b.name}"\n')
 
             file.write("\t}\n\n")
 
@@ -1232,7 +1224,7 @@ class BlockDiagram(BlockDiagramMixin):
         for b in self.blocklist:
             if not b.blockclass == "continuous":
                 for p in b.sources:
-                    file.write('\t"{:s}" -> "{:s}"\n'.format(p.name, b.name))
+                    file.write(f'\t"{p.name}" -> "{b.name}"\n')
 
         file.write("}\n")
 
@@ -1472,8 +1464,8 @@ class BlockDiagram(BlockDiagramMixin):
             border="thin",
         )
         for wire in self.wirelist:
-            start: str = "{}[{}]".format(wire.start.block.id, wire.start.port)
-            end: str = "{}[{}]".format(wire.end.block.id, wire.end.port)
+            start: str = f"{wire.start.block.id}[{wire.start.port}]"
+            end: str = f"{wire.end.block.id}[{wire.end.port}]"
 
             typ = _signature_str(wire.end.block.insig[wire.end.port])  # type: ignore[index, arg-type]
             table.row(wire.id, start, end, wire.fullname, typ)
@@ -1932,13 +1924,13 @@ class BlockDiagram(BlockDiagramMixin):
         for b in self.blocklist:
             options = []
             if b.blockclass in shapes:
-                options.append("shape={:s}".format(shapes[b.blockclass]))
+                options.append(f"shape={shapes[b.blockclass]}")
             if b.blockclass == "source":
                 options.append('rank="source"')
             if b.blockclass in ("sink", "graphics"):
                 options.append('rank="sink"')
             if b.pos is not None:
-                options.append('pos="{:g},{:g}!"'.format(b.pos[0], b.pos[1]))
+                options.append(f'pos="{b.pos[0]:g},{b.pos[1]:g}!"')
             # options.append(
             #     'xlabel=<<BR/><FONT POINT-SIZE="8" COLOR="blue">{:s}</FONT>>'.format(
             #         b.type
@@ -1953,12 +1945,10 @@ class BlockDiagram(BlockDiagramMixin):
             options = []
             # options.append('xlabel="{:s}"'.format(w.name))
             if w.end.block.type == "sum":
-                options.append(
-                    'headlabel="{:s} "'.format(w.end.block.signs[w.end.port])
-                )
+                options.append(f'headlabel="{w.end.block.signs[w.end.port]} "')
                 options.append("labeldistance=1.5")
             if w.end.block.type == "prod":
-                options.append('headlabel="{:s} "'.format(w.end.block.ops[w.end.port]))
+                options.append(f'headlabel="{w.end.block.ops[w.end.port]} "')
                 options.append("labeldistance=1.5")
             file.write(
                 '\t"{:s}" -> "{:s}" [{:s}]\n'.format(
@@ -2273,7 +2263,7 @@ class BlockDiagram(BlockDiagramMixin):
         self, t: float | None = None, simstate: SimulationState | None = None
     ) -> None:
         for b in self.blocklist:
-            print("Block {:s}:".format(b.name))
+            print(f"Block {b.name}:")
             print("  inputs:  ", b.inport_values)
             if b.nout > 0:
                 print("  outputs: ", [b.outport_value(i) for i in range(b.nout)])

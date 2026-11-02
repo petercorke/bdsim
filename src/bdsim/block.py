@@ -799,7 +799,7 @@ class Block(ABC, Port):
 
     @property
     def fullname(self) -> str:
-        return self.blockclass + "." + str(self)
+        return f"{self.blockclass}.{self}"
 
     @property
     def hasstate(self) -> bool:
@@ -1626,13 +1626,11 @@ class Block(ABC, Port):
             )
 
         if isinstance(value, (int, float)):
-            name = "_const.{:d}({:.3g})".format(next(self.bd.n_auto_const), value)
+            name = f"_const.{next(self.bd.n_auto_const)}({value:.3g})"
         elif isinstance(value, str):
-            name = "_const.{:d}({})".format(next(self.bd.n_auto_const), value)
+            name = f"_const.{next(self.bd.n_auto_const)}({value})"
         else:
-            name = "_const.{:d}<{}>".format(
-                next(self.bd.n_auto_const), type(value).__name__
-            )
+            name = f"_const.{next(self.bd.n_auto_const)}<{type(value).__name__}>"
         return self.bd.CONSTANT(value, name=name)
 
     def _autogain(self, value: int | float | np.ndarray, **kwargs: Any) -> Block:
@@ -1642,9 +1640,9 @@ class Block(ABC, Port):
             )
 
         if isinstance(value, (int, float)):
-            name = "_gain.{:d}({:.3g})".format(next(self.bd.n_auto_gain), value)
+            name = f"_gain.{next(self.bd.n_auto_gain)}({value:.3g})"
         elif isinstance(value, np.ndarray):
-            name = "_gain.{:d}({})".format(next(self.bd.n_auto_gain), value)
+            name = f"_gain.{next(self.bd.n_auto_gain)}({value})"
         else:
             raise TypeError(
                 f"automatic gain value must be int, float, or ndarray, got {type(value).__name__}"
@@ -1657,7 +1655,7 @@ class Block(ABC, Port):
                 "block must be connected to a block diagram to create an automatic power block"
             )
 
-        name = "_pow.{:d}({:.3g})".format(next(self.bd.n_auto_pow), value)
+        name = f"_pow.{next(self.bd.n_auto_pow)}({value:.3g})"
         return self.bd.POW(value, name=name, **kwargs)
 
     @oodebug
@@ -1699,7 +1697,7 @@ class Block(ABC, Port):
             raise RuntimeError(  # pragma: no cover
                 "block must be connected to a block diagram to create an automatic sum block"
             )
-        name = "_sum.{:d}".format(next(self.bd.n_auto_sum))
+        name = f"_sum.{next(self.bd.n_auto_sum)}"
         if isinstance(other, (int, float, np.ndarray)):
             # block + constant, create a CONSTANT block
             other = self._autoconstant(other)
@@ -1744,7 +1742,7 @@ class Block(ABC, Port):
             raise RuntimeError(  # pragma: no cover
                 "block must be connected to a block diagram to create an automatic sum block"
             )
-        name = "_sum.{:d}".format(next(self.bd.n_auto_sum))
+        name = f"_sum.{next(self.bd.n_auto_sum)}"
         if isinstance(other, (int, float, np.ndarray)):
             # constant + block, create a CONSTANT block
             other = self._autoconstant(other)
@@ -1784,7 +1782,7 @@ class Block(ABC, Port):
             raise RuntimeError(  # pragma: no cover
                 "block must be connected to a block diagram to create an automatic sum block"
             )
-        name = "_sum.{:d}".format(next(self.bd.n_auto_sum))
+        name = f"_sum.{next(self.bd.n_auto_sum)}"
         if isinstance(other, (int, float, np.ndarray)):
             # block - constant, create a CONSTANT block
             other = self._autoconstant(other)
@@ -1829,7 +1827,7 @@ class Block(ABC, Port):
                 "block must be connected to a block diagram to create an automatic sum block"
             )
 
-        name = "_sum.{:d}".format(next(self.bd.n_auto_sum))
+        name = f"_sum.{next(self.bd.n_auto_sum)}"
         if isinstance(other, (int, float, np.ndarray)):
             # constant - block, create a CONSTANT block
             other = self._autoconstant(other)
@@ -1924,7 +1922,7 @@ class Block(ABC, Port):
             return self._autogain(other, premul=False, inputs=[self])
         else:
             # value * value, create a PROD block
-            name = "_prod.{:d}".format(next(self.bd.n_auto_prod))
+            name = f"_prod.{next(self.bd.n_auto_prod)}"
             return Prod("**", inputs=[self, other], name=name, bd=self.bd)
 
     @oodebug
@@ -2001,7 +1999,7 @@ class Block(ABC, Port):
                 "block must be connected to a block diagram to create an automatic product block"
             )
 
-        name = "_prod.{:d}".format(next(self.bd.n_auto_prod))
+        name = f"_prod.{next(self.bd.n_auto_prod)}"
         if isinstance(other, (int, float, np.ndarray)):
             # block / constant, create a GAIN block
             if isinstance(other, np.ndarray):
@@ -2011,7 +2009,7 @@ class Block(ABC, Port):
             return self._autogain(inverse, premul=False, inputs=[self])
         else:
             # value * value, create a PROD block
-            name = "_prod.{:d}".format(next(self.bd.n_auto_prod))
+            name = f"_prod.{next(self.bd.n_auto_prod)}"
             return Prod("*/", inputs=[self, other], name=name, bd=self.bd)
 
     @oodebug
@@ -2052,7 +2050,7 @@ class Block(ABC, Port):
                 "block must be connected to a block diagram to create an automatic product block"
             )
 
-        name = "_prod.{:d}".format(next(self.bd.n_auto_prod))
+        name = f"_prod.{next(self.bd.n_auto_prod)}"
         if isinstance(other, (int, float, np.ndarray)):
             # constant / block, create a CONSTANT block
             other = self._autoconstant(other)

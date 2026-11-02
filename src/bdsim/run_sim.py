@@ -82,7 +82,7 @@ class Progress:
         fill: str = "█",
         printEnd: str = "\r",
     ) -> None:
-        percent: str = ("{0:." + str(decimals) + "f}").format(fraction * 100)
+        percent: str = f"{fraction * 100:.{decimals}f}"
         filledLength = int(length * fraction)
         bar: str = fill * filledLength + "-" * (length - filledLength)
         print(f"\r{prefix} |{bar}| {percent}% {suffix}", end=printEnd)
@@ -721,7 +721,7 @@ class BDSim(Runner):
         )
         s += "simulation options:\n"
         for k, v in options.items():
-            s += "  {:s}: {}\n".format(k, v)
+            s += f"  {k}: {v}\n"
         return s
 
     def _get_context(self) -> SimulationContext | None:
@@ -2413,7 +2413,7 @@ class BDSim(Runner):
             raise RuntimeError("options not initialised")  # pragma: no cover
         options: OptionsBase = context.options if context is not None else self.options
         if debug[0] in options.debug:
-            print(f"DEBUG.{debug:s}: " + fmt.format(*args))
+            print(f"DEBUG.{debug}: " + fmt.format(*args))
 
     def done(self, bd: Any, block: bool = False) -> None:
         """Enter the matplotlib event loop and clean up after simulation.
