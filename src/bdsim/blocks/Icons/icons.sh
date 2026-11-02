@@ -49,7 +49,6 @@ bdtex2icon -r 140 -o poseintegrator.png -t "\int\! \nu\, dt"
 
 bdtex2icon -r 118 -o pid.png -t '\mbox{PID}(s)'
 bdtex2icon -r 118 -o pid_s.png -t '\mbox{PID}(z)'
-bdtex2icon -r 190 -o deriv.png -t 's'
 bdtex2icon -r 300 -o deriv.png -t 's'
 
 # the sampled variants, and the second-order derivative filter
