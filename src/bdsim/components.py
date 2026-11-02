@@ -172,30 +172,20 @@ class BDStruct(UserDict):
         maxwidth: int = max([len("_name")] + [len(key) for key in visible.keys()])
         for k, v in sorted(visible.items(), key=lambda x: x[0]):
             if isinstance(v, BDStruct):
-                rows.append("{:s}::".format(v._name.ljust(maxwidth)))
+                rows.append(f"{v._name.ljust(maxwidth)}::")
                 rows.append(
                     "\n".join(
                         [" " * (maxwidth + 3) + line for line in str(v).split("\n")]
                     )
                 )
             elif isinstance(v, str):
-                rows.append(
-                    '{:s} = "{:s}" ({:s})'.format(
-                        k.ljust(maxwidth), str(v), type(v).__name__
-                    )
-                )
+                rows.append(f'{k.ljust(maxwidth)} = "{v}" ({type(v).__name__})')
             elif isinstance(v, np.ndarray):
                 rows.append(
-                    "{:s} = ndarray:{:s} {:s}".format(
-                        k.ljust(maxwidth), v.dtype.type.__name__, str(v.shape)
-                    )
+                    f"{k.ljust(maxwidth)} = ndarray:{v.dtype.type.__name__} {v.shape}"
                 )
             else:
-                rows.append(
-                    "{:s} = {:s} ({:s})".format(
-                        k.ljust(maxwidth), str(v), type(v).__name__
-                    )
-                )
+                rows.append(f"{k.ljust(maxwidth)} = {v} ({type(v).__name__})")
 
         return "\n".join(rows)
 
@@ -543,7 +533,7 @@ class Runner:
         context = self._get_context()
         options = context.options if context is not None else self.options
         if options is not None and debug[0] in options.debug:
-            print(f"DEBUG.{debug:s}: " + fmt.format(*args))
+            print(f"DEBUG.{debug}: " + fmt.format(*args))
 
     def done(self, bd: BlockDiagram, block: bool = False) -> None:
         context = self._require_context()
@@ -602,7 +592,7 @@ class Clock:
         self._compile_fallback_hits: dict[str, int] = {}
 
         if name is None:
-            self.name: str = "clock." + str(len(clocklist))
+            self.name: str = f"clock.{len(clocklist)}"
         else:
             self.name = name
 

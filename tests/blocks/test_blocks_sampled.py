@@ -577,18 +577,18 @@ class LTISSSNotationTest(unittest.TestCase):
 
     def test_no_d_means_no_feedthrough(self):
         block = self.block()
-        self.assertFalse(block._feedthrough)
+        self.assertFalse(block.feedthrough)
         self.assertIsNone(block.D)
         x, u = np.r_[1.0, 2.0], 5.0
         nt.assert_allclose(block.test_output(u, x=x)[0], 3.0 + 8.0)
 
     def test_zero_d_means_no_feedthrough(self):
         block = self.block(D=np.zeros((1, 1)))
-        self.assertFalse(block._feedthrough)
+        self.assertFalse(block.feedthrough)
 
     def test_nonzero_d_is_feedthrough(self):
         block = self.block(D=np.array([[2.0]]))
-        self.assertTrue(block._feedthrough)
+        self.assertTrue(block.feedthrough)
         x, u = np.r_[1.0, 2.0], 5.0
         nt.assert_allclose(block.test_output(u, x=x)[0], 3.0 + 8.0 + 2.0 * 5.0)
         # D does not enter the next state
@@ -596,7 +596,7 @@ class LTISSSNotationTest(unittest.TestCase):
 
     def test_d_can_be_given_as_a_1d_array(self):
         block = self.block(D=np.array([2.0]))
-        self.assertTrue(block._feedthrough)
+        self.assertTrue(block.feedthrough)
 
     def test_d_of_the_wrong_shape_is_rejected(self):
         with self.assertRaises(ValueError):

@@ -497,7 +497,7 @@ class SubSystem(SubsystemBlock):
                 elif len(diagrams) > 1:
                     raise ImportError(
                         "multiple bdsim.BlockDiagram instances in imported module: "
-                        + str(diagrams)
+                        f"{diagrams}"
                     )
                 new_subsystem = cast(BlockDiagram, module.__dict__[diagrams[0]])
                 name = diagrams[0]
