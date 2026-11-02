@@ -55,4 +55,5 @@ bdtex2icon -r 300 -o deriv.png -t 's'
 bdtex2icon -r 190 -o deriv2.png -t '\frac{s}{F(s)}'
 bdtex2icon -r 220 -o deriv_s.png -t '\frac{z-1}{z}'
 bdtex2icon -r 150 -o lti_siso_s.png -t '\frac{N(z)}{D(z)}'
-bdtex2icon -r 90 -o lti_ss_s.png -t '\begin{array}{c|c} A & B\\ \hline C & D \end{array}'
+# Phi and Gamma, as in Astrom and Wittenmark, for the discrete-time system
+bdtex2icon -r 90 -o lti_ss_s.png -t '\begin{array}{c|c} \Phi & \Gamma\\ \hline C & D \end{array}'
