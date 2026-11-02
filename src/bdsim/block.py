@@ -2270,6 +2270,17 @@ class ContinuousBlock(Block):
         self._feedthrough = feedthrough
         super().__init__(nstates=nstates, ndstates=0, **blockargs)
 
+    @property
+    def feedthrough(self) -> bool:
+        """
+        True if the output depends directly on the input at the same instant.
+
+        Fixed when the block is created, because it decides the block's place in the
+        execution order: a block with feedthrough can be part of an algebraic loop.
+        Read-only, and not a parameter.
+        """
+        return self._feedthrough  # type: ignore[no-any-return]
+
     def setstate(self, x: np.ndarray) -> np.ndarray:
         self._x_view = x[: self.nstates]
         return x[self.nstates :]
@@ -2352,6 +2363,17 @@ class SampledBlock(Block):
         self.T = clock.T
         self._feedthrough = feedthrough
         clock.add_block(self)
+
+    @property
+    def feedthrough(self) -> bool:
+        """
+        True if the output depends directly on the input at the same instant.
+
+        Fixed when the block is created, because it decides the block's place in the
+        execution order: a block with feedthrough can be part of an algebraic loop.
+        Read-only, and not a parameter.
+        """
+        return self._feedthrough  # type: ignore[no-any-return]
 
     def setstate(self, x: np.ndarray) -> np.ndarray:
         self._x_view = x[: self.ndstates]
