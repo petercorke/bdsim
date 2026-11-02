@@ -1071,13 +1071,13 @@ class Function(FunctionBlock):
             if isinstance(val, (list, tuple)):
                 if len(val) != self.nout:
                     raise RuntimeError(
-                        "Function returns wrong number of arguments: " + str(self)
+                        f"Function returns wrong number of arguments: {self}"
                     )
                 return list(val)
             else:
                 if self.nout != 1:
                     raise RuntimeError(
-                        "Function returns wrong number of arguments: " + str(self)
+                        f"Function returns wrong number of arguments: {self}"
                     )
                 return [val]
         else:

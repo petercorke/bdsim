@@ -115,7 +115,7 @@ class Wire:
 
             wire.5: d2goal[0] --> Kv[0]
         """
-        return str(self) + ": " + self.fullname
+        return f"{self}: {self.fullname}"
 
     @property
     def fullname(self) -> str:
@@ -129,11 +129,9 @@ class Wire:
 
             d2goal[0] --> Kv[0]
         """
-        return "{}[{}] --> {}[{}]".format(
-            self.start.block.name,
-            self.start.port,
-            self.end.block.name,
-            self.end.port,
+        return (
+            f"{self.start.block.name}[{self.start.port}] --> "
+            f"{self.end.block.name}[{self.end.port}]"
         )
 
     def __str__(self) -> str:
@@ -217,10 +215,10 @@ class Plug(Port):
         self.type: str = kind or ""
 
     def __str__(self) -> str:
-        return str(self.block) + "[" + str(self.port) + "]"
+        return f"{self.block}[{self.port}]"
 
     def __repr__(self) -> str:
-        return "Plug/" + self.type + ":" + str(self)
+        return f"Plug/{self.type}:{self}"
 
     @property
     def isslice(self) -> bool:
@@ -317,13 +315,13 @@ class Plug(Port):
         elif isinstance(other, Plug):
             bd = self.block.bd
         else:
-            raise ValueError("unsupported operand type for *: " + str(type(other)))
+            raise ValueError(f"unsupported operand type for *: {type(other)}")
 
         if bd is None:
             raise RuntimeError(  # pragma: no cover
                 "left operand of * operator must be a plug connected to a block diagram"
             )
-        name = "_prod.{:d}".format(next(bd.n_auto_prod))
+        name = f"_prod.{next(bd.n_auto_prod)}"
         return Prod("**", matrix=True, name=name, inputs=[self, other], bd=bd)
 
     @oodebug

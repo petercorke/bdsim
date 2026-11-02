@@ -314,7 +314,7 @@ class GraphicsBlock(SinkBlock):
             if filename is None:
                 filename = self.name or ""
             filename += "." + format
-            print("saved {} -> {}".format(str(self), filename))
+            print(f"saved {self} -> {filename}")
             plt.savefig(filename, **kwargs)  # save the current figure
 
         except:
@@ -365,7 +365,7 @@ class GraphicsBlock(SinkBlock):
             x = int(x) + gstate.xoffset
             y = int(y)
             if backend == "TkAgg":
-                f.canvas.manager.window.wm_geometry("+%d+%d" % (x, y))
+                f.canvas.manager.window.wm_geometry(f"+{x}+{y}")
             elif backend == "WXAgg":
                 f.canvas.manager.window.SetPosition((x, y))
             else:
@@ -562,7 +562,7 @@ class GraphicsBlock(SinkBlock):
             # Notebook/inline backends have no window manager; skip desktop GUI ops.
             _is_notebook_backend = is_notebook_backend(mpl_backend)
             if not _is_notebook_backend:
-                f.canvas.manager.set_window_title(f"bdsim: Figure {f.number:d}")  # type: ignore[union-attr]
+                f.canvas.manager.set_window_title(f"bdsim: Figure {f.number}")  # type: ignore[union-attr]
 
             # save graphics info away in state
             gstate.figsize = figsize
@@ -595,7 +595,7 @@ class GraphicsBlock(SinkBlock):
         if gstate.ntiles is None:
             # Untiled mode: each graphics block gets its own figure.
             if gstate.fignum > 0 and not _notebook:
-                f.canvas.manager.set_window_title(f"bdsim: Figure {f.number:d}")  # type: ignore[union-attr]
+                f.canvas.manager.set_window_title(f"bdsim: Figure {f.number}")  # type: ignore[union-attr]
         else:
             # Tiled mode: one shared figure with subplots; each block gets a tile.
             rows, cols = gstate.ntiles
