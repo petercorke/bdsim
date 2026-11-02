@@ -106,3 +106,21 @@ for name, glyph in (("anoise_s", glyph_plus), ("mnoise_s", glyph_times)):
     glyph(d, 52, 125, 34, 17)
     poly(d, held_noise(104, 240, 60), 11)
     done(im, name)
+
+# SWITCH: X (upper) and Y (lower) in on the left, Z out on the right, a lever pivoting at
+# the output and resting on X, and a control arrow for S pointing at the lever
+im, d = new()
+PIVOT, XT, YT = (206, 125), (50, 76), (50, 174)
+poly(d, [(8, XT[1]), (XT[0] - 10, XT[1])], 9)
+poly(d, [(8, YT[1]), (YT[0] - 10, YT[1])], 9)
+poly(d, [(PIVOT[0] + 4, PIVOT[1]), (242, PIVOT[1])], 9)
+dot(d, *XT, 11)
+dot(d, *YT, 11)
+dot(d, *PIVOT, 11)
+# the lever stops short of X, so that the contact is visible
+lx, ly = XT[0] + 16, XT[1] + 5
+stroke(d, [PIVOT, (lx, ly)], 13, cap="round")
+mx, my = (PIVOT[0] + lx) / 2, (PIVOT[1] + ly) / 2
+poly(d, [(mx, 22), (mx, my - 34)], 7)
+arrowhead(d, (mx, my - 12), (0, 1), length=26, width=30)
+done(im, "switch")
