@@ -2011,6 +2011,8 @@ class BDSim(Runner):
             ivp_args["events"] = [
                 detector for detector, _ in simstate.crossing_detectors
             ]
+            # the step boundaries are needed to refine the state at a crossing
+            ivp_args["dense_output"] = True
 
         # ---------------------------------------------------------------------
         # INTEGRATOR CORE (single solve_ivp call for this interval)
@@ -2038,6 +2040,9 @@ class BDSim(Runner):
                 status=int(result.status),
                 message=str(result.message),
             )
+
+        if len(simstate.crossing_detectors) > 0:
+            self._refine_crossing_state(ydot, result, ivp_args)
 
         # remove time overlap between integration segments
         #
@@ -2167,6 +2172,67 @@ class BDSim(Runner):
 
         # if integration produced no points, return initial state
         return np.array(x0), t_final
+
+    @staticmethod
+    def _refine_crossing_state(
+        ydot: Callable[[float, np.ndarray], np.ndarray],
+        result: Any,
+        ivp_args: dict[str, Any],
+    ) -> None:
+        """
+        Recompute the state at a crossing that stopped the solver.
+
+        :param ydot: the right-hand side that was integrated
+        :param result: the ``solve_ivp`` result, with ``dense_output=True``; its
+            ``y`` and ``y_events`` are corrected in place
+        :param ivp_args: the keyword arguments given to ``solve_ivp``
+
+        solve_ivp finds the crossing time accurately, but takes the state there
+        from the interpolant of the step that contained it.  If the right-hand side
+        has a corner or a jump at the crossing, the stages of that step straddled
+        it, and the interpolant, and so the state, is wrong by an amount set by the
+        tolerance.  Everything the solver accepted before that step is sound, so
+        integrate again from the start of that step to the crossing, where the
+        right-hand side is smooth.  Output samples that fell inside the step on a
+        fixed grid (``t_eval``) are replaced too.
+
+        If the second integration fails the interpolant is kept.
+        """
+        sol = getattr(result, "sol", None)
+        if result.status != 1 or sol is None or len(sol.ts) < 2:
+            return  # not stopped by an event
+
+        t_c = float(sol.ts[-1])
+        t_s = float(sol.ts[-2])
+        if t_c <= t_s:
+            return
+
+        # Stop a hair short of the crossing.  A Runge-Kutta method evaluates the
+        # right-hand side at its endpoint, and at the crossing a jump (SIGN) is
+        # ambiguous: just short of it the evaluation is on the pre-crossing side.
+        # The state differs from that at the crossing by the rate times this gap,
+        # about 1e-12 of the step.
+        t_end = t_c - 1e-12 * (t_c - t_s)
+        inside = [float(t) for t in result.t if t_s < t < t_end]
+        t_eval = np.array(sorted({*inside, t_end}))
+        args = {
+            k: v
+            for k, v in ivp_args.items()
+            if k not in ("events", "t_eval", "dense_output", "first_step")
+        }
+        fine = integrate.solve_ivp(ydot, (t_s, t_end), sol(t_s), t_eval=t_eval, **args)
+        if not fine.success or fine.y.shape[1] != len(t_eval):
+            return
+
+        for k, t in enumerate(result.t):
+            if t_s < t < t_end:
+                result.y[:, k] = fine.y[:, np.searchsorted(t_eval, t)]
+            elif t_end <= t <= t_c:
+                result.y[:, k] = fine.y[:, -1]
+        for crossings, states in zip(result.t_events, result.y_events):
+            for j, t in enumerate(crossings):
+                if abs(float(t) - t_c) <= 1e-12 * max(1.0, abs(t_c)):
+                    states[j] = fine.y[:, -1]
 
     def _interval_discrete(
         self, bd: Any, t0: float, t1: float, x0: np.ndarray, simstate: BDSimState
