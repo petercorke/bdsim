@@ -46,10 +46,10 @@ class ScopeLineStyleTest(unittest.TestCase):
     def tearDown(self) -> None:
         plt.close("all")
 
-    def _started_scope(self, styles, labels=None):
+    def _started_scope(self, styles, labels=None, **kwargs):
         sim = BDSim()
         bd = sim.blockdiagram()
-        scope = bd.SCOPE(styles=styles, labels=labels)
+        scope = bd.SCOPE(styles=styles, labels=labels, **kwargs)
         for i in range(len(styles)):
             bd.connect(bd.CONSTANT(i), scope[i])
         bd.compile()
@@ -69,6 +69,34 @@ class ScopeLineStyleTest(unittest.TestCase):
         self.assertEqual(scope.line[0].get_color(), "b")
         self.assertEqual(scope.line[1].get_color(), "r")
         self.assertEqual(scope.line[1].get_drawstyle(), "steps")
+
+    def test_stairs_does_not_change_the_callers_style_dict(self):
+        # stairs forces a stepped line, which used to be written into the dict the
+        # caller passed, so reusing it elsewhere silently gave a stepped line too
+        style = dict(color="b")
+        scope = self._started_scope([style], stairs=True)
+
+        self.assertEqual(scope.line[0].get_drawstyle(), "steps")
+        self.assertEqual(style, dict(color="b"))
+
+    def test_a_style_dict_can_be_reused_by_another_scope(self):
+        style = dict(color="b")
+        self._started_scope([style], stairs=True)
+        other = self._started_scope([style])
+
+        self.assertEqual(other.line[0].get_drawstyle(), "default")
+
+    def test_style_dict_can_set_the_line_width(self):
+        # the scope's own default width of 2 must not clash with the caller's
+        scope = self._started_scope([dict(color="b", linewidth=5)])
+
+        self.assertEqual(scope.line[0].get_linewidth(), 5)
+
+    def test_default_line_width_is_2(self):
+        scope = self._started_scope([dict(color="b"), "r"])
+
+        self.assertEqual(scope.line[0].get_linewidth(), 2)
+        self.assertEqual(scope.line[1].get_linewidth(), 2)
 
     def test_style_is_not_the_legend_label(self):
         scope = self._started_scope(["r--", dict(color="b")], labels=["x", "y"])
