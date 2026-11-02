@@ -105,9 +105,8 @@ class SwitchRuleTest(unittest.TestCase):
     def test_ports_are_named(self):
         s = Switch()
         self.assertEqual((s.nin, s.nout), (3, 1))
-        self.assertEqual(s._inport_names, ["X", "Y", "S"]) if isinstance(
-            s._inport_names, list
-        ) else self.assertEqual(tuple(s._inport_names), ("X", "Y", "S"))
+        self.assertEqual(list(s._inport_names), ["X", "Y", "S"])
+        self.assertEqual(list(s._outport_names), ["Z"])
         for i, name in enumerate("XYS"):
             self.assertEqual(getattr(s, name).port, i)
 
@@ -186,7 +185,7 @@ class SwitchSimulationTest(unittest.TestCase):
         self.check_better_with_events(f, expected=4.0)
 
     def test_vectors(self):
-        out, x = self.integrate(
+        _, x = self.integrate(
             lambda bd: bd.CONSTANT(np.r_[1.0, 2.0]),
             lambda bd: bd.CONSTANT(np.r_[0.0, 0.0]),
             self.signal(lambda t: t - 1.0),
@@ -218,7 +217,10 @@ class SwitchSimulationTest(unittest.TestCase):
         # S always selects X, so the output never changes type or shape: only the check
         # at the start of the run, not the run-time check for a change of signature, can
         # find that Y differs
-        always = lambda bd: bd.CONSTANT(True)
+
+        def always(bd):
+            return bd.CONSTANT(True)
+
         with self.assertRaises(RuntimeError):
             self.integrate(self.two, lambda bd: bd.CONSTANT(0), always)
         with self.assertRaises(RuntimeError):
