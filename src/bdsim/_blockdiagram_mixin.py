@@ -871,7 +871,7 @@ class BlockDiagramMixin:
             - The default ``form='ccf', order='backward'`` corresponds to the state-space realization returned by ``scipy.signal.tf2ss`` and MATLAB's ``tf2ss``.
             - The state-space matrices are available in the ``A``, ``B``, ``C``, and ``D`` attributes of the block.
             - If D is zero, then the block has no feedthrough and the D matrix is set to None. If D is nonzero, then the block has feedthrough and the D matrix is stored in the D attribute.
-            - The ``_feedthrough`` attribute of the block is set to True if D is nonzero. This can be used to check for feedthrough without having to check the D matrix directly, and is used
+            - The ``feedthrough`` attribute of the block is set to True if D is nonzero. This can be used to check for feedthrough without having to check the D matrix directly, and is used
               by the scheduler to ensure correct block evaluation order.
         """
         raise NotImplementedError(  # pragma: no cover
@@ -957,7 +957,7 @@ class BlockDiagramMixin:
             - The default ``form='ccf', order='backward'`` corresponds to the state-space realization returned by ``scipy.signal.tf2ss`` and MATLAB's ``tf2ss``.
             - The state-space matrices are available in the ``A``, ``B``, ``C``, and ``D`` attributes of the block.
             - If D is zero, then the block has no feedthrough and the D matrix is set to None. If D is nonzero, then the block has feedthrough and the D matrix is stored in the D attribute.
-            - The ``_feedthrough`` attribute of the block is set to True if D is nonzero. This can be used to check for feedthrough without having to check the D matrix directly, and is used
+            - The ``feedthrough`` attribute of the block is set to True if D is nonzero. This can be used to check for feedthrough without having to check the D matrix directly, and is used
               by the scheduler to ensure correct block evaluation order.
         """
         raise NotImplementedError(  # pragma: no cover
@@ -1518,6 +1518,19 @@ class BlockDiagramMixin:
 
         For example if ``mode="rc"`` then a 2-element array would have its
         second element wrapped to the range [-π, π).
+        """
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
+
+    # bdsim.blocks.functions.Switch
+    def SWITCH(self, threshold: float | None = None, **blockargs: Any) -> Any:
+        """
+        :param threshold: ``S`` selects ``X`` when ``S >= threshold``; ``None`` (the
+            default) uses the rule for the type of ``S`` in the table above
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "

@@ -880,7 +880,7 @@ class LTI_SISO_S(_TFParams, LTI_SS_S):
               length of ``den`` minus one, cannot change.
             - The state-space matrices are available in the ``A``, ``B``, ``C``, and ``D`` attributes of the block.
             - If the numerator degree is less than the denominator degree, the block has no feedthrough and ``D`` is None.
-              The ``_feedthrough`` attribute of the block is set to True otherwise. It is used
+              The ``feedthrough`` attribute of the block is set to True otherwise. It is used
               by the scheduler to ensure correct block evaluation order.
 
         .. versionchanged:: next
@@ -1003,8 +1003,8 @@ class PID_S(SubsystemBlock):
     proportional term is always built.
 
     * By default (``terms=None``) the I term is built only if ``I`` is not zero, and the D
-      term only if ``D`` is not zero.  So ``bd.PID_S(P=3, I=1)`` is a PI controller and
-      ``bd.PID_S(P=3)`` is proportional only.
+      term only if ``D`` is not zero.  So ``bd.PID_S(clock, P=3, I=1)`` is a PI controller and
+      ``bd.PID_S(clock, P=3)`` is proportional only.
     * ``terms`` overrides this.  It is one of ``"P"``, ``"PI"``, ``"PD"`` or ``"PID"``, and
       exactly those terms are built, **even if their gain is zero**.  A term that is
       built can have its gain changed after the block is created; a term that was left
