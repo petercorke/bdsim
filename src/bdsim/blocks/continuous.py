@@ -392,15 +392,16 @@ class LTI_SS(ContinuousBlock):
 
         \begin{aligned}
         \dot{x} &= A x + B u \\
-        y &= C x
+        y &= C x + D u
         \end{aligned}
 
-    A direct passthrough component, typically :math:`D`, is not allowed in order
-    to avoid algebraic loops.
+    ``D`` is optional and defaults to zero.  If it is nonzero the block has direct
+    feedthrough, the output depends on the input at the same instant, which creates an
+    algebraic loop if the output feeds back to the input without a delay.
 
     Examples::
 
-        lti = bd.LTI_SS(A=-2, B=1, C=-1)
+        lti = bd.LTI_SS(A=np.array([[-2.0]]), B=np.array([1.0]), C=np.array([-1.0]))
 
     is the system :math:`\dot{x}=-2x+u, y=-x`.
     """
@@ -418,16 +419,14 @@ class LTI_SS(ContinuousBlock):
         **blockargs: Any,
     ) -> None:
         r"""
-        :param N: numerator coefficients, defaults to 1
-        :type N: array_like, optional
-        :param A: system matrix, defaults to [1,1]
-        :type A: array_like, optional
-        :param B: input matrix, defaults to [1]
-        :type B: array_like, optional
-        :param C: output matrix, defaults to [1]
-        :type C: array_like, optional
-        :param D: feedthrough matrix, defaults to None
-        :type D: array_like, optional
+        :param A: system matrix
+        :type A: ndarray(n,n)
+        :param B: input matrix; a 1D array is a column vector
+        :type B: ndarray(n,m)
+        :param C: output matrix; a 1D array is a row vector
+        :type C: ndarray(p,n)
+        :param D: feedthrough matrix, defaults to zero
+        :type D: ndarray(p,m), optional
         :param x0: initial states, defaults to None
         :type x0: array_like, optional
         :param blockargs: :meth:`common block options <bdsim.Block.__init__>`

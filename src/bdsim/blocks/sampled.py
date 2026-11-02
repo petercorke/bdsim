@@ -972,8 +972,8 @@ class PID_S(SubsystemBlock):
     proportional term is always built.
 
     * By default (``terms=None``) the I term is built only if ``I`` is not zero, and the D
-      term only if ``D`` is not zero.  So ``bd.PID_S(P=3, I=1)`` is a PI controller and
-      ``bd.PID_S(P=3)`` is proportional only.
+      term only if ``D`` is not zero.  So ``bd.PID_S(clock, P=3, I=1)`` is a PI controller and
+      ``bd.PID_S(clock, P=3)`` is proportional only.
     * ``terms`` overrides this.  It is one of ``"P"``, ``"PI"``, ``"PD"`` or ``"PID"``, and
       exactly those terms are built, **even if their gain is zero**.  A term that is
       built can have its gain changed after the block is created; a term that was left
