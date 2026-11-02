@@ -121,6 +121,23 @@ class BlockDiagramMixin:
             "onto BlockDiagram at import time by the @block decorator"
         )
 
+    # bdsim.blocks.sampled.Anoise_S
+    def ANOISE_S(self, clock: Clock, sigma: Vector1D = 1, seed: int | None = None, x0: Vector1D | None = None, **blockargs: Any) -> Any:
+        """
+        :param clock: clock source
+        :type clock: Clock
+        :param sigma: standard deviation of the noise, defaults to 1
+        :param seed: seed for the random number generator, defaults to None
+        :param x0: noise during the first sample period, defaults to zero with the
+            length of ``sigma``
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        """
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
+
     # bdsim.blocks.functions.Clip
     def CLIP(self, min: Vector1D = -inf, max: ArrayLike = inf, **blockargs: Any) -> Any:
         """
@@ -1043,6 +1060,23 @@ class BlockDiagramMixin:
         :type flapscale: float
         :param projection: 3D projection, one of: 'ortho' [default], 'perspective'
         :type projection: str
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        """
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
+
+    # bdsim.blocks.sampled.Mnoise_S
+    def MNOISE_S(self, clock: Clock, sigma: Vector1D = 1, seed: int | None = None, x0: Vector1D | None = None, **blockargs: Any) -> Any:
+        """
+        :param clock: clock source
+        :type clock: Clock
+        :param sigma: standard deviation of the noise, defaults to 1
+        :param seed: seed for the random number generator, defaults to None
+        :param x0: noise during the first sample period, defaults to one with the
+            length of ``sigma``
         :param blockargs: |BlockOptions|
         :type blockargs: dict
         """

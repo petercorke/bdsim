@@ -1268,6 +1268,265 @@ class PID_S(SubsystemBlock):
 # Compatibility shims
 
 
+# ------------------------------------------------------------------------ #
+
+
+class _NoiseMixin:
+    r"""
+    What ANOISE_S and MNOISE_S share: a noise sample held in the discrete state.
+
+    The sample for tick :math:`k` is drawn in ``next()`` from a generator seeded with
+    ``[seed, k]``, so it is a pure function of the seed and the tick index.  That makes
+    a run repeatable whatever the solver does between ticks, and harmless if ``next()``
+    is also called for ticks of other clocks, where the result is discarded.
+    """
+
+    _mean: float  # mean of each sample
+
+    sigma: Vector1D
+    seed: int | None
+
+    def _check_sigma(self, value: Any) -> None:
+        sigma = np.asarray(value, dtype=float)
+        if sigma.ndim > 1:
+            raise ValueError(
+                f"sigma must be a scalar or a vector, got shape {sigma.shape}"
+            )
+        if np.any(sigma < 0):
+            raise ValueError("sigma must not be negative")
+
+    def _check_seed(self, value: Any) -> None:
+        if value is not None and (int(value) != value or value < 0):
+            raise ValueError(
+                f"seed must be a non-negative integer or None, got {value}"
+            )
+
+    def _check_shapes(self) -> None:
+        shape = np.shape(self.sigma)
+        n = self._x0.size  # type: ignore[attr-defined]
+        if shape not in ((), (n,)):
+            raise ValueError(
+                f"sigma has shape {shape} but the block has {n} state element(s)"
+            )
+
+    def reset(self) -> None:
+        """A seeded block repeats every run, an unseeded one starts each run afresh."""
+        if self.seed is None:
+            self._run_seed = int(np.random.SeedSequence().entropy)  # type: ignore[arg-type]
+        else:
+            self._run_seed = int(self.seed)
+
+    def configure(self) -> None:
+        self._check_shapes()
+        sig = self.insig[0]  # type: ignore[attr-defined]
+        if sig is None or sig.shape is None:
+            return
+        n = self._x0.size  # type: ignore[attr-defined]
+        size = int(np.prod(sig.shape))
+        if n != 1 and tuple(sig.shape) != self._x0.shape:  # type: ignore[attr-defined]
+            raise ValueError(
+                f"{self.name}: input has shape {tuple(sig.shape)} but the noise has "  # type: ignore[attr-defined]
+                f"{n} element(s)"
+            )
+        if n == 1 and size != 1:
+            raise ValueError(
+                f"{self.name}: input has {size} elements but the noise has one "  # type: ignore[attr-defined]
+                "sample per tick.  Give sigma, or x0, one element per input element "
+                "for independent noise on each"
+            )
+
+    def next(self, t: float, u: list[Any], x: np.ndarray) -> np.ndarray:
+        k = int(round((t - self._clock.offset) / self.T))  # type: ignore[attr-defined]
+        rng = np.random.default_rng([self._run_seed, max(k, 0)])
+        return np.atleast_1d(rng.normal(self._mean, self.sigma, size=self._x0.shape))  # type: ignore[attr-defined]
+
+    def _sample(self, x: np.ndarray) -> Any:
+        return x.item() if x.size == 1 else x
+
+
+class Anoise_S(_NoiseMixin, SampledBlock):
+    r"""
+    :blockname:`ANOISE_S`
+
+    Additive noise block.
+
+    :inputs: 1
+    :outputs: 1
+    :states: N
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - float, ndarray
+            - :math:`u`
+        *   - Output
+            - 0
+            - float, ndarray
+            - :math:`u + n`
+
+    The output is the input plus a sample :math:`n` of zero-mean Gaussian noise with
+    standard deviation ``sigma``.  A new sample is drawn at each tick of the clock
+    and held until the next, so the noise is piecewise constant and the solver sees a
+    function of time.  The input passes through continuously.
+
+    The sample for tick :math:`k` depends only on ``seed`` and :math:`k`, so a seeded
+    block gives the same noise in every run and whatever the solver does.  If ``seed``
+    is ``None`` each run uses a new seed.
+
+    ``sigma`` is a scalar or a vector.  If the input is a vector the noise has one
+    element per input element, independent of each other, so ``sigma`` (or ``x0``) must
+    have that length.  A vector ``sigma`` gives each element its own standard deviation.
+
+    As for all sampled blocks the tick at :math:`t=0` is not applied, so the first
+    sample period carries ``x0`` instead of noise.  It is zero by default.
+
+    For example::
+
+        anoise = bd.ANOISE_S(clock, sigma=0.1, seed=1)
+
+    :seealso: :class:`Mnoise_S` :func:`numpy.random.default_rng`
+    """
+
+    nin = 1
+    nout = 1
+    _mean = 0.0
+
+    def __init__(
+        self,
+        clock: Clock,
+        sigma: Vector1D = 1,
+        seed: int | None = None,
+        x0: Vector1D | None = None,
+        **blockargs: Any,
+    ) -> None:
+        r"""
+        :param clock: clock source
+        :param sigma: standard deviation of the noise, defaults to 1
+        :param seed: seed for the random number generator, defaults to None
+        :param x0: noise during the first sample period, defaults to zero with the
+            length of ``sigma``
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        """
+        sigma_array = np.asarray(sigma, dtype=float)
+        if x0 is None:
+            x0 = np.zeros(sigma_array.size)
+        super().__init__(clock=clock, x0=x0, feedthrough=True, **blockargs)
+
+        self.sigma = sigma
+        self.seed = seed
+        self._check_sigma(sigma)
+        self._check_seed(seed)
+        self._check_shapes()
+        self.reset()
+
+        self.add_param("clock", when="never")
+        self.add_param("sigma", coerce=False, validate=self._check_sigma)
+        self.add_param("seed", coerce=False, when="setup", validate=self._check_seed)
+        self.add_param("x0", when="setup")
+
+    def output(self, t: float, u: list[Any], x: np.ndarray) -> list[Any]:
+        return [u[0] + self._sample(x)]
+
+
+class Mnoise_S(_NoiseMixin, SampledBlock):
+    r"""
+    :blockname:`MNOISE_S`
+
+    Multiplicative noise block.
+
+    :inputs: 1
+    :outputs: 1
+    :states: N
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - float, ndarray
+            - :math:`u`
+        *   - Output
+            - 0
+            - float, ndarray
+            - :math:`u \times n`
+
+    The output is the input times a sample :math:`n` of Gaussian noise with unit mean
+    and standard deviation ``sigma``.  A new sample is drawn at each tick of the clock
+    and held until the next, so the noise is piecewise constant and the solver sees a
+    function of time.  The input passes through continuously.
+
+    The sample for tick :math:`k` depends only on ``seed`` and :math:`k`, so a seeded
+    block gives the same noise in every run and whatever the solver does.  If ``seed``
+    is ``None`` each run uses a new seed.
+
+    ``sigma`` is a scalar or a vector.  If the input is a vector the noise has one
+    element per input element, independent of each other, so ``sigma`` (or ``x0``) must
+    have that length.  A vector ``sigma`` gives each element its own standard deviation.
+
+    As for all sampled blocks the tick at :math:`t=0` is not applied, so the first
+    sample period carries ``x0`` instead of noise.  It is one by default.
+
+    For example::
+
+        mnoise = bd.MNOISE_S(clock, sigma=0.1, seed=1)
+
+    :seealso: :class:`Anoise_S` :func:`numpy.random.default_rng`
+    """
+
+    nin = 1
+    nout = 1
+    _mean = 1.0
+
+    def __init__(
+        self,
+        clock: Clock,
+        sigma: Vector1D = 1,
+        seed: int | None = None,
+        x0: Vector1D | None = None,
+        **blockargs: Any,
+    ) -> None:
+        r"""
+        :param clock: clock source
+        :param sigma: standard deviation of the noise, defaults to 1
+        :param seed: seed for the random number generator, defaults to None
+        :param x0: noise during the first sample period, defaults to one with the
+            length of ``sigma``
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        """
+        sigma_array = np.asarray(sigma, dtype=float)
+        if x0 is None:
+            x0 = np.ones(sigma_array.size)
+        super().__init__(clock=clock, x0=x0, feedthrough=True, **blockargs)
+
+        self.sigma = sigma
+        self.seed = seed
+        self._check_sigma(sigma)
+        self._check_seed(seed)
+        self._check_shapes()
+        self.reset()
+
+        self.add_param("clock", when="never")
+        self.add_param("sigma", coerce=False, validate=self._check_sigma)
+        self.add_param("seed", coerce=False, when="setup", validate=self._check_seed)
+        self.add_param("x0", when="setup")
+
+    def output(self, t: float, u: list[Any], x: np.ndarray) -> list[Any]:
+        return [u[0] * self._sample(x)]
+
+
+# ------------------------------------------------------------------------ #
+
+
 @deprecated_block("Integrator_S")
 class DIntegrator(Integrator_S):
     r"""Deprecated: use ``Integrator_S`` instead."""
