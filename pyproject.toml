@@ -117,6 +117,8 @@ select = [
     "UP006",  # list[X], not List[X]
     "UP007",  # X | Y, not Union[X, Y]
     "UP045",  # X | None, not Optional[X]
+    "UP031",  # f-strings, not percent formatting
+    "UP032",  # f-strings, not str.format
 ]
 ignore = [
     "F403",  # star imports are used deliberately by the block modules
@@ -128,7 +130,7 @@ ignore = [
 "__init__.py" = ["F401"]  # re-exports
 # bdedit modules rely on `from x import *` chains, so an "unused" import is often
 # a name that dependent modules use implicitly; auto-removing them breaks those modules.
-"src/bdedit/**" = ["F401"]
+"src/bdedit/**" = ["F401", "UP031", "UP032"]  # vendored, not being modernised
 
 [tool.ruff.format]
 quote-style = "double"

@@ -101,7 +101,8 @@ class Print(SinkBlock):
         # TODO format can be a string or function
 
     def step(self, t: float, inputs: list[Any]) -> None:
-        prefix: str = "{:12s}".format("PRINT({:s} (t={:.3f})".format(self.name, t))
+        label = f"PRINT({self.name} (t={t:.3f})"
+        prefix: str = f"{label:12s}"
         value = inputs[0]
         if self.fmt is None:
             # no format string
