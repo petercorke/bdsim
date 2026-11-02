@@ -1524,6 +1524,19 @@ class BlockDiagramMixin:
             "onto BlockDiagram at import time by the @block decorator"
         )
 
+    # bdsim.blocks.functions.Switch
+    def SWITCH(self, threshold: float | None = None, **blockargs: Any) -> Any:
+        """
+        :param threshold: ``S`` selects ``X`` when ``S >= threshold``; ``None`` (the
+            default) uses the rule for the type of ``S`` in the table above
+        :param blockargs: |BlockOptions|
+        :type blockargs: dict
+        """
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
+
     # bdsim.blocks.sources.Time
     def TIME(self, value: Any | None = None, **blockargs: Any) -> Any:
         """

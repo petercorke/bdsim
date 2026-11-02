@@ -163,3 +163,18 @@ def arrowhead(d, tip, direction, length=30, width=34):
         [(s(tip[0]), s(tip[1])), (s(bx + px), s(by + py)), (s(bx - px), s(by - py))],
         fill=255,
     )
+
+
+def box(d, x0, y0, x1, y1, w=W):
+    """
+    Hollow rectangle with its outer edge at the given coordinates.
+
+    It clears its inside, so draw it before anything that goes inside it.
+    """
+    d.rectangle([s(x0), s(y0), s(x1), s(y1)], fill=255)
+    d.rectangle([s(x0 + w), s(y0 + w), s(x1 - w), s(y1 - w)], fill=0)
+
+
+def solid(d, pts):
+    """Filled polygon."""
+    d.polygon([(s(x), s(y)) for x, y in pts], fill=255)
