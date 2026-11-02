@@ -22,6 +22,7 @@ from numpy.typing import ArrayLike
 Vector1D = int | float | tuple[float, ...] | list[float] | np.ndarray
 
 from bdsim.components import FunctionBlock
+from bdsim.crossing import CrossingMixin
 
 # TODO:
 # transform 3D points
@@ -634,7 +635,7 @@ class Abs(FunctionBlock):
 # ------------------------------------------------------------------------ #
 
 
-class Clip(FunctionBlock):
+class Clip(CrossingMixin, FunctionBlock):
     r"""
     :blockname:`CLIP`
 
@@ -697,6 +698,17 @@ class Clip(FunctionBlock):
         self.max = max
         self.add_param("min")
         self.add_param("max")
+
+    def start(self, simstate: Any) -> None:
+        # the output is continuous but its slope jumps at each limit: restart the
+        # solver there so that no step straddles the corner
+        n = self.signal_size()
+        lo = np.broadcast_to(np.atleast_1d(self.min), n)
+        hi = np.broadcast_to(np.atleast_1d(self.max), n)
+        self.declare_thresholds(
+            simstate,
+            [(i, lo[i]) for i in range(n)] + [(i, hi[i]) for i in range(n)],
+        )
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         input = inputs[0]
