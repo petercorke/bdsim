@@ -278,7 +278,7 @@ class GraphicsBlock(SinkBlock):
                 pass
             elif not already_drawn:
                 if tiled and self._fig is not None:
-                    self._fig._bdsim_last_draw_t = draw_key
+                    setattr(self._fig, "_bdsim_last_draw_t", draw_key)
 
                 if self._simstate.backend == "TkAgg":
                     self._fig.canvas.flush_events()  # type: ignore[union-attr]
@@ -376,15 +376,16 @@ class GraphicsBlock(SinkBlock):
             backend: str = matplotlib.get_backend()
             x = int(x) + gstate.xoffset
             y = int(y)
+            manager = cast(Any, f.canvas.manager)
             if backend == "TkAgg":
-                f.canvas.manager.window.wm_geometry(f"+{x}+{y}")
+                manager.window.wm_geometry(f"+{x}+{y}")
             elif backend == "WXAgg":
-                f.canvas.manager.window.SetPosition((x, y))
+                manager.window.SetPosition((x, y))
             else:
                 # This works for QT and GTK
                 # You can also use window.setGeometry
                 try:
-                    f.canvas.manager.window.move(x, y)
+                    manager.window.move(x, y)
                 except AttributeError:
                     # Native MacOSX backend does not expose a window move API.
                     if (
@@ -711,7 +712,7 @@ class GraphicsBlock(SinkBlock):
 
         if not getattr(f, "_bdsim_global_keys", False):
             f.canvas.mpl_connect("key_press_event", onkeypress)
-            f._bdsim_global_keys = True
+            setattr(f, "_bdsim_global_keys", True)
 
         self.bd.runtime.DEBUG(  # type: ignore[attr-defined]
             "graphics", "create figure {:d} at ({:d}, {:d})", gstate.fignum, row, col
