@@ -15,6 +15,7 @@ exclude_paths:
   # false positives (assignment-from-no-return, mutable-default-argument)
   # against code that never actually runs.
   - "src/bdsim/_blockfactory_stubs.py"
+  - "src/bdsim/_stubs_*.py"
 
 engines:
   bandit:

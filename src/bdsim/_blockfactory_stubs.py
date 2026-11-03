@@ -77,108 +77,6 @@ class BlockFactoryStubs:
             "onto BlockDiagram at import time by the @block decorator"
         )
 
-    # roboticstoolbox.blocks.arm.ArmPlot
-    def ARMPLOT(
-        self, robot: Any = None, q0: Any = None, backend: Any = None, **blockargs: Any
-    ) -> Any:
-        """
-        :param robot: Robot model
-        :type robot: Robot subclass
-        :param q0: initial joint angles, defaults to None
-        :type q0: ndarray(N)
-        :param backend: RTB backend name, defaults to 'pyplot'
-        :type backend: str, optional
-        :param blockargs: |GraphicsBlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.mobile.Bicycle
-    def BICYCLE(
-        self,
-        L: float = 1,
-        speed_max: float = inf,
-        accel_max: float = inf,
-        steer_max: float = 1.413716694115407,
-        x0: ArrayLike3 | None = None,
-        **blockargs: Any,
-    ) -> Any:
-        """
-        :param L: Wheelbase, defaults to 1
-        :param speed_max: Velocity limit, defaults to math.inf
-        :param accel_max: maximum acceleration, defaults to math.inf
-        :param steer_max: maximum steered wheel angle, defaults to math.pi*0.45
-        :param x0: Initial state, defaults to [0,0,0]
-        :param blockargs: |BlockOptions|
-
-        .. deprecated:: 1.4.0
-            the ``vlim`` and ``slim`` keywords are deprecated,
-            use ``speed_max`` and ``steer_max`` instead.
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # machinevisiontoolbox.blocks.camera.Camera
-    def CAMERA(self, camera: Any = None, args: Any = {}, **blockargs: Any) -> Any:
-        """
-        :param camera: Camera model, defaults to None
-        :type camera: Camera subclass, optional
-        :param blockargs: Additional options for the block, passed as a dictionary
-        :type blockargs: dict
-        :return: a CAMERA block
-        :rtype: Camera instance
-
-        Camera projection model.
-
-        **Block ports**
-
-            :input pose: Camera pose as an SE3 object.
-            :input P: world points as ndarray(3,N)
-
-            :output p: image plane points as ndarray(2,N)
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.arm.CirclePath
-    def CIRCLEPATH(
-        self,
-        radius: float = 1,
-        centre: Any = (0, 0, 0),
-        pose: Any = None,
-        frequency: float = 1,
-        unit: str = "rps",
-        phase: float | None = None,
-        **blockargs: Any,
-    ) -> Any:
-        """
-        :param radius: radius of circle, defaults to 1
-        :type radius: float
-        :param centre: center of circle, defaults to [0,0,0]
-        :type centre: array_like(3)
-        :param pose: SE3 pose of output, defaults to None
-        :type pose: SE3
-        :param frequency: rotational frequency, defaults to 1
-        :type frequency: float
-        :param unit: unit for frequency, one of: 'rps' [default], 'rad'
-        :type unit: str
-        :param phase: phase
-        :type phase: float
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
     # bdsim.blocks.functions.Clip
     def CLIP(self, min: Vector1D = -inf, max: ArrayLike = inf, **blockargs: Any) -> Any:
         """
@@ -221,27 +119,6 @@ class BlockFactoryStubs:
             "onto BlockDiagram at import time by the @block decorator"
         )
 
-    # roboticstoolbox.blocks.arm.CTraj
-    def CTRAJ(
-        self, T1: Any, T2: Any, T: Any, trapezoidal: bool = True, **blockargs: Any
-    ) -> Any:
-        """
-        :param T1: initial pose
-        :type T1: SE3
-        :param T2: final pose
-        :type T2: SE3
-        :param T: motion time
-        :type T: float
-        :param trapezoidal: Use LSPB motion profile along the path
-        :type trapezoidal: bool
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
     # bdsim.blocks.functions.Deadband
     def DEADBAND(self, d: float | ArrayLike = 1, **blockargs: Any) -> Any:
         """
@@ -252,17 +129,6 @@ class BlockFactoryStubs:
         :type blockargs: dict
         :raises ValueError: ``d`` is not a scalar or 2-element array_like, or
             the band is empty (lower edge above upper edge)
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.spatial.Delta2Tr
-    def DELTA2TR(self, **blockargs: Any) -> Any:
-        """
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
@@ -384,59 +250,6 @@ class BlockFactoryStubs:
             "onto BlockDiagram at import time by the @block decorator"
         )
 
-    # roboticstoolbox.blocks.mobile.DiffSteer
-    def DIFFSTEER(
-        self,
-        w: float = 1,
-        R: float = 1,
-        speed_max: float = inf,
-        accel_max: float = inf,
-        steer_max: float | None = None,
-        x0: ArrayLike3 | None = None,
-        **blockargs: Any,
-    ) -> Any:
-        """
-        :param w: vehicle width, defaults to 1
-        :param R: Wheel radius, defaults to 1
-        :param speed_max: Velocity limit, defaults to math.inf
-        :param accel_max: maximum acceleration, defaults to math.inf
-        :param steer_max: maximum steering rate, defaults to None (no limit)
-        :param x0: Initial state, defaults to [0,0,0]
-        :param blockargs: |BlockOptions|
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # machinevisiontoolbox.blocks.camera.EstPose_p
-    def ESTPOSE_P(
-        self,
-        camera: Any,
-        P: Any,
-        frame: Any = "world",
-        method: Any = "iterative",
-        **blockargs: Any,
-    ) -> Any:
-        """
-        :param camera: Camera model, defaults to None
-        :type camera: Camera subclass, optional
-        :param P: World point coordinates
-        :type P: ndarray(2,N)
-        :param frame: return pose of points with respect to reference frame which is one of: 'world' [default] or 'camera'
-        :type frame: str, optional
-        :param method: pose estimation algorithm one of: 'iterative' [default], 'epnp', 'p3p', 'ap3p', 'ippe', 'ippe-square'
-        :type method: str, optional
-        :param blockargs: Additional options for the block, passed as a dictionary
-        :type blockargs: dict
-        :return: a ESTPOSE_P block
-        :rtype: EstPose_p instance
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
     # bdsim.blocks.sinks.Event
     def EVENT(
         self,
@@ -456,68 +269,6 @@ class BlockFactoryStubs:
         :param fkwargs: extra keyword args passed to callback
         :type fkwargs: dict, optional
         :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.arm.FDyn
-    def FDYN(self, robot: Any, q0: Any = None, **blockargs: Any) -> Any:
-        """
-        :param robot: Robot model
-        :type robot: Robot subclass
-        :param q0: Initial joint configuration
-        :type q0: array_like(n)
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.arm.FDyn_X
-    def FDYN_X(
-        self,
-        robot: Any,
-        q0: Any = None,
-        gravcomp: bool = False,
-        velcomp: bool = False,
-        representation: str = "rpy/xyz",
-        **blockargs: Any,
-    ) -> Any:
-        """
-        :param robot: Robot model
-        :type robot: Robot subclass
-        :param q0: Initial joint configuration
-        :type q0: array_like(n)
-        :param gravcomp: perform gravity compensation
-        :type gravcomp: bool
-        :param velcomp: perform velocity term compensation
-        :type velcomp: bool
-        :param representation: task-space representation, defaults to "rpy/xyz"
-        :type representation: str
-
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.arm.FKine
-    def FKINE(self, robot: Any = None, args: Any = {}, **blockargs: Any) -> Any:
-        """
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
-        :param robot: Robot model, defaults to None
-        :type robot: Robot subclass, optional
-        :param args: Options for fkine, defaults to {}
-        :type args: dict, optional
-        :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -590,48 +341,6 @@ class BlockFactoryStubs:
             "onto BlockDiagram at import time by the @block decorator"
         )
 
-    # roboticstoolbox.blocks.arm.Gravload
-    def GRAVLOAD(self, robot: Any, gravity: Any = None, **blockargs: Any) -> Any:
-        """
-        :param robot: Robot model
-        :type robot: Robot subclass
-        :param gravity: gravitational acceleration in the world frame,
-            downwards gravitational force is equivalent to robot base
-            acceleration upwards (positive)
-        :type gravity: ndarray(3)
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.arm.Gravload_X
-    def GRAVLOAD_X(
-        self,
-        robot: Any,
-        representation: str = "rpy/xyz",
-        gravity: Any = None,
-        **blockargs: Any,
-    ) -> Any:
-        """
-        :param robot: Robot model
-        :type robot: Robot subclass
-        :param representation: task-space representation, defaults to "rpy/xyz"
-        :type representation: str
-        :param gravity: gravitational acceleration in the world frame,
-            downwards gravitational force is equivalent to robot base
-            acceleration upwards (positive)
-        :type gravity: ndarray(3)
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
     # bdsim.blocks.sampled.Hysteresis_S
     def HYSTERESIS_S(
         self,
@@ -667,104 +376,6 @@ class BlockFactoryStubs:
             "onto BlockDiagram at import time by the @block decorator"
         )
 
-    # roboticstoolbox.blocks.arm.IDyn
-    def IDYN(self, robot: Any, gravity: Any = None, **blockargs: Any) -> Any:
-        """
-        :param robot: Robot model
-        :type robot: Robot subclass
-        :param gravity: gravitational acceleration in the world frame,
-            downwards gravitational force is equivalent to robot base
-            acceleration upwards (positive)
-        :type gravity: ndarray(3)
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.arm.IKine
-    def IKINE(
-        self,
-        robot: Any = None,
-        q0: Any = None,
-        useprevious: bool = True,
-        ik: Any = None,
-        args: Any = {},
-        seed: Any = None,
-        **blockargs: Any,
-    ) -> Any:
-        """
-        :param robot: Robot model, defaults to None
-        :type robot: Robot subclass, optional
-        :param q0: Initial joint angles, defaults to None
-        :type q0: array_like(n), optional
-        :param useprevious: Use previous IK solution as q0, defaults to True
-        :type useprevious: bool, optional
-        :param ik: Specify an IK function, defaults to "LM"
-        :type ik: str
-        :param args: Options passed to IK function
-        :type args: dict
-        :param seed: random seed for solution
-        :type seed: int
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # machinevisiontoolbox.blocks.camera.ImagePlane
-    def IMAGEPLANE(
-        self,
-        camera: Any,
-        style: Any = None,
-        labels: Any = None,
-        grid: Any = True,
-        retain: Any = False,
-        watch: Any = False,
-        init: Any = None,
-        **blockargs: Any,
-    ) -> Any:
-        """
-        Create a block that plots image plane coordinates.
-
-        :param camera: a camera model
-        :type camera: Camera instance
-        :param style: styles for each point to be plotted
-        :type style: str or dict, list of strings or dicts; one per line, optional
-        :param grid: draw a grid, defaults to True. Can be boolean or a tuple of
-                     options for grid()
-        :type grid: bool or sequence
-        :param retain: keep previous image plane points, defaults to False
-        :type retain: bool, optional
-        :param watch: add these signals to the watchlist, defaults to False
-        :type watch: bool, optional
-        :param init: function to initialize the graphics, defaults to None
-        :type init: callable, optional
-        :param blockargs: Additional options for the block, passed as a dictionary
-        :type blockargs: dict
-        :return: An IMAGEPLANE block
-        :rtype: ImagePlane instance
-
-        Create a block that plots points on a camera object's virtual image plane.
-
-        Examples::
-
-            SCOPE()
-            SCOPE(nin=2)
-            SCOPE(nin=2, scale=[-1,2])
-            SCOPE(styles='k--')
-            SCOPE(styles=[{'color': 'blue'}, {'color': 'red', 'linestyle': '--'}])
-            SCOPE(styles=['k', 'r--'])
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
     # bdsim.blocks.connections.Index
     def INDEX(
         self, index: list[int] | slice | str | None = None, **blockargs: Any
@@ -775,40 +386,6 @@ class BlockFactoryStubs:
         :param index: elements of input array, defaults to []
         :type index: list, slice or str, optional
         :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.arm.Inertia
-    def INERTIA(self, robot: Any, **blockargs: Any) -> Any:
-        """
-        :param robot: Robot model
-        :type robot: Robot subclass
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.arm.Inertia_X
-    def INERTIA_X(
-        self,
-        robot: Any,
-        representation: str = "rpy/xyz",
-        pinv: bool = False,
-        **blockargs: Any,
-    ) -> Any:
-        """
-        :param robot: Robot model
-        :type robot: Robot subclass
-        :param representation: task-space representation, defaults to "rpy/xyz"
-        :type representation: str
-        :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -938,82 +515,6 @@ class BlockFactoryStubs:
         :param item: name of dictionary item
         :type item: str
         :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.arm.Jacobian
-    def JACOBIAN(
-        self,
-        robot: Any,
-        frame: str = "0",
-        representation: Any = None,
-        inverse: bool = False,
-        pinv: bool = False,
-        damping: Any = None,
-        transpose: bool = False,
-        **blockargs: Any,
-    ) -> Any:
-        """
-        :param robot: Robot model
-        :type robot: Robot subclass
-        :param frame: Frame to compute Jacobian for, one of: "0" [default], "e"
-        :type frame: str, optional
-        :param representation: representation for analytical Jacobian
-        :type representation: str, optional
-        :param inverse: output inverse of Jacobian, defaults to False
-        :type inverse: bool, optional
-        :param pinv: output pseudo-inverse of Jacobian, defaults to False
-        :type pinv: bool, optional
-        :param damping: damping term for inverse, defaults to None
-        :type damping: float or array_like(N)
-        :param transpose: output transpose of Jacobian, defaults to False
-        :type transpose: bool, optional
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-
-        If an inverse is requested and ``damping`` is not None it is added to the
-        diagonal of the Jacobian prior to the inversion.  If a scalar is provided it is
-        added to each element of the diagonal, otherwise an N-vector is assumed.
-
-        .. note::
-            - Only one of ``inverse`` or ``pinv`` can be True
-            - ``inverse`` or ``pinv`` can be used in conjunction with ``transpose``
-            - ``inverse`` requires that the Jacobian is square
-            - If ``inverse`` is True and the Jacobian is singular a runtime
-              error will occur.
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.arm.JTraj
-    def JTRAJ(
-        self,
-        q0: Any,
-        qf: Any,
-        qd0: Any = None,
-        qdf: Any = None,
-        T: Any = None,
-        **blockargs: Any,
-    ) -> Any:
-        """
-
-        :param q0: initial joint coordinate
-        :type q0: array_like(n)
-        :param qf: final joint coordinate
-        :type qf: array_like(n)
-        :param T: time vector or number of steps, defaults to None
-        :type T: array_like or int, optional
-        :param qd0: initial velocity, defaults to None
-        :type qd0: array_like(n), optional
-        :param qdf: final velocity, defaults to None
-        :type qdf: array_like(n), optional
-        :param blockargs: |BlockOptions|
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -1282,79 +783,6 @@ class BlockFactoryStubs:
             "onto BlockDiagram at import time by the @block decorator"
         )
 
-    # roboticstoolbox.blocks.uav.MultiRotor
-    def MULTIROTOR(
-        self,
-        model: Any,
-        groundcheck: bool = True,
-        speedcheck: bool = True,
-        x0: Any = None,
-        **blockargs: Any,
-    ) -> Any:
-        """
-        Create a multi-rotor dynamic model block.
-
-        :param model: A dictionary of vehicle geometric and inertial properties
-        :type model: dict
-        :param groundcheck: Prevent vehicle moving below ground :math:`z>0`, defaults to True
-        :type groundcheck: bool
-        :param speedcheck: Check for non-positive rotor speed, defaults to True
-        :type speedcheck: bool
-        :param x0: Initial state, defaults to None
-        :type x0: array_like(6) or array_like(12), optional
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.uav.MultiRotorMixer
-    def MULTIROTORMIXER(
-        self, model: Any = None, wmax: float = 1000, wmin: float = 5, **blockargs: Any
-    ) -> Any:
-        """
-        :param model: A dictionary of vehicle geometric and inertial properties
-        :type model: dict
-        :param maxw: maximum rotor speed in rad/s, defaults to 1000
-        :type maxw: float
-        :param minw: minimum rotor speed in rad/s, defaults to 5
-        :type minw: float
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.uav.MultiRotorPlot
-    def MULTIROTORPLOT(
-        self,
-        model: Any,
-        scale: Any = None,
-        flapscale: float = 1,
-        projection: str = "ortho",
-        **blockargs: Any,
-    ) -> Any:
-        """
-        :param model: A dictionary of vehicle geometric and inertial properties
-        :type model: dict
-        :param scale: dimensions of workspace: xmin, xmax, ymin, ymax, zmin, zmax, defaults to [-2,2,-2,2,10]
-        :type scale: array_like, optional
-        :param flapscale: exaggerate flapping angle by this factor, defaults to 1
-        :type flapscale: float
-        :param projection: 3D projection, one of: 'ortho' [default], 'perspective'
-        :type projection: str
-        :param blockargs: |GraphicsBlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
     # bdsim.blocks.connections.Mux
     def MUX(self, nin: int = 1, **blockargs: Any) -> Any:
         """
@@ -1502,21 +930,6 @@ class BlockFactoryStubs:
         :type asarray: bool, optional
         :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.spatial.Point2Tr
-    def POINT2TR(self, T: Any = None, **blockargs: Any) -> Any:
-        """
-        :param T: the transform
-        :type T: SE3
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-
-        If ``T`` is None then it defaults to the identity matrix.
         """
         raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
@@ -1962,57 +1375,6 @@ class BlockFactoryStubs:
             "onto BlockDiagram at import time by the @block decorator"
         )
 
-    # roboticstoolbox.blocks.spatial.Tr2Delta
-    def TR2DELTA(self, **blockargs: Any) -> Any:
-        """
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.spatial.TR2T
-    def TR2T(self, **blockargs: Any) -> Any:
-        """
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.arm.Traj
-    def TRAJ(
-        self,
-        y0: ArrayLike | float = 0,
-        yf: ArrayLike | float = 1,
-        T: Any = None,
-        time: bool = False,
-        traj: str = "trapezoidal",
-        **blockargs: Any,
-    ) -> Any:
-        """
-        :param y0: initial value, defaults to 0
-        :type y0: array_like(m), optional
-        :param yf: final value, defaults to 1
-        :type yf: array_like(m), optional
-        :param T: maximum time, defaults to None
-        :type T: float, optional
-        :param time: if `True` trajectory is based on simulation time, else based on input 0. Defaults to False
-        :type time: bool, optional
-        :param traj: trajectory type, one of: 'trapezoidal' [default], 'quintic'
-        :type traj: str, optional
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
     # bdsim.blocks.spatial.Transform_vector
     def TRANSFORM_VECTOR(self, **blockargs: Any) -> Any:
         """
@@ -2029,135 +1391,6 @@ class BlockFactoryStubs:
         """
         :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.arm.Trapezoidal
-    def TRAPEZOIDAL(
-        self, q0: Any, qf: Any, V: Any = None, T: Any = None, **blockargs: Any
-    ) -> Any:
-        """
-        Compute a joint-space trajectory
-
-        :param q0: initial joint coordinate
-        :type q0: float
-        :param qf: final joint coordinate
-        :type qf: float
-        :param T: maximum time, defaults to None
-        :type T: float, optional
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-
-        If ``T`` is given the value ``qf`` is reached at this time.  This can be
-        less or greater than the simulation time.
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.mobile.Unicycle
-    def UNICYCLE(
-        self,
-        w: float = 1,
-        speed_max: float = inf,
-        accel_max: float = inf,
-        steer_max: float = inf,
-        x0: ArrayLike3 | None = None,
-        **blockargs: Any,
-    ) -> Any:
-        """
-
-        :param w: vehicle width, defaults to 1
-        :param speed_max: Velocity limit, defaults to math.inf
-        :param accel_max: maximum acceleration, defaults to math.inf
-        :param steer_max: maximum turn rate :math:`\\omega`, defaults to math.inf
-        :param x0: Initial state, defaults to [0,0,0]
-        :param blockargs: |BlockOptions|
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.mobile.VehiclePlot
-    def VEHICLEPLOT(
-        self,
-        animation: mobile.VehicleAnimationBase | None = None,
-        path_style: str | dict[str, Any] | None = None,
-        labels: tuple[str, str] = ("X", "Y"),
-        square: bool = True,
-        init_func: Callable[[Axes], None] | None = None,
-        limits: str | ArrayLike = "auto",
-        shape: str = "car",
-        size: float | ArrayLike | None = None,
-        polygon_style: dict[str, Any] | None = None,
-        **blockargs: Any,
-    ) -> Any:
-        """
-        :param animation: Graphical animation of vehicle, a
-            :class:`~roboticstoolbox.mobile.Animations.VehicleAnimationBase`
-            subclass, defaults to a :class:`~roboticstoolbox.mobile.Animations.VehiclePolygon`
-        :param path_style: Matplotlib linestyle string or dict of arguments used to
-            plot the path taken by vehicle, defaults to None (no path)
-        :param labels: axis labels (xlabel, ylabel), defaults to ("X", "Y")
-        :param square: Set aspect ratio to 1, defaults to True
-        :param init_func: function called with the axes to initialize graphics,
-            defaults to None
-        :param limits: axis limits: ``"auto"``, ``[min, max]`` used for both axes, or
-            ``[xmin, xmax, ymin, ymax]``, defaults to ``"auto"``
-        :param shape: shape of vehicle, passed to the default animation, defaults
-            to ``"car"``
-        :param size: size of vehicle, passed to the default animation, defaults to
-            None (the animation's default)
-        :param polygon_style: Matplotlib patch options (``color``, ``alpha``,
-            ``edgecolor``, ...) for the default animation
-            :class:`~roboticstoolbox.mobile.Animations.VehiclePolygon`, defaults
-            to None.  The dict is not modified.
-        :param blockargs: |GraphicsBlockOptions|
-        :raises TypeError: ``animation`` is not a ``VehicleAnimationBase``
-
-        .. deprecated:: 1.5.0
-            the arguments ``path``, ``init``, ``scale`` and ``polyargs`` are
-            deprecated, use ``path_style``, ``init_func``, ``limits`` and
-            ``polygon_style`` instead.
-
-        .. note::
-
-            - The ``init_func`` function is called after the axes are initialized
-              and can be used to draw application specific detail on the
-              plot. In the example below, this is the dot and star.
-            - If an ``animation`` object is not provided then a default polygon animation is
-              created.  It's size and shape can be set by the ``size`` and ``shape`` parameters, which are passed to the animation object,
-              or a dictionary of arguments ``polygon_style`` which is passed to the default animation object.
-            - A dynamic trail, showing path to date can be animated if
-              the option ``path_style`` is set to a linestyle.
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # machinevisiontoolbox.blocks.camera.Visjac_p
-    def VISJAC_P(
-        self, camera: Any, depth: Any = 1, depthest: Any = False, **blockargs: Any
-    ) -> Any:
-        """
-        :param camera: Camera model, defaults to None
-        :type camera: Camera subclass, optional
-        :param depth: Point depth
-        :type depth: float or ndarray
-        :param depthest: Use depth estimation, defaults to True
-        :type depthest: bool, optional
-        :param blockargs: Additional options for the block, passed as a dictionary
-        :type blockargs: dict
-        :return: a VISJAC_P block
-        :rtype: Visjac_p instance
-
-        If the Jacobian
         """
         raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "

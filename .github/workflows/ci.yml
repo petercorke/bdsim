@@ -79,6 +79,13 @@ jobs:
       - name: Check formatting
         run: ruff format --check .
 
+      # stubgen imports bdsim to discover its blocks, and formats with the ruff above
+      - name: Install bdsim
+        run: python -m pip install -e .
+
+      - name: Check the generated stubs are current
+        run: python -m bdsim.bin.stubgen --check
+
   all-tests-passed:
     name: All tests passed
     needs: [test, lint]
