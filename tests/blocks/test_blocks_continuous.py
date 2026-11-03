@@ -36,7 +36,9 @@ import numpy as np
 import math
 
 import bdsim
+from bdsim import Clock
 from bdsim.blocks.continuous import Integrator, LTI_SISO, LTI_SS, _tf2ss
+from bdsim.blocks.sampled import LTI_SS_S
 from bdsim.blocks.spatial import PoseIntegrator
 from spatialmath import SE3, Twist3
 
@@ -445,6 +447,86 @@ class Tf2SsTest(unittest.TestCase):
 
         nt.assert_array_equal(A, [[0, 1], [-3, -2]])
         nt.assert_array_equal(C, [[0.5, 0]])  # b2=0.5, b1=0
+
+
+class LTISSFeedthroughMatrixTest(unittest.TestCase):
+    """The D argument of LTI_SS and LTI_SS_S: its forms, its errors, and the flag."""
+
+    def make(self, D, sampled=False, nin=1, nout=1):
+        n = 2
+        A = np.eye(n)
+        B = np.ones((n, nin)) if nin > 1 else np.ones(n)
+        C = np.ones((nout, n)) if nout > 1 else np.ones(n)
+        if sampled:
+            return LTI_SS_S(Clock(2, "Hz"), A=A, B=B, C=C, D=D, x0=[0.0, 0.0])
+        return LTI_SS(A=A, B=B, C=C, D=D)
+
+    def both(self):
+        return (False, True)
+
+    def test_no_d_is_no_feedthrough(self):
+        for sampled in self.both():
+            with self.subTest(sampled=sampled):
+                block = self.make(None, sampled)
+                self.assertIsNone(block.D)
+                self.assertFalse(block.feedthrough)
+
+    def test_zero_d_is_no_feedthrough_and_is_not_stored(self):
+        for sampled in self.both():
+            with self.subTest(sampled=sampled):
+                block = self.make(np.zeros((1, 1)), sampled)
+                self.assertIsNone(block.D)
+                self.assertFalse(block.feedthrough)
+
+    def test_d_as_a_number(self):
+        for sampled in self.both():
+            with self.subTest(sampled=sampled):
+                block = self.make(2.0, sampled)
+                self.assertTrue(block.feedthrough)
+                nt.assert_array_equal(block.D, [[2.0]])
+
+    def test_d_as_a_flat_list_or_array(self):
+        for sampled in self.both():
+            with self.subTest(sampled=sampled):
+                for D in ([1.0, 2.0, 3.0, 4.0], np.array([1.0, 2.0, 3.0, 4.0])):
+                    block = self.make(D, sampled, nin=2, nout=2)
+                    nt.assert_array_equal(block.D, [[1.0, 2.0], [3.0, 4.0]])
+
+    def test_d_as_a_matrix_is_kept(self):
+        for sampled in self.both():
+            with self.subTest(sampled=sampled):
+                D = np.array([[1.0, 0.0], [0.0, 3.0]])
+                block = self.make(D, sampled, nin=2, nout=2)
+                nt.assert_array_equal(block.D, D)
+                self.assertTrue(block.feedthrough)
+
+    def test_d_of_the_wrong_shape_is_refused_and_says_what_it_should_be(self):
+        for sampled in self.both():
+            with self.subTest(sampled=sampled):
+                with self.assertRaises(ValueError) as cm:
+                    self.make(np.ones((2, 2)), sampled)
+                self.assertIn("1x1", str(cm.exception))
+                self.assertIn("(2, 2)", str(cm.exception))
+                with self.assertRaises(ValueError):
+                    self.make([1.0, 2.0, 3.0], sampled, nin=2, nout=2)
+
+    def test_the_setter_agrees_with_the_constructor(self):
+        for sampled in self.both():
+            with self.subTest(sampled=sampled):
+                block = self.make(2.0, sampled)
+                block.set_param("D", 3.0)
+                nt.assert_array_equal(block.D, [[3.0]])
+                with self.assertRaises(ValueError):
+                    block.set_param("D", np.ones((2, 2)))
+
+    def test_a_block_without_feedthrough_cannot_gain_it(self):
+        for sampled in self.both():
+            with self.subTest(sampled=sampled):
+                block = self.make(None, sampled)
+                with self.assertRaises(ValueError):
+                    block.set_param("D", 1.0)
+                block.set_param("D", 0.0)  # zero is fine
+                self.assertIsNone(block.D)
 
 
 # ---------------------------------------------------------------------------------------#

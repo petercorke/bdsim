@@ -28,6 +28,7 @@ from bdsim.components import SampledBlock, Clock, SubsystemBlock, deprecated_blo
 from bdsim.blocks.continuous import (
     _NO_D,
     _NO_I,
+    _as_D,
     _conform_D,
     _integral_limits,
     _old_tf_names,
@@ -640,28 +641,16 @@ class LTI_SS_S(SampledBlock):
             if C.shape[1] != n:
                 raise ValueError("C must have same number of columns as A")
 
-        if D is None:
-            D = np.zeros((nout, nin))
-        elif len(D.shape) == 1:
-            if len(D) != nin * nout:
-                raise ValueError("D must conform to B and C dimensions")
-            D = D.reshape((nout, nin))
-        else:
-            if D.shape != (nout, nin):
-                raise ValueError("D must conform to B and C dimensions")
+        D = _as_D(D, nout, nin)
 
         self.A = A
         self.B = B
         self.C = C
 
-        # if D is nonzero then we have feedthrough, which may create an algebraic loop, so flag this to the base class
-        if np.any(D != 0):
-            # flag we have feedthrough, which may create an algebraic loop
-            self._D: np.ndarray | None = D
-            feedthrough = True
-        else:
-            self._D = None
-            feedthrough = False
+        # a nonzero D is direct feedthrough, which may create an algebraic loop, so the
+        # base class is told; without one there is no D to store
+        feedthrough = D is not None and bool(np.any(D != 0))
+        self._D: np.ndarray | None = D if feedthrough else None
 
         super().__init__(
             clock=clock,
