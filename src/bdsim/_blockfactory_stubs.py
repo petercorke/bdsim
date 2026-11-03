@@ -656,13 +656,13 @@ class BlockFactoryStubs:
             1. **Control Perspective (z-domain):**
             If coefficients represent descending powers of :math:`z`, the states 
             represent forward shifts. 
-            
+    
             Example: :math:`G(z) = \\\\frac{b_1 z + b_2}{z^2 + a_1 z + a_2}`
 
             2. **DSP Perspective (z⁻¹-domain):**
             If coefficients represent ascending powers of :math:`z^{-1}`, the 
             states represent physical unit delays. 
-            
+    
             Example: :math:`H(z^{-1}) = \\\\frac{b_0 + b_1 z^{-1}}{1 + a_1 z^{-1} + a_2 z^{-2}}`
 
             In both cases, this function treats the input arrays as ordered 
@@ -675,7 +675,7 @@ class BlockFactoryStubs:
             If ``form='ccf'`` and ``order='forward'``, the state :math:`x_i[k]` 
             corresponds to the output of the :math:`i`-th delay element in a 
             tapped delay line.
-  
+
 
         .. note::
             - The transfer function is assumed to be strictly proper (:math:`deg(num) < deg(den)`).

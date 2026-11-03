@@ -37,6 +37,8 @@ import inspect
 import re
 import subprocess
 import sys
+import textwrap
+import typing
 from pathlib import Path
 
 import bdsim
@@ -193,7 +195,9 @@ def _param_to_str(p: inspect.Parameter) -> str:
 
     if has_annotation:
         ann = p.annotation
-        if isinstance(ann, type):
+        # list[str] is an instance of ``type`` before Python 3.11, and its
+        # __name__ is just "list": only a plain class is named this way
+        if isinstance(ann, type) and typing.get_origin(ann) is None:
             ann_str = ann.__name__
         elif isinstance(ann, str):
             ann_str = ann
@@ -243,15 +247,18 @@ def generate(package: str, cls: str, command: str) -> str:
         # generated stubs use the project's modern ``|`` style annotations.
         # Params without annotations default to Any.
         sig_str = "(" + ", ".join(["self"] + [_param_to_str(p) for p in params]) + ")"
-        doc = (meth.__init__.__doc__ or "").rstrip()
+        # cleandoc, then a fixed indent: Python 3.13 strips the indentation of a
+        # docstring at compile time and earlier versions do not, so the raw
+        # __doc__ would give different stubs on different interpreters
+        doc = inspect.cleandoc(meth.__init__.__doc__ or "")
 
         out.append(f"\n    # {info['module']}.{info['classname']}\n")
         out.append(f"    def {block}{sig_str} -> Any:\n")
         if doc:
             # Escape backslashes so LaTeX sequences like \omega don't produce
             # SyntaxWarnings in the generated file (Python 3.12+).
-            safe_doc = doc.replace("\\", "\\\\")
-            out.append(f'        """{safe_doc}\n        """\n')
+            safe_doc = textwrap.indent(doc.replace("\\", "\\\\"), " " * 8)
+            out.append(f'        """\n{safe_doc}\n        """\n')
         out.append(
             "        raise NotImplementedError(  # pragma: no cover\n"
             '            "stub signature -- the real implementation is injected "\n'
