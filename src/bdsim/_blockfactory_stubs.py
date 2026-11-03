@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 Vector1D = int | float | tuple[float, ...] | list[float] | np.ndarray
 
-class BlockDiagramMixin:
+class BlockFactoryStubs:
     """
     Mixin that declares stub signatures for all block factory methods.
 

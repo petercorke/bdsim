@@ -14,7 +14,7 @@ exclude_paths:
   # `return` and mirror the real methods' mutable defaults -- and flags
   # false positives (assignment-from-no-return, mutable-default-argument)
   # against code that never actually runs.
-  - "src/bdsim/_blockdiagram_mixin.py"
+  - "src/bdsim/_blockfactory_stubs.py"
 
 engines:
   bandit:
