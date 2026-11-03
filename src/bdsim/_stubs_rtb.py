@@ -411,7 +411,6 @@ class RTBStubs:
         **blockargs: Any,
     ) -> Any:
         """
-
         :param q0: initial joint coordinate
         :type q0: array_like(n)
         :param qf: final joint coordinate
@@ -604,7 +603,6 @@ class RTBStubs:
         **blockargs: Any,
     ) -> Any:
         """
-
         :param w: vehicle width, defaults to 1
         :param speed_max: Velocity limit, defaults to math.inf
         :param accel_max: maximum acceleration, defaults to math.inf

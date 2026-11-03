@@ -1,6 +1,6 @@
 """Tests for bin/stubgen.py, which generates the typing-only block factory stubs."""
 
-import subprocess
+import subprocess  # nosec B404
 import sys
 import tempfile
 import unittest
@@ -9,7 +9,7 @@ from pathlib import Path
 from bdsim.bin import stubgen
 
 HAVE_RUFF = (
-    subprocess.run(
+    subprocess.run(  # nosec B603  # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-audit.dangerous-subprocess-use-audit
         [sys.executable, "-m", "ruff", "--version"], capture_output=True
     ).returncode
     == 0
@@ -26,12 +26,12 @@ class StubgenTest(unittest.TestCase):
     def test_check_does_not_write(self):
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp) / "stubs.py"
-            out.write_text("stale\n")
+            out.write_text("stale\n", encoding="utf-8")
             # a stale file fails the check and is left alone; writing fixes it
             self.assertEqual(
                 stubgen.main(["--check", "--package", "bdsim", "--out", str(out)]), 1
             )
-            self.assertEqual(out.read_text(), "stale\n")
+            self.assertEqual(out.read_text(encoding="utf-8"), "stale\n")
             self.assertEqual(stubgen.main(["--package", "bdsim", "--out", str(out)]), 0)
             self.assertEqual(
                 stubgen.main(["--check", "--package", "bdsim", "--out", str(out)]), 0
