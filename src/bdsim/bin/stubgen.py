@@ -338,7 +338,7 @@ def main(argv: list[str] | None = None) -> int:
         if current == text:
             print(f"{out} is up to date")
             return 0
-        sys.stdout.writelines(
+        diff = "".join(
             difflib.unified_diff(
                 current.splitlines(keepends=True),
                 text.splitlines(keepends=True),
@@ -346,6 +346,9 @@ def main(argv: list[str] | None = None) -> int:
                 tofile=f"{out} (regenerated)",
             )
         )
+        # a console may not be able to show every character of a docstring
+        encoding = sys.stdout.encoding or "ascii"
+        sys.stdout.write(diff.encode(encoding, "backslashreplace").decode(encoding))
         print(f"\n{out} is stale; regenerate it with:\n  {command}", file=sys.stderr)
         return 1
 
