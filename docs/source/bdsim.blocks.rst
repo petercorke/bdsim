@@ -17,6 +17,10 @@ Icons, if shown to the left of the black header bar, are as used with `bdedit <h
 Source blocks
 =============
 
+Two of the sources output the state of the system rather than a signal:
+:class:`~bdsim.blocks.sources.State` for the continuous-time state and
+:class:`~bdsim.blocks.sources.State_S` for the discrete-time state of the blocks on a clock.
+
 .. automodule:: bdsim.blocks.sources
    :members:
    :undoc-members:
@@ -103,6 +107,8 @@ Continuous-time dynamics
 Sampled-time dynamics
 =====================
 
+The discrete-time state of the blocks on a clock is read by
+:class:`~bdsim.blocks.sources.State_S`, which is listed with the source blocks because it is a source.
 
 .. automodule:: bdsim.blocks.sampled
    :members:

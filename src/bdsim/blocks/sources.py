@@ -18,7 +18,7 @@ from bdsim.signature import maybe_asarray, unify
 
 if TYPE_CHECKING:
     from bdsim.analysis import Index
-    from bdsim.components import Block
+    from bdsim.components import Block, Clock
 
 
 # ------------------------------------------------------------------------ #
@@ -314,7 +314,7 @@ class State(_StateReader, SourceBlock):
 
     :seealso: :meth:`~bdsim.BlockDiagram.linearize`
         :meth:`~bdsim.BlockDiagram.functions`
-        :class:`~bdsim.blocks.sampled.State_S` :class:`~bdsim.blocks.sources.Time`
+        :class:`~bdsim.blocks.sources.State_S` :class:`~bdsim.blocks.sources.Time`
     """
 
     nin = 0
@@ -343,6 +343,110 @@ class State(_StateReader, SourceBlock):
 
     def _domain(self) -> str:
         return "continuous state"
+
+
+# ------------------------------------------------------------------------ #
+
+
+class State_S(_StateReader, SourceBlock):
+    r"""
+    :blockname:`STATE_S`
+
+    Discrete-time state of the system.
+
+    :inputs: 0
+    :outputs: 1
+    :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Output
+            - 0
+            - ndarray(n)
+            - :math:`X(k)`
+
+    Outputs the discrete-time state vector :math:`X` of the blocks that run on a
+    clock, for example the state of an observer or a digital controller.  For
+    example::
+
+        clock = bd.clock(0.01)
+        X = bd.STATE_S(clock)
+
+    **What the state is.**  A clocked block such as ``INTEGRATOR_S``, ``ZOH`` or
+    ``LTI_SS_S`` has discrete state that changes only at the ticks of its clock.
+    The output is the state of the blocks on the clock, in the order they were
+    added to it, which is the order of ``clock.statenames``.  Between ticks it
+    is the state after the most recent tick, and before the first tick it is
+    the initial state.
+
+    To read only some of the clock's blocks, list them, by block or by name, in
+    the order wanted::
+
+        X = bd.STATE_S(clock, [observer])
+
+    To feed the continuous state of a plant to a digital controller, sample it
+    with a ``ZOH`` on the same clock, ``bd.ZOH(clock)`` applied to
+    ``bd.STATE()``; this block is for the state that belongs to the discrete
+    time blocks.
+
+    **Checking the state.**  After the diagram is compiled::
+
+        X.statenames   # the name of each element of the output
+        X.index        # which slice of the output belongs to which block
+
+    Like ``STATE``, this is a perfect and instantaneous measurement of the
+    simulation, and is not offered as an input of ``functions()`` or
+    ``linearize()``.
+
+    :param clock: the clock whose blocks' state is output
+    :type clock: Clock
+    :param blocks: blocks on the clock, or their names, whose state to output, in
+        this order, defaults to every block on the clock
+    :type blocks: block, str, or list of block or str, optional
+
+    :seealso: :class:`~bdsim.blocks.sources.State`
+        :meth:`~bdsim.BlockDiagram.linearize`
+        :class:`~bdsim.blocks.sampled.ZOH`
+    """
+
+    nin = 0
+    nout = 1
+
+    def __init__(
+        self,
+        clock: Clock,
+        blocks: Block | str | list[Block | str] | None = None,
+        **blockargs: Any,
+    ) -> None:
+        """
+        :param clock: the clock whose blocks' state is output
+        :type clock: Clock
+        :param blocks: blocks on the clock, or their names, whose state to output,
+            in this order, defaults to every block on the clock
+        :type blocks: block, str, or list of block or str, optional
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        :type blockargs: dict
+        """
+        super().__init__(**blockargs)
+        self.clock = clock
+        self.add_param("clock", when="never")
+        # not a parameter: which blocks to read is structure, like a connection
+        self._blocks_arg = blocks
+        self._selected = None
+
+    def _candidates(self) -> list[Block]:
+        return list(self.clock.blocklist)
+
+    def _width(self, block: Block) -> int:
+        return block.ndstates
+
+    def _domain(self) -> str:
+        return f"discrete state on clock {self.clock.name}"
 
 
 # ------------------------------------------------------------------------ #

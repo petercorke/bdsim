@@ -737,7 +737,7 @@ class AnalysisMixin:
         simulation: they overwrite the values on the wires.
 
         :seealso: :meth:`linearize` :class:`~bdsim.analysis.SystemFunctions`
-            :class:`~bdsim.blocks.sources.State` :class:`~bdsim.blocks.sampled.State_S`
+            :class:`~bdsim.blocks.sources.State` :class:`~bdsim.blocks.sources.State_S`
         """
         return SystemFunctions(self, inputs, outputs)
 
@@ -815,7 +815,7 @@ class AnalysisMixin:
         state of that block is in the order of the states of this method, so
         ``K`` applies directly, and linearizing the closed loop gives
         :math:`A - BK`.  The state of a clocked block is available from
-        :class:`~bdsim.blocks.sampled.State_S`.
+        :class:`~bdsim.blocks.sources.State_S`.
 
         If the operating point is at a corner of a non-smooth block (a limit, a
         dead band, a switch) the derivative is not defined there.  The result is
@@ -823,7 +823,7 @@ class AnalysisMixin:
         that the estimate is not reliable.
 
         :seealso: :meth:`functions` :class:`~bdsim.blocks.continuous.LTI_SS`
-            :class:`~bdsim.blocks.sources.State` :class:`~bdsim.blocks.sampled.State_S`
+            :class:`~bdsim.blocks.sources.State` :class:`~bdsim.blocks.sources.State_S`
         """
         sysf = self.functions(inputs, outputs)
 
