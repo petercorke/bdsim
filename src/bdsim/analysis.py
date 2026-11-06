@@ -160,6 +160,50 @@ def _output_signals(bd: Any, item: Block | Plug | str) -> list[tuple[Block, int]
     return [(block, p) for p in ports]
 
 
+def _not_a_source(block: Block) -> str:
+    """Why a block cannot be an input, and what to use instead.
+
+    A signal made by an expression, such as ``step1 - step2``, is the output of an
+    automatically named block (``_sum.0``), which is not a source.  The sources it
+    is computed from are found by following its inputs back through algebraic
+    blocks.  A block that depends on a state cannot be an input at all.
+    """
+    sources: list[str] = []
+    stateful = False
+    seen: set[Block] = set()
+    todo = [block]
+    while todo:
+        b = todo.pop()
+        if b in seen:
+            continue
+        seen.add(b)
+        for plug in b.inports:
+            upstream = plug.block
+            if isinstance(upstream, SourceBlock):
+                name = str(upstream.name)
+                if upstream.type != "time" and name not in sources:
+                    sources.append(name)
+            elif upstream.blockclass == "function":
+                todo.append(upstream)
+            else:
+                stateful = True
+
+    message = (
+        f"input {block.name} is not a source block: inputs are source blocks or "
+        f"their ports, but {block.name} is a {block.type} block. "
+    )
+    if stateful:
+        return message + (
+            "It depends on the state of the system, so it cannot be an input."
+        )
+    if sources:
+        return message + (
+            f"It is computed from the source blocks {', '.join(sources)}: use "
+            "those, or make the signal a single source block."
+        )
+    return message + "Make the signal a single source block."
+
+
 class SystemFunctions:
     """
     The functions :math:`f` and :math:`g` of a block diagram.
@@ -226,7 +270,7 @@ class SystemFunctions:
         for item in inputs:
             block, ports = _block_and_ports(bd, item, "nout")
             if not isinstance(block, SourceBlock):
-                raise TypeError(f"input {block.name} is not a source block")
+                raise TypeError(_not_a_source(block))
             if block.type == "time":
                 raise ValueError("TIME is not an input: it is the t argument")
             selected.setdefault(block, [])

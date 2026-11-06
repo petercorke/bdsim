@@ -216,6 +216,52 @@ class SelectionTest(unittest.TestCase):
         with self.assertRaisesRegex(TypeError, "total is not a source"):
             bd.functions(inputs=[bd["total"]])
 
+    def test_the_error_for_an_expression_names_the_sources_it_is_made_of(self):
+        # step1 - step2 is a SUM block with a generated name, not a source
+        bd = new_diagram()
+        pulse = bd.STEP(1, name="on") - bd.STEP(1.2, name="off")
+        bd.connect(pulse, bd.NULL(1, name="y"))
+        bd.compile(verbose=False)
+        with self.assertRaises(TypeError) as caught:
+            bd.functions(inputs=[pulse])
+        message = str(caught.exception)
+        self.assertIn(f"input {pulse.name} is not a source block", message)
+        self.assertIn("sum block", message)
+        self.assertIn("on, off", message)
+
+    def test_the_error_follows_the_expression_back_through_several_blocks(self):
+        # ((on - off) * 3) + time: the sources are found two blocks back, and
+        # TIME, which is not an input, is not offered as one
+        bd = new_diagram()
+        force = (bd.STEP(1, name="on") - bd.STEP(1.2, name="off")) * 3.0 + bd.TIME(
+            name="time"
+        )
+        bd.connect(force, bd.NULL(1, name="y"))
+        bd.compile(verbose=False)
+        with self.assertRaises(TypeError) as caught:
+            bd.functions(inputs=[force])
+        message = str(caught.exception)
+        self.assertIn("source blocks on, off:", message)
+        self.assertNotIn("time", message.split("computed from")[-1])
+
+    def test_the_error_for_an_expression_of_time_alone(self):
+        bd = new_diagram()
+        ramp = bd.TIME(name="time") * 2.0
+        bd.connect(ramp, bd.NULL(1, name="y"))
+        bd.compile(verbose=False)
+        with self.assertRaisesRegex(TypeError, "Make the signal a single source block"):
+            bd.functions(inputs=[ramp])
+
+    def test_the_error_for_a_signal_from_the_state_says_so(self):
+        bd = new_diagram()
+        integrator = bd.INTEGRATOR(x0=0, name="integrator")
+        scaled = integrator * 2.0
+        bd.connect(bd.CONSTANT(1.0, name="u"), integrator)
+        bd.connect(scaled, bd.NULL(1, name="y"))
+        bd.compile(verbose=False)
+        with self.assertRaisesRegex(TypeError, "depends on the state"):
+            bd.functions(inputs=[scaled])
+
     def test_an_entry_must_be_a_block_a_plug_or_a_name(self):
         bd, a, b = self.two_source_diagram()
         with self.assertRaisesRegex(
