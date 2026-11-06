@@ -246,6 +246,7 @@ class Block(ABC, Port):
     _inport_names: list[str] | None
     _outport_names: list[str] | None
     _state_names: list[str] | None
+    _implicit: bool = False  # created by bdsim for a number in an expression
 
     _clocked: bool = False
     _clock: Clock | None
@@ -1631,7 +1632,9 @@ class Block(ABC, Port):
             name = f"_const.{next(self.bd.n_auto_const)}({value})"
         else:
             name = f"_const.{next(self.bd.n_auto_const)}<{type(value).__name__}>"
-        return self.bd.CONSTANT(value, name=name)
+        constant = self.bd.CONSTANT(value, name=name)
+        constant._implicit = True
+        return constant
 
     def _autogain(self, value: int | float | np.ndarray, **kwargs: Any) -> Block:
         if self.bd is None:

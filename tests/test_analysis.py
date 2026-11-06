@@ -203,6 +203,32 @@ class SelectionTest(unittest.TestCase):
         first = bd.functions(outputs=[sink[0]])
         np.testing.assert_allclose(first.g([], [10.0, 20.0]), [10.0])
 
+    def test_a_number_in_an_expression_is_a_parameter_not_an_input(self):
+        # "+ 1.0" makes a CONSTANT block named _const.0(1) behind the scenes
+        bd = new_diagram()
+        step = bd.STEP(1, name="demand")
+        offset = step + 1.0
+        bd.connect(offset, bd.NULL(1, name="y"))
+        bd.compile(verbose=False)
+        implicit = [b for b in bd.blocklist if b.type == "constant"]
+        self.assertEqual(len(implicit), 1)
+        self.assertTrue(implicit[0]._implicit)
+        sysf = bd.functions()
+        self.assertEqual(sysf.uindex.names, ["demand"])
+        # y = u + 1 holds for any u: the 1 is not available to be changed
+        np.testing.assert_allclose(sysf.g([], [5.0]), [6.0])
+        # but it can still be chosen on purpose
+        both = bd.functions(inputs=[step, implicit[0].name])
+        self.assertEqual(both.nu, 2)
+
+    def test_a_constant_made_by_the_user_is_an_input(self):
+        bd = new_diagram()
+        gain = bd.CONSTANT(2.0, name="mine")
+        bd.connect(gain, bd.NULL(1, name="y"))
+        bd.compile(verbose=False)
+        self.assertFalse(bd["mine"]._implicit)
+        self.assertEqual(bd.functions().uindex.names, ["mine"])
+
     def test_time_cannot_be_an_input(self):
         bd = new_diagram()
         time = bd.TIME(name="time")

@@ -264,7 +264,7 @@ class SystemFunctions:
             inputs = [
                 b
                 for b in bd.blocklist
-                if isinstance(b, SourceBlock) and b.type != "time"
+                if isinstance(b, SourceBlock) and b.type != "time" and not b._implicit
             ]
         selected: dict[Block, list[int]] = {}
         for item in inputs:
@@ -511,7 +511,8 @@ class AnalysisMixin:
 
         :param inputs: the source blocks, or the outputs of them, that are the
             input :math:`u`, see below.  Defaults to every source block except
-            ``TIME``.
+            ``TIME`` and the constants bdsim creates for numbers written in
+            expressions, which are parameters, not inputs.
         :param outputs: the signals that are the output :math:`y`, see below.
             Defaults to the signal into every sink input.
         :return: the functions, which unpack as ``f, g``
