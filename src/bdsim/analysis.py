@@ -57,6 +57,9 @@ class Index:
     elements have no entry.
     """
 
+    labels: list[tuple[Block, int]]  #: ``(block, k)`` for each element, in order
+    slices: dict[Block, slice]  #: the slice of the vector holding each block's elements
+
     def __init__(
         self,
         entries: list[tuple[Block, int]],
@@ -258,21 +261,18 @@ class SystemFunctions:
     :meth:`fg` computes both from one propagation through the diagram, which is
     half the work of calling ``f`` and then ``g``.
 
-    :ivar nx: number of continuous states
-    :ivar nu: number of inputs
-    :ivar ny: number of outputs
-    :ivar x0: initial continuous state of the diagram
-    :ivar xindex: which states belong to which block
-    :vartype xindex: Index
-    :ivar uindex: which inputs are the outputs of which source block
-    :vartype uindex: Index
-    :ivar yindex: which outputs are the signals of which block
-    :vartype yindex: Index
-
     Calling it evaluates the diagram, so it is not meant to be used during a
     simulation: the values on the wires and the diagram's state map are
     overwritten.
     """
+
+    nx: int  #: number of continuous states
+    nu: int  #: number of inputs
+    ny: int  #: number of outputs
+    x0: NDArray  #: initial continuous state of the diagram
+    xindex: Index  #: which states belong to which block
+    uindex: Index  #: which inputs are the outputs of which source block
+    yindex: Index  #: which outputs are the signals of which block
 
     def __init__(
         self,
@@ -496,46 +496,43 @@ class Linearization:
     A local linear model of a block diagram, from
     :meth:`~bdsim.BlockDiagram.linearize`.
 
-    It unpacks as ``A, B, C, D``.  ``print`` shows the model with each matrix
-    labelled by the names of the signals that are its rows and columns, and the
-    poles, the eigenvalues of ``A``.
-
-    :ivar A: :math:`\partial f / \partial x`, shape ``(nx, nx)``
-    :ivar B: :math:`\partial f / \partial u`, shape ``(nx, nu)``
-    :ivar C: :math:`\partial g / \partial x`, shape ``(ny, nx)``
-    :ivar D: :math:`\partial g / \partial u`, shape ``(ny, nu)``
-    :ivar f0: :math:`f(x, u, t)` at the operating point; zero at an equilibrium
-    :ivar y0: :math:`g(x, u, t)` at the operating point
-    :ivar x: state of the operating point
-    :ivar u: input of the operating point
-    :ivar t: time of the operating point
-    :ivar error: estimated error of ``A, B, C, D``, or ``None`` if not requested
-    :ivar xindex: rows and columns of ``A``, columns of ``C``
-    :ivar uindex: columns of ``B`` and ``D``
-    :ivar yindex: rows of ``C`` and ``D``
-
     The model is
 
     .. math::
 
         \frac{d}{dt}(\delta x) = A\,\delta x + B\,\delta u + f_0
+
+    where :math:`\delta x` and :math:`\delta u` are the deviations of the state and
+    the input from the operating point.  The matrices are attributes, as are the
+    operating point and the maps that say which signal each row and column is.
+
+    It unpacks as ``A, B, C, D``::
+
+        A, B, C, D = bd.linearize(...)
+
+    and ``print`` shows the model with each matrix labelled by the names of the
+    signals that are its rows and columns, see :meth:`__str__`.  :attr:`poles` are the
+    eigenvalues of ``A``.
     """
 
-    A: NDArray
-    B: NDArray
-    C: NDArray
-    D: NDArray
-    f0: NDArray
-    y0: NDArray
-    x: NDArray
-    u: NDArray
-    t: float
-    xindex: Index
-    uindex: Index
-    yindex: Index
+    A: NDArray  #: :math:`\partial f / \partial x`, shape ``(nx, nx)``
+    B: NDArray  #: :math:`\partial f / \partial u`, shape ``(nx, nu)``
+    C: NDArray  #: :math:`\partial g / \partial x`, shape ``(ny, nx)``
+    D: NDArray  #: :math:`\partial g / \partial u`, shape ``(ny, nu)``
+    f0: NDArray  #: :math:`f(x, u, t)` at the operating point, zero at an equilibrium
+    y0: NDArray  #: :math:`g(x, u, t)` at the operating point
+    x: NDArray  #: state of the operating point
+    u: NDArray  #: input of the operating point
+    t: float  #: time of the operating point
+    xindex: Index  #: names the rows and columns of ``A`` and the columns of ``C``
+    uindex: Index  #: names the columns of ``B`` and ``D``
+    yindex: Index  #: names the rows of ``C`` and ``D``
+    #: estimated error of each of ``A, B, C, D``, as a dict with those keys, or
+    #: ``None`` if ``estimate_error`` was not requested
     error: dict[str, NDArray] | None = field(default=None)
 
     def __iter__(self) -> Iterator[NDArray]:
+        """Unpack as ``A, B, C, D``."""
         return iter((self.A, self.B, self.C, self.D))
 
     def ss(self, name: str | None = None) -> Any:
@@ -625,6 +622,57 @@ class Linearization:
         )
 
     def __str__(self) -> str:
+        r"""
+        The model, with each matrix labelled by the signals that are its rows and
+        columns.
+
+        This is what ``print`` shows.  For a cart and pole with the force on the cart
+        as the input and the cart position and pole angle as the outputs::
+
+            Linearization at t = 0
+
+            states  x (4): x_dot, x, theta_dot, theta
+            inputs  u (1): disturbance
+            outputs y (2): x, theta
+
+            A = df/dx  (4x4)
+              rows and columns: x_dot, x, theta_dot, theta
+            [[-10.   ,   0.   ,   0.   ,  -0.981],
+             [  1.   ,   0.   ,   0.   ,   0.   ],
+             [ 20.   ,   0.   ,   0.   ,  21.582],
+             [  0.   ,   0.   ,   1.   ,   0.   ]]
+
+            B = df/du  (4x1)
+              rows: x_dot, x, theta_dot, theta
+              columns: disturbance
+            [[ 1.],
+             [ 0.],
+             [-2.],
+             [ 0.]]
+
+            C = dg/dx  (2x4)
+              rows: x, theta
+              columns: x_dot, x, theta_dot, theta
+            [[0., 1., 0., 0.],
+             [0., 0., 0., 1.]]
+
+            D = dg/du  (2x1)
+              rows: x, theta
+              columns: disturbance
+            [[0.],
+             [0.]]
+
+            poles: [-10.24, -4.262, 0, 4.498]
+
+        The names are those of the blocks that are the states, inputs and outputs,
+        or the names a block gave its states.  A value smaller than about 5e-5 is
+        shown as 0, which hides the noise of the numerical derivative; the matrices
+        themselves are not changed.  The poles are listed as real numbers if they all
+        are.
+
+        If the operating point is not an equilibrium, so that :math:`f_0` is not zero,
+        a last line says so, because the model then includes :math:`f_0`.
+        """
         nx, nu, ny = len(self.xindex), len(self.uindex), len(self.yindex)
         states = ", ".join(self.xindex.names)
         inputs = ", ".join(self.uindex.names)
@@ -800,7 +848,7 @@ class AnalysisMixin:
         simulation: they overwrite the values on the wires.
 
         :seealso: :meth:`linearize` :class:`~bdsim.analysis.SystemFunctions`
-            :class:`~bdsim.blocks.sources.State` :class:`~bdsim.blocks.sampled.State_S`
+            :class:`~bdsim.blocks.sources.State` :class:`~bdsim.blocks.sources.State_S`
         """
         return SystemFunctions(self, inputs, outputs)
 
@@ -836,7 +884,9 @@ class AnalysisMixin:
             it when a variable is far from 1 in size and zero at the point.
         :param estimate_error: also differentiate with twice the step, to estimate
             the error and warn where a block is not smooth enough
-        :param full: return a :class:`~bdsim.analysis.Linearization`
+        :param full: return a :class:`~bdsim.analysis.Linearization`, which also has
+            the operating point and the names of the states, inputs and outputs, and
+            prints as a labelled model, see :meth:`~bdsim.analysis.Linearization.__str__`
         :return: ``(A, B, C, D)``, or the ``Linearization`` if ``full``
         :raises NotImplementedError: the diagram has sampled (discrete-time) blocks
 
@@ -878,7 +928,7 @@ class AnalysisMixin:
         state of that block is in the order of the states of this method, so
         ``K`` applies directly, and linearizing the closed loop gives
         :math:`A - BK`.  The state of a clocked block is available from
-        :class:`~bdsim.blocks.sampled.State_S`.
+        :class:`~bdsim.blocks.sources.State_S`.
 
         If the operating point is at a corner of a non-smooth block (a limit, a
         dead band, a switch) the derivative is not defined there.  The result is
@@ -886,7 +936,7 @@ class AnalysisMixin:
         that the estimate is not reliable.
 
         :seealso: :meth:`functions` :class:`~bdsim.blocks.continuous.LTI_SS`
-            :class:`~bdsim.blocks.sources.State` :class:`~bdsim.blocks.sampled.State_S`
+            :class:`~bdsim.blocks.sources.State` :class:`~bdsim.blocks.sources.State_S`
         """
         sysf = self.functions(inputs, outputs)
 

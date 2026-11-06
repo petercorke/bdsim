@@ -1245,7 +1245,7 @@ class BlockFactoryStubs:
             "onto BlockDiagram at import time by the @block decorator"
         )
 
-    # bdsim.blocks.sampled.State_S
+    # bdsim.blocks.sources.State_S
     def STATE_S(
         self,
         clock: Clock,
