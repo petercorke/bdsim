@@ -583,7 +583,7 @@ class AnalysisMixin:
             return J
 
         J1 = jacobian(1.0)
-        nx, ny = sysf.nx, sysf.ny
+        nx = sysf.nx
         A, B = J1[:nx, :nx], J1[:nx, nx:]
         C, D = J1[nx:, :nx], J1[nx:, nx:]
 
