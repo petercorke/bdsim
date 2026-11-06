@@ -1,0 +1,455 @@
+"""Tests for BlockDiagram.functions() and linearize() (src/bdsim/analysis.py)."""
+
+import unittest
+import warnings
+
+import numpy as np
+
+import bdsim
+from bdsim.analysis import AnalysisMixin, Index, Linearization
+from bdsim.blockdiagram import BlockDiagram
+
+
+def new_diagram() -> BlockDiagram:
+    return bdsim.BDSim(sysargs=False, graphics=False).blockdiagram()
+
+
+def lti_diagram():
+    """Two states, two inputs, one output, with a nonzero D."""
+    A = np.array([[0, 1], [-2, -3.0]])
+    B = np.array([[0, 1], [1, 0.0]])
+    C = np.array([[1, 2.0]])
+    D = np.array([[0.5, -1.0]])
+    bd = new_diagram()
+    u1 = bd.CONSTANT(1.0, name="u1")
+    u2 = bd.CONSTANT(2.0, name="u2")
+    system = bd.LTI_SS(A=A, B=B, C=C, D=D, x0=[1, 2], name="system")
+    bd.connect(u1, system[0])
+    bd.connect(u2, system[1])
+    bd.connect(system, bd.NULL(1, name="y"))
+    bd.compile(verbose=False)
+    return bd, (A, B, C, D)
+
+
+G_OVER_L = 9.81
+DAMPING = 0.4
+
+
+def pendulum_diagram(torque=0.3, theta0=0.5, omega0=0.2):
+    r"""theta'' = u - (g/l) sin(theta) - b theta', the output is theta."""
+    bd = new_diagram()
+    u = bd.CONSTANT(torque, name="u")
+    acc = bd.SUM("+--", name="acc")
+    omega = bd.INTEGRATOR(x0=omega0, name="omega")
+    theta = bd.INTEGRATOR(x0=theta0, name="theta")
+    sin = bd.FUNCTION(lambda th: np.sin(th), name="sin")
+    stiffness = bd.GAIN(G_OVER_L, name="stiffness")
+    damper = bd.GAIN(DAMPING, name="damper")
+    bd.connect(u, acc[0])
+    bd.connect(stiffness, acc[1])
+    bd.connect(damper, acc[2])
+    bd.connect(acc, omega)
+    bd.connect(omega, theta, damper)
+    bd.connect(theta, sin)
+    bd.connect(sin, stiffness)
+    bd.connect(theta, bd.NULL(1, name="y"))
+    bd.compile(verbose=False)
+    return bd
+
+
+class FunctionsTest(unittest.TestCase):
+    def test_f_and_g_of_a_linear_system(self):
+        bd, (A, B, C, D) = lti_diagram()
+        f, g = bd.functions()
+        x = np.array([0.3, -0.7])
+        u = np.array([1.5, 0.25])
+        np.testing.assert_allclose(f(x, u, 0.0), A @ x + B @ u, atol=1e-12)
+        np.testing.assert_allclose(g(x, u, 0.0), C @ x + D @ u, atol=1e-12)
+
+    def test_fg_equals_f_and_g(self):
+        bd, _ = lti_diagram()
+        sysf = bd.functions()
+        x, u = np.array([0.3, -0.7]), np.array([1.5, 0.25])
+        xdot, y = sysf.fg(x, u, 0.0)
+        np.testing.assert_array_equal(xdot, sysf.f(x, u))
+        np.testing.assert_array_equal(y, sysf.g(x, u))
+
+    def test_sizes_and_initial_state(self):
+        bd, _ = lti_diagram()
+        sysf = bd.functions()
+        self.assertEqual((sysf.nx, sysf.nu, sysf.ny), (2, 2, 1))
+        np.testing.assert_array_equal(sysf.x0, [1, 2])
+
+    def test_u_at_is_the_natural_input(self):
+        bd, _ = lti_diagram()
+        np.testing.assert_array_equal(bd.functions().u_at(0.0), [1.0, 2.0])
+
+    def test_the_sources_are_replaced_by_u(self):
+        # the CONSTANTs are 1 and 2, but f and g follow the u given
+        bd, (A, B, C, D) = lti_diagram()
+        f, g = bd.functions()
+        u = np.array([-4.0, 7.0])
+        np.testing.assert_allclose(f([0.0, 0.0], u), B @ u, atol=1e-12)
+        np.testing.assert_allclose(g([0.0, 0.0], u), D @ u, atol=1e-12)
+
+    def test_time_is_the_t_argument_not_an_input(self):
+        bd = new_diagram()
+        time = bd.TIME(name="time")
+        integrator = bd.INTEGRATOR(x0=0, name="integrator")
+        bd.connect(time, integrator)
+        bd.connect(integrator, bd.NULL(1, name="y"))
+        bd.compile(verbose=False)
+        sysf = bd.functions()
+        self.assertEqual(sysf.nu, 0)
+        self.assertEqual(sysf.f([0.0], [], t=3.5)[0], 3.5)
+
+    def test_the_wrong_sizes_are_errors(self):
+        bd, _ = lti_diagram()
+        f, g = bd.functions()
+        with self.assertRaisesRegex(ValueError, "x has 3 elements, expected 2"):
+            f([1, 2, 3], [1, 2])
+        with self.assertRaisesRegex(ValueError, "u has 1 elements, expected 2"):
+            g([1, 2], [1])
+
+    def test_a_diagram_that_is_not_compiled_is_an_error(self):
+        bd = new_diagram()
+        bd.connect(bd.CONSTANT(1.0), bd.NULL(1))
+        with self.assertRaisesRegex(RuntimeError, "not been compiled"):
+            bd.functions()
+
+    def test_sampled_blocks_are_not_supported(self):
+        bd = new_diagram()
+        zoh = bd.ZOH(bd.clock(0.1), name="zoh")
+        bd.connect(bd.CONSTANT(1.0), zoh)
+        bd.connect(zoh, bd.NULL(1))
+        bd.compile(verbose=False)
+        with self.assertRaisesRegex(NotImplementedError, "zoh"):
+            bd.functions()
+        with self.assertRaises(NotImplementedError):
+            bd.linearize()
+
+    def test_the_sinks_are_not_stepped(self):
+        bd, _ = lti_diagram()
+        calls = []
+        sink = bd["y"]
+        sink.step = lambda t, u: calls.append(t)
+        f, g = bd.functions()
+        f([0.0, 0.0], [1.0, 2.0])
+        g([0.0, 0.0], [1.0, 2.0])
+        self.assertEqual(calls, [])
+
+    def test_a_non_numeric_signal_is_an_error_naming_the_port(self):
+        bd = new_diagram()
+        text = bd.CONSTANT("hello", name="text")
+        bd.connect(text, bd.NULL(1, name="y"))
+        bd.compile(verbose=False)
+        with self.assertRaisesRegex(TypeError, r"input text\[0\].*str"):
+            bd.functions()
+        with self.assertRaisesRegex(TypeError, r"output y\[0\].*str"):
+            bd.functions(inputs=[])
+
+
+class SelectionTest(unittest.TestCase):
+    def two_source_diagram(self):
+        bd = new_diagram()
+        a = bd.CONSTANT(3.0, name="a")
+        b = bd.CONSTANT(5.0, name="b")
+        total = bd.SUM("++", name="total")
+        bd.connect(a, total[0])
+        bd.connect(b, total[1])
+        bd.connect(total, bd.NULL(1, name="y1"))
+        bd.connect(b, bd.NULL(1, name="y2"))
+        bd.compile(verbose=False)
+        return bd, a, b
+
+    def test_default_is_every_source_and_every_sink_in_creation_order(self):
+        bd, a, b = self.two_source_diagram()
+        sysf = bd.functions()
+        self.assertEqual((sysf.nu, sysf.ny), (2, 2))
+        self.assertEqual(sysf.uindex.names, ["a", "b"])
+        self.assertEqual(sysf.yindex.names, ["y1", "y2"])
+        np.testing.assert_allclose(sysf.g([], [10.0, 20.0]), [30.0, 20.0])
+
+    def test_inputs_select_sources_and_the_rest_keep_their_value(self):
+        bd, a, b = self.two_source_diagram()
+        sysf = bd.functions(inputs=[a])
+        self.assertEqual(sysf.nu, 1)
+        # b is not an input: it still outputs its own 5
+        np.testing.assert_allclose(sysf.g([], [10.0]), [15.0, 5.0])
+
+    def test_a_plug_selects_a_sink_port(self):
+        bd, a, b = self.two_source_diagram()
+        sysf = bd.functions(outputs=[bd["y2"]])
+        self.assertEqual(sysf.ny, 1)
+        np.testing.assert_allclose(sysf.g([], [10.0, 20.0]), [20.0])
+
+    def test_a_plug_selects_one_port_of_a_sink_with_several(self):
+        bd = new_diagram()
+        a = bd.CONSTANT(3.0, name="a")
+        b = bd.CONSTANT(5.0, name="b")
+        sink = bd.NULL(2, name="sink")
+        bd.connect(a, sink[0])
+        bd.connect(b, sink[1])
+        bd.compile(verbose=False)
+        both = bd.functions()
+        self.assertEqual(both.ny, 2)
+        np.testing.assert_allclose(both.g([], [10.0, 20.0]), [10.0, 20.0])
+        second = bd.functions(outputs=[sink[1]])
+        self.assertEqual(second.ny, 1)
+        np.testing.assert_allclose(second.g([], [10.0, 20.0]), [20.0])
+        first = bd.functions(outputs=[sink[0]])
+        np.testing.assert_allclose(first.g([], [10.0, 20.0]), [10.0])
+
+    def test_time_cannot_be_an_input(self):
+        bd = new_diagram()
+        time = bd.TIME(name="time")
+        bd.connect(time, bd.NULL(1))
+        bd.compile(verbose=False)
+        with self.assertRaisesRegex(ValueError, "TIME is not an input"):
+            bd.functions(inputs=[time])
+
+    def test_inputs_must_be_sources_and_outputs_sinks(self):
+        bd, a, b = self.two_source_diagram()
+        with self.assertRaisesRegex(TypeError, "total is not a source"):
+            bd.functions(inputs=[bd["total"]])
+        with self.assertRaisesRegex(TypeError, "total is not a sink"):
+            bd.functions(outputs=[bd["total"]])
+
+    def test_a_vector_source_is_flattened(self):
+        bd = new_diagram()
+        v = bd.CONSTANT(np.array([1.0, 2.0, 3.0]), name="v")
+        bd.connect(v, bd.NULL(1, name="y"))
+        bd.compile(verbose=False)
+        sysf = bd.functions()
+        self.assertEqual((sysf.nu, sysf.ny), (3, 3))
+        self.assertEqual(sysf.uindex.names, ["v[0]", "v[1]", "v[2]"])
+        np.testing.assert_allclose(sysf.g([], [7, 8, 9]), [7, 8, 9])
+
+
+class IndexTest(unittest.TestCase):
+    def test_slices_labels_and_lookup_by_name(self):
+        bd = pendulum_diagram()
+        sysf = bd.functions()
+        # integrators in creation order: omega, then theta
+        self.assertEqual(sysf.xindex.names, ["omega", "theta"])
+        self.assertEqual(sysf.xindex["omega"], slice(0, 1))
+        self.assertEqual(sysf.xindex[bd["theta"]], slice(1, 2))
+        self.assertEqual(sysf.xindex.labels, [(bd["omega"], 0), (bd["theta"], 0)])
+        self.assertEqual(len(sysf.xindex), 2)
+        self.assertIn("theta", sysf.xindex)
+        self.assertEqual(list(sysf.xindex), [bd["omega"], bd["theta"]])
+
+    def test_a_block_with_several_elements_gets_one_slice(self):
+        bd, _ = lti_diagram()
+        sysf = bd.functions()
+        self.assertEqual(sysf.xindex["system"], slice(0, 2))
+        self.assertEqual(sysf.xindex.names, ["system[0]", "system[1]"])
+
+    def test_missing_blocks(self):
+        bd, _ = lti_diagram()
+        sysf = bd.functions()
+        with self.assertRaisesRegex(KeyError, "no block named"):
+            sysf.xindex["nothing"]
+        with self.assertRaisesRegex(KeyError, "no elements"):
+            sysf.xindex[bd["u1"]]
+
+    def test_the_order_is_the_order_of_addition_not_of_selection(self):
+        bd = new_diagram()
+        a = bd.CONSTANT(1.0, name="a")
+        b = bd.CONSTANT(2.0, name="b")
+        bd.connect(a, bd.NULL(1, name="ya"))
+        bd.connect(b, bd.NULL(1, name="yb"))
+        bd.compile(verbose=False)
+        sysf = bd.functions(inputs=[b, a], outputs=[bd["yb"], bd["ya"]])
+        self.assertEqual(sysf.uindex.names, ["a", "b"])
+        self.assertEqual(sysf.yindex.names, ["ya", "yb"])
+        np.testing.assert_allclose(sysf.g([], [10.0, 20.0]), [10.0, 20.0])
+
+    def test_repr(self):
+        bd = pendulum_diagram()
+        self.assertEqual(repr(bd.functions().xindex), "Index(2 elements: omega, theta)")
+
+
+class LinearizeTest(unittest.TestCase):
+    def test_a_linear_system_is_recovered(self):
+        bd, (A, B, C, D) = lti_diagram()
+        a, b, c, d = bd.linearize()
+        np.testing.assert_allclose(a, A, atol=1e-8)
+        np.testing.assert_allclose(b, B, atol=1e-8)
+        np.testing.assert_allclose(c, C, atol=1e-8)
+        np.testing.assert_allclose(d, D, atol=1e-8)
+        self.assertEqual(
+            (a.shape, b.shape, c.shape, d.shape), ((2, 2), (2, 2), (1, 2), (1, 2))
+        )
+
+    def test_a_nonlinear_system_against_the_analytic_jacobian(self):
+        theta, omega, torque = 0.7, -0.3, 0.3
+        bd = pendulum_diagram()
+        # states are in the order omega, theta
+        A, B, C, D = bd.linearize(x=[omega, theta], u=[torque])
+        np.testing.assert_allclose(
+            A,
+            [[-DAMPING, -G_OVER_L * np.cos(theta)], [1.0, 0.0]],
+            atol=1e-7,
+        )
+        np.testing.assert_allclose(B, [[1.0], [0.0]], atol=1e-8)
+        np.testing.assert_allclose(C, [[0.0, 1.0]], atol=1e-8)
+        np.testing.assert_allclose(D, [[0.0]], atol=1e-8)
+
+    def test_the_operating_point_defaults_to_the_initial_state_and_natural_input(self):
+        bd = pendulum_diagram(theta0=0.9)
+        A, *_ = bd.linearize()
+        self.assertAlmostEqual(A[0, 1], -G_OVER_L * np.cos(0.9), places=6)
+
+    def test_the_result_is_not_a_function_of_the_input_given_to_a_linear_system(self):
+        bd, (A, B, C, D) = lti_diagram()
+        a, b, c, d = bd.linearize(x=[5.0, -4.0], u=[100.0, -100.0])
+        np.testing.assert_allclose(a, A, atol=1e-7)
+        np.testing.assert_allclose(d, D, atol=1e-7)
+
+    def test_full_returns_the_operating_point_and_unpacks(self):
+        bd, (A, B, C, D) = lti_diagram()
+        lin = bd.linearize(x=[1.0, 2.0], u=[1.0, 2.0], full=True)
+        self.assertIsInstance(lin, Linearization)
+        np.testing.assert_allclose(lin.f0, A @ [1.0, 2.0] + B @ [1.0, 2.0], atol=1e-12)
+        np.testing.assert_allclose(lin.y0, C @ [1.0, 2.0] + D @ [1.0, 2.0], atol=1e-12)
+        np.testing.assert_array_equal(lin.x, [1.0, 2.0])
+        np.testing.assert_array_equal(lin.u, [1.0, 2.0])
+        self.assertEqual(lin.t, 0.0)
+        self.assertIsNone(lin.error)
+        self.assertEqual(lin.xindex.names, ["system[0]", "system[1]"])
+        self.assertEqual(lin.uindex.names, ["u1", "u2"])
+        self.assertEqual(lin.yindex.names, ["y"])
+        a, b, c, d = lin
+        np.testing.assert_array_equal(a, lin.A)
+
+    def test_the_default_is_just_the_four_matrices(self):
+        bd, _ = lti_diagram()
+        result = bd.linearize()
+        self.assertIsInstance(result, tuple)
+        self.assertEqual(len(result), 4)
+
+    def test_estimate_error(self):
+        bd = pendulum_diagram()
+        lin = bd.linearize(estimate_error=True, full=True)
+        self.assertEqual(set(lin.error), {"A", "B", "C", "D"})
+        self.assertEqual(lin.error["A"].shape, lin.A.shape)
+        self.assertLess(max(e.max() for e in lin.error.values()), 1e-8)
+
+    def test_a_smooth_system_does_not_warn(self):
+        bd = pendulum_diagram()
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            bd.linearize(estimate_error=True)
+
+    def test_a_corner_within_the_step_warns(self):
+        bd = new_diagram()
+        u = bd.CONSTANT(0.95, name="u")
+        clip = bd.CLIP(min=-1.0, max=1.0, name="clip")
+        integrator = bd.INTEGRATOR(x0=0, name="integrator")
+        bd.connect(u, clip)
+        bd.connect(clip, integrator)
+        bd.connect(integrator, bd.NULL(1, name="y"))
+        bd.compile(verbose=False)
+        # the corner at 1 is within one step (0.1) of u = 0.95, so the slope
+        # across the step depends on the step
+        with self.assertWarnsRegex(UserWarning, "changes with the step size"):
+            bd.linearize(h=0.1, estimate_error=True)
+        # and without asking for the estimate there is nothing to say
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            bd.linearize(h=0.1)
+
+    def test_scale_gives_a_step_for_a_variable_that_is_zero(self):
+        bd, (A, B, C, D) = lti_diagram()
+        a, *_ = bd.linearize(x=[0.0, 0.0], u=[0.0, 0.0], scale=1e-3)
+        np.testing.assert_allclose(a, A, atol=1e-5)
+        with self.assertRaisesRegex(ValueError, "scale must be positive"):
+            bd.linearize(scale=0.0)
+
+    def test_the_sizes_of_x_and_u_are_checked(self):
+        bd, _ = lti_diagram()
+        with self.assertRaisesRegex(ValueError, "x has 1 elements, expected 2"):
+            bd.linearize(x=[1.0])
+        with self.assertRaisesRegex(ValueError, "u has 1 elements, expected 2"):
+            bd.linearize(u=[1.0])
+
+    def test_inputs_and_outputs_can_be_selected(self):
+        bd, (A, B, C, D) = lti_diagram()
+        a, b, c, d = bd.linearize(inputs=[bd["u2"]])
+        np.testing.assert_allclose(b, B[:, 1:], atol=1e-8)
+        np.testing.assert_allclose(d, D[:, 1:], atol=1e-8)
+
+
+class AfterARunTest(unittest.TestCase):
+    def limited_integrator_diagram(self):
+        bd = new_diagram()
+        u = bd.CONSTANT(1.0, name="u")
+        integrator = bd.INTEGRATOR(x0=0.0, max=0.5, name="integrator")
+        bd.connect(u, integrator)
+        bd.connect(integrator, bd.NULL(1, name="y"))
+        bd.compile(verbose=False)
+        return bd
+
+    def test_before_a_run_the_integrator_is_free(self):
+        bd = self.limited_integrator_diagram()
+        A, B, C, D = bd.linearize()
+        np.testing.assert_allclose(B, [[1.0]], atol=1e-8)
+
+    def test_after_a_run_a_held_integrator_stays_held(self):
+        bd = self.limited_integrator_diagram()
+        sim = bdsim.BDSim(sysargs=False, graphics=False)
+        out = sim.run(bd, T=2.0, dt=0.1)
+        np.testing.assert_allclose(out.x[-1], [0.5])
+        A, B, C, D = bd.linearize(out.x[-1])
+        # at the limit with the input pushing against it, the state cannot move
+        np.testing.assert_allclose(A, [[0.0]], atol=1e-12)
+        np.testing.assert_allclose(B, [[0.0]], atol=1e-12)
+        np.testing.assert_allclose(C, [[1.0]], atol=1e-8)
+
+    def test_linearize_at_the_end_of_a_run(self):
+        bd = pendulum_diagram()
+        sim = bdsim.BDSim(sysargs=False, graphics=False)
+        out = sim.run(bd, T=1.0, dt=0.05)
+        omega, theta = out.x[-1]
+        A, B, C, D = bd.linearize(out.x[-1])
+        self.assertAlmostEqual(A[0, 1], -G_OVER_L * np.cos(theta), places=6)
+        self.assertAlmostEqual(A[0, 0], -DAMPING, places=6)
+
+    def test_the_run_can_be_repeated_after_linearizing(self):
+        bd = pendulum_diagram()
+        sim = bdsim.BDSim(sysargs=False, graphics=False)
+        first = sim.run(bd, T=0.5, dt=0.05)
+        bd.linearize(first.x[-1])
+        second = sim.run(bd, T=0.5, dt=0.05)
+        np.testing.assert_allclose(first.x, second.x)
+
+
+class EvaluateOverridesTest(unittest.TestCase):
+    def test_overrides_replace_the_output_of_a_block(self):
+        bd = new_diagram()
+        source = bd.CONSTANT(1.0, name="source")
+        gain = bd.GAIN(10.0, name="gain")
+        bd.connect(source, gain)
+        bd.connect(gain, bd.NULL(1, name="y"))
+        bd.compile(verbose=False)
+        state_map = bd.state_map(np.array([]))
+        bd.evaluate(state_map, 0.0, sinks=False, overrides={source: [4.0]})
+        self.assertEqual(bd["y"].inport_values, [40.0])
+        # without overrides the block is called as before
+        bd.evaluate(state_map, 0.0, sinks=False)
+        self.assertEqual(bd["y"].inport_values, [10.0])
+
+
+class MixinTest(unittest.TestCase):
+    def test_the_methods_come_from_the_mixin(self):
+        self.assertTrue(issubclass(BlockDiagram, AnalysisMixin))
+        for name in ("functions", "linearize"):
+            self.assertIs(getattr(BlockDiagram, name), getattr(AnalysisMixin, name))
+
+    def test_index_is_exported(self):
+        self.assertTrue(callable(Index))
+
+
+if __name__ == "__main__":
+    unittest.main()

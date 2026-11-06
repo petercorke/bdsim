@@ -21,6 +21,7 @@ from colored import attr, fg
 
 from bdsim._graph import GraphMixin
 from bdsim._reports import ReportMixin
+from bdsim.analysis import AnalysisMixin
 from bdsim.exceptions import BlockRuntimeError
 from bdsim.signature import Signature
 from bdsim.literals import NOT_A_LITERAL, parse_literal
@@ -83,7 +84,9 @@ def _is_finite(value: Any) -> bool:
     return True
 
 
-class BlockDiagram(GraphMixin, ReportMixin, BlockFactoryStubs, RTBStubs, MVTBStubs):
+class BlockDiagram(
+    AnalysisMixin, GraphMixin, ReportMixin, BlockFactoryStubs, RTBStubs, MVTBStubs
+):
     r"""
     Block diagram class.  This object is the parent of all blocks and wires in
     the system.
@@ -136,6 +139,7 @@ class BlockDiagram(GraphMixin, ReportMixin, BlockFactoryStubs, RTBStubs, MVTBStu
         self.n_auto_gain = Counter()
         self.n_auto_pow = Counter()
         self._state_map: dict[Block, np.ndarray | None] = {}
+        self._started = False  # start() has run since the last compile
         self.compiled = False
 
     def __getitem__(self, id: int | str) -> Block:
@@ -469,6 +473,7 @@ class BlockDiagram(GraphMixin, ReportMixin, BlockFactoryStubs, RTBStubs, MVTBStu
             else:
                 print(f"\nRecompiling blockdiagram '{self.name}':")
         self.compiled = False
+        self._started = False
 
         # recursively instantiate all subsystem imports
         self.blocklist, self.wirelist = self._subsystem_import(
@@ -930,6 +935,7 @@ class BlockDiagram(GraphMixin, ReportMixin, BlockFactoryStubs, RTBStubs, MVTBStu
         sinks: bool = True,
         *,
         check: bool | None = None,
+        overrides: dict[Block, list[Any]] | None = None,
     ) -> None:
         """
         Evaluate all blocks in the network using the compiled execution schedule
@@ -943,6 +949,10 @@ class BlockDiagram(GraphMixin, ReportMixin, BlockFactoryStubs, RTBStubs, MVTBStu
         :param check: check the block outputs, defaults to the diagram's ``check``
             attribute, which :meth:`BDSim.run` sets from the ``check`` option
         :type check: bool, optional
+        :param overrides: output values to publish for some blocks, instead of
+            calling their ``output`` method; the list has one value per output
+            port.  Used by :meth:`functions` to replace the source blocks.
+        :type overrides: dict, optional
 
         Performs the following steps:
 
@@ -977,7 +987,10 @@ class BlockDiagram(GraphMixin, ReportMixin, BlockFactoryStubs, RTBStubs, MVTBStu
                     # inports = None if sequence == 0 else b.inport_values
                     inports = b.inport_values
                     block_state = state_map.get(b)
-                    out = b.output_safe(t, inports, block_state)
+                    if overrides is not None and b in overrides:
+                        out = overrides[b]
+                    else:
+                        out = b.output_safe(t, inports, block_state)
 
                     self.runtime.DEBUG("propagate", "block {:s}: output = {}", b, out)
 
@@ -1496,6 +1509,8 @@ class BlockDiagram(GraphMixin, ReportMixin, BlockFactoryStubs, RTBStubs, MVTBStu
                 b.validate_start_safe()
         except BlockRuntimeError as err:
             self._handle_block_runtime_error(err)
+
+        self._started = True
 
     def initialstate(self) -> None:
         self._state_map = self.initial_state_map()
