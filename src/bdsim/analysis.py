@@ -538,6 +538,69 @@ class Linearization:
     def __iter__(self) -> Iterator[NDArray]:
         return iter((self.A, self.B, self.C, self.D))
 
+    def ss(self, name: str | None = None) -> Any:
+        r"""
+        The model as a python-control state-space system.
+
+        :param name: name of the system, defaults to one chosen by python-control
+        :return: a ``control.StateSpace`` with the matrices ``A, B, C, D`` of this
+            model, and with the names of the states, inputs and outputs as its signal
+            names, taken from ``xindex``, ``uindex`` and ``yindex``
+        :raises ImportError: python-control is not installed
+
+        `python-control <https://github.com/python-control/python-control>`_ is the
+        usual package for the design of control systems, and this is the way to use
+        it on a diagram.  For example, to design a linear quadratic regulator for a
+        cart and pole and apply it::
+
+            import control
+
+            X = bd.linearize(outputs=[x, theta], full=True)
+            sys = X.ss()
+            K, S, E = control.lqr(sys, Q, R)
+            F = -K * bd.STATE()
+
+        The signal names carry through, so that systems made this way can be
+        connected by name with ``control.interconnect``.
+
+        python-control is an optional dependency, imported when this method is
+        called: ``pip install control``, or install bdsim with the ``control`` extra.
+        Version 0.10 or later is needed, for the signal names.
+
+        python-control cannot make a system that has no inputs and a single state
+        or a single output, because it mistakes a matrix of shape ``(1, 0)`` for an
+        empty one.  Use :attr:`poles` for an autonomous system like that.
+
+        The system is linear and time invariant, which is the model
+        :math:`\delta\dot{x} = A\,\delta x + B\,\delta u`.  The offset :math:`f_0` of an
+        operating point that is not an equilibrium, the output :math:`y_0`, and the
+        operating point itself are not part of it, and stay on this object.  The
+        values of the matrices are those of the numerical derivative, so an element
+        that is zero may be of the order of 1e-10, which can matter for tests of
+        rank such as ``control.ctrb``.
+
+        :seealso: :meth:`~bdsim.BlockDiagram.linearize`
+            :class:`~bdsim.blocks.continuous.LTI_SS`
+        """
+        try:
+            import control
+        except ImportError:
+            raise ImportError(
+                "Linearization.ss() needs the python-control package: "
+                "pip install control"
+            ) from None
+        return control.ss(
+            self.A,
+            self.B,
+            self.C,
+            self.D,
+            dt=0,
+            states=self.xindex.names,
+            inputs=self.uindex.names,
+            outputs=self.yindex.names,
+            name=name,
+        )
+
     @property
     def poles(self) -> NDArray:
         """

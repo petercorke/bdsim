@@ -22,6 +22,9 @@ Part of the RVC ecosystem. **Read [rvc-ecosystem/AGENTS.md](https://github.com/p
 - Depends on `spatialmath`, `ansitable`. Integrates with `robotics-toolbox-python`
   *optionally* (notebook helpers, examples) — not a hard package dependency, don't add one
   without discussion.
+- `python-control` is optional too (extra `control`, also in `dev` so CI tests it). It is imported
+  only inside `Linearization.ss()`, never at module level, with a clear `ImportError`; a test checks
+  that importing bdsim does not import it. Do not make it a hard dependency.
 - Hardware I/O blocks integrate with `arduIO` (Python client + Arduino sketch).
 - Pure Python — builds with Hatch (`hatchling`) directly.
 - Aspirational direction, in progress on branches, not yet merged: more real-time support,
