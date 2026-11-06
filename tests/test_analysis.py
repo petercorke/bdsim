@@ -895,16 +895,21 @@ class LinearizationSSWithoutControlTest(unittest.TestCase):
                 lin.ss()
 
     def test_control_is_not_imported_until_it_is_needed(self):
+        # not by importing bdsim, and not by linearizing: only by calling ss()
         code = (
-            "import sys, bdsim, bdsim.analysis;"
-            "bd = bdsim.BDSim(sysargs=False, graphics=False).blockdiagram();"
-            "bd.connect(bd.CONSTANT(1.0), bd.INTEGRATOR(), );"
-            "assert 'control' not in sys.modules, 'imported too early'"
+            "import sys, bdsim, bdsim.analysis\n"
+            "bd = bdsim.BDSim(sysargs=False, graphics=False).blockdiagram()\n"
+            "integrator = bd.INTEGRATOR(x0=0.0)\n"
+            "bd.connect(bd.CONSTANT(1.0), integrator)\n"
+            "bd.connect(integrator, bd.NULL(1))\n"
+            "bd.compile(verbose=False)\n"
+            "bd.linearize(full=True)\n"
+            "assert 'control' not in sys.modules, 'imported too early'\n"
         )
-        result = subprocess.run(  # nosec B603
+        result = subprocess.run(  # nosec B603  # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-audit.dangerous-subprocess-use-audit
             [sys.executable, "-I", "-c", code], capture_output=True, text=True
         )
-        self.assertNotIn("imported too early", result.stderr)
+        self.assertEqual(result.returncode, 0, result.stderr)
 
 
 class AfterARunTest(unittest.TestCase):
